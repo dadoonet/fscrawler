@@ -1,0 +1,57 @@
+h1. FileSystem River for Elasticsearch
+
+Welcome to the FS River Plugin for "Elasticsearch":http://www.elasticsearch.org/ 
+
+
+h2. Versions
+
+|_. FS River Plugin |_. ElasticSearch|_. Attachment Plugin|
+|  master (0.0.1)   |    0.19.4      |       1.4.0        |
+
+
+h2. Getting Started
+
+h3. Installation
+
+Just type :
+
+<pre>
+$ bin\plugin -install dadoonet/fsriver/0.0.1-SNAPSHOT
+</pre>
+
+This will do the job...
+
+<pre>
+-> Installing dadoonet/fsriver/0.0.1...
+Trying https://github.com/downloads/dadoonet/fsriver/fsriver-0.0.1-SNAPSHOT.zip...
+Downloading ...DONE
+Installed fsriver
+</pre>
+
+h3. Creating a FS river
+
+We create first an index to store our @documents@ :
+
+<pre>
+$ curl -XPUT 'localhost:9200/mydocs/' -d '{}'
+</pre>
+
+We create the river with the following properties :
+
+* FS URL : /tmp
+* Update Rate : every 15 minutes (15 * 60 * 1000 = 900000 ms)
+
+<pre>
+$ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+  "type": "fs",
+  "fs": {
+    "fs" : [ {
+    	"name": "My tmp dir",
+    	"url": "/tmp",
+    	"update_rate": 900000
+    	}
+    ]
+  }
+}'
+</pre>
+
