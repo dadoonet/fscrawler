@@ -1,0 +1,296 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.elasticsearch.plugin</groupId>
+	<artifactId>fsriver</artifactId>
+	<packaging>jar</packaging>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>File System River Plugin for ElasticSearch</name>
+	<url>https://github.com/dadoonet/fsriver</url>
+	
+	<properties>
+		<elasticsearch.version>0.19.4</elasticsearch.version>
+		<elasticsearch.attachment.version>1.4.0</elasticsearch.attachment.version>
+		
+		<!-- Some properties for github that you have to define in your settings.xml -->
+		<!-- 
+		<github.global.oauth2token>token</github.global.oauth2token>
+		<github.global.userName>username</github.global.userName>
+		<github.global.password>password</github.global.password>
+		-->
+	</properties>
+
+	<developers>
+		<developer>
+			<id>dadoonet</id>
+			<name>David Pilato</name>
+			<email>david+github@pilato.fr</email>
+			<url>http://dev.david.pilato.fr/</url>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
+	
+	<scm>
+		<connection>scm:git:git@github.com:dadoonet/fsriver.git</connection>
+		<url>scm:git:git@github.com:dadoonet/fsriver.git</url>
+		<developerConnection>scm:git:git@github.com:dadoonet/fsriver.git</developerConnection>
+	</scm>
+	
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/dadoonet/fsriver/issues/</url>
+	</issueManagement>
+	
+	<build>
+		<plugins>
+		    <plugin>
+				<groupId>com.github.github</groupId>
+				<artifactId>downloads-maven-plugin</artifactId>
+				<version>0.4</version>
+				<configuration>
+					<description>${project.name} download for ${project.version}</description>
+					<override>true</override>
+					<includeAttached>true</includeAttached>
+					<dryRun>false</dryRun>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>upload</goal>
+						</goals>
+						<phase>deploy</phase>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.github.github</groupId>
+				<artifactId>site-maven-plugin</artifactId>
+				<version>0.5</version>
+				<configuration>
+					<description>Creating site</description>
+					<override>true</override>
+					<includeAttached>true</includeAttached>
+					<message>Building ${project.version} maven site</message>
+					<path>version/${project.version}/</path>
+					<merge>true</merge>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>site</goal>
+						</goals>
+						<phase>site</phase>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.8</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<phase>pre-site</phase>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.1.2</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+						<phase>pre-site</phase>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>3.0</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-changes-plugin</artifactId>
+				<version>2.6</version>
+			</plugin>
+      		<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.2.1</version>
+			</plugin>
+			<!-- Add/Edit items in META-INF/MANIFEST.MF -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.3.2</version>
+			</plugin>
+			<!-- Copy dependencies into lib folder -->
+			<!-- To see full classpath use  mvn dependency:build-classpath -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.3</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Skip Surefire tests -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.10</version>
+				<configuration>
+					<skipTests>true</skipTests>
+					<additionalClasspathElements>
+						<additionalClasspathElement>${project.build.directory}/classes/conf</additionalClasspathElement>
+						<additionalClasspathElement>${project.build.directory}/lib</additionalClasspathElement>
+					</additionalClasspathElements>
+				</configuration>
+			</plugin>
+			<!-- Generate the release zip file (run during package step) -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<appendAssemblyId>false</appendAssemblyId>
+					<outputDirectory>${project.build.directory}/release/</outputDirectory>
+					<descriptors>
+						<descriptor>${basedir}/src/main/assemblies/esplugin.xml</descriptor>
+					</descriptors>
+				</configuration>
+				<executions>
+					<execution>
+						<id>generate-release-plugin</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>	
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+		        <configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+		        </configuration>
+   			</plugin>
+		</plugins>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/*.properties</include>
+				</includes>
+			</resource>
+		</resources>
+	</build>
+
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-changes-plugin</artifactId>
+				<version>2.6</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>changes-report</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-changelog-plugin</artifactId>
+				<version>2.2</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.8</version>
+			</plugin>			
+
+		</plugins>
+	</reporting>
+  
+	<dependencies>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.16</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.10</version>
+		</dependency>
+		<dependency>
+			<groupId>org.elasticsearch</groupId>
+			<artifactId>elasticsearch</artifactId>
+			<version>${elasticsearch.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.elasticsearch</groupId>
+			<artifactId>elasticsearch-mapper-attachments</artifactId>
+			<version>${elasticsearch.attachment.version}</version>
+		</dependency>
+	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>sonatype</id>
+			<name>Sonatype Groups</name>
+			<url>https://oss.sonatype.org/content/groups/public/</url>
+		</repository>
+	</repositories>
+	
+	<pluginRepositories>
+	    <pluginRepository>
+	      <id>central</id>
+	      <name>Maven Plugin Repository</name>
+	      <url>http://repo1.maven.org/maven2</url>
+	    </pluginRepository>
+		<pluginRepository>
+			<id>sonatype</id>
+			<name>Sonatype Groups</name>
+			<url>https://oss.sonatype.org/content/groups/public/</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>oss-sonatype-snapshots</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+		</pluginRepository>
+	</pluginRepositories>
+
+	<!-- Just to make deploy not fail ! -->	
+	<distributionManagement>
+		<repository>
+			<id>local-tmp-repo</id>
+			<name>Local Temporary Reposioty</name>
+			<url>file:///tmp/local_tmp_repo/</url>
+		</repository>
+	</distributionManagement>
+	
+</project>

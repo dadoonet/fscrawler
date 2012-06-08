@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="Maven">
+  <bannerLeft>
+    <name>FS River Maven Site</name>
+    <src>http://dadoonet.github.com/fsriver/images/header.png</src>
+    <href>http://dadoonet.github.com/fsriver/</href>
+  </bannerLeft>
+  <publishDate position="right"/>
+  <version position="right"/>
+  <body>
+    <links>
+      <item name="Github" href="https://github.com/dadoonet/fsriver" />
+      <item name="Github doc" href="https://github.com/dadoonet/fsriver/tree/gh-pages"/>
+    </links>
+
+    <menu name="FS River">
+      <item name="Main site" href="http://dadoonet.github.com/fsriver/" />
+    </menu>
+
+    <menu ref="reports"/>
+
+  </body>
+</project>
