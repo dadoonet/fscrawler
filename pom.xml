@@ -1,13 +1,27 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.elasticsearch.plugin</groupId>
+	<groupId>fr.pilato.elasticsearch.river</groupId>
 	<artifactId>fsriver</artifactId>
 	<packaging>jar</packaging>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>File System River Plugin for ElasticSearch</name>
 	<url>https://github.com/dadoonet/fsriver</url>
 	
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
+  
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+  	
 	<properties>
 		<elasticsearch.version>0.19.4</elasticsearch.version>
 		<elasticsearch.attachment.version>1.4.0</elasticsearch.attachment.version>
@@ -258,31 +272,6 @@
 			<version>${elasticsearch.attachment.version}</version>
 		</dependency>
 	</dependencies>
-
-	<repositories>
-		<repository>
-			<id>sonatype</id>
-			<name>Sonatype Groups</name>
-			<url>https://oss.sonatype.org/content/groups/public/</url>
-		</repository>
-	</repositories>
-	
-	<pluginRepositories>
-	    <pluginRepository>
-	      <id>central</id>
-	      <name>Maven Plugin Repository</name>
-	      <url>http://repo1.maven.org/maven2</url>
-	    </pluginRepository>
-		<pluginRepository>
-			<id>sonatype</id>
-			<name>Sonatype Groups</name>
-			<url>https://oss.sonatype.org/content/groups/public/</url>
-		</pluginRepository>
-		<pluginRepository>
-			<id>oss-sonatype-snapshots</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-		</pluginRepository>
-	</pluginRepositories>
 
 	<!-- Just to make deploy not fail ! -->	
 	<distributionManagement>
