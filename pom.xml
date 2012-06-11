@@ -57,7 +57,7 @@
 	
 	<build>
 		<plugins>
-		    <plugin>
+		    <!-- <plugin>
 				<groupId>com.github.github</groupId>
 				<artifactId>downloads-maven-plugin</artifactId>
 				<version>0.4</version>
@@ -75,7 +75,7 @@
 						<phase>deploy</phase>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin>-->
 			<plugin>
 				<groupId>com.github.github</groupId>
 				<artifactId>site-maven-plugin</artifactId>
@@ -178,7 +178,7 @@
 				</configuration>
 			</plugin>
 			<!-- Generate the release zip file (run during package step) -->
-			<plugin>
+			<!-- <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>2.3</version>
@@ -198,7 +198,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>	
+			</plugin>-->	
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
