@@ -9,6 +9,11 @@ h2. Versions
 |  master (0.0.1)   |    0.19.4      |       1.4.0        |
 
 
+h2. Build Status
+
+Thanks to cloudbees for the "build status":https://buildhive.cloudbees.com : !https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/badge/icon(Build Status)!:https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/
+
+
 h2. Getting Started
 
 h3. Installation
