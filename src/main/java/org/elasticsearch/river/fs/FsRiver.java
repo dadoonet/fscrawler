@@ -43,7 +43,6 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.Base64;
-import org.elasticsearch.common.UUID;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.joda.time.format.ISODateTimeFormat;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
@@ -272,8 +271,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
 					bulk = client.prepareBulk();
 
-					String lastupdateField = "_lastupdated_"
-							+ UUID.nameUUIDFromBytes(url.getBytes()).toString();
+					String lastupdateField = "_lastupdated";
 					Date scanDatenew = new Date();
 					Date scanDate = getLastDateFromRiver(lastupdateField);
 
