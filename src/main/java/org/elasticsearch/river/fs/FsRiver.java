@@ -70,11 +70,11 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
 	private final long bulkSize;
 
-	private volatile ArrayList<Thread> threads;
+	private volatile Thread feedThread;
 
 	private volatile boolean closed = false;
 
-	private final ArrayList<FsRiverFeedDefinition> fsDefinition;
+	private final FsRiverFeedDefinition fsDefinition;
 
 	@SuppressWarnings({ "unchecked" })
 	@Inject
@@ -84,33 +84,26 @@ public class FsRiver extends AbstractRiverComponent implements River {
 		this.client = client;
 
 		if (settings.settings().containsKey("fs")) {
-			Map<String, Object> fsSettings = (Map<String, Object>) settings
+			Map<String, Object> feed = (Map<String, Object>) settings
 					.settings().get("fs");
 
-			// Getting fs array
-			ArrayList<Map<String, Object>> feeds = (ArrayList<Map<String, Object>>) fsSettings
-					.get("fs");
-			fsDefinition = new ArrayList<FsRiverFeedDefinition>(feeds.size());
-			for (Map<String, Object> feed : feeds) {
-				String feedname = XContentMapValues.nodeStringValue(
-						feed.get("name"), null);
-				String url = XContentMapValues.nodeStringValue(feed.get("url"),
-						null);
+			String feedname = XContentMapValues.nodeStringValue(
+					feed.get("name"), null);
+			String url = XContentMapValues.nodeStringValue(feed.get("url"),
+					null);
 
-				int updateRate = XContentMapValues.nodeIntegerValue(
-						feed.get("update_rate"), 15 * 60 * 1000);
-				fsDefinition.add(new FsRiverFeedDefinition(feedname, url,
-						updateRate));
-			}
+			int updateRate = XContentMapValues.nodeIntegerValue(
+					feed.get("update_rate"), 15 * 60 * 1000);
+			fsDefinition = new FsRiverFeedDefinition(feedname, url,
+						updateRate);
 		} else {
 			String url = "/esdir";
 			logger.warn(
 					"You didn't define the fs url. Switching to defaults : [{}]",
 					url);
 			int updateRate = 60 * 60 * 1000;
-			fsDefinition = new ArrayList<FsRiverFeedDefinition>(1);
-			fsDefinition.add(new FsRiverFeedDefinition("defaultlocaldir", url,
-					updateRate));
+			fsDefinition = new FsRiverFeedDefinition("defaultlocaldir", url,
+					updateRate);
 		}
 
 		if (settings.settings().containsKey("index")) {
@@ -121,7 +114,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			typeName = XContentMapValues.nodeStringValue(
 					indexSettings.get("type"), FsRiverUtil.INDEX_TYPE_DOC);
 			bulkSize = XContentMapValues.nodeLongValue(
-					indexSettings.get("type"), 100);
+					indexSettings.get("bulk_size"), 100);
 		} else {
 			indexName = riverName.name();
 			typeName = FsRiverUtil.INDEX_TYPE_DOC;
@@ -162,19 +155,13 @@ public class FsRiver extends AbstractRiverComponent implements River {
 		}
 
 		// We create as many Threads as there are feeds
-		threads = new ArrayList<Thread>(fsDefinition.size());
-		int threadNumber = 0;
-		for (FsRiverFeedDefinition feedDefinition : fsDefinition) {
-			Thread thread = EsExecutors.daemonThreadFactory(
-					settings.globalSettings(), "fs_slurper_" + threadNumber)
-					.newThread(
-							new FSParser(feedDefinition.getFeedname(),
-									feedDefinition.getUrl(), feedDefinition
-											.getUpdateRate()));
-			thread.start();
-			threads.add(thread);
-			threadNumber++;
-		}
+		feedThread = EsExecutors.daemonThreadFactory(
+				settings.globalSettings(), "fs_slurper")
+				.newThread(
+						new FSParser(fsDefinition.getFeedname(),
+								fsDefinition.getUrl(), fsDefinition
+										.getUpdateRate()));
+		feedThread.start();
 	}
 
 	@Override
@@ -183,13 +170,9 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			logger.info("Closing fs river");
 		closed = true;
 
-		// We have to close each Thread
-		if (threads != null) {
-			for (Thread thread : threads) {
-				if (thread != null) {
-					thread.interrupt();
-				}
-			}
+		// We have to close the Thread
+		if (feedThread != null) {
+			feedThread.interrupt();
 		}
 	}
 

@@ -108,11 +108,15 @@ public abstract class AbstractFsRiverTest {
 		}
 
 		if (fsRiver == null) throw new Exception("Subclasses must provide an fs setup...");
-		node.client().prepareIndex("_river", indexName, "_meta").setSource(fsRiver)
-				.execute().actionGet();
+		
+		addARiver(indexName, fsRiver);
 		
 		// Let's wait x seconds 
 		Thread.sleep(waitingTime() * 1000);
+	}
+	
+	protected void addARiver(String riverName, XContentBuilder fsRiver) throws Exception {
+		node.client().prepareIndex("_river", riverName, "_meta").setSource(fsRiver).execute().actionGet();		
 	}
 
 }

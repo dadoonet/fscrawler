@@ -45,12 +45,9 @@ We create the river with the following properties :
 $ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
   "type": "fs",
   "fs": {
-    "fs" : [ {
-    	"name": "My tmp dir",
-    	"url": "/tmp",
-    	"update_rate": 900000
-    	}
-    ]
+	"name": "My tmp dir",
+	"url": "/tmp",
+	"update_rate": 900000
   }
 }'
 </pre>

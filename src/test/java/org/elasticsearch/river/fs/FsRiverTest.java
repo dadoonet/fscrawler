@@ -47,13 +47,9 @@ public class FsRiverTest extends AbstractFsRiverSimpleTest {
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
-						.startArray("fs")
-							.startObject()
-								.field("name", dir)
-								.field("url", url)
-								.field("update_rate", updateRate)
-							.endObject()
-						.endArray()
+						.field("name", dir)
+						.field("url", url)
+						.field("update_rate", updateRate)
 					.endObject()
 				.endObject();
 		return xb;
