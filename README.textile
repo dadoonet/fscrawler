@@ -238,6 +238,8 @@ If you want to define your own mapping to set analyzers for example, you can pus
 }
 </pre>
 
+To send mapping to Elasticsearch, refer to the "Put Mapping API":http://www.elasticsearch.org/guide/reference/api/admin-indices-put-mapping.html
+
 h3. Meta fields
 
 FS River creates some meta fields :
