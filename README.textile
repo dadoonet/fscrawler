@@ -43,10 +43,10 @@ $ curl -XPUT 'localhost:9200/mydocs/' -d '{}'
 
 We create the river with the following properties :
 
-* FS URL : /tmp
+* FS URL : `/tmp`
 * Update Rate : every 15 minutes (15 * 60 * 1000 = 900000 ms)
-* Get only docs like *.doc and *.pdf
-* Don't index resume*
+* Get only docs like `*.doc` and `*.pdf`
+* Don't index `resume*`
 
 
 <pre>
@@ -66,14 +66,14 @@ h3. Adding another FS river
 
 We add another river with the following properties :
 
-* FS URL : /tmp2
+* FS URL : `/tmp2`
 * Update Rate : every hour (60 * 60 * 1000 = 3600000 ms)
-* Get only docs like *.doc, *.xls and *.pdf
+* Get only docs like `*.doc`, `*.xls` and `*.pdf`
 
 By the way, we define to index in the same index/type as the previous one:
 
-* index: docs
-* type: doc 
+* index: `docs`
+* type: `doc`
 
 <pre>
 $ curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
@@ -82,7 +82,7 @@ $ curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
 	"name": "My tmp2 dir",
 	"url": "/tmp2",
 	"update_rate": 3600000,
-	"includes": [ "*.doc" , "*.pdf" ]
+	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
   },
   "index": {
   	"index": "mydocs",
@@ -175,8 +175,7 @@ When the FSRiver detect a new type, it creates automatically a mapping for this 
 
 h3. Creating your own mapping (analyzers)
 
-If you want to define your own mapping to set analyzers for example, you can pus the mapping before
-starting the FS River.
+If you want to define your own mapping to set analyzers for example, you can push the mapping before starting the FS River.
 
 <pre>
 {
