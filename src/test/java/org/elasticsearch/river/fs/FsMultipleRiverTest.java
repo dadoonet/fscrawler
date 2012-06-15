@@ -4,7 +4,6 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -13,8 +12,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class FsMultipleRiverTest extends AbstractFsRiverTest {
-
-	private Logger logger = Logger.getLogger(FsMultipleRiverTest.class);
 
 	@Override
 	public long waitingTime() throws Exception {

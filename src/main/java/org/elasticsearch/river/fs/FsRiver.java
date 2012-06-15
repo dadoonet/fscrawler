@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -93,8 +94,14 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
 			int updateRate = XContentMapValues.nodeIntegerValue(
 					feed.get("update_rate"), 15 * 60 * 1000);
+			
+			String[] includes = FsRiverUtil.buildArrayFromSettings(settings.settings(), "fs.includes");
+			String[] excludes = FsRiverUtil.buildArrayFromSettings(settings.settings(), "fs.excludes");
+
+			
+			
 			fsDefinition = new FsRiverFeedDefinition(feedname, url,
-						updateRate);
+						updateRate, Arrays.asList(includes), Arrays.asList(excludes));
 		} else {
 			String url = "/esdir";
 			logger.warn(
@@ -102,7 +109,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					url);
 			int updateRate = 60 * 60 * 1000;
 			fsDefinition = new FsRiverFeedDefinition("defaultlocaldir", url,
-					updateRate);
+					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"));
 		}
 
 		if (settings.settings().containsKey("index")) {
@@ -157,9 +164,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 		feedThread = EsExecutors.daemonThreadFactory(
 				settings.globalSettings(), "fs_slurper")
 				.newThread(
-						new FSParser(fsDefinition.getFeedname(),
-								fsDefinition.getUrl(), fsDefinition
-										.getUpdateRate()));
+						new FSParser(fsDefinition));
 		feedThread.start();
 	}
 
@@ -234,20 +239,16 @@ public class FsRiver extends AbstractRiverComponent implements River {
 	
 	
 	private class FSParser implements Runnable {
-		private String url;
-		private int updateRate;
-		private String feedname;
-
+		private FsRiverFeedDefinition fsdef;
+		
 		private BulkRequestBuilder bulk;
 		private ScanStatistic stats;
 
-		public FSParser(String feedname, String url, int updateRate) {
+		public FSParser(FsRiverFeedDefinition fsDefinition) {
+			this.fsdef = fsDefinition;
 			if (logger.isInfoEnabled())
 				logger.info("creating fs river [{}] for [{}] every [{}] ms",
-						feedname, url, updateRate);
-			this.feedname = feedname;
-			this.url = url;
-			this.updateRate = updateRate;
+						fsdef.getFeedname(), fsdef.getUrl(), fsdef.getUpdateRate());
 		}
 
 		@Override
@@ -258,12 +259,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
 				}
 
 				try {
-					stats = new ScanStatistic(url);
+					stats = new ScanStatistic(fsdef.getUrl());
 
-					File directory = new File(url);
+					File directory = new File(fsdef.getUrl());
 
 					if (!directory.exists())
-						throw new RuntimeException(url + " doesn't exists.");
+						throw new RuntimeException(fsdef.getUrl() + " doesn't exists.");
 
 					String rootPathId = SignTool.sign(directory
 							.getAbsolutePath());
@@ -287,16 +288,16 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					commitBulk();
 
 				} catch (Exception e) {
-					logger.warn("Error while indexing content from {}", url);
+					logger.warn("Error while indexing content from {}", fsdef.getUrl());
 					if (logger.isDebugEnabled())
-						logger.debug("Exception for {} is {}", url, e);
+						logger.debug("Exception for {} is {}", fsdef.getUrl(), e);
 				}
 
 				try {
 					if (logger.isDebugEnabled())
 						logger.debug("Fs river is going to sleep for {} ms",
-								updateRate);
-					Thread.sleep(updateRate);
+								fsdef.getUpdateRate());
+					Thread.sleep(fsdef.getUpdateRate());
 				} catch (InterruptedException e1) {
 				}
 			}
@@ -342,7 +343,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			XContentBuilder xb = jsonBuilder()
 				.startObject()
 					.startObject("fs")
-						.field("feedname", feedname)
+						.field("feedname", fsdef.getFeedname())
 						.field("lastdate", scanDate)
 						.field("docadded", stats.getNbDocScan())
 						.field("docdeleted", stats.getNbDocDeleted())
@@ -411,16 +412,23 @@ public class FsRiver extends AbstractRiverComponent implements River {
 				for (File child : children) {
 
 					if (child.isFile()) {
-						fsFiles.add(child.getName());
-						if ((lastScanDate == null || child.lastModified() > lastScanDate
-								.getTime()) && child.isFile()) {
-							indexFile(stats, child);
-							stats.addFile();
+						String filename = child.getName();
+						
+						// https://github.com/dadoonet/fsriver/issues/1 : Filter documents
+						if (FsRiverUtil.isIndexable(filename, fsdef.getIncludes(), fsdef.getExcludes())) {
+							fsFiles.add(filename);
+							if ((lastScanDate == null || child.lastModified() > lastScanDate
+									.getTime())) {
+								indexFile(stats, child);
+								stats.addFile();
+							}
 						}
 					} else if (child.isDirectory()) {
 						fsFolders.add(child.getName());
 						indexDirectory(stats, child);
 						addFilesRecursively(child, lastScanDate);
+					} else {
+						if (logger.isDebugEnabled()) logger.debug("Not a file nor a dir. Skipping {}", child.getAbsolutePath());
 					}
 				}
 			}
@@ -435,8 +443,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
 				// for the delete files
 				for (String esfile : esFiles) {
-
-					if (!fsFiles.contains(esfile)) {
+					if (FsRiverUtil.isIndexable(esfile, fsdef.getIncludes(), fsdef.getExcludes()) && !fsFiles.contains(esfile)) {
 						File file = new File(path.getAbsolutePath()
 								.concat(File.separator).concat(esfile));
 						esDelete(indexName, typeName,
@@ -463,10 +470,13 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
 					File file = new File(path.getAbsolutePath()
 							.concat(File.separator).concat(fsFile));
-					if (!esFiles.contains(fsFile)
-							&& (lastScanDate == null || file.lastModified() < lastScanDate.getTime())) {
-						indexFile(stats, file);
-						stats.addFile();
+					
+					if (FsRiverUtil.isIndexable(fsFile, fsdef.getIncludes(), fsdef.getExcludes())) {
+						if (!esFiles.contains(fsFile)
+								&& (lastScanDate == null || file.lastModified() < lastScanDate.getTime())) {
+							indexFile(stats, file);
+							stats.addFile();
+						}
 					}
 				}
 			}

@@ -2,7 +2,12 @@ package org.elasticsearch.river.fs;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
+import java.util.List;
+import java.util.Map;
+
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.support.XContentMapValues;
 
 public class FsRiverUtil {
 	public static final String INDEX_TYPE_DOC = "doc";
@@ -73,6 +78,59 @@ public class FsRiverUtil {
 		return buildFsRiverMapping(INDEX_TYPE_FS);
 	}
 
+	/**
+	 * Extract array from settings (array or ; delimited String)
+	 * @param settings Settings
+	 * @param path Path to definition : "fs.includes"
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static String[] buildArrayFromSettings(Map<String, Object> settings, String path) {
+		String[] includes;
 
+		// We manage comma separated format and arrays
+		if(XContentMapValues.isArray(XContentMapValues.extractValue(path, settings))) {
+			List<String> includesarray = (List<String>) XContentMapValues.extractValue(path, settings);
+			int i = 0;
+			includes = new String[includesarray.size()];
+			for (String include : includesarray) {
+				includes[i++] = Strings.trimAllWhitespace(include);
+			}
+		} else {
+			String includedef = (String) XContentMapValues.extractValue(path, settings);
+			includes = Strings.commaDelimitedListToStringArray(Strings.trimAllWhitespace(includedef));
+		}
+		
+		String[] uniquelist = Strings.removeDuplicateStrings(includes);
+		
+		return uniquelist;
+	}
 
+	/**
+	 * We check if we can index the file or if we should ignore it
+	 * @param filename The filename to scan
+	 * @param includes include rules, may be empty not null
+	 * @param excludes exclude rules, may be empty not null
+	 * @return
+	 */
+	public static boolean isIndexable(String filename, List<String> includes, List<String> excludes) {
+		// No rules ? Fine, we index everything
+		if (includes.isEmpty() && excludes.isEmpty()) return true;
+
+		// Exclude rules : we know that whatever includes rules are, we should exclude matching files
+		for (String exclude : excludes) {
+			String regex = exclude.replace("?", ".?").replace("*", ".*?");
+			if(filename.matches(regex)) return false;
+		}
+		
+		// Include rules : we should add document if it match include rules
+		if (includes.isEmpty()) return true;
+		
+		for (String include : includes) {
+			String regex = include.replace("?", ".?").replace("*", ".*?");
+			if(filename.matches(regex)) return true;
+		}
+		
+		return false;
+	}
 }

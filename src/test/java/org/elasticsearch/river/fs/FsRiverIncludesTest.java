@@ -7,7 +7,7 @@ import java.io.File;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
 
-public class FsRiverTest extends AbstractFsRiverSimpleTest {
+public class FsRiverIncludesTest extends AbstractFsRiverSimpleTest {
 
 	@Override
 	public long waitingTime() throws Exception {
@@ -30,8 +30,8 @@ public class FsRiverTest extends AbstractFsRiverSimpleTest {
 	@Override
 	public XContentBuilder fsRiver() throws Exception {
 		// We update every minute
-		int updateRate = 10 * 1000;
-		String dir = "testfs1";
+		int updateRate = 10;
+		String dir = "testfs_includes";
 		
 		// First we check that filesystem to be analyzed exists...
 		File dataDir = new File("./target/test-classes/" + dir);
@@ -47,6 +47,7 @@ public class FsRiverTest extends AbstractFsRiverSimpleTest {
 						.field("name", dir)
 						.field("url", url)
 						.field("update_rate", updateRate)
+						.field("includes", "*.txt")
 					.endObject()
 				.endObject();
 		return xb;

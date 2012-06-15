@@ -1,7 +1,6 @@
 package org.elasticsearch.river.fs;
 
 import org.elasticsearch.action.count.CountResponse;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Assert;
 
