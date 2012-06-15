@@ -43,10 +43,10 @@ $ curl -XPUT 'localhost:9200/mydocs/' -d '{}'
 
 We create the river with the following properties :
 
-* FS URL : `/tmp`
+* FS URL : <code>/tmp</code>
 * Update Rate : every 15 minutes (15 * 60 * 1000 = 900000 ms)
-* Get only docs like `*.doc` and `*.pdf`
-* Don't index `resume*`
+* Get only docs like <code>*.doc</code> and <code>*.pdf</code>
+* Don't index <code>resume*</code>
 
 
 <pre>
@@ -66,14 +66,14 @@ h3. Adding another FS river
 
 We add another river with the following properties :
 
-* FS URL : `/tmp2`
+* FS URL : <code>/tmp2</code>
 * Update Rate : every hour (60 * 60 * 1000 = 3600000 ms)
-* Get only docs like `*.doc`, `*.xls` and `*.pdf`
+* Get only docs like <code>*.doc</code>, <code>*.xls</code> and <code>*.pdf</code>
 
 By the way, we define to index in the same index/type as the previous one:
 
-* index: `docs`
-* type: `doc`
+* index: <code>docs</code>
+* type: <code>doc</code>
 
 <pre>
 $ curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
