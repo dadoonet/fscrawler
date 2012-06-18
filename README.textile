@@ -2,6 +2,10 @@ h1. FileSystem River for Elasticsearch
 
 Welcome to the FS River Plugin for "Elasticsearch":http://www.elasticsearch.org/ 
 
+This river plugin helps to index documents from your local file system.
+
+*WARNING* : If you use this river in a multinode mode on differents servers, you need to ensure that the river can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your local dir is empty and will *erase* all your docs.
+
 
 h2. Versions
 
