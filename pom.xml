@@ -273,13 +273,4 @@
 		</dependency>
 	</dependencies>
 
-	<!-- Just to make deploy not fail ! -->	
-	<distributionManagement>
-		<repository>
-			<id>local-tmp-repo</id>
-			<name>Local Temporary Reposioty</name>
-			<url>file:///tmp/local_tmp_repo/</url>
-		</repository>
-	</distributionManagement>
-	
 </project>
