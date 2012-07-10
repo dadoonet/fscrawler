@@ -6,7 +6,7 @@ Welcome to the FS River Plugin for "Elasticsearch":http://www.elasticsearch.org/
 h2. Versions
 
 |_. FS River Plugin |_. ElasticSearch|_. Attachment Plugin|
-|  master (0.0.1)   |    0.19.4      |       1.4.0        |
+|  master (0.0.1)   |    0.19.8      |       1.4.0        |
 
 
 h2. Build Status
