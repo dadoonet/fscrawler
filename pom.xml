@@ -4,7 +4,7 @@
 	<groupId>fr.pilato.elasticsearch.river</groupId>
 	<artifactId>fsriver</artifactId>
 	<packaging>jar</packaging>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<name>File System River Plugin for ElasticSearch</name>
 	<url>https://github.com/dadoonet/fsriver</url>
 	
@@ -60,7 +60,7 @@
 		    <plugin>
 				<groupId>com.github.github</groupId>
 				<artifactId>downloads-maven-plugin</artifactId>
-				<version>0.4</version>
+				<version>0.5</version>
 				<configuration>
 					<description>${project.name} download for ${project.version}</description>
 					<override>true</override>
@@ -79,7 +79,7 @@
 			<plugin>
 				<groupId>com.github.github</groupId>
 				<artifactId>site-maven-plugin</artifactId>
-				<version>0.5</version>
+				<version>0.6</version>
 				<configuration>
 					<description>Creating site</description>
 					<override>true</override>
@@ -273,13 +273,4 @@
 		</dependency>
 	</dependencies>
 
-	<!-- Just to make deploy not fail ! -->	
-	<distributionManagement>
-		<repository>
-			<id>local-tmp-repo</id>
-			<name>Local Temporary Reposioty</name>
-			<url>file:///tmp/local_tmp_repo/</url>
-		</repository>
-	</distributionManagement>
-	
 </project>
