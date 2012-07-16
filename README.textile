@@ -10,7 +10,9 @@ This river plugin helps to index documents from your local file system.
 h2. Versions
 
 |_. FS River Plugin |_. ElasticSearch|_. Attachment Plugin|
-|  master (0.0.1)   |    0.19.8      |       1.4.0        |
+|  master (0.0.3)   |    0.19.8      |       1.4.0        |
+|      0.0.2        |    0.19.8      |       1.4.0        |
+|      0.0.1        |    0.19.4      |       1.4.0        |
 
 
 h2. Build Status
@@ -25,14 +27,14 @@ h3. Installation
 Just type :
 
 <pre>
-$ bin\plugin -install dadoonet/fsriver/0.0.1-SNAPSHOT
+$ bin\plugin -install dadoonet/fsriver/0.0.2
 </pre>
 
 This will do the job...
 
 <pre>
--> Installing dadoonet/fsriver/0.0.1...
-Trying https://github.com/downloads/dadoonet/fsriver/fsriver-0.0.1-SNAPSHOT.zip...
+-> Installing dadoonet/fsriver/0.0.2...
+Trying https://github.com/downloads/dadoonet/fsriver/fsriver-0.0.2.zip...
 Downloading ...DONE
 Installed fsriver
 </pre>
