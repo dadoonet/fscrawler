@@ -1,13 +1,13 @@
 FileSystem River for Elasticsearch
 ==================================
 
-Welcome to the FS River Plugin for [Elasticsearch"](http://www.elasticsearch.org/)
+Welcome to the FS River Plugin for [Elasticsearch](http://www.elasticsearch.org/)
 
 This river plugin helps to index documents from your local file system.
 
-<WARNING>: If you use this river in a multinode mode on differents servers, you need to ensure that the river can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your local dir is empty and will *erase* all your docs.
+*WARNING*: If you use this river in a multinode mode on differents servers, you need to ensure that the river can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your local dir is empty and will *erase* all your docs.
 
-<WARNING>: starting from 0.0.3, you need to have the [Attachment Plugin](https://github.com/elasticsearch/elasticsearch-mapper-attachments). It's not included anymore
+*WARNING*: starting from 0.0.3, you need to have the [Attachment Plugin](https://github.com/elasticsearch/elasticsearch-mapper-attachments). It's not included anymore
 in the distribution.
 
 Versions
@@ -44,7 +44,8 @@ Versions
 Build Status
 ------------
 
-Thanks to cloudbees for the "build status":https://buildhive.cloudbees.com : !https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/badge/icon(Build Status)!:https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/
+Thanks to cloudbees for the [build status](https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/) : 
+![build status](https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/badge/icon "Build status")
 
 Getting Started
 ===============
@@ -70,7 +71,7 @@ Installed fsriver
 Creating a FS river
 -------------------
 
-We create first an index to store our <documents> :
+We create first an index to store our *documents* :
 
 ```sh
 $ curl -XPUT 'localhost:9200/mydocs/' -d '{}'
@@ -78,10 +79,10 @@ $ curl -XPUT 'localhost:9200/mydocs/' -d '{}'
 
 We create the river with the following properties :
 
-* FS URL : <code>/tmp</code>
+* FS URL : `/tmp`
 * Update Rate : every 15 minutes (15 * 60 * 1000 = 900000 ms)
-* Get only docs like <code>*.doc</code> and <code>*.pdf</code>
-* Don't index <code>resume*</code>
+* Get only docs like `*.doc` and `*.pdf`
+* Don't index `resume*`
 
 
 ```sh
@@ -102,14 +103,14 @@ Adding another FS river
 
 We add another river with the following properties :
 
-* FS URL : <code>/tmp2</code>
+* FS URL : `/tmp2`
 * Update Rate : every hour (60 * 60 * 1000 = 3600000 ms)
-* Get only docs like <code>*.doc</code>, <code>*.xls</code> and <code>*.pdf</code>
+* Get only docs like `*.doc`, `*.xls` and `*.pdf`
 
 By the way, we define to index in the same index/type as the previous one:
 
-* index: <code>docs</code>
-* type: <code>doc</code>
+* index: `docs`
+* type: `doc`
 
 ```sh
 $ curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
