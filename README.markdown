@@ -24,8 +24,8 @@ Versions
 	<tbody>
 		<tr>
 			<td>master (0.0.3)</td>
-			<td>0.19.8</td>
-			<td>1.4.0</td>
+			<td>0.20.2</td>
+			<td>1.6.0</td>
 		</tr>
 		<tr>
 			<td>0.0.2</td>
