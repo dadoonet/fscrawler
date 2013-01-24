@@ -98,10 +98,11 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			String[] includes = FsRiverUtil.buildArrayFromSettings(settings.settings(), "fs.includes");
 			String[] excludes = FsRiverUtil.buildArrayFromSettings(settings.settings(), "fs.excludes");
 
-			
+            // https://github.com/dadoonet/fsriver/issues/5 : Support JSon documents
+			boolean jsonSupport = XContentMapValues.nodeBooleanValue(feed.get("json_support"), false);
 			
 			fsDefinition = new FsRiverFeedDefinition(feedname, url,
-						updateRate, Arrays.asList(includes), Arrays.asList(excludes));
+						updateRate, Arrays.asList(includes), Arrays.asList(excludes), jsonSupport);
 		} else {
 			String url = "/esdir";
 			logger.warn(
@@ -109,7 +110,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					url);
 			int updateRate = 60 * 60 * 1000;
 			fsDefinition = new FsRiverFeedDefinition("defaultlocaldir", url,
-					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"));
+					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false);
 		}
 
 		if (settings.settings().containsKey("index")) {
@@ -153,7 +154,8 @@ public class FsRiver extends AbstractRiverComponent implements River {
 		
 		try {
 			// If needed, we create the new mapping for files
-			pushMapping(indexName, typeName, FsRiverUtil.buildFsFileMapping(typeName));			
+			if (!fsDefinition.isJsonSupport())
+                pushMapping(indexName, typeName, FsRiverUtil.buildFsFileMapping(typeName));
 		} catch (Exception e) {
 			logger.warn("failed to create mapping for [{}/{}], disabling river...",
 					e, indexName, typeName);
@@ -446,6 +448,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					if (FsRiverUtil.isIndexable(esfile, fsdef.getIncludes(), fsdef.getExcludes()) && !fsFiles.contains(esfile)) {
 						File file = new File(path.getAbsolutePath()
 								.concat(File.separator).concat(esfile));
+
 						esDelete(indexName, typeName,
 								SignTool.sign(file.getAbsolutePath()));
 						stats.removeFile();
@@ -560,25 +563,34 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			fileReader.close();
 			bos.close();
 
-			esIndex(indexName,
-					typeName,
-					SignTool.sign(file.getAbsolutePath()),
-					jsonBuilder()
-							.startObject()
-							.field(FsRiverUtil.DOC_FIELD_NAME, file.getName())
-							.field(FsRiverUtil.DOC_FIELD_DATE,
-									file.lastModified())
-							.field(FsRiverUtil.DOC_FIELD_PATH_ENCODED,
-									SignTool.sign(file.getParent()))
-							.field(FsRiverUtil.DOC_FIELD_ROOT_PATH,
-									stats.getRootPathId())
-							.field(FsRiverUtil.DOC_FIELD_VIRTUAL_PATH,
-									computeVirtualPathName(stats,
-											file.getParent()))
-							.startObject("file").field("_name", file.getName())
-							.field("content", Base64.encodeBytes(data))
-							.endObject().endObject());
-		}
+            // https://github.com/dadoonet/fsriver/issues/5 : Support JSon files
+            if (fsDefinition.isJsonSupport()) {
+                esIndex(indexName,
+                        typeName,
+                        SignTool.sign(file.getAbsolutePath()),
+                        data);
+            } else {
+                esIndex(indexName,
+                        typeName,
+                        SignTool.sign(file.getAbsolutePath()),
+                        jsonBuilder()
+                                .startObject()
+                                .field(FsRiverUtil.DOC_FIELD_NAME, file.getName())
+                                .field(FsRiverUtil.DOC_FIELD_DATE,
+                                        file.lastModified())
+                                .field(FsRiverUtil.DOC_FIELD_PATH_ENCODED,
+                                        SignTool.sign(file.getParent()))
+                                .field(FsRiverUtil.DOC_FIELD_ROOT_PATH,
+                                        stats.getRootPathId())
+                                .field(FsRiverUtil.DOC_FIELD_VIRTUAL_PATH,
+                                        computeVirtualPathName(stats,
+                                                file.getParent()))
+                                .startObject("file").field("_name", file.getName())
+                                .field("content", Base64.encodeBytes(data))
+                                .endObject().endObject());
+            }
+
+ 		}
 
 		/**
 		 * Index a directory
@@ -607,8 +619,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
 		/**
 		 * Add the root directory as a folder
-		 * 
-		 * @param stats
+		 *
 		 * @param file
 		 * @throws Exception
 		 */
@@ -680,7 +691,25 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			commitBulkIfNeeded();
 		}
 
-		/**
+        /**
+         * Add to bulk an IndexRequest in JSon format
+         *
+         * @param index
+         * @param type
+         * @param id
+         * @param json
+         * @throws Exception
+         */
+        private void esIndex(String index, String type, String id,
+                             byte[] json) throws Exception {
+            if (logger.isDebugEnabled()) logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
+            if (logger.isTraceEnabled()) logger.trace("JSon indexed : {}", json);
+
+            bulk.add(client.prepareIndex(index, type, id).setSource(json));
+            commitBulkIfNeeded();
+        }
+
+        /**
 		 * Add to bulk a DeleteRequest
 		 * 
 		 * @param index

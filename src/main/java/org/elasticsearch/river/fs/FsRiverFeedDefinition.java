@@ -32,17 +32,19 @@ public class FsRiverFeedDefinition {
 	private int updateRate;
 	private List<String> includes;
 	private List<String> excludes;
-	
-	
-	public FsRiverFeedDefinition() {
-		this(null, null, 0, new ArrayList<String>(), new ArrayList<String>());
+    private boolean jsonSupport;
+
+
+    public FsRiverFeedDefinition() {
+		this(null, null, 0, new ArrayList<String>(), new ArrayList<String>(), false);
 	}
 	
 	public FsRiverFeedDefinition(String feedname, String url, int updateRate) {
-		this(feedname, url, updateRate, new ArrayList<String>(), new ArrayList<String>());
+		this(feedname, url, updateRate, new ArrayList<String>(), new ArrayList<String>(), false);
 	}
 	
-	public FsRiverFeedDefinition(String feedname, String url, int updateRate, List<String> includes, List<String> excludes) {
+	public FsRiverFeedDefinition(String feedname, String url, int updateRate, List<String> includes,
+                                 List<String> excludes, boolean jsonSupport) {
 		assert( excludes != null);
 		assert( includes != null);
 		this.includes = includes;
@@ -50,9 +52,10 @@ public class FsRiverFeedDefinition {
 		this.feedname = feedname;
 		this.url = url;
 		this.updateRate = updateRate;
+        this.jsonSupport = jsonSupport;
 	}
-	
-	public String getFeedname() {
+
+    public String getFeedname() {
 		return feedname;
 	}
 	
@@ -99,4 +102,12 @@ public class FsRiverFeedDefinition {
 	public void addExclude(String exclude) {
 		this.excludes.add(exclude);
 	}
+
+    public boolean isJsonSupport() {
+        return jsonSupport;
+    }
+
+    public void setJsonSupport(boolean jsonSupport) {
+        this.jsonSupport = jsonSupport;
+    }
 }

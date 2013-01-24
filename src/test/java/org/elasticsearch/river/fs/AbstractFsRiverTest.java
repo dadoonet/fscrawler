@@ -132,7 +132,10 @@ public abstract class AbstractFsRiverTest {
 		
 		// Let's wait x seconds 
 		Thread.sleep(waitingTime() * 1000);
-	}
+
+        // We send a refresh request to be sure that everything has been committed
+        node.client().admin().indices().prepareRefresh(indexName).execute().actionGet();
+    }
 	
 	protected void addARiver(String riverName, XContentBuilder fsRiver) throws Exception {
 		node.client().prepareIndex("_river", riverName, "_meta").setSource(fsRiver).execute().actionGet();		

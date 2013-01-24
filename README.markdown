@@ -124,7 +124,7 @@ $ curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
   "index": {
   	"index": "mydocs",
   	"type": "doc",
-  	bulk_size: 50
+  	"bulk_size": 50
   }
 }'
 ```
@@ -144,6 +144,104 @@ $ curl -XGET http://localhost:9200/docs/doc/_search -d '{
 }'
 ```
 
+Indexing JSon docs
+------------------
+
+If you want to index JSon files directly without parsing them through the attachment mapper plugin, you
+can set `json_support` to `true`.
+
+```sh
+$ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"name": "My tmp dir",
+	"url": "/tmp",
+	"update_rate": 3600000,
+	"json_support" : true
+  },
+  "index": {
+    "index": "mydocs",
+    "type": "doc",
+    "bulk_size": 50
+  }
+}'
+```
+
+Of course, if you did not define a mapping prior creating the river, Elasticsearch will auto guess the mapping.
+
+If you have more than one type, create as many rivers as types:
+
+```sh
+$ curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"name": "My type1 dir",
+	"url": "/tmp/type1",
+	"update_rate": 3600000,
+	"json_support" : true
+  },
+  "index": {
+    "index": "mydocs",
+    "type": "type1",
+    "bulk_size": 50
+  }
+}'
+
+$ curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"name": "My type2 dir",
+	"url": "/tmp/type2",
+	"update_rate": 3600000,
+	"json_support" : true
+  },
+  "index": {
+    "index": "mydocs",
+    "type": "type2",
+    "bulk_size": 50
+  }
+}'
+```
+
+You can also index many types from one single dir using two rivers on the same dir and by setting
+`includes` parameter:
+
+```sh
+$ curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"name": "My type1 files in tmp dir",
+	"url": "/tmp",
+	"update_rate": 3600000,
+    "includes": [ "type1*.json" ],
+	"json_support" : true
+  },
+  "index": {
+    "index": "mydocs",
+    "type": "type1",
+    "bulk_size": 50
+  }
+}'
+
+$ curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"name": "My type2 files in tmp dir",
+	"url": "/tmp",
+	"update_rate": 3600000,
+    "includes": [ "type2*.json" ],
+	"json_support" : true
+  },
+  "index": {
+    "index": "mydocs",
+    "type": "type2",
+    "bulk_size: 50
+  }
+}'
+```
+
+Please note that the document ID is always generated (hash value) from the JSon filename to avoid issues with
+special characters in filenames.
 
 Advanced
 ========
