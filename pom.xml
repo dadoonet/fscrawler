@@ -34,8 +34,8 @@
 	</licenses>
   	
 	<properties>
-		<elasticsearch.version>0.19.8</elasticsearch.version>
-		<elasticsearch.attachment.version>1.4.0</elasticsearch.attachment.version>
+		<elasticsearch.version>0.20.2</elasticsearch.version>
+		<elasticsearch.attachment.version>1.6.0</elasticsearch.attachment.version>
 		
 		<!-- Some properties for github that you have to define in your settings.xml -->
 		<!-- 
@@ -68,25 +68,6 @@
 	
 	<build>
 		<plugins>
-		    <plugin>
-				<groupId>com.github.github</groupId>
-				<artifactId>downloads-maven-plugin</artifactId>
-				<version>0.6</version>
-				<configuration>
-					<description>${project.name} download for ${project.version}</description>
-					<override>true</override>
-					<includeAttached>true</includeAttached>
-					<dryRun>false</dryRun>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>upload</goal>
-						</goals>
-						<phase>deploy</phase>
-					</execution>
-				</executions>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -199,6 +180,7 @@
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch-mapper-attachments</artifactId>
 			<version>${elasticsearch.attachment.version}</version>
+            <scope>provided</scope>
 		</dependency>
 	</dependencies>
 
