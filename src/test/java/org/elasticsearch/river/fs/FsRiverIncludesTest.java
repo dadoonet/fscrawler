@@ -48,8 +48,8 @@ public class FsRiverIncludesTest extends AbstractFsRiverSimpleTest {
 	 */
 	@Override
 	public XContentBuilder fsRiver() throws Exception {
-		// We update every minute
-		int updateRate = 10;
+        // We update every ten seconds
+        int updateRate = 10 * 1000;
 		String dir = "testfs_includes";
 		
 		// First we check that filesystem to be analyzed exists...

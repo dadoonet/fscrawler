@@ -48,7 +48,7 @@ public class FsRiverIncludesArrayTest extends AbstractFsRiverSimpleTest {
 	 */
 	@Override
 	public XContentBuilder fsRiver() throws Exception {
-		// We update every minute
+		// We update every ten seconds
 		int updateRate = 10 * 1000;
 		String dir = "testfs_includes";
 		
