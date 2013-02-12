@@ -56,7 +56,7 @@ Installation
 Just type :
 
 ```sh
-$ bin/plugin -install dadoonet/fsriver/0.0.2
+$ bin/plugin -install rssriver -url http://cloud.github.com/downloads/dadoonet/fsriver/fsriver-0.0.2.zip
 ```
 
 This will do the job...
