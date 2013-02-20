@@ -151,8 +151,8 @@ $ curl -XGET http://localhost:9200/docs/doc/_search -d '{
 }'
 ```
 
-Indexing JSon docs
-------------------
+Indexing JSon docs (>= 0.0.3)
+-----------------------------
 
 If you want to index JSon files directly without parsing them through the attachment mapper plugin, you
 can set `json_support` to `true`.
