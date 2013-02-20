@@ -86,7 +86,7 @@ $ curl -XPUT 'localhost:9200/mydocs/' -d '{}'
 
 We create the river with the following properties :
 
-* FS URL : `/tmp`
+* FS URL : `/tmp` or `c:\\tmp` if you use Microsoft Windows OS
 * Update Rate : every 15 minutes (15 * 60 * 1000 = 900000 ms)
 * Get only docs like `*.doc` and `*.pdf`
 * Don't index `resume*`
