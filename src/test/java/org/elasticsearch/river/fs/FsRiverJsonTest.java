@@ -84,6 +84,6 @@ public class FsRiverJsonTest extends AbstractFsRiverSimpleTest {
         // We do a search for tweet
         SearchResponse searchResponse = node.client().prepareSearch(indexName())
 				.setQuery(QueryBuilders.termQuery("text", "tweet")).execute().actionGet();
-		Assert.assertEquals("We should have two docs for tweet...", 2, searchResponse.hits().getTotalHits());
+		Assert.assertEquals("We should have two docs for tweet...", 2, searchResponse.getHits().getTotalHits());
 	}
 }

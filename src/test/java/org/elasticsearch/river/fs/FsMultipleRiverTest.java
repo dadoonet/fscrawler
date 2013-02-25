@@ -19,16 +19,16 @@
 
 package org.elasticsearch.river.fs;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-
-import java.io.File;
-
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class FsMultipleRiverTest extends AbstractFsRiverTest {
 
@@ -118,6 +118,6 @@ public class FsMultipleRiverTest extends AbstractFsRiverTest {
 		// Let's search for entries
 		CountResponse response = node.client().prepareCount(indexName()).setTypes("otherdocs","doc")
 				.setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
-		Assert.assertEquals("We should have two docs...", 2, response.count());
+		Assert.assertEquals("We should have two docs...", 2, response.getCount());
 	}
 }

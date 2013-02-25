@@ -38,14 +38,14 @@ public abstract class AbstractFsRiverSimpleTest extends AbstractFsRiverTest {
 		// Let's search for entries for darkreading
 //		SearchResponse searchResponse = node.client().prepareSearch(indexName())
 //				.setQuery(QueryBuilders.fieldQuery("feedname", feedname)).execute().actionGet();
-//		Assert.assertTrue("We should have at least one doc for " + feedname + "...", searchResponse.hits().getTotalHits() > 1);
+//		Assert.assertTrue("We should have at least one doc for " + feedname + "...", searchResponse.getHits().getTotalHits() > 1);
 	}
 	
 	public void countTestHelper() throws Exception {
 		// Let's search for entries
 		CountResponse response = node.client().prepareCount(indexName())
 				.setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
-		Assert.assertTrue("We should have at least one doc...", response.count() > 1);
+		Assert.assertTrue("We should have at least one doc...", response.getCount() > 1);
 	}
 
 }

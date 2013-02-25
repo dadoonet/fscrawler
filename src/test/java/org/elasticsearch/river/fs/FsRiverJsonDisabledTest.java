@@ -84,10 +84,10 @@ public class FsRiverJsonDisabledTest extends AbstractFsRiverSimpleTest {
         // We do a search for tweet
         SearchResponse searchResponse = node.client().prepareSearch(indexName())
 				.setQuery(QueryBuilders.termQuery("text", "tweet")).execute().actionGet();
-		Assert.assertEquals("We should have 0 doc for tweet in text field...", 0, searchResponse.hits().getTotalHits());
+		Assert.assertEquals("We should have 0 doc for tweet in text field...", 0, searchResponse.getHits().getTotalHits());
 
         searchResponse = node.client().prepareSearch(indexName())
                 .setQuery(QueryBuilders.queryString("tweet")).execute().actionGet();
-        Assert.assertEquals("We should have 2 docs for tweet in _all...", 2, searchResponse.hits().getTotalHits());
+        Assert.assertEquals("We should have 2 docs for tweet in _all...", 2, searchResponse.getHits().getTotalHits());
 	}
 }
