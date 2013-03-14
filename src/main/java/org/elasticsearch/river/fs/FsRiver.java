@@ -386,18 +386,6 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			}
 		}
 
-		private String computeVirtualPathName(ScanStatistic stats,
-				String realPath) {
-			if (realPath == null)
-				return null;
-
-			if (realPath.length() < stats.getRootPath().length())
-				return "/";
-
-			return realPath.substring(stats.getRootPath().length() - 1)
-					.replace(File.separator, "/");
-		}
-
 		private void addFilesRecursively(File path, Date lastScanDate)
 				throws Exception {
 
@@ -579,7 +567,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                                 .field(FsRiverUtil.DOC_FIELD_ROOT_PATH,
                                         stats.getRootPathId())
                                 .field(FsRiverUtil.DOC_FIELD_VIRTUAL_PATH,
-                                        computeVirtualPathName(stats,
+                                        FsRiverUtil.computeVirtualPathName(stats,
                                                 file.getParent()))
                                 .startObject("file").field("_name", file.getName())
                                 .field("content", Base64.encodeBytes(data))
@@ -606,7 +594,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 							.field(FsRiverUtil.DIR_FIELD_ROOT_PATH,
 									stats.getRootPathId())
 							.field(FsRiverUtil.DIR_FIELD_VIRTUAL_PATH,
-									computeVirtualPathName(stats,
+                                    FsRiverUtil.computeVirtualPathName(stats,
 											file.getParent()))
 							.field(FsRiverUtil.DIR_FIELD_PATH_ENCODED,
 									SignTool.sign(file.getParent()))

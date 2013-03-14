@@ -19,14 +19,15 @@
 
 package org.elasticsearch.river.fs;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-
-import java.util.List;
-import java.util.Map;
-
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
+
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class FsRiverUtil {
 	public static final String INDEX_TYPE_DOC = "doc";
@@ -152,4 +153,20 @@ public class FsRiverUtil {
 		
 		return false;
 	}
+
+    public static String computeVirtualPathName(ScanStatistic stats,
+                                          String realPath) {
+        if (realPath == null)
+            return null;
+
+        if (realPath.length() < stats.getRootPath().length())
+            return "/";
+
+        // Offset is 1 on Windows platforms
+        int offset = 0;
+        if (!"/".equals(File.separator)) offset = 1;
+
+        return realPath.substring(stats.getRootPath().length() - offset)
+                .replace(File.separator, "/");
+    }
 }
