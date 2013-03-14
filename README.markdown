@@ -24,7 +24,7 @@ Versions
 	<tbody>
 		<tr>
 			<td>master (0.0.4)</td>
-			<td>0.21.0.Beta1-SNAPSHOT</td>
+			<td>0.90.0.Beta1</td>
 			<td>1.6.0</td>
 		</tr>
 		<tr>
