@@ -34,7 +34,7 @@
 	</licenses>
   	
 	<properties>
-		<elasticsearch.version>0.21.0.Beta1-SNAPSHOT</elasticsearch.version>
+		<elasticsearch.version>0.90.0.Beta1</elasticsearch.version>
 		<elasticsearch.attachment.version>1.6.0</elasticsearch.attachment.version>
 		
 		<!-- Some properties for github that you have to define in your settings.xml -->
@@ -183,13 +183,5 @@
             <scope>provided</scope>
 		</dependency>
 	</dependencies>
-
-	<repositories>
-		<repository>
-			<id>sonatype</id>
-			<url>http://oss.sonatype.org/content/repositories/releases/</url>
-			<name>Sonatype Releases</name>
-		</repository>
-	</repositories>
 
 </project>
