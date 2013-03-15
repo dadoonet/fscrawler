@@ -118,7 +118,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.10</version>
 				<configuration>
-					<skipTests>true</skipTests>
+					<skipTests>false</skipTests>
 					<additionalClasspathElements>
 						<additionalClasspathElement>${project.build.directory}/classes/conf</additionalClasspathElement>
 						<additionalClasspathElement>${project.build.directory}/lib</additionalClasspathElement>
