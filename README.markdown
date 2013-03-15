@@ -247,8 +247,27 @@ $ curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
 }'
 ```
 
-Please note that the document ID is always generated (hash value) from the JSon filename to avoid issues with
-special characters in filenames.
+Please note that the document `_id` is always generated (hash value) from the JSon filename to avoid issues with
+special characters in filename.
+You can force to use the `_id` to be the filename using `filename_as_id` attribute:
+
+```sh
+$ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"name": "My tmp dir",
+	"url": "/tmp",
+	"update_rate": 3600000,
+	"json_support": true,
+	"filename_as_id": true
+  },
+  "index": {
+    "index": "mydocs",
+    "type": "doc",
+    "bulk_size": 50
+  }
+}'
+```
 
 Advanced
 ========

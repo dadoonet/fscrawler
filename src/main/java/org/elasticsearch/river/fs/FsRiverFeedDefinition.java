@@ -19,7 +19,6 @@
 
 package org.elasticsearch.river.fs;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,18 +32,10 @@ public class FsRiverFeedDefinition {
 	private List<String> includes;
 	private List<String> excludes;
     private boolean jsonSupport;
-
-
-    public FsRiverFeedDefinition() {
-		this(null, null, 0, new ArrayList<String>(), new ArrayList<String>(), false);
-	}
-	
-	public FsRiverFeedDefinition(String feedname, String url, int updateRate) {
-		this(feedname, url, updateRate, new ArrayList<String>(), new ArrayList<String>(), false);
-	}
+    private boolean filenameAsId;
 	
 	public FsRiverFeedDefinition(String feedname, String url, int updateRate, List<String> includes,
-                                 List<String> excludes, boolean jsonSupport) {
+                                 List<String> excludes, boolean jsonSupport, boolean filenameAsId) {
 		assert( excludes != null);
 		assert( includes != null);
 		this.includes = includes;
@@ -53,6 +44,7 @@ public class FsRiverFeedDefinition {
 		this.url = url;
 		this.updateRate = updateRate;
         this.jsonSupport = jsonSupport;
+        this.filenameAsId = filenameAsId;
 	}
 
     public String getFeedname() {
@@ -109,5 +101,13 @@ public class FsRiverFeedDefinition {
 
     public void setJsonSupport(boolean jsonSupport) {
         this.jsonSupport = jsonSupport;
+    }
+
+    public boolean isFilenameAsId() {
+        return filenameAsId;
+    }
+
+    public void setFilenameAsId(boolean filenameAsId) {
+        this.filenameAsId = filenameAsId;
     }
 }

@@ -96,9 +96,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
             // https://github.com/dadoonet/fsriver/issues/5 : Support JSon documents
 			boolean jsonSupport = XContentMapValues.nodeBooleanValue(feed.get("json_support"), false);
-			
+
+            // https://github.com/dadoonet/fsriver/issues/7 : JSON support: use filename as ID
+            boolean filenameAsId = XContentMapValues.nodeBooleanValue(feed.get("filename_as_id"), false);
+
 			fsDefinition = new FsRiverFeedDefinition(feedname, url,
-						updateRate, Arrays.asList(includes), Arrays.asList(excludes), jsonSupport);
+						updateRate, Arrays.asList(includes), Arrays.asList(excludes), jsonSupport, filenameAsId);
 		} else {
 			String url = "/esdir";
 			logger.warn(
@@ -106,7 +109,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					url);
 			int updateRate = 60 * 60 * 1000;
 			fsDefinition = new FsRiverFeedDefinition("defaultlocaldir", url,
-					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false);
+					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false, false);
 		}
 
 		if (settings.settings().containsKey("index")) {
@@ -562,9 +565,19 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
             // https://github.com/dadoonet/fsriver/issues/5 : Support JSon files
             if (fsDefinition.isJsonSupport()) {
+                String id;
+                if (fsDefinition.isFilenameAsId()) {
+                    id = file.getName();
+                    int pos = id.lastIndexOf(".");
+                    if (pos > 0) {
+                        id = id.substring(0, pos);
+                    }
+                } else {
+                    id = SignTool.sign(file.getAbsolutePath());
+                }
                 esIndex(indexName,
                         typeName,
-                        SignTool.sign(file.getAbsolutePath()),
+                        id,
                         data);
             } else {
                 esIndex(indexName,
