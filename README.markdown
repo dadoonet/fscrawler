@@ -443,6 +443,77 @@ $ curl -XGET http://localhost:9200/docs/doc/_search -d '{
 }'
 ```
 
+Disabling _source
+-----------------
+
+If you don't need to highlight your search responses nor need to get back the original file from
+Elasticsearch, you can think about disabling `_source` field.
+
+In that case, you need to store `name` field. Otherwise, FSRiver won't be able to remove documents when they disappear
+from your hard drive.
+
+```javascript
+{
+  "doc" : {
+    "_source" : { "enabled" : false },
+    "properties" : {
+      "file" : {
+        "type" : "attachment",
+        "path" : "full",
+        "fields" : {
+          "file" : {
+            "type" : "string",
+            "store" : "yes",
+            "term_vector" : "with_positions_offsets"
+          },
+          "author" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string",
+            "store" : "yes"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "date" : {
+            "type" : "date",
+            "format" : "dateOptionalTime"
+          },
+          "keywords" : {
+            "type" : "string"
+          },
+          "content_type" : {
+            "type" : "string"
+          }
+        }
+      },
+      "name" : {
+        "type" : "string",
+        "analyzer" : "keyword",
+        "store" : true
+      },
+      "pathEncoded" : {
+        "type" : "string",
+        "analyzer" : "keyword"
+      },
+      "postDate" : {
+        "type" : "date",
+        "format" : "dateOptionalTime"
+      },
+      "rootpath" : {
+        "type" : "string",
+        "analyzer" : "keyword"
+      },
+      "virtualpath" : {
+        "type" : "string",
+        "analyzer" : "keyword"
+      }
+    }
+  }
+}
+```
+
 Behind the scene
 ================
 

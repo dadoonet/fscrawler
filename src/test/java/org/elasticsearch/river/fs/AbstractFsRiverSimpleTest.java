@@ -20,6 +20,8 @@
 package org.elasticsearch.river.fs;
 
 import org.elasticsearch.action.count.CountResponse;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Assert;
 
@@ -34,18 +36,59 @@ public abstract class AbstractFsRiverSimpleTest extends AbstractFsRiverTest {
 		return 5;
 	}
 
-	protected void searchTestHelper(String feedname) {
-		// Let's search for entries for darkreading
-//		SearchResponse searchResponse = node.client().prepareSearch(indexName())
-//				.setQuery(QueryBuilders.fieldQuery("feedname", feedname)).execute().actionGet();
-//		Assert.assertTrue("We should have at least one doc for " + feedname + "...", searchResponse.getHits().getTotalHits() > 1);
+	protected void searchTestHelper(String term, Integer expected) {
+        QueryBuilder query;
+        if (term == null) {
+            query = QueryBuilders.matchAllQuery();
+        } else {
+            query = QueryBuilders.queryString(term);
+        }
+
+        // Let's search for entries
+        SearchResponse response = node.client().prepareSearch(indexName())
+                .setTypes(FsRiverUtil.INDEX_TYPE_DOC)
+                .setQuery(query).execute().actionGet();
+
+        if (expected == null) {
+            Assert.assertTrue("We should have at least one doc...", response.getHits().getTotalHits() >= 1);
+        } else {
+            Assert.assertEquals(expected.intValue(), response.getHits().getTotalHits());
+        }
 	}
-	
+
+    /**
+     * Check that we have the expected number of docs or at least one if expected is null
+     * @param term Term you search for. MatchAll if null.
+     * @param expected expected number of docs. Null if at least 1.
+     * @throws Exception
+     */
+    public void countTestHelper(String term, Integer expected) throws Exception {
+        // Let's search for entries
+        QueryBuilder query;
+        if (term == null) {
+            query = QueryBuilders.matchAllQuery();
+        } else {
+            query = QueryBuilders.queryString(term);
+        }
+
+        CountResponse response = node.client().prepareCount(indexName())
+                .setTypes(FsRiverUtil.INDEX_TYPE_DOC)
+                .setQuery(query).execute().actionGet();
+
+        if (expected == null) {
+            Assert.assertTrue("We should have at least one doc...", response.getCount() >= 1);
+        } else {
+            Assert.assertEquals(expected.intValue(), response.getCount());
+        }
+    }
+
+    /**
+     * Check that we have at least one doc
+     * @throws Exception
+     */
 	public void countTestHelper() throws Exception {
 		// Let's search for entries
-		CountResponse response = node.client().prepareCount(indexName())
-				.setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
-		Assert.assertTrue("We should have at least one doc...", response.getCount() > 1);
+		countTestHelper(null, null);
 	}
 
 }

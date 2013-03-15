@@ -19,12 +19,12 @@
 
 package org.elasticsearch.river.fs;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.junit.Test;
 
 import java.io.File;
 
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.junit.Test;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class FsRiverIncludesArrayTest extends AbstractFsRiverSimpleTest {
 
@@ -49,7 +49,7 @@ public class FsRiverIncludesArrayTest extends AbstractFsRiverSimpleTest {
 	@Override
 	public XContentBuilder fsRiver() throws Exception {
 		// We update every ten seconds
-		int updateRate = 10 * 1000;
+		int updateRate = 5 * 1000;
 		String dir = "testfs_includes";
 		
 		// First we check that filesystem to be analyzed exists...

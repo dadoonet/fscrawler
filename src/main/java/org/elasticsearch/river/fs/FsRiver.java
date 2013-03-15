@@ -469,6 +469,8 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			}
 		}
 
+        // TODO Optimize it. We can probably use a search for a big array of filenames instead of
+        // Searching fo 50000 files (which is somehow limited).
 		private Collection<String> getFileDirectory(String path)
 				throws Exception {
 			Collection<String> files = new ArrayList<String>();
@@ -480,14 +482,25 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					.setQuery(
 							QueryBuilders.termQuery(
 									FsRiverUtil.DOC_FIELD_PATH_ENCODED,
-									SignTool.sign(path))).setFrom(0)
-					.setSize(50000).execute().actionGet();
+									SignTool.sign(path)))
+                    .setFrom(0)
+					.setSize(50000)
+                    .addField(FsRiverUtil.DOC_FIELD_NAME)
+                    .execute().actionGet();
 
 			if (response.getHits() != null
 					&& response.getHits().getHits() != null) {
 				for (SearchHit hit : response.getHits().getHits()) {
-					String name = hit.getSource()
-							.get(FsRiverUtil.DOC_FIELD_NAME).toString();
+                    String name = null;
+                    if (hit.getSource() != null && hit.getSource().get(FsRiverUtil.DOC_FIELD_NAME) != null) {
+                        name = hit.getSource().get(FsRiverUtil.DOC_FIELD_NAME).toString();
+                    } else if (hit.getFields() != null && hit.getFields().get(FsRiverUtil.DOC_FIELD_NAME) != null) {
+                        name = hit.getFields().get(FsRiverUtil.DOC_FIELD_NAME).getValue().toString();
+                    } else {
+                        // Houston, we have a problem ! We can't get the old files from ES
+                        logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
+                                "Please enable _source or store field [{}]", path, FsRiverUtil.DOC_FIELD_NAME);
+                    }
 					files.add(name);
 				}
 			}
