@@ -23,7 +23,12 @@ Versions
 	</thead>
 	<tbody>
 		<tr>
-			<td>master (0.0.4)</td>
+			<td>master (0.2.0-SNAPSHOT)</td>
+			<td>0.90.0.Beta1</td>
+			<td>1.6.0</td>
+		</tr>
+		<tr>
+			<td>0.1.0</td>
 			<td>0.90.0.Beta1</td>
 			<td>1.6.0</td>
 		</tr>
@@ -64,16 +69,16 @@ Installation
 Just type :
 
 ```sh
-$ bin/plugin -install fr.pilato.elasticsearch.river/fsriver/0.0.3
+$ bin/plugin -install fr.pilato.elasticsearch.river/fsriver/0.1.0
 ```
 
 This will do the job...
 
 ```
 -> Installing fr.pilato.elasticsearch.river/fsriver/0.0.3...
-Trying http://download.elasticsearch.org/fr.pilato.elasticsearch.river/fsriver/fsriver-0.0.3.zip...
-Trying http://search.maven.org/remotecontent?filepath=fr/pilato/elasticsearch/river/fsriver/0.0.3/fsriver-0.0.3.zip...
-Trying https://oss.sonatype.org/service/local/repositories/releases/content/fr/pilato/elasticsearch/river/fsriver/0.0.3/fsriver-0.0.3.zip...
+Trying http://download.elasticsearch.org/fr.pilato.elasticsearch.river/fsriver/fsriver-0.1.0.zip...
+Trying http://search.maven.org/remotecontent?filepath=fr/pilato/elasticsearch/river/fsriver/0.1.0/fsriver-0.1.0.zip...
+Trying https://oss.sonatype.org/service/local/repositories/releases/content/fr/pilato/elasticsearch/river/fsriver/0.1.0/fsriver-0.1.0.zip...
 Downloading ......DONE
 Installed fsriver
 ```
