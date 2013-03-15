@@ -19,8 +19,6 @@
 
 package org.elasticsearch.river.fs;
 
-import java.io.File;
-
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.common.io.FileSystemUtils;
@@ -31,6 +29,8 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
+
+import java.io.File;
 
 public abstract class AbstractFsRiverTest {
 
@@ -74,6 +74,7 @@ public abstract class AbstractFsRiverTest {
 			// Then we start our node for tests
 			node = NodeBuilder
 					.nodeBuilder()
+                    .local(true)
 					.settings(
 							ImmutableSettings.settingsBuilder()
 							.put("gateway.type", "local")
@@ -121,7 +122,7 @@ public abstract class AbstractFsRiverTest {
 		if (mapping != null) {
 			node.client().admin().indices()
 			.preparePutMapping(indexName)
-			.setType("page")
+			.setType(FsRiverUtil.INDEX_TYPE_DOC)
 			.setSource(mapping)
 			.execute().actionGet();
 		}
