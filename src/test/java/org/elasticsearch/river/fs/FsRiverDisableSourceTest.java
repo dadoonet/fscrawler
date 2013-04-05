@@ -55,7 +55,7 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
                 .endObject()
                 .endObject();
 
-		return xb.toString();
+		return xb.string();
 	}
 
 	/**
