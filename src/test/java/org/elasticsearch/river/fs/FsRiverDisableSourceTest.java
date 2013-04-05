@@ -40,7 +40,7 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
 	 * We use the default mapping
 	 */
 	@Override
-	public XContentBuilder mapping() throws Exception {
+	public String mapping() throws Exception {
         XContentBuilder xb = jsonBuilder()
                 .startObject()
                 .startObject("doc")
@@ -55,7 +55,7 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
                 .endObject()
                 .endObject();
 
-		return xb;
+		return xb.toString();
 	}
 
 	/**

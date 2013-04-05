@@ -19,12 +19,12 @@
 
 package org.elasticsearch.river.fs;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.junit.Test;
 
 import java.io.File;
 
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.junit.Test;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class FsRiverTest extends AbstractFsRiverSimpleTest {
 
@@ -36,7 +36,7 @@ public class FsRiverTest extends AbstractFsRiverSimpleTest {
 	 * We use the default mapping
 	 */
 	@Override
-	public XContentBuilder mapping() throws Exception {
+	public String mapping() throws Exception {
 		return null;
 	}
 

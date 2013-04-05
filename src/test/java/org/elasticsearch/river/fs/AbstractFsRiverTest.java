@@ -46,7 +46,7 @@ public abstract class AbstractFsRiverTest {
 	 * Define a mapping if needed
 	 * @return The mapping to use
 	 */
-	abstract public XContentBuilder mapping() throws Exception;
+	abstract public String mapping() throws Exception;
 	
 	/**
 	 * Define the Rss River settings
@@ -102,7 +102,7 @@ public abstract class AbstractFsRiverTest {
 	public void setUp() throws Exception {
 		XContentBuilder fsRiver = fsRiver();
 		String indexName = indexName();
-		XContentBuilder mapping = mapping();
+		String mapping = mapping();
 		
 		// We delete the index before we start any test
 		try {

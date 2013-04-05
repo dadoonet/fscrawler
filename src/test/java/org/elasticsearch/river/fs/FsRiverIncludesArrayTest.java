@@ -36,7 +36,7 @@ public class FsRiverIncludesArrayTest extends AbstractFsRiverSimpleTest {
 	 * We use the default mapping
 	 */
 	@Override
-	public XContentBuilder mapping() throws Exception {
+	public String mapping() throws Exception {
 		return null;
 	}
 

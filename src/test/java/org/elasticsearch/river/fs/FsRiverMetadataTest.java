@@ -19,19 +19,19 @@
 
 package org.elasticsearch.river.fs;
 
-import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.junit.Assert;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
 import java.io.File;
 
+import static org.elasticsearch.common.io.Streams.copyToStringFromClasspath;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.junit.Assert.assertNotNull;
 
-/**
- * Test case for issue #7: https://github.com/dadoonet/fsriver/issues/7 : JSON support: use filename as ID
- */
-public class FsRiverJsonIDsTest extends AbstractFsRiverSimpleTest {
+public class FsRiverMetadataTest extends AbstractFsRiverSimpleTest {
 
 	@Override
 	public long waitingTime() throws Exception {
@@ -42,20 +42,21 @@ public class FsRiverJsonIDsTest extends AbstractFsRiverSimpleTest {
 	 */
 	@Override
 	public String mapping() throws Exception {
-		return null;
+        String mapping = copyToStringFromClasspath("/testfs_metadata/odt-mapping.json");
+		return mapping;
 	}
 
 	/**
 	 * 
 	 * <ul>
-	 *   <li>We index JSon files so we don't use the mapper attachment plugin
+	 *   <li>We want to check that the FSRiver extract also metadata (see https://github.com/dadoonet/fsriver/issues/14)
 	 * </ul>
 	 */
 	@Override
 	public XContentBuilder fsRiver() throws Exception {
-		// We update 2 seconds
-		int updateRate = 5 * 1000;
-		String dir = "testfsjson1";
+        // We update every minute
+		int updateRate = 10 * 1000;
+		String dir = "testfs_metadata";
 		
 		// First we check that filesystem to be analyzed exists...
 		File dataDir = new File("./target/test-classes/" + dir);
@@ -71,8 +72,7 @@ public class FsRiverJsonIDsTest extends AbstractFsRiverSimpleTest {
 						.field("name", dir)
 						.field("url", url)
 						.field("update_rate", updateRate)
-                        .field("json_support", true)
-                        .field("filename_as_id", true)
+                        .field("excludes", "*.json")
 					.endObject()
 				.endObject();
 		return xb;
@@ -80,12 +80,20 @@ public class FsRiverJsonIDsTest extends AbstractFsRiverSimpleTest {
 	
 
 	@Test
-	public void tweet_term_is_indexed_twice() throws Exception {
-        // We check that document name is used as an id
-        GetResponse getResponse = node.client().prepareGet(indexName(), FsRiverUtil.INDEX_TYPE_DOC, "tweet1").execute().actionGet();
-		Assert.assertTrue("Document should exists with [tweet1] id...", getResponse.isExists());
-        // We check that document name is used as an id
-        getResponse = node.client().prepareGet(indexName(), FsRiverUtil.INDEX_TYPE_DOC, "tweet2").execute().actionGet();
-        Assert.assertTrue("Document should exists with [tweet2] id...", getResponse.isExists());
+	public void we_have_metadata() throws Exception {
+        SearchResponse searchResponse = node.client().prepareSearch("fsrivermetadatatest").setTypes("doc")
+                .setQuery(QueryBuilders.matchAllQuery())
+                .addField("*")
+                .execute().actionGet();
+        System.out.println(searchResponse.toString());
+
+        for (SearchHit hit : searchResponse.getHits()) {
+            assertNotNull(hit.getFields().get("file"));
+            assertNotNull(hit.getFields().get("file.content_type"));
+            assertNotNull(hit.getFields().get("file.keywords"));
+            assertNotNull(hit.getFields().get("file.date"));
+            assertNotNull(hit.getFields().get("file.title"));
+        }
+
 	}
 }
