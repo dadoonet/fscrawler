@@ -589,6 +589,69 @@ This field is used by mapper attachment plugin to define the number of extracted
 That means that a value of 0.8 will extract 20% less characters than the file size. A value of 1.5 will extract 50% more characters than the filesize (think compressed files).
 A value of 1, will extract exactly the filesize.
 
+Storing extracted content
+-------------------------
+
+If you need to store and retrieve as is extracted content by the mapper attachment plugin, you simply
+have to set `store` to `yes` for your `file` field in your mapping:
+
+```javascript
+{
+  "doc": {
+    "properties": {
+      "file": {
+        "type": "attachment",
+        "path": "full",
+        "fields": {
+          "file": {
+            "type": "string",
+            "store": "yes",
+            "term_vector": "with_positions_offsets"
+          }
+        }
+      }
+    }
+  }
+}
+````
+
+Then, you can extract document content using fields property when searching:
+
+```sh
+curl -XPOST http://localhost:9200/mydocs/doc/_search -d '{
+  "fields" : ["file"],
+  "query":{
+    "match_all" : {}
+  }
+}'
+```
+
+gives:
+
+```javascript
+{
+  "took" : 19,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 1,
+    "max_score" : 1.0,
+    "hits" : [ {
+      "_index" : "fsrivermetadatatest",
+      "_type" : "doc",
+      "_id" : "fb6115c44876aa1e94cc4f86b03ba93",
+      "_score" : 1.0,
+      "fields" : {
+        "file" : "Bonjour David\n\n\n"
+      }
+    } ]
+  }
+}
+```
 
 
 Behind the scene
