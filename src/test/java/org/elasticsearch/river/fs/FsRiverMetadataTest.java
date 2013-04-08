@@ -81,11 +81,10 @@ public class FsRiverMetadataTest extends AbstractFsRiverSimpleTest {
 
 	@Test
 	public void we_have_metadata() throws Exception {
-        SearchResponse searchResponse = node.client().prepareSearch("fsrivermetadatatest").setTypes("doc")
+        SearchResponse searchResponse = node.client().prepareSearch(indexName()).setTypes("doc")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .addField("*")
                 .execute().actionGet();
-        System.out.println(searchResponse.toString());
 
         for (SearchHit hit : searchResponse.getHits()) {
             assertNotNull(hit.getFields().get("file"));
