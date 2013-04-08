@@ -33,9 +33,11 @@ public class FsRiverFeedDefinition {
 	private List<String> excludes;
     private boolean jsonSupport;
     private boolean filenameAsId;
+    private boolean addFilesize;
 	
 	public FsRiverFeedDefinition(String feedname, String url, int updateRate, List<String> includes,
-                                 List<String> excludes, boolean jsonSupport, boolean filenameAsId) {
+                                 List<String> excludes, boolean jsonSupport, boolean filenameAsId,
+                                 boolean addFilesize) {
 		assert( excludes != null);
 		assert( includes != null);
 		this.includes = includes;
@@ -45,46 +47,27 @@ public class FsRiverFeedDefinition {
 		this.updateRate = updateRate;
         this.jsonSupport = jsonSupport;
         this.filenameAsId = filenameAsId;
+        this.addFilesize = addFilesize;
 	}
 
     public String getFeedname() {
 		return feedname;
 	}
 	
-	public void setFeedname(String feedname) {
-		this.feedname = feedname;
-	}
-	
 	public String getUrl() {
 		return url;
-	}
-
-	public void setUrl(String url) {
-		this.url = url;
 	}
 
 	public int getUpdateRate() {
 		return updateRate;
 	}
 
-	public void setUpdateRate(int updateRate) {
-		this.updateRate = updateRate;
-	}
-	
 	public List<String> getExcludes() {
 		return excludes;
 	}
 	
-	public void setExcludes(List<String> excludes) {
-		this.excludes = excludes;
-	}
-	
 	public List<String> getIncludes() {
 		return includes;
-	}
-	
-	public void setIncludes(List<String> includes) {
-		this.includes = includes;
 	}
 	
 	public void addInclude(String include) {
@@ -99,15 +82,11 @@ public class FsRiverFeedDefinition {
         return jsonSupport;
     }
 
-    public void setJsonSupport(boolean jsonSupport) {
-        this.jsonSupport = jsonSupport;
-    }
-
     public boolean isFilenameAsId() {
         return filenameAsId;
     }
 
-    public void setFilenameAsId(boolean filenameAsId) {
-        this.filenameAsId = filenameAsId;
+    public boolean isAddFilesize() {
+        return addFilesize;
     }
 }

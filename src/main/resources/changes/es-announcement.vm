@@ -23,101 +23,101 @@ No changes defined in this version.
 #else
 Changes in this version include:
 
-    #if ($release.getActions('add').size() !=0)
-    New features:
-        #foreach($actionItem in $release.getActions('add'))
-            #set($action=$actionItem.getAction())
-            #if ($actionItem.getIssue())
-                #set($issue=$actionItem.getIssue())
-                #set($issueurl="https://github.com/dadoonet/fsriver/issues/"+$issue)
-            #else
-                #set($issue="")
-                #set($issueurl="")
-            #end
-            #if ($actionItem.getDueTo())
-                #set($dueto=$actionItem.getDueTo())
-            #else
-                #set($dueto="")
-            #end
-        o ${action} #if($!issue != "") Issue: $issueurl. #end#if($!dueto != "")Thanks to $dueto. #end
+#if ($release.getActions('add').size() !=0)
+New features:
+#foreach($actionItem in $release.getActions('add'))
+#set($action=$actionItem.getAction())
+#if ($actionItem.getIssue())
+#set($issue=$actionItem.getIssue())
+#set($issueurl="https://github.com/dadoonet/fsriver/issues/"+$issue)
+#else
+#set($issue="")
+#set($issueurl="")
+#end
+#if ($actionItem.getDueTo())
+#set($dueto=$actionItem.getDueTo())
+#else
+#set($dueto="")
+#end
+o ${action} #if($!issue != "") Issue: $issueurl. #end#if($!dueto != "")Thanks to $dueto. #end
 
-            #set($issue="")
-            #set($issueurl="")
-            #set($dueto="")
-        #end
-    #end
+#set($issue="")
+#set($issueurl="")
+#set($dueto="")
+#end
+#end
 
-    #if ($release.getActions('fix').size() !=0)
-    Fixed Bugs:
-        #foreach($actionItem in $release.getActions('fix'))
-            #set($action=$actionItem.getAction())
-            #if ($actionItem.getIssue())
-                #set($issue=$actionItem.getIssue())
-                #set($issueurl="https://github.com/dadoonet/fsriver/issues/"+$issue)
-            #else
-                #set($issue="")
-                #set($issueurl="")
-            #end
-            #if ($actionItem.getDueTo())
-                #set($dueto=$actionItem.getDueTo())
-            #else
-                #set($dueto="")
-            #end
-        o ${action} #if($!issue != "") Issue: $issueurl. #end#if($!dueto != "")Thanks to $dueto. #end
+#if ($release.getActions('fix').size() !=0)
+Fixed Bugs:
+#foreach($actionItem in $release.getActions('fix'))
+#set($action=$actionItem.getAction())
+#if ($actionItem.getIssue())
+#set($issue=$actionItem.getIssue())
+#set($issueurl="https://github.com/dadoonet/fsriver/issues/"+$issue)
+#else
+#set($issue="")
+#set($issueurl="")
+#end
+#if ($actionItem.getDueTo())
+#set($dueto=$actionItem.getDueTo())
+#else
+#set($dueto="")
+#end
+o ${action} #if($!issue != "") Issue: $issueurl. #end#if($!dueto != "")Thanks to $dueto. #end
 
-            #set($issue="")
-            #set($issueurl="")
-            #set($dueto="")
-        #end
-    #end
+#set($issue="")
+#set($issueurl="")
+#set($dueto="")
+#end
+#end
 
-    #if ($release.getActions('update').size() !=0)
-    Changes:
-        #foreach($actionItem in $release.getActions('update'))
-            #set($action=$actionItem.getAction())
-            #if ($actionItem.getIssue())
-                #set($issue=$actionItem.getIssue())
-                #set($issueurl="https://github.com/dadoonet/fsriver/issues/"+$issue)
-            #else
-                #set($issue="")
-                #set($issueurl="")
-            #end
-            #if ($actionItem.getDueTo())
-                #set($dueto=$actionItem.getDueTo())
-            #else
-                #set($dueto="")
-            #end
-        o ${action} #if($!issue != "") Issue: $issueurl. #end#if($!dueto != "")Thanks to $dueto. #end
+#if ($release.getActions('update').size() !=0)
+Changes:
+#foreach($actionItem in $release.getActions('update'))
+#set($action=$actionItem.getAction())
+#if ($actionItem.getIssue())
+#set($issue=$actionItem.getIssue())
+#set($issueurl="https://github.com/dadoonet/fsriver/issues/"+$issue)
+#else
+#set($issue="")
+#set($issueurl="")
+#end
+#if ($actionItem.getDueTo())
+#set($dueto=$actionItem.getDueTo())
+#else
+#set($dueto="")
+#end
+o ${action} #if($!issue != "") Issue: $issueurl. #end#if($!dueto != "")Thanks to $dueto. #end
 
-            #set($issue="")
-            #set($issueurl="")
-            #set($dueto="")
-        #end
-    #end
+#set($issue="")
+#set($issueurl="")
+#set($dueto="")
+#end
+#end
 
-    #if ($release.getActions('remove').size() !=0)
-    Removed:
-        #foreach($actionItem in $release.getActions('remove'))
-            #set($action=$actionItem.getAction())
-            #if ($actionItem.getIssue())
-                #set($issue=$actionItem.getIssue())
-                #set($issueurl="https://github.com/dadoonet/fsriver/issues/"+$issue)
-            #else
-                #set($issue="")
-                #set($issueurl="")
-            #end
-            #if ($actionItem.getDueTo())
-                #set($dueto=$actionItem.getDueTo())
-            #else
-                #set($dueto="")
-            #end
-        o ${action} #if($!issue != "") Issue: $issueurl. #end#if($!dueto != "")Thanks to $dueto. #end
+#if ($release.getActions('remove').size() !=0)
+Removed:
+#foreach($actionItem in $release.getActions('remove'))
+#set($action=$actionItem.getAction())
+#if ($actionItem.getIssue())
+#set($issue=$actionItem.getIssue())
+#set($issueurl="https://github.com/dadoonet/fsriver/issues/"+$issue)
+#else
+#set($issue="")
+#set($issueurl="")
+#end
+#if ($actionItem.getDueTo())
+#set($dueto=$actionItem.getDueTo())
+#else
+#set($dueto="")
+#end
+o ${action} #if($!issue != "") Issue: $issueurl. #end#if($!dueto != "")Thanks to $dueto. #end
 
-            #set($issue="")
-            #set($issueurl="")
-            #set($dueto="")
-        #end
-    #end
+#set($issue="")
+#set($issueurl="")
+#set($dueto="")
+#end
+#end
 
 ## End of main loop
 #end

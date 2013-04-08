@@ -100,8 +100,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
             // https://github.com/dadoonet/fsriver/issues/7 : JSON support: use filename as ID
             boolean filenameAsId = XContentMapValues.nodeBooleanValue(feed.get("filename_as_id"), false);
 
-			fsDefinition = new FsRiverFeedDefinition(feedname, url,
-						updateRate, Arrays.asList(includes), Arrays.asList(excludes), jsonSupport, filenameAsId);
+            // https://github.com/dadoonet/fsriver/issues/18 : Add filesize to indexed document
+            boolean addFilesize = XContentMapValues.nodeBooleanValue(feed.get("add_filesize"), true);
+
+            fsDefinition = new FsRiverFeedDefinition(feedname, url,
+                    updateRate, Arrays.asList(includes), Arrays.asList(excludes),
+                    jsonSupport, filenameAsId, addFilesize);
 		} else {
 			String url = "/esdir";
 			logger.warn(
@@ -109,7 +113,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					url);
 			int updateRate = 60 * 60 * 1000;
 			fsDefinition = new FsRiverFeedDefinition("defaultlocaldir", url,
-					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false, false);
+					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false, false, true);
 		}
 
 		if (settings.settings().containsKey("index")) {
@@ -580,24 +584,30 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         id,
                         data);
             } else {
+                XContentBuilder source = jsonBuilder().startObject();
+
+                // We add metadata
+                source
+                    .field(FsRiverUtil.DOC_FIELD_NAME, file.getName())
+                    .field(FsRiverUtil.DOC_FIELD_DATE, file.lastModified())
+                    .field(FsRiverUtil.DOC_FIELD_PATH_ENCODED, SignTool.sign(file.getParent()))
+                    .field(FsRiverUtil.DOC_FIELD_ROOT_PATH, stats.getRootPathId())
+                    .field(FsRiverUtil.DOC_FIELD_VIRTUAL_PATH,
+                            FsRiverUtil.computeVirtualPathName(stats,file.getParent()));
+                if (fsDefinition.isAddFilesize()) {
+                    source.field(FsRiverUtil.DOC_FIELD_FILESIZE, file.length());
+                }
+
+                // We add the content itself
+                source.startObject("file").field("_name", file.getName())
+                    .field("content", Base64.encodeBytes(data))
+                    .endObject().endObject();
+
+                // We index
                 esIndex(indexName,
                         typeName,
                         SignTool.sign(file.getAbsolutePath()),
-                        jsonBuilder()
-                                .startObject()
-                                .field(FsRiverUtil.DOC_FIELD_NAME, file.getName())
-                                .field(FsRiverUtil.DOC_FIELD_DATE,
-                                        file.lastModified())
-                                .field(FsRiverUtil.DOC_FIELD_PATH_ENCODED,
-                                        SignTool.sign(file.getParent()))
-                                .field(FsRiverUtil.DOC_FIELD_ROOT_PATH,
-                                        stats.getRootPathId())
-                                .field(FsRiverUtil.DOC_FIELD_VIRTUAL_PATH,
-                                        FsRiverUtil.computeVirtualPathName(stats,
-                                                file.getParent()))
-                                .startObject("file").field("_name", file.getName())
-                                .field("content", Base64.encodeBytes(data))
-                                .endObject().endObject());
+                        source);
             }
 
  		}

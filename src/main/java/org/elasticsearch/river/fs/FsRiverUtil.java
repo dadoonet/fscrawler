@@ -39,7 +39,8 @@ public class FsRiverUtil {
 	public static final String DOC_FIELD_PATH_ENCODED = "pathEncoded";
 	public static final String DOC_FIELD_VIRTUAL_PATH = "virtualpath";
 	public static final String DOC_FIELD_ROOT_PATH = "rootpath";
-	
+    public static final String DOC_FIELD_FILESIZE = "filesize";
+
 	public static final String DIR_FIELD_NAME = "name";
 	public static final String DIR_FIELD_PATH_ENCODED = "pathEncoded";
 	public static final String DIR_FIELD_VIRTUAL_PATH = "virtualpath";
@@ -52,6 +53,7 @@ public class FsRiverUtil {
 			.startObject(DOC_FIELD_PATH_ENCODED).field("type", "string").field("analyzer","keyword").endObject()
 			.startObject(DOC_FIELD_ROOT_PATH).field("type", "string").field("analyzer","keyword").endObject()
 			.startObject(DOC_FIELD_VIRTUAL_PATH).field("type", "string").field("analyzer","keyword").endObject()
+            .startObject(DOC_FIELD_FILESIZE).field("type", "long").endObject()
 			.startObject(DOC_FIELD_DATE).field("type", "date").endObject()
 			.startObject("file").field("type", "attachment")
 			.startObject("fields").startObject("title")

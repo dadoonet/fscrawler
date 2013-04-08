@@ -277,6 +277,24 @@ $ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
 }'
 ```
 
+Disabling file size field (>= 0.2.0)
+------------------------------------
+
+By default, FSRiver will create a field to store the original file size in octet.
+You can disable it using `add_filesize' option:
+
+```sh
+$ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"name": "My tmp dir",
+	"url": "/tmp",
+	"add_filesize": false
+  }
+}'
+```
+
+
 Advanced
 ========
 
@@ -339,6 +357,9 @@ When the FSRiver detect a new type, it creates automatically a mapping for this 
       "virtualpath" : {
         "type" : "string",
         "analyzer" : "keyword"
+      },
+      "filesize" : {
+        "type" : "long"
       }
     }
   }
@@ -405,6 +426,9 @@ If you want to define your own mapping to set analyzers for example, you can pus
       "virtualpath" : {
         "type" : "string",
         "analyzer" : "keyword"
+      },
+      "filesize" : {
+        "type" : "long"
       }
     }
   }
@@ -452,7 +476,12 @@ FS River creates some meta fields :
 			<td>Relative path</td>
 			<td>mydir/otherdir</td>
 		</tr>
-	</tbody>
+		<tr>
+			<td>filesize</td>
+			<td>File size in octet</td>
+			<td>1256362</td>
+		</tr>
+    </tbody>
 </table>
 
 Advanced search
@@ -535,6 +564,9 @@ from your hard drive.
       "virtualpath" : {
         "type" : "string",
         "analyzer" : "keyword"
+      },
+      "filesize" : {
+        "type" : "long"
       }
     }
   }
