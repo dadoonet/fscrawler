@@ -103,9 +103,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
             // https://github.com/dadoonet/fsriver/issues/18 : Add filesize to indexed document
             boolean addFilesize = XContentMapValues.nodeBooleanValue(feed.get("add_filesize"), true);
 
+            // https://github.com/dadoonet/fsriver/issues/17 : Modify Indexed Characters limit
+            double indexedChars = XContentMapValues.nodeDoubleValue(feed.get("indexed_chars"), 0.0);
+
             fsDefinition = new FsRiverFeedDefinition(feedname, url,
                     updateRate, Arrays.asList(includes), Arrays.asList(excludes),
-                    jsonSupport, filenameAsId, addFilesize);
+                    jsonSupport, filenameAsId, addFilesize, indexedChars);
 		} else {
 			String url = "/esdir";
 			logger.warn(
@@ -113,7 +116,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					url);
 			int updateRate = 60 * 60 * 1000;
 			fsDefinition = new FsRiverFeedDefinition("defaultlocaldir", url,
-					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false, false, true);
+					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false, false, true, 0.0);
 		}
 
 		if (settings.settings().containsKey("index")) {
@@ -599,9 +602,14 @@ public class FsRiver extends AbstractRiverComponent implements River {
                 }
 
                 // We add the content itself
-                source.startObject("file").field("_name", file.getName())
-                    .field("content", Base64.encodeBytes(data))
-                    .endObject().endObject();
+                source.startObject("file")
+                    .field("_name", file.getName())
+                    .field("content", Base64.encodeBytes(data));
+                if (fsDefinition.getIndexedChars() > 0) {
+                    source.field(FsRiverUtil.DOC_FIELD_INDEXED_CHARS,
+                            Math.round(file.length() * fsDefinition.getIndexedChars()));
+                }
+                source.endObject().endObject();
 
                 // We index
                 esIndex(indexName,

@@ -573,6 +573,24 @@ from your hard drive.
 }
 ```
 
+Extracted characters
+--------------------
+
+By default the mapper attachment plugin extracts only a limited size of characters (100000 by default).
+Setting `index.mapping.attachment.indexed_chars` property on your node may help to index bigger files.
+
+But, you can also have a finer control and set `indexed_chars` to `1` in FSRiver definition.
+That option will add a special field `_indexed_chars` to the document. It will be set to the filesize.
+This field is used by mapper attachment plugin to define the number of extracted characters.
+
+* `indexed_chars : 0` (default) will use default mapper attachment settings (`index.mapping.attachment.indexed_chars`)
+* `indexed_chars : x` will compute file size, multiply it with x and pass it to Tika using `_indexed_chars` field.
+
+That means that a value of 0.8 will extract 20% less characters than the file size. A value of 1.5 will extract 50% more characters than the filesize (think compressed files).
+A value of 1, will extract exactly the filesize.
+
+
+
 Behind the scene
 ================
 

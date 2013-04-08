@@ -4,6 +4,9 @@
 
     <body>
         <release date="2013-04-30" description="" version="0.2.0">
+            <action issue="17" dev="dadoonet" type="add" due-to="Josef Jezek">
+                Modify Indexed Characters limit.
+            </action>
             <action issue="18" dev="dadoonet" type="add" due-to="Yahia Ammar">
                 Add filesize to indexed document.
             </action>

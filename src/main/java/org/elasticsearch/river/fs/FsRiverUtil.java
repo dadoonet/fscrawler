@@ -40,6 +40,7 @@ public class FsRiverUtil {
 	public static final String DOC_FIELD_VIRTUAL_PATH = "virtualpath";
 	public static final String DOC_FIELD_ROOT_PATH = "rootpath";
     public static final String DOC_FIELD_FILESIZE = "filesize";
+    public static final String DOC_FIELD_INDEXED_CHARS = "_indexed_chars";
 
 	public static final String DIR_FIELD_NAME = "name";
 	public static final String DIR_FIELD_PATH_ENCODED = "pathEncoded";
@@ -56,10 +57,11 @@ public class FsRiverUtil {
             .startObject(DOC_FIELD_FILESIZE).field("type", "long").endObject()
 			.startObject(DOC_FIELD_DATE).field("type", "date").endObject()
 			.startObject("file").field("type", "attachment")
-			.startObject("fields").startObject("title")
-			.field("store", "yes").endObject().startObject("file")
-			.field("term_vector", "with_positions_offsets")
-			.field("store", "yes").endObject().endObject().endObject()
+			.startObject("fields")
+                .startObject("title").field("store", "yes").endObject()
+                .startObject("file").field("term_vector", "with_positions_offsets").field("store", "yes").endObject()
+                .startObject(DOC_FIELD_INDEXED_CHARS).field("type", "long").field("index","no").field("include_in_all",false).endObject()
+            .endObject().endObject()
 			.endObject().endObject().endObject();
 		return xbMapping;
 	}

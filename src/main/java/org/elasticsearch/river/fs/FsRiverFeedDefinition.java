@@ -34,10 +34,11 @@ public class FsRiverFeedDefinition {
     private boolean jsonSupport;
     private boolean filenameAsId;
     private boolean addFilesize;
+    private double indexedChars;
 	
 	public FsRiverFeedDefinition(String feedname, String url, int updateRate, List<String> includes,
                                  List<String> excludes, boolean jsonSupport, boolean filenameAsId,
-                                 boolean addFilesize) {
+                                 boolean addFilesize, double indexedChars) {
 		assert( excludes != null);
 		assert( includes != null);
 		this.includes = includes;
@@ -48,6 +49,7 @@ public class FsRiverFeedDefinition {
         this.jsonSupport = jsonSupport;
         this.filenameAsId = filenameAsId;
         this.addFilesize = addFilesize;
+        this.indexedChars = indexedChars;
 	}
 
     public String getFeedname() {
@@ -88,5 +90,9 @@ public class FsRiverFeedDefinition {
 
     public boolean isAddFilesize() {
         return addFilesize;
+    }
+
+    public double getIndexedChars() {
+        return indexedChars;
     }
 }
