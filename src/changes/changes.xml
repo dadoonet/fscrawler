@@ -3,6 +3,12 @@
           xsi:schemaLocation="http://maven.apache.org/changes/1.0.0 http://maven.apache.org/xsd/changes-1.0.0.xsd">
 
     <body>
+        <release date="2013-04-30" description="" version="0.2.0">
+            <action issue="18" dev="dadoonet" type="add" due-to="Yahia Ammar">
+                Add filesize to indexed document.
+            </action>
+        </release>
+
         <release date="2013-03-15" description="" version="0.1.0">
             <action issue="7" dev="dadoonet" type="add">
                 JSON support: use filename as ID.
