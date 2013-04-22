@@ -10,6 +10,9 @@
             <action issue="18" dev="dadoonet" type="add" due-to="Yahia Ammar">
                 Add filesize to indexed document.
             </action>
+            <action issue="20" dev="dadoonet" type="update" >
+                Rename package from org.elasticsearch to fr.pilato...
+            </action>
         </release>
 
         <release date="2013-03-15" description="" version="0.1.0">
