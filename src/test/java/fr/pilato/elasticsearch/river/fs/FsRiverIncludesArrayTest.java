@@ -28,10 +28,6 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class FsRiverIncludesArrayTest extends AbstractFsRiverSimpleTest {
 
-	@Override
-	public long waitingTime() throws Exception {
-		return 5;
-	}
 	/**
 	 * We use the default mapping
 	 */
@@ -63,7 +59,6 @@ public class FsRiverIncludesArrayTest extends AbstractFsRiverSimpleTest {
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
-						.field("name", dir)
 						.field("url", url)
 						.field("update_rate", updateRate)
 						.startArray("includes")

@@ -69,7 +69,7 @@ Installation
 Just type :
 
 ```sh
-$ bin/plugin -install fr.pilato.elasticsearch.river/fsriver/0.1.0
+bin/plugin -install fr.pilato.elasticsearch.river/fsriver/0.1.0
 ```
 
 This will do the job...
@@ -89,7 +89,7 @@ Creating a FS river
 We create first an index to store our *documents* :
 
 ```sh
-$ curl -XPUT 'localhost:9200/mydocs/' -d '{}'
+curl -XPUT 'localhost:9200/mydocs/' -d '{}'
 ```
 
 We create the river with the following properties :
@@ -101,10 +101,9 @@ We create the river with the following properties :
 
 
 ```sh
-$ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
   "type": "fs",
   "fs": {
-	"name": "My tmp dir",
 	"url": "/tmp",
 	"update_rate": 900000,
 	"includes": "*.doc,*.pdf",
@@ -128,10 +127,9 @@ By the way, we define to index in the same index/type as the previous one:
 * type: `doc`
 
 ```sh
-$ curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
+curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
   "type": "fs",
   "fs": {
-	"name": "My tmp2 dir",
 	"url": "/tmp2",
 	"update_rate": 3600000,
 	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
@@ -150,7 +148,7 @@ Searching for docs
 This is a common use case in elasticsearch, we want to search for something ;-)
 
 ```sh
-$ curl -XGET http://localhost:9200/docs/doc/_search -d '{
+curl -XGET http://localhost:9200/docs/doc/_search -d '{
   "query" : {
     "text" : {
         "_all" : "I am searching for something !"
@@ -166,10 +164,9 @@ If you want to index JSon files directly without parsing them through the attach
 can set `json_support` to `true`.
 
 ```sh
-$ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
   "type": "fs",
   "fs": {
-	"name": "My tmp dir",
 	"url": "/tmp",
 	"update_rate": 3600000,
 	"json_support" : true
@@ -187,10 +184,9 @@ Of course, if you did not define a mapping prior creating the river, Elasticsear
 If you have more than one type, create as many rivers as types:
 
 ```sh
-$ curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
+curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
   "type": "fs",
   "fs": {
-	"name": "My type1 dir",
 	"url": "/tmp/type1",
 	"update_rate": 3600000,
 	"json_support" : true
@@ -202,10 +198,9 @@ $ curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
   }
 }'
 
-$ curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
+curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
   "type": "fs",
   "fs": {
-	"name": "My type2 dir",
 	"url": "/tmp/type2",
 	"update_rate": 3600000,
 	"json_support" : true
@@ -222,10 +217,9 @@ You can also index many types from one single dir using two rivers on the same d
 `includes` parameter:
 
 ```sh
-$ curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
+curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
   "type": "fs",
   "fs": {
-	"name": "My type1 files in tmp dir",
 	"url": "/tmp",
 	"update_rate": 3600000,
     "includes": [ "type1*.json" ],
@@ -238,10 +232,9 @@ $ curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
   }
 }'
 
-$ curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
+curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
   "type": "fs",
   "fs": {
-	"name": "My type2 files in tmp dir",
 	"url": "/tmp",
 	"update_rate": 3600000,
     "includes": [ "type2*.json" ],
@@ -260,10 +253,9 @@ special characters in filename.
 You can force to use the `_id` to be the filename using `filename_as_id` attribute:
 
 ```sh
-$ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
   "type": "fs",
   "fs": {
-	"name": "My tmp dir",
 	"url": "/tmp",
 	"update_rate": 3600000,
 	"json_support": true,
@@ -284,14 +276,28 @@ By default, FSRiver will create a field to store the original file size in octet
 You can disable it using `add_filesize' option:
 
 ```sh
-$ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
   "type": "fs",
   "fs": {
-	"name": "My tmp dir",
 	"url": "/tmp",
 	"add_filesize": false
   }
 }'
+```
+
+Suspend or restart a file river (>= 0.2.0)
+------------------------------------------
+
+If you need to stop a river, you can call the `_stop' endpoint:
+
+```sh
+curl 'localhost:9200/_river/mydocs/_stop'
+```
+
+To restart the river from the previous point, just call `_start` end point:
+
+```sh
+curl 'localhost:9200/_river/mydocs/_start'
 ```
 
 
@@ -490,7 +496,7 @@ Advanced search
 You can use meta fields to perform search on.
 
 ```sh
-$ curl -XGET http://localhost:9200/docs/doc/_search -d '{
+curl -XGET http://localhost:9200/docs/doc/_search -d '{
   "query" : {
     "term" : {
         "name" : "mydocument.pdf"

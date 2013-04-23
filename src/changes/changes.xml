@@ -13,6 +13,9 @@
             <action issue="20" dev="dadoonet" type="update" >
                 Rename package from org.elasticsearch to fr.pilato...
             </action>
+            <action issue="21" dev="dadoonet" type="add" >
+                Suspend FSRiver.
+            </action>
         </release>
 
         <release date="2013-03-15" description="" version="0.1.0">

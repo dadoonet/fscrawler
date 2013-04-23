@@ -86,6 +86,10 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
 			String feedname = XContentMapValues.nodeStringValue(
 					feed.get("name"), null);
+            if (feedname != null) {
+                logger.warn("`fs.name` attribute is deprecated. Don't use it anymore.");
+            }
+
 			String url = XContentMapValues.nodeStringValue(feed.get("url"),
 					null);
 
@@ -107,7 +111,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
             // https://github.com/dadoonet/fsriver/issues/17 : Modify Indexed Characters limit
             double indexedChars = XContentMapValues.nodeDoubleValue(feed.get("indexed_chars"), 0.0);
 
-            fsDefinition = new FsRiverFeedDefinition(feedname, url,
+            fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
                     updateRate, Arrays.asList(includes), Arrays.asList(excludes),
                     jsonSupport, filenameAsId, addFilesize, indexedChars);
 		} else {
@@ -116,7 +120,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					"You didn't define the fs url. Switching to defaults : [{}]",
 					url);
 			int updateRate = 60 * 60 * 1000;
-			fsDefinition = new FsRiverFeedDefinition("defaultlocaldir", url,
+			fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
 					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false, false, true, 0.0);
 		}
 
@@ -257,7 +261,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			this.fsdef = fsDefinition;
 			if (logger.isInfoEnabled())
 				logger.info("creating fs river [{}] for [{}] every [{}] ms",
-						fsdef.getFeedname(), fsdef.getUrl(), fsdef.getUpdateRate());
+						fsdef.getRivername(), fsdef.getUrl(), fsdef.getUpdateRate());
 		}
 
 		@Override
@@ -268,33 +272,58 @@ public class FsRiver extends AbstractRiverComponent implements River {
 				}
 
 				try {
-					stats = new ScanStatistic(fsdef.getUrl());
+                    // Let's see if river is suspended
+                    GetResponse getResponse = client.prepareGet("_river", fsdef.getRivername(), "_fsstatus").execute().actionGet();
+                    boolean isStarted = true;
+                    if (!getResponse.isExists()) {
+                        XContentBuilder xb = jsonBuilder()
+                                .startObject()
+                                    .startObject("fs")
+                                        .field("status", "STARTED")
+                                    .endObject()
+                                .endObject();
 
-					File directory = new File(fsdef.getUrl());
+                        client.prepareIndex("_river", fsdef.getRivername(), "_fsstatus").setSource(xb).execute().actionGet();
+                    } else {
+                        String status = (String) XContentMapValues.extractValue("fs.status", getResponse.getSourceAsMap());
+                        if (status.equals("STOPPED")) {
+                            isStarted = false;
+                        }
+                    }
 
-					if (!directory.exists())
-						throw new RuntimeException(fsdef.getUrl() + " doesn't exists.");
+                    if (isStarted) {
+                        stats = new ScanStatistic(fsdef.getUrl());
 
-					String rootPathId = SignTool.sign(directory
-							.getAbsolutePath());
-					stats.setRootPathId(rootPathId);
+                        File directory = new File(fsdef.getUrl());
 
-					bulk = client.prepareBulk();
+                        if (!directory.exists())
+                            throw new RuntimeException(fsdef.getUrl() + " doesn't exists.");
 
-					String lastupdateField = "_lastupdated";
-					Date scanDatenew = new Date();
-					Date scanDate = getLastDateFromRiver(lastupdateField);
+                        String rootPathId = SignTool.sign(directory
+                                .getAbsolutePath());
+                        stats.setRootPathId(rootPathId);
 
-					// We only index the root directory once (first run)
-					// That means that we don't have a scanDate yet
-					if (scanDate == null) indexRootDirectory(directory);
+                        bulk = client.prepareBulk();
 
-					addFilesRecursively(directory, scanDate);
+                        String lastupdateField = "_lastupdated";
+                        Date scanDatenew = new Date();
+                        Date scanDate = getLastDateFromRiver(lastupdateField);
 
-					updateFsRiver(lastupdateField, scanDatenew);
+                        // We only index the root directory once (first run)
+                        // That means that we don't have a scanDate yet
+                        if (scanDate == null) indexRootDirectory(directory);
 
-					// If some bulkActions remains, we should commit them
-					commitBulk();
+                        addFilesRecursively(directory, scanDate);
+
+                        updateFsRiver(lastupdateField, scanDatenew);
+
+                        // If some bulkActions remains, we should commit them
+                        commitBulk();
+                    } else {
+                        if (logger.isDebugEnabled())
+                            logger.debug("FSRiver is disabled for {}", fsdef.getRivername());
+                    }
+
 
 				} catch (Exception e) {
 					logger.warn("Error while indexing content from {}", fsdef.getUrl());
@@ -352,7 +381,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			XContentBuilder xb = jsonBuilder()
 				.startObject()
 					.startObject("fs")
-						.field("feedname", fsdef.getFeedname())
+						.field("feedname", fsdef.getRivername())
 						.field("lastdate", scanDate)
 						.field("docadded", stats.getNbDocScan())
 						.field("docdeleted", stats.getNbDocDeleted())

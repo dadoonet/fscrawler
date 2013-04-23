@@ -19,10 +19,12 @@
 
 package fr.pilato.elasticsearch.river.fs.plugin;
 
+import fr.pilato.elasticsearch.river.fs.rest.ManageRiverAction;
 import fr.pilato.elasticsearch.river.fs.river.FsRiverModule;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.plugins.AbstractPlugin;
+import org.elasticsearch.rest.RestModule;
 import org.elasticsearch.river.RiversModule;
 
 /**
@@ -44,6 +46,11 @@ public class FsRiverPlugin extends AbstractPlugin {
     @Override public void processModule(Module module) {
         if (module instanceof RiversModule) {
             ((RiversModule) module).registerRiver("fs", FsRiverModule.class);
+        }
+
+
+        if (module instanceof RestModule) {
+            ((RestModule) module).addRestAction(ManageRiverAction.class);
         }
     }
 }

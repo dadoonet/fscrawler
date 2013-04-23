@@ -24,16 +24,13 @@
 		<level value="info" />
 	</logger>
 
-	<logger name="org.elasticsearch.river.fs">
-		<level value="debug" />
-	</logger>
-	<logger name="org.elasticsearch.plugin.river.fs">
+	<logger name="org.elasticsearch.fr.pilato.elasticsearch.river.fs">
 		<level value="debug" />
 	</logger>
 
 
 	<root>
-		<priority value="info" />
+		<priority value="debug" />
 		<appender-ref ref="console" />
 	</root>
 

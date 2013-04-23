@@ -34,8 +34,9 @@ public class FsMultipleRiverTest extends AbstractFsRiverTest {
 
 	@Override
 	public long waitingTime() throws Exception {
-		return 5;
+		return 2;
 	}
+
 	/**
 	 * We use the default mapping
 	 */
@@ -64,7 +65,6 @@ public class FsMultipleRiverTest extends AbstractFsRiverTest {
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
-						.field("name", dir)
 						.field("url", url)
 						.field("update_rate", updateRate)
 					.endObject()
@@ -104,7 +104,6 @@ public class FsMultipleRiverTest extends AbstractFsRiverTest {
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
-						.field("name", dir)
 						.field("url", url)
 						.field("update_rate", updateRate)
 					.endObject()

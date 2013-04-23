@@ -26,7 +26,7 @@ import java.util.List;
  * @author dadoonet (David Pilato)
  */
 public class FsRiverFeedDefinition {
-	private String feedname;
+	private String rivername;
 	private String url;
 	private int updateRate;
 	private List<String> includes;
@@ -36,14 +36,14 @@ public class FsRiverFeedDefinition {
     private boolean addFilesize;
     private double indexedChars;
 	
-	public FsRiverFeedDefinition(String feedname, String url, int updateRate, List<String> includes,
+	public FsRiverFeedDefinition(String rivername, String url, int updateRate, List<String> includes,
                                  List<String> excludes, boolean jsonSupport, boolean filenameAsId,
                                  boolean addFilesize, double indexedChars) {
 		assert( excludes != null);
 		assert( includes != null);
 		this.includes = includes;
 		this.excludes = excludes;
-		this.feedname = feedname;
+		this.rivername = rivername;
 		this.url = url;
 		this.updateRate = updateRate;
         this.jsonSupport = jsonSupport;
@@ -52,8 +52,8 @@ public class FsRiverFeedDefinition {
         this.indexedChars = indexedChars;
 	}
 
-    public String getFeedname() {
-		return feedname;
+    public String getRivername() {
+		return rivername;
 	}
 	
 	public String getUrl() {

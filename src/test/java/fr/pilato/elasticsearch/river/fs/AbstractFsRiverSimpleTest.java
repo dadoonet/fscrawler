@@ -34,7 +34,7 @@ public abstract class AbstractFsRiverSimpleTest extends AbstractFsRiverTest {
 	 */
 	@Override
 	public long waitingTime() throws Exception {
-		return 5;
+		return 2;
 	}
 
 	protected void searchTestHelper(String term, Integer expected) {
