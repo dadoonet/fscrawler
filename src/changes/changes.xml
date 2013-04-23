@@ -14,7 +14,7 @@
                 Rename package from org.elasticsearch to fr.pilato...
             </action>
             <action issue="21" dev="dadoonet" type="add" >
-                Suspend FSRiver.
+                Suspend or restart a single FSRiver instance.
             </action>
         </release>
 
