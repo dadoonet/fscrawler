@@ -59,6 +59,7 @@ public class FsRiverUtil {
 			.startObject(DOC_FIELD_DATE).field("type", "date").endObject()
 			.startObject("file").field("type", "attachment")
 			.startObject("fields")
+                .startObject("content_type").field("store", "yes").endObject()
                 .startObject("title").field("store", "yes").endObject()
                 .startObject("file").field("term_vector", "with_positions_offsets").field("store", "yes").endObject()
                 .startObject(DOC_FIELD_INDEXED_CHARS).field("type", "long").field("index","no").field("include_in_all",false).endObject()

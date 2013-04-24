@@ -340,7 +340,8 @@ When the FSRiver detect a new type, it creates automatically a mapping for this 
             "type" : "string"
           },
           "content_type" : {
-            "type" : "string"
+            "type" : "string",
+            "store" : "yes"
           }
         }
       },
@@ -409,7 +410,8 @@ If you want to define your own mapping to set analyzers for example, you can pus
             "type" : "string"
           },
           "content_type" : {
-            "type" : "string"
+            "type" : "string",
+            "store" : "yes"
           }
         }
       },
@@ -546,7 +548,8 @@ from your hard drive.
             "type" : "string"
           },
           "content_type" : {
-            "type" : "string"
+            "type" : "string",
+            "store" : "yes"
           }
         }
       },
@@ -594,6 +597,50 @@ This field is used by mapper attachment plugin to define the number of extracted
 
 That means that a value of 0.8 will extract 20% less characters than the file size. A value of 1.5 will extract 50% more characters than the filesize (think compressed files).
 A value of 1, will extract exactly the filesize.
+
+
+Get content_type
+-------------------------
+
+By default, `content_type` is detected by mapper attachment plugin and stored in documents. So, you can easily access
+it:
+
+```sh
+curl -XPOST http://localhost:9200/mydocs/doc/_search -d '{
+  "fields" : ["file.content_type", "_source"],
+  "query":{
+    "match_all" : {}
+  }
+}'
+```
+
+gives:
+
+```javascript
+{
+  "took" : 19,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 1,
+    "max_score" : 1.0,
+    "hits" : [ {
+      "_index" : "fsrivermetadatatest",
+      "_type" : "doc",
+      "_id" : "fb6115c44876aa1e94cc4f86b03ba93",
+      "_score" : 1.0,
+      "fields" : {
+        "file.content_type" : "application/vnd.oasis.opendocument.text",
+        "_source" : "..."
+      }
+    } ]
+  }
+}
+```
 
 Storing extracted content
 -------------------------
