@@ -34,7 +34,7 @@ public class FsMultipleRiverTest extends AbstractFsRiverTest {
 
 	@Override
 	public long waitingTime() throws Exception {
-		return 2;
+		return 5;
 	}
 
 	/**
