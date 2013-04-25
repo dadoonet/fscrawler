@@ -25,7 +25,7 @@ Versions
 		<tr>
 			<td>master (0.2.0-SNAPSHOT)</td>
 			<td>0.90.0.Beta1</td>
-			<td>1.6.0</td>
+			<td>1.7.0</td>
 		</tr>
 		<tr>
 			<td>0.1.0</td>
