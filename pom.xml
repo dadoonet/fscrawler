@@ -38,7 +38,7 @@
 	</licenses>
   	
 	<properties>
-		<elasticsearch.version>0.90.0.Beta1</elasticsearch.version>
+		<elasticsearch.version>0.90.0</elasticsearch.version>
 		<elasticsearch.attachment.version>1.7.0</elasticsearch.attachment.version>
 		
 		<!-- Some properties for github that you have to define in your settings.xml -->

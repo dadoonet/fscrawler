@@ -16,6 +16,9 @@
             <action issue="21" dev="dadoonet" type="add" >
                 Suspend or restart a single FSRiver instance.
             </action>
+            <action issue="23" dev="dadoonet" type="update">
+                Move to Elasticsearch 0.90.0.
+            </action>
         </release>
 
         <release date="2013-03-15" description="" version="0.1.0">
