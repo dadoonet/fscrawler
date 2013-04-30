@@ -3,7 +3,7 @@
           xsi:schemaLocation="http://maven.apache.org/changes/1.0.0 http://maven.apache.org/xsd/changes-1.0.0.xsd">
 
     <body>
-        <release date="2013-04-30" description="" version="0.2.0">
+        <release date="2013-04-30" description="April 2013 update" version="0.2.0">
             <action issue="17" dev="dadoonet" type="add" due-to="Josef Jezek">
                 Modify Indexed Characters limit.
             </action>
@@ -21,7 +21,7 @@
             </action>
         </release>
 
-        <release date="2013-03-15" description="" version="0.1.0">
+        <release date="2013-03-15" description="March 2013 update" version="0.1.0">
             <action issue="7" dev="dadoonet" type="add">
                 JSON support: use filename as ID.
             </action>
