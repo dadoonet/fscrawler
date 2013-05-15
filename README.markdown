@@ -598,9 +598,21 @@ Extracted characters
 --------------------
 
 By default the mapper attachment plugin extracts only a limited size of characters (100000 by default).
-Setting `index.mapping.attachment.indexed_chars` property on your node may help to index bigger files.
+Setting `index.mapping.attachment.indexed_chars` property in your `elasticsearch.yml` file for each node
+may help to index bigger files.
 
 But, you can also have a finer control and set `indexed_chars` to `1` in FSRiver definition.
+
+```sh
+curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+  "type": "fs",
+  "fs": {
+    "url": "/tmp",
+    "indexed_chars": 1
+  }
+}'
+```
+
 That option will add a special field `_indexed_chars` to the document. It will be set to the filesize.
 This field is used by mapper attachment plugin to define the number of extracted characters.
 
