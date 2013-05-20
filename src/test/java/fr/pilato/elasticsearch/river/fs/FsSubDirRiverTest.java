@@ -26,7 +26,7 @@ import java.io.File;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
-public class FsRiverTest extends AbstractFsRiverSimpleTest {
+public class FsSubDirRiverTest extends AbstractFsRiverSimpleTest {
 
 	/**
 	 * We use the default mapping
@@ -44,9 +44,9 @@ public class FsRiverTest extends AbstractFsRiverSimpleTest {
 	 */
 	@Override
 	public XContentBuilder fsRiver() throws Exception {
-		// We update every ten seconds
+		// We update every minute
 		int updateRate = 10 * 1000;
-		String dir = "testfs1";
+		String dir = "testsubdir";
 		
 		// First we check that filesystem to be analyzed exists...
 		File dataDir = new File("./target/test-classes/" + dir);
@@ -69,6 +69,6 @@ public class FsRiverTest extends AbstractFsRiverSimpleTest {
 
 	@Test
 	public void index_is_not_empty() throws Exception {
-		countTestHelper();
+		countTestHelper(null, 2);
 	}
 }

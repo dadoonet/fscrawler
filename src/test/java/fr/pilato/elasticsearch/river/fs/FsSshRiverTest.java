@@ -19,14 +19,31 @@
 
 package fr.pilato.elasticsearch.river.fs;
 
+import fr.pilato.elasticsearch.river.fs.river.FsRiver;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
-public class FsRiverTest extends AbstractFsRiverSimpleTest {
+/**
+ * You have to adapt this test to your own system (login / password and SSH connexion)
+ * So this test is disabled by default
+ */
+@Ignore
+public class FsSshRiverTest extends AbstractFsRiverSimpleTest {
+    private String username = "USERNAME";
+    private String password = "PASSWORD";
+    private String server = "localhost";
+    /**
+     * We wait for 5 seconds before each test
+     */
+    @Override
+    public long waitingTime() throws Exception {
+        return 5;
+    }
 
 	/**
 	 * We use the default mapping
@@ -44,9 +61,9 @@ public class FsRiverTest extends AbstractFsRiverSimpleTest {
 	 */
 	@Override
 	public XContentBuilder fsRiver() throws Exception {
-		// We update every ten seconds
+		// We update every minute
 		int updateRate = 10 * 1000;
-		String dir = "testfs1";
+		String dir = "testsubdir";
 		
 		// First we check that filesystem to be analyzed exists...
 		File dataDir = new File("./target/test-classes/" + dir);
@@ -59,8 +76,12 @@ public class FsRiverTest extends AbstractFsRiverSimpleTest {
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
-						.field("url", url)
+						.field("url", url + "/")
 						.field("update_rate", updateRate)
+                        .field("username", username)
+                        .field("password", password)
+                        .field("protocol", FsRiver.PROTOCOL.SSH)
+                        .field("server", server)
 					.endObject()
 				.endObject();
 		return xb;
@@ -69,6 +90,6 @@ public class FsRiverTest extends AbstractFsRiverSimpleTest {
 
 	@Test
 	public void index_is_not_empty() throws Exception {
-		countTestHelper();
+		countTestHelper(null, 2);
 	}
 }

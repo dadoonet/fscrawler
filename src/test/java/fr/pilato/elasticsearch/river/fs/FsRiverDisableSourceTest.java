@@ -32,6 +32,9 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
  * Test case for issue #10: https://github.com/dadoonet/fsriver/issues/10
  */
 public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
+    private static int updateRate = 2 * 1000;
+    private static String dir = "testfs_source_disabled";
+    private static String filename = "roottxtfile.txt";
 
 	/**
 	 * We use the default mapping
@@ -63,16 +66,21 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
 	 */
 	@Override
 	public XContentBuilder fsRiver() throws Exception {
-		// We update 2 seconds
-		int updateRate = 2 * 1000;
-		String dir = "testfs_source_disabled";
-		
 		// First we check that filesystem to be analyzed exists...
 		File dataDir = new File("./target/test-classes/" + dir);
 		if(!dataDir.exists()) {
 			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
 		}
-		String url = dataDir.getAbsoluteFile().getAbsolutePath();
+
+        // We need to remove previous file from prior tests
+        File file2 = new File("./target/test-classes/" + dir + "/new_" + filename);
+        try {
+            file2.delete();
+        } catch (Exception e) {
+            // Ignoring
+        }
+
+        String url = dataDir.getAbsoluteFile().getAbsolutePath();
 		
 		XContentBuilder xb = jsonBuilder()
 				.startObject()
@@ -91,24 +99,22 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
         // We should have one doc first
         countTestHelper(null, 1);
 
-        // We need to remove the old file and wait for the river
-        int updateRate = 2 * 1000;
-        String dir = "testfs_source_disabled";
-        String filename = "roottxtfile.txt";
-
-        // First we check that filesystem to be analyzed exists...
+        // We add a new file
         File file1 = new File("./target/test-classes/" + dir + "/" + filename);
         File file2 = new File("./target/test-classes/" + dir + "/new_" + filename);
         FileSystemUtils.copyFile(file1, file2);
 
         Thread.sleep(updateRate + 1000);
 
+        // We expect to have one more file indexed
         countTestHelper(null, 2);
 
+        // We remove the old file and wait for the river
         file2.delete();
 
         Thread.sleep(updateRate + 1000);
 
+        // We expect to have one file indexed only
         countTestHelper(null, 1);
 	}
 }

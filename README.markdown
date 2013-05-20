@@ -3,9 +3,11 @@ FileSystem River for Elasticsearch
 
 Welcome to the FS River Plugin for [Elasticsearch](http://www.elasticsearch.org/)
 
-This river plugin helps to index documents from your local file system.
+This river plugin helps to index documents from your local file system and using SSH.
 
-*WARNING*: If you use this river in a multinode mode on differents servers, you need to ensure that the river can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your local dir is empty and will *erase* all your docs.
+*WARNING*: If you use this river in a multinode mode on different servers without SSH, you need to ensure that the river
+can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your
+local dir is empty and will *erase* all your docs.
 
 *WARNING*: starting from 0.0.3, you need to have the [Attachment Plugin](https://github.com/elasticsearch/elasticsearch-mapper-attachments). It's not included anymore
 in the distribution.
@@ -95,8 +97,8 @@ Downloading ......DONE
 Installed fsriver
 ```
 
-Creating a FS river
--------------------
+Creating a Local FS river
+-------------------------
 
 We create first an index to store our *documents* :
 
@@ -106,8 +108,8 @@ curl -XPUT 'localhost:9200/mydocs/' -d '{}'
 
 We create the river with the following properties :
 
-* FS URL : `/tmp` or `c:\\tmp` if you use Microsoft Windows OS
-* Update Rate : every 15 minutes (15 * 60 * 1000 = 900000 ms)
+* FS URL: `/tmp` or `c:\\tmp` if you use Microsoft Windows OS
+* Update Rate: every 15 minutes (15 * 60 * 1000 = 900000 ms)
 * Get only docs like `*.doc` and `*.pdf`
 * Don't index `resume*`
 
@@ -124,13 +126,13 @@ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
 }'
 ```
 
-Adding another FS river
------------------------
+Adding another local FS river
+-----------------------------
 
 We add another river with the following properties :
 
-* FS URL : `/tmp2`
-* Update Rate : every hour (60 * 60 * 1000 = 3600000 ms)
+* FS URL: `/tmp2`
+* Update Rate: every hour (60 * 60 * 1000 = 3600000 ms)
 * Get only docs like `*.doc`, `*.xls` and `*.pdf`
 
 By the way, we define to index in the same index/type as the previous one:
@@ -150,6 +152,34 @@ curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
   	"index": "mydocs",
   	"type": "doc",
   	"bulk_size": 50
+  }
+}'
+```
+
+Indexing using SSH (>= 0.3.0)
+-----------------------------
+
+You can now index files remotely using SSH:
+
+* FS URL: `/tmp3`
+* Server: `mynode.mydomain.com`
+* Username: `username`
+* Password: `password`
+* Protocol: `ssh` (default to `local`)
+* Update Rate: every hour (60 * 60 * 1000 = 3600000 ms)
+* Get only docs like `*.doc`, `*.xls` and `*.pdf`
+
+```sh
+curl -XPUT 'localhost:9200/_river/mysshriver/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"url": "/tmp3",
+	"server": "mynode.mydomain.com",
+	"username": "username",
+	"password": "password",
+	"protocol": "ssh",
+	"update_rate": 3600000,
+	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
   }
 }'
 ```

@@ -35,10 +35,15 @@ public class FsRiverFeedDefinition {
     private boolean filenameAsId;
     private boolean addFilesize;
     private double indexedChars;
-	
+    private String username;
+    private String password;
+	private String server;
+	private String protocol;
+
 	public FsRiverFeedDefinition(String rivername, String url, int updateRate, List<String> includes,
                                  List<String> excludes, boolean jsonSupport, boolean filenameAsId,
-                                 boolean addFilesize, double indexedChars) {
+                                 boolean addFilesize, double indexedChars, String username, String password,
+                                 String server, String protocol) {
 		assert( excludes != null);
 		assert( includes != null);
 		this.includes = includes;
@@ -50,6 +55,10 @@ public class FsRiverFeedDefinition {
         this.filenameAsId = filenameAsId;
         this.addFilesize = addFilesize;
         this.indexedChars = indexedChars;
+        this.username = username;
+        this.password = password;
+        this.server = server;
+        this.protocol = protocol;
 	}
 
     public String getRivername() {
@@ -94,5 +103,21 @@ public class FsRiverFeedDefinition {
 
     public double getIndexedChars() {
         return indexedChars;
+    }
+
+    public String getUsername(){
+    	return this.username;
+    }
+
+    public String getPassword(){
+    	return this.password;
+    }
+
+    public String getServer(){
+    	return this.server;
+    }
+
+    public String getProtocol(){
+    	return this.protocol;
     }
 }

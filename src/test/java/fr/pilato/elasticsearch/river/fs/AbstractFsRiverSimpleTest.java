@@ -22,39 +22,18 @@ package fr.pilato.elasticsearch.river.fs;
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Assert;
 
 
 public abstract class AbstractFsRiverSimpleTest extends AbstractFsRiverTest {
+    protected ESLogger logger = Loggers.getLogger(this.getClass());
 
-	/**
-	 * We wait for 5 seconds before each test
-	 */
-	@Override
 	public long waitingTime() throws Exception {
 		return 5;
-	}
-
-	protected void searchTestHelper(String term, Integer expected) {
-        QueryBuilder query;
-        if (term == null) {
-            query = QueryBuilders.matchAllQuery();
-        } else {
-            query = QueryBuilders.queryString(term);
-        }
-
-        // Let's search for entries
-        SearchResponse response = node.client().prepareSearch(indexName())
-                .setTypes(FsRiverUtil.INDEX_TYPE_DOC)
-                .setQuery(query).execute().actionGet();
-
-        if (expected == null) {
-            Assert.assertTrue("We should have at least one doc...", response.getHits().getTotalHits() >= 1);
-        } else {
-            Assert.assertEquals(expected.intValue(), response.getHits().getTotalHits());
-        }
 	}
 
     /**
@@ -72,14 +51,28 @@ public abstract class AbstractFsRiverSimpleTest extends AbstractFsRiverTest {
             query = QueryBuilders.queryString(term);
         }
 
-        CountResponse response = node.client().prepareCount(indexName())
-                .setTypes(FsRiverUtil.INDEX_TYPE_DOC)
-                .setQuery(query).execute().actionGet();
+        long totalHits = 0;
+
+        if (logger.isDebugEnabled()) {
+            // We want traces, so let's run a search query and trace results
+            // Let's search for entries
+            SearchResponse response = node.client().prepareSearch(indexName())
+                    .setTypes(FsRiverUtil.INDEX_TYPE_DOC)
+                    .setQuery(query).execute().actionGet();
+
+            logger.debug("result {}", response.toString());
+            totalHits = response.getHits().getTotalHits();
+        } else {
+            CountResponse response = node.client().prepareCount(indexName())
+                    .setTypes(FsRiverUtil.INDEX_TYPE_DOC)
+                    .setQuery(query).execute().actionGet();
+            totalHits = response.getCount();
+        }
 
         if (expected == null) {
-            Assert.assertTrue("We should have at least one doc...", response.getCount() >= 1);
+            Assert.assertTrue("We should have at least one doc...", totalHits >= 1);
         } else {
-            Assert.assertEquals(expected.intValue(), response.getCount());
+            Assert.assertEquals(expected.intValue(), totalHits);
         }
     }
 
