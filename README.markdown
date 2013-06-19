@@ -32,7 +32,7 @@ Versions
 			<td>31/05/2013 ?</td>
 		</tr>
         <tr>
-			<td>master (0.2.0-SNAPSHOT)</td>
+			<td>0.2.0</td>
 			<td>0.90.0</td>
 			<td>1.7.0</td>
 			<td>30/04/2013</td>
