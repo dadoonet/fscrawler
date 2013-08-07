@@ -38,8 +38,8 @@
 	</licenses>
   	
 	<properties>
-		<elasticsearch.version>0.90.0</elasticsearch.version>
-		<elasticsearch.attachment.version>1.7.0</elasticsearch.attachment.version>
+		<elasticsearch.version>0.90.3</elasticsearch.version>
+		<elasticsearch.attachment.version>1.8.0</elasticsearch.attachment.version>
 	</properties>
 
 	<developers>

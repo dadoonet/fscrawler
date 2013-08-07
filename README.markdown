@@ -26,10 +26,16 @@ Versions
 	</thead>
 	<tbody>
 		<tr>
-			<td>master (0.3.0-SNAPSHOT)</td>
-			<td>0.90.0</td>
-			<td>1.7.0</td>
-			<td>31/05/2013 ?</td>
+			<td>master (0.4.0-SNAPSHOT)</td>
+			<td>0.90.3</td>
+			<td>1.8.0</td>
+			<td>31/10/2013 ?</td>
+		</tr>
+		<tr>
+			<td>0.3.0</td>
+			<td>0.90.3</td>
+			<td>1.8.0</td>
+			<td>07/08/2013</td>
 		</tr>
         <tr>
 			<td>0.2.0</td>
