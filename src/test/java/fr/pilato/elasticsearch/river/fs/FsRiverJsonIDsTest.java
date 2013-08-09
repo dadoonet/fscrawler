@@ -70,6 +70,11 @@ public class FsRiverJsonIDsTest extends AbstractFsRiverSimpleTest {
                         .field("json_support", true)
                         .field("filename_as_id", true)
 					.endObject()
+                    .startObject("index")
+                        .field("index", indexName())
+                        .field("type", "doc")
+                        .field("bulk_size", 1)
+                    .endObject()
 				.endObject();
 		return xb;
 	}

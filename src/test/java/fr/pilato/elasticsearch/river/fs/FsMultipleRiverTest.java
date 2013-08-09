@@ -71,7 +71,7 @@ public class FsMultipleRiverTest extends AbstractFsRiverTest {
 					.startObject("index")
 						.field("index", indexName())
 						.field("type", "otherdocs")
-						.field("bulk_size", 5)
+						.field("bulk_size", 1)
 					.endObject()
 				.endObject();
 

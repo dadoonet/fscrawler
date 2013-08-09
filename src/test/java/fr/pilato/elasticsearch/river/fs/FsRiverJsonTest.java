@@ -69,6 +69,11 @@ public class FsRiverJsonTest extends AbstractFsRiverSimpleTest {
 						.field("update_rate", updateRate)
                         .field("json_support", true)
 					.endObject()
+                    .startObject("index")
+                        .field("index", indexName())
+                        .field("type", "doc")
+                        .field("bulk_size", 1)
+                    .endObject()
 				.endObject();
 		return xb;
 	}

@@ -62,6 +62,11 @@ public class FsSubDirRiverTest extends AbstractFsRiverSimpleTest {
 						.field("url", url)
 						.field("update_rate", updateRate)
 					.endObject()
+                    .startObject("index")
+                        .field("index", indexName())
+                        .field("type", "doc")
+                        .field("bulk_size", 1)
+                    .endObject()
 				.endObject();
 		return xb;
 	}

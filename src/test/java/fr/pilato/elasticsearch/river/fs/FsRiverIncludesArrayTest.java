@@ -65,6 +65,11 @@ public class FsRiverIncludesArrayTest extends AbstractFsRiverSimpleTest {
 							.value("*_include.txt")
 						.endArray()
 					.endObject()
+                    .startObject("index")
+                        .field("index", indexName())
+                        .field("type", "doc")
+                        .field("bulk_size", 1)
+                    .endObject()
 				.endObject();
 		return xb;
 	}

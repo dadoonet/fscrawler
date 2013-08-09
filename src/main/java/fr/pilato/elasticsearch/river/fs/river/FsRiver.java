@@ -22,9 +22,10 @@ package fr.pilato.elasticsearch.river.fs.river;
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.bulk.*;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
@@ -35,6 +36,7 @@ import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.Base64;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.joda.time.format.ISODateTimeFormat;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
@@ -69,9 +71,13 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
 	private final String typeName;
 
-	private final long bulkSize;
+	private final int bulkSize;
+    private final int maxConcurrentBulk;
+    private final TimeValue bulkFlushInterval;
 
-	private volatile Thread feedThread;
+    private volatile BulkProcessor bulkProcessor;
+
+    private volatile Thread feedThread;
 
 	private volatile boolean closed = false;
 
@@ -144,13 +150,18 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					indexSettings.get("index"), riverName.name());
 			typeName = XContentMapValues.nodeStringValue(
 					indexSettings.get("type"), FsRiverUtil.INDEX_TYPE_DOC);
-			bulkSize = XContentMapValues.nodeLongValue(
+			bulkSize = XContentMapValues.nodeIntegerValue(
 					indexSettings.get("bulk_size"), 100);
-		} else {
+            bulkFlushInterval = TimeValue.parseTimeValue(XContentMapValues.nodeStringValue(
+                    indexSettings.get("flush_interval"), "5s"), TimeValue.timeValueSeconds(5));
+            maxConcurrentBulk = XContentMapValues.nodeIntegerValue(indexSettings.get("max_concurrent_bulk"), 1);
+        } else {
 			indexName = riverName.name();
 			typeName = FsRiverUtil.INDEX_TYPE_DOC;
 			bulkSize = 100;
-		}
+            maxConcurrentBulk = 1;
+            bulkFlushInterval = TimeValue.timeValueSeconds(5);
+        }
 
 
         // Checking protocol
@@ -196,7 +207,40 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			return;
 		}
 
-		// We create as many Threads as there are feeds
+        // Creating bulk processor
+        this.bulkProcessor = BulkProcessor.builder(client, new BulkProcessor.Listener() {
+            @Override
+            public void beforeBulk(long executionId, BulkRequest request) {
+                logger.debug("Going to execute new bulk composed of {} actions", request.numberOfActions());
+            }
+
+            @Override
+            public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+                logger.debug("Executed bulk composed of {} actions", request.numberOfActions());
+                if (response.hasFailures()) {
+                    logger.warn("There was failures while executing bulk", response.buildFailureMessage());
+                    if (logger.isDebugEnabled()) {
+                        for (BulkItemResponse item : response.getItems()) {
+                            if (item.isFailed()) {
+                                logger.debug("Error for {}/{}/{} for {} operation: {}", item.getIndex(),
+                                        item.getType(), item.getId(), item.getOpType(), item.getFailureMessage());
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+                logger.warn("Error executing bulk", failure);
+            }
+        })
+                .setBulkActions(bulkSize)
+                .setConcurrentRequests(maxConcurrentBulk)
+                .setFlushInterval(bulkFlushInterval)
+                .build();
+
+        // We create as many Threads as there are feeds
 		feedThread = EsExecutors.daemonThreadFactory(
 				settings.globalSettings(), "fs_slurper")
 				.newThread(
@@ -214,6 +258,10 @@ public class FsRiver extends AbstractRiverComponent implements River {
 		if (feedThread != null) {
 			feedThread.interrupt();
 		}
+
+        if (this.bulkProcessor != null) {
+            this.bulkProcessor.close();
+        }
 	}
 
     /**
@@ -276,8 +324,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 	
 	private class FSParser implements Runnable {
 		private FsRiverFeedDefinition fsdef;
-		
-		private BulkRequestBuilder bulk;
+
 		private ScanStatistic stats;
 
 		public FSParser(FsRiverFeedDefinition fsDefinition) {
@@ -326,8 +373,6 @@ public class FsRiver extends AbstractRiverComponent implements River {
                                 .getAbsolutePath());
                         stats.setRootPathId(rootPathId);
 
-                        bulk = client.prepareBulk();
-
                         String lastupdateField = "_lastupdated";
                         Date scanDatenew = new Date();
                         Date scanDate = getLastDateFromRiver(lastupdateField);
@@ -339,9 +384,6 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         addFilesRecursively(fsdef.getUrl(), scanDate);
 
                         updateFsRiver(lastupdateField, scanDatenew);
-
-                        // If some bulkActions remains, we should commit them
-                        commitBulk();
                     } else {
                         if (logger.isDebugEnabled())
                             logger.debug("FSRiver is disabled for {}", fsdef.getRivername());
@@ -411,42 +453,6 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					.endObject()
 				.endObject();
 			esIndex("_river", riverName.name(), lastupdateField, xb);
-		}
-
-		/**
-		 * Commit to ES if something is in queue
-		 * 
-		 * @throws Exception
-		 */
-		private void commitBulk() throws Exception {
-			if (bulk != null && bulk.numberOfActions() > 0) {
-				if (logger.isDebugEnabled()) logger.debug("ES Bulk Commit is needed");
-				BulkResponse response = bulk.execute().actionGet();
-				if (response.hasFailures()) {
-					logger.warn("Failed to execute "
-							+ response.buildFailureMessage());
-				}
-			}
-		}
-
-		/**
-		 * Commit to ES if we have too much in bulk
-		 * 
-		 * @throws Exception
-		 */
-		private void commitBulkIfNeeded() throws Exception {
-			if (bulk != null && bulk.numberOfActions() > 0 && bulk.numberOfActions() >= bulkSize) {
-				if (logger.isDebugEnabled()) logger.debug("ES Bulk Commit is needed");
-				
-				BulkResponse response = bulk.execute().actionGet();
-				if (response.hasFailures()) {
-					logger.warn("Failed to execute "
-							+ response.buildFailureMessage());
-				}
-				
-				// Reinit a new bulk
-				bulk = client.prepareBulk();
-			}
 		}
 
         private FileAbstractor buildFileAbstractor(String filepath) throws Exception {
@@ -774,9 +780,8 @@ public class FsRiver extends AbstractRiverComponent implements River {
 				XContentBuilder xb) throws Exception {
 			if (logger.isDebugEnabled()) logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
 			if (logger.isTraceEnabled()) logger.trace("JSon indexed : {}", xb.string());
-			
-			bulk.add(client.prepareIndex(index, type, id).setSource(xb));
-			commitBulkIfNeeded();
+
+            bulkProcessor.add(new IndexRequest(index, type, id).source(xb));
 		}
 
         /**
@@ -793,8 +798,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
             if (logger.isDebugEnabled()) logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
             if (logger.isTraceEnabled()) logger.trace("JSon indexed : {}", json);
 
-            bulk.add(client.prepareIndex(index, type, id).setSource(json));
-            commitBulkIfNeeded();
+            bulkProcessor.add(new IndexRequest(index, type, id).source(json));
         }
 
         /**
@@ -807,8 +811,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 		 */
 		private void esDelete(String index, String type, String id) throws Exception {
 			if (logger.isDebugEnabled()) logger.debug("Deleting from ES " + index + ", " + type + ", " + id);
-			bulk.add(client.prepareDelete(index, type, id));
-			commitBulkIfNeeded();
+            bulkProcessor.add(new DeleteRequest(index, type, id));
 		}
 	}
 	
