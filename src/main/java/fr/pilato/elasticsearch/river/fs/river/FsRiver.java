@@ -34,6 +34,7 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.Base64;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.joda.time.format.ISODateTimeFormat;
 import org.elasticsearch.common.unit.TimeValue;
@@ -42,10 +43,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
-import org.elasticsearch.river.AbstractRiverComponent;
-import org.elasticsearch.river.River;
-import org.elasticsearch.river.RiverName;
-import org.elasticsearch.river.RiverSettings;
+import org.elasticsearch.river.*;
 import org.elasticsearch.search.SearchHit;
 
 import java.io.ByteArrayOutputStream;
@@ -170,7 +168,16 @@ public class FsRiver extends AbstractRiverComponent implements River {
             // Non supported protocol
             logger.error(fsDefinition.getProtocol() + " is not supported yet. Please use " +
                     PROTOCOL.LOCAL + " or " + PROTOCOL.SSH + ". Disabling river");
+            closed = true;
             return;
+        }
+
+        // Checking username/password
+        if (PROTOCOL.SSH.equals(fsDefinition.getProtocol()) &&
+                !Strings.hasLength(fsDefinition.getUsername())) {
+            // Non supported protocol
+            logger.error("When using SSH, you need to set a username and probably a password. Disabling river");
+            closed = true;
         }
 	}
 
@@ -178,6 +185,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
 	public void start() {
 		if (logger.isInfoEnabled())
 			logger.info("Starting fs river scanning");
+
+        if (closed) {
+            logger.info("Fs river is closed. Exiting");
+            return;
+        }
+
 		try {
 			client.admin().indices().prepareCreate(indexName).execute()
 					.actionGet();
