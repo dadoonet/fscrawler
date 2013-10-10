@@ -173,6 +173,6 @@ public class FsRiverUtil {
         //if (!"/".equals(File.separator)) offset = 1;
         
         return realPath.substring(stats.getRootPath().length())
-                .replace(File.separator, "/");
+                .replace("\\", "/");
     }
 }
