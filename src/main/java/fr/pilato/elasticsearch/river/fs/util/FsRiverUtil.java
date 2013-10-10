@@ -169,10 +169,10 @@ public class FsRiverUtil {
             return "/";
 
         // Offset is 1 on Windows platforms
-        int offset = 0;
-        if (!"/".equals(File.separator)) offset = 1;
-
-        return realPath.substring(stats.getRootPath().length() - offset)
+        //int offset = 0;
+        //if (!"/".equals(File.separator)) offset = 1;
+        
+        return realPath.substring(stats.getRootPath().length())
                 .replace(File.separator, "/");
     }
 }

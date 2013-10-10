@@ -20,11 +20,11 @@ public class FsRiverUtilTest {
     @Test
     public void testComputePathWindows() {
         // TODO Test it on a windows platform
-        testHelper("C:/tmp", "C:/tmp/myfile.txt", "/myfile.txt");
-        testHelper("C:/tmp", "C:/tmp/dir/myfile.txt", "/dir/myfile.txt");
+        testHelper("C:\\tmp", "C:\\tmp\\myfile.txt", "/myfile.txt");
+        testHelper("C:\\tmp", "C:\\tmp\\dir\\myfile.txt", "/dir/myfile.txt");
     }
 
     private void testHelper(String rootPath, String realPath, String expectedPath) {
-        Assert.assertEquals(expectedPath, FsRiverUtil.computeVirtualPathName(new ScanStatistic(rootPath), realPath));
+    	Assert.assertEquals(expectedPath, FsRiverUtil.computeVirtualPathName(new ScanStatistic(rootPath), realPath));
     }
 }

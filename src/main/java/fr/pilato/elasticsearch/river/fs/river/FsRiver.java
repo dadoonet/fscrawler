@@ -658,7 +658,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         id = id.substring(0, pos);
                     }
                 } else {
-                    id = SignTool.sign(filepath + "/" + filename);
+                    id = SignTool.sign(filepath + File.separator + filename);
                 }
                 esIndex(indexName,
                         typeName,
@@ -692,7 +692,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                 // We index
                 esIndex(indexName,
                         typeName,
-                        SignTool.sign(filepath + "/" + filename),
+                        SignTool.sign(filepath + File.separator + filename),
                         source);
             }
 
@@ -718,9 +718,9 @@ public class FsRiver extends AbstractRiverComponent implements River {
 							stats.getRootPathId())
 							.field(FsRiverUtil.DIR_FIELD_VIRTUAL_PATH,
 									FsRiverUtil.computeVirtualPathName(stats,
-											filepath.substring(0, filepath.lastIndexOf("/"))))
+											filepath.substring(0, filepath.lastIndexOf(File.separator))))
 											.field(FsRiverUtil.DIR_FIELD_PATH_ENCODED,
-													SignTool.sign(filepath.substring(0, filepath.lastIndexOf("/"))))
+													SignTool.sign(filepath.substring(0, filepath.lastIndexOf(File.separator))))
 													.endObject());
 		}
 
