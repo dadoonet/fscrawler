@@ -13,6 +13,9 @@
             <action issue="35" dev="dadoonet" type="add">
                 Option to not delete documents when files are removed.
             </action>
+            <action issue="32" dev="dadoonet" type="fix" due-to="Fabien Gaujous">
+                Index is not updated when files are deleted on windows platform.
+            </action>
         </release>
 
         <release date="2013-06-15" description="Add SSH support" version="0.3.0">

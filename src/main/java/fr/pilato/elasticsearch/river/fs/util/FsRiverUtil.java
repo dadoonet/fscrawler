@@ -24,7 +24,6 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -168,11 +167,7 @@ public class FsRiverUtil {
         if (realPath.length() < stats.getRootPath().length())
             return "/";
 
-        // Offset is 1 on Windows platforms
-        int offset = 0;
-        if (!"/".equals(File.separator)) offset = 1;
-
-        return realPath.substring(stats.getRootPath().length() - offset)
-                .replace(File.separator, "/");
+        return realPath.substring(stats.getRootPath().length())
+                .replace("\\", "/");
     }
 }
