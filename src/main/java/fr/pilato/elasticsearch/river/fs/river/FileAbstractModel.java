@@ -27,4 +27,17 @@ public class FileAbstractModel {
     public long lastModifiedDate;
     public String path;
     public String fullpath;
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("FileAbstractModel{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", file=").append(file);
+        sb.append(", directory=").append(directory);
+        sb.append(", lastModifiedDate=").append(lastModifiedDate);
+        sb.append(", path='").append(path).append('\'');
+        sb.append(", fullpath='").append(fullpath).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

@@ -348,6 +348,22 @@ To restart the river from the previous point, just call `_start` end point:
 curl 'localhost:9200/_river/mydocs/_start'
 ```
 
+Ignore deleted files (>= 0.4.0)
+-------------------------------
+
+If you don't want to remove indexed documents when you remove a file or a directory, you can
+set `remove_deleted` to `false` (default to `true`):
+
+
+```sh
+curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"url": "/tmp",
+	"remove_deleted": false
+  }
+}'
+```
 
 Advanced
 ========

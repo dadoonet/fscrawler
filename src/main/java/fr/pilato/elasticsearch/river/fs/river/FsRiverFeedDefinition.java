@@ -39,11 +39,12 @@ public class FsRiverFeedDefinition {
     private String password;
 	private String server;
 	private String protocol;
+    private boolean removeDeleted;
 
 	public FsRiverFeedDefinition(String rivername, String url, int updateRate, List<String> includes,
                                  List<String> excludes, boolean jsonSupport, boolean filenameAsId,
                                  boolean addFilesize, double indexedChars, String username, String password,
-                                 String server, String protocol) {
+                                 String server, String protocol, boolean removeDeleted) {
 		assert( excludes != null);
 		assert( includes != null);
 		this.includes = includes;
@@ -59,6 +60,7 @@ public class FsRiverFeedDefinition {
         this.password = password;
         this.server = server;
         this.protocol = protocol;
+        this.removeDeleted = removeDeleted;
 	}
 
     public String getRivername() {
@@ -119,5 +121,9 @@ public class FsRiverFeedDefinition {
 
     public String getProtocol(){
     	return this.protocol;
+    }
+
+    public boolean isRemoveDeleted() {
+        return removeDeleted;
     }
 }

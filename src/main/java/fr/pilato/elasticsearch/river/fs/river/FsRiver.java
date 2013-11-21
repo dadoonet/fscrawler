@@ -126,10 +126,13 @@ public class FsRiver extends AbstractRiverComponent implements River {
             String server = XContentMapValues.nodeStringValue(feed.get("server"), null);
             String protocol = XContentMapValues.nodeStringValue(feed.get("protocol"), PROTOCOL.LOCAL);
 
+            // https://github.com/dadoonet/fsriver/issues/35 : Option to not delete documents when files are removed
+            boolean removeDeleted = XContentMapValues.nodeBooleanValue(feed.get("remove_deleted"), true);
+
             fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
                     updateRate, Arrays.asList(includes), Arrays.asList(excludes),
                     jsonSupport, filenameAsId, addFilesize, indexedChars,
-                    username, password, server , protocol);
+                    username, password, server , protocol, removeDeleted);
 		} else {
 			String url = "/esdir";
 			logger.warn(
@@ -138,7 +141,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			int updateRate = 60 * 60 * 1000;
 			fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
 					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false, false, true, 0.0 ,
-                    null, null, null , null);
+                    null, null, null , null, true);
 		}
 
 		if (settings.settings().containsKey("index")) {
@@ -494,7 +497,6 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			Collection<String> fsFolders = new ArrayList<String>();
 
 			if (children != null) {
-
 				for (FileAbstractModel child : children) {
                     String filename = child.name;
 
@@ -504,6 +506,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                     }
 
                     if (child.file) {
+                        logger.debug("  - file: {}", filename);
 
                         // https://github.com/dadoonet/fsriver/issues/1 : Filter documents
                         if (FsRiverUtil.isIndexable(filename, fsdef.getIncludes(), fsdef.getExcludes())) {
@@ -515,10 +518,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
                             }
                         }
                     } else if (child.directory) {
+                        logger.debug("  - folder: {}", filename);
                         fsFolders.add(filename);
                         indexDirectory(stats, filename, child.fullpath.concat(File.separator));
                         addFilesRecursively(child.fullpath.concat(File.separator), lastScanDate);
                     } else {
+                        logger.debug("  - other: {}", filename);
                         if (logger.isDebugEnabled())
                             logger.debug("Not a file nor a dir. Skipping {}", child.fullpath);
                     }
@@ -529,29 +534,30 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			// if (path.isDirectory() && path.lastModified() > lastScanDate
 			// && lastScanDate != 0) {
 
+            if (fsdef.isRemoveDeleted()) {
+                Collection<String> esFiles = getFileDirectory(filepath);
 
-            Collection<String> esFiles = getFileDirectory(filepath);
+                // for the delete files
+                for (String esfile : esFiles) {
+                    if (FsRiverUtil.isIndexable(esfile, fsdef.getIncludes(), fsdef.getExcludes()) && !fsFiles.contains(esfile)) {
+                        File file = new File(FileAbstractor.computeFullPath(filepath, esfile));
 
-            // for the delete files
-            for (String esfile : esFiles) {
-                if (FsRiverUtil.isIndexable(esfile, fsdef.getIncludes(), fsdef.getExcludes()) && !fsFiles.contains(esfile)) {
-                    File file = new File(FileAbstractor.computeFullPath(filepath, esfile));
-
-                    esDelete(indexName, typeName,
-                            SignTool.sign(file.getAbsolutePath()));
-                    stats.removeFile();
+                        esDelete(indexName, typeName,
+                                SignTool.sign(file.getAbsolutePath()));
+                        stats.removeFile();
+                    }
                 }
-            }
 
-            Collection<String> esFolders = getFolderDirectory(filepath);
+                Collection<String> esFolders = getFolderDirectory(filepath);
 
-            // for the delete folder
-            for (String esfolder : esFolders) {
+                // for the delete folder
+                for (String esfolder : esFolders) {
 
-                if (!fsFolders.contains(esfolder)) {
+                    if (!fsFolders.contains(esfolder)) {
 
-                    removeEsDirectoryRecursively(filepath,
-                            esfolder);
+                        removeEsDirectoryRecursively(filepath,
+                                esfolder);
+                    }
                 }
             }
 		}

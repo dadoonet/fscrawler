@@ -10,6 +10,9 @@
             <action issue="36" dev="dadoonet" type="update">
                 Update to Elasticsearch 0.90.7.
             </action>
+            <action issue="35" dev="dadoonet" type="add">
+                Option to not delete documents when files are removed.
+            </action>
         </release>
 
         <release date="2013-06-15" description="Add SSH support" version="0.3.0">
