@@ -20,9 +20,13 @@
 package fr.pilato.elasticsearch.river.fs.river;
 
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
+import org.apache.tika.metadata.Metadata;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
-import org.elasticsearch.action.bulk.*;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -33,9 +37,9 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
-import org.elasticsearch.common.Base64;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.io.stream.BytesStreamInput;
 import org.elasticsearch.common.joda.time.format.ISODateTimeFormat;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
@@ -43,7 +47,10 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
-import org.elasticsearch.river.*;
+import org.elasticsearch.river.AbstractRiverComponent;
+import org.elasticsearch.river.River;
+import org.elasticsearch.river.RiverName;
+import org.elasticsearch.river.RiverSettings;
 import org.elasticsearch.search.SearchHit;
 
 import java.io.ByteArrayOutputStream;
@@ -52,6 +59,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.*;
 
+import static fr.pilato.elasticsearch.river.fs.river.TikaInstance.tika;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 /**
@@ -681,18 +689,46 @@ public class FsRiver extends AbstractRiverComponent implements River {
                     .field(FsRiverUtil.DOC_FIELD_ROOT_PATH, stats.getRootPathId())
                     .field(FsRiverUtil.DOC_FIELD_VIRTUAL_PATH,
                             FsRiverUtil.computeVirtualPathName(stats,filepath));
-                if (fsDefinition.isAddFilesize()) {
-                    source.field(FsRiverUtil.DOC_FIELD_FILESIZE, data.length);
+
+                // Extracting content with Tika
+                // See #38: https://github.com/dadoonet/fsriver/issues/38
+                int indexedChars = 100000;
+                if (fsDefinition.getIndexedChars() > 0) {
+                    indexedChars = (int) Math.round(data.length * fsDefinition.getIndexedChars());
+                    source.field(FsRiverUtil.DOC_FIELD_INDEXED_CHARS, indexedChars);
                 }
 
-                // We add the content itself
+                Metadata metadata = new Metadata();
+
+                String parsedContent;
+                try {
+                    // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
+                    parsedContent = tika().parseToString(new BytesStreamInput(data, false), metadata, indexedChars);
+                } catch (Throwable e) {
+                    logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "]", e);
+                    parsedContent = "";
+                }
+
+                if (fsDefinition.isAddFilesize()) {
+                    if (metadata.get(Metadata.CONTENT_LENGTH) != null) {
+                        // We try to get CONTENT_LENGTH from Tika first
+                        source.field(FsRiverUtil.DOC_FIELD_FILESIZE, metadata.get(Metadata.CONTENT_LENGTH));
+                    } else {
+                        // Otherwise, we use our byte[] length
+                        source.field(FsRiverUtil.DOC_FIELD_FILESIZE, data.length);
+                    }
+                }
+
                 source.startObject("file")
                     .field("_name", filename)
-                    .field("content", Base64.encodeBytes(data));
-                if (fsDefinition.getIndexedChars() > 0) {
-                    source.field(FsRiverUtil.DOC_FIELD_INDEXED_CHARS,
-                            Math.round(data.length * fsDefinition.getIndexedChars()));
-                }
+                    .field("file", parsedContent)
+                    .field("author", metadata.get(Metadata.AUTHOR))
+                    .field("title", metadata.get(Metadata.TITLE))
+                    .field("name", filename)
+                    .field("date", metadata.get(Metadata.DATE))
+                    .field("keywords", metadata.get(Metadata.KEYWORDS))
+                    .field("content_type", metadata.get(Metadata.CONTENT_TYPE))
+                ;
                 source.endObject().endObject();
 
                 // We index

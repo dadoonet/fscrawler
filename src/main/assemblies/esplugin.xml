@@ -13,7 +13,6 @@
 			<useTransitiveFiltering>true</useTransitiveFiltering>
 			<excludes>
 				<exclude>org.elasticsearch:elasticsearch:jar</exclude>
-				<exclude>org.elasticsearch:elasticsearch-mapper-attachments:jar</exclude>
 				<exclude>junit:junit</exclude>
 				<exclude>log4j:log4j</exclude>
 			</excludes>

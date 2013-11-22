@@ -2,9 +2,7 @@
   "doc": {
     "properties": {
       "file": {
-        "type": "attachment",
-        "path": "full",
-        "fields": {
+        "properties": {
           "file": {
             "type": "string",
             "store": "yes",

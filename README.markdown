@@ -12,6 +12,9 @@ local dir is empty and will *erase* all your docs.
 *WARNING*: starting from 0.0.3, you need to have the [Attachment Plugin](https://github.com/elasticsearch/elasticsearch-mapper-attachments). It's not included anymore
 in the distribution.
 
+*WARNING*: starting from 0.4.0, you don't need anymore the Attachment Plugin as we use now directly
+[Tika](http://tika.apache.org/), see [#38](https://github.com/dadoonet/fsriver/issues/38).
+
 Versions
 --------
 
@@ -21,6 +24,7 @@ Versions
 			<td>FS River Plugin</td>
 			<td>ElasticSearch</td>
 			<td>Attachment Plugin</td>
+			<td>Tika</td>
 			<td>Release date</td>
 		</tr>
 	</thead>
@@ -28,43 +32,50 @@ Versions
 		<tr>
 			<td>master (0.4.0-SNAPSHOT)</td>
 			<td>0.90.7</td>
-			<td>1.8.0</td>
+			<td>Not used</td>
+			<td>1.4</td>
 			<td>30/11/2013 ?</td>
 		</tr>
 		<tr>
 			<td>0.3.0</td>
 			<td>0.90.3</td>
 			<td>1.8.0</td>
+			<td></td>
 			<td>09/08/2013</td>
 		</tr>
         <tr>
 			<td>0.2.0</td>
 			<td>0.90.0</td>
 			<td>1.7.0</td>
+			<td></td>
 			<td>30/04/2013</td>
 		</tr>
 		<tr>
 			<td>0.1.0</td>
 			<td>0.90.0.Beta1</td>
 			<td>1.6.0</td>
+			<td></td>
 			<td>15/03/2013</td>
 		</tr>
 		<tr>
 			<td>0.0.3</td>
 			<td>0.20.4</td>
 			<td>1.6.0</td>
+			<td></td>
 			<td>12/02/2013</td>
 		</tr>
 		<tr>
 			<td>0.0.2</td>
 			<td>0.19.8</td>
 			<td>1.4.0</td>
+			<td></td>
             <td>16/07/2012</td>
 		</tr>
 		<tr>
 			<td>0.0.1</td>
 			<td>0.19.4</td>
 			<td>1.4.0</td>
+			<td></td>
 			<td>19/06/2012</td>
 		</tr>
 	</tbody>
@@ -198,7 +209,7 @@ This is a common use case in elasticsearch, we want to search for something ;-)
 ```sh
 curl -XGET http://localhost:9200/docs/doc/_search -d '{
   "query" : {
-    "text" : {
+    "match" : {
         "_all" : "I am searching for something !"
     }
   }
@@ -378,9 +389,7 @@ When the FSRiver detect a new type, it creates automatically a mapping for this 
   "doc" : {
     "properties" : {
       "file" : {
-        "type" : "attachment",
-        "path" : "full",
-        "fields" : {
+        "properties" : {
           "file" : {
             "type" : "string",
             "store" : "yes",
@@ -447,9 +456,7 @@ If you want to define your own mapping to set analyzers for example, you can pus
   "doc" : {
     "properties" : {
       "file" : {
-        "type" : "attachment",
-        "path" : "full",
-        "fields" : {
+        "properties" : {
           "file" : {
             "type" : "string",
             "store" : "yes",
@@ -586,9 +593,7 @@ from your hard drive.
     "_source" : { "enabled" : false },
     "properties" : {
       "file" : {
-        "type" : "attachment",
-        "path" : "full",
-        "fields" : {
+        "properties" : {
           "file" : {
             "type" : "string",
             "store" : "yes",
@@ -649,11 +654,10 @@ from your hard drive.
 Extracted characters
 --------------------
 
-By default the mapper attachment plugin extracts only a limited size of characters (100000 by default).
-Setting `index.mapping.attachment.indexed_chars` property in your `elasticsearch.yml` file for each node
-may help to index bigger files.
+**From version 0.4.0**:
 
-But, you can also have a finer control and set `indexed_chars` to `1` in FSRiver definition.
+By default FSRiver will extract only a limited size of characters (100000).
+But, you can set `indexed_chars` to `1` in FSRiver definition.
 
 ```sh
 curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
@@ -668,17 +672,28 @@ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
 That option will add a special field `_indexed_chars` to the document. It will be set to the filesize.
 This field is used by mapper attachment plugin to define the number of extracted characters.
 
+Setting `indexed_chars : x` will compute file size, multiply it with x and pass it to Tika using `_indexed_chars` field.
+
+That means that a value of 0.8 will extract 20% less characters than the file size. A value of 1.5 will extract 50% more
+characters than the filesize (think compressed files). A value of 1, will extract exactly the filesize.
+
+**Before version 0.4.0**:
+
+By default the mapper attachment plugin extracts only a limited size of characters (100000 by default).
+Setting `index.mapping.attachment.indexed_chars` property in your `elasticsearch.yml` file for each node
+may help to index bigger files.
+
+`indexed_chars` option will add a special field `_indexed_chars` to the document. It will be set to the filesize.
+This field is used by mapper attachment plugin to define the number of extracted characters.
+
 * `indexed_chars : 0` (default) will use default mapper attachment settings (`index.mapping.attachment.indexed_chars`)
 * `indexed_chars : x` will compute file size, multiply it with x and pass it to Tika using `_indexed_chars` field.
-
-That means that a value of 0.8 will extract 20% less characters than the file size. A value of 1.5 will extract 50% more characters than the filesize (think compressed files).
-A value of 1, will extract exactly the filesize.
 
 
 Get content_type
 -------------------------
 
-By default, `content_type` is detected by mapper attachment plugin and stored in documents. So, you can easily access
+By default, `content_type` is detected by the FSRiver stored in documents. So, you can easily access
 it:
 
 ```sh
@@ -721,7 +736,7 @@ gives:
 Storing extracted content
 -------------------------
 
-If you need to store and retrieve as is extracted content by the mapper attachment plugin, you simply
+If you need to store and retrieve as is extracted content by the FSRiver, you simply
 have to set `store` to `yes` for your `file` field in your mapping:
 
 ```javascript
@@ -729,9 +744,7 @@ have to set `store` to `yes` for your `file` field in your mapping:
   "doc": {
     "properties": {
       "file": {
-        "type": "attachment",
-        "path": "full",
-        "fields": {
+        "properties": {
           "file": {
             "type": "string",
             "store": "yes",
