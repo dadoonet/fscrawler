@@ -72,6 +72,11 @@ public class FsRiverFileSizeLimitTest extends AbstractFsRiverSimpleTest {
                         .field("excludes", "*.json")
                         .field("indexed_chars", 0.001)
 					.endObject()
+                    .startObject("index")
+                        .field("index", indexName())
+                        .field("type", "doc")
+                        .field("bulk_size", 1)
+                    .endObject()
 				.endObject();
 		return xb;
 	}
@@ -85,10 +90,10 @@ public class FsRiverFileSizeLimitTest extends AbstractFsRiverSimpleTest {
                 .execute().actionGet();
 
         for (SearchHit hit : searchResponse.getHits()) {
-            assertNotNull(hit.getFields().get("file"));
+            assertNotNull(hit.getFields().get("file.file"));
 
             // Our original text: "Bonjour David..." should be truncated
-            assertEquals("Bonjour ", hit.getFields().get("file").getValue());
+            assertEquals("Bonjour ", hit.getFields().get("file.file").getValue());
         }
 	}
 }

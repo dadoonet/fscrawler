@@ -83,6 +83,11 @@ public class FsSshRiverTest extends AbstractFsRiverSimpleTest {
                         .field("protocol", FsRiver.PROTOCOL.SSH)
                         .field("server", server)
 					.endObject()
+                    .startObject("index")
+                        .field("index", indexName())
+                        .field("type", "doc")
+                        .field("bulk_size", 1)
+                    .endObject()
 				.endObject();
 		return xb;
 	}

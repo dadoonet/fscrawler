@@ -68,6 +68,11 @@ public class FsRiverMetadataDefaultTest extends AbstractFsRiverSimpleTest {
 						.field("update_rate", updateRate)
                         .field("excludes", "*.json")
 					.endObject()
+                    .startObject("index")
+                        .field("index", indexName())
+                        .field("type", "doc")
+                        .field("bulk_size", 1)
+                    .endObject()
 				.endObject();
 		return xb;
 	}
@@ -81,7 +86,7 @@ public class FsRiverMetadataDefaultTest extends AbstractFsRiverSimpleTest {
                 .execute().actionGet();
 
         for (SearchHit hit : searchResponse.getHits()) {
-            assertNotNull(hit.getFields().get("file"));
+            assertNotNull(hit.getFields().get("file.file"));
             assertNotNull(hit.getFields().get("file.content_type"));
             assertNotNull(hit.getFields().get("file.title"));
         }

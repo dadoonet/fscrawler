@@ -71,6 +71,11 @@ public class FsRiverFileSizeDisabledTest extends AbstractFsRiverSimpleTest {
                         .field("excludes", "*.json")
                         .field("add_filesize", false)
 					.endObject()
+                    .startObject("index")
+                        .field("index", indexName())
+                        .field("type", "doc")
+                        .field("bulk_size", 1)
+                    .endObject()
 				.endObject();
 		return xb;
 	}
