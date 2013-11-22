@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.river.fs;
 
+import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -87,11 +88,11 @@ public class FsRiverMetadataTest extends AbstractFsRiverSimpleTest {
                 .execute().actionGet();
 
         for (SearchHit hit : searchResponse.getHits()) {
-            assertNotNull(hit.getFields().get("file.file"));
             assertNotNull(hit.getFields().get("file.content_type"));
             assertNotNull(hit.getFields().get("file.keywords"));
             assertNotNull(hit.getFields().get("file.date"));
             assertNotNull(hit.getFields().get("file.title"));
+            assertNotNull(hit.getFields().get(FsRiverUtil.DOC_FIELD_URL));
         }
 
 	}

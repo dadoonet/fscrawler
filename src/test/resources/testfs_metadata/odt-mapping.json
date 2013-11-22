@@ -1,36 +1,68 @@
 {
-  "doc": {
-    "properties": {
-      "file": {
+    "doc": {
         "properties": {
-          "file": {
-            "type": "string",
-            "store": "yes",
-            "term_vector": "with_positions_offsets"
-          },
-          "author": {
-            "type": "string",
-            "store": "yes"
-          },
-          "title": {
-            "type": "string",
-            "store": "yes"
-          },
-          "date": {
-            "type": "date",
-            "format": "dateOptionalTime",
-            "store": "yes"
-          },
-          "keywords": {
-            "type": "string",
-            "store": "yes"
-          },
-          "content_type": {
-            "type": "string",
-            "store": "yes"
-          }
+            "file": {
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "store": "yes",
+                        "term_vector": "with_positions_offsets"
+                    },
+                    "author": {
+                        "type": "string",
+                        "store": "yes"
+                    },
+                    "title": {
+                        "type": "string",
+                        "store": "yes"
+                    },
+                    "name": {
+                        "type": "string",
+                        "store": "yes"
+                    },
+                    "date": {
+                        "type": "date",
+                        "format": "dateOptionalTime",
+                        "store": "yes"
+                    },
+                    "keywords": {
+                        "type": "string",
+                        "store": "yes"
+                    },
+                    "content_type": {
+                        "type": "string",
+                        "store": "yes"
+                    }
+                }
+            },
+            "name": {
+                "type": "string",
+                "analyzer": "keyword"
+            },
+            "pathEncoded": {
+                "type": "string",
+                "analyzer": "keyword"
+            },
+            "postDate": {
+                "type": "date",
+                "format": "dateOptionalTime"
+            },
+            "rootpath": {
+                "type": "string",
+                "analyzer": "keyword"
+            },
+            "virtualpath": {
+                "type": "string",
+                "analyzer": "keyword"
+            },
+            "url": {
+                "type": "string",
+                "store": "yes",
+                "index": "no"
+            },
+            "filesize": {
+                "type": "long"
+            }
         }
-      }
     }
-  }
 }

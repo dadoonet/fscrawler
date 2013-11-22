@@ -688,7 +688,8 @@ public class FsRiver extends AbstractRiverComponent implements River {
                     .field(FsRiverUtil.DOC_FIELD_PATH_ENCODED, SignTool.sign(filepath))
                     .field(FsRiverUtil.DOC_FIELD_ROOT_PATH, stats.getRootPathId())
                     .field(FsRiverUtil.DOC_FIELD_VIRTUAL_PATH,
-                            FsRiverUtil.computeVirtualPathName(stats,filepath));
+                            FsRiverUtil.computeVirtualPathName(stats,filepath))
+                    .field(FsRiverUtil.DOC_FIELD_URL, "file://" + filepath + File.separator + filename);
 
                 // Extracting content with Tika
                 // See #38: https://github.com/dadoonet/fsriver/issues/38

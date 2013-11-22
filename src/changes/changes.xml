@@ -19,6 +19,9 @@
             <action issue="38" dev="dadoonet" type="update">
                 Replace mapper-attachment plugin by Tika.
             </action>
+            <action issue="37" dev="dadoonet" type="add">
+                Store origin URL in documents.
+            </action>
         </release>
 
         <release date="2013-06-15" description="Add SSH support" version="0.3.0">

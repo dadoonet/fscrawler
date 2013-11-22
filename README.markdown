@@ -438,6 +438,11 @@ When the FSRiver detect a new type, it creates automatically a mapping for this 
         "type" : "string",
         "analyzer" : "keyword"
       },
+      "url" : {
+        "type" : "string",
+        "store" : "yes",
+        "index" : "no"
+      },
       "filesize" : {
         "type" : "long"
       }
@@ -505,6 +510,11 @@ If you want to define your own mapping to set analyzers for example, you can pus
       "virtualpath" : {
         "type" : "string",
         "analyzer" : "keyword"
+      },
+      "url" : {
+        "type" : "string",
+        "store" : "yes",
+        "index" : "no"
       },
       "filesize" : {
         "type" : "long"
@@ -643,6 +653,11 @@ from your hard drive.
         "type" : "string",
         "analyzer" : "keyword"
       },
+      "url" : {
+        "type" : "string",
+        "store" : "yes",
+        "index" : "no"
+      },
       "filesize" : {
         "type" : "long"
       }
@@ -761,7 +776,7 @@ Then, you can extract document content using fields property when searching:
 
 ```sh
 curl -XPOST http://localhost:9200/mydocs/doc/_search -d '{
-  "fields" : ["file"],
+  "fields" : ["file.file"],
   "query":{
     "match_all" : {}
   }
