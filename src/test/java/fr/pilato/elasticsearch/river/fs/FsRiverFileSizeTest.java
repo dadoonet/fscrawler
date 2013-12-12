@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.river.fs;
 
+import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -26,6 +27,7 @@ import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Map;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.junit.Assert.assertEquals;
@@ -63,7 +65,7 @@ public class FsRiverFileSizeTest extends AbstractFsRiverSimpleTest {
 		}
 		String url = dataDir.getAbsoluteFile().getAbsolutePath();
 		
-		XContentBuilder xb = jsonBuilder()
+		return jsonBuilder()
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
@@ -77,7 +79,6 @@ public class FsRiverFileSizeTest extends AbstractFsRiverSimpleTest {
                         .field("bulk_size", 1)
                     .endObject()
 				.endObject();
-		return xb;
 	}
 	
 
@@ -89,8 +90,9 @@ public class FsRiverFileSizeTest extends AbstractFsRiverSimpleTest {
         System.out.println(searchResponse.toString());
 
         for (SearchHit hit : searchResponse.getHits()) {
-            assertNotNull(hit.getSource().get("filesize"));
-            assertEquals(8359, hit.getSource().get("filesize"));
+            Map<String, Object> file = (Map<String, Object>) hit.getSource().get(FsRiverUtil.Doc.FILE);
+            assertNotNull(file);
+            assertEquals(8355, file.get(FsRiverUtil.Doc.File.FILESIZE));
         }
 	}
 }

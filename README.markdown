@@ -15,72 +15,27 @@ in the distribution.
 *WARNING*: starting from 0.4.0, you don't need anymore the Attachment Plugin as we use now directly
 [Tika](http://tika.apache.org/), see [#38](https://github.com/dadoonet/fsriver/issues/38).
 
+Please read documentation relative to the version you are using:
+
+* [0.3.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.3.0/README.markdown#filesystem-river-for-elasticsearch)
+* [0.2.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.2.0/README.markdown#filesystem-river-for-elasticsearch)
+* [0.1.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.1.0/README.markdown#filesystem-river-for-elasticsearch)
+* [0.0.3](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.3/README.markdown#filesystem-river-for-elasticsearch)
+* [0.0.2](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.2/README.markdown#filesystem-river-for-elasticsearch)
+* [0.0.1](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.1/README.markdown#filesystem-river-for-elasticsearch)
+
 Versions
 --------
 
-<table>
-	<thead>
-		<tr>
-			<td>FS River Plugin</td>
-			<td>ElasticSearch</td>
-			<td>Attachment Plugin</td>
-			<td>Tika</td>
-			<td>Release date</td>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>master (0.4.0-SNAPSHOT)</td>
-			<td>0.90.7</td>
-			<td>Not used</td>
-			<td>1.4</td>
-			<td>30/11/2013 ?</td>
-		</tr>
-		<tr>
-			<td>0.3.0</td>
-			<td>0.90.3</td>
-			<td>1.8.0</td>
-			<td></td>
-			<td>09/08/2013</td>
-		</tr>
-        <tr>
-			<td>0.2.0</td>
-			<td>0.90.0</td>
-			<td>1.7.0</td>
-			<td></td>
-			<td>30/04/2013</td>
-		</tr>
-		<tr>
-			<td>0.1.0</td>
-			<td>0.90.0.Beta1</td>
-			<td>1.6.0</td>
-			<td></td>
-			<td>15/03/2013</td>
-		</tr>
-		<tr>
-			<td>0.0.3</td>
-			<td>0.20.4</td>
-			<td>1.6.0</td>
-			<td></td>
-			<td>12/02/2013</td>
-		</tr>
-		<tr>
-			<td>0.0.2</td>
-			<td>0.19.8</td>
-			<td>1.4.0</td>
-			<td></td>
-            <td>16/07/2012</td>
-		</tr>
-		<tr>
-			<td>0.0.1</td>
-			<td>0.19.4</td>
-			<td>1.4.0</td>
-			<td></td>
-			<td>19/06/2012</td>
-		</tr>
-	</tbody>
-</table>
-
+|      FS River Plugin    | elasticsearch | Attachment Plugin | Tika | Release date |
+|-------------------------|:-------------:|:-----------------:|:----:|:------------:|
+| 0.4.0-SNAPSHOT (master) |    0.90.7     |      Not used     |  1.4 | 30/11/2013 ? |
+| 0.3.0                   |    0.90.3     |       1.8.0       |      |  09/08/2013  |
+| 0.2.0                   |    0.90.0     |       1.7.0       |      |  30/04/2013  |
+| 0.1.0                   | 0.90.0.Beta1  |       1.6.0       |      |  15/03/2013  |
+| 0.0.3                   |    0.20.4     |       1.6.0       |      |  12/02/2013  |
+| 0.0.2                   |    0.19.8     |       1.4.0       |      |  16/07/2012  |
+| 0.0.1                   |    0.19.4     |       1.4.0       |      |  19/06/2012  |
 
 Build Status
 ------------
@@ -100,16 +55,16 @@ Installation
 Just type :
 
 ```sh
-bin/plugin -install fr.pilato.elasticsearch.river/fsriver/0.3.0
+bin/plugin -install fr.pilato.elasticsearch.river/fsriver/0.4.0-SNAPSHOT
 ```
 
 This will do the job...
 
 ```
--> Installing fr.pilato.elasticsearch.river/fsriver/0.3.0...
-Trying http://download.elasticsearch.org/fr.pilato.elasticsearch.river/fsriver/fsriver-0.3.0.zip...
-Trying http://search.maven.org/remotecontent?filepath=fr/pilato/elasticsearch/river/fsriver/0.3.0/fsriver-0.3.0.zip...
-Trying https://oss.sonatype.org/service/local/repositories/releases/content/fr/pilato/elasticsearch/river/fsriver/0.3.0/fsriver-0.3.0.zip...
+-> Installing fr.pilato.elasticsearch.river/fsriver/0.4.0-SNAPSHOT...
+Trying http://download.elasticsearch.org/fr.pilato.elasticsearch.river/fsriver/fsriver-0.4.0-SNAPSHOT.zip...
+Trying http://search.maven.org/remotecontent?filepath=fr/pilato/elasticsearch/river/fsriver/0.4.0-SNAPSHOT/fsriver-0.4.0-SNAPSHOT.zip...
+Trying https://oss.sonatype.org/service/local/repositories/releases/content/fr/pilato/elasticsearch/river/fsriver/0.4.0-SNAPSHOT/fsriver-0.4.0-SNAPSHOT.zip...
 Downloading ......DONE
 Installed fsriver
 ```
@@ -173,8 +128,8 @@ curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
 }'
 ```
 
-Indexing using SSH (>= 0.3.0)
------------------------------
+Indexing using SSH
+------------------
 
 You can now index files remotely using SSH:
 
@@ -216,8 +171,8 @@ curl -XGET http://localhost:9200/docs/doc/_search -d '{
 }'
 ```
 
-Indexing JSon docs (>= 0.0.3)
------------------------------
+Indexing JSon docs
+------------------
 
 If you want to index JSon files directly without parsing them through the attachment mapper plugin, you
 can set `json_support` to `true`.
@@ -328,8 +283,8 @@ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
 }'
 ```
 
-Disabling file size field (>= 0.2.0)
-------------------------------------
+Disabling file size field
+-------------------------
 
 By default, FSRiver will create a field to store the original file size in octet.
 You can disable it using `add_filesize' option:
@@ -344,8 +299,8 @@ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
 }'
 ```
 
-Suspend or restart a file river (>= 0.2.0)
-------------------------------------------
+Suspend or restart a file river
+-------------------------------
 
 If you need to stop a river, you can call the `_stop' endpoint:
 
@@ -359,8 +314,8 @@ To restart the river from the previous point, just call `_start` end point:
 curl 'localhost:9200/_river/mydocs/_start'
 ```
 
-Ignore deleted files (>= 0.4.0)
--------------------------------
+Ignore deleted files
+--------------------
 
 If you don't want to remove indexed documents when you remove a file or a directory, you can
 set `remove_deleted` to `false` (default to `true`):
@@ -388,63 +343,91 @@ When the FSRiver detect a new type, it creates automatically a mapping for this 
 {
   "doc" : {
     "properties" : {
-      "file" : {
+      "content" : {
+        "type" : "string",
+        "store" : "yes"
+      },
+      "meta" : {
         "properties" : {
-          "file" : {
-            "type" : "string",
-            "store" : "yes",
-            "term_vector" : "with_positions_offsets"
-          },
           "author" : {
-            "type" : "string"
+              "type" : "string",
+              "store" : "yes"
           },
           "title" : {
-            "type" : "string",
-            "store" : "yes"
-          },
-          "name" : {
-            "type" : "string"
+              "type" : "string",
+              "store" : "yes"
           },
           "date" : {
-            "type" : "date",
-            "format" : "dateOptionalTime"
+              "type" : "date",
+              "format" : "dateOptionalTime",
+              "store" : "yes"
           },
           "keywords" : {
-            "type" : "string"
-          },
-          "content_type" : {
-            "type" : "string",
-            "store" : "yes"
+              "type" : "string",
+              "store" : "yes"
           }
         }
       },
-      "name" : {
-        "type" : "string",
-        "analyzer" : "keyword"
+      "file" : {
+        "properties" : {
+          "content_type" : {
+              "type" : "string",
+              "analyzer" : "simple",
+              "store" : "yes"
+          },
+          "last_modified" : {
+              "type" : "date",
+              "format" : "dateOptionalTime",
+              "store" : "yes"
+          },
+          "indexing_date" : {
+              "type" : "date",
+              "format" : "dateOptionalTime",
+              "store" : "yes"
+          },
+          "filesize" : {
+              "type" : "long",
+              "store" : "yes"
+          },
+          "indexed_chars" : {
+              "type" : "long",
+              "store" : "yes"
+          },
+          "filename" : {
+              "type" : "string",
+              "analyzer" : "simple",
+              "store" : "yes"
+          },
+          "url" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "no"
+          }
+        }
       },
-      "pathEncoded" : {
-        "type" : "string",
-        "analyzer" : "keyword"
-      },
-      "postDate" : {
-        "type" : "date",
-        "format" : "dateOptionalTime"
-      },
-      "rootpath" : {
-        "type" : "string",
-        "analyzer" : "keyword"
-      },
-      "virtualpath" : {
-        "type" : "string",
-        "analyzer" : "keyword"
-      },
-      "url" : {
-        "type" : "string",
-        "store" : "yes",
-        "index" : "no"
-      },
-      "filesize" : {
-        "type" : "long"
+      "path" : {
+        "properties" : {
+          "encoded" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "virtual" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "root" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "real" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          }
+        }
       }
     }
   }
@@ -454,124 +437,165 @@ When the FSRiver detect a new type, it creates automatically a mapping for this 
 Creating your own mapping (analyzers)
 -------------------------------------
 
-If you want to define your own mapping to set analyzers for example, you can push the mapping before starting the FS River.
+If you want to define your own mapping to set analyzers for example, you can push the mapping **before** starting the FS River.
 
-```javascript
-{
+```sh
+# Create index
+$ curl -XPUT "http://localhost:9200/docs/"
+
+# Create the mapping
+$ curl -XPUT "http://localhost:9200/docs/doc/_mapping" -d '{
   "doc" : {
     "properties" : {
-      "file" : {
+      "content" : {
+        "type" : "string",
+        "store" : "yes",
+        "analyzer" : "french"
+      },
+      "meta" : {
         "properties" : {
-          "file" : {
-            "type" : "string",
-            "store" : "yes",
-            "term_vector" : "with_positions_offsets",
-            "analyzer" : "french"
-          },
           "author" : {
-            "type" : "string"
+              "type" : "string",
+              "store" : "yes"
           },
           "title" : {
-            "type" : "string",
-            "store" : "yes"
-          },
-          "name" : {
-            "type" : "string"
+              "type" : "string",
+              "store" : "yes"
           },
           "date" : {
-            "type" : "date",
-            "format" : "dateOptionalTime"
+              "type" : "date",
+              "format" : "dateOptionalTime",
+              "store" : "yes"
           },
           "keywords" : {
-            "type" : "string"
-          },
-          "content_type" : {
-            "type" : "string",
-            "store" : "yes"
+              "type" : "string",
+              "store" : "yes"
           }
         }
       },
-      "name" : {
-        "type" : "string",
-        "analyzer" : "keyword"
+      "file" : {
+        "properties" : {
+          "content_type" : {
+              "type" : "string",
+              "analyzer" : "simple",
+              "store" : "yes"
+          },
+          "last_modified" : {
+              "type" : "date",
+              "format" : "dateOptionalTime",
+              "store" : "yes"
+          },
+          "indexing_date" : {
+              "type" : "date",
+              "format" : "dateOptionalTime",
+              "store" : "yes"
+          },
+          "filesize" : {
+              "type" : "long",
+              "store" : "yes"
+          },
+          "indexed_chars" : {
+              "type" : "long",
+              "store" : "yes"
+          },
+          "filename" : {
+              "type" : "string",
+              "analyzer" : "simple",
+              "store" : "yes"
+          },
+          "url" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "no"
+          }
+        }
       },
-      "pathEncoded" : {
-        "type" : "string",
-        "analyzer" : "keyword"
-      },
-      "postDate" : {
-        "type" : "date",
-        "format" : "dateOptionalTime"
-      },
-      "rootpath" : {
-        "type" : "string",
-        "analyzer" : "keyword"
-      },
-      "virtualpath" : {
-        "type" : "string",
-        "analyzer" : "keyword"
-      },
-      "url" : {
-        "type" : "string",
-        "store" : "yes",
-        "index" : "no"
-      },
-      "filesize" : {
-        "type" : "long"
+      "path" : {
+        "properties" : {
+          "encoded" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "virtual" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "root" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "real" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          }
+        }
       }
     }
   }
+}'
+```
+
+Generated fields
+----------------
+
+FS River creates the following fields :
+
+|   Field (>= 0.4.0)   |   Field (< 0.4.0)    |                Description                  |                    Example                  |
+|----------------------|----------------------|---------------------------------------------|---------------------------------------------|
+| `content`            | `file.file`          | Extracted content                           | `"This is my text!"`                        |
+| `meta.author`        | `file.author`        | Author if any in document metadata          | `"David Pilato"`                            |
+| `meta.title`         | `file.title`         | Title if any in document metadata           | `"My document title"`                       |
+| `meta.date`          |                      | Document date if any in document metadata   | `"2013-04-04T15:21:35"`                     |
+| `meta.keywords`      |                      | Keywords if any in document metadata        | `["river","fs","elasticsearch"]`            |
+| `file.content_type`  | `file.content_type`  | Content Type                                | `"application/vnd.oasis.opendocument.text"` |
+| `file.last_modified` |                      | Last modification date                      | `1386855978000`                             |
+| `file.indexing_date` | `postDate`           | Indexing date                               | `"2013-12-12T13:50:58.758Z"`                |
+| `file.filesize`      | `filesize`           | File size in bytes                          | `1256362`                                   |
+| `file.indexed_chars` | `file.indexed_chars` | Extracted chars if `fs.indexed_chars` > 0   | `100000`                                    |
+| `file.filename`      | `name`               | Original file name                          | `"mydocument.pdf"`                          |
+| `file.url`           |                      | Original file url                           | `"file://tmp/mydir/otherdir/mydocument.pdf"`|
+| `path.encoded`       | `pathEncoded`        | BASE64 encoded file path (for internal use) | `"112aed83738239dbfe4485f024cd4ce1"`        |
+| `path.virtual`       | `virtualpath`        | Relative path from root path                | `"mydir/otherdir"`                          |
+| `path.root`          | `rootpath`           | BASE64 encoded root path (for internal use) | `"112aed83738239dbfe4485f024cd4ce1"`        |
+| `path.real`          |                      | Actual real path name                       | `"/tmp/mydir/otherdir/mydocument.pdf"`      |
+
+Here is a typical JSON document generated by the river:
+
+```javascript
+{
+   "file":{
+      "filename":"test.odt",
+      "last_modified":1386855978000,
+      "indexing_date":"2013-12-12T13:50:58.758Z",
+      "content_type":"application/vnd.oasis.opendocument.text",
+      "url":"file:///tmp/testfs_metadata/test.odt",
+      "indexed_chars":100000,
+      "filesize":8355
+   },
+   "path":{
+      "encoded":"bceb3913f6d793e915beb70a4735592",
+      "root":"bceb3913f6d793e915beb70a4735592",
+      "virtual":"",
+      "real":"/tmp/testfs_metadata/test.odt"
+   },
+   "meta":{
+      "author":"David Pilato",
+      "title":"Mon titre",
+      "date":"2013-04-04T15:21:35",
+      "keywords":[
+         "fs",
+         "elasticsearch",
+         "river"
+      ]
+   },
+   "content":"Bonjour David\n\n\n"
 }
 ```
 
-To send mapping to Elasticsearch, refer to the [Put Mapping API](http://www.elasticsearch.org/guide/reference/api/admin-indices-put-mapping.html)
-
-Meta fields
------------
-
-FS River creates some meta fields :
-
-<table>
-	<thead>
-		<tr>
-			<td>Field</td>
-			<td>Description</td>
-			<td>Example</td>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>name</td>
-			<td>Original file name</td>
-			<td>mydocument.pdf</td>
-		</tr>
-		<tr>
-			<td>pathEncoded</td>
-			<td>BASE64 encoded file path (for internal use)</td>
-			<td>112aed83738239dbfe4485f024cd4ce1</td>
-		</tr>
-		<tr>
-			<td>postDate</td>
-			<td>Indexing date</td>
-			<td>1312893360000</td>
-		</tr>
-		<tr>
-			<td>rootpath</td>
-			<td>BASE64 encoded root path (for internal use)</td>
-			<td>112aed83738239dbfe4485f024cd4ce1</td>
-		</tr>
-		<tr>
-			<td>virtualpath</td>
-			<td>Relative path</td>
-			<td>mydir/otherdir</td>
-		</tr>
-		<tr>
-			<td>filesize</td>
-			<td>File size in octet</td>
-			<td>1256362</td>
-		</tr>
-    </tbody>
-</table>
 
 Advanced search
 ---------------
@@ -582,7 +606,7 @@ You can use meta fields to perform search on.
 curl -XGET http://localhost:9200/docs/doc/_search -d '{
   "query" : {
     "term" : {
-        "name" : "mydocument.pdf"
+        "file.filename" : "mydocument.pdf"
     }
   }
 }'
@@ -594,72 +618,99 @@ Disabling _source
 If you don't need to highlight your search responses nor need to get back the original file from
 Elasticsearch, you can think about disabling `_source` field.
 
-In that case, you need to store `name` field. Otherwise, FSRiver won't be able to remove documents when they disappear
-from your hard drive.
+In that case, you need to store `file.filename` field. Otherwise, FSRiver won't be able to remove documents when
+they disappear from your hard drive.
 
 ```javascript
 {
   "doc" : {
     "_source" : { "enabled" : false },
     "properties" : {
-      "file" : {
+      "content" : {
+        "type" : "string",
+        "store" : "yes"
+      },
+      "meta" : {
         "properties" : {
-          "file" : {
-            "type" : "string",
-            "store" : "yes",
-            "term_vector" : "with_positions_offsets"
-          },
           "author" : {
-            "type" : "string"
+              "type" : "string",
+              "store" : "yes"
           },
           "title" : {
-            "type" : "string",
-            "store" : "yes"
-          },
-          "name" : {
-            "type" : "string"
+              "type" : "string",
+              "store" : "yes"
           },
           "date" : {
-            "type" : "date",
-            "format" : "dateOptionalTime"
+              "type" : "date",
+              "format" : "dateOptionalTime",
+              "store" : "yes"
           },
           "keywords" : {
-            "type" : "string"
-          },
-          "content_type" : {
-            "type" : "string",
-            "store" : "yes"
+              "type" : "string",
+              "store" : "yes"
           }
         }
       },
-      "name" : {
-        "type" : "string",
-        "analyzer" : "keyword",
-        "store" : true
+      "file" : {
+        "properties" : {
+          "content_type" : {
+              "type" : "string",
+              "analyzer" : "simple",
+              "store" : "yes"
+          },
+          "last_modified" : {
+              "type" : "date",
+              "format" : "dateOptionalTime",
+              "store" : "yes"
+          },
+          "indexing_date" : {
+              "type" : "date",
+              "format" : "dateOptionalTime",
+              "store" : "yes"
+          },
+          "filesize" : {
+              "type" : "long",
+              "store" : "yes"
+          },
+          "indexed_chars" : {
+              "type" : "long",
+              "store" : "yes"
+          },
+          "filename" : {
+              "type" : "string",
+              "analyzer" : "simple",
+              "store" : "yes"
+          },
+          "url" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "no"
+          }
+        }
       },
-      "pathEncoded" : {
-        "type" : "string",
-        "analyzer" : "keyword"
-      },
-      "postDate" : {
-        "type" : "date",
-        "format" : "dateOptionalTime"
-      },
-      "rootpath" : {
-        "type" : "string",
-        "analyzer" : "keyword"
-      },
-      "virtualpath" : {
-        "type" : "string",
-        "analyzer" : "keyword"
-      },
-      "url" : {
-        "type" : "string",
-        "store" : "yes",
-        "index" : "no"
-      },
-      "filesize" : {
-        "type" : "long"
+      "path" : {
+        "properties" : {
+          "encoded" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "virtual" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "root" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "real" : {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          }
+        }
       }
     }
   }
@@ -668,8 +719,6 @@ from your hard drive.
 
 Extracted characters
 --------------------
-
-**From version 0.4.0**:
 
 By default FSRiver will extract only a limited size of characters (100000).
 But, you can set `indexed_chars` to `1` in FSRiver definition.
@@ -692,132 +741,18 @@ Setting `indexed_chars : x` will compute file size, multiply it with x and pass 
 That means that a value of 0.8 will extract 20% less characters than the file size. A value of 1.5 will extract 50% more
 characters than the filesize (think compressed files). A value of 1, will extract exactly the filesize.
 
-**Before version 0.4.0**:
-
-By default the mapper attachment plugin extracts only a limited size of characters (100000 by default).
-Setting `index.mapping.attachment.indexed_chars` property in your `elasticsearch.yml` file for each node
-may help to index bigger files.
-
-`indexed_chars` option will add a special field `_indexed_chars` to the document. It will be set to the filesize.
-This field is used by mapper attachment plugin to define the number of extracted characters.
-
-* `indexed_chars : 0` (default) will use default mapper attachment settings (`index.mapping.attachment.indexed_chars`)
-* `indexed_chars : x` will compute file size, multiply it with x and pass it to Tika using `_indexed_chars` field.
+Note that Tika requires to allocate in memory a data structure to extract text. Setting `indexed_chars` to a high
+number will require more memory!
 
 
-Get content_type
--------------------------
+Migrating from version < 0.4.0
+==============================
 
-By default, `content_type` is detected by the FSRiver stored in documents. So, you can easily access
-it:
+Some important changes have been done in FSRiver 0.4.0:
 
-```sh
-curl -XPOST http://localhost:9200/mydocs/doc/_search -d '{
-  "fields" : ["file.content_type", "_source"],
-  "query":{
-    "match_all" : {}
-  }
-}'
-```
-
-gives:
-
-```javascript
-{
-  "took" : 19,
-  "timed_out" : false,
-  "_shards" : {
-    "total" : 5,
-    "successful" : 5,
-    "failed" : 0
-  },
-  "hits" : {
-    "total" : 1,
-    "max_score" : 1.0,
-    "hits" : [ {
-      "_index" : "fsrivermetadatatest",
-      "_type" : "doc",
-      "_id" : "fb6115c44876aa1e94cc4f86b03ba93",
-      "_score" : 1.0,
-      "fields" : {
-        "file.content_type" : "application/vnd.oasis.opendocument.text",
-        "_source" : "..."
-      }
-    } ]
-  }
-}
-```
-
-Storing extracted content
--------------------------
-
-If you need to store and retrieve as is extracted content by the FSRiver, you simply
-have to set `store` to `yes` for your `file` field in your mapping:
-
-```javascript
-{
-  "doc": {
-    "properties": {
-      "file": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "store": "yes",
-            "term_vector": "with_positions_offsets"
-          }
-        }
-      }
-    }
-  }
-}
-````
-
-Then, you can extract document content using fields property when searching:
-
-```sh
-curl -XPOST http://localhost:9200/mydocs/doc/_search -d '{
-  "fields" : ["file.file"],
-  "query":{
-    "match_all" : {}
-  }
-}'
-```
-
-gives:
-
-```javascript
-{
-  "took" : 19,
-  "timed_out" : false,
-  "_shards" : {
-    "total" : 5,
-    "successful" : 5,
-    "failed" : 0
-  },
-  "hits" : {
-    "total" : 1,
-    "max_score" : 1.0,
-    "hits" : [ {
-      "_index" : "fsrivermetadatatest",
-      "_type" : "doc",
-      "_id" : "fb6115c44876aa1e94cc4f86b03ba93",
-      "_score" : 1.0,
-      "fields" : {
-        "file" : "Bonjour David\n\n\n"
-      }
-    } ]
-  }
-}
-```
-
-
-Behind the scene
-================
-
-How it works ?
---------------
-
-TO BE COMPLETED
+* You don't have to add attachment plugin anymore as we directly rely on Apache Tika.
+* Fields have changed. You should look at [Generated Fields](#generated-fields) section
+to know how the old fields have been renamed.
 
 License
 =======

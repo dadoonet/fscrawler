@@ -36,25 +36,12 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
     private static String dir = "testfs_source_disabled";
     private static String filename = "roottxtfile.txt";
 
-	/**
+    /**
 	 * We use the default mapping
 	 */
 	@Override
 	public String mapping() throws Exception {
-        XContentBuilder xb = jsonBuilder()
-                .startObject()
-                .startObject("doc")
-                    .startObject("_source").field("enabled", false).endObject()
-                    .startObject("properties")
-                        .startObject(FsRiverUtil.DOC_FIELD_NAME)
-                            .field("type", "string")
-                            .field("analyzer","keyword")
-                            .field("store", true)
-                        .endObject()
-                    .endObject()
-                .endObject()
-                .endObject();
-
+        XContentBuilder xb = FsRiverUtil.buildFsFileMapping("doc", false);
 		return xb.string();
 	}
 
@@ -82,7 +69,7 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
 
         String url = dataDir.getAbsoluteFile().getAbsolutePath();
 		
-		XContentBuilder xb = jsonBuilder()
+		return jsonBuilder()
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
@@ -95,7 +82,6 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
                         .field("bulk_size", 1)
                     .endObject()
 				.endObject();
-		return xb;
 	}
 	
 

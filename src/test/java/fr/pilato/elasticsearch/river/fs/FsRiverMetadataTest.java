@@ -39,8 +39,7 @@ public class FsRiverMetadataTest extends AbstractFsRiverSimpleTest {
 	 */
 	@Override
 	public String mapping() throws Exception {
-        String mapping = copyToStringFromClasspath("/testfs_metadata/odt-mapping.json");
-		return mapping;
+		return copyToStringFromClasspath("/testfs_metadata/odt-mapping.json");
 	}
 
 	/**
@@ -61,14 +60,15 @@ public class FsRiverMetadataTest extends AbstractFsRiverSimpleTest {
 			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
 		}
 		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
-		XContentBuilder xb = jsonBuilder()
+
+        return jsonBuilder()
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
 						.field("url", url)
 						.field("update_rate", updateRate)
                         .field("excludes", "*.json")
+                        .field("indexed_chars", 1)
 					.endObject()
                     .startObject("index")
                         .field("index", indexName())
@@ -76,7 +76,6 @@ public class FsRiverMetadataTest extends AbstractFsRiverSimpleTest {
                         .field("bulk_size", 1)
                     .endObject()
                 .endObject();
-		return xb;
 	}
 	
 
@@ -88,11 +87,16 @@ public class FsRiverMetadataTest extends AbstractFsRiverSimpleTest {
                 .execute().actionGet();
 
         for (SearchHit hit : searchResponse.getHits()) {
-            assertNotNull(hit.getFields().get("file.content_type"));
-            assertNotNull(hit.getFields().get("file.keywords"));
-            assertNotNull(hit.getFields().get("file.date"));
-            assertNotNull(hit.getFields().get("file.title"));
-            assertNotNull(hit.getFields().get(FsRiverUtil.DOC_FIELD_URL));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.FILENAME));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.CONTENT_TYPE));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.URL));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.FILESIZE));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.INDEXING_DATE));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.INDEXED_CHARS));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.LAST_MODIFIED));
+
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.META + "." + FsRiverUtil.Doc.Meta.TITLE));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.META + "." + FsRiverUtil.Doc.Meta.DATE));
         }
 
 	}

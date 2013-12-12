@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.river.fs;
 
+import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -63,7 +64,7 @@ public class FsRiverFileSizeLimitTest extends AbstractFsRiverSimpleTest {
 		}
 		String url = dataDir.getAbsoluteFile().getAbsolutePath();
 		
-		XContentBuilder xb = jsonBuilder()
+		return jsonBuilder()
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
@@ -78,7 +79,6 @@ public class FsRiverFileSizeLimitTest extends AbstractFsRiverSimpleTest {
                         .field("bulk_size", 1)
                     .endObject()
 				.endObject();
-		return xb;
 	}
 	
 
@@ -90,10 +90,12 @@ public class FsRiverFileSizeLimitTest extends AbstractFsRiverSimpleTest {
                 .execute().actionGet();
 
         for (SearchHit hit : searchResponse.getHits()) {
-            assertNotNull(hit.getFields().get("file.file"));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.CONTENT));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.INDEXED_CHARS));
 
             // Our original text: "Bonjour David..." should be truncated
-            assertEquals("Bonjour ", hit.getFields().get("file.file").getValue());
+            assertEquals("Bonjour ", hit.getFields().get(FsRiverUtil.Doc.CONTENT).getValue());
+            assertEquals(8L, hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.INDEXED_CHARS).getValue());
         }
 	}
 }

@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import java.io.File;
 
+import static junit.framework.Assert.assertNull;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.junit.Assert.assertNotNull;
 
@@ -61,7 +62,7 @@ public class FsRiverMetadataDefaultTest extends AbstractFsRiverSimpleTest {
 		}
 		String url = dataDir.getAbsoluteFile().getAbsolutePath();
 		
-		XContentBuilder xb = jsonBuilder()
+		return jsonBuilder()
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
@@ -75,7 +76,6 @@ public class FsRiverMetadataDefaultTest extends AbstractFsRiverSimpleTest {
                         .field("bulk_size", 1)
                     .endObject()
 				.endObject();
-		return xb;
 	}
 	
 
@@ -87,11 +87,16 @@ public class FsRiverMetadataDefaultTest extends AbstractFsRiverSimpleTest {
                 .execute().actionGet();
 
         for (SearchHit hit : searchResponse.getHits()) {
-            assertNotNull(hit.getFields().get("file.file"));
-            assertNotNull(hit.getFields().get("file.content_type"));
-            assertNotNull(hit.getFields().get("file.title"));
-            assertNotNull(hit.getFields().get(FsRiverUtil.DOC_FIELD_URL));
-        }
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.FILENAME));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.CONTENT_TYPE));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.URL));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.FILESIZE));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.INDEXING_DATE));
+            assertNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.INDEXED_CHARS));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.LAST_MODIFIED));
 
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.META + "." + FsRiverUtil.Doc.Meta.TITLE));
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.META + "." + FsRiverUtil.Doc.Meta.DATE));
+        }
 	}
 }

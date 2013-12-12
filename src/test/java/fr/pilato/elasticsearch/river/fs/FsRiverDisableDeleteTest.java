@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.river.fs;
 
-import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
+import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
 
@@ -33,28 +33,14 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 public class FsRiverDisableDeleteTest extends AbstractFsRiverSimpleTest {
     private static int updateRate = 2 * 1000;
     private static String dir = "testfs_delete_disabled";
-    private static String filename = "deletedfile.txt";
+    private static String filename = "roottxtfile.txt";
 
 	/**
 	 * We use the default mapping
 	 */
 	@Override
 	public String mapping() throws Exception {
-        XContentBuilder xb = jsonBuilder()
-                .startObject()
-                .startObject("doc")
-                    .startObject("_source").field("enabled", false).endObject()
-                    .startObject("properties")
-                        .startObject(FsRiverUtil.DOC_FIELD_NAME)
-                            .field("type", "string")
-                            .field("analyzer","keyword")
-                            .field("store", true)
-                        .endObject()
-                    .endObject()
-                .endObject()
-                .endObject();
-
-		return xb.string();
+		return null;
 	}
 
 	/**
@@ -72,8 +58,8 @@ public class FsRiverDisableDeleteTest extends AbstractFsRiverSimpleTest {
 		}
 
         String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
-		XContentBuilder xb = jsonBuilder()
+
+        return jsonBuilder()
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
@@ -87,17 +73,23 @@ public class FsRiverDisableDeleteTest extends AbstractFsRiverSimpleTest {
                         .field("bulk_size", 1)
                     .endObject()
 				.endObject();
-		return xb;
 	}
 	
 
 	@Test
 	public void deleted_file_should_not_be_removed() throws Exception {
+        // We first create a copy of a file
+        File file1 = new File("./target/test-classes/" + dir + "/" + filename);
+        File file2 = new File("./target/test-classes/" + dir + "/deleted_" + filename);
+        FileSystemUtils.copyFile(file1, file2);
+
+        Thread.sleep(updateRate + 1000);
+
         // We should have two docs first
         countTestHelper(null, 2);
 
         // We remove a file
-        File file = new File("./target/test-classes/" + dir + "/" + filename);
+        File file = new File("./target/test-classes/" + dir + "/deleted_" + filename);
         try {
             file.delete();
         } catch (Exception e) {

@@ -22,6 +22,9 @@
             <action issue="37" dev="dadoonet" type="add">
                 Store origin URL in documents.
             </action>
+            <action issue="39" dev="dadoonet" type="update">
+                New json document mapping for docs. (Breaking)
+            </action>
         </release>
 
         <release date="2013-06-15" description="Add SSH support" version="0.3.0">

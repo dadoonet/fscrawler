@@ -1,67 +1,91 @@
 {
-    "doc": {
-        "properties": {
-            "file": {
-                "properties": {
-                    "file": {
-                        "type": "string",
-                        "store": "yes",
-                        "term_vector": "with_positions_offsets"
+    "doc" : {
+        "properties" : {
+            "content" : {
+                "type" : "string",
+                "store" : "yes"
+            },
+            "meta" : {
+                "properties" : {
+                    "author" : {
+                        "type" : "string",
+                        "store" : "yes"
                     },
-                    "author": {
-                        "type": "string",
-                        "store": "yes"
+                    "title" : {
+                        "type" : "string",
+                        "store" : "yes"
                     },
-                    "title": {
-                        "type": "string",
-                        "store": "yes"
+                    "date" : {
+                        "type" : "date",
+                        "format" : "dateOptionalTime",
+                        "store" : "yes"
                     },
-                    "name": {
-                        "type": "string",
-                        "store": "yes"
-                    },
-                    "date": {
-                        "type": "date",
-                        "format": "dateOptionalTime",
-                        "store": "yes"
-                    },
-                    "keywords": {
-                        "type": "string",
-                        "store": "yes"
-                    },
-                    "content_type": {
-                        "type": "string",
-                        "store": "yes"
+                    "keywords" : {
+                        "type" : "string",
+                        "store" : "yes"
                     }
                 }
             },
-            "name": {
-                "type": "string",
-                "analyzer": "keyword"
+            "file" : {
+                "properties" : {
+                    "content_type" : {
+                        "type" : "string",
+                        "analyzer" : "simple",
+                        "store" : "yes"
+                    },
+                    "last_modified" : {
+                        "type" : "date",
+                        "format" : "dateOptionalTime",
+                        "store" : "yes"
+                    },
+                    "indexing_date" : {
+                        "type" : "date",
+                        "format" : "dateOptionalTime",
+                        "store" : "yes"
+                    },
+                    "filesize" : {
+                        "type" : "long",
+                        "store" : "yes"
+                    },
+                    "indexed_chars" : {
+                        "type" : "long",
+                        "store" : "yes"
+                    },
+                    "filename" : {
+                        "type" : "string",
+                        "analyzer" : "simple",
+                        "store" : "yes"
+                    },
+                    "url" : {
+                        "type" : "string",
+                        "store" : "yes",
+                        "index" : "no"
+                    }
+                }
             },
-            "pathEncoded": {
-                "type": "string",
-                "analyzer": "keyword"
-            },
-            "postDate": {
-                "type": "date",
-                "format": "dateOptionalTime"
-            },
-            "rootpath": {
-                "type": "string",
-                "analyzer": "keyword"
-            },
-            "virtualpath": {
-                "type": "string",
-                "analyzer": "keyword"
-            },
-            "url": {
-                "type": "string",
-                "store": "yes",
-                "index": "no"
-            },
-            "filesize": {
-                "type": "long"
+            "path" : {
+                "properties" : {
+                    "encoded" : {
+                        "type" : "string",
+                        "store" : "yes",
+                        "index" : "not_analyzed"
+                    },
+                    "virtual" : {
+                        "type" : "string",
+                        "store" : "yes",
+                        "index" : "not_analyzed"
+                    },
+                    "root" : {
+                        "type" : "string",
+                        "store" : "yes",
+                        "index" : "not_analyzed"
+                    },
+                    "real" : {
+                        "type" : "string",
+                        "store" : "yes",
+                        "index" : "not_analyzed"
+                    }
+                }
             }
         }
     }

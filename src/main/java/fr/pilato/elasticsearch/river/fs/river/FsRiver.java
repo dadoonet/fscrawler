@@ -327,11 +327,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					throw new Exception("Could not define mapping for type ["+index+"]/["+type+"].");
 				} else {
 					if (logger.isDebugEnabled()) {
-						if (mappingExist) {
-							logger.debug("Mapping definition for ["+index+"]/["+type+"] succesfully merged.");
-						} else {
-							logger.debug("Mapping definition for ["+index+"]/["+type+"] succesfully created.");
-						}
+                        logger.debug("Mapping definition for ["+index+"]/["+type+"] succesfully created.");
 					}
 				}
 			} else {
@@ -347,6 +343,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 	
 	
 	private class FSParser implements Runnable {
+        private static final String field_filename = FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.FILENAME;
 		private FsRiverFeedDefinition fsdef;
 
 		private ScanStatistic stats;
@@ -479,7 +476,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			esIndex("_river", riverName.name(), lastupdateField, xb);
 		}
 
-        private FileAbstractor buildFileAbstractor(String filepath) throws Exception {
+        private FileAbstractor buildFileAbstractor() throws Exception {
             // What is the protocol used?
             if (PROTOCOL.LOCAL.equals(fsdef.getProtocol())) {
                 // Local FS
@@ -498,7 +495,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 				throws Exception {
 
             if (logger.isDebugEnabled()) logger.debug("Indexing [{}] content", filepath);
-            FileAbstractor path = buildFileAbstractor(filepath);
+            FileAbstractor path = buildFileAbstractor();
 
 			final Collection<FileAbstractModel> children = path.getFiles(filepath);
 			Collection<String> fsFiles = new ArrayList<String>();
@@ -582,25 +579,25 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					.setTypes(typeName)
 					.setQuery(
 							QueryBuilders.termQuery(
-									FsRiverUtil.DOC_FIELD_PATH_ENCODED,
+									FsRiverUtil.Doc.Path.ENCODED,
 									SignTool.sign(path)))
                     .setFrom(0)
 					.setSize(50000)
-                    .addField(FsRiverUtil.DOC_FIELD_NAME)
+                    .addField(field_filename)
                     .execute().actionGet();
 
 			if (response.getHits() != null
 					&& response.getHits().getHits() != null) {
 				for (SearchHit hit : response.getHits().getHits()) {
                     String name = null;
-                    if (hit.getSource() != null && hit.getSource().get(FsRiverUtil.DOC_FIELD_NAME) != null) {
-                        name = hit.getSource().get(FsRiverUtil.DOC_FIELD_NAME).toString();
-                    } else if (hit.getFields() != null && hit.getFields().get(FsRiverUtil.DOC_FIELD_NAME) != null) {
-                        name = hit.getFields().get(FsRiverUtil.DOC_FIELD_NAME).getValue().toString();
+                    if (hit.getSource() != null && hit.getSource().get(FsRiverUtil.Doc.File.FILENAME) != null) {
+                        name = hit.getSource().get(FsRiverUtil.Doc.File.FILENAME).toString();
+                    } else if (hit.getFields() != null && hit.getFields().get(field_filename) != null) {
+                        name = hit.getFields().get(field_filename).getValue().toString();
                     } else {
                         // Houston, we have a problem ! We can't get the old files from ES
                         logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
-                                "Please enable _source or store field [{}]", path, FsRiverUtil.DOC_FIELD_NAME);
+                                "Please enable _source or store field [{}]", path, field_filename);
                     }
 					files.add(name);
 				}
@@ -620,7 +617,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					.setTypes(FsRiverUtil.INDEX_TYPE_FOLDER)
 					.setQuery(
 							QueryBuilders.termQuery(
-									FsRiverUtil.DIR_FIELD_PATH_ENCODED,
+                                    FsRiverUtil.Doc.Path.ENCODED,
 									SignTool.sign(path))).setFrom(0)
 					.setSize(50000).execute().actionGet();
 
@@ -628,7 +625,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 					&& response.getHits().getHits() != null) {
 				for (SearchHit hit : response.getHits().getHits()) {
 					String name = hit.getSource()
-							.get(FsRiverUtil.DIR_FIELD_NAME).toString();
+							.get(FsRiverUtil.Doc.File.FILENAME).toString();
 					files.add(name);
 				}
 			}
@@ -639,12 +636,6 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
         /**
          * Index a file
-         * @param stats
-         * @param filename
-         * @param filepath
-         * @param fileReader
-         * @param lastmodified
-         * @throws Exception
          */
 		private void indexFile(ScanStatistic stats, String filename, String filepath, InputStream fileReader, long lastmodified) throws Exception {
             if (logger.isDebugEnabled()) logger.debug("fetching content from [{}],[{}]", filepath, filename);
@@ -653,7 +644,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			// image size
 			byte[] buffer = new byte[1024];
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			int i = 0;
+			int i;
 			while (-1 != (i = fileReader.read(buffer))) {
 				bos.write(buffer, 0, i);
 			}
@@ -679,26 +670,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         id,
                         data);
             } else {
-                XContentBuilder source = jsonBuilder().startObject();
-
-                // We add metadata
-                source
-                    .field(FsRiverUtil.DOC_FIELD_NAME, filename)
-                    .field(FsRiverUtil.DOC_FIELD_DATE, lastmodified)
-                    .field(FsRiverUtil.DOC_FIELD_PATH_ENCODED, SignTool.sign(filepath))
-                    .field(FsRiverUtil.DOC_FIELD_ROOT_PATH, stats.getRootPathId())
-                    .field(FsRiverUtil.DOC_FIELD_VIRTUAL_PATH,
-                            FsRiverUtil.computeVirtualPathName(stats,filepath))
-                    .field(FsRiverUtil.DOC_FIELD_URL, "file://" + filepath + File.separator + filename);
-
                 // Extracting content with Tika
                 // See #38: https://github.com/dadoonet/fsriver/issues/38
                 int indexedChars = 100000;
                 if (fsDefinition.getIndexedChars() > 0) {
                     indexedChars = (int) Math.round(data.length * fsDefinition.getIndexedChars());
-                    source.field(FsRiverUtil.DOC_FIELD_INDEXED_CHARS, indexedChars);
                 }
-
                 Metadata metadata = new Metadata();
 
                 String parsedContent;
@@ -710,27 +687,57 @@ public class FsRiver extends AbstractRiverComponent implements River {
                     parsedContent = "";
                 }
 
+                XContentBuilder source = jsonBuilder().startObject();
+
+                // File
+                source
+                        .startObject(FsRiverUtil.Doc.FILE)
+                        .field(FsRiverUtil.Doc.File.FILENAME, filename)
+                        .field(FsRiverUtil.Doc.File.LAST_MODIFIED, lastmodified)
+                        .field(FsRiverUtil.Doc.File.INDEXING_DATE, new Date())
+                        .field(FsRiverUtil.Doc.File.CONTENT_TYPE, metadata.get(Metadata.CONTENT_TYPE))
+                        .field(FsRiverUtil.Doc.File.URL, "file://" + filepath + File.separator + filename);
+
+                // We only add `indexed_chars` if we have other value than default
+                if (fsDefinition.getIndexedChars() > 0) {
+                    source.field(FsRiverUtil.Doc.File.INDEXED_CHARS, indexedChars);
+                }
+
                 if (fsDefinition.isAddFilesize()) {
                     if (metadata.get(Metadata.CONTENT_LENGTH) != null) {
                         // We try to get CONTENT_LENGTH from Tika first
-                        source.field(FsRiverUtil.DOC_FIELD_FILESIZE, metadata.get(Metadata.CONTENT_LENGTH));
+                        source.field(FsRiverUtil.Doc.File.FILESIZE, metadata.get(Metadata.CONTENT_LENGTH));
                     } else {
                         // Otherwise, we use our byte[] length
-                        source.field(FsRiverUtil.DOC_FIELD_FILESIZE, data.length);
+                        source.field(FsRiverUtil.Doc.File.FILESIZE, data.length);
                     }
                 }
+                source.endObject(); // File
 
-                source.startObject("file")
-                    .field("_name", filename)
-                    .field("file", parsedContent)
-                    .field("author", metadata.get(Metadata.AUTHOR))
-                    .field("title", metadata.get(Metadata.TITLE))
-                    .field("name", filename)
-                    .field("date", metadata.get(Metadata.DATE))
-                    .field("keywords", metadata.get(Metadata.KEYWORDS))
-                    .field("content_type", metadata.get(Metadata.CONTENT_TYPE))
-                ;
-                source.endObject().endObject();
+                // Path
+                source
+                        .startObject(FsRiverUtil.Doc.PATH)
+                        .field(FsRiverUtil.Doc.Path.ENCODED, SignTool.sign(filepath))
+                        .field(FsRiverUtil.Doc.Path.ROOT, stats.getRootPathId())
+                        .field(FsRiverUtil.Doc.Path.VIRTUAL,
+                            FsRiverUtil.computeVirtualPathName(stats,filepath))
+                        .field(FsRiverUtil.Doc.Path.REAL, filepath + File.separator + filename)
+                        .endObject(); // Path
+
+                // Meta
+                source
+                        .startObject(FsRiverUtil.Doc.META)
+                        .field(FsRiverUtil.Doc.Meta.AUTHOR, metadata.get(Metadata.AUTHOR))
+                        .field(FsRiverUtil.Doc.Meta.TITLE, metadata.get(Metadata.TITLE))
+                        .field(FsRiverUtil.Doc.Meta.DATE, metadata.get(Metadata.DATE))
+                        .array(FsRiverUtil.Doc.Meta.KEYWORDS, Strings.commaDelimitedListToStringArray(metadata.get(Metadata.KEYWORDS)))
+                        .endObject(); // Meta
+
+                // Doc content
+                source.field(FsRiverUtil.Doc.CONTENT, parsedContent);
+
+                // End of our document
+                source.endObject();
 
                 // We index
                 esIndex(indexName,
@@ -741,60 +748,45 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
  		}
 
+        private void indexDirectory(String id, String name, String root, String virtual, String encoded)
+                throws Exception {
+            esIndex(indexName,
+                    FsRiverUtil.INDEX_TYPE_FOLDER,
+                    id,
+                    jsonBuilder().startObject()
+                            .field(FsRiverUtil.Dir.NAME, name)
+                            .field(FsRiverUtil.Dir.ROOT, root)
+                            .field(FsRiverUtil.Dir.VIRTUAL, virtual)
+                            .field(FsRiverUtil.Dir.ENCODED, encoded)
+                            .endObject());
+        }
+
 		/**
 		 * Index a directory
-		 *
-		 * @param stats
-		 * @param filename
-         * @param filepath
-		 * @throws Exception
 		 */
 		private void indexDirectory(ScanStatistic stats, String filename, String filepath)
 				throws Exception {
-			esIndex(indexName,
-					FsRiverUtil.INDEX_TYPE_FOLDER,
-					SignTool.sign(filepath),
-					jsonBuilder()
-					.startObject()
-					.field(FsRiverUtil.DIR_FIELD_NAME, filename)
-					.field(FsRiverUtil.DIR_FIELD_ROOT_PATH,
-							stats.getRootPathId())
-							.field(FsRiverUtil.DIR_FIELD_VIRTUAL_PATH,
-									FsRiverUtil.computeVirtualPathName(stats,
-											filepath.substring(0, filepath.lastIndexOf(File.separator))))
-											.field(FsRiverUtil.DIR_FIELD_PATH_ENCODED,
-													SignTool.sign(filepath.substring(0, filepath.lastIndexOf(File.separator))))
-													.endObject());
+            indexDirectory(SignTool.sign(filepath),
+                    filename,
+                    stats.getRootPathId(),
+                    FsRiverUtil.computeVirtualPathName(stats,
+                        filepath.substring(0, filepath.lastIndexOf(File.separator))),
+                    SignTool.sign(filepath.substring(0, filepath.lastIndexOf(File.separator))));
 		}
 
 		/**
 		 * Add the root directory as a folder
-		 *
-		 * @param file
-		 * @throws Exception
 		 */
 		private void indexRootDirectory(File file) throws Exception {
-			esIndex(indexName,
-					FsRiverUtil.INDEX_TYPE_FOLDER,
-					SignTool.sign(file.getAbsolutePath()),
-					jsonBuilder()
-							.startObject()
-							.field(FsRiverUtil.DIR_FIELD_NAME, file.getName())
-							.field(FsRiverUtil.DIR_FIELD_ROOT_PATH,
-									stats.getRootPathId())
-							.field(FsRiverUtil.DIR_FIELD_VIRTUAL_PATH,
-									(String) null)
-							.field(FsRiverUtil.DIR_FIELD_PATH_ENCODED,
-									SignTool.sign(file.getParent()))
-							.endObject());
+            indexDirectory(SignTool.sign(file.getAbsolutePath()),
+                    file.getName(),
+                    stats.getRootPathId(),
+                    null,
+                    SignTool.sign(file.getParent()));
 		}
 
 		/**
 		 * Remove a full directory and sub dirs recursively
-		 * 
-		 * @param path
-		 * @param name
-		 * @throws Exception
 		 */
 		private void removeEsDirectoryRecursively(String path, String name)
 				throws Exception {
@@ -825,12 +817,6 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
 		/**
 		 * Add to bulk an IndexRequest
-		 * 
-		 * @param index
-		 * @param type
-		 * @param id
-		 * @param xb
-		 * @throws Exception 
 		 */
 		private void esIndex(String index, String type, String id,
 				XContentBuilder xb) throws Exception {
@@ -842,12 +828,6 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
         /**
          * Add to bulk an IndexRequest in JSon format
-         *
-         * @param index
-         * @param type
-         * @param id
-         * @param json
-         * @throws Exception
          */
         private void esIndex(String index, String type, String id,
                              byte[] json) throws Exception {
@@ -859,18 +839,10 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
         /**
 		 * Add to bulk a DeleteRequest
-		 * 
-		 * @param index
-		 * @param type
-		 * @param id
-		 * @throws Exception 
 		 */
 		private void esDelete(String index, String type, String id) throws Exception {
 			if (logger.isDebugEnabled()) logger.debug("Deleting from ES " + index + ", " + type + ", " + id);
             bulkProcessor.add(new DeleteRequest(index, type, id));
 		}
 	}
-	
-	
-	
 }

@@ -24,6 +24,7 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -34,8 +35,47 @@ public class FsRiverUtil {
 	public static final String INDEX_TYPE_FOLDER = "folder";
 	public static final String INDEX_TYPE_FS = "fsRiver";
 
-	public static final String DOC_FIELD_NAME = "name";
-	public static final String DOC_FIELD_DATE = "postDate";
+    static public final class Doc {
+        public static final String CONTENT = "content";
+
+        public static final String META = "meta";
+        static public final class Meta {
+            public static final String AUTHOR = "author";
+            public static final String TITLE = "title";
+            public static final String DATE = "date";
+            public static final String KEYWORDS = "keywords";
+        }
+
+        public static final String FILE = "file";
+        static public final class File {
+            public static final String CONTENT_TYPE = "content_type";
+            public static final String LAST_MODIFIED = "last_modified";
+            public static final String INDEXING_DATE = "indexing_date";
+            public static final String FILESIZE = "filesize";
+            public static final String FILENAME = "filename";
+            public static final String URL = "url";
+            public static final String INDEXED_CHARS = "indexed_chars";
+        }
+
+        public static final String PATH = "path";
+        static public final class Path {
+            public static final String ENCODED = "encoded";
+            public static final String ROOT = "root";
+            public static final String VIRTUAL = "virtual";
+            public static final String REAL = "real";
+        }
+    }
+
+    static public final class Dir {
+        public static final String NAME = "name";
+        public static final String ENCODED = "encoded";
+        public static final String ROOT = "root";
+        public static final String VIRTUAL = "virtual";
+        public static final String REAL = "real";
+    }
+
+/*	public static final String DOC_FIELD_NAME = "name";
+	public static final String DOC_FIELD_DATE = "lastModified";
 	public static final String DOC_FIELD_PATH_ENCODED = "pathEncoded";
 	public static final String DOC_FIELD_VIRTUAL_PATH = "virtualpath";
 	public static final String DOC_FIELD_ROOT_PATH = "rootpath";
@@ -46,49 +86,86 @@ public class FsRiverUtil {
 	public static final String DIR_FIELD_NAME = "name";
 	public static final String DIR_FIELD_PATH_ENCODED = "pathEncoded";
 	public static final String DIR_FIELD_VIRTUAL_PATH = "virtualpath";
-	public static final String DIR_FIELD_ROOT_PATH = "rootpath";
+	public static final String DIR_FIELD_ROOT_PATH = "rootpath";*/
 	
 	public static XContentBuilder buildFsFileMapping(String type) throws Exception {
-		XContentBuilder xbMapping = jsonBuilder().prettyPrint().startObject()
-			.startObject(type).startObject("properties")
-			.startObject(DOC_FIELD_NAME).field("type", "string").field("analyzer","keyword").endObject()
-			.startObject(DOC_FIELD_PATH_ENCODED).field("type", "string").field("analyzer","keyword").endObject()
-			.startObject(DOC_FIELD_ROOT_PATH).field("type", "string").field("analyzer","keyword").endObject()
-			.startObject(DOC_FIELD_VIRTUAL_PATH).field("type", "string").field("analyzer","keyword").endObject()
-            .startObject(DOC_FIELD_URL).field("type", "string").field("store", "yes").field("index","no").endObject()
-            .startObject(DOC_FIELD_FILESIZE).field("type", "long").endObject()
-			.startObject(DOC_FIELD_DATE).field("type", "date").endObject()
-			.startObject("file")
-			.startObject("properties")
-                .startObject("content_type").field("type", "string").field("store", "yes").endObject()
-                .startObject("title").field("type", "string").field("store", "yes").endObject()
-                .startObject("file").field("type", "string").field("term_vector", "with_positions_offsets").field("store", "yes").endObject()
-                .startObject(DOC_FIELD_INDEXED_CHARS).field("type", "long").field("index","no").field("include_in_all",false).endObject()
-            .endObject().endObject()
-			.endObject().endObject().endObject();
-		return xbMapping;
+		return buildFsFileMapping(type, true);
 	}
 
-	public static XContentBuilder buildFsFolderMapping(String type) throws Exception {
+    public static XContentBuilder buildFsFileMapping(String type, boolean enableSource) throws Exception {
+        XContentBuilder xbMapping = jsonBuilder().prettyPrint().startObject()
+                // Type
+                .startObject(type).startObject("properties");
+
+        if (!enableSource) {
+            // Disable source
+            xbMapping.startObject("_source").field("enabled", false).endObject();
+        }
+
+        // Doc content
+        addAnalyzedString(xbMapping, Doc.CONTENT);
+
+        // Meta
+        xbMapping.startObject(Doc.META).startObject("properties");
+        addAnalyzedString(xbMapping, Doc.Meta.AUTHOR);
+        addAnalyzedString(xbMapping, Doc.Meta.TITLE);
+        addDate(xbMapping, Doc.Meta.DATE);
+        addAnalyzedString(xbMapping, Doc.Meta.KEYWORDS);
+        xbMapping.endObject().endObject(); // End Meta
+
+        // File
+        xbMapping.startObject(Doc.FILE).startObject("properties");
+        addAnalyzedSimpleString(xbMapping, Doc.File.CONTENT_TYPE);
+        addDate(xbMapping, Doc.File.LAST_MODIFIED);
+        addDate(xbMapping, Doc.File.INDEXING_DATE);
+        addLong(xbMapping, Doc.File.FILESIZE);
+        addLong(xbMapping, Doc.File.INDEXED_CHARS);
+        addAnalyzedSimpleString(xbMapping, Doc.File.FILENAME);
+        addNotIndexedString(xbMapping, Doc.File.URL);
+        xbMapping.endObject().endObject(); // End File
+
+        // Path
+        xbMapping.startObject(Doc.PATH).startObject("properties");
+        addNotAnalyzedString(xbMapping, Doc.Path.ENCODED);
+        addNotAnalyzedString(xbMapping, Doc.Path.VIRTUAL);
+        addNotAnalyzedString(xbMapping, Doc.Path.ROOT);
+        addNotAnalyzedString(xbMapping, Doc.Path.REAL);
+        xbMapping.endObject().endObject(); // End Path
+
+        xbMapping.endObject().endObject().endObject(); // End Type
+        return xbMapping;
+    }
+
+
+    public static XContentBuilder buildFsFolderMapping(String type) throws Exception {
 		XContentBuilder xbMapping = jsonBuilder().prettyPrint().startObject()
-				.startObject(type).startObject("properties")
-				.startObject(DIR_FIELD_NAME).field("type", "string").field("analyzer","keyword").endObject()
-				.startObject(DIR_FIELD_PATH_ENCODED).field("type", "string").field("analyzer","keyword").endObject()
-				.startObject(DIR_FIELD_ROOT_PATH).field("type", "string").field("analyzer","keyword").endObject()
-				.startObject(DIR_FIELD_VIRTUAL_PATH).field("type", "string").field("analyzer","keyword").endObject()
-				.endObject().endObject().endObject();
+            // Type
+            .startObject(type).startObject("properties");
+
+        addNotAnalyzedString(xbMapping, Dir.NAME);
+        addNotAnalyzedString(xbMapping, Dir.REAL);
+        addNotAnalyzedString(xbMapping, Dir.ENCODED);
+        addNotAnalyzedString(xbMapping, Dir.ROOT);
+        addNotAnalyzedString(xbMapping, Dir.VIRTUAL);
+
+        xbMapping.endObject().endObject().endObject(); // End Type
 
 		return xbMapping;
 	}
 
 	public static XContentBuilder buildFsRiverMapping(String type) throws Exception {
 		XContentBuilder	xbMapping = jsonBuilder().prettyPrint().startObject()
-				.startObject(type).startObject("properties")
-				.startObject("scanDate").field("type", "long").endObject()
-				.startObject("folders").startObject("properties")
-					.startObject("url").field("type", "string").endObject()
-				.endObject().endObject()
-				.endObject().endObject().endObject();
+            // Type
+            .startObject(type).startObject("properties");
+
+        addLong(xbMapping, "scanDate");
+
+        // Folders
+        xbMapping.startObject("folders").startObject("properties");
+        addNotIndexedString(xbMapping, Doc.File.URL);
+        xbMapping.endObject().endObject(); // End Folders
+
+        xbMapping.endObject().endObject().endObject(); // End Type
 
 		return xbMapping;
 	}
@@ -105,11 +182,56 @@ public class FsRiverUtil {
 		return buildFsRiverMapping(INDEX_TYPE_FS);
 	}
 
+    private static void addAnalyzedString(XContentBuilder xcb, String fieldName) throws IOException {
+        xcb.startObject(fieldName)
+            .field("type", "string")
+            .field("store", "yes")
+        .endObject();
+    }
+
+    private static void addAnalyzedSimpleString(XContentBuilder xcb, String fieldName) throws IOException {
+        xcb.startObject(fieldName)
+            .field("type", "string")
+            .field("analyzer", "simple")
+            .field("store", "yes")
+        .endObject();
+    }
+
+    private static void addNotAnalyzedString(XContentBuilder xcb, String fieldName) throws IOException {
+        xcb.startObject(fieldName)
+            .field("type", "string")
+            .field("store", "yes")
+            .field("index", "not_analyzed")
+        .endObject();
+    }
+
+    private static void addNotIndexedString(XContentBuilder xcb, String fieldName) throws IOException {
+        xcb.startObject(fieldName)
+            .field("type", "string")
+            .field("store", "yes")
+            .field("index", "no")
+        .endObject();
+    }
+
+    private static void addDate(XContentBuilder xcb, String fieldName) throws IOException {
+        xcb.startObject(fieldName)
+            .field("type", "date")
+            .field("format", "dateOptionalTime")
+            .field("store", "yes")
+        .endObject();
+    }
+
+    private static void addLong(XContentBuilder xcb, String fieldName) throws IOException {
+        xcb.startObject(fieldName)
+            .field("type", "long")
+            .field("store", "yes")
+        .endObject();
+    }
+
 	/**
 	 * Extract array from settings (array or ; delimited String)
 	 * @param settings Settings
 	 * @param path Path to definition : "fs.includes"
-	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	public static String[] buildArrayFromSettings(Map<String, Object> settings, String path) {
@@ -127,10 +249,8 @@ public class FsRiverUtil {
 			String includedef = (String) XContentMapValues.extractValue(path, settings);
 			includes = Strings.commaDelimitedListToStringArray(Strings.trimAllWhitespace(includedef));
 		}
-		
-		String[] uniquelist = Strings.removeDuplicateStrings(includes);
-		
-		return uniquelist;
+
+		return Strings.removeDuplicateStrings(includes);
 	}
 
 	/**
@@ -138,7 +258,6 @@ public class FsRiverUtil {
 	 * @param filename The filename to scan
 	 * @param includes include rules, may be empty not null
 	 * @param excludes exclude rules, may be empty not null
-	 * @return
 	 */
 	public static boolean isIndexable(String filename, List<String> includes, List<String> excludes) {
 		// No rules ? Fine, we index everything
@@ -149,10 +268,10 @@ public class FsRiverUtil {
 			String regex = exclude.replace("?", ".?").replace("*", ".*?");
 			if(filename.matches(regex)) return false;
 		}
-		
+
 		// Include rules : we should add document if it match include rules
 		if (includes.isEmpty()) return true;
-		
+
 		for (String include : includes) {
 			String regex = include.replace("?", ".?").replace("*", ".*?");
 			if(filename.matches(regex)) return true;
