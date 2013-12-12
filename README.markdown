@@ -547,6 +547,7 @@ FS River creates the following fields :
 |   Field (>= 0.4.0)   |   Field (< 0.4.0)    |                Description                  |                    Example                  |
 |----------------------|----------------------|---------------------------------------------|---------------------------------------------|
 | `content`            | `file.file`          | Extracted content                           | `"This is my text!"`                        |
+| `attachment`         | `file`               | BASE64 encoded binary file                  | BASE64 Encoded document                     |
 | `meta.author`        | `file.author`        | Author if any in document metadata          | `"David Pilato"`                            |
 | `meta.title`         | `file.title`         | Title if any in document metadata           | `"My document title"`                       |
 | `meta.date`          |                      | Document date if any in document metadata   | `"2013-04-04T15:21:35"`                     |
@@ -712,6 +713,80 @@ they disappear from your hard drive.
           }
         }
       }
+    }
+  }
+}
+```
+
+Storing binary source document (BASE64 encoded)
+-----------------------------------------------
+
+You can store in elasticsearch itself the binary document using `store_source` option:
+
+```sh
+curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"url": "/tmp",
+	"update_rate": 3600000,
+	"store_source": true
+  },
+  "index": {
+    "index": "mydocs",
+    "type": "doc",
+    "bulk_size": 50
+  }
+}'
+```
+
+In that case, a new stored field named `attachment` is added to the generated JSon document.
+If you let FSRiver generates the mapping, FSRiver will exclude `attachment` field from
+`_source` to save some disk space.
+
+That means you need to ask for field `attachment` when querying:
+
+```sh
+curl -XPOST http://localhost:9200/mydocs/doc/_search -d '{
+  "fields" : ["attachment", "_source"],
+  "query":{
+    "match_all" : {}
+  }
+}'
+```
+
+Default generated mapping in this case is:
+
+```javascript
+{
+  "doc" : {
+    "_source" : {
+      "excludes" : [ "attachment" ]
+    },
+    "properties" : {
+      "attachment" : {
+        "type" : "binary"
+      },
+      ... // Other properties here
+    }
+  }
+}
+```
+
+You can force not to store `attachment` field and keep `attachment` in `_source`:
+
+```sh
+# Create index
+$ curl -XPUT "http://localhost:9200/docs/"
+
+# Create the mapping
+$ curl -XPUT "http://localhost:9200/docs/doc/_mapping" -d '{
+  "doc" : {
+    "properties" : {
+      "attachment" : {
+        "type" : "binary",
+        "store" : "no"
+      },
+      ... // Other properties here
     }
   }
 }

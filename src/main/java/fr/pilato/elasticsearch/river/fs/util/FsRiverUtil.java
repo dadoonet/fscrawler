@@ -37,6 +37,7 @@ public class FsRiverUtil {
 
     static public final class Doc {
         public static final String CONTENT = "content";
+        public static final String ATTACHMENT = "attachment";
 
         public static final String META = "meta";
         static public final class Meta {
@@ -74,36 +75,44 @@ public class FsRiverUtil {
         public static final String REAL = "real";
     }
 
-/*	public static final String DOC_FIELD_NAME = "name";
-	public static final String DOC_FIELD_DATE = "lastModified";
-	public static final String DOC_FIELD_PATH_ENCODED = "pathEncoded";
-	public static final String DOC_FIELD_VIRTUAL_PATH = "virtualpath";
-	public static final String DOC_FIELD_ROOT_PATH = "rootpath";
-    public static final String DOC_FIELD_FILESIZE = "filesize";
-    public static final String DOC_FIELD_INDEXED_CHARS = "_indexed_chars";
-    public static final String DOC_FIELD_URL = "url";
-
-	public static final String DIR_FIELD_NAME = "name";
-	public static final String DIR_FIELD_PATH_ENCODED = "pathEncoded";
-	public static final String DIR_FIELD_VIRTUAL_PATH = "virtualpath";
-	public static final String DIR_FIELD_ROOT_PATH = "rootpath";*/
-	
 	public static XContentBuilder buildFsFileMapping(String type) throws Exception {
-		return buildFsFileMapping(type, true);
+		return buildFsFileMapping(type, true, false);
 	}
 
-    public static XContentBuilder buildFsFileMapping(String type, boolean enableSource) throws Exception {
-        XContentBuilder xbMapping = jsonBuilder().prettyPrint().startObject()
-                // Type
-                .startObject(type).startObject("properties");
+    /**
+     * Build the mapping for documents
+     * @param type elasticsearch type you will use
+     * @param enableSource Do you want to enable _source?
+     * @param storeSource Do you want to store file source as binary BASE64 encoded?
+     * @return a mapping
+     * @throws Exception
+     */
+    public static XContentBuilder buildFsFileMapping(String type, boolean enableSource, boolean storeSource) throws Exception {
+        XContentBuilder xbMapping = jsonBuilder().prettyPrint().startObject();
 
+        // Type
+        xbMapping.startObject(type);
+
+        // Manage _source
         if (!enableSource) {
             // Disable source
             xbMapping.startObject("_source").field("enabled", false).endObject();
+        } else {
+            if (storeSource) {
+                // We store binary source as a stored field so we don't need it in _source
+                xbMapping.startObject("_source").array("excludes", Doc.ATTACHMENT).endObject();
+            }
         }
+
+        xbMapping.startObject("properties");
 
         // Doc content
         addAnalyzedString(xbMapping, Doc.CONTENT);
+
+        // Doc source
+        if (storeSource) {
+            addBinary(xbMapping, Doc.ATTACHMENT);
+        }
 
         // Meta
         xbMapping.startObject(Doc.META).startObject("properties");
@@ -228,7 +237,14 @@ public class FsRiverUtil {
         .endObject();
     }
 
-	/**
+    private static void addBinary(XContentBuilder xcb, String fieldName) throws IOException {
+        xcb.startObject(fieldName)
+            .field("type", "binary")
+        .endObject();
+    }
+
+
+    /**
 	 * Extract array from settings (array or ; delimited String)
 	 * @param settings Settings
 	 * @param path Path to definition : "fs.includes"

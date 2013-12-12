@@ -37,6 +37,7 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
+import org.elasticsearch.common.Base64;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.BytesStreamInput;
@@ -136,11 +137,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
             // https://github.com/dadoonet/fsriver/issues/35 : Option to not delete documents when files are removed
             boolean removeDeleted = XContentMapValues.nodeBooleanValue(feed.get("remove_deleted"), true);
+            boolean storeSource = XContentMapValues.nodeBooleanValue(feed.get("store_source"), false);
 
             fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
                     updateRate, Arrays.asList(includes), Arrays.asList(excludes),
                     jsonSupport, filenameAsId, addFilesize, indexedChars,
-                    username, password, server , protocol, removeDeleted);
+                    username, password, server , protocol, removeDeleted, storeSource);
 		} else {
 			String url = "/esdir";
 			logger.warn(
@@ -149,7 +151,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 			int updateRate = 60 * 60 * 1000;
 			fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
 					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false, false, true, 0.0 ,
-                    null, null, null , null, true);
+                    null, null, null , null, true, false);
 		}
 
 		if (settings.settings().containsKey("index")) {
@@ -224,7 +226,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 		try {
 			// If needed, we create the new mapping for files
 			if (!fsDefinition.isJsonSupport())
-                pushMapping(indexName, typeName, FsRiverUtil.buildFsFileMapping(typeName));
+                pushMapping(indexName, typeName, FsRiverUtil.buildFsFileMapping(typeName, true, fsDefinition.isStoreSource()));
 		} catch (Exception e) {
 			logger.warn("failed to create mapping for [{}/{}], disabling river...",
 					e, indexName, typeName);
@@ -334,7 +336,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
 				if (logger.isDebugEnabled()) logger.debug("No mapping definition for ["+index+"]/["+type+"]. Ignoring.");
 			}
 		} else {
-			if (logger.isDebugEnabled()) logger.debug("Mapping ["+index+"]/["+type+"] already exists and mergeMapping is not set.");
+			if (logger.isDebugEnabled()) logger.debug("Mapping ["+index+"]/["+type+"] already exists.");
 		}
 		if (logger.isTraceEnabled()) logger.trace("/pushMapping("+index+","+type+")");
 	}
@@ -735,6 +737,11 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
                 // Doc content
                 source.field(FsRiverUtil.Doc.CONTENT, parsedContent);
+
+                // Doc as binary attachment
+                if (fsDefinition.isStoreSource()) {
+                    source.field(FsRiverUtil.Doc.ATTACHMENT, Base64.encodeBytes(data));
+                }
 
                 // End of our document
                 source.endObject();

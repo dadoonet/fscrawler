@@ -20,28 +20,26 @@
 package fr.pilato.elasticsearch.river.fs;
 
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
-import org.elasticsearch.common.io.FileSystemUtils;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
 import java.io.File;
 
+import static junit.framework.Assert.assertNull;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.junit.Assert.assertNotNull;
 
-/**
- * Test case for issue #10: https://github.com/dadoonet/fsriver/issues/10
- */
-public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
-    private static int updateRate = 2 * 1000;
-    private static String dir = "testfs_source_disabled";
-    private static String filename = "roottxtfile.txt";
+public class FsRiverStoreBinarySourceTest extends AbstractFsRiverSimpleTest {
 
     /**
 	 * We use the default mapping
 	 */
 	@Override
 	public String mapping() throws Exception {
-		return FsRiverUtil.buildFsFileMapping("doc", false, false).string();
+        return null;
 	}
 
 	/**
@@ -52,28 +50,24 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
 	 */
 	@Override
 	public XContentBuilder fsRiver() throws Exception {
+		// We update every ten seconds
+		int updateRate = 10 * 1000;
+		String dir = "testfs1";
+		
 		// First we check that filesystem to be analyzed exists...
 		File dataDir = new File("./target/test-classes/" + dir);
 		if(!dataDir.exists()) {
 			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
 		}
-
-        // We need to remove previous file from prior tests
-        File file2 = new File("./target/test-classes/" + dir + "/new_" + filename);
-        try {
-            file2.delete();
-        } catch (Exception e) {
-            // Ignoring
-        }
-
-        String url = dataDir.getAbsoluteFile().getAbsolutePath();
+		String url = dataDir.getAbsoluteFile().getAbsolutePath();
 		
-		return jsonBuilder()
+		XContentBuilder xb = jsonBuilder()
 				.startObject()
 					.field("type", "fs")
 					.startObject("fs")
 						.field("url", url)
 						.field("update_rate", updateRate)
+						.field("store_source", true)
 					.endObject()
                     .startObject("index")
                         .field("index", indexName())
@@ -81,30 +75,23 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
                         .field("bulk_size", 1)
                     .endObject()
 				.endObject();
+		return xb;
 	}
-	
 
-	@Test
-	public void index_is_not_empty() throws Exception {
-        // We should have one doc first
-        countTestHelper(null, 1);
+    @Test
+    public void we_have_stored_attachment() throws Exception {
+        SearchResponse searchResponse = node.client().prepareSearch(indexName()).setTypes("doc")
+                .setQuery(QueryBuilders.matchAllQuery())
+                .addField("_source")
+                .addField("*")
+                .execute().actionGet();
 
-        // We add a new file
-        File file1 = new File("./target/test-classes/" + dir + "/" + filename);
-        File file2 = new File("./target/test-classes/" + dir + "/new_" + filename);
-        FileSystemUtils.copyFile(file1, file2);
+        for (SearchHit hit : searchResponse.getHits()) {
+            // We check that the field has been stored
+            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.ATTACHMENT));
 
-        Thread.sleep(updateRate + 1000);
-
-        // We expect to have one more file indexed
-        countTestHelper(null, 2);
-
-        // We remove the old file and wait for the river
-        file2.delete();
-
-        Thread.sleep(updateRate + 1000);
-
-        // We expect to have one file indexed only
-        countTestHelper(null, 1);
-	}
+            // We check that the field is not part of _source
+            assertNull(hit.getSource().get(FsRiverUtil.Doc.ATTACHMENT));
+        }
+    }
 }

@@ -25,7 +25,7 @@
 	</logger>
 
 	<logger name="org.elasticsearch.fr.pilato.elasticsearch.river.fs">
-		<level value="debug" />
+		<level value="info" />
 	</logger>
 
 
