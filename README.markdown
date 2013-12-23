@@ -5,18 +5,19 @@ Welcome to the FS River Plugin for [Elasticsearch](http://www.elasticsearch.org/
 
 This river plugin helps to index documents from your local file system and using SSH.
 
-*WARNING*: If you use this river in a multinode mode on different servers without SSH, you need to ensure that the river
+**WARNING**: If you use this river in a multinode mode on different servers without SSH, you need to ensure that the river
 can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your
-local dir is empty and will *erase* all your docs.
+local dir is empty and will **erase** all your docs.
 
-*WARNING*: starting from 0.0.3, you need to have the [Attachment Plugin](https://github.com/elasticsearch/elasticsearch-mapper-attachments). It's not included anymore
+**WARNING**: starting from 0.0.3, you need to have the [Attachment Plugin](https://github.com/elasticsearch/elasticsearch-mapper-attachments). It's not included anymore
 in the distribution.
 
-*WARNING*: starting from 0.4.0, you don't need anymore the Attachment Plugin as we use now directly
+**WARNING**: starting from 0.4.0, you don't need anymore the Attachment Plugin as we use now directly
 [Tika](http://tika.apache.org/), see [#38](https://github.com/dadoonet/fsriver/issues/38).
 
 Please read documentation relative to the version you are using:
 
+* [0.4.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.4.0/README.markdown#filesystem-river-for-elasticsearch)
 * [0.3.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.3.0/README.markdown#filesystem-river-for-elasticsearch)
 * [0.2.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.2.0/README.markdown#filesystem-river-for-elasticsearch)
 * [0.1.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.1.0/README.markdown#filesystem-river-for-elasticsearch)
@@ -29,7 +30,8 @@ Versions
 
 |      FS River Plugin    | elasticsearch | Attachment Plugin | Tika | Release date |
 |-------------------------|:-------------:|:-----------------:|:----:|:------------:|
-| 0.4.0-SNAPSHOT (master) |    0.90.7     |      Not used     |  1.4 | 30/11/2013 ? |
+| 0.5.0-SNAPSHOT (master) |    0.90.7     |      Not used     |  1.4 |              |
+| 0.4.0                   |    0.90.7     |      Not used     |  1.4 |  22/12/2013  |
 | 0.3.0                   |    0.90.3     |       1.8.0       |      |  09/08/2013  |
 | 0.2.0                   |    0.90.0     |       1.7.0       |      |  30/04/2013  |
 | 0.1.0                   | 0.90.0.Beta1  |       1.6.0       |      |  15/03/2013  |
@@ -55,16 +57,16 @@ Installation
 Just type :
 
 ```sh
-bin/plugin -install fr.pilato.elasticsearch.river/fsriver/0.4.0-SNAPSHOT
+bin/plugin -install fr.pilato.elasticsearch.river/fsriver/0.4.0
 ```
 
 This will do the job...
 
 ```
--> Installing fr.pilato.elasticsearch.river/fsriver/0.4.0-SNAPSHOT...
-Trying http://download.elasticsearch.org/fr.pilato.elasticsearch.river/fsriver/fsriver-0.4.0-SNAPSHOT.zip...
-Trying http://search.maven.org/remotecontent?filepath=fr/pilato/elasticsearch/river/fsriver/0.4.0-SNAPSHOT/fsriver-0.4.0-SNAPSHOT.zip...
-Trying https://oss.sonatype.org/service/local/repositories/releases/content/fr/pilato/elasticsearch/river/fsriver/0.4.0-SNAPSHOT/fsriver-0.4.0-SNAPSHOT.zip...
+-> Installing fr.pilato.elasticsearch.river/fsriver/0.4.0...
+Trying http://download.elasticsearch.org/fr.pilato.elasticsearch.river/fsriver/fsriver-0.4.0.zip...
+Trying http://search.maven.org/remotecontent?filepath=fr/pilato/elasticsearch/river/fsriver/0.4.0/fsriver-0.4.0.zip...
+Trying https://oss.sonatype.org/service/local/repositories/releases/content/fr/pilato/elasticsearch/river/fsriver/0.4.0/fsriver-0.4.0.zip...
 Downloading ......DONE
 Installed fsriver
 ```
