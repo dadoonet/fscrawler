@@ -26,63 +26,69 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.junit.Assert;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractFsRiverSimpleTest extends AbstractFsRiverTest {
-    protected ESLogger logger = Loggers.getLogger(this.getClass());
+	protected ESLogger logger = Loggers.getLogger(this.getClass());
 
-	public long waitingTime() throws Exception {
-		return 5;
+	/**
+	 * Check that we have the expected number of docs or at least one if expected is null
+	 *
+	 * @param term     Term you search for, otherwise MatchAll.
+	 * @param expected expected number of docs, otherwise at least 1.
+	 * @throws Exception
+	 */
+	public void countTestHelper(String term, Integer expected) throws Exception {
+		QueryBuilder query = getQueryFromTerm(term);
+		long totalHits = getTotalHits(query);
+
+		if (expected == null) {
+			assertTrue("We should have at least one doc...", totalHits >= 1);
+		} else {
+			assertEquals(expected.intValue(), totalHits);
+		}
 	}
 
-    /**
-     * Check that we have the expected number of docs or at least one if expected is null
-     * @param term Term you search for. MatchAll if null.
-     * @param expected expected number of docs. Null if at least 1.
-     * @throws Exception
-     */
-    public void countTestHelper(String term, Integer expected) throws Exception {
-        // Let's search for entries
-        QueryBuilder query;
-        if (term == null) {
-            query = QueryBuilders.matchAllQuery();
-        } else {
-            query = QueryBuilders.queryString(term);
-        }
-
-        long totalHits = 0;
-
-        if (logger.isDebugEnabled()) {
-            // We want traces, so let's run a search query and trace results
-            // Let's search for entries
-            SearchResponse response = node.client().prepareSearch(indexName())
-                    .setTypes(FsRiverUtil.INDEX_TYPE_DOC)
-                    .setQuery(query).execute().actionGet();
-
-            logger.debug("result {}", response.toString());
-            totalHits = response.getHits().getTotalHits();
-        } else {
-            CountResponse response = node.client().prepareCount(indexName())
-                    .setTypes(FsRiverUtil.INDEX_TYPE_DOC)
-                    .setQuery(query).execute().actionGet();
-            totalHits = response.getCount();
-        }
-
-        if (expected == null) {
-            Assert.assertTrue("We should have at least one doc...", totalHits >= 1);
-        } else {
-            Assert.assertEquals(expected.intValue(), totalHits);
-        }
-    }
-
-    /**
-     * Check that we have at least one doc
-     * @throws Exception
-     */
+	/**
+	 * Check that we have at least one doc
+	 *
+	 * @throws Exception
+	 */
 	public void countTestHelper() throws Exception {
-		// Let's search for entries
 		countTestHelper(null, null);
+	}
+
+	private long getTotalHits(QueryBuilder query) {
+		long totalHits;
+		if (logger.isDebugEnabled()) {
+			totalHits = getTotalHitsAndTraceSearchResults(query);
+		} else {
+			totalHits = getTotalHitsFromCountRequest(query);
+		}
+		return totalHits;
+	}
+
+	private long getTotalHitsAndTraceSearchResults(QueryBuilder query) {
+		long totalHits;
+		SearchResponse response = node.client().prepareSearch(indexName())
+				.setTypes(FsRiverUtil.INDEX_TYPE_DOC)
+				.setQuery(query).execute().actionGet();
+
+		logger.debug("result {}", response.toString());
+		totalHits = response.getHits().getTotalHits();
+		return totalHits;
+	}
+
+	private QueryBuilder getQueryFromTerm(String term) {
+		QueryBuilder query;
+		if (term == null) {
+			query = QueryBuilders.matchAllQuery();
+		} else {
+			query = QueryBuilders.queryString(term);
+		}
+		return query;
 	}
 
 }

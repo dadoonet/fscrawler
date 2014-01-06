@@ -26,7 +26,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
 
 public class FsMappingTest {
-	
+
 	private Logger logger = Logger.getLogger(FsMappingTest.class);
 
 	@Test
@@ -34,7 +34,7 @@ public class FsMappingTest {
 		XContentBuilder xb = FsRiverUtil.buildFsFileMapping();
 		logger.debug("Mapping used for files : " + xb.string());
 	}
-	
+
 	@Test
 	public void fs_mapping_for_folders() throws Exception {
 		XContentBuilder xb = FsRiverUtil.buildFsFolderMapping();

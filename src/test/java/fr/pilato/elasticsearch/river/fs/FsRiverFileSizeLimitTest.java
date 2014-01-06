@@ -37,65 +37,51 @@ import static org.junit.Assert.assertNotNull;
  */
 public class FsRiverFileSizeLimitTest extends AbstractFsRiverSimpleTest {
 
-	/**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
-		return null;
-	}
+	private static final int UPDATE_RATE = 10 * 1000;
+	private static final String DIRECTORY = "testfs_metadata";
+	private static final String TYPENAME = "doc";
 
 	/**
-	 * 
 	 * <ul>
-	 *   <li>We index one file of size 8359 octets
+	 * <li>We index one file of size 8359 octets
 	 * </ul>
 	 */
 	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// We update every minute
-		int updateRate = 10 * 1000;
-		String dir = "testfs_metadata";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
+	public XContentBuilder fsRiverSettings() throws Exception {
+		File dataDir = verifyDirectoryExists(DIRECTORY);
 		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
+
 		return jsonBuilder()
 				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-                        .field("excludes", "*.json")
-                        .field("indexed_chars", 0.001)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
+				.field("type", "fs")
+				.startObject("fs")
+				.field("url", url)
+				.field("update_rate", UPDATE_RATE)
+				.field("excludes", "*.json")
+				.field("indexed_chars", 0.001)
+				.endObject()
+				.startObject("index")
+				.field("index", indexName())
+				.field("type", TYPENAME)
+				.field("bulk_size", 1)
+				.endObject()
 				.endObject();
 	}
-	
 
 	@Test
 	public void filecontent_should_be_truncated() throws Exception {
-        SearchResponse searchResponse = node.client().prepareSearch(indexName()).setTypes("doc")
-                .setQuery(QueryBuilders.matchAllQuery())
-                .addField("*")
-                .execute().actionGet();
+		SearchResponse searchResponse = node.client().prepareSearch(indexName()).setTypes(TYPENAME)
+				.setQuery(QueryBuilders.matchAllQuery())
+				.addField("*")
+				.execute().actionGet();
 
-        for (SearchHit hit : searchResponse.getHits()) {
-            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.CONTENT));
-            assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.INDEXED_CHARS));
+		for (SearchHit hit : searchResponse.getHits()) {
+			assertNotNull(hit.getFields().get(FsRiverUtil.Doc.CONTENT));
+			assertNotNull(hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.INDEXED_CHARS));
 
-            // Our original text: "Bonjour David..." should be truncated
-            assertEquals("Bonjour ", hit.getFields().get(FsRiverUtil.Doc.CONTENT).getValue());
-            assertEquals(8L, hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.INDEXED_CHARS).getValue());
-        }
+			// Our original text: "Bonjour David..." should be truncated
+			assertEquals("Bonjour ", hit.getFields().get(FsRiverUtil.Doc.CONTENT).getValue());
+			assertEquals(8L, hit.getFields().get(FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.INDEXED_CHARS).getValue());
+		}
 	}
 }

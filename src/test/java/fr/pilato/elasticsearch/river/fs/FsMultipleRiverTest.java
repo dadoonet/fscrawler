@@ -32,96 +32,67 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class FsMultipleRiverTest extends AbstractFsRiverTest {
 
-	@Override
-	public long waitingTime() throws Exception {
-		return 5;
-	}
+	private static final int UPDATE_RATE_SECOND_RIVER = 5 * 1000;
+	private static final int UPDATE_RATE_FIRST_RIVER = 10 * 1000;
+	private static final String DIRECTORY_SECOND_RIVER = "testfs2";
+	private static final int EXPECTED_NUMBER_OF_DOC_SECOND_RIVER_CREATION = 2;
+	private static final String DIRECTORY_FIRST_RIVER = "testfs1";
+	private static final String TYPE_SECOND_RIVER = "otherdocs";
 
-	/**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
-		return null;
-	}
-	
-	@Override @Before
+	@Before
 	public void setUp() throws Exception {
-		super.setUp();
-		
-		// In this case, we want to add another river
-		// We update every five seconds
-		int updateRate = 5 * 1000;
-		String dir = "testfs2";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
-		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
-		XContentBuilder xb = jsonBuilder()
-				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-					.endObject()
-					.startObject("index")
-						.field("index", indexName())
-						.field("type", "otherdocs")
-						.field("bulk_size", 1)
-					.endObject()
-				.endObject();
-
-		addARiver(dir, xb);
-		
-		// Let's wait x seconds 
-		Thread.sleep(waitingTime() * 1000);
+		createSecondRiver();
 	}
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>TODO Fill the use case
-	 * </ul>
-	 */
 	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// We update every ten seconds
-		int updateRate = 10 * 1000;
-		String dir = "testfs1";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
+	public XContentBuilder fsRiverSettings() throws Exception {
+		File dataDir = verifyDirectoryExists(DIRECTORY_FIRST_RIVER);
 		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
+
 		XContentBuilder xb = jsonBuilder()
 				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
+				.field("type", "fs")
+				.startObject("fs")
+				.field("url", url)
+				.field("update_rate", UPDATE_RATE_FIRST_RIVER)
+				.endObject()
+				.startObject("index")
+				.field("index", indexName())
+				.field("type", "doc")
+				.field("bulk_size", 1)
+				.endObject()
 				.endObject();
 		return xb;
 	}
-	
 
 	@Test
 	public void index_must_have_two_files() throws Exception {
-		// Let's search for entries
-		CountResponse response = node.client().prepareCount(indexName()).setTypes("otherdocs","doc")
+		CountResponse response = node.client().prepareCount(indexName()).setTypes(TYPE_SECOND_RIVER, "doc")
 				.setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
-		Assert.assertEquals("We should have two docs...", 2, response.getCount());
+
+		Assert.assertEquals("We should have two docs...", EXPECTED_NUMBER_OF_DOC_SECOND_RIVER_CREATION,
+				response.getCount());
+	}
+
+	private void createSecondRiver() throws Exception {
+		File dataDir = verifyDirectoryExists(DIRECTORY_SECOND_RIVER);
+		String url = dataDir.getAbsoluteFile().getAbsolutePath();
+
+		XContentBuilder xb = jsonBuilder()
+				.startObject()
+				.field("type", "fs")
+				.startObject("fs")
+				.field("url", url)
+				.field("update_rate", UPDATE_RATE_SECOND_RIVER)
+				.endObject()
+				.startObject("index")
+				.field("index", indexName())
+				.field("type", TYPE_SECOND_RIVER)
+				.field("bulk_size", 1)
+				.endObject()
+				.endObject();
+
+		addARiver(DIRECTORY_SECOND_RIVER, xb);
+		waitForIndexToHaveAtLeast(EXPECTED_NUMBER_OF_DOC_SECOND_RIVER_CREATION);
 	}
 }

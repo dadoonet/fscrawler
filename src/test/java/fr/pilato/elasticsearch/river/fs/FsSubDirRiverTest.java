@@ -28,52 +28,38 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class FsSubDirRiverTest extends AbstractFsRiverSimpleTest {
 
-	/**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
-		return null;
-	}
+	private static final int UPDATE_RATE = 10 * 1000;
+	private static final String DIRECTORY = "testsubdir";
+	private static final int EXPECTED_NUMBER_OF_DOCUMENTS = 2;
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>TODO Fill the use case
-	 * </ul>
-	 */
 	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// We update every minute
-		int updateRate = 10 * 1000;
-		String dir = "testsubdir";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
+	public XContentBuilder fsRiverSettings() throws Exception {
+		File dataDir = verifyDirectoryExists(DIRECTORY);
 		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
+
 		XContentBuilder xb = jsonBuilder()
 				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
+				.field("type", "fs")
+				.startObject("fs")
+				.field("url", url)
+				.field("update_rate", UPDATE_RATE)
+				.endObject()
+				.startObject("index")
+				.field("index", indexName())
+				.field("type", "doc")
+				.field("bulk_size", 1)
+				.endObject()
 				.endObject();
 		return xb;
 	}
-	
+
+	@Override
+	protected int expectedNumberOfDocumentsInTheRiver() {
+		return EXPECTED_NUMBER_OF_DOCUMENTS;
+	}
 
 	@Test
-	public void index_is_not_empty() throws Exception {
-		countTestHelper(null, 2);
+	public void index_contains_all_documents() throws Exception {
+		countTestHelper(null, EXPECTED_NUMBER_OF_DOCUMENTS);
 	}
 }

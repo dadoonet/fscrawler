@@ -20,21 +20,21 @@
 package fr.pilato.elasticsearch.river.fs;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class FsMatchFilesTest {
-	
+
 	@Test
 	public void exclude_only() throws Exception {
 		Assert.assertFalse(FsRiverUtil.isIndexable("test.doc", new ArrayList<String>(), Arrays.asList("*.doc")));
 		Assert.assertTrue(FsRiverUtil.isIndexable("test.xls", new ArrayList<String>(), Arrays.asList("*.doc")));
 		Assert.assertTrue(FsRiverUtil.isIndexable("my.doc.xls", new ArrayList<String>(), Arrays.asList("*.doc")));
-		Assert.assertFalse(FsRiverUtil.isIndexable("my.doc.xls", new ArrayList<String>(), Arrays.asList("*.doc","*.xls")));
+		Assert.assertFalse(FsRiverUtil.isIndexable("my.doc.xls", new ArrayList<String>(), Arrays.asList("*.doc", "*.xls")));
 		Assert.assertFalse(FsRiverUtil.isIndexable("my.doc.xls", new ArrayList<String>(), Arrays.asList("my.d?c*.xls")));
 		Assert.assertTrue(FsRiverUtil.isIndexable("my.douc.xls", new ArrayList<String>(), Arrays.asList("my.d?c*.xls")));
 	}
