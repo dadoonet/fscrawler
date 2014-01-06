@@ -24,6 +24,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
@@ -31,74 +32,56 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
  * Test case for issue #35: https://github.com/dadoonet/fsriver/issues/35
  */
 public class FsRiverDisableDeleteTest extends AbstractFsRiverSimpleTest {
-    private static int updateRate = 2 * 1000;
-    private static String dir = "testfs_delete_disabled";
-    private static String filename = "roottxtfile.txt";
 
-	/**
-	 * We use the default mapping
-	 */
+	private static final int UPDATE_RATE = 2 * 1000;
+	private static final String DIRECTORY = "testfs_delete_disabled";
+	private static final String FILENAME = "roottxtfile.txt";
+
 	@Override
-	public String mapping() throws Exception {
-		return null;
-	}
+	public XContentBuilder fsRiverSettings() throws Exception {
+		File dataDir = verifyDirectoryExists(DIRECTORY);
+		String url = dataDir.getAbsoluteFile().getAbsolutePath();
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>TODO Fill the use case
-	 * </ul>
-	 */
-	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
-
-        String url = dataDir.getAbsoluteFile().getAbsolutePath();
-
-        return jsonBuilder()
+		return jsonBuilder()
 				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-                        .field("remove_deleted", false)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
+				.field("type", "fs")
+				.startObject("fs")
+				.field("url", url)
+				.field("update_rate", UPDATE_RATE)
+				.field("remove_deleted", false)
+				.endObject()
+				.startObject("index")
+				.field("index", indexName())
+				.field("type", "doc")
+				.field("bulk_size", 1)
+				.endObject()
 				.endObject();
 	}
-	
 
 	@Test
 	public void deleted_file_should_not_be_removed() throws Exception {
-        // We first create a copy of a file
-        File file1 = new File("./target/test-classes/" + dir + "/" + filename);
-        File file2 = new File("./target/test-classes/" + dir + "/deleted_" + filename);
-        FileSystemUtils.copyFile(file1, file2);
+		createACopyOfTheFile();
+		waitUntilNextUpdate(UPDATE_RATE);
 
-        Thread.sleep(updateRate + 1000);
+		countTestHelper(null, 2);
 
-        // We should have two docs first
-        countTestHelper(null, 2);
+		removeCopiedFile();
+		waitUntilNextUpdate(UPDATE_RATE);
 
-        // We remove a file
-        File file = new File("./target/test-classes/" + dir + "/deleted_" + filename);
-        try {
-            file.delete();
-        } catch (Exception e) {
-            // Ignoring
-        }
+		countTestHelper(null, 2);
+	}
 
-        Thread.sleep(updateRate + 1000);
+	private void removeCopiedFile() {
+		File file = new File("./target/test-classes/" + DIRECTORY + "/deleted_" + FILENAME);
+		try {
+			file.delete();
+		} catch (Exception ignored) {
+		}
+	}
 
-        // We expect to have two files
-        countTestHelper(null, 2);
+	private void createACopyOfTheFile() throws IOException {
+		File file1 = new File("./target/test-classes/" + DIRECTORY + "/" + FILENAME);
+		File file2 = new File("./target/test-classes/" + DIRECTORY + "/deleted_" + FILENAME);
+		FileSystemUtils.copyFile(file1, file2);
 	}
 }

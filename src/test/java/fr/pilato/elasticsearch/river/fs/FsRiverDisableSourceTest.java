@@ -25,6 +25,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
@@ -32,79 +33,55 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
  * Test case for issue #10: https://github.com/dadoonet/fsriver/issues/10
  */
 public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
-    private static int updateRate = 2 * 1000;
-    private static String dir = "testfs_source_disabled";
-    private static String filename = "roottxtfile.txt";
 
-    /**
-	 * We use the default mapping
-	 */
+	private static final int UPDATE_RATE = 2 * 1000;
+	private static final String DIRECTORY = "testfs_source_disabled";
+	private static final String FILENAME = "roottxtfile.txt";
+
 	@Override
 	public String mapping() throws Exception {
 		return FsRiverUtil.buildFsFileMapping("doc", false, false).string();
 	}
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>TODO Fill the use case
-	 * </ul>
-	 */
 	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
+	public XContentBuilder fsRiverSettings() throws Exception {
+		File dataDir = verifyDirectoryExists(DIRECTORY);
+		String url = dataDir.getAbsoluteFile().getAbsolutePath();
 
-        // We need to remove previous file from prior tests
-        File file2 = new File("./target/test-classes/" + dir + "/new_" + filename);
-        try {
-            file2.delete();
-        } catch (Exception e) {
-            // Ignoring
-        }
-
-        String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
 		return jsonBuilder()
 				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
+				.field("type", "fs")
+				.startObject("fs")
+				.field("url", url)
+				.field("update_rate", UPDATE_RATE)
+				.endObject()
+				.startObject("index")
+				.field("index", indexName())
+				.field("type", "doc")
+				.field("bulk_size", 1)
+				.endObject()
 				.endObject();
 	}
-	
 
 	@Test
 	public void index_is_not_empty() throws Exception {
-        // We should have one doc first
-        countTestHelper(null, 1);
+		countTestHelper(null, 1);
 
-        // We add a new file
-        File file1 = new File("./target/test-classes/" + dir + "/" + filename);
-        File file2 = new File("./target/test-classes/" + dir + "/new_" + filename);
-        FileSystemUtils.copyFile(file1, file2);
+		File aNewFile = createANewFile();
+		waitUntilNextUpdate(UPDATE_RATE);
 
-        Thread.sleep(updateRate + 1000);
+		countTestHelper(null, 2);
 
-        // We expect to have one more file indexed
-        countTestHelper(null, 2);
+		aNewFile.delete();
+		waitUntilNextUpdate(UPDATE_RATE);
 
-        // We remove the old file and wait for the river
-        file2.delete();
+		countTestHelper(null, 1);
+	}
 
-        Thread.sleep(updateRate + 1000);
-
-        // We expect to have one file indexed only
-        countTestHelper(null, 1);
+	private File createANewFile() throws IOException {
+		File file1 = new File("./target/test-classes/" + DIRECTORY + "/" + FILENAME);
+		File file2 = new File("./target/test-classes/" + DIRECTORY + "/new_" + FILENAME);
+		FileSystemUtils.copyFile(file1, file2);
+		return file2;
 	}
 }

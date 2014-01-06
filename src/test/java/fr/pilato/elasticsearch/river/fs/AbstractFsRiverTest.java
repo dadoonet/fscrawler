@@ -22,9 +22,12 @@ package fr.pilato.elasticsearch.river.fs;
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
@@ -35,112 +38,178 @@ import java.io.File;
 
 public abstract class AbstractFsRiverTest {
 
+	private static final String GATEWAY_TYPE = "local";
+	private static final String PATH_ES_DATA = "./target/es/data";
+	private static final String PATH_ES_LOGS = "./target/es/logs";
+	private static final String PATH_ES_WORK = "./target/es/work";
+	private static final int DEFAULT_WAITING_TIME = 5;
+	private static final int DEFAULT_EXPECTED_NUMBER_OF_DOCUMENTS = 1;
+	private static final String DEFAULT_MAPPING = null;
+	protected static Node node;
+
+	@BeforeClass
+	public static void setUpBeforeClass() throws Exception {
+		if (node == null) {
+			deleteOldDataIfExists();
+
+			node = buildTestNode();
+			waitUntilNodeIsReady();
+			deleteIndexIfExists("_river");
+		}
+	}
+
+	protected static File verifyDirectoryExists(String dir) {
+		File dataDir = new File("./target/test-classes/" + dir);
+		if (!dataDir.exists()) {
+			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests.");
+		}
+		return dataDir;
+	}
+
+	private static Node buildTestNode() {
+		return NodeBuilder
+				.nodeBuilder()
+				.local(true)
+				.settings(
+						ImmutableSettings.settingsBuilder()
+								.put("gateway.type", GATEWAY_TYPE)
+								.put("path.data", PATH_ES_DATA)
+								.put("path.logs", PATH_ES_LOGS)
+								.put("path.work", PATH_ES_WORK)
+				).node();
+	}
+
+	private static void waitUntilNodeIsReady() {
+		node.client().admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet();
+	}
+
+	private static void deleteOldDataIfExists() {
+		File dataDir = new File(PATH_ES_DATA);
+		if (dataDir.exists()) {
+			FileSystemUtils.deleteRecursively(dataDir, true);
+		}
+	}
+
+	private static void deleteIndexIfExists(String indexName) throws InterruptedException {
+		try {
+			node.client().admin().indices()
+					.delete(new DeleteIndexRequest(indexName)).actionGet();
+			waitUntilNodeIsReady();
+		} catch (IndexMissingException ignored) {
+		}
+	}
+
+	@Before
+	public void baseSetUp() throws Exception {
+		XContentBuilder fsRiver = fsRiverSettings();
+		String indexName = indexName();
+		String mapping = mapping();
+
+		deleteIndexIfExists(indexName);
+		createIndex(indexName);
+
+		if (mapping != null) {
+			putMapping(indexName, mapping);
+		}
+
+		verifyFsRiverIsProvidedBySubClasses(fsRiver);
+
+		addARiver(indexName, fsRiver);
+		waitForIndexToHaveAtLeast(expectedNumberOfDocumentsInTheRiver());
+	}
+
 	/**
 	 * Define a unique index name
+	 *
 	 * @return The unique index name (could be this.getClass().getSimpleName())
 	 */
 	protected String indexName() {
 		return this.getClass().getSimpleName().toLowerCase();
 	}
-	
+
+	/**
+	 * Define the FS River settings
+	 *
+	 * @return FS River Settings
+	 */
+	protected abstract XContentBuilder fsRiverSettings() throws Exception;
+
 	/**
 	 * Define a mapping if needed
+	 *
 	 * @return The mapping to use
 	 */
-	abstract public String mapping() throws Exception;
-	
-	/**
-	 * Define the Rss River settings
-	 * @return Rss River Settings
-	 */
-	abstract public XContentBuilder fsRiver() throws Exception;
-	
+	protected String mapping() throws Exception {
+		return DEFAULT_MAPPING;
+	}
+
+	protected int expectedNumberOfDocumentsInTheRiver() {
+		return DEFAULT_EXPECTED_NUMBER_OF_DOCUMENTS;
+	}
+
 	/**
 	 * Define the waiting time in seconds before launching a test
+	 *
 	 * @return Waiting time (in seconds)
 	 */
-	abstract public long waitingTime() throws Exception;
-	
-	protected static Node node;
-	
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-		if (node == null) {
-			// First we delete old datas...
-			File dataDir = new File("./target/es/data");
-			if(dataDir.exists()) {
-				FileSystemUtils.deleteRecursively(dataDir, true);
-			}
-			
-			// Then we start our node for tests
-			node = NodeBuilder
-					.nodeBuilder()
-                    .local(true)
-					.settings(
-							ImmutableSettings.settingsBuilder()
-							.put("gateway.type", "local")
-							.put("path.data", "./target/es/data")		
-							.put("path.logs", "./target/es/logs")		
-							.put("path.work", "./target/es/work")		
-							).node();
-			
-			// We wait now for the yellow (or green) status
-			node.client().admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet(); 
-			
-			// We clean existing rivers
-			try {
-				node.client().admin().indices()
-						.delete(new DeleteIndexRequest("_river")).actionGet();
-				// We wait for one second to let ES delete the river
-				Thread.sleep(1000);
-			} catch (IndexMissingException e) {
-				// Index does not exist... Fine
+	protected long timeLimitWaitingForTheRiver() throws Exception {
+		return DEFAULT_WAITING_TIME;
+	}
+
+	protected void addARiver(String riverName, XContentBuilder fsRiver) throws Exception {
+		node.client().prepareIndex("_river", riverName, "_meta").setSource(fsRiver).execute().actionGet();
+	}
+
+	protected void waitForIndexToHaveAtLeast(long numberOfDocuments) throws Exception {
+		long timeLimit = timeLimitWaitingForTheRiver() * 1000;
+		long currentTime = 0;
+		long deltaTime = 100;
+		while (currentTime < timeLimit) {
+			final long count = getTotalHitsFromCountRequest(QueryBuilders.matchAllQuery());
+			if (count >= numberOfDocuments) {
+				return; //We know the river is done indexing stuff
+			} else {
+				currentTime += deltaTime;
+				Thread.sleep(deltaTime);
+				refreshTestNode(indexName());
 			}
 		}
 	}
 
-	@Before
-	public void setUp() throws Exception {
-		XContentBuilder fsRiver = fsRiver();
-		String indexName = indexName();
-		String mapping = mapping();
-		
-		// We delete the index before we start any test
-		try {
-			node.client().admin().indices()
-					.delete(new DeleteIndexRequest(indexName)).actionGet();
-			// We wait for one second to let ES delete the index
-			Thread.sleep(1000);
-		} catch (IndexMissingException e) {
-			// Index does not exist... Fine
+	protected long getTotalHitsFromCountRequest(QueryBuilder query) {
+		long totalHits;
+		CountResponse response = node.client().prepareCount(indexName())
+				.setTypes(FsRiverUtil.INDEX_TYPE_DOC)
+				.setQuery(query).execute().actionGet();
+		totalHits = response.getCount();
+		return totalHits;
+	}
+
+	protected void waitUntilNextUpdate(int updateRate) throws InterruptedException {
+		Thread.sleep(updateRate + 1000);
+	}
+
+	private void verifyFsRiverIsProvidedBySubClasses(XContentBuilder fsRiver) throws Exception {
+		if (fsRiver == null) {
+			throw new Exception("Subclasses must provide an fs setup...");
 		}
-		
-		// Creating the index
+	}
+
+	private void putMapping(String indexName, String mapping) {
+		node.client().admin().indices()
+				.preparePutMapping(indexName)
+				.setType(FsRiverUtil.INDEX_TYPE_DOC)
+				.setSource(mapping)
+				.execute().actionGet();
+	}
+
+	private void refreshTestNode(String indexName) {
+		node.client().admin().indices().prepareRefresh(indexName).execute().actionGet();
+	}
+
+	private void createIndex(String indexName) throws InterruptedException {
 		node.client().admin().indices().create(new CreateIndexRequest(indexName)).actionGet();
-		Thread.sleep(1000);
-
-		// If a mapping is defined, we will use it
-		if (mapping != null) {
-			node.client().admin().indices()
-			.preparePutMapping(indexName)
-			.setType(FsRiverUtil.INDEX_TYPE_DOC)
-			.setSource(mapping)
-			.execute().actionGet();
-		}
-
-		if (fsRiver == null) throw new Exception("Subclasses must provide an fs setup...");
-		
-		addARiver(indexName, fsRiver);
-		
-		// Let's wait x seconds 
-		Thread.sleep(waitingTime() * 1000);
-
-        // We send a refresh request to be sure that everything has been committed
-        node.client().admin().indices().prepareRefresh(indexName).execute().actionGet();
-    }
-	
-	protected void addARiver(String riverName, XContentBuilder fsRiver) throws Exception {
-		node.client().prepareIndex("_river", riverName, "_meta").setSource(fsRiver).execute().actionGet();		
+		waitUntilNodeIsReady();
 	}
 
 }

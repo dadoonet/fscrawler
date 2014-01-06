@@ -30,64 +30,54 @@ import java.io.File;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 /**
- * Test case for issue #5: https://github.com/dadoonet/fsriver/issues/5 : Support JSon documents
+ * Test case for issue #5: https://github.com/dadoonet/fsriver/issues/5 : Support JSON documents
  */
 public class FsRiverJsonDisabledTest extends AbstractFsRiverSimpleTest {
 
-	/**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
-		return null;
-	}
+	private static final int UPDATE_RATE = 10 * 1000;
+	private static final String DIRECTORY = "testfsjson1";
+	private static final int EXPECTED_NUMBER_OF_DOCUMENTS_AFTER_RIVER_CREATION = 2;
 
 	/**
-	 * 
 	 * <ul>
-	 *   <li>We index JSon files so we don't use the mapper attachment plugin
+	 * <li>We index JSON files so we don't use the mapper attachment plugin
 	 * </ul>
 	 */
 	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// We update every minute
-		int updateRate = 10 * 1000;
-		String dir = "testfsjson1";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
+	public XContentBuilder fsRiverSettings() throws Exception {
+		File dataDir = verifyDirectoryExists(DIRECTORY);
 		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
+
 		XContentBuilder xb = jsonBuilder()
 				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-                        .field("json_support", false)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
+				.field("type", "fs")
+				.startObject("fs")
+				.field("url", url)
+				.field("update_rate", UPDATE_RATE)
+				.field("json_support", false)
+				.endObject()
+				.startObject("index")
+				.field("index", indexName())
+				.field("type", "doc")
+				.field("bulk_size", 1)
+				.endObject()
 				.endObject();
 		return xb;
 	}
-	
+
+	@Override
+	protected int expectedNumberOfDocumentsInTheRiver() {
+		return EXPECTED_NUMBER_OF_DOCUMENTS_AFTER_RIVER_CREATION;
+	}
 
 	@Test
-	public void tweet_term_is_indexed_twice() throws Exception {
-        // We do a search for tweet
-        SearchResponse searchResponse = node.client().prepareSearch(indexName())
+	public void tweets_should_be_indexed_as_plain_text() throws Exception {
+		SearchResponse searchResponse = node.client().prepareSearch(indexName())
 				.setQuery(QueryBuilders.termQuery("text", "tweet")).execute().actionGet();
 		Assert.assertEquals("We should have 0 doc for tweet in text field...", 0, searchResponse.getHits().getTotalHits());
 
-        searchResponse = node.client().prepareSearch(indexName())
-                .setQuery(QueryBuilders.queryString("tweet")).execute().actionGet();
-        Assert.assertEquals("We should have 2 docs for tweet in _all...", 2, searchResponse.getHits().getTotalHits());
+		searchResponse = node.client().prepareSearch(indexName())
+				.setQuery(QueryBuilders.queryString("tweet")).execute().actionGet();
+		Assert.assertEquals("We should have 2 docs for tweet in _all...", 2, searchResponse.getHits().getTotalHits());
 	}
 }
