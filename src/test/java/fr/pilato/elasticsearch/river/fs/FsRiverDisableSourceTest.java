@@ -37,26 +37,25 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
     private static String filename = "roottxtfile.txt";
 
     /**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
-		return FsRiverUtil.buildFsFileMapping("doc", false, false).string();
-	}
+     * We use the default mapping
+     */
+    @Override
+    public String mapping() throws Exception {
+        return FsRiverUtil.buildFsFileMapping("doc", false, false).string();
+    }
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>TODO Fill the use case
-	 * </ul>
-	 */
-	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
+    /**
+     * <ul>
+     * <li>TODO Fill the use case
+     * </ul>
+     */
+    @Override
+    public XContentBuilder fsRiver() throws Exception {
+        // First we check that filesystem to be analyzed exists...
+        File dataDir = new File("./target/test-classes/" + dir);
+        if (!dataDir.exists()) {
+            throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests.");
+        }
 
         // We need to remove previous file from prior tests
         File file2 = new File("./target/test-classes/" + dir + "/new_" + filename);
@@ -67,25 +66,25 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
         }
 
         String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
-		return jsonBuilder()
-				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
-				.endObject();
-	}
-	
 
-	@Test
-	public void index_is_not_empty() throws Exception {
+        return jsonBuilder()
+                .startObject()
+                .field("type", "fs")
+                .startObject("fs")
+                .field("url", url)
+                .field("update_rate", updateRate)
+                .endObject()
+                .startObject("index")
+                .field("index", indexName())
+                .field("type", "doc")
+                .field("bulk_size", 1)
+                .endObject()
+                .endObject();
+    }
+
+
+    @Test
+    public void index_is_not_empty() throws Exception {
         // We should have one doc first
         countTestHelper(null, 1);
 
@@ -106,5 +105,5 @@ public class FsRiverDisableSourceTest extends AbstractFsRiverSimpleTest {
 
         // We expect to have one file indexed only
         countTestHelper(null, 1);
-	}
+    }
 }

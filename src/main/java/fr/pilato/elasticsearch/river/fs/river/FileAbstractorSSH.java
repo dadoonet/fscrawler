@@ -68,7 +68,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         for (ChannelSftp.LsEntry file : ls) {
             // We ignore here all files like . and ..
             if (!".".equals(file.getFilename()) &&
-                !"..".equals(file.getFilename())) {
+                    !"..".equals(file.getFilename())) {
                 result.add(toFileAbstractModel(dir, file));
             }
         }
@@ -82,7 +82,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
                 fsdef.getServer());
 
         JSch jsch = new JSch();
-        Session session = jsch.getSession(fsdef.getUsername(),fsdef.getServer());
+        Session session = jsch.getSession(fsdef.getUsername(), fsdef.getServer());
         java.util.Properties config = new java.util.Properties();
         config.put("StrictHostKeyChecking", "no");
         session.setConfig(config);
@@ -97,7 +97,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         if (!channel.isConnected()) {
             logger.warn("Cannot connect with SSH to {}@{}", fsdef.getUsername(),
                     fsdef.getServer());
-            throw new RuntimeException("Can not connect to " + fsdef.getUsername() + "@" + fsdef.getServer() );
+            throw new RuntimeException("Can not connect to " + fsdef.getUsername() + "@" + fsdef.getServer());
         }
         if (logger.isDebugEnabled()) logger.debug("SSH connection successful");
         return (ChannelSftp) channel;

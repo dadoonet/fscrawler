@@ -34,20 +34,20 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class ManageRiverAction extends BaseRestHandler {
 
-	@Inject
+    @Inject
     public ManageRiverAction(Settings settings, Client client, RestController controller) {
-		super(settings, client);
+        super(settings, client);
 
-		// Define _start / _stop REST Endpoints
-		controller.registerHandler(Method.GET, "/_river/{rivername}/{command}", this);
-	}
+        // Define _start / _stop REST Endpoints
+        controller.registerHandler(Method.GET, "/_river/{rivername}/{command}", this);
+    }
 
-	@Override
-	public void handleRequest(RestRequest request, RestChannel channel) {
-		if (logger.isDebugEnabled()) logger.debug("REST ManageRiverAction called");
+    @Override
+    public void handleRequest(RestRequest request, RestChannel channel) {
+        if (logger.isDebugEnabled()) logger.debug("REST ManageRiverAction called");
 
-		String rivername = request.param("rivername");
-		String command = request.param("command");
+        String rivername = request.param("rivername");
+        String command = request.param("command");
 
         try {
             String status = "STARTED";
@@ -55,22 +55,22 @@ public class ManageRiverAction extends BaseRestHandler {
 
             XContentBuilder xb = jsonBuilder()
                     .startObject()
-                        .startObject("fs")
-                            .field("status", status)
-                        .endObject()
+                    .startObject("fs")
+                    .field("status", status)
+                    .endObject()
                     .endObject();
             client.prepareIndex("_river", rivername, "_fsstatus").setSource(xb).execute().actionGet();
 
             XContentBuilder builder = RestXContentBuilder.restContentBuilder(request);
             builder
-                .startObject()
+                    .startObject()
                     .field(new XContentBuilderString("ok"), true)
-                .endObject();
+                    .endObject();
             channel.sendResponse(new XContentRestResponse(request, RestStatus.OK, builder));
         } catch (IOException e) {
             onFailure(channel, request, e);
         }
-	}
+    }
 
     protected void onFailure(RestChannel channel, RestRequest request,
                              IOException e) {

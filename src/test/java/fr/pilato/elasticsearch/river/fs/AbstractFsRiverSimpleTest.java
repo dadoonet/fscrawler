@@ -32,13 +32,14 @@ import org.junit.Assert;
 public abstract class AbstractFsRiverSimpleTest extends AbstractFsRiverTest {
     protected ESLogger logger = Loggers.getLogger(this.getClass());
 
-	public long waitingTime() throws Exception {
-		return 5;
-	}
+    public long waitingTime() throws Exception {
+        return 5;
+    }
 
     /**
      * Check that we have the expected number of docs or at least one if expected is null
-     * @param term Term you search for. MatchAll if null.
+     *
+     * @param term     Term you search for. MatchAll if null.
      * @param expected expected number of docs. Null if at least 1.
      * @throws Exception
      */
@@ -78,11 +79,12 @@ public abstract class AbstractFsRiverSimpleTest extends AbstractFsRiverTest {
 
     /**
      * Check that we have at least one doc
+     *
      * @throws Exception
      */
-	public void countTestHelper() throws Exception {
-		// Let's search for entries
-		countTestHelper(null, null);
-	}
+    public void countTestHelper() throws Exception {
+        // Let's search for entries
+        countTestHelper(null, null);
+    }
 
 }

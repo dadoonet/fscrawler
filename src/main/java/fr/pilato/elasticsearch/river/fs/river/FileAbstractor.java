@@ -30,7 +30,9 @@ public abstract class FileAbstractor<T> {
     protected ESLogger logger = Loggers.getLogger(this.getClass());
 
     public abstract FileAbstractModel toFileAbstractModel(String path, T file);
+
     public abstract InputStream getInputStream(FileAbstractModel file) throws Exception;
+
     public abstract Collection<FileAbstractModel> getFiles(String dir) throws Exception;
 
     public FileAbstractor(FsRiverFeedDefinition fsDef) {

@@ -32,96 +32,96 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class FsMultipleRiverTest extends AbstractFsRiverTest {
 
-	@Override
-	public long waitingTime() throws Exception {
-		return 5;
-	}
+    @Override
+    public long waitingTime() throws Exception {
+        return 5;
+    }
 
-	/**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
-		return null;
-	}
-	
-	@Override @Before
-	public void setUp() throws Exception {
-		super.setUp();
-		
-		// In this case, we want to add another river
-		// We update every five seconds
-		int updateRate = 5 * 1000;
-		String dir = "testfs2";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
-		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
-		XContentBuilder xb = jsonBuilder()
-				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-					.endObject()
-					.startObject("index")
-						.field("index", indexName())
-						.field("type", "otherdocs")
-						.field("bulk_size", 1)
-					.endObject()
-				.endObject();
+    /**
+     * We use the default mapping
+     */
+    @Override
+    public String mapping() throws Exception {
+        return null;
+    }
 
-		addARiver(dir, xb);
-		
-		// Let's wait x seconds 
-		Thread.sleep(waitingTime() * 1000);
-	}
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>TODO Fill the use case
-	 * </ul>
-	 */
-	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// We update every ten seconds
-		int updateRate = 10 * 1000;
-		String dir = "testfs1";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
-		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
-		XContentBuilder xb = jsonBuilder()
-				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
-				.endObject();
-		return xb;
-	}
-	
+        // In this case, we want to add another river
+        // We update every five seconds
+        int updateRate = 5 * 1000;
+        String dir = "testfs2";
 
-	@Test
-	public void index_must_have_two_files() throws Exception {
-		// Let's search for entries
-		CountResponse response = node.client().prepareCount(indexName()).setTypes("otherdocs","doc")
-				.setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
-		Assert.assertEquals("We should have two docs...", 2, response.getCount());
-	}
+        // First we check that filesystem to be analyzed exists...
+        File dataDir = new File("./target/test-classes/" + dir);
+        if (!dataDir.exists()) {
+            throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        String url = dataDir.getAbsoluteFile().getAbsolutePath();
+
+        XContentBuilder xb = jsonBuilder()
+                .startObject()
+                .field("type", "fs")
+                .startObject("fs")
+                .field("url", url)
+                .field("update_rate", updateRate)
+                .endObject()
+                .startObject("index")
+                .field("index", indexName())
+                .field("type", "otherdocs")
+                .field("bulk_size", 1)
+                .endObject()
+                .endObject();
+
+        addARiver(dir, xb);
+
+        // Let's wait x seconds
+        Thread.sleep(waitingTime() * 1000);
+    }
+
+    /**
+     * <ul>
+     * <li>TODO Fill the use case
+     * </ul>
+     */
+    @Override
+    public XContentBuilder fsRiver() throws Exception {
+        // We update every ten seconds
+        int updateRate = 10 * 1000;
+        String dir = "testfs1";
+
+        // First we check that filesystem to be analyzed exists...
+        File dataDir = new File("./target/test-classes/" + dir);
+        if (!dataDir.exists()) {
+            throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        String url = dataDir.getAbsoluteFile().getAbsolutePath();
+
+        XContentBuilder xb = jsonBuilder()
+                .startObject()
+                .field("type", "fs")
+                .startObject("fs")
+                .field("url", url)
+                .field("update_rate", updateRate)
+                .endObject()
+                .startObject("index")
+                .field("index", indexName())
+                .field("type", "doc")
+                .field("bulk_size", 1)
+                .endObject()
+                .endObject();
+        return xb;
+    }
+
+
+    @Test
+    public void index_must_have_two_files() throws Exception {
+        // Let's search for entries
+        CountResponse response = node.client().prepareCount(indexName()).setTypes("otherdocs", "doc")
+                .setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
+        Assert.assertEquals("We should have two docs...", 2, response.getCount());
+    }
 }

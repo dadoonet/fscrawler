@@ -34,56 +34,55 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
  */
 public class FsRiverJsonTest extends AbstractFsRiverSimpleTest {
 
-	/**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
-		return null;
-	}
+    /**
+     * We use the default mapping
+     */
+    @Override
+    public String mapping() throws Exception {
+        return null;
+    }
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>We index JSon files so we don't use the mapper attachment plugin
-	 * </ul>
-	 */
-	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// We update every minute
-		int updateRate = 10 * 1000;
-		String dir = "testfsjson1";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
-		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
-		XContentBuilder xb = jsonBuilder()
-				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-                        .field("json_support", true)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
-				.endObject();
-		return xb;
-	}
-	
+    /**
+     * <ul>
+     * <li>We index JSon files so we don't use the mapper attachment plugin
+     * </ul>
+     */
+    @Override
+    public XContentBuilder fsRiver() throws Exception {
+        // We update every minute
+        int updateRate = 10 * 1000;
+        String dir = "testfsjson1";
 
-	@Test
-	public void tweet_term_is_indexed_twice() throws Exception {
+        // First we check that filesystem to be analyzed exists...
+        File dataDir = new File("./target/test-classes/" + dir);
+        if (!dataDir.exists()) {
+            throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        String url = dataDir.getAbsoluteFile().getAbsolutePath();
+
+        XContentBuilder xb = jsonBuilder()
+                .startObject()
+                .field("type", "fs")
+                .startObject("fs")
+                .field("url", url)
+                .field("update_rate", updateRate)
+                .field("json_support", true)
+                .endObject()
+                .startObject("index")
+                .field("index", indexName())
+                .field("type", "doc")
+                .field("bulk_size", 1)
+                .endObject()
+                .endObject();
+        return xb;
+    }
+
+
+    @Test
+    public void tweet_term_is_indexed_twice() throws Exception {
         // We do a search for tweet
         SearchResponse searchResponse = node.client().prepareSearch(indexName())
-				.setQuery(QueryBuilders.termQuery("text", "tweet")).execute().actionGet();
-		Assert.assertEquals("We should have two docs for tweet...", 2, searchResponse.getHits().getTotalHits());
-	}
+                .setQuery(QueryBuilders.termQuery("text", "tweet")).execute().actionGet();
+        Assert.assertEquals("We should have two docs for tweet...", 2, searchResponse.getHits().getTotalHits());
+    }
 }

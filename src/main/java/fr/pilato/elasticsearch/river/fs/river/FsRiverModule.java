@@ -27,7 +27,8 @@ import org.elasticsearch.river.River;
  */
 public class FsRiverModule extends AbstractModule {
 
-    @Override protected void configure() {
+    @Override
+    protected void configure() {
         bind(River.class).to(FsRiver.class).asEagerSingleton();
     }
 }

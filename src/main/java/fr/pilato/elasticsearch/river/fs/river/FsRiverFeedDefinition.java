@@ -23,36 +23,37 @@ import java.util.List;
 
 /**
  * Define a FS Feed with source (aka short name), url and updateRate attributes
+ *
  * @author dadoonet (David Pilato)
  */
 public class FsRiverFeedDefinition {
-	private String rivername;
-	private String url;
-	private int updateRate;
-	private List<String> includes;
-	private List<String> excludes;
+    private String rivername;
+    private String url;
+    private int updateRate;
+    private List<String> includes;
+    private List<String> excludes;
     private boolean jsonSupport;
     private boolean filenameAsId;
     private boolean addFilesize;
     private double indexedChars;
     private String username;
     private String password;
-	private String server;
-	private String protocol;
+    private String server;
+    private String protocol;
     private boolean removeDeleted;
     private boolean storeSource;
 
-	public FsRiverFeedDefinition(String rivername, String url, int updateRate, List<String> includes,
+    public FsRiverFeedDefinition(String rivername, String url, int updateRate, List<String> includes,
                                  List<String> excludes, boolean jsonSupport, boolean filenameAsId,
                                  boolean addFilesize, double indexedChars, String username, String password,
                                  String server, String protocol, boolean removeDeleted, boolean storeSource) {
-		assert( excludes != null);
-		assert( includes != null);
-		this.includes = includes;
-		this.excludes = excludes;
-		this.rivername = rivername;
-		this.url = url;
-		this.updateRate = updateRate;
+        assert (excludes != null);
+        assert (includes != null);
+        this.includes = includes;
+        this.excludes = excludes;
+        this.rivername = rivername;
+        this.url = url;
+        this.updateRate = updateRate;
         this.jsonSupport = jsonSupport;
         this.filenameAsId = filenameAsId;
         this.addFilesize = addFilesize;
@@ -63,35 +64,35 @@ public class FsRiverFeedDefinition {
         this.protocol = protocol;
         this.removeDeleted = removeDeleted;
         this.storeSource = storeSource;
-	}
+    }
 
     public String getRivername() {
-		return rivername;
-	}
-	
-	public String getUrl() {
-		return url;
-	}
+        return rivername;
+    }
 
-	public int getUpdateRate() {
-		return updateRate;
-	}
+    public String getUrl() {
+        return url;
+    }
 
-	public List<String> getExcludes() {
-		return excludes;
-	}
-	
-	public List<String> getIncludes() {
-		return includes;
-	}
-	
-	public void addInclude(String include) {
-		this.includes.add(include);
-	}
+    public int getUpdateRate() {
+        return updateRate;
+    }
 
-	public void addExclude(String exclude) {
-		this.excludes.add(exclude);
-	}
+    public List<String> getExcludes() {
+        return excludes;
+    }
+
+    public List<String> getIncludes() {
+        return includes;
+    }
+
+    public void addInclude(String include) {
+        this.includes.add(include);
+    }
+
+    public void addExclude(String exclude) {
+        this.excludes.add(exclude);
+    }
 
     public boolean isJsonSupport() {
         return jsonSupport;
@@ -109,20 +110,20 @@ public class FsRiverFeedDefinition {
         return indexedChars;
     }
 
-    public String getUsername(){
-    	return this.username;
+    public String getUsername() {
+        return this.username;
     }
 
-    public String getPassword(){
-    	return this.password;
+    public String getPassword() {
+        return this.password;
     }
 
-    public String getServer(){
-    	return this.server;
+    public String getServer() {
+        return this.server;
     }
 
-    public String getProtocol(){
-    	return this.protocol;
+    public String getProtocol() {
+        return this.protocol;
     }
 
     public boolean isRemoveDeleted() {

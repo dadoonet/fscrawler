@@ -35,49 +35,48 @@ public class FsRiverDisableDeleteTest extends AbstractFsRiverSimpleTest {
     private static String dir = "testfs_delete_disabled";
     private static String filename = "roottxtfile.txt";
 
-	/**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
-		return null;
-	}
+    /**
+     * We use the default mapping
+     */
+    @Override
+    public String mapping() throws Exception {
+        return null;
+    }
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>TODO Fill the use case
-	 * </ul>
-	 */
-	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
+    /**
+     * <ul>
+     * <li>TODO Fill the use case
+     * </ul>
+     */
+    @Override
+    public XContentBuilder fsRiver() throws Exception {
+        // First we check that filesystem to be analyzed exists...
+        File dataDir = new File("./target/test-classes/" + dir);
+        if (!dataDir.exists()) {
+            throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests.");
+        }
 
         String url = dataDir.getAbsoluteFile().getAbsolutePath();
 
         return jsonBuilder()
-				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-                        .field("remove_deleted", false)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
-				.endObject();
-	}
-	
+                .startObject()
+                .field("type", "fs")
+                .startObject("fs")
+                .field("url", url)
+                .field("update_rate", updateRate)
+                .field("remove_deleted", false)
+                .endObject()
+                .startObject("index")
+                .field("index", indexName())
+                .field("type", "doc")
+                .field("bulk_size", 1)
+                .endObject()
+                .endObject();
+    }
 
-	@Test
-	public void deleted_file_should_not_be_removed() throws Exception {
+
+    @Test
+    public void deleted_file_should_not_be_removed() throws Exception {
         // We first create a copy of a file
         File file1 = new File("./target/test-classes/" + dir + "/" + filename);
         File file2 = new File("./target/test-classes/" + dir + "/deleted_" + filename);
@@ -100,5 +99,5 @@ public class FsRiverDisableDeleteTest extends AbstractFsRiverSimpleTest {
 
         // We expect to have two files
         countTestHelper(null, 2);
-	}
+    }
 }

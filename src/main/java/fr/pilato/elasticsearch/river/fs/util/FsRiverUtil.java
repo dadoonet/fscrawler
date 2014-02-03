@@ -31,15 +31,16 @@ import java.util.Map;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class FsRiverUtil {
-	public static final String INDEX_TYPE_DOC = "doc";
-	public static final String INDEX_TYPE_FOLDER = "folder";
-	public static final String INDEX_TYPE_FS = "fsRiver";
+    public static final String INDEX_TYPE_DOC = "doc";
+    public static final String INDEX_TYPE_FOLDER = "folder";
+    public static final String INDEX_TYPE_FS = "fsRiver";
 
     static public final class Doc {
         public static final String CONTENT = "content";
         public static final String ATTACHMENT = "attachment";
 
         public static final String META = "meta";
+
         static public final class Meta {
             public static final String AUTHOR = "author";
             public static final String TITLE = "title";
@@ -48,6 +49,7 @@ public class FsRiverUtil {
         }
 
         public static final String FILE = "file";
+
         static public final class File {
             public static final String CONTENT_TYPE = "content_type";
             public static final String LAST_MODIFIED = "last_modified";
@@ -59,6 +61,7 @@ public class FsRiverUtil {
         }
 
         public static final String PATH = "path";
+
         static public final class Path {
             public static final String ENCODED = "encoded";
             public static final String ROOT = "root";
@@ -75,15 +78,16 @@ public class FsRiverUtil {
         public static final String REAL = "real";
     }
 
-	public static XContentBuilder buildFsFileMapping(String type) throws Exception {
-		return buildFsFileMapping(type, true, false);
-	}
+    public static XContentBuilder buildFsFileMapping(String type) throws Exception {
+        return buildFsFileMapping(type, true, false);
+    }
 
     /**
      * Build the mapping for documents
-     * @param type elasticsearch type you will use
+     *
+     * @param type         elasticsearch type you will use
      * @param enableSource Do you want to enable _source?
-     * @param storeSource Do you want to store file source as binary BASE64 encoded?
+     * @param storeSource  Do you want to store file source as binary BASE64 encoded?
      * @return a mapping
      * @throws Exception
      */
@@ -147,9 +151,9 @@ public class FsRiverUtil {
 
 
     public static XContentBuilder buildFsFolderMapping(String type) throws Exception {
-		XContentBuilder xbMapping = jsonBuilder().prettyPrint().startObject()
-            // Type
-            .startObject(type).startObject("properties");
+        XContentBuilder xbMapping = jsonBuilder().prettyPrint().startObject()
+                // Type
+                .startObject(type).startObject("properties");
 
         addNotAnalyzedString(xbMapping, Dir.NAME);
         addNotAnalyzedString(xbMapping, Dir.REAL);
@@ -159,13 +163,13 @@ public class FsRiverUtil {
 
         xbMapping.endObject().endObject().endObject(); // End Type
 
-		return xbMapping;
-	}
+        return xbMapping;
+    }
 
-	public static XContentBuilder buildFsRiverMapping(String type) throws Exception {
-		XContentBuilder	xbMapping = jsonBuilder().prettyPrint().startObject()
-            // Type
-            .startObject(type).startObject("properties");
+    public static XContentBuilder buildFsRiverMapping(String type) throws Exception {
+        XContentBuilder xbMapping = jsonBuilder().prettyPrint().startObject()
+                // Type
+                .startObject(type).startObject("properties");
 
         addLong(xbMapping, "scanDate");
 
@@ -176,128 +180,130 @@ public class FsRiverUtil {
 
         xbMapping.endObject().endObject().endObject(); // End Type
 
-		return xbMapping;
-	}
+        return xbMapping;
+    }
 
-	public static XContentBuilder buildFsFileMapping() throws Exception {
-		return buildFsFileMapping(INDEX_TYPE_DOC);
-	}
+    public static XContentBuilder buildFsFileMapping() throws Exception {
+        return buildFsFileMapping(INDEX_TYPE_DOC);
+    }
 
-	public static XContentBuilder buildFsFolderMapping() throws Exception {
-		return buildFsFolderMapping(INDEX_TYPE_FOLDER);
-	}
+    public static XContentBuilder buildFsFolderMapping() throws Exception {
+        return buildFsFolderMapping(INDEX_TYPE_FOLDER);
+    }
 
-	public static XContentBuilder buildFsRiverMapping() throws Exception {
-		return buildFsRiverMapping(INDEX_TYPE_FS);
-	}
+    public static XContentBuilder buildFsRiverMapping() throws Exception {
+        return buildFsRiverMapping(INDEX_TYPE_FS);
+    }
 
     private static void addAnalyzedString(XContentBuilder xcb, String fieldName) throws IOException {
         xcb.startObject(fieldName)
-            .field("type", "string")
-            .field("store", "yes")
-        .endObject();
+                .field("type", "string")
+                .field("store", "yes")
+                .endObject();
     }
 
     private static void addAnalyzedSimpleString(XContentBuilder xcb, String fieldName) throws IOException {
         xcb.startObject(fieldName)
-            .field("type", "string")
-            .field("analyzer", "simple")
-            .field("store", "yes")
-        .endObject();
+                .field("type", "string")
+                .field("analyzer", "simple")
+                .field("store", "yes")
+                .endObject();
     }
 
     private static void addNotAnalyzedString(XContentBuilder xcb, String fieldName) throws IOException {
         xcb.startObject(fieldName)
-            .field("type", "string")
-            .field("store", "yes")
-            .field("index", "not_analyzed")
-        .endObject();
+                .field("type", "string")
+                .field("store", "yes")
+                .field("index", "not_analyzed")
+                .endObject();
     }
 
     private static void addNotIndexedString(XContentBuilder xcb, String fieldName) throws IOException {
         xcb.startObject(fieldName)
-            .field("type", "string")
-            .field("store", "yes")
-            .field("index", "no")
-        .endObject();
+                .field("type", "string")
+                .field("store", "yes")
+                .field("index", "no")
+                .endObject();
     }
 
     private static void addDate(XContentBuilder xcb, String fieldName) throws IOException {
         xcb.startObject(fieldName)
-            .field("type", "date")
-            .field("format", "dateOptionalTime")
-            .field("store", "yes")
-        .endObject();
+                .field("type", "date")
+                .field("format", "dateOptionalTime")
+                .field("store", "yes")
+                .endObject();
     }
 
     private static void addLong(XContentBuilder xcb, String fieldName) throws IOException {
         xcb.startObject(fieldName)
-            .field("type", "long")
-            .field("store", "yes")
-        .endObject();
+                .field("type", "long")
+                .field("store", "yes")
+                .endObject();
     }
 
     private static void addBinary(XContentBuilder xcb, String fieldName) throws IOException {
         xcb.startObject(fieldName)
-            .field("type", "binary")
-        .endObject();
+                .field("type", "binary")
+                .endObject();
     }
 
 
     /**
-	 * Extract array from settings (array or ; delimited String)
-	 * @param settings Settings
-	 * @param path Path to definition : "fs.includes"
-	 */
-	@SuppressWarnings("unchecked")
-	public static String[] buildArrayFromSettings(Map<String, Object> settings, String path) {
-		String[] includes;
+     * Extract array from settings (array or ; delimited String)
+     *
+     * @param settings Settings
+     * @param path     Path to definition : "fs.includes"
+     */
+    @SuppressWarnings("unchecked")
+    public static String[] buildArrayFromSettings(Map<String, Object> settings, String path) {
+        String[] includes;
 
-		// We manage comma separated format and arrays
-		if(XContentMapValues.isArray(XContentMapValues.extractValue(path, settings))) {
-			List<String> includesarray = (List<String>) XContentMapValues.extractValue(path, settings);
-			int i = 0;
-			includes = new String[includesarray.size()];
-			for (String include : includesarray) {
-				includes[i++] = Strings.trimAllWhitespace(include);
-			}
-		} else {
-			String includedef = (String) XContentMapValues.extractValue(path, settings);
-			includes = Strings.commaDelimitedListToStringArray(Strings.trimAllWhitespace(includedef));
-		}
+        // We manage comma separated format and arrays
+        if (XContentMapValues.isArray(XContentMapValues.extractValue(path, settings))) {
+            List<String> includesarray = (List<String>) XContentMapValues.extractValue(path, settings);
+            int i = 0;
+            includes = new String[includesarray.size()];
+            for (String include : includesarray) {
+                includes[i++] = Strings.trimAllWhitespace(include);
+            }
+        } else {
+            String includedef = (String) XContentMapValues.extractValue(path, settings);
+            includes = Strings.commaDelimitedListToStringArray(Strings.trimAllWhitespace(includedef));
+        }
 
-		return Strings.removeDuplicateStrings(includes);
-	}
+        return Strings.removeDuplicateStrings(includes);
+    }
 
-	/**
-	 * We check if we can index the file or if we should ignore it
-	 * @param filename The filename to scan
-	 * @param includes include rules, may be empty not null
-	 * @param excludes exclude rules, may be empty not null
-	 */
-	public static boolean isIndexable(String filename, List<String> includes, List<String> excludes) {
-		// No rules ? Fine, we index everything
-		if (includes.isEmpty() && excludes.isEmpty()) return true;
+    /**
+     * We check if we can index the file or if we should ignore it
+     *
+     * @param filename The filename to scan
+     * @param includes include rules, may be empty not null
+     * @param excludes exclude rules, may be empty not null
+     */
+    public static boolean isIndexable(String filename, List<String> includes, List<String> excludes) {
+        // No rules ? Fine, we index everything
+        if (includes.isEmpty() && excludes.isEmpty()) return true;
 
-		// Exclude rules : we know that whatever includes rules are, we should exclude matching files
-		for (String exclude : excludes) {
-			String regex = exclude.replace("?", ".?").replace("*", ".*?");
-			if(filename.matches(regex)) return false;
-		}
+        // Exclude rules : we know that whatever includes rules are, we should exclude matching files
+        for (String exclude : excludes) {
+            String regex = exclude.replace("?", ".?").replace("*", ".*?");
+            if (filename.matches(regex)) return false;
+        }
 
-		// Include rules : we should add document if it match include rules
-		if (includes.isEmpty()) return true;
+        // Include rules : we should add document if it match include rules
+        if (includes.isEmpty()) return true;
 
-		for (String include : includes) {
-			String regex = include.replace("?", ".?").replace("*", ".*?");
-			if(filename.matches(regex)) return true;
-		}
-		
-		return false;
-	}
+        for (String include : includes) {
+            String regex = include.replace("?", ".?").replace("*", ".*?");
+            if (filename.matches(regex)) return true;
+        }
+
+        return false;
+    }
 
     public static String computeVirtualPathName(ScanStatistic stats,
-                                          String realPath) {
+                                                String realPath) {
         if (realPath == null)
             return null;
 

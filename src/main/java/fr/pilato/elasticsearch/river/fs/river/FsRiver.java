@@ -72,13 +72,13 @@ public class FsRiver extends AbstractRiverComponent implements River {
         public static final String SSH = "ssh";
     }
 
-	private final Client client;
+    private final Client client;
 
-	private final String indexName;
+    private final String indexName;
 
-	private final String typeName;
+    private final String typeName;
 
-	private final int bulkSize;
+    private final int bulkSize;
     private final int maxConcurrentBulk;
     private final TimeValue bulkFlushInterval;
 
@@ -86,40 +86,40 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
     private volatile Thread feedThread;
 
-	private volatile boolean closed = false;
+    private volatile boolean closed = false;
 
-	private final FsRiverFeedDefinition fsDefinition;
+    private final FsRiverFeedDefinition fsDefinition;
 
-	@SuppressWarnings({ "unchecked" })
-	@Inject
-	public FsRiver(RiverName riverName, RiverSettings settings, Client client)
-			throws MalformedURLException {
-		super(riverName, settings);
-		this.client = client;
+    @SuppressWarnings({"unchecked"})
+    @Inject
+    public FsRiver(RiverName riverName, RiverSettings settings, Client client)
+            throws MalformedURLException {
+        super(riverName, settings);
+        this.client = client;
 
-		if (settings.settings().containsKey("fs")) {
-			Map<String, Object> feed = (Map<String, Object>) settings
-					.settings().get("fs");
+        if (settings.settings().containsKey("fs")) {
+            Map<String, Object> feed = (Map<String, Object>) settings
+                    .settings().get("fs");
 
-			String feedname = XContentMapValues.nodeStringValue(
-					feed.get("name"), null);
+            String feedname = XContentMapValues.nodeStringValue(
+                    feed.get("name"), null);
             if (feedname != null) {
                 logger.warn("`fs.name` attribute is deprecated. Don't use it anymore.");
             }
 
-			String url = XContentMapValues.nodeStringValue(feed.get("url"), null);
+            String url = XContentMapValues.nodeStringValue(feed.get("url"), null);
             if (url == null) {
                 logger.warn("`url` is not set. Please define it. Falling back to default: /esdir.");
                 url = "/esdir";
             }
 
             int updateRate = XContentMapValues.nodeIntegerValue(feed.get("update_rate"), 15 * 60 * 1000);
-			
-			String[] includes = FsRiverUtil.buildArrayFromSettings(settings.settings(), "fs.includes");
-			String[] excludes = FsRiverUtil.buildArrayFromSettings(settings.settings(), "fs.excludes");
+
+            String[] includes = FsRiverUtil.buildArrayFromSettings(settings.settings(), "fs.includes");
+            String[] excludes = FsRiverUtil.buildArrayFromSettings(settings.settings(), "fs.excludes");
 
             // https://github.com/dadoonet/fsriver/issues/5 : Support JSon documents
-			boolean jsonSupport = XContentMapValues.nodeBooleanValue(feed.get("json_support"), false);
+            boolean jsonSupport = XContentMapValues.nodeBooleanValue(feed.get("json_support"), false);
 
             // https://github.com/dadoonet/fsriver/issues/7 : JSON support: use filename as ID
             boolean filenameAsId = XContentMapValues.nodeBooleanValue(feed.get("filename_as_id"), false);
@@ -130,8 +130,8 @@ public class FsRiver extends AbstractRiverComponent implements River {
             // https://github.com/dadoonet/fsriver/issues/17 : Modify Indexed Characters limit
             double indexedChars = XContentMapValues.nodeDoubleValue(feed.get("indexed_chars"), 0.0);
 
-            String username  = XContentMapValues.nodeStringValue(feed.get("username"), null);
-            String password  = XContentMapValues.nodeStringValue(feed.get("password"), null);
+            String username = XContentMapValues.nodeStringValue(feed.get("username"), null);
+            String password = XContentMapValues.nodeStringValue(feed.get("password"), null);
             String server = XContentMapValues.nodeStringValue(feed.get("server"), null);
             String protocol = XContentMapValues.nodeStringValue(feed.get("protocol"), PROTOCOL.LOCAL);
 
@@ -142,34 +142,34 @@ public class FsRiver extends AbstractRiverComponent implements River {
             fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
                     updateRate, Arrays.asList(includes), Arrays.asList(excludes),
                     jsonSupport, filenameAsId, addFilesize, indexedChars,
-                    username, password, server , protocol, removeDeleted, storeSource);
-		} else {
-			String url = "/esdir";
-			logger.warn(
-					"You didn't define the fs url. Switching to defaults : [{}]",
-					url);
-			int updateRate = 60 * 60 * 1000;
-			fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
-					updateRate, Arrays.asList("*.txt","*.pdf"), Arrays.asList("*.exe"), false, false, true, 0.0 ,
-                    null, null, null , null, true, false);
-		}
+                    username, password, server, protocol, removeDeleted, storeSource);
+        } else {
+            String url = "/esdir";
+            logger.warn(
+                    "You didn't define the fs url. Switching to defaults : [{}]",
+                    url);
+            int updateRate = 60 * 60 * 1000;
+            fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
+                    updateRate, Arrays.asList("*.txt", "*.pdf"), Arrays.asList("*.exe"), false, false, true, 0.0,
+                    null, null, null, null, true, false);
+        }
 
-		if (settings.settings().containsKey("index")) {
-			Map<String, Object> indexSettings = (Map<String, Object>) settings
-					.settings().get("index");
-			indexName = XContentMapValues.nodeStringValue(
-					indexSettings.get("index"), riverName.name());
-			typeName = XContentMapValues.nodeStringValue(
-					indexSettings.get("type"), FsRiverUtil.INDEX_TYPE_DOC);
-			bulkSize = XContentMapValues.nodeIntegerValue(
-					indexSettings.get("bulk_size"), 100);
+        if (settings.settings().containsKey("index")) {
+            Map<String, Object> indexSettings = (Map<String, Object>) settings
+                    .settings().get("index");
+            indexName = XContentMapValues.nodeStringValue(
+                    indexSettings.get("index"), riverName.name());
+            typeName = XContentMapValues.nodeStringValue(
+                    indexSettings.get("type"), FsRiverUtil.INDEX_TYPE_DOC);
+            bulkSize = XContentMapValues.nodeIntegerValue(
+                    indexSettings.get("bulk_size"), 100);
             bulkFlushInterval = TimeValue.parseTimeValue(XContentMapValues.nodeStringValue(
                     indexSettings.get("flush_interval"), "5s"), TimeValue.timeValueSeconds(5));
             maxConcurrentBulk = XContentMapValues.nodeIntegerValue(indexSettings.get("max_concurrent_bulk"), 1);
         } else {
-			indexName = riverName.name();
-			typeName = FsRiverUtil.INDEX_TYPE_DOC;
-			bulkSize = 100;
+            indexName = riverName.name();
+            typeName = FsRiverUtil.INDEX_TYPE_DOC;
+            bulkSize = 100;
             maxConcurrentBulk = 1;
             bulkFlushInterval = TimeValue.timeValueSeconds(5);
         }
@@ -192,46 +192,46 @@ public class FsRiver extends AbstractRiverComponent implements River {
             logger.error("When using SSH, you need to set a username and probably a password. Disabling river");
             closed = true;
         }
-	}
+    }
 
-	@Override
-	public void start() {
-		if (logger.isInfoEnabled())
-			logger.info("Starting fs river scanning");
+    @Override
+    public void start() {
+        if (logger.isInfoEnabled())
+            logger.info("Starting fs river scanning");
 
         if (closed) {
             logger.info("Fs river is closed. Exiting");
             return;
         }
 
-		try {
-			client.admin().indices().prepareCreate(indexName).execute()
-					.actionGet();
-		} catch (Exception e) {
-			if (ExceptionsHelper.unwrapCause(e) instanceof IndexAlreadyExistsException) {
-				// that's fine
-			} else if (ExceptionsHelper.unwrapCause(e) instanceof ClusterBlockException) {
-				// ok, not recovered yet..., lets start indexing and hope we
-				// recover by the first bulk
-				// TODO: a smarter logic can be to register for cluster event
-				// listener here, and only start sampling when the block is
-				// removed...
-			} else {
-				logger.warn("failed to create index [{}], disabling river...",
-						e, indexName);
-				return;
-			}
-		}
-		
-		try {
-			// If needed, we create the new mapping for files
-			if (!fsDefinition.isJsonSupport())
+        try {
+            client.admin().indices().prepareCreate(indexName).execute()
+                    .actionGet();
+        } catch (Exception e) {
+            if (ExceptionsHelper.unwrapCause(e) instanceof IndexAlreadyExistsException) {
+                // that's fine
+            } else if (ExceptionsHelper.unwrapCause(e) instanceof ClusterBlockException) {
+                // ok, not recovered yet..., lets start indexing and hope we
+                // recover by the first bulk
+                // TODO: a smarter logic can be to register for cluster event
+                // listener here, and only start sampling when the block is
+                // removed...
+            } else {
+                logger.warn("failed to create index [{}], disabling river...",
+                        e, indexName);
+                return;
+            }
+        }
+
+        try {
+            // If needed, we create the new mapping for files
+            if (!fsDefinition.isJsonSupport())
                 pushMapping(indexName, typeName, FsRiverUtil.buildFsFileMapping(typeName, true, fsDefinition.isStoreSource()));
-		} catch (Exception e) {
-			logger.warn("failed to create mapping for [{}/{}], disabling river...",
-					e, indexName, typeName);
-			return;
-		}
+        } catch (Exception e) {
+            logger.warn("failed to create mapping for [{}/{}], disabling river...",
+                    e, indexName, typeName);
+            return;
+        }
 
         // Creating bulk processor
         this.bulkProcessor = BulkProcessor.builder(client, new BulkProcessor.Listener() {
@@ -267,113 +267,114 @@ public class FsRiver extends AbstractRiverComponent implements River {
                 .build();
 
         // We create as many Threads as there are feeds
-		feedThread = EsExecutors.daemonThreadFactory(
-				settings.globalSettings(), "fs_slurper")
-				.newThread(
-						new FSParser(fsDefinition));
-		feedThread.start();
-	}
+        feedThread = EsExecutors.daemonThreadFactory(
+                settings.globalSettings(), "fs_slurper")
+                .newThread(
+                        new FSParser(fsDefinition));
+        feedThread.start();
+    }
 
-	@Override
-	public void close() {
-		if (logger.isInfoEnabled())
-			logger.info("Closing fs river");
-		closed = true;
+    @Override
+    public void close() {
+        if (logger.isInfoEnabled())
+            logger.info("Closing fs river");
+        closed = true;
 
-		// We have to close the Thread
-		if (feedThread != null) {
-			feedThread.interrupt();
-		}
+        // We have to close the Thread
+        if (feedThread != null) {
+            feedThread.interrupt();
+        }
 
         if (this.bulkProcessor != null) {
             this.bulkProcessor.close();
         }
-	}
+    }
 
     /**
-	 * Check if a mapping already exists in an index
-	 * @param index Index name
-	 * @param type Mapping name
-	 * @return true if mapping exists
-	 */
-	private boolean isMappingExist(String index, String type) {
-		ClusterState cs = client.admin().cluster().prepareState().setFilterIndices(index).execute().actionGet().getState();
-		IndexMetaData imd = cs.getMetaData().index(index);
+     * Check if a mapping already exists in an index
+     *
+     * @param index Index name
+     * @param type  Mapping name
+     * @return true if mapping exists
+     */
+    private boolean isMappingExist(String index, String type) {
+        ClusterState cs = client.admin().cluster().prepareState().setFilterIndices(index).execute().actionGet().getState();
+        IndexMetaData imd = cs.getMetaData().index(index);
 
-		if (imd == null) return false;
+        if (imd == null) return false;
 
-		MappingMetaData mdd = imd.mapping(type);
+        MappingMetaData mdd = imd.mapping(type);
 
-		if (mdd != null) return true;
-		return false;
-	}
+        if (mdd != null) return true;
+        return false;
+    }
 
-	private void pushMapping(String index, String type, XContentBuilder xcontent) throws Exception {
-		if (logger.isTraceEnabled()) logger.trace("pushMapping("+index+","+type+")");
+    private void pushMapping(String index, String type, XContentBuilder xcontent) throws Exception {
+        if (logger.isTraceEnabled()) logger.trace("pushMapping(" + index + "," + type + ")");
 
-		// If type does not exist, we create it
-		boolean mappingExist = isMappingExist(index, type);
-		if (!mappingExist) {
-			logger.debug("Mapping ["+index+"]/["+type+"] doesn't exist. Creating it.");
+        // If type does not exist, we create it
+        boolean mappingExist = isMappingExist(index, type);
+        if (!mappingExist) {
+            logger.debug("Mapping [" + index + "]/[" + type + "] doesn't exist. Creating it.");
 
-			// Read the mapping json file if exists and use it
-			if (xcontent != null) {
-				if (logger.isTraceEnabled()) logger.trace("Mapping for ["+index+"]/["+type+"]="+xcontent.string());
-				// Create type and mapping
-				PutMappingResponse response = client.admin().indices()
-					.preparePutMapping(index)
-					.setType(type)
-					.setSource(xcontent)
-					.execute().actionGet();
-				if (!response.isAcknowledged()) {
-					throw new Exception("Could not define mapping for type ["+index+"]/["+type+"].");
-				} else {
-					if (logger.isDebugEnabled()) {
-                        logger.debug("Mapping definition for ["+index+"]/["+type+"] succesfully created.");
-					}
-				}
-			} else {
-				if (logger.isDebugEnabled()) logger.debug("No mapping definition for ["+index+"]/["+type+"]. Ignoring.");
-			}
-		} else {
-			if (logger.isDebugEnabled()) logger.debug("Mapping ["+index+"]/["+type+"] already exists.");
-		}
-		if (logger.isTraceEnabled()) logger.trace("/pushMapping("+index+","+type+")");
-	}
+            // Read the mapping json file if exists and use it
+            if (xcontent != null) {
+                if (logger.isTraceEnabled())
+                    logger.trace("Mapping for [" + index + "]/[" + type + "]=" + xcontent.string());
+                // Create type and mapping
+                PutMappingResponse response = client.admin().indices()
+                        .preparePutMapping(index)
+                        .setType(type)
+                        .setSource(xcontent)
+                        .execute().actionGet();
+                if (!response.isAcknowledged()) {
+                    throw new Exception("Could not define mapping for type [" + index + "]/[" + type + "].");
+                } else {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Mapping definition for [" + index + "]/[" + type + "] succesfully created.");
+                    }
+                }
+            } else {
+                if (logger.isDebugEnabled())
+                    logger.debug("No mapping definition for [" + index + "]/[" + type + "]. Ignoring.");
+            }
+        } else {
+            if (logger.isDebugEnabled()) logger.debug("Mapping [" + index + "]/[" + type + "] already exists.");
+        }
+        if (logger.isTraceEnabled()) logger.trace("/pushMapping(" + index + "," + type + ")");
+    }
 
-	
-	
-	
-	private class FSParser implements Runnable {
+
+    private class FSParser implements Runnable {
         private static final String field_filename = FsRiverUtil.Doc.FILE + "." + FsRiverUtil.Doc.File.FILENAME;
-		private FsRiverFeedDefinition fsdef;
+        private FsRiverFeedDefinition fsdef;
 
-		private ScanStatistic stats;
+        private ScanStatistic stats;
 
-		public FSParser(FsRiverFeedDefinition fsDefinition) {
-			this.fsdef = fsDefinition;
-			if (logger.isInfoEnabled())
-				logger.info("creating fs river [{}] for [{}] every [{}] ms",
-						fsdef.getRivername(), fsdef.getUrl(), fsdef.getUpdateRate());
-		}
+        public FSParser(FsRiverFeedDefinition fsDefinition) {
+            this.fsdef = fsDefinition;
+            if (logger.isInfoEnabled())
+                logger.info("creating fs river [{}] for [{}] every [{}] ms",
+                        fsdef.getRivername(), fsdef.getUrl(), fsdef.getUpdateRate());
+        }
 
-		@Override
-		public void run() {
-			while (true) {
-				if (closed) {
-					return;
-				}
+        @Override
+        public void run() {
+            while (true) {
+                if (closed) {
+                    return;
+                }
 
-				try {
+                try {
                     // Let's see if river is suspended
                     GetResponse getResponse = client.prepareGet("_river", fsdef.getRivername(), "_fsstatus").execute().actionGet();
                     boolean isStarted = true;
                     if (!getResponse.isExists()) {
                         XContentBuilder xb = jsonBuilder()
                                 .startObject()
-                                    .startObject("fs")
-                                        .field("status", "STARTED")
-                                    .endObject()
+                                .startObject("fs")
+                                .field("status", "STARTED")
+                                .endObject()
                                 .endObject();
 
                         client.prepareIndex("_river", fsdef.getRivername(), "_fsstatus").setSource(xb).execute().actionGet();
@@ -413,70 +414,70 @@ public class FsRiver extends AbstractRiverComponent implements River {
                     }
 
 
-				} catch (Exception e) {
-					logger.warn("Error while indexing content from {}", fsdef.getUrl());
-					if (logger.isDebugEnabled())
-						logger.debug("Exception for {} is {}", fsdef.getUrl(), e);
-				}
+                } catch (Exception e) {
+                    logger.warn("Error while indexing content from {}", fsdef.getUrl());
+                    if (logger.isDebugEnabled())
+                        logger.debug("Exception for {} is {}", fsdef.getUrl(), e);
+                }
 
-				try {
-					if (logger.isDebugEnabled())
-						logger.debug("Fs river is going to sleep for {} ms",
-								fsdef.getUpdateRate());
-					Thread.sleep(fsdef.getUpdateRate());
-				} catch (InterruptedException e1) {
-				}
-			}
-		}
+                try {
+                    if (logger.isDebugEnabled())
+                        logger.debug("Fs river is going to sleep for {} ms",
+                                fsdef.getUpdateRate());
+                    Thread.sleep(fsdef.getUpdateRate());
+                } catch (InterruptedException e1) {
+                }
+            }
+        }
 
         @SuppressWarnings("unchecked")
-		private Date getLastDateFromRiver(String lastupdateField) {
-			Date lastDate = null;
-			try {
-				// Do something
-				client.admin().indices().prepareRefresh("_river").execute()
-						.actionGet();
-				GetResponse lastSeqGetResponse = client
-						.prepareGet("_river", riverName().name(),
-								lastupdateField).execute().actionGet();
-				if (lastSeqGetResponse.isExists()) {
-					Map<String, Object> fsState = (Map<String, Object>) lastSeqGetResponse
-							.getSourceAsMap().get("fs");
+        private Date getLastDateFromRiver(String lastupdateField) {
+            Date lastDate = null;
+            try {
+                // Do something
+                client.admin().indices().prepareRefresh("_river").execute()
+                        .actionGet();
+                GetResponse lastSeqGetResponse = client
+                        .prepareGet("_river", riverName().name(),
+                                lastupdateField).execute().actionGet();
+                if (lastSeqGetResponse.isExists()) {
+                    Map<String, Object> fsState = (Map<String, Object>) lastSeqGetResponse
+                            .getSourceAsMap().get("fs");
 
-					if (fsState != null) {
-						Object lastupdate = fsState.get("lastdate");
-						if (lastupdate != null) {
-							String strLastDate = lastupdate.toString();
-							lastDate = ISODateTimeFormat
-									.dateOptionalTimeParser()
-									.parseDateTime(strLastDate).toDate();
-						}
-					}
-				} else {
-					// First call
-					if (logger.isDebugEnabled())
-						logger.debug("{} doesn't exist", lastupdateField);
-				}
-			} catch (Exception e) {
-				logger.warn("failed to get _lastupdate, throttling....", e);
-			}
-			return lastDate;
-		}
+                    if (fsState != null) {
+                        Object lastupdate = fsState.get("lastdate");
+                        if (lastupdate != null) {
+                            String strLastDate = lastupdate.toString();
+                            lastDate = ISODateTimeFormat
+                                    .dateOptionalTimeParser()
+                                    .parseDateTime(strLastDate).toDate();
+                        }
+                    }
+                } else {
+                    // First call
+                    if (logger.isDebugEnabled())
+                        logger.debug("{} doesn't exist", lastupdateField);
+                }
+            } catch (Exception e) {
+                logger.warn("failed to get _lastupdate, throttling....", e);
+            }
+            return lastDate;
+        }
 
-		private void updateFsRiver(String lastupdateField, Date scanDate)
-				throws Exception {
-			// We store the lastupdate date and some stats
-			XContentBuilder xb = jsonBuilder()
-				.startObject()
-					.startObject("fs")
-						.field("feedname", fsdef.getRivername())
-						.field("lastdate", scanDate)
-						.field("docadded", stats.getNbDocScan())
-						.field("docdeleted", stats.getNbDocDeleted())
-					.endObject()
-				.endObject();
-			esIndex("_river", riverName.name(), lastupdateField, xb);
-		}
+        private void updateFsRiver(String lastupdateField, Date scanDate)
+                throws Exception {
+            // We store the lastupdate date and some stats
+            XContentBuilder xb = jsonBuilder()
+                    .startObject()
+                    .startObject("fs")
+                    .field("feedname", fsdef.getRivername())
+                    .field("lastdate", scanDate)
+                    .field("docadded", stats.getNbDocScan())
+                    .field("docdeleted", stats.getNbDocDeleted())
+                    .endObject()
+                    .endObject();
+            esIndex("_river", riverName.name(), lastupdateField, xb);
+        }
 
         private FileAbstractor buildFileAbstractor() throws Exception {
             // What is the protocol used?
@@ -493,22 +494,22 @@ public class FsRiver extends AbstractRiverComponent implements River {
                     PROTOCOL.LOCAL + " or " + PROTOCOL.SSH);
         }
 
-		private void addFilesRecursively(String filepath, Date lastScanDate)
-				throws Exception {
+        private void addFilesRecursively(String filepath, Date lastScanDate)
+                throws Exception {
 
             if (logger.isDebugEnabled()) logger.debug("Indexing [{}] content", filepath);
             FileAbstractor path = buildFileAbstractor();
 
-			final Collection<FileAbstractModel> children = path.getFiles(filepath);
-			Collection<String> fsFiles = new ArrayList<String>();
-			Collection<String> fsFolders = new ArrayList<String>();
+            final Collection<FileAbstractModel> children = path.getFiles(filepath);
+            Collection<String> fsFiles = new ArrayList<String>();
+            Collection<String> fsFolders = new ArrayList<String>();
 
-			if (children != null) {
-				for (FileAbstractModel child : children) {
+            if (children != null) {
+                for (FileAbstractModel child : children) {
                     String filename = child.name;
 
                     // Ignore temporary files
-                    if(filename.contains("~")){
+                    if (filename.contains("~")) {
                         continue;
                     }
 
@@ -534,12 +535,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         if (logger.isDebugEnabled())
                             logger.debug("Not a file nor a dir. Skipping {}", child.fullpath);
                     }
-				}
-			}
+                }
+            }
 
-			// TODO Optimize
-			// if (path.isDirectory() && path.lastModified() > lastScanDate
-			// && lastScanDate != 0) {
+            // TODO Optimize
+            // if (path.isDirectory() && path.lastModified() > lastScanDate
+            // && lastScanDate != 0) {
 
             if (fsdef.isRemoveDeleted()) {
                 Collection<String> esFiles = getFileDirectory(filepath);
@@ -567,30 +568,30 @@ public class FsRiver extends AbstractRiverComponent implements River {
                     }
                 }
             }
-		}
+        }
 
         // TODO Optimize it. We can probably use a search for a big array of filenames instead of
         // Searching fo 50000 files (which is somehow limited).
-		private Collection<String> getFileDirectory(String path)
-				throws Exception {
-			Collection<String> files = new ArrayList<String>();
+        private Collection<String> getFileDirectory(String path)
+                throws Exception {
+            Collection<String> files = new ArrayList<String>();
 
-			SearchResponse response = client
-					.prepareSearch(indexName)
-					.setSearchType(SearchType.QUERY_AND_FETCH)
-					.setTypes(typeName)
-					.setQuery(
-							QueryBuilders.termQuery(
-									FsRiverUtil.Doc.Path.ENCODED,
-									SignTool.sign(path)))
+            SearchResponse response = client
+                    .prepareSearch(indexName)
+                    .setSearchType(SearchType.QUERY_AND_FETCH)
+                    .setTypes(typeName)
+                    .setQuery(
+                            QueryBuilders.termQuery(
+                                    FsRiverUtil.Doc.Path.ENCODED,
+                                    SignTool.sign(path)))
                     .setFrom(0)
-					.setSize(50000)
+                    .setSize(50000)
                     .addField(field_filename)
                     .execute().actionGet();
 
-			if (response.getHits() != null
-					&& response.getHits().getHits() != null) {
-				for (SearchHit hit : response.getHits().getHits()) {
+            if (response.getHits() != null
+                    && response.getHits().getHits() != null) {
+                for (SearchHit hit : response.getHits().getHits()) {
                     String name = null;
                     if (hit.getSource() != null && hit.getSource().get(FsRiverUtil.Doc.File.FILENAME) != null) {
                         name = hit.getSource().get(FsRiverUtil.Doc.File.FILENAME).toString();
@@ -601,59 +602,59 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
                                 "Please enable _source or store field [{}]", path, field_filename);
                     }
-					files.add(name);
-				}
-			}
+                    files.add(name);
+                }
+            }
 
-			return files;
+            return files;
 
-		}
+        }
 
-		private Collection<String> getFolderDirectory(String path)
-				throws Exception {
-			Collection<String> files = new ArrayList<String>();
+        private Collection<String> getFolderDirectory(String path)
+                throws Exception {
+            Collection<String> files = new ArrayList<String>();
 
-			SearchResponse response = client
-					.prepareSearch(indexName)
-					.setSearchType(SearchType.QUERY_AND_FETCH)
-					.setTypes(FsRiverUtil.INDEX_TYPE_FOLDER)
-					.setQuery(
-							QueryBuilders.termQuery(
+            SearchResponse response = client
+                    .prepareSearch(indexName)
+                    .setSearchType(SearchType.QUERY_AND_FETCH)
+                    .setTypes(FsRiverUtil.INDEX_TYPE_FOLDER)
+                    .setQuery(
+                            QueryBuilders.termQuery(
                                     FsRiverUtil.Doc.Path.ENCODED,
-									SignTool.sign(path))).setFrom(0)
-					.setSize(50000).execute().actionGet();
+                                    SignTool.sign(path))).setFrom(0)
+                    .setSize(50000).execute().actionGet();
 
-			if (response.getHits() != null
-					&& response.getHits().getHits() != null) {
-				for (SearchHit hit : response.getHits().getHits()) {
-					String name = hit.getSource()
-							.get(FsRiverUtil.Doc.File.FILENAME).toString();
-					files.add(name);
-				}
-			}
+            if (response.getHits() != null
+                    && response.getHits().getHits() != null) {
+                for (SearchHit hit : response.getHits().getHits()) {
+                    String name = hit.getSource()
+                            .get(FsRiverUtil.Doc.File.FILENAME).toString();
+                    files.add(name);
+                }
+            }
 
-			return files;
+            return files;
 
-		}
+        }
 
         /**
          * Index a file
          */
-		private void indexFile(ScanStatistic stats, String filename, String filepath, InputStream fileReader, long lastmodified) throws Exception {
+        private void indexFile(ScanStatistic stats, String filename, String filepath, InputStream fileReader, long lastmodified) throws Exception {
             if (logger.isDebugEnabled()) logger.debug("fetching content from [{}],[{}]", filepath, filename);
 
-			// write it to a byte[] using a buffer since we don't know the exact
-			// image size
-			byte[] buffer = new byte[1024];
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			int i;
-			while (-1 != (i = fileReader.read(buffer))) {
-				bos.write(buffer, 0, i);
-			}
-			byte[] data = bos.toByteArray();
+            // write it to a byte[] using a buffer since we don't know the exact
+            // image size
+            byte[] buffer = new byte[1024];
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            int i;
+            while (-1 != (i = fileReader.read(buffer))) {
+                bos.write(buffer, 0, i);
+            }
+            byte[] data = bos.toByteArray();
 
-			fileReader.close();
-			bos.close();
+            fileReader.close();
+            bos.close();
 
             // https://github.com/dadoonet/fsriver/issues/5 : Support JSon files
             if (fsDefinition.isJsonSupport()) {
@@ -722,7 +723,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         .field(FsRiverUtil.Doc.Path.ENCODED, SignTool.sign(filepath))
                         .field(FsRiverUtil.Doc.Path.ROOT, stats.getRootPathId())
                         .field(FsRiverUtil.Doc.Path.VIRTUAL,
-                            FsRiverUtil.computeVirtualPathName(stats,filepath))
+                                FsRiverUtil.computeVirtualPathName(stats, filepath))
                         .field(FsRiverUtil.Doc.Path.REAL, filepath + File.separator + filename)
                         .endObject(); // Path
 
@@ -753,7 +754,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         source);
             }
 
- 		}
+        }
 
         private void indexDirectory(String id, String name, String root, String virtual, String encoded)
                 throws Exception {
@@ -768,70 +769,70 @@ public class FsRiver extends AbstractRiverComponent implements River {
                             .endObject());
         }
 
-		/**
-		 * Index a directory
-		 */
-		private void indexDirectory(ScanStatistic stats, String filename, String filepath)
-				throws Exception {
+        /**
+         * Index a directory
+         */
+        private void indexDirectory(ScanStatistic stats, String filename, String filepath)
+                throws Exception {
             indexDirectory(SignTool.sign(filepath),
                     filename,
                     stats.getRootPathId(),
                     FsRiverUtil.computeVirtualPathName(stats,
-                        filepath.substring(0, filepath.lastIndexOf(File.separator))),
+                            filepath.substring(0, filepath.lastIndexOf(File.separator))),
                     SignTool.sign(filepath.substring(0, filepath.lastIndexOf(File.separator))));
-		}
+        }
 
-		/**
-		 * Add the root directory as a folder
-		 */
-		private void indexRootDirectory(File file) throws Exception {
+        /**
+         * Add the root directory as a folder
+         */
+        private void indexRootDirectory(File file) throws Exception {
             indexDirectory(SignTool.sign(file.getAbsolutePath()),
                     file.getName(),
                     stats.getRootPathId(),
                     null,
                     SignTool.sign(file.getParent()));
-		}
+        }
 
-		/**
-		 * Remove a full directory and sub dirs recursively
-		 */
-		private void removeEsDirectoryRecursively(String path, String name)
-				throws Exception {
+        /**
+         * Remove a full directory and sub dirs recursively
+         */
+        private void removeEsDirectoryRecursively(String path, String name)
+                throws Exception {
 
-			String fullPath = path.concat(File.separator).concat(name);
+            String fullPath = path.concat(File.separator).concat(name);
 
-			logger.debug("Delete folder " + fullPath);
-			Collection<String> listFile = getFileDirectory(fullPath);
+            logger.debug("Delete folder " + fullPath);
+            Collection<String> listFile = getFileDirectory(fullPath);
 
-			for (String esfile : listFile) {
-				esDelete(
-						indexName,
-						typeName,
-						SignTool.sign(fullPath.concat(File.separator).concat(
-								esfile)));
-			}
+            for (String esfile : listFile) {
+                esDelete(
+                        indexName,
+                        typeName,
+                        SignTool.sign(fullPath.concat(File.separator).concat(
+                                esfile)));
+            }
 
-			Collection<String> listFolder = getFolderDirectory(fullPath);
+            Collection<String> listFolder = getFolderDirectory(fullPath);
 
-			for (String esfolder : listFolder) {
-				removeEsDirectoryRecursively(fullPath, esfolder);
-			}
+            for (String esfolder : listFolder) {
+                removeEsDirectoryRecursively(fullPath, esfolder);
+            }
 
-			esDelete(indexName, FsRiverUtil.INDEX_TYPE_FOLDER,
-					SignTool.sign(fullPath));
+            esDelete(indexName, FsRiverUtil.INDEX_TYPE_FOLDER,
+                    SignTool.sign(fullPath));
 
-		}
+        }
 
-		/**
-		 * Add to bulk an IndexRequest
-		 */
-		private void esIndex(String index, String type, String id,
-				XContentBuilder xb) throws Exception {
-			if (logger.isDebugEnabled()) logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
-			if (logger.isTraceEnabled()) logger.trace("JSon indexed : {}", xb.string());
+        /**
+         * Add to bulk an IndexRequest
+         */
+        private void esIndex(String index, String type, String id,
+                             XContentBuilder xb) throws Exception {
+            if (logger.isDebugEnabled()) logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
+            if (logger.isTraceEnabled()) logger.trace("JSon indexed : {}", xb.string());
 
             bulkProcessor.add(new IndexRequest(index, type, id).source(xb));
-		}
+        }
 
         /**
          * Add to bulk an IndexRequest in JSon format
@@ -845,11 +846,11 @@ public class FsRiver extends AbstractRiverComponent implements River {
         }
 
         /**
-		 * Add to bulk a DeleteRequest
-		 */
-		private void esDelete(String index, String type, String id) throws Exception {
-			if (logger.isDebugEnabled()) logger.debug("Deleting from ES " + index + ", " + type + ", " + id);
+         * Add to bulk a DeleteRequest
+         */
+        private void esDelete(String index, String type, String id) throws Exception {
+            if (logger.isDebugEnabled()) logger.debug("Deleting from ES " + index + ", " + type + ", " + id);
             bulkProcessor.add(new DeleteRequest(index, type, id));
-		}
-	}
+        }
+    }
 }

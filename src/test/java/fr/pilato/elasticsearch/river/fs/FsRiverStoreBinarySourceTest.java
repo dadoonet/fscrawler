@@ -35,48 +35,47 @@ import static org.junit.Assert.assertNotNull;
 public class FsRiverStoreBinarySourceTest extends AbstractFsRiverSimpleTest {
 
     /**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
+     * We use the default mapping
+     */
+    @Override
+    public String mapping() throws Exception {
         return null;
-	}
+    }
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>TODO Fill the use case
-	 * </ul>
-	 */
-	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// We update every ten seconds
-		int updateRate = 10 * 1000;
-		String dir = "testfs1";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
-		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
-		XContentBuilder xb = jsonBuilder()
-				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-						.field("store_source", true)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
-				.endObject();
-		return xb;
-	}
+    /**
+     * <ul>
+     * <li>TODO Fill the use case
+     * </ul>
+     */
+    @Override
+    public XContentBuilder fsRiver() throws Exception {
+        // We update every ten seconds
+        int updateRate = 10 * 1000;
+        String dir = "testfs1";
+
+        // First we check that filesystem to be analyzed exists...
+        File dataDir = new File("./target/test-classes/" + dir);
+        if (!dataDir.exists()) {
+            throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        String url = dataDir.getAbsoluteFile().getAbsolutePath();
+
+        XContentBuilder xb = jsonBuilder()
+                .startObject()
+                .field("type", "fs")
+                .startObject("fs")
+                .field("url", url)
+                .field("update_rate", updateRate)
+                .field("store_source", true)
+                .endObject()
+                .startObject("index")
+                .field("index", indexName())
+                .field("type", "doc")
+                .field("bulk_size", 1)
+                .endObject()
+                .endObject();
+        return xb;
+    }
 
     @Test
     public void we_have_stored_attachment() throws Exception {

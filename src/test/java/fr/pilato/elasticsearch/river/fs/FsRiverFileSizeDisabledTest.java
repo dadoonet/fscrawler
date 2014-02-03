@@ -35,54 +35,53 @@ import static org.junit.Assert.assertNull;
  */
 public class FsRiverFileSizeDisabledTest extends AbstractFsRiverSimpleTest {
 
-	/**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
-		return null;
-	}
+    /**
+     * We use the default mapping
+     */
+    @Override
+    public String mapping() throws Exception {
+        return null;
+    }
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>We index one file of size 8359 octets but we don't store size
-	 * </ul>
-	 */
-	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// We update every minute
-		int updateRate = 10 * 1000;
-		String dir = "testfs_metadata";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
-		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
-		XContentBuilder xb = jsonBuilder()
-				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-                        .field("excludes", "*.json")
-                        .field("add_filesize", false)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
-				.endObject();
-		return xb;
-	}
-	
+    /**
+     * <ul>
+     * <li>We index one file of size 8359 octets but we don't store size
+     * </ul>
+     */
+    @Override
+    public XContentBuilder fsRiver() throws Exception {
+        // We update every minute
+        int updateRate = 10 * 1000;
+        String dir = "testfs_metadata";
 
-	@Test
-	public void filesize_should_not_be_indexed() throws Exception {
+        // First we check that filesystem to be analyzed exists...
+        File dataDir = new File("./target/test-classes/" + dir);
+        if (!dataDir.exists()) {
+            throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        String url = dataDir.getAbsoluteFile().getAbsolutePath();
+
+        XContentBuilder xb = jsonBuilder()
+                .startObject()
+                .field("type", "fs")
+                .startObject("fs")
+                .field("url", url)
+                .field("update_rate", updateRate)
+                .field("excludes", "*.json")
+                .field("add_filesize", false)
+                .endObject()
+                .startObject("index")
+                .field("index", indexName())
+                .field("type", "doc")
+                .field("bulk_size", 1)
+                .endObject()
+                .endObject();
+        return xb;
+    }
+
+
+    @Test
+    public void filesize_should_not_be_indexed() throws Exception {
         SearchResponse searchResponse = node.client().prepareSearch(indexName()).setTypes("doc")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .execute().actionGet();
@@ -91,5 +90,5 @@ public class FsRiverFileSizeDisabledTest extends AbstractFsRiverSimpleTest {
         for (SearchHit hit : searchResponse.getHits()) {
             assertNull(hit.getSource().get("filesize"));
         }
-	}
+    }
 }

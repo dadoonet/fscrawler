@@ -10,201 +10,202 @@
 	KIND, either express or implied. See the License for the specific language 
 	governing permissions and limitations under the License. -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>fr.pilato.elasticsearch.river</groupId>
-	<artifactId>fsriver</artifactId>
-	<packaging>jar</packaging>
-	<version>0.5.0-SNAPSHOT</version>
-	<name>File System River Plugin for ElasticSearch</name>
-	<url>http://www.pilato.fr/fsriver</url>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>fr.pilato.elasticsearch.river</groupId>
+    <artifactId>fsriver</artifactId>
+    <packaging>jar</packaging>
+    <version>0.5.0-SNAPSHOT</version>
+    <name>File System River Plugin for ElasticSearch</name>
+    <url>http://www.pilato.fr/fsriver</url>
     <description>
         FS River Plugin offers a simple way to index local files into Elasticsearch.
         See full documentation on Github: https://github.com/dadoonet/fsriver
     </description>
 
-	<parent>
-		<groupId>org.sonatype.oss</groupId>
-		<artifactId>oss-parent</artifactId>
-		<version>7</version>
-	</parent>
-  
-	<licenses>
-		<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-  	
-	<properties>
-		<elasticsearch.version>0.90.7</elasticsearch.version>
-		<tika.version>1.4</tika.version>
-	</properties>
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
 
-	<developers>
-		<developer>
-			<id>dadoonet</id>
-			<name>David Pilato</name>
-			<email>david@pilato.fr</email>
-			<url>http://dev.david.pilato.fr/</url>
-			<timezone>+1</timezone>
-		</developer>
-	</developers>
-	
-	<scm>
-		<connection>scm:git:git@github.com:dadoonet/fsriver.git</connection>
-		<url>scm:git:git@github.com:dadoonet/fsriver.git</url>
-		<developerConnection>scm:git:git@github.com:dadoonet/fsriver.git</developerConnection>
-	</scm>
-	
-	<issueManagement>
-		<system>GitHub</system>
-		<url>https://github.com/dadoonet/fsriver/issues/</url>
-	</issueManagement>
-	
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
-		        <configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-		        </configuration>
-   			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.8</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>2.1.2</version>
-			</plugin>
-			<!-- Add/Edit items in META-INF/MANIFEST.MF -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.3.2</version>
-			</plugin>
-			<!-- Copy dependencies into lib folder -->
-			<!-- To see full classpath use  mvn dependency:build-classpath -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.3</version>
-				<executions>
-					<execution>
-						<id>copy-dependencies</id>
-						<phase>package</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>${project.build.directory}/lib</outputDirectory>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<!-- Skip Surefire tests -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.10</version>
-				<configuration>
-					<skipTests>false</skipTests>
-					<additionalClasspathElements>
-						<additionalClasspathElement>${project.build.directory}/classes/conf</additionalClasspathElement>
-						<additionalClasspathElement>${project.build.directory}/lib</additionalClasspathElement>
-					</additionalClasspathElements>
-				</configuration>
-			</plugin>
-			<!-- Generate the release zip file (run during package step) -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.3</version>
-				<configuration>
-					<appendAssemblyId>false</appendAssemblyId>
-					<outputDirectory>${project.build.directory}/release/</outputDirectory>
-					<descriptors>
-						<descriptor>${basedir}/src/main/assemblies/esplugin.xml</descriptor>
-					</descriptors>
-				</configuration>
-				<executions>
-					<execution>
-						<id>generate-release-plugin</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <properties>
+        <elasticsearch.version>0.90.7</elasticsearch.version>
+        <tika.version>1.4</tika.version>
+    </properties>
+
+    <developers>
+        <developer>
+            <id>dadoonet</id>
+            <name>David Pilato</name>
+            <email>david@pilato.fr</email>
+            <url>http://dev.david.pilato.fr/</url>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:dadoonet/fsriver.git</connection>
+        <url>scm:git:git@github.com:dadoonet/fsriver.git</url>
+        <developerConnection>scm:git:git@github.com:dadoonet/fsriver.git</developerConnection>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/dadoonet/fsriver/issues/</url>
+    </issueManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.1.2</version>
+            </plugin>
+            <!-- Add/Edit items in META-INF/MANIFEST.MF -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.3.2</version>
+            </plugin>
+            <!-- Copy dependencies into lib folder -->
+            <!-- To see full classpath use  mvn dependency:build-classpath -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Skip Surefire tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.10</version>
+                <configuration>
+                    <skipTests>false</skipTests>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${project.build.directory}/classes/conf</additionalClasspathElement>
+                        <additionalClasspathElement>${project.build.directory}/lib</additionalClasspathElement>
+                    </additionalClasspathElements>
+                </configuration>
+            </plugin>
+            <!-- Generate the release zip file (run during package step) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.3</version>
+                <configuration>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <outputDirectory>${project.build.directory}/release/</outputDirectory>
+                    <descriptors>
+                        <descriptor>${basedir}/src/main/assemblies/esplugin.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-release-plugin</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-changes-plugin</artifactId>
                 <version>2.8</version>
-                 <configuration>
-                     <smtpHost>smtp.free.fr</smtpHost>
-                     <smtpPort implementation="java.lang.Integer">25</smtpPort>
-                     <fromDeveloperId>dadoonet</fromDeveloperId>
-                     <toAddresses>
-                         <toAddress implementation="java.lang.String">elasticsearch@googlegroups.com</toAddress>
-                         <toAddress implementation="java.lang.String">elasticsearch-fr@googlegroups.com</toAddress>
-                     </toAddresses>
-                     <template>es-announcement.vm</template>
-                     <templateDirectory>changes</templateDirectory>
-                 </configuration>
+                <configuration>
+                    <smtpHost>smtp.free.fr</smtpHost>
+                    <smtpPort implementation="java.lang.Integer">25</smtpPort>
+                    <fromDeveloperId>dadoonet</fromDeveloperId>
+                    <toAddresses>
+                        <toAddress implementation="java.lang.String">elasticsearch@googlegroups.com</toAddress>
+                        <toAddress implementation="java.lang.String">elasticsearch-fr@googlegroups.com</toAddress>
+                    </toAddresses>
+                    <template>es-announcement.vm</template>
+                    <templateDirectory>changes</templateDirectory>
+                </configuration>
             </plugin>
-		</plugins>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>true</filtering>
-				<includes>
-					<include>**/*.properties</include>
-				</includes>
-			</resource>
-		</resources>
-	</build>
+        </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
 
-	<dependencies>
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-			<version>1.2.16</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.10</version>
-			<scope>test</scope>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.16</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
-			<version>${elasticsearch.version}</version>
+            <version>${elasticsearch.version}</version>
         </dependency>
-		<dependency>
-			<groupId>org.apache.tika</groupId>
-			<artifactId>tika-core</artifactId>
-			<version>${tika.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
             <version>${tika.version}</version>
         </dependency>
-		<!--Dependency for parsing remote ssh directory [http://www.jcraft.com/jsch/]-->
-		<dependency>
-			<groupId>com.jcraft</groupId>
-			<artifactId>jsch</artifactId>
-			<version>0.1.49</version>
-		</dependency>
-	</dependencies>
+        <!--Dependency for parsing remote ssh directory [http://www.jcraft.com/jsch/]-->
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.1.49</version>
+        </dependency>
+    </dependencies>
 
 </project>

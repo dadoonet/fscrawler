@@ -21,88 +21,95 @@ package fr.pilato.elasticsearch.river.fs.river;
 
 /**
  * Provide Scan Statistics
- * @author David Pilato (aka dadoonet)
  *
+ * @author David Pilato (aka dadoonet)
  */
 public class ScanStatistic {
-	private int nbDocScan = 0;
-	private int nbDocDeleted = 0;
-	private String rootPath;
-	private String rootPathId;
-	
-	public ScanStatistic() {
-		this.rootPath = "/";
-		this.nbDocScan = 0;
-		this.nbDocDeleted = 0;
-	}
-	
-	public ScanStatistic(String rootPath) {
-		this.rootPath = rootPath;
-		this.nbDocScan = 0;
-		this.nbDocDeleted = 0;
-	}
+    private int nbDocScan = 0;
+    private int nbDocDeleted = 0;
+    private String rootPath;
+    private String rootPathId;
 
-	/**
-	 * @return the nbDocScan
-	 */
-	public int getNbDocScan() {
-		return nbDocScan;
-	}
-	/**
-	 * @param nbDocScan the nbDocScan to set
-	 */
-	public void setNbDocScan(int nbDocScan) {
-		this.nbDocScan = nbDocScan;
-	}
-	/**
-	 * @return the nbDocDeleted
-	 */
-	public int getNbDocDeleted() {
-		return nbDocDeleted;
-	}
-	/**
-	 * @param nbDocDeleted the nbDocDeleted to set
-	 */
-	public void setNbDocDeleted(int nbDocDeleted) {
-		this.nbDocDeleted = nbDocDeleted;
-	}
-	/**
-	 * @return the rootPath
-	 */
-	public String getRootPath() {
-		return rootPath;
-	}
-	/**
-	 * @param rootPath the rootPath to set
-	 */
-	public void setRootPath(String rootPath) {
-		this.rootPath = rootPath;
-	}
-	/**
-	 * @return the rootPathId
-	 */
-	public String getRootPathId() {
-		return rootPathId;
-	}
-	/**
-	 * @param rootPathId the rootPathId to set
-	 */
-	public void setRootPathId(String rootPathId) {
-		this.rootPathId = rootPathId;
-	}
-	
-	/**
-	 * Increment statistic for new files
-	 */
-	public void addFile() {
-		this.nbDocScan++;
-	}
-	
-	/**
-	 * Increment statistic for deleted files
-	 */
-	public void removeFile() {
-		this.nbDocDeleted++;
-	}
+    public ScanStatistic() {
+        this.rootPath = "/";
+        this.nbDocScan = 0;
+        this.nbDocDeleted = 0;
+    }
+
+    public ScanStatistic(String rootPath) {
+        this.rootPath = rootPath;
+        this.nbDocScan = 0;
+        this.nbDocDeleted = 0;
+    }
+
+    /**
+     * @return the nbDocScan
+     */
+    public int getNbDocScan() {
+        return nbDocScan;
+    }
+
+    /**
+     * @param nbDocScan the nbDocScan to set
+     */
+    public void setNbDocScan(int nbDocScan) {
+        this.nbDocScan = nbDocScan;
+    }
+
+    /**
+     * @return the nbDocDeleted
+     */
+    public int getNbDocDeleted() {
+        return nbDocDeleted;
+    }
+
+    /**
+     * @param nbDocDeleted the nbDocDeleted to set
+     */
+    public void setNbDocDeleted(int nbDocDeleted) {
+        this.nbDocDeleted = nbDocDeleted;
+    }
+
+    /**
+     * @return the rootPath
+     */
+    public String getRootPath() {
+        return rootPath;
+    }
+
+    /**
+     * @param rootPath the rootPath to set
+     */
+    public void setRootPath(String rootPath) {
+        this.rootPath = rootPath;
+    }
+
+    /**
+     * @return the rootPathId
+     */
+    public String getRootPathId() {
+        return rootPathId;
+    }
+
+    /**
+     * @param rootPathId the rootPathId to set
+     */
+    public void setRootPathId(String rootPathId) {
+        this.rootPathId = rootPathId;
+    }
+
+    /**
+     * Increment statistic for new files
+     */
+    public void addFile() {
+        this.nbDocScan++;
+    }
+
+    /**
+     * Increment statistic for deleted files
+     */
+    public void removeFile() {
+        this.nbDocDeleted++;
+    }
 
 }

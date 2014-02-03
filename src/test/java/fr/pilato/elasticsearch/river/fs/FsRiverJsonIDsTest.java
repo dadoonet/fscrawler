@@ -34,59 +34,58 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
  */
 public class FsRiverJsonIDsTest extends AbstractFsRiverSimpleTest {
 
-	/**
-	 * We use the default mapping
-	 */
-	@Override
-	public String mapping() throws Exception {
-		return null;
-	}
+    /**
+     * We use the default mapping
+     */
+    @Override
+    public String mapping() throws Exception {
+        return null;
+    }
 
-	/**
-	 * 
-	 * <ul>
-	 *   <li>We index JSon files so we don't use the mapper attachment plugin
-	 * </ul>
-	 */
-	@Override
-	public XContentBuilder fsRiver() throws Exception {
-		// We update 2 seconds
-		int updateRate = 5 * 1000;
-		String dir = "testfsjson1";
-		
-		// First we check that filesystem to be analyzed exists...
-		File dataDir = new File("./target/test-classes/" + dir);
-		if(!dataDir.exists()) {
-			throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests."); 
-		}
-		String url = dataDir.getAbsoluteFile().getAbsolutePath();
-		
-		XContentBuilder xb = jsonBuilder()
-				.startObject()
-					.field("type", "fs")
-					.startObject("fs")
-						.field("url", url)
-						.field("update_rate", updateRate)
-                        .field("json_support", true)
-                        .field("filename_as_id", true)
-					.endObject()
-                    .startObject("index")
-                        .field("index", indexName())
-                        .field("type", "doc")
-                        .field("bulk_size", 1)
-                    .endObject()
-				.endObject();
-		return xb;
-	}
-	
+    /**
+     * <ul>
+     * <li>We index JSon files so we don't use the mapper attachment plugin
+     * </ul>
+     */
+    @Override
+    public XContentBuilder fsRiver() throws Exception {
+        // We update 2 seconds
+        int updateRate = 5 * 1000;
+        String dir = "testfsjson1";
 
-	@Test
-	public void tweet_term_is_indexed_twice() throws Exception {
+        // First we check that filesystem to be analyzed exists...
+        File dataDir = new File("./target/test-classes/" + dir);
+        if (!dataDir.exists()) {
+            throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        String url = dataDir.getAbsoluteFile().getAbsolutePath();
+
+        XContentBuilder xb = jsonBuilder()
+                .startObject()
+                .field("type", "fs")
+                .startObject("fs")
+                .field("url", url)
+                .field("update_rate", updateRate)
+                .field("json_support", true)
+                .field("filename_as_id", true)
+                .endObject()
+                .startObject("index")
+                .field("index", indexName())
+                .field("type", "doc")
+                .field("bulk_size", 1)
+                .endObject()
+                .endObject();
+        return xb;
+    }
+
+
+    @Test
+    public void tweet_term_is_indexed_twice() throws Exception {
         // We check that document name is used as an id
         GetResponse getResponse = node.client().prepareGet(indexName(), FsRiverUtil.INDEX_TYPE_DOC, "tweet1").execute().actionGet();
-		Assert.assertTrue("Document should exists with [tweet1] id...", getResponse.isExists());
+        Assert.assertTrue("Document should exists with [tweet1] id...", getResponse.isExists());
         // We check that document name is used as an id
         getResponse = node.client().prepareGet(indexName(), FsRiverUtil.INDEX_TYPE_DOC, "tweet2").execute().actionGet();
         Assert.assertTrue("Document should exists with [tweet2] id...", getResponse.isExists());
-	}
+    }
 }

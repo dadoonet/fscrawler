@@ -32,18 +32,22 @@ import org.elasticsearch.river.RiversModule;
  */
 public class FsRiverPlugin extends AbstractPlugin {
 
-    @Inject public FsRiverPlugin() {
+    @Inject
+    public FsRiverPlugin() {
     }
 
-    @Override public String name() {
+    @Override
+    public String name() {
         return "river-fs";
     }
 
-    @Override public String description() {
+    @Override
+    public String description() {
         return "River FileSystem Plugin";
     }
 
-    @Override public void processModule(Module module) {
+    @Override
+    public void processModule(Module module) {
         if (module instanceof RiversModule) {
             ((RiversModule) module).registerRiver("fs", FsRiverModule.class);
         }
