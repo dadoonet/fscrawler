@@ -42,11 +42,12 @@ public class FsRiverFeedDefinition {
     private String protocol;
     private boolean removeDeleted;
     private boolean storeSource;
+    private int port;
 
     public FsRiverFeedDefinition(String rivername, String url, int updateRate, List<String> includes,
                                  List<String> excludes, boolean jsonSupport, boolean filenameAsId,
                                  boolean addFilesize, double indexedChars, String username, String password,
-                                 String server, String protocol, boolean removeDeleted, boolean storeSource) {
+                                 String server, int port, String protocol, boolean removeDeleted, boolean storeSource) {
         assert (excludes != null);
         assert (includes != null);
         this.includes = includes;
@@ -64,6 +65,7 @@ public class FsRiverFeedDefinition {
         this.protocol = protocol;
         this.removeDeleted = removeDeleted;
         this.storeSource = storeSource;
+        this.port = port;
     }
 
     public String getRivername() {
@@ -132,5 +134,9 @@ public class FsRiverFeedDefinition {
 
     public boolean isStoreSource() {
         return storeSource;
+    }
+
+    public int getPort() {
+        return port;
     }
 }

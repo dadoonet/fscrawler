@@ -82,7 +82,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
                 fsdef.getServer());
 
         JSch jsch = new JSch();
-        Session session = jsch.getSession(fsdef.getUsername(), fsdef.getServer());
+        Session session = jsch.getSession(fsdef.getUsername(), fsdef.getServer(), fsdef.getPort());
         java.util.Properties config = new java.util.Properties();
         config.put("StrictHostKeyChecking", "no");
         session.setConfig(config);

@@ -70,6 +70,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
     public static final class PROTOCOL {
         public static final String LOCAL = "local";
         public static final String SSH = "ssh";
+        public static final int SSH_PORT = 22;
     }
 
     private final Client client;
@@ -133,6 +134,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
             String username = XContentMapValues.nodeStringValue(feed.get("username"), null);
             String password = XContentMapValues.nodeStringValue(feed.get("password"), null);
             String server = XContentMapValues.nodeStringValue(feed.get("server"), null);
+            int port = XContentMapValues.nodeIntegerValue(feed.get("port"), PROTOCOL.SSH_PORT);
             String protocol = XContentMapValues.nodeStringValue(feed.get("protocol"), PROTOCOL.LOCAL);
 
             // https://github.com/dadoonet/fsriver/issues/35 : Option to not delete documents when files are removed
@@ -142,7 +144,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
             fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
                     updateRate, Arrays.asList(includes), Arrays.asList(excludes),
                     jsonSupport, filenameAsId, addFilesize, indexedChars,
-                    username, password, server, protocol, removeDeleted, storeSource);
+                    username, password, server, port, protocol, removeDeleted, storeSource);
         } else {
             String url = "/esdir";
             logger.warn(
@@ -151,7 +153,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
             int updateRate = 60 * 60 * 1000;
             fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
                     updateRate, Arrays.asList("*.txt", "*.pdf"), Arrays.asList("*.exe"), false, false, true, 0.0,
-                    null, null, null, null, true, false);
+                    null, null, null, PROTOCOL.SSH_PORT, null, true, false);
         }
 
         if (settings.settings().containsKey("index")) {

@@ -130,6 +130,7 @@ You can now index files remotely using SSH:
 * Username: `username`
 * Password: `password`
 * Protocol: `ssh` (default to `local`)
+* Port: `22` (default to `22`)
 * Update Rate: every hour (60 * 60 * 1000 = 3600000 ms)
 * Get only docs like `*.doc`, `*.xls` and `*.pdf`
 
@@ -139,6 +140,7 @@ curl -XPUT 'localhost:9200/_river/mysshriver/_meta' -d '{
   "fs": {
 	"url": "/tmp3",
 	"server": "mynode.mydomain.com",
+	"port": 22,
 	"username": "username",
 	"password": "password",
 	"protocol": "ssh",
@@ -843,6 +845,7 @@ Here is a full list of existing settings:
 | `fs.includes`                    | [Creating a Local FS river](#creating-a-local-fs-river)                           |
 | `fs.excludes`                    | [Creating a Local FS river](#creating-a-local-fs-river)                           |
 | `fs.server`                      | [Indexing using SSH](#indexing-using-ssh)                                         |
+| `fs.port`                        | [Indexing using SSH](#indexing-using-ssh)                                         |
 | `fs.username`                    | [Indexing using SSH](#indexing-using-ssh)                                         |
 | `fs.password`                    | [Indexing using SSH](#indexing-using-ssh)                                         |
 | `fs.protocol`                    | [Indexing using SSH](#indexing-using-ssh)                                         |
