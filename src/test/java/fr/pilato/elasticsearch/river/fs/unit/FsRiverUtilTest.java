@@ -1,4 +1,4 @@
-package fr.pilato.elasticsearch.river.fs;
+package fr.pilato.elasticsearch.river.fs.unit;
 
 
 import fr.pilato.elasticsearch.river.fs.river.ScanStatistic;
@@ -19,7 +19,6 @@ public class FsRiverUtilTest {
 
     @Test
     public void testComputePathWindows() {
-        // TODO Test it on a windows platform
         testHelper("C:\\tmp", "C:\\tmp\\myfile.txt", "/myfile.txt");
         testHelper("C:\\tmp", "C:\\tmp\\dir\\myfile.txt", "/dir/myfile.txt");
     }

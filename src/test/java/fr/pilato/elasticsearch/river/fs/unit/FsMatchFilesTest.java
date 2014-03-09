@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.river.fs;
+package fr.pilato.elasticsearch.river.fs.unit;
 
 
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;

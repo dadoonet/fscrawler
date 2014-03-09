@@ -5,3 +5,4 @@
 /.project
 .idea
 *.iml
+.local-execution-hints.log
