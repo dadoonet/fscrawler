@@ -17,12 +17,9 @@
     <artifactId>fsriver</artifactId>
     <packaging>jar</packaging>
     <version>0.5.0-SNAPSHOT</version>
-    <name>File System River Plugin for ElasticSearch</name>
-    <url>http://www.pilato.fr/fsriver</url>
-    <description>
-        FS River Plugin offers a simple way to index local files into Elasticsearch.
-        See full documentation on Github: https://github.com/dadoonet/fsriver
-    </description>
+    <name>Elasticsearch File System River Plugin</name>
+    <url>https://github.com/dadoonet/fsriver/</url>
+    <description>FS River Plugin offers a simple way to index local files into elasticsearch.</description>
 
     <parent>
         <groupId>org.sonatype.oss</groupId>
@@ -116,7 +113,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.10</version>
                 <configuration>
-                    <skipTests>false</skipTests>
                     <additionalClasspathElements>
                         <additionalClasspathElement>${project.build.directory}/classes/conf</additionalClasspathElement>
                         <additionalClasspathElement>${project.build.directory}/lib</additionalClasspathElement>
