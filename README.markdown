@@ -374,7 +374,7 @@ When the FSRiver detect a new type, it creates automatically a mapping for this 
         "properties" : {
           "content_type" : {
               "type" : "string",
-              "analyzer" : "simple",
+              "analyzer" : "not_analyzed",
               "store" : "yes"
           },
           "last_modified" : {
@@ -397,7 +397,7 @@ When the FSRiver detect a new type, it creates automatically a mapping for this 
           },
           "filename" : {
               "type" : "string",
-              "analyzer" : "simple",
+              "analyzer" : "not_analyzed",
               "store" : "yes"
           },
           "url" : {
@@ -479,7 +479,7 @@ $ curl -XPUT "http://localhost:9200/docs/doc/_mapping" -d '{
         "properties" : {
           "content_type" : {
               "type" : "string",
-              "analyzer" : "simple",
+              "analyzer" : "not_analyzed",
               "store" : "yes"
           },
           "last_modified" : {
@@ -502,7 +502,7 @@ $ curl -XPUT "http://localhost:9200/docs/doc/_mapping" -d '{
           },
           "filename" : {
               "type" : "string",
-              "analyzer" : "simple",
+              "analyzer" : "not_analyzed",
               "store" : "yes"
           },
           "url" : {
@@ -658,7 +658,7 @@ they disappear from your hard drive.
         "properties" : {
           "content_type" : {
               "type" : "string",
-              "analyzer" : "simple",
+              "analyzer" : "not_analyzed",
               "store" : "yes"
           },
           "last_modified" : {
@@ -681,7 +681,7 @@ they disappear from your hard drive.
           },
           "filename" : {
               "type" : "string",
-              "analyzer" : "simple",
+              "analyzer" : "not_analyzed",
               "store" : "yes"
           },
           "url" : {

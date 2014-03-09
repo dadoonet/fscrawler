@@ -128,12 +128,12 @@ public class FsRiverUtil {
 
         // File
         xbMapping.startObject(Doc.FILE).startObject("properties");
-        addAnalyzedSimpleString(xbMapping, Doc.File.CONTENT_TYPE);
+        addNotAnalyzedString(xbMapping, Doc.File.CONTENT_TYPE);
         addDate(xbMapping, Doc.File.LAST_MODIFIED);
         addDate(xbMapping, Doc.File.INDEXING_DATE);
         addLong(xbMapping, Doc.File.FILESIZE);
         addLong(xbMapping, Doc.File.INDEXED_CHARS);
-        addAnalyzedSimpleString(xbMapping, Doc.File.FILENAME);
+        addNotAnalyzedString(xbMapping, Doc.File.FILENAME);
         addNotIndexedString(xbMapping, Doc.File.URL);
         xbMapping.endObject().endObject(); // End File
 
@@ -198,14 +198,6 @@ public class FsRiverUtil {
     private static void addAnalyzedString(XContentBuilder xcb, String fieldName) throws IOException {
         xcb.startObject(fieldName)
                 .field("type", "string")
-                .field("store", "yes")
-                .endObject();
-    }
-
-    private static void addAnalyzedSimpleString(XContentBuilder xcb, String fieldName) throws IOException {
-        xcb.startObject(fieldName)
-                .field("type", "string")
-                .field("analyzer", "simple")
                 .field("store", "yes")
                 .endObject();
     }
