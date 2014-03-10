@@ -21,7 +21,7 @@ Versions
 
 Please read documentation relative to the version you are using:
 
-* [1.0.0](https://github.com/dadoonet/fsriver/blob/master/README.markdown)
+* [1.0.0-SNAPSHOT](https://github.com/dadoonet/fsriver/blob/master/README.markdown)
 
 
 Build Status
