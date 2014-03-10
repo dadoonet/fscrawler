@@ -300,7 +300,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
      * @return true if mapping exists
      */
     private boolean isMappingExist(String index, String type) {
-        ClusterState cs = client.admin().cluster().prepareState().setFilterIndices(index).execute().actionGet().getState();
+        ClusterState cs = client.admin().cluster().prepareState().setIndices(index).execute().actionGet().getState();
         IndexMetaData imd = cs.getMetaData().index(index);
 
         if (imd == null) return false;

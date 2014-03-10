@@ -9,35 +9,20 @@ This river plugin helps to index documents from your local file system and using
 can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your
 local dir is empty and will **erase** all your docs.
 
-**WARNING**: starting from 0.0.3, you need to have the [Attachment Plugin](https://github.com/elasticsearch/elasticsearch-mapper-attachments). It's not included anymore
-in the distribution.
-
-**WARNING**: starting from 0.4.0, you don't need anymore the Attachment Plugin as we use now directly
-[Tika](http://tika.apache.org/), see [#38](https://github.com/dadoonet/fsriver/issues/38).
-
-Please read documentation relative to the version you are using:
-
-* [0.4.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.4.0/README.markdown#filesystem-river-for-elasticsearch)
-* [0.3.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.3.0/README.markdown#filesystem-river-for-elasticsearch)
-* [0.2.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.2.0/README.markdown#filesystem-river-for-elasticsearch)
-* [0.1.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.1.0/README.markdown#filesystem-river-for-elasticsearch)
-* [0.0.3](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.3/README.markdown#filesystem-river-for-elasticsearch)
-* [0.0.2](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.2/README.markdown#filesystem-river-for-elasticsearch)
-* [0.0.1](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.1/README.markdown#filesystem-river-for-elasticsearch)
-
 Versions
 --------
 
+* For 1.0.x elasticsearch versions, look at [master branch](https://github.com/dadoonet/fsriver/tree/master).
+* For 0.90.x elasticsearch versions, look at [es-0.90 branch](https://github.com/dadoonet/fsriver/tree/es-0.90).
+
 |      FS River Plugin    | elasticsearch | Attachment Plugin | Tika | Release date |
 |-------------------------|:-------------:|:-----------------:|:----:|:------------:|
-| 0.5.0-SNAPSHOT          |    0.90.10    |      Not used     |  1.4 |  XXXX-XX-XX  |
-| 0.4.0                   |    0.90.7     |      Not used     |  1.4 |  2013-12-22  |
-| 0.3.0                   |    0.90.3     |       1.8.0       |      |  2013-08-09  |
-| 0.2.0                   |    0.90.0     |       1.7.0       |      |  2013-04-30  |
-| 0.1.0                   | 0.90.0.Beta1  |       1.6.0       |      |  2013-03-15  |
-| 0.0.3                   |    0.20.4     |       1.6.0       |      |  2013-02-12  |
-| 0.0.2                   |    0.19.8     |       1.4.0       |      |  2012-07-16  |
-| 0.0.1                   |    0.19.4     |       1.4.0       |      |  2012-06-19  |
+| 1.0.0-SNAPSHOT          |    1.0.0      |      Not used     |  1.4 |  XXXX-XX-XX  |
+
+Please read documentation relative to the version you are using:
+
+* [1.0.0](https://github.com/dadoonet/fsriver/blob/master/README.markdown)
+
 
 Build Status
 ------------
