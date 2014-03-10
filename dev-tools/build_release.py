@@ -224,7 +224,7 @@ def add_version_snapshot(readme_file, release, snapshot):
 # Moves the README.markdown file from a snapshot to a release (documentation link)
 def remove_documentation_snapshot(readme_file, release, branch):
     pattern = '* [%s-SNAPSHOT](https://github.com/dadoonet/fsriver/blob/%s/README.markdown)' % (release, branch)
-    replacement = '* [%s](https://github.com/dadoonet/fsriver/blob/v%s/README.markdown)' % (release, release)
+    replacement = '* [%s](https://github.com/dadoonet/fsriver/blob/fsriver-%s/README.markdown)' % (release, release)
     def callback(line):
         # If we find pattern, we replace its content
         if line.find(pattern) >= 0:
@@ -235,7 +235,7 @@ def remove_documentation_snapshot(readme_file, release, branch):
 
 # Add in README.markdown file the documentation for the next version
 def add_documentation_snapshot(readme_file, release, snapshot, branch):
-    pattern = '* [%s](https://github.com/dadoonet/fsriver/blob/v%s/README.markdown)' % (release, release)
+    pattern = '* [%s](https://github.com/dadoonet/fsriver/blob/fsriver-%s/README.markdown)' % (release, release)
     replacement = '* [%s-SNAPSHOT](https://github.com/dadoonet/fsriver/blob/%s/README.markdown)' % (snapshot, branch)
     def callback(line):
         # If we find pattern, we copy the line and replace its content
@@ -276,7 +276,7 @@ def commit_snapshot():
     run('git commit -m "prepare for next development iteration"')
 
 def tag_release(release):
-    run('git tag -a v%s -m "Tag release version %s"' % (release, release))
+    run('git tag -a fsriver-%s -m "Tag release version %s"' % (release, release))
 
 def run_mvn(*cmd):
     for c in cmd:
@@ -326,7 +326,7 @@ def git_merge(src_branch, release_version):
 def git_push(remote, src_branch, release_version, dry_run):
     if not dry_run:
         run('git push %s %s' % (remote, src_branch)) # push the commit
-        run('git push %s v%s' % (remote, release_version)) # push the tag
+        run('git push %s fsriver-%s' % (remote, release_version)) # push the tag
     else:
         print('  dryrun [True] -- skipping push to remote %s' % remote)
 
@@ -376,7 +376,7 @@ def get_github_repository(reponame,
 def check_opened_issues(version, repository, reponame):
     opened_issues = [i for i in repository.iter_issues(state='open', labels='%s' % version)]
     if len(opened_issues)>0:
-        raise NameError('Some issues [%s] are still opened. Check https://github.com/elasticsearch/%s/issues?labels=%s&state=open'
+        raise NameError('Some issues [%s] are still opened. Check https://github.com/dadoonet/%s/issues?labels=%s&state=open'
                         % (len(opened_issues), reponame, version))
 
 # List issues from github: can be done anonymously if you don't
@@ -672,6 +672,7 @@ if __name__ == '__main__':
         git_push(remote, src_branch, release_version, dry_run)
         print('  preparing email (from github issues)')
         msg = prepare_email(artifact_id, release_version, repository, artifact_name, artifact_description, project_url)
+        input('Press Enter to send email...')
         print('  sending email -- dry_run: %s, mail: %s' % (dry_run, mail))
         send_email(msg, dry_run=dry_run, mail=mail)
 
@@ -694,6 +695,6 @@ Release successful pending steps:
             input('Press Enter to reset changes...')
 
             run('git reset --hard %s' % head_hash)
-            run('git tag -d v%s' % release_version)
+            run('git tag -d %s-%s' % (artifact_id, release_version))
         # we delete this one anyways
         run('git branch -D %s' %  (release_branch(release_version)))
