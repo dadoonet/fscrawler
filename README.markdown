@@ -17,11 +17,11 @@ Versions
 
 |      FS River Plugin    | elasticsearch | Attachment Plugin | Tika | Release date |
 |-------------------------|:-------------:|:-----------------:|:----:|:------------:|
-| 1.0.0-SNAPSHOT          |    1.0.0      |      Not used     |  1.4 |  XXXX-XX-XX  |
+| 1.0.0                   |    1.0.0      |      Not used     |  1.4 |  2014-03-10  |
 
 Please read documentation relative to the version you are using:
 
-* [1.0.0-SNAPSHOT](https://github.com/dadoonet/fsriver/blob/master/README.markdown)
+* [1.0.0](https://github.com/dadoonet/fsriver/blob/fsriver-1.0.0/README.markdown)
 
 
 Build Status
@@ -42,7 +42,7 @@ Installation
 Just type :
 
 ```sh
-bin/plugin -install fr.pilato.elasticsearch.river/fsriver/0.4.0
+bin/plugin -install fr.pilato.elasticsearch.river/fsriver/1.0.0
 ```
 
 Creating a Local FS river
