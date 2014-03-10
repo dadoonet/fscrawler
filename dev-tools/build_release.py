@@ -194,8 +194,8 @@ def remove_maven_snapshot(pom, release):
 
 # Moves the README.markdown file from a snapshot to a release
 def remove_version_snapshot(readme_file, release):
-    pattern = '%s-SNAPSHOT' % release
-    replacement = '%s         ' % release
+    pattern = '| %s-SNAPSHOT' % release
+    replacement = '| %s         ' % release
     def callback(line):
         return line.replace(pattern, replacement)
     process_file(readme_file, callback)
@@ -216,7 +216,31 @@ def add_version_snapshot(readme_file, release, snapshot):
         # If we find pattern, we copy the line and replace its content
         if line.find(pattern) >= 0:
             return line.replace(pattern, replacement).replace('%s' % (datetime.datetime.now().strftime("%Y-%m-%d")),
-                                                           'XXXX-XX-XX')+line
+                                                              'XXXX-XX-XX')+line
+        else:
+            return line
+    process_file(readme_file, callback)
+
+# Moves the README.markdown file from a snapshot to a release (documentation link)
+def remove_documentation_snapshot(readme_file, release, branch):
+    pattern = '* [%s-SNAPSHOT](https://github.com/dadoonet/fsriver/blob/%s/README.markdown)' % (release, branch)
+    replacement = '* [%s](https://github.com/dadoonet/fsriver/blob/v%s/README.markdown)' % (release, release)
+    def callback(line):
+        # If we find pattern, we replace its content
+        if line.find(pattern) >= 0:
+            return line.replace(pattern, replacement)
+        else:
+            return line
+    process_file(readme_file, callback)
+
+# Add in README.markdown file the documentation for the next version
+def add_documentation_snapshot(readme_file, release, snapshot, branch):
+    pattern = '* [%s](https://github.com/dadoonet/fsriver/blob/v%s/README.markdown)' % (release, release)
+    replacement = '* [%s-SNAPSHOT](https://github.com/dadoonet/fsriver/blob/%s/README.markdown)' % (snapshot, branch)
+    def callback(line):
+        # If we find pattern, we copy the line and replace its content
+        if line.find(pattern) >= 0:
+            return line.replace(pattern, replacement)+line
         else:
             return line
     process_file(readme_file, callback)
@@ -336,9 +360,9 @@ def format_issues_html(issues, title='Fix'):
     return response
 
 def get_github_repository(reponame,
-                      login=env.get('GITHUB_LOGIN', None),
-                      password=env.get('GITHUB_PASSWORD', None),
-                      key=env.get('GITHUB_KEY', None)):
+                          login=env.get('GITHUB_LOGIN', None),
+                          password=env.get('GITHUB_PASSWORD', None),
+                          key=env.get('GITHUB_KEY', None)):
     if login:
         g = github3.login(login, password)
     elif key:
@@ -609,6 +633,7 @@ if __name__ == '__main__':
     try:
         pending_files = [POM_FILE, README_FILE]
         remove_maven_snapshot(POM_FILE, release_version)
+        remove_documentation_snapshot(README_FILE, release_version, src_branch)
         remove_version_snapshot(README_FILE, release_version)
         set_date(README_FILE)
         set_install_instructions(README_FILE, artifact_id, release_version)
@@ -639,6 +664,7 @@ if __name__ == '__main__':
 
         add_maven_snapshot(POM_FILE, release_version, snapshot_version)
         add_version_snapshot(README_FILE, release_version, snapshot_version)
+        add_documentation_snapshot(README_FILE, release_version, snapshot_version, src_branch)
         add_pending_files(*pending_files)
         commit_snapshot()
 

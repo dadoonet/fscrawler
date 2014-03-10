@@ -15,18 +15,11 @@ in the distribution.
 **WARNING**: starting from 0.4.0, you don't need anymore the Attachment Plugin as we use now directly
 [Tika](http://tika.apache.org/), see [#38](https://github.com/dadoonet/fsriver/issues/38).
 
-Please read documentation relative to the version you are using:
-
-* [0.4.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.4.0/README.markdown#filesystem-river-for-elasticsearch)
-* [0.3.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.3.0/README.markdown#filesystem-river-for-elasticsearch)
-* [0.2.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.2.0/README.markdown#filesystem-river-for-elasticsearch)
-* [0.1.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.1.0/README.markdown#filesystem-river-for-elasticsearch)
-* [0.0.3](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.3/README.markdown#filesystem-river-for-elasticsearch)
-* [0.0.2](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.2/README.markdown#filesystem-river-for-elasticsearch)
-* [0.0.1](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.1/README.markdown#filesystem-river-for-elasticsearch)
-
 Versions
 --------
+
+* For 1.0.x elasticsearch versions, look at [master branch](https://github.com/dadoonet/fsriver/tree/master).
+* For 0.90.x elasticsearch versions, look at [es-0.90 branch](https://github.com/dadoonet/fsriver/tree/es-0.90).
 
 |      FS River Plugin    | elasticsearch | Attachment Plugin | Tika | Release date |
 |-------------------------|:-------------:|:-----------------:|:----:|:------------:|
@@ -38,6 +31,17 @@ Versions
 | 0.0.3                   |    0.20.4     |       1.6.0       |      |  2013-02-12  |
 | 0.0.2                   |    0.19.8     |       1.4.0       |      |  2012-07-16  |
 | 0.0.1                   |    0.19.4     |       1.4.0       |      |  2012-06-19  |
+
+Please read documentation relative to the version you are using:
+
+* [0.5.0-SNAPSHOT](https://github.com/dadoonet/fsriver/blob/es-0.90/README.markdown)
+* [0.4.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.4.0/README.markdown)
+* [0.3.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.3.0/README.markdown)
+* [0.2.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.2.0/README.markdown)
+* [0.1.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.1.0/README.markdown)
+* [0.0.3](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.3/README.markdown)
+* [0.0.2](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.2/README.markdown)
+* [0.0.1](https://github.com/dadoonet/fsriver/blob/fsriver-0.0.1/README.markdown)
 
 Build Status
 ------------
