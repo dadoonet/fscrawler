@@ -23,6 +23,7 @@ Versions
 
 |      FS River Plugin    | elasticsearch | Attachment Plugin | Tika | Release date |
 |-------------------------|:-------------:|:-----------------:|:----:|:------------:|
+| 0.6.0-SNAPSHOT          |    0.90.10    |      Not used     |  1.4 |  XXXX-XX-XX  |
 | 0.5.0                   |    0.90.10    |      Not used     |  1.4 |  2014-03-10  |
 | 0.4.0                   |    0.90.7     |      Not used     |  1.4 |  2013-12-22  |
 | 0.3.0                   |    0.90.3     |       1.8.0       |      |  2013-08-09  |
@@ -34,6 +35,7 @@ Versions
 
 Please read documentation relative to the version you are using:
 
+* [0.6.0-SNAPSHOT](https://github.com/dadoonet/fsriver/blob/es-0.90/README.markdown)
 * [0.5.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.5.0/README.markdown)
 * [0.4.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.4.0/README.markdown)
 * [0.3.0](https://github.com/dadoonet/fsriver/blob/fsriver-0.3.0/README.markdown)
