@@ -405,7 +405,7 @@ def prepare_email(artifact_id, release_version, repository,
 Heya,
 
 
-We are pleased to announce the release of the %(artifact_name)s, version %(release_version)s.
+I am pleased to announce the release of the %(artifact_name)s, version %(release_version)s.
 
 %(artifact_description)s.
 
@@ -441,7 +441,7 @@ Enjoy,
     <body>
         <p>Heya,</p>
 
-        <p>We are pleased to announce the release of the <b>%(artifact_name)s</b>, <b>version %(release_version)s</b></p>
+        <p>I am pleased to announce the release of the <b>%(artifact_name)s</b>, <b>version %(release_version)s</b>.</p>
 
 <blockquote>%(artifact_description)s.</blockquote>
 
