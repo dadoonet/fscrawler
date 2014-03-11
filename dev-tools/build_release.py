@@ -284,11 +284,14 @@ def run_mvn(*cmd):
 
 def build_release(run_tests=False, dry_run=True):
     target = 'deploy'
+    profile = '-Psonatype-oss-release'
     if dry_run:
         target = 'package'
+        profile = ''
     if run_tests:
         run_mvn('clean test')
-    run_mvn('clean %s -DskipTests' %(target))
+        profile = ''
+    run_mvn('clean %s -DskipTests %s' %(target, profile))
 
 # Checks the pom.xml for the release version. <version>2.0.0-SNAPSHOT</version>
 # This method fails if the pom file has no SNAPSHOT version set ie.
