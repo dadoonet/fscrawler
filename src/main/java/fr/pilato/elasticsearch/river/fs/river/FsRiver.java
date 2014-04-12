@@ -525,6 +525,8 @@ public class FsRiver extends AbstractRiverComponent implements River {
                                     .getTime())) {
                                 indexFile(stats, child.name, filepath, path.getInputStream(child), child.lastModifiedDate);
                                 stats.addFile();
+                            } else if (logger.isDebugEnabled()) {
+                                logger.debug("    - not modified: file date {}, last scan date {}", child.lastModifiedDate, lastScanDate);
                             }
                         }
                     } else if (child.directory) {
@@ -693,6 +695,10 @@ public class FsRiver extends AbstractRiverComponent implements River {
                 }
 
                 XContentBuilder source = jsonBuilder().startObject();
+
+                if (logger.isTraceEnabled()) {
+                    source.prettyPrint();
+                }
 
                 // File
                 source

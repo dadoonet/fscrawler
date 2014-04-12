@@ -52,7 +52,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
     private XContentBuilder startRiverDefinition(String dir) throws IOException {
-        return jsonBuilder().startObject()
+        return jsonBuilder().prettyPrint().startObject()
                 .field("type", "fs")
                 .startObject("fs")
                     .field("url", getUrl(dir))
@@ -60,11 +60,14 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
     }
 
     private XContentBuilder endRiverDefinition(XContentBuilder xcb) throws IOException {
-        return xcb.endObject()
+        xcb.endObject()
                 .startObject("index")
                 .field("bulk_size", 1)
                 .endObject()
                 .endObject();
+
+        logger.info(" --> creating river: {}", xcb.string());
+        return xcb;
     }
 
     private File URItoFile(URL url) {
@@ -93,7 +96,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         createIndex(riverName);
         index("_river", riverName, "_meta", river);
 
-        // We wait up to 5 seconds before considering a failing test
+        // We wait up to 10 seconds before considering a failing test
         assertThat("Document should exists with [_lastupdated] id...", awaitBusy(new Predicate<Object>() {
             @Override
             public boolean apply(Object o) {
@@ -353,6 +356,32 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
         // We expect to have two files
         countTestHelper("remove_deleted_disabled", null, 2);
+    }
+
+    /**
+     * Test case for issue #60: https://github.com/dadoonet/fsriver/issues/60 : new files are not added
+     */
+    @Test
+    public void test_add_new_file() throws Exception {
+        String dir = "test_add_new_file";
+        String fullpath = getUrl(dir);
+
+        XContentBuilder river = startRiverDefinition(dir);
+        startRiver("test_add_new_file", endRiverDefinition(river));
+
+        // We should have two docs first
+        countTestHelper("test_add_new_file", null, 1);
+
+        logger.info(" ---> Adding a copy of roottxtfile.txt");
+        // We create a copy of a file
+        File file1 = new File(fullpath + File.separator + "roottxtfile.txt");
+        File file2 = new File(fullpath + File.separator + "new_roottxtfile.txt");
+        FileSystemUtils.copyFile(file1, file2);
+
+        Thread.sleep(1000);
+
+        // We expect to have two files
+        countTestHelper("test_add_new_file", null, 2);
     }
 
     /**
