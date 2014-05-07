@@ -521,10 +521,8 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         // https://github.com/dadoonet/fsriver/issues/1 : Filter documents
                         if (FsRiverUtil.isIndexable(filename, fsdef.getIncludes(), fsdef.getExcludes())) {
                             fsFiles.add(filename);
-                            // TODO: Check if file exists in index or not
-                            // If a file indexable but not indexed, it should be indexed
                             if ((lastScanDate == null || child.lastModifiedDate > lastScanDate
-                                    .getTime())) {
+                                    .getTime()) || !fileInIndex(child.fullpath)) {
                                 indexFile(stats, child.name, filepath, path.getInputStream(child), child.lastModifiedDate);
                                 stats.addFile();
                             } else if (logger.isDebugEnabled()) {
@@ -641,6 +639,24 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
             return files;
 
+        }
+
+        private boolean fileInIndex(String fullpath)
+            throws Exception {
+
+            SearchResponse response = client
+                    .prepareSearch(indexName)
+                    .setSearchType(SearchType.QUERY_AND_FETCH)
+                    .setTypes(typeName)
+                    .setQuery(
+                            QueryBuilders.termQuery(
+                                    FsRiverUtil.Doc.Path.REAL,
+                                    fullpath))
+                    .setFrom(0)
+                    .setSize(50000)
+                    .execute().actionGet();
+
+            return (response.getHits().totalHits() != 0);
         }
 
         /**
