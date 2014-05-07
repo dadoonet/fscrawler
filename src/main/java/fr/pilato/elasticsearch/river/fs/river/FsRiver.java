@@ -522,12 +522,11 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         if (FsRiverUtil.isIndexable(filename, fsdef.getIncludes(), fsdef.getExcludes())) {
                             fsFiles.add(filename);
                             if ((lastScanDate == null || child.lastModifiedDate > lastScanDate
-                                    .getTime()) || (child.creationDate > 0 && child.creationDate > lastScanDate.getTime())) {
+                                    .getTime()) || !fileInIndex(child.fullpath)) {
                                 indexFile(stats, child.name, filepath, path.getInputStream(child), child.lastModifiedDate);
                                 stats.addFile();
                             } else if (logger.isDebugEnabled()) {
-                                logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
-                                        child.creationDate, child.lastModifiedDate, lastScanDate.getTime());
+                                logger.debug("    - not modified: file date {}, last scan date {}", child.lastModifiedDate, lastScanDate);
                             }
                         }
                     } else if (child.directory) {
@@ -640,6 +639,24 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
             return files;
 
+        }
+
+        private boolean fileInIndex(String fullpath)
+            throws Exception {
+
+            SearchResponse response = client
+                    .prepareSearch(indexName)
+                    .setSearchType(SearchType.QUERY_AND_FETCH)
+                    .setTypes(typeName)
+                    .setQuery(
+                            QueryBuilders.termQuery(
+                                    FsRiverUtil.Doc.Path.REAL,
+                                    fullpath))
+                    .setFrom(0)
+                    .setSize(50000)
+                    .execute().actionGet();
+
+            return (response.getHits().totalHits() != 0);
         }
 
         /**
