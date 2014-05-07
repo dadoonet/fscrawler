@@ -521,6 +521,8 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         // https://github.com/dadoonet/fsriver/issues/1 : Filter documents
                         if (FsRiverUtil.isIndexable(filename, fsdef.getIncludes(), fsdef.getExcludes())) {
                             fsFiles.add(filename);
+                            // TODO: Check if file exists in index or not
+                            // If a file indexable but not indexed, it should be indexed
                             if ((lastScanDate == null || child.lastModifiedDate > lastScanDate
                                     .getTime())) {
                                 indexFile(stats, child.name, filepath, path.getInputStream(child), child.lastModifiedDate);
@@ -670,7 +672,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         id = id.substring(0, pos);
                     }
                 } else {
-                    id = SignTool.sign(filepath + File.separator + filename);
+                    id = SignTool.sign((new File(filepath, filename)).toString());
                 }
                 esIndex(indexName,
                         typeName,
@@ -707,7 +709,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         .field(FsRiverUtil.Doc.File.LAST_MODIFIED, lastmodified)
                         .field(FsRiverUtil.Doc.File.INDEXING_DATE, new Date())
                         .field(FsRiverUtil.Doc.File.CONTENT_TYPE, metadata.get(Metadata.CONTENT_TYPE))
-                        .field(FsRiverUtil.Doc.File.URL, "file://" + filepath + File.separator + filename);
+                        .field(FsRiverUtil.Doc.File.URL, "file://" + (new File(filepath, filename)).toString());
 
                 // We only add `indexed_chars` if we have other value than default
                 if (fsDefinition.getIndexedChars() > 0) {
@@ -732,7 +734,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         .field(FsRiverUtil.Doc.Path.ROOT, stats.getRootPathId())
                         .field(FsRiverUtil.Doc.Path.VIRTUAL,
                                 FsRiverUtil.computeVirtualPathName(stats, filepath))
-                        .field(FsRiverUtil.Doc.Path.REAL, filepath + File.separator + filename)
+                        .field(FsRiverUtil.Doc.Path.REAL, (new File(filepath, filename)).toString())
                         .endObject(); // Path
 
                 // Meta
@@ -758,7 +760,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                 // We index
                 esIndex(indexName,
                         typeName,
-                        SignTool.sign(filepath + File.separator + filename),
+                        SignTool.sign((new File(filepath, filename)).toString()),
                         source);
             }
 
