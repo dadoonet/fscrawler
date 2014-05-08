@@ -24,7 +24,12 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.*;
+import java.nio.file.*;
 import java.util.List;
 import java.util.Map;
 
@@ -304,5 +309,19 @@ public class FsRiverUtil {
 
         return realPath.substring(stats.getRootPath().length())
                 .replace("\\", "/");
+    }
+
+    public static long getCreationTime(File file) {
+        long time;
+        try  {
+            Path path = Paths.get(file.getAbsolutePath());
+            BasicFileAttributes fileattr = Files
+                    .getFileAttributeView(path, BasicFileAttributeView.class)
+                    .readAttributes();
+            time = fileattr.creationTime().toMillis();
+        } catch (Exception e) {
+            time = 0L;
+        }
+        return time;
     }
 }
