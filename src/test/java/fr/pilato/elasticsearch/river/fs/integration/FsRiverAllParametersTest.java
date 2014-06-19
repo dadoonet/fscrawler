@@ -21,11 +21,11 @@ package fr.pilato.elasticsearch.river.fs.integration;
 
 import fr.pilato.elasticsearch.river.fs.river.FsRiver;
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
+import org.apache.lucene.util.IOUtils;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.base.Predicate;
-import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -160,7 +160,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
     public void tearDown() throws Exception {
         logger.info("  --> stopping rivers");
         // We need to make sure that the _river is stopped
-        wipeIndices("_river");
+        client().admin().indices().prepareDelete("_river").get();
 
         // We have to wait a little because it could throw java.lang.RuntimeException
         Thread.sleep(1000);
@@ -305,7 +305,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         // We first create a copy of a file
         File file1 = new File(fullpath + File.separator + "roottxtfile.txt");
         File file2 = new File(fullpath + File.separator + "deleted_roottxtfile.txt");
-        FileSystemUtils.copyFile(file1, file2);
+        IOUtils.copy(file1, file2);
 
         XContentBuilder river = startRiverDefinition(dir);
         startRiver("remove_deleted_enabled", endRiverDefinition(river));
@@ -335,7 +335,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         // We first create a copy of a file
         File file1 = new File(fullpath + File.separator + "roottxtfile.txt");
         File file2 = new File(fullpath + File.separator + "deleted_roottxtfile.txt");
-        FileSystemUtils.copyFile(file1, file2);
+        IOUtils.copy(file1, file2);
 
         XContentBuilder river = startRiverDefinition(dir)
                 .field("remove_deleted", false);
@@ -376,7 +376,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         // We create a copy of a file
         File file1 = new File(fullpath + File.separator + "roottxtfile.txt");
         File file2 = new File(fullpath + File.separator + "new_roottxtfile.txt");
-        FileSystemUtils.copyFile(file1, file2);
+        IOUtils.copy(file1, file2);
 
         Thread.sleep(1000);
 
