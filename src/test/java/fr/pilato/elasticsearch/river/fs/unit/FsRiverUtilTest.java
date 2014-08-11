@@ -3,8 +3,10 @@ package fr.pilato.elasticsearch.river.fs.unit;
 
 import fr.pilato.elasticsearch.river.fs.river.ScanStatistic;
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
-import junit.framework.Assert;
 import org.junit.Test;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
  * We want to test some utilities
@@ -24,6 +26,6 @@ public class FsRiverUtilTest {
     }
 
     private void testHelper(String rootPath, String realPath, String expectedPath) {
-        Assert.assertEquals(expectedPath, FsRiverUtil.computeVirtualPathName(new ScanStatistic(rootPath), realPath));
+        assertThat(FsRiverUtil.computeVirtualPathName(new ScanStatistic(rootPath), realPath), is(expectedPath));
     }
 }
