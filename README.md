@@ -44,19 +44,27 @@ Thanks to cloudbees for the [build status](https://buildhive.cloudbees.com/job/d
 Getting Started
 ===============
 
-Creating a Local FS river
--------------------------
+Creating a FS river
+-------------------
 
-We create first an index to store our *documents* :
+You can create the most simple river as follow:
 
 ```
-PUT mydocs
+PUT _river/mydocs/_meta
+{
+  "type" : "fs"
+}
 ```
+
+This will scan every 15 minutes all documents available in `/esdir` dir will index them into `mydocs` index using 
+`doc` type.
+
+Choose scanned directory
+------------------------
 
 We create the river with the following properties :
 
 * FS URL: `/tmp` or `c:\\tmp` if you use Microsoft Windows OS
-* Update Rate: every 15 minutes (15 * 60 * 1000 = 900000 ms)
 * Get only docs like `*.doc` and `*.pdf`
 * Don't index `resume*`
 
@@ -67,9 +75,38 @@ PUT _river/mydocs/_meta
   "type": "fs",
   "fs": {
 	"url": "/tmp",
-	"update_rate": 900000,
 	"includes": "*.doc,*.pdf",
 	"excludes": "resume"
+  }
+}
+```
+
+Setting update rate
+-------------------
+
+By default, `update_rate` is set to `15m`. You can modify this value using any compatible 
+[time unit](http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/common-options.html#time-units).
+
+For example, here is a 15 minutes update rate.
+
+```
+PUT _river/mydocs/_meta
+{
+  "type": "fs",
+  "fs": {
+	"update_rate": "15m"
+  }
+}
+```
+
+Or a 3 hours update rate.
+
+```
+PUT _river/mydocs/_meta
+{
+  "type": "fs",
+  "fs": {
+	"update_rate": "3h"
   }
 }
 ```
@@ -80,7 +117,7 @@ Adding another local FS river
 We add another river with the following properties :
 
 * FS URL: `/tmp2`
-* Update Rate: every hour (60 * 60 * 1000 = 3600000 ms)
+* Update Rate: every hour
 * Get only docs like `*.doc`, `*.xls` and `*.pdf`
 
 By the way, we define to index in the same index/type as the previous one
@@ -95,7 +132,7 @@ PUT _river/mynewriver/_meta
   "type": "fs",
   "fs": {
 	"url": "/tmp2",
-	"update_rate": 3600000,
+	"update_rate": "1h",
 	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
   },
   "index": {
@@ -119,7 +156,7 @@ You can now index files remotely using SSH.
 * Password: `password`
 * Protocol: `ssh` (default to `local`)
 * Port: `22` (default to `22`)
-* Update Rate: every hour (60 * 60 * 1000 = 3600000 ms)
+* Update Rate: every hour 
 * Get only docs like `*.doc`, `*.xls` and `*.pdf`
 
 ```
@@ -133,7 +170,7 @@ PUT _river/mysshriver/_meta
 	"username": "username",
 	"password": "password",
 	"protocol": "ssh",
-	"update_rate": 3600000,
+	"update_rate": "1h",
 	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
   }
 }
@@ -148,7 +185,7 @@ PUT _river/mysshriver/_meta
 * PEM File: `/path/to/private_key.pem`
 * Protocol: `ssh` (default to `local`)
 * Port: `22` (default to `22`)
-* Update Rate: every hour (60 * 60 * 1000 = 3600000 ms)
+* Update Rate: every hour
 * Get only docs like `*.doc`, `*.xls` and `*.pdf`
 
 ```
@@ -162,7 +199,7 @@ PUT _river/mysshriver/_meta
 	"username": "username",
 	"pem_path": "/path/to/private_key.pem",
 	"protocol": "ssh",
-	"update_rate": 3600000,
+	"update_rate": "1h",
 	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
   }
 }
@@ -196,7 +233,7 @@ PUT _river/mydocs/_meta
   "type": "fs",
   "fs": {
 	"url": "/tmp",
-	"update_rate": 3600000,
+	"update_rate": "1h",
 	"json_support" : true
   }
 }
@@ -212,7 +249,7 @@ PUT _river/mydocs1/_meta
   "type": "fs",
   "fs": {
 	"url": "/tmp/type1",
-	"update_rate": 3600000,
+	"update_rate": "1h",
 	"json_support" : true
   },
   "index": {
@@ -226,7 +263,7 @@ PUT _river/mydocs2/_meta
   "type": "fs",
   "fs": {
 	"url": "/tmp/type2",
-	"update_rate": 3600000,
+	"update_rate": "1h",
 	"json_support" : true
   },
   "index": {
@@ -245,7 +282,7 @@ PUT _river/mydocs1/_meta
   "type": "fs",
   "fs": {
 	"url": "/tmp",
-	"update_rate": 3600000,
+	"update_rate": "1h",
     "includes": [ "type1*.json" ],
 	"json_support" : true
   },
@@ -260,7 +297,7 @@ PUT _river/mydocs2/_meta
   "type": "fs",
   "fs": {
 	"url": "/tmp",
-	"update_rate": 3600000,
+	"update_rate": "1h",
     "includes": [ "type2*.json" ],
 	"json_support" : true
   },
@@ -281,7 +318,7 @@ PUT _river/mydocs/_meta
   "type": "fs",
   "fs": {
 	"url": "/tmp",
-	"update_rate": 3600000,
+	"update_rate": "1h",
 	"json_support": true,
 	"filename_as_id": true
   }
@@ -738,7 +775,7 @@ PUT _river/mydocs/_meta
   "type": "fs",
   "fs": {
 	"url": "/tmp",
-	"update_rate": 3600000,
+	"update_rate": "1h",
 	"store_source": true
   }
 }
