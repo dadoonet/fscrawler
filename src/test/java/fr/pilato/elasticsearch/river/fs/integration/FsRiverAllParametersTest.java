@@ -26,6 +26,7 @@ import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.base.Predicate;
+import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -51,11 +52,15 @@ import static org.hamcrest.Matchers.equalTo;
 public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
     private XContentBuilder startRiverDefinition(String dir) throws IOException {
+        return startRiverDefinition(dir, 500);
+    }
+
+    private XContentBuilder startRiverDefinition(String dir, long updateRate) throws IOException {
         return jsonBuilder().prettyPrint().startObject()
                 .field("type", "fs")
                 .startObject("fs")
                     .field("url", getUrl(dir))
-                    .field("update_rate", 500);
+                    .field("update_rate", updateRate);
     }
 
     private XContentBuilder endRiverDefinition(XContentBuilder xcb) throws IOException {
@@ -106,6 +111,11 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
         // Make sure we refresh indexed docs before launching tests
         refresh();
+    }
+
+    private void stopRiver(final String riverName) {
+        logger.info("  --> stopping river [{}]", riverName);
+        client().admin().indices().prepareDeleteMapping("_river").setType(riverName).get();
     }
 
     /**
@@ -531,4 +541,51 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
         countTestHelper("ssh", null, 2);
     }
+
+    @Test
+    public void test_stop_river_while_adding_content() throws Exception {
+        String sourcedir = "test_add_new_file";
+        String riverdir = "test_stop_river";
+        String fullpath_sourcedir = getUrl(sourcedir);
+        String fullpath_riverdir = getUrl(riverdir);
+
+        // We remove all "old files"
+        FileSystemUtils.deleteRecursively(new File(fullpath_riverdir), false);
+
+        XContentBuilder river = startRiverDefinition(riverdir, 5);
+        startRiver("test_stop_river", endRiverDefinition(river));
+
+        // While copying files, we stop the river
+        int filenumber = 0;
+        int filenumber_before_closing_river = between(5, 10);
+        int filenumber_after_closing_river = between(30, 50);
+        long sleepTime = 100;
+        boolean closing_river = false;
+        logger.info(" ---> Generating [{}] before closing the river and [{}] after", filenumber_before_closing_river, filenumber_after_closing_river);
+        while (true) {
+            File file1 = new File(fullpath_sourcedir + File.separator + "roottxtfile.txt");
+            File file2 = new File(fullpath_riverdir + File.separator + "roottxtfile_" + filenumber +".txt");
+            logger.info(" ---> Adding copy [{}] of roottxtfile.txt", filenumber);
+            FsUtils.copyFile(file1, file2);
+            filenumber++;
+
+            if (filenumber == filenumber_before_closing_river) {
+                // Close the river
+                stopRiver("test_stop_river");
+                closing_river = true;
+                // We accelerate copies if we want to have a failure
+                sleepTime = 0;
+            }
+
+            if (closing_river) {
+                if (filenumber_after_closing_river-- == 0) {
+                    // This is the end of this test. We don't add file anymore
+                    break;
+                }
+            }
+            Thread.sleep(sleepTime);
+        }
+    }
+
+
 }
