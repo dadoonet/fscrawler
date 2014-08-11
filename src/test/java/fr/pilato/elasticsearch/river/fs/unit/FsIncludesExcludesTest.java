@@ -23,12 +23,13 @@ package fr.pilato.elasticsearch.river.fs.unit;
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Map;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 public class FsIncludesExcludesTest {
 
@@ -50,7 +51,7 @@ public class FsIncludesExcludesTest {
 
         String[] includes = FsRiverUtil.buildArrayFromSettings(map, "fs.includes");
 
-        Assert.assertEquals(1, includes.length);
+        assertThat(includes.length, is(1));
     }
 
     @Test
@@ -67,7 +68,7 @@ public class FsIncludesExcludesTest {
 
         String[] includes = FsRiverUtil.buildArrayFromSettings(map, "fs.includes");
 
-        Assert.assertEquals(1, includes.length);
+        assertThat(includes.length, is(1));
     }
 
     @Test
@@ -84,7 +85,7 @@ public class FsIncludesExcludesTest {
 
         String[] includes = FsRiverUtil.buildArrayFromSettings(map, "fs.includes");
 
-        Assert.assertEquals(3, includes.length);
+        assertThat(includes.length, is(3));
     }
 
     @Test
@@ -105,7 +106,7 @@ public class FsIncludesExcludesTest {
 
         String[] includes = FsRiverUtil.buildArrayFromSettings(map, "fs.includes");
 
-        Assert.assertEquals(3, includes.length);
+        assertThat(includes.length, is(3));
     }
 
     @Test
@@ -122,7 +123,7 @@ public class FsIncludesExcludesTest {
 
         String[] includes = FsRiverUtil.buildArrayFromSettings(map, "fs.includes");
 
-        Assert.assertEquals(1, includes.length);
+        assertThat(includes.length, is(1));
     }
 
     @Test
@@ -141,7 +142,7 @@ public class FsIncludesExcludesTest {
 
         String[] includes = FsRiverUtil.buildArrayFromSettings(map, "fs.includes");
 
-        Assert.assertEquals(1, includes.length);
+        assertThat(includes.length, is(1));
     }
 
     @Test
@@ -157,7 +158,7 @@ public class FsIncludesExcludesTest {
 
         String[] includes = FsRiverUtil.buildArrayFromSettings(map, "fs.includes");
 
-        Assert.assertEquals(0, includes.length);
+        assertThat(includes.length, is(0));
     }
 
     @Test
@@ -173,7 +174,7 @@ public class FsIncludesExcludesTest {
 
         String[] includes = FsRiverUtil.buildArrayFromSettings(map, "fs.includes");
 
-        Assert.assertEquals(0, includes.length);
+        assertThat(includes.length, is(0));
     }
 
     @Test
@@ -191,6 +192,6 @@ public class FsIncludesExcludesTest {
 
         String[] includes = FsRiverUtil.buildArrayFromSettings(map, "fs.includes");
 
-        Assert.assertEquals(0, includes.length);
+        assertThat(includes.length, is(0));
     }
 }
