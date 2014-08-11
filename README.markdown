@@ -27,15 +27,6 @@ Thanks to cloudbees for the [build status](https://buildhive.cloudbees.com/job/d
 Getting Started
 ===============
 
-Installation
-------------
-
-Just type :
-
-```sh
-bin/plugin -install fr.pilato.elasticsearch.river/fsriver/1.0.0
-```
-
 Creating a Local FS river
 -------------------------
 
