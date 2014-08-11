@@ -41,9 +41,6 @@ Build Status
 Thanks to cloudbees for the [build status](https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/) : 
 ![build status](https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/badge/icon "Build status")
 
-[![Test trends](https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/test/trend)](https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/)
-
-
 Getting Started
 ===============
 
