@@ -81,7 +81,9 @@ curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
 Indexing using SSH
 ------------------
 
-You can now index files remotely using SSH:
+You can now index files remotely using SSH.
+
+### Username / Password
 
 * FS URL: `/tmp3`
 * Server: `mynode.mydomain.com`
@@ -101,6 +103,34 @@ curl -XPUT 'localhost:9200/_river/mysshriver/_meta' -d '{
 	"port": 22,
 	"username": "username",
 	"password": "password",
+	"protocol": "ssh",
+	"update_rate": 3600000,
+	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
+  }
+}'
+```
+
+### Using Username / PEM file
+
+
+* FS URL: `/tmp3`
+* Server: `mynode.mydomain.com`
+* Username: `username`
+* PEM File: `/path/to/private_key.pem`
+* Protocol: `ssh` (default to `local`)
+* Port: `22` (default to `22`)
+* Update Rate: every hour (60 * 60 * 1000 = 3600000 ms)
+* Get only docs like `*.doc`, `*.xls` and `*.pdf`
+
+```sh
+curl -XPUT 'localhost:9200/_river/mysshriver/_meta' -d '{
+  "type": "fs",
+  "fs": {
+	"url": "/tmp3",
+	"server": "mynode.mydomain.com",
+	"port": 22,
+	"username": "username",
+	"pem_path": "/path/to/private_key.pem",
 	"protocol": "ssh",
 	"update_rate": 3600000,
 	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
@@ -807,6 +837,7 @@ Here is a full list of existing settings:
 | `fs.username`                    | [Indexing using SSH](#indexing-using-ssh)                                         |
 | `fs.password`                    | [Indexing using SSH](#indexing-using-ssh)                                         |
 | `fs.protocol`                    | [Indexing using SSH](#indexing-using-ssh)                                         |
+| `fs.pem_path`                    | [Indexing using SSH](#indexing-using-ssh)                                         |
 | `fs.json_support`                | [Indexing JSon docs](#indexing-json-docs)                                         |
 | `fs.filename_as_id`              | [Indexing JSon docs](#indexing-json-docs)                                         |
 | `fs.add_filesize`                | [Disabling file size field](#disabling-file-size-field)                           |

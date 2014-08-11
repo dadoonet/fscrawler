@@ -40,6 +40,7 @@ public class FsRiverFeedDefinition {
     private String password;
     private String server;
     private String protocol;
+    private String pemFilePath;
     private boolean removeDeleted;
     private boolean storeSource;
     private int port;
@@ -47,7 +48,7 @@ public class FsRiverFeedDefinition {
     public FsRiverFeedDefinition(String rivername, String url, int updateRate, List<String> includes,
                                  List<String> excludes, boolean jsonSupport, boolean filenameAsId,
                                  boolean addFilesize, double indexedChars, String username, String password,
-                                 String server, int port, String protocol, boolean removeDeleted, boolean storeSource) {
+                                 String server, int port, String protocol, String pemFilePath, boolean removeDeleted, boolean storeSource) {
         assert (excludes != null);
         assert (includes != null);
         this.includes = includes;
@@ -63,6 +64,7 @@ public class FsRiverFeedDefinition {
         this.password = password;
         this.server = server;
         this.protocol = protocol;
+        this.pemFilePath = pemFilePath;
         this.removeDeleted = removeDeleted;
         this.storeSource = storeSource;
         this.port = port;
@@ -126,6 +128,10 @@ public class FsRiverFeedDefinition {
 
     public String getProtocol() {
         return this.protocol;
+    }
+
+    public String getPemFilePath() {
+        return pemFilePath;
     }
 
     public boolean isRemoveDeleted() {
