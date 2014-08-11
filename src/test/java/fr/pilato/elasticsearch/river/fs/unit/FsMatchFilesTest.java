@@ -21,40 +21,42 @@ package fr.pilato.elasticsearch.river.fs.unit;
 
 
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
 public class FsMatchFilesTest {
 
     @Test
     public void exclude_only() throws Exception {
-        Assert.assertFalse(FsRiverUtil.isIndexable("test.doc", new ArrayList<String>(), Arrays.asList("*.doc")));
-        Assert.assertTrue(FsRiverUtil.isIndexable("test.xls", new ArrayList<String>(), Arrays.asList("*.doc")));
-        Assert.assertTrue(FsRiverUtil.isIndexable("my.doc.xls", new ArrayList<String>(), Arrays.asList("*.doc")));
-        Assert.assertFalse(FsRiverUtil.isIndexable("my.doc.xls", new ArrayList<String>(), Arrays.asList("*.doc", "*.xls")));
-        Assert.assertFalse(FsRiverUtil.isIndexable("my.doc.xls", new ArrayList<String>(), Arrays.asList("my.d?c*.xls")));
-        Assert.assertTrue(FsRiverUtil.isIndexable("my.douc.xls", new ArrayList<String>(), Arrays.asList("my.d?c*.xls")));
+        assertThat(FsRiverUtil.isIndexable("test.doc", new ArrayList<String>(), Arrays.asList("*.doc")), is(false));
+        assertThat(FsRiverUtil.isIndexable("test.xls", new ArrayList<String>(), Arrays.asList("*.doc")), is(true));
+        assertThat(FsRiverUtil.isIndexable("my.doc.xls", new ArrayList<String>(), Arrays.asList("*.doc")), is(true));
+        assertThat(FsRiverUtil.isIndexable("my.doc.xls", new ArrayList<String>(), Arrays.asList("*.doc", "*.xls")), is(false));
+        assertThat(FsRiverUtil.isIndexable("my.doc.xls", new ArrayList<String>(), Arrays.asList("my.d?c*.xls")), is(false));
+        assertThat(FsRiverUtil.isIndexable("my.douc.xls", new ArrayList<String>(), Arrays.asList("my.d?c*.xls")), is(true));
     }
 
     @Test
     public void include_only() throws Exception {
-        Assert.assertTrue(FsRiverUtil.isIndexable("test.doc", Arrays.asList("*.doc"), new ArrayList<String>()));
-        Assert.assertFalse(FsRiverUtil.isIndexable("test.xls", Arrays.asList("*.doc"), new ArrayList<String>()));
-        Assert.assertFalse(FsRiverUtil.isIndexable("my.doc.xls", Arrays.asList("*.doc"), new ArrayList<String>()));
-        Assert.assertTrue(FsRiverUtil.isIndexable("my.doc.xls", Arrays.asList("my.d?c*.xls"), new ArrayList<String>()));
-        Assert.assertFalse(FsRiverUtil.isIndexable("my.douc.xls", Arrays.asList("my.d?c*.xls"), new ArrayList<String>()));
+        assertThat(FsRiverUtil.isIndexable("test.doc", Arrays.asList("*.doc"), new ArrayList<String>()), is(true));
+        assertThat(FsRiverUtil.isIndexable("test.xls", Arrays.asList("*.doc"), new ArrayList<String>()), is(false));
+        assertThat(FsRiverUtil.isIndexable("my.doc.xls", Arrays.asList("*.doc"), new ArrayList<String>()), is(false));
+        assertThat(FsRiverUtil.isIndexable("my.doc.xls", Arrays.asList("my.d?c*.xls"), new ArrayList<String>()), is(true));
+        assertThat(FsRiverUtil.isIndexable("my.douc.xls", Arrays.asList("my.d?c*.xls"), new ArrayList<String>()), is(false));
     }
 
     @Test
     public void include_exclude() throws Exception {
-        Assert.assertFalse(FsRiverUtil.isIndexable("test.doc", Arrays.asList("*.xls"), Arrays.asList("*.doc")));
-        Assert.assertTrue(FsRiverUtil.isIndexable("test.xls", Arrays.asList("*.xls"), Arrays.asList("*.doc")));
-        Assert.assertTrue(FsRiverUtil.isIndexable("my.doc.xls", Arrays.asList("*.xls"), Arrays.asList("*.doc")));
-        Assert.assertFalse(FsRiverUtil.isIndexable("my.doc.xls", Arrays.asList("*.xls"), Arrays.asList("my.d?c*.xls")));
-        Assert.assertTrue(FsRiverUtil.isIndexable("my.douc.xls", Arrays.asList("*.xls"), Arrays.asList("my.d?c*.xls")));
+        assertThat(FsRiverUtil.isIndexable("test.doc", Arrays.asList("*.xls"), Arrays.asList("*.doc")), is(false));
+        assertThat(FsRiverUtil.isIndexable("test.xls", Arrays.asList("*.xls"), Arrays.asList("*.doc")), is(true));
+        assertThat(FsRiverUtil.isIndexable("my.doc.xls", Arrays.asList("*.xls"), Arrays.asList("*.doc")), is(true));
+        assertThat(FsRiverUtil.isIndexable("my.doc.xls", Arrays.asList("*.xls"), Arrays.asList("my.d?c*.xls")), is(false));
+        assertThat(FsRiverUtil.isIndexable("my.douc.xls", Arrays.asList("*.xls"), Arrays.asList("my.d?c*.xls")), is(true));
     }
 
 }
