@@ -26,10 +26,12 @@ import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.base.Predicate;
-import org.elasticsearch.common.io.FileSystemUtils;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Ignore;
@@ -50,6 +52,14 @@ import static org.hamcrest.Matchers.equalTo;
  */
 @ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.SUITE)
 public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
+
+    @Override
+    protected Settings nodeSettings(int nodeOrdinal) {
+        ImmutableSettings.Builder settings = ImmutableSettings.builder()
+                .put(super.nodeSettings(nodeOrdinal))
+                .put("plugins." + PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, true);
+        return settings.build();
+    }
 
     private XContentBuilder startRiverDefinition(String dir) throws IOException {
         return startRiverDefinition(dir, 500);
@@ -553,7 +563,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         String fullpath_riverdir = getUrl(riverdir);
 
         // We remove all "old files"
-        FileSystemUtils.deleteRecursively(new File(fullpath_riverdir), false);
+        FsUtils.deleteRecursively(new File(fullpath_riverdir), false);
 
         XContentBuilder river = startRiverDefinition(riverdir, 5);
         startRiver("test_stop_river", endRiverDefinition(river));
