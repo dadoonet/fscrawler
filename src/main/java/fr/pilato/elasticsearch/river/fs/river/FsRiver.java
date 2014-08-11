@@ -437,8 +437,18 @@ public class FsRiver extends AbstractRiverComponent implements River {
             Date lastDate = null;
             try {
                 // Do something
+                // If the river is being closed, we return
+                if (closed) {
+                    return lastDate;
+                }
+
                 client.admin().indices().prepareRefresh("_river").execute()
                         .actionGet();
+
+                // If the river is being closed, we return
+                if (closed) {
+                    return lastDate;
+                }
                 GetResponse lastSeqGetResponse = client
                         .prepareGet("_river", riverName().name(),
                                 lastupdateField).execute().actionGet();
@@ -580,6 +590,11 @@ public class FsRiver extends AbstractRiverComponent implements River {
                 throws Exception {
             Collection<String> files = new ArrayList<String>();
 
+            // If the river is being closed, we return
+            if (closed) {
+                return files;
+            }
+
             SearchResponse response = client
                     .prepareSearch(indexName)
                     .setSearchType(SearchType.QUERY_AND_FETCH)
@@ -617,6 +632,11 @@ public class FsRiver extends AbstractRiverComponent implements River {
         private Collection<String> getFolderDirectory(String path)
                 throws Exception {
             Collection<String> files = new ArrayList<String>();
+
+            // If the river is being closed, we return
+            if (closed) {
+                return files;
+            }
 
             SearchResponse response = client
                     .prepareSearch(indexName)
@@ -839,7 +859,11 @@ public class FsRiver extends AbstractRiverComponent implements River {
             if (logger.isDebugEnabled()) logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
             if (logger.isTraceEnabled()) logger.trace("JSon indexed : {}", xb.string());
 
-            bulkProcessor.add(new IndexRequest(index, type, id).source(xb));
+            if (!closed) {
+                bulkProcessor.add(new IndexRequest(index, type, id).source(xb));
+            } else {
+                logger.warn("trying to add new file while closing river. Document [{}]/[{}]/[{}] has been ignored", index, type, id);
+            }
         }
 
         /**
@@ -850,7 +874,11 @@ public class FsRiver extends AbstractRiverComponent implements River {
             if (logger.isDebugEnabled()) logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
             if (logger.isTraceEnabled()) logger.trace("JSon indexed : {}", json);
 
-            bulkProcessor.add(new IndexRequest(index, type, id).source(json));
+            if (!closed) {
+                bulkProcessor.add(new IndexRequest(index, type, id).source(json));
+            } else {
+                logger.warn("trying to add new file while closing river. Document [{}]/[{}]/[{}] has been ignored", index, type, id);
+            }
         }
 
         /**
@@ -858,7 +886,11 @@ public class FsRiver extends AbstractRiverComponent implements River {
          */
         private void esDelete(String index, String type, String id) throws Exception {
             if (logger.isDebugEnabled()) logger.debug("Deleting from ES " + index + ", " + type + ", " + id);
-            bulkProcessor.add(new DeleteRequest(index, type, id));
+            if (!closed) {
+                bulkProcessor.add(new DeleteRequest(index, type, id));
+            } else {
+                logger.warn("trying to remove a file while closing river. Document [{}]/[{}]/[{}] has been ignored", index, type, id);
+            }
         }
     }
 }
