@@ -9,7 +9,7 @@ This river plugin helps to index documents from your local file system and using
 can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your
 local dir is empty and will **erase** all your docs.
 
-## Version 1.2.0-SNAPSHOT for Elasticsearch: 1.x
+## Version 1.2.0-SNAPSHOT for Elasticsearch: 1.2
 
 If you are looking for another version documentation, please refer to the 
 [compatibility matrix](https://github.com/dadoonet/fsriver/#filesystem-river-for-elasticsearch).
@@ -26,15 +26,6 @@ Thanks to cloudbees for the [build status](https://buildhive.cloudbees.com/job/d
 
 Getting Started
 ===============
-
-Installation
-------------
-
-Just type :
-
-```sh
-bin/plugin -install fr.pilato.elasticsearch.river/fsriver/1.0.0
-```
 
 Creating a Local FS river
 -------------------------
