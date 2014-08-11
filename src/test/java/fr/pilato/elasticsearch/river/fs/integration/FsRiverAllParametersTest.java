@@ -555,6 +555,26 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         countTestHelper("ssh", null, 2);
     }
 
+    /**
+     * You have to adapt this test to your own system (login / pem file and SSH connexion)
+     * So this test is disabled by default
+     */
+    @Test @Ignore
+    public void test_ssh_with_key() throws Exception {
+        String username = "USERNAME";
+        String path_to_pem_file = "/path/to/private_key.pem";
+        String server = "localhost";
+
+        XContentBuilder river = startRiverDefinition("testsubdir")
+                .field("username", username)
+                .field("pem_path", path_to_pem_file)
+                .field("protocol", FsRiver.PROTOCOL.SSH)
+                .field("server", server);
+        startRiver("ssh", endRiverDefinition(river));
+
+        countTestHelper("ssh", null, 2);
+    }
+
     @Test
     public void test_stop_river_while_adding_content() throws Exception {
         String sourcedir = "test_add_new_file";

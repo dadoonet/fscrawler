@@ -136,6 +136,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
             String server = XContentMapValues.nodeStringValue(feed.get("server"), null);
             int port = XContentMapValues.nodeIntegerValue(feed.get("port"), PROTOCOL.SSH_PORT);
             String protocol = XContentMapValues.nodeStringValue(feed.get("protocol"), PROTOCOL.LOCAL);
+            String pemPathFile = XContentMapValues.nodeStringValue(feed.get("pem_path"), null);
 
             // https://github.com/dadoonet/fsriver/issues/35 : Option to not delete documents when files are removed
             boolean removeDeleted = XContentMapValues.nodeBooleanValue(feed.get("remove_deleted"), true);
@@ -144,7 +145,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
             fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
                     updateRate, Arrays.asList(includes), Arrays.asList(excludes),
                     jsonSupport, filenameAsId, addFilesize, indexedChars,
-                    username, password, server, port, protocol, removeDeleted, storeSource);
+                    username, password, server, port, protocol, pemPathFile, removeDeleted, storeSource);
         } else {
             String url = "/esdir";
             logger.warn(
@@ -153,7 +154,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
             int updateRate = 60 * 60 * 1000;
             fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
                     updateRate, Arrays.asList("*.txt", "*.pdf"), Arrays.asList("*.exe"), false, false, true, 0.0,
-                    null, null, null, PROTOCOL.SSH_PORT, null, true, false);
+                    null, null, null, PROTOCOL.SSH_PORT, null, null, true, false);
         }
 
         if (settings.settings().containsKey("index")) {
@@ -191,7 +192,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
         if (PROTOCOL.SSH.equals(fsDefinition.getProtocol()) &&
                 !Strings.hasLength(fsDefinition.getUsername())) {
             // Non supported protocol
-            logger.error("When using SSH, you need to set a username and probably a password. Disabling river");
+            logger.error("When using SSH, you need to set a username and probably a password or a pem file. Disabling river");
             closed = true;
         }
     }
