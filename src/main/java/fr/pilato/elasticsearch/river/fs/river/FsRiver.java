@@ -41,6 +41,7 @@ import org.elasticsearch.common.Base64;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.BytesStreamInput;
+import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.joda.time.format.ISODateTimeFormat;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
@@ -406,7 +407,9 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
                         // We only index the root directory once (first run)
                         // That means that we don't have a scanDate yet
-                        if (scanDate == null) indexRootDirectory(directory);
+                        if (scanDate == null) {
+                            indexRootDirectory(directory);
+                        }
 
                         addFilesRecursively(fsdef.getUrl(), scanDate);
 
@@ -480,6 +483,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
         private void updateFsRiver(String lastupdateField, Date scanDate)
                 throws Exception {
             // We store the lastupdate date and some stats
+
+            // We need to round that lastest date to the lower second and
+            // remove 2 seconds.
+            // See #82: https://github.com/dadoonet/fsriver/issues/82
+            scanDate = new DateTime(scanDate).secondOfDay().roundFloorCopy().minusSeconds(2).toDate();
+
             XContentBuilder xb = jsonBuilder()
                     .startObject()
                     .startObject("fs")
