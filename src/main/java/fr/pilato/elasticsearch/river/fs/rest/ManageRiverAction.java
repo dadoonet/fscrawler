@@ -42,7 +42,7 @@ public class ManageRiverAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest request, RestChannel channel) throws Exception {
+    protected void handleRequest(RestRequest request, RestChannel channel, Client client) throws Exception {
         if (logger.isDebugEnabled()) logger.debug("REST ManageRiverAction called");
 
         String rivername = request.param("rivername");

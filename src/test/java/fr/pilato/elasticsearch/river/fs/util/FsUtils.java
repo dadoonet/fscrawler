@@ -52,4 +52,33 @@ public class FsUtils {
             }
         }
     }
+
+    /**
+     * Delete the supplied {@link java.io.File} - for directories,
+     * recursively delete any nested directories or files as well.
+     *
+     * @param root       the root <code>File</code> to delete
+     * @param deleteRoot whether or not to delete the root itself or just the content of the root.
+     * @return <code>true</code> if the <code>File</code> was deleted,
+     *         otherwise <code>false</code>
+     */
+    public static boolean deleteRecursively(File root, boolean deleteRoot) {
+        if (root != null && root.exists()) {
+            if (root.isDirectory()) {
+                File[] children = root.listFiles();
+                if (children != null) {
+                    for (File aChildren : children) {
+                        deleteRecursively(aChildren, true);
+                    }
+                }
+            }
+
+            if (deleteRoot) {
+                return root.delete();
+            } else {
+                return true;
+            }
+        }
+        return false;
+    }
 }
