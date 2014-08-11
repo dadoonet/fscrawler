@@ -85,8 +85,13 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         Session session = jsch.getSession(fsdef.getUsername(), fsdef.getServer(), fsdef.getPort());
         java.util.Properties config = new java.util.Properties();
         config.put("StrictHostKeyChecking", "no");
+        if (fsdef.getPemFilePath() != null) {
+            jsch.addIdentity(fsdef.getPemFilePath());
+        }
         session.setConfig(config);
-        session.setPassword(fsdef.getPassword());
+        if (fsdef.getPassword() != null) {
+            session.setPassword(fsdef.getPassword());
+        }
         session.connect();
 
         //Open a new session for SFTP.
