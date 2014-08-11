@@ -84,11 +84,9 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
     private String getUrl(String dir) throws IOException {
         URL resource = FsRiverAllParametersTest.class.getResource("/elasticsearch.yml");
-        File parent = URItoFile(resource).getParentFile();
-        String filename = parent.getCanonicalPath() + File.separator + dir;
-        File dataDir = new File(filename);
+        File dataDir = new File(URItoFile(resource).getParentFile(), dir);
         if (!dataDir.exists()) {
-            logger.error("directory [src/test/resources/{}] should be copied to [{}]", dir, filename);
+            logger.error("directory [src/test/resources/{}] should be copied to [{}]", dir, dataDir);
             throw new RuntimeException("src/test/resources/" + dir + " doesn't seem to exist. Check your JUnit tests.");
         }
 
@@ -159,7 +157,12 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
                 if (expected == null) {
                     return (totalHits >= 1);
                 } else {
-                    return (expected.intValue() == totalHits);
+                    if (expected.intValue() == totalHits) {
+                        return true;
+                    } else {
+                        logger.debug("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
+                        return false;
+                    }
                 }
             }
         }, 10, TimeUnit.SECONDS), equalTo(true));
@@ -300,8 +303,8 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         String fullpath = getUrl(dir);
 
         // We first create a copy of a file
-        File file1 = new File(fullpath + File.separator + "roottxtfile.txt");
-        File file2 = new File(fullpath + File.separator + "deleted_roottxtfile.txt");
+        File file1 = new File(fullpath, "roottxtfile.txt");
+        File file2 = new File(fullpath, "deleted_roottxtfile.txt");
         FsUtils.copyFile(file1, file2);
 
         XContentBuilder river = startRiverDefinition(dir);
@@ -311,7 +314,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         countTestHelper("remove_deleted_enabled", null, 2);
 
         // We remove a file
-        File file = new File(fullpath + File.separator + "deleted_roottxtfile.txt");
+        File file = new File(fullpath, "deleted_roottxtfile.txt");
         try {
             file.delete();
         } catch (Exception e) {
@@ -330,8 +333,8 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         String fullpath = getUrl(dir);
 
         // We first create a copy of a file
-        File file1 = new File(fullpath + File.separator + "roottxtfile.txt");
-        File file2 = new File(fullpath + File.separator + "deleted_roottxtfile.txt");
+        File file1 = new File(fullpath, "roottxtfile.txt");
+        File file2 = new File(fullpath, "deleted_roottxtfile.txt");
         FsUtils.copyFile(file1, file2);
 
         XContentBuilder river = startRiverDefinition(dir)
@@ -342,7 +345,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         countTestHelper("remove_deleted_disabled", null, 2);
 
         // We remove a file
-        File file = new File(fullpath + File.separator + "deleted_roottxtfile.txt");
+        File file = new File(fullpath, "deleted_roottxtfile.txt");
         try {
             file.delete();
         } catch (Exception e) {
@@ -366,7 +369,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         // We need to make sure that the "new" file does not already exist
         // because we already ran the test
         // We remove a file
-        File file = new File(fullpath + File.separator + "new_roottxtfile.txt");
+        File file = new File(fullpath, "new_roottxtfile.txt");
         try {
             file.delete();
         } catch (Exception e) {
@@ -381,8 +384,8 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
         logger.info(" ---> Adding a copy of roottxtfile.txt");
         // We create a copy of a file
-        File file1 = new File(fullpath + File.separator + "roottxtfile.txt");
-        File file2 = new File(fullpath + File.separator + "new_roottxtfile.txt");
+        File file1 = new File(fullpath, "roottxtfile.txt");
+        File file2 = new File(fullpath, "new_roottxtfile.txt");
         FsUtils.copyFile(file1, file2);
 
         Thread.sleep(1000);
@@ -563,8 +566,8 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         boolean closing_river = false;
         logger.info(" ---> Generating [{}] before closing the river and [{}] after", filenumber_before_closing_river, filenumber_after_closing_river);
         while (true) {
-            File file1 = new File(fullpath_sourcedir + File.separator + "roottxtfile.txt");
-            File file2 = new File(fullpath_riverdir + File.separator + "roottxtfile_" + filenumber +".txt");
+            File file1 = new File(fullpath_sourcedir, "roottxtfile.txt");
+            File file2 = new File(fullpath_riverdir, "roottxtfile_" + filenumber +".txt");
             logger.info(" ---> Adding copy [{}] of roottxtfile.txt", filenumber);
             FsUtils.copyFile(file1, file2);
             filenumber++;

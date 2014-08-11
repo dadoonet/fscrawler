@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.river.fs.river;
 
+import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -37,6 +39,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         model.file = file.isFile();
         model.directory = !model.file;
         model.lastModifiedDate = file.lastModified();
+        model.creationDate = FsRiverUtil.getCreationTime(file);
         model.path = path;
         model.fullpath = file.getAbsolutePath();
         return model;

@@ -532,11 +532,12 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         if (FsRiverUtil.isIndexable(filename, fsdef.getIncludes(), fsdef.getExcludes())) {
                             fsFiles.add(filename);
                             if ((lastScanDate == null || child.lastModifiedDate > lastScanDate
-                                    .getTime())) {
+                                    .getTime()) || (child.creationDate > 0 && child.creationDate > lastScanDate.getTime())) {
                                 indexFile(stats, child.name, filepath, path.getInputStream(child), child.lastModifiedDate);
                                 stats.addFile();
                             } else if (logger.isDebugEnabled()) {
-                                logger.debug("    - not modified: file date {}, last scan date {}", child.lastModifiedDate, lastScanDate);
+                                logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
+                                        child.creationDate, child.lastModifiedDate, lastScanDate.getTime());
                             }
                         }
                     } else if (child.directory) {
@@ -562,7 +563,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                 // for the delete files
                 for (String esfile : esFiles) {
                     if (FsRiverUtil.isIndexable(esfile, fsdef.getIncludes(), fsdef.getExcludes()) && !fsFiles.contains(esfile)) {
-                        File file = new File(FileAbstractor.computeFullPath(filepath, esfile));
+                        File file = new File(filepath, esfile);
 
                         esDelete(indexName, typeName,
                                 SignTool.sign(file.getAbsolutePath()));
@@ -690,7 +691,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         id = id.substring(0, pos);
                     }
                 } else {
-                    id = SignTool.sign(filepath + File.separator + filename);
+                    id = SignTool.sign((new File(filepath, filename)).toString());
                 }
                 esIndex(indexName,
                         typeName,
@@ -727,7 +728,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         .field(FsRiverUtil.Doc.File.LAST_MODIFIED, lastmodified)
                         .field(FsRiverUtil.Doc.File.INDEXING_DATE, new Date())
                         .field(FsRiverUtil.Doc.File.CONTENT_TYPE, metadata.get(Metadata.CONTENT_TYPE))
-                        .field(FsRiverUtil.Doc.File.URL, "file://" + filepath + File.separator + filename);
+                        .field(FsRiverUtil.Doc.File.URL, "file://" + (new File(filepath, filename)).toString());
 
                 // We only add `indexed_chars` if we have other value than default
                 if (fsDefinition.getIndexedChars() > 0) {
@@ -752,7 +753,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                         .field(FsRiverUtil.Doc.Path.ROOT, stats.getRootPathId())
                         .field(FsRiverUtil.Doc.Path.VIRTUAL,
                                 FsRiverUtil.computeVirtualPathName(stats, filepath))
-                        .field(FsRiverUtil.Doc.Path.REAL, filepath + File.separator + filename)
+                        .field(FsRiverUtil.Doc.Path.REAL, (new File(filepath, filename)).toString())
                         .endObject(); // Path
 
                 // Meta
@@ -778,7 +779,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                 // We index
                 esIndex(indexName,
                         typeName,
-                        SignTool.sign(filepath + File.separator + filename),
+                        SignTool.sign((new File(filepath, filename)).toString()),
                         source);
             }
 

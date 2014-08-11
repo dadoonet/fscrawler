@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.river.fs.river;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.Collection;
 
@@ -38,9 +37,4 @@ public abstract class FileAbstractor<T> {
     public FileAbstractor(FsRiverFeedDefinition fsDef) {
         // Do nothing here
     }
-
-    static public String computeFullPath(String parent, String filename) {
-        return parent.concat(File.separator).concat(filename);
-    }
-
 }

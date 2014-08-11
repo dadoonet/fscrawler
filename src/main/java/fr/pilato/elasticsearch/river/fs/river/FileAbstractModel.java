@@ -25,6 +25,7 @@ public class FileAbstractModel {
     public boolean file;
     public boolean directory;
     public long lastModifiedDate;
+    public long creationDate;
     public String path;
     public String fullpath;
 
@@ -35,6 +36,7 @@ public class FileAbstractModel {
         sb.append(", file=").append(file);
         sb.append(", directory=").append(directory);
         sb.append(", lastModifiedDate=").append(lastModifiedDate);
+        sb.append(", creationDate=").append(creationDate);
         sb.append(", path='").append(path).append('\'');
         sb.append(", fullpath='").append(fullpath).append('\'');
         sb.append('}');
