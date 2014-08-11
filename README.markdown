@@ -9,21 +9,10 @@ This river plugin helps to index documents from your local file system and using
 can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your
 local dir is empty and will **erase** all your docs.
 
-Versions
---------
+## Version 1.2.0-SNAPSHOT for Elasticsearch: 1.x
 
-* For 1.0.x elasticsearch versions, look at [master branch](https://github.com/dadoonet/fsriver/tree/master).
-* For 0.90.x elasticsearch versions, look at [es-0.90 branch](https://github.com/dadoonet/fsriver/tree/es-0.90).
-
-|      FS River Plugin    | elasticsearch | Attachment Plugin | Tika | Release date |
-|-------------------------|:-------------:|:-----------------:|:----:|:------------:|
-| 1.1.0-SNAPSHOT          |    1.0.0      |      Not used     |  1.4 |  XXXX-XX-XX  |
-| 1.0.0                   |    1.0.0      |      Not used     |  1.4 |  2014-03-10  |
-
-Please read documentation relative to the version you are using:
-
-* [1.1.0-SNAPSHOT](https://github.com/dadoonet/fsriver/blob/master/README.markdown)
-* [1.0.0](https://github.com/dadoonet/fsriver/blob/fsriver-1.0.0/README.markdown)
+If you are looking for another version documentation, please refer to the 
+[compatibility matrix](https://github.com/dadoonet/fsriver/#filesystem-river-for-elasticsearch).
 
 
 Build Status
