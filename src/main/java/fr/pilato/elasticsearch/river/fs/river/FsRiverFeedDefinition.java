@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.river.fs.river;
 
+import org.elasticsearch.common.unit.TimeValue;
+
 import java.util.List;
 
 /**
@@ -29,7 +31,7 @@ import java.util.List;
 public class FsRiverFeedDefinition {
     private String rivername;
     private String url;
-    private int updateRate;
+    private TimeValue updateRate;
     private List<String> includes;
     private List<String> excludes;
     private boolean jsonSupport;
@@ -45,7 +47,7 @@ public class FsRiverFeedDefinition {
     private boolean storeSource;
     private int port;
 
-    public FsRiverFeedDefinition(String rivername, String url, int updateRate, List<String> includes,
+    public FsRiverFeedDefinition(String rivername, String url, TimeValue updateRate, List<String> includes,
                                  List<String> excludes, boolean jsonSupport, boolean filenameAsId,
                                  boolean addFilesize, double indexedChars, String username, String password,
                                  String server, int port, String protocol, String pemFilePath, boolean removeDeleted, boolean storeSource) {
@@ -78,7 +80,7 @@ public class FsRiverFeedDefinition {
         return url;
     }
 
-    public int getUpdateRate() {
+    public TimeValue getUpdateRate() {
         return updateRate;
     }
 

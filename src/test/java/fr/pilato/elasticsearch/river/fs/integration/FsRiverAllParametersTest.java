@@ -72,7 +72,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         return startRiverDefinition(dir, 500);
     }
 
-    private XContentBuilder startRiverDefinition(String dir, long updateRate) throws IOException {
+    private XContentBuilder startRiverDefinition(String dir, Object updateRate) throws IOException {
         return jsonBuilder().prettyPrint().startObject()
                 .field("type", "fs")
                 .startObject("fs")
@@ -565,6 +565,19 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
                 .setQuery(QueryBuilders.termQuery("file.filename", "roottxtfile.txt")).execute().actionGet();
         assertThat("We should have one doc...", response.getCount(), equalTo(1L));
     }
+
+    /**
+     * Test for #83: https://github.com/dadoonet/fsriver/issues/83
+     */
+    @Test
+    public void test_time_value() throws Exception {
+        XContentBuilder river = startRiverDefinition("testfs1", "1h");
+        startRiver(getRiverName(), endRiverDefinition(river));
+
+        // We expect to have one file
+        countTestHelper(getRiverName(), null, 1);
+    }
+
 
     /**
      * You have to adapt this test to your own system (login / password and SSH connexion)
