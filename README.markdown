@@ -9,21 +9,28 @@ This river plugin helps to index documents from your local file system and using
 can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your
 local dir is empty and will **erase** all your docs.
 
-Versions
---------
+In order to install the plugin, run: 
 
-* For 1.0.x elasticsearch versions, look at [master branch](https://github.com/dadoonet/fsriver/tree/master).
-* For 0.90.x elasticsearch versions, look at [es-0.90 branch](https://github.com/dadoonet/fsriver/tree/es-0.90).
+```sh
+bin/plugin -install elasticsearch/elasticsearch-river-twitter/2.3.0
+```
 
-|      FS River Plugin    | elasticsearch | Attachment Plugin | Tika | Release date |
-|-------------------------|:-------------:|:-----------------:|:----:|:------------:|
-| 1.1.0-SNAPSHOT          |    1.0.0      |      Not used     |  1.4 |  XXXX-XX-XX  |
-| 1.0.0                   |    1.0.0      |      Not used     |  1.4 |  2014-03-10  |
+You need to install a version matching your Elasticsearch version:
 
-Please read documentation relative to the version you are using:
+|       Elasticsearch    |  FS River Plugin  |                                                            Docs                                                                    |
+|------------------------|-------------------|------------------------------------------------------------------------------------------------------------------------------------|
+|    master              | Build from source | See below                                                                                                                          |
+|    es-1.x              | Build from source | [1.2.0-SNAPSHOT](https://github.com/dadoonet/fsriver/tree/es-1.x/#version-120-snapshot-for-elasticsearch-1x)                       |
+|    es-1.0              |     1.0.0         | [1.0.0](https://github.com/dadoonet/fsriver/tree/v1.0.0/#filesystem-river-for-elasticsearch)                                       |
+|    es-0.90             |     0.5.0         | [0.5.0](https://github.com/dadoonet/fsriver/tree/v0.5.0/#filesystem-river-for-elasticsearch)                                       |
 
-* [1.1.0-SNAPSHOT](https://github.com/dadoonet/fsriver/blob/master/README.markdown)
-* [1.0.0](https://github.com/dadoonet/fsriver/blob/fsriver-1.0.0/README.markdown)
+To build a `SNAPSHOT` version, you need to build it with Maven:
+
+```bash
+mvn clean install
+plugin --install fsriver \ 
+       --url file:target/releases/fsriver-X.X.X-SNAPSHOT.zip
+```
 
 
 Build Status
