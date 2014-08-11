@@ -115,7 +115,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                 url = "/esdir";
             }
 
-            int updateRate = XContentMapValues.nodeIntegerValue(feed.get("update_rate"), 15 * 60 * 1000);
+            TimeValue updateRate = XContentMapValues.nodeTimeValue(feed.get("update_rate"), TimeValue.timeValueMinutes(15));
 
             String[] includes = FsRiverUtil.buildArrayFromSettings(settings.settings(), "fs.includes");
             String[] excludes = FsRiverUtil.buildArrayFromSettings(settings.settings(), "fs.excludes");
@@ -152,10 +152,9 @@ public class FsRiver extends AbstractRiverComponent implements River {
             logger.warn(
                     "You didn't define the fs url. Switching to defaults : [{}]",
                     url);
-            int updateRate = 60 * 60 * 1000;
             fsDefinition = new FsRiverFeedDefinition(riverName.getName(), url,
-                    updateRate, Arrays.asList("*.txt", "*.pdf"), Arrays.asList("*.exe"), false, false, true, 0.0,
-                    null, null, null, PROTOCOL.SSH_PORT, null, null, true, false);
+                    TimeValue.timeValueMinutes(15), Arrays.asList("*.txt", "*.pdf"), Arrays.asList("*.exe"), false, false, true, 0.0,
+                    null, null, null, PROTOCOL.SSH_PORT, PROTOCOL.LOCAL, null, true, false);
         }
 
         if (settings.settings().containsKey("index")) {
@@ -358,7 +357,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
         public FSParser(FsRiverFeedDefinition fsDefinition) {
             this.fsdef = fsDefinition;
             if (logger.isInfoEnabled())
-                logger.info("creating fs river [{}] for [{}] every [{}] ms",
+                logger.info("creating fs river [{}] for [{}] every [{}]",
                         fsdef.getRivername(), fsdef.getUrl(), fsdef.getUpdateRate());
         }
 
@@ -428,9 +427,9 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
                 try {
                     if (logger.isDebugEnabled())
-                        logger.debug("Fs river is going to sleep for {} ms",
+                        logger.debug("Fs river is going to sleep for {}",
                                 fsdef.getUpdateRate());
-                    Thread.sleep(fsdef.getUpdateRate());
+                    Thread.sleep(fsdef.getUpdateRate().getMillis());
                 } catch (InterruptedException e1) {
                 }
             }
