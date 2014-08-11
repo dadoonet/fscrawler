@@ -23,8 +23,8 @@ Creating a Local FS river
 
 We create first an index to store our *documents* :
 
-```sh
-curl -XPUT 'localhost:9200/mydocs/' -d '{}'
+```
+PUT mydocs
 ```
 
 We create the river with the following properties :
@@ -35,8 +35,9 @@ We create the river with the following properties :
 * Don't index `resume*`
 
 
-```sh
-curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+```
+PUT _river/mydocs/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp",
@@ -44,7 +45,7 @@ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
 	"includes": "*.doc,*.pdf",
 	"excludes": "resume"
   }
-}'
+}
 ```
 
 Adding another local FS river
@@ -62,8 +63,9 @@ By the way, we define to index in the same index/type as the previous one
 * index: `docs`
 * type: `doc`
 
-```sh
-curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
+```
+PUT _river/mynewriver/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp2",
@@ -75,7 +77,7 @@ curl -XPUT 'localhost:9200/_river/mynewriver/_meta' -d '{
   	"type": "doc",
   	"bulk_size": 50
   }
-}'
+}
 ```
 
 Indexing using SSH
@@ -94,8 +96,9 @@ You can now index files remotely using SSH.
 * Update Rate: every hour (60 * 60 * 1000 = 3600000 ms)
 * Get only docs like `*.doc`, `*.xls` and `*.pdf`
 
-```sh
-curl -XPUT 'localhost:9200/_river/mysshriver/_meta' -d '{
+```
+PUT _river/mysshriver/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp3",
@@ -107,7 +110,7 @@ curl -XPUT 'localhost:9200/_river/mysshriver/_meta' -d '{
 	"update_rate": 3600000,
 	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
   }
-}'
+}
 ```
 
 ### Using Username / PEM file
@@ -122,8 +125,9 @@ curl -XPUT 'localhost:9200/_river/mysshriver/_meta' -d '{
 * Update Rate: every hour (60 * 60 * 1000 = 3600000 ms)
 * Get only docs like `*.doc`, `*.xls` and `*.pdf`
 
-```sh
-curl -XPUT 'localhost:9200/_river/mysshriver/_meta' -d '{
+```
+PUT _river/mysshriver/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp3",
@@ -135,7 +139,7 @@ curl -XPUT 'localhost:9200/_river/mysshriver/_meta' -d '{
 	"update_rate": 3600000,
 	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
   }
-}'
+}
 ```
 
 Searching for docs
@@ -143,14 +147,15 @@ Searching for docs
 
 This is a common use case in elasticsearch, we want to search for something ;-)
 
-```sh
-curl -XGET http://localhost:9200/docs/doc/_search -d '{
+```
+GET docs/doc/_search
+{
   "query" : {
     "match" : {
         "_all" : "I am searching for something !"
     }
   }
-}'
+}
 ```
 
 Indexing JSon docs
@@ -159,23 +164,25 @@ Indexing JSon docs
 If you want to index JSon files directly without parsing them through the attachment mapper plugin, you
 can set `json_support` to `true`.
 
-```sh
-curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+```
+PUT _river/mydocs/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp",
 	"update_rate": 3600000,
 	"json_support" : true
   }
-}'
+}
 ```
 
 Of course, if you did not define a mapping prior creating the river, Elasticsearch will auto guess the mapping.
 
 If you have more than one type, create as many rivers as types:
 
-```sh
-curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
+```
+PUT _river/mydocs1/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp/type1",
@@ -186,9 +193,10 @@ curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
     "index": "mydocs",
     "type": "type1"
   }
-}'
+}
 
-curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
+PUT _river/mydocs2/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp/type2",
@@ -199,14 +207,15 @@ curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
     "index": "mydocs",
     "type": "type2"
   }
-}'
+}
 ```
 
 You can also index many types from one single dir using two rivers on the same dir and by setting
 `includes` parameter:
 
-```sh
-curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
+```
+PUT _river/mydocs1/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp",
@@ -218,9 +227,10 @@ curl -XPUT 'localhost:9200/_river/mydocs1/_meta' -d '{
     "index": "mydocs",
     "type": "type1"
   }
-}'
+}
 
-curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
+PUT _river/mydocs2/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp",
@@ -232,15 +242,16 @@ curl -XPUT 'localhost:9200/_river/mydocs2/_meta' -d '{
     "index": "mydocs",
     "type": "type2"
   }
-}'
+}
 ```
 
 Please note that the document `_id` is always generated (hash value) from the JSon filename to avoid issues with
 special characters in filename.
 You can force to use the `_id` to be the filename using `filename_as_id` attribute:
 
-```sh
-curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+```
+PUT _river/mydocs/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp",
@@ -248,7 +259,7 @@ curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
 	"json_support": true,
 	"filename_as_id": true
   }
-}'
+}
 ```
 
 Disabling file size field
@@ -257,14 +268,15 @@ Disabling file size field
 By default, FSRiver will create a field to store the original file size in octet.
 You can disable it using `add_filesize' option:
 
-```sh
-curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+```
+PUT _river/mydocs/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp",
 	"add_filesize": false
   }
-}'
+}
 ```
 
 Ignore deleted files
@@ -274,14 +286,15 @@ If you don't want to remove indexed documents when you remove a file or a direct
 set `remove_deleted` to `false` (default to `true`):
 
 
-```sh
-curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+```
+PUT _river/mydocs/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp",
 	"remove_deleted": false
   }
-}'
+}
 ```
 
 Advanced
@@ -292,14 +305,14 @@ Suspend or restart a file river
 
 If you need to stop a river, you can call the `_stop' endpoint:
 
-```sh
-curl 'localhost:9200/_river/mydocs/_stop'
+```
+GET _river/mydocs/_stop
 ```
 
 To restart the river from the previous point, just call `_start` end point:
 
-```sh
-curl 'localhost:9200/_river/mydocs/_start'
+```
+GET _river/mydocs/_start
 ```
 
 Autogenerated mapping
@@ -407,12 +420,13 @@ Creating your own mapping (analyzers)
 
 If you want to define your own mapping to set analyzers for example, you can push the mapping **before** starting the FS River.
 
-```sh
+```
 # Create index
-$ curl -XPUT "http://localhost:9200/docs/"
+PUT docs
 
 # Create the mapping
-$ curl -XPUT "http://localhost:9200/docs/doc/_mapping" -d '{
+PUT docs/doc/_mapping
+{
   "doc" : {
     "properties" : {
       "content" : {
@@ -504,7 +518,7 @@ $ curl -XPUT "http://localhost:9200/docs/doc/_mapping" -d '{
       }
     }
   }
-}'
+}
 ```
 
 Generated fields
@@ -571,14 +585,15 @@ Advanced search
 
 You can use meta fields to perform search on.
 
-```sh
-curl -XGET http://localhost:9200/docs/doc/_search -d '{
+```
+GET docs/doc/_search
+{
   "query" : {
     "term" : {
         "file.filename" : "mydocument.pdf"
     }
   }
-}'
+}
 ```
 
 Disabling _source
@@ -691,15 +706,16 @@ Storing binary source document (BASE64 encoded)
 
 You can store in elasticsearch itself the binary document using `store_source` option:
 
-```sh
-curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+```
+PUT _river/mydocs/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/tmp",
 	"update_rate": 3600000,
 	"store_source": true
   }
-}'
+}
 ```
 
 In that case, a new stored field named `attachment` is added to the generated JSon document.
@@ -708,13 +724,14 @@ If you let FSRiver generates the mapping, FSRiver will exclude `attachment` fiel
 
 That means you need to ask for field `attachment` when querying:
 
-```sh
-curl -XPOST http://localhost:9200/mydocs/doc/_search -d '{
+```
+GET mydocs/doc/_search
+{
   "fields" : ["attachment", "_source"],
   "query":{
     "match_all" : {}
   }
-}'
+}
 ```
 
 Default generated mapping in this case is:
@@ -737,12 +754,13 @@ Default generated mapping in this case is:
 
 You can force not to store `attachment` field and keep `attachment` in `_source`:
 
-```sh
+```
 # Create index
-$ curl -XPUT "http://localhost:9200/docs/"
+PUT docs
 
 # Create the mapping
-$ curl -XPUT "http://localhost:9200/docs/doc/_mapping" -d '{
+PUT docs/doc/_mapping
+{
   "doc" : {
     "properties" : {
       "attachment" : {
@@ -761,14 +779,15 @@ Extracted characters
 By default FSRiver will extract only a limited size of characters (100000).
 But, you can set `indexed_chars` to `1` in FSRiver definition.
 
-```sh
-curl -XPUT 'localhost:9200/_river/mydocs/_meta' -d '{
+```
+PUT _river/mydocs/_meta
+{
   "type": "fs",
   "fs": {
     "url": "/tmp",
     "indexed_chars": 1
   }
-}'
+}
 ```
 
 That option will add a special field `_indexed_chars` to the document. It will be set to the filesize.
@@ -795,8 +814,9 @@ bulk is not fill with `bulk_size` documents.
 
 For example:
 
-```sh
-curl -XPUT 'localhost:9200/_river/myriver/_meta' -d '{
+```
+PUT _river/myriver/_meta
+{
   "type": "fs",
   "fs": {
 	"url": "/sales"
@@ -807,7 +827,7 @@ curl -XPUT 'localhost:9200/_river/myriver/_meta' -d '{
   	"bulk_size": 10,
   	"flush_interval": "30s"
   }
-}'
+}
 ```
 
 
