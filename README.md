@@ -110,7 +110,7 @@ PUT _river/mynewriver/_meta
 	"includes": [ "*.doc" , "*.xls", "*.pdf" ]
   },
   "index": {
-  	"index": "mydocs",
+  	"index": "docs",
   	"type": "doc",
   	"bulk_size": 50
   }
