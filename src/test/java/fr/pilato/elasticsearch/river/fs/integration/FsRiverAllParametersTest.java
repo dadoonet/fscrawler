@@ -21,17 +21,16 @@ package fr.pilato.elasticsearch.river.fs.integration;
 
 import fr.pilato.elasticsearch.river.fs.river.FsRiver;
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
+import fr.pilato.elasticsearch.river.fs.util.FsUtils;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.base.Predicate;
-import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
-import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -155,18 +154,6 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
             }
         }, 10, TimeUnit.SECONDS), equalTo(true));
     }
-
-    @After
-    public void tearDown() throws Exception {
-        logger.info("  --> stopping rivers");
-        // We need to make sure that the _river is stopped
-        wipeIndices("_river");
-
-        // We have to wait a little because it could throw java.lang.RuntimeException
-        Thread.sleep(1000);
-        super.tearDown();
-    }
-
 
     @Test
     public void test_filesize() throws IOException, InterruptedException {
@@ -305,7 +292,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         // We first create a copy of a file
         File file1 = new File(fullpath + File.separator + "roottxtfile.txt");
         File file2 = new File(fullpath + File.separator + "deleted_roottxtfile.txt");
-        FileSystemUtils.copyFile(file1, file2);
+        FsUtils.copyFile(file1, file2);
 
         XContentBuilder river = startRiverDefinition(dir);
         startRiver("remove_deleted_enabled", endRiverDefinition(river));
@@ -335,7 +322,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         // We first create a copy of a file
         File file1 = new File(fullpath + File.separator + "roottxtfile.txt");
         File file2 = new File(fullpath + File.separator + "deleted_roottxtfile.txt");
-        FileSystemUtils.copyFile(file1, file2);
+        FsUtils.copyFile(file1, file2);
 
         XContentBuilder river = startRiverDefinition(dir)
                 .field("remove_deleted", false);
@@ -366,17 +353,27 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         String dir = "test_add_new_file";
         String fullpath = getUrl(dir);
 
+        // We need to make sure that the "new" file does not already exist
+        // because we already ran the test
+        // We remove a file
+        File file = new File(fullpath + File.separator + "new_roottxtfile.txt");
+        try {
+            file.delete();
+        } catch (Exception e) {
+            // Ignoring
+        }
+
         XContentBuilder river = startRiverDefinition(dir);
         startRiver("test_add_new_file", endRiverDefinition(river));
 
-        // We should have two docs first
+        // We should have one doc first
         countTestHelper("test_add_new_file", null, 1);
 
         logger.info(" ---> Adding a copy of roottxtfile.txt");
         // We create a copy of a file
         File file1 = new File(fullpath + File.separator + "roottxtfile.txt");
         File file2 = new File(fullpath + File.separator + "new_roottxtfile.txt");
-        FileSystemUtils.copyFile(file1, file2);
+        FsUtils.copyFile(file1, file2);
 
         Thread.sleep(1000);
 

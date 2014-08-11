@@ -26,7 +26,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.rest.*;
 import org.elasticsearch.rest.RestRequest.Method;
-import org.elasticsearch.rest.action.support.RestXContentBuilder;
 
 import java.io.IOException;
 
@@ -43,7 +42,7 @@ public class ManageRiverAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest request, RestChannel channel) {
+    public void handleRequest(RestRequest request, RestChannel channel) throws Exception {
         if (logger.isDebugEnabled()) logger.debug("REST ManageRiverAction called");
 
         String rivername = request.param("rivername");
@@ -61,23 +60,18 @@ public class ManageRiverAction extends BaseRestHandler {
                     .endObject();
             client.prepareIndex("_river", rivername, "_fsstatus").setSource(xb).execute().actionGet();
 
-            XContentBuilder builder = RestXContentBuilder.restContentBuilder(request);
+            XContentBuilder builder = jsonBuilder();
             builder
                     .startObject()
                     .field(new XContentBuilderString("ok"), true)
                     .endObject();
-            channel.sendResponse(new XContentRestResponse(request, RestStatus.OK, builder));
+            channel.sendResponse(new BytesRestResponse(RestStatus.OK, builder));
         } catch (IOException e) {
-            onFailure(channel, request, e);
-        }
-    }
-
-    protected void onFailure(RestChannel channel, RestRequest request,
-                             IOException e) {
-        try {
-            channel.sendResponse(new XContentThrowableRestResponse(request, e));
-        } catch (IOException e1) {
-            logger.error("Failed to send failure response", e1);
+            try {
+                channel.sendResponse(new BytesRestResponse(channel, e));
+            } catch (IOException e1) {
+                channel.sendResponse(new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR));
+            }
         }
     }
 }
