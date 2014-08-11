@@ -837,6 +837,22 @@ Here is a full list of existing settings:
 | `index.flush_interval`           | [Bulk settings](#bulk-settings)                                                   |
 
 
+Debug mode
+==========
+
+To activate traces (`DEBUG` or `TRACE` level), you need to modify `config/logging.yml` and set 
+`fr.pilato.elasticsearch.river.fs` to the desired log level:
+
+
+```yaml
+es.logger.level: INFO
+rootLogger: ${es.logger.level}, console, file
+logger:
+  # TRACE fsriver
+  fr.pilato.elasticsearch.river.fs: TRACE
+```
+
+
 License
 =======
 
