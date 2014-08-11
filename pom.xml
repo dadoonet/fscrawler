@@ -40,7 +40,6 @@
         <tika.version>1.4</tika.version>
         <lucene.version>4.8.1</lucene.version>
         <tests.output>onerror</tests.output>
-        <tests.jvms>1</tests.jvms>
         <tests.shuffle>true</tests.shuffle>
         <tests.output>onerror</tests.output>
         <tests.client.ratio></tests.client.ratio>
@@ -149,7 +148,7 @@
                             <assertions>
                                 <enable/>
                             </assertions>
-                            <parallelism>${tests.jvms}</parallelism>
+                            <parallelism>1</parallelism>
                             <balancers>
                                 <execution-times>
                                     <fileset dir="${basedir}" includes=".local-execution-hints.log"/>
@@ -188,7 +187,6 @@
                                 <tests.badapples>${tests.badapples}</tests.badapples>
                                 <tests.weekly>${tests.weekly}</tests.weekly>
                                 <tests.slow>${tests.slow}</tests.slow>
-                                <tests.azure>${tests.azure}</tests.azure>
                                 <tests.awaitsfix>${tests.awaitsfix}</tests.awaitsfix>
                                 <tests.slow>${tests.slow}</tests.slow>
                                 <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>

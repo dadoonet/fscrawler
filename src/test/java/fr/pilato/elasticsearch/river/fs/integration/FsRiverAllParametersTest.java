@@ -22,11 +22,14 @@ package fr.pilato.elasticsearch.river.fs.integration;
 import fr.pilato.elasticsearch.river.fs.river.FsRiver;
 import fr.pilato.elasticsearch.river.fs.util.FsRiverUtil;
 import fr.pilato.elasticsearch.river.fs.util.FsUtils;
+import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.base.Predicate;
 import org.elasticsearch.common.io.FileSystemUtils;
+import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -50,6 +53,20 @@ import static org.hamcrest.Matchers.equalTo;
  */
 @ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.SUITE)
 public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
+
+    // Test infrastructure creates random number of shards and replicas.
+    // But we expect to have only one shard for rivers
+    @Override
+    protected boolean randomizeNumberOfShardsAndReplicas() {
+        return false;
+    }
+
+    private static final String testRiverPrefix = "fsriver_test_";
+
+    private String getRiverName() {
+        String testName = testRiverPrefix.concat(Strings.toUnderscoreCase(getTestName()));
+        return testName.indexOf(" ") >= 0? Strings.split(testName, " ")[0] : testName;
+    }
 
     private XContentBuilder startRiverDefinition(String dir) throws IOException {
         return startRiverDefinition(dir, 500);
@@ -96,7 +113,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
     private void startRiver(final String riverName, XContentBuilder river) throws InterruptedException {
         logger.info("  --> starting river [{}]", riverName);
         createIndex(riverName);
-        index("_river", riverName, "_meta", river);
+        client().prepareIndex("_river", riverName, "_meta").setSource(river).get();
 
         // We wait up to 10 seconds before considering a failing test
         assertThat("Document should exists with [_lastupdated] id...", awaitBusy(new Predicate<Object>() {
@@ -109,11 +126,20 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
         // Make sure we refresh indexed docs before launching tests
         refresh();
+
+        // Print index settings
+        GetSettingsResponse riverSettings = client().admin().indices().prepareGetSettings("_river").get();
+        logger.info("  --> Index settings [{}]", riverSettings);
     }
 
     private void stopRiver(final String riverName) {
-        logger.info("  --> stopping river [{}]", riverName);
-        client().admin().indices().prepareDeleteMapping("_river").setType(riverName).get();
+        if (riverName == null) {
+            logger.info("  --> stopping all rivers");
+            cluster().wipeIndices("_river");
+        } else {
+            logger.info("  --> stopping river [{}]", riverName);
+            client().admin().indices().prepareDeleteMapping("_river").setType(riverName).get();
+        }
     }
 
     /**
@@ -125,6 +151,19 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
      * @throws Exception
      */
     public void countTestHelper(final String indexName, String term, final Integer expected) throws Exception {
+        countTestHelper(indexName, term, expected, null);
+    }
+
+    /**
+     * Check that we have the expected number of docs or at least one if expected is null
+     *
+     * @param indexName Index we will search in.
+     * @param term      Term you search for. MatchAll if null.
+     * @param expected  expected number of docs. Null if at least 1.
+     * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
+     * @throws Exception
+     */
+    public void countTestHelper(final String indexName, String term, final Integer expected, final String path) throws Exception {
         // Let's search for entries
         final QueryBuilder query;
         if (term == null) {
@@ -160,7 +199,15 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
                     if (expected.intValue() == totalHits) {
                         return true;
                     } else {
-                        logger.debug("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
+                        logger.info("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
+                        if (path != null) {
+                            logger.info("     ---> content of [{}]:", path);
+                            File[] files = new File(path).listFiles();
+                            for (int i = 0; i < files.length; i++) {
+                                File file = files[i];
+                                logger.info("         - {} {}", file.getAbsolutePath(), new DateTime(file.lastModified()));
+                            }
+                        }
                         return false;
                     }
                 }
@@ -172,9 +219,9 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
     public void test_filesize() throws IOException, InterruptedException {
         XContentBuilder river = startRiverDefinition("testfs_metadata")
                 .field("excludes", "*.json");
-        startRiver("filesize", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
-        SearchResponse searchResponse = client().prepareSearch("filesize").setTypes("doc")
+        SearchResponse searchResponse = client().prepareSearch(getRiverName()).setTypes("doc")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .execute().actionGet();
         logger.info(searchResponse.toString());
@@ -191,9 +238,9 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         XContentBuilder river = startRiverDefinition("testfs_metadata")
                 .field("excludes", "*.json")
                 .field("indexed_chars", 0.001);
-        startRiver("filesize_limit", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
-        SearchResponse searchResponse = client().prepareSearch("filesize_limit").setTypes("doc")
+        SearchResponse searchResponse = client().prepareSearch(getRiverName()).setTypes("doc")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .addField("*")
                 .execute().actionGet();
@@ -214,9 +261,9 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         XContentBuilder river = startRiverDefinition("testfs_metadata")
                 .field("excludes", "*.json")
                 .field("add_filesize", false);
-        startRiver("filesize_disabled", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
-        SearchResponse searchResponse = client().prepareSearch("filesize_disabled").setTypes("doc")
+        SearchResponse searchResponse = client().prepareSearch(getRiverName()).setTypes("doc")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .execute().actionGet();
         logger.info(searchResponse.toString());
@@ -232,16 +279,16 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
                 .startArray("includes")
                     .value("*_include.txt")
                 .endArray();
-        startRiver("includes_array", endRiverDefinition(river));
-        countTestHelper("includes_array", null, null);
+        startRiver(getRiverName(), endRiverDefinition(river));
+        countTestHelper(getRiverName(), null, null);
     }
 
     @Test
     public void test_includes() throws Exception {
         XContentBuilder river = startRiverDefinition("testfs_includes")
                 .field("includes", "*.txt");
-        startRiver("includes", endRiverDefinition(river));
-        countTestHelper("includes", null, null);
+        startRiver(getRiverName(), endRiverDefinition(river));
+        countTestHelper(getRiverName(), null, null);
     }
 
     @Test
@@ -249,9 +296,9 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         XContentBuilder river = startRiverDefinition("testfs_metadata")
                 .field("excludes", "*.json")
                 .field("indexed_chars", 1);
-        startRiver("metadata", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
-        SearchResponse searchResponse = client().prepareSearch("metadata").setTypes("doc")
+        SearchResponse searchResponse = client().prepareSearch(getRiverName()).setTypes("doc")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .addField("*")
                 .execute().actionGet();
@@ -274,9 +321,9 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
     public void test_default_metadata() throws Exception {
         XContentBuilder river = startRiverDefinition("testfs_metadata")
                 .field("excludes", "*.json");
-        startRiver("default_metadata", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
-        SearchResponse searchResponse = client().prepareSearch("default_metadata").setTypes("doc")
+        SearchResponse searchResponse = client().prepareSearch(getRiverName()).setTypes("doc")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .addField("*")
                 .execute().actionGet();
@@ -308,10 +355,10 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         FsUtils.copyFile(file1, file2);
 
         XContentBuilder river = startRiverDefinition(dir);
-        startRiver("remove_deleted_enabled", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
         // We should have two docs first
-        countTestHelper("remove_deleted_enabled", null, 2);
+        countTestHelper(getRiverName(), null, 2);
 
         // We remove a file
         File file = new File(fullpath, "deleted_roottxtfile.txt");
@@ -321,10 +368,8 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
             // Ignoring
         }
 
-        Thread.sleep(1000);
-
         // We expect to have two files
-        countTestHelper("remove_deleted_enabled", null, 1);
+        countTestHelper(getRiverName(), null, 1);
     }
 
     @Test
@@ -339,10 +384,10 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
         XContentBuilder river = startRiverDefinition(dir)
                 .field("remove_deleted", false);
-        startRiver("remove_deleted_disabled", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
         // We should have two docs first
-        countTestHelper("remove_deleted_disabled", null, 2);
+        countTestHelper(getRiverName(), null, 2);
 
         // We remove a file
         File file = new File(fullpath, "deleted_roottxtfile.txt");
@@ -352,10 +397,8 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
             // Ignoring
         }
 
-        Thread.sleep(1000);
-
         // We expect to have two files
-        countTestHelper("remove_deleted_disabled", null, 2);
+        countTestHelper(getRiverName(), null, 2);
     }
 
     /**
@@ -368,7 +411,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
         // We need to make sure that the "new" file does not already exist
         // because we already ran the test
-        // We remove a file
+        // We remove the file
         File file = new File(fullpath, "new_roottxtfile.txt");
         try {
             file.delete();
@@ -377,10 +420,10 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         }
 
         XContentBuilder river = startRiverDefinition(dir);
-        startRiver("test_add_new_file", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
         // We should have one doc first
-        countTestHelper("test_add_new_file", null, 1);
+        countTestHelper(getRiverName(), null, 1, fullpath);
 
         logger.info(" ---> Adding a copy of roottxtfile.txt");
         // We create a copy of a file
@@ -388,10 +431,8 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         File file2 = new File(fullpath, "new_roottxtfile.txt");
         FsUtils.copyFile(file1, file2);
 
-        Thread.sleep(1000);
-
         // We expect to have two files
-        countTestHelper("test_add_new_file", null, 2);
+        countTestHelper(getRiverName(), null, 2, fullpath);
     }
 
     /**
@@ -401,12 +442,12 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
     public void test_json_support() throws Exception {
         XContentBuilder river = startRiverDefinition("testfsjson1")
                 .field("json_support", true);
-        startRiver("json_support", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(new Predicate<Object>() {
             @Override
             public boolean apply(Object o) {
-                SearchResponse searchResponse = client().prepareSearch("json_support")
+                SearchResponse searchResponse = client().prepareSearch(getRiverName())
                         .setQuery(QueryBuilders.termQuery("text", "tweet")).execute().actionGet();
                 return searchResponse.getHits().getTotalHits() == 2;
             }
@@ -420,12 +461,12 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
     public void test_json_disabled() throws Exception {
         XContentBuilder river = startRiverDefinition("testfsjson1")
                 .field("json_support", false);
-        startRiver("json_disabled", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(new Predicate<Object>() {
             @Override
             public boolean apply(Object o) {
-                SearchResponse searchResponse = client().prepareSearch("json_disabled")
+                SearchResponse searchResponse = client().prepareSearch(getRiverName())
                         .setQuery(QueryBuilders.termQuery("text", "tweet")).execute().actionGet();
                 return searchResponse.getHits().getTotalHits() == 0;
             }
@@ -434,7 +475,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         assertThat("We should have 2 docs for tweet in _all...", awaitBusy(new Predicate<Object>() {
             @Override
             public boolean apply(Object o) {
-                SearchResponse searchResponse = client().prepareSearch("json_disabled")
+                SearchResponse searchResponse = client().prepareSearch(getRiverName())
                         .setQuery(QueryBuilders.queryString("tweet")).execute().actionGet();
                 return searchResponse.getHits().getTotalHits() == 2;
             }
@@ -449,12 +490,12 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         XContentBuilder river = startRiverDefinition("testfsjson1")
                 .field("json_support", true)
                 .field("filename_as_id", true);
-        startRiver("filename_as_id", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
         assertThat("Document should exists with [tweet1] id...", awaitBusy(new Predicate<Object>() {
             @Override
             public boolean apply(Object o) {
-                GetResponse getResponse = client().prepareGet("filename_as_id", FsRiverUtil.INDEX_TYPE_DOC, "tweet1").execute().actionGet();
+                GetResponse getResponse = client().prepareGet(getRiverName(), FsRiverUtil.INDEX_TYPE_DOC, "tweet1").execute().actionGet();
                 return getResponse.isExists();
             }
         }, 10, TimeUnit.SECONDS), equalTo(true));
@@ -462,7 +503,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         assertThat("Document should exists with [tweet2] id...", awaitBusy(new Predicate<Object>() {
             @Override
             public boolean apply(Object o) {
-                GetResponse getResponse = client().prepareGet("filename_as_id", FsRiverUtil.INDEX_TYPE_DOC, "tweet2").execute().actionGet();
+                GetResponse getResponse = client().prepareGet(getRiverName(), FsRiverUtil.INDEX_TYPE_DOC, "tweet2").execute().actionGet();
                 return getResponse.isExists();
             }
         }, 10, TimeUnit.SECONDS), equalTo(true));
@@ -473,9 +514,9 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         XContentBuilder river = startRiverDefinition("testfs1")
                 .field("json_support", true)
                 .field("filename_as_id", true);
-        startRiver("store_source", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
-        SearchResponse searchResponse = client().prepareSearch("store_source").setTypes("doc")
+        SearchResponse searchResponse = client().prepareSearch(getRiverName()).setTypes("doc")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .addField("_source")
                 .addField("*")
@@ -492,25 +533,25 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
     @Test
     public void test_defaults() throws Exception {
-        startRiver("defaults", endRiverDefinition(startRiverDefinition("testfs1")));
+        startRiver(getRiverName(), endRiverDefinition(startRiverDefinition("testfs1")));
 
         // We expect to have one file
-        countTestHelper("defaults", null, 1);
+        countTestHelper(getRiverName(), null, 1);
     }
 
     @Test
     public void test_subdirs() throws Exception {
-        startRiver("subdirs", endRiverDefinition(startRiverDefinition("testsubdir")));
+        startRiver(getRiverName(), endRiverDefinition(startRiverDefinition("testsubdir")));
 
         // We expect to have one file
-        countTestHelper("subdirs", null, 2);
+        countTestHelper(getRiverName(), null, 2);
     }
 
     @Test
     public void test_multiple_rivers() throws Exception {
-        startRiver("river1", endRiverDefinition(startRiverDefinition("testfs1")));
-        startRiver("river2", endRiverDefinition(startRiverDefinition("testfs2")));
-        CountResponse response = client().prepareCount("river1","river2")
+        startRiver(getRiverName() + "_1", endRiverDefinition(startRiverDefinition("testfs1")));
+        startRiver(getRiverName() + "_2", endRiverDefinition(startRiverDefinition("testfs2")));
+        CountResponse response = client().prepareCount(getRiverName() + "_1", getRiverName() + "_2")
                 .setTypes(FsRiverUtil.INDEX_TYPE_DOC)
                 .setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
         assertThat("We should have two docs...", response.getCount(), equalTo(2L));
@@ -518,8 +559,8 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
     @Test
     public void test_filename_analyzer() throws Exception {
-        startRiver("filename_analyzer", endRiverDefinition(startRiverDefinition("testfs1")));
-        CountResponse response = client().prepareCount("filename_analyzer")
+        startRiver(getRiverName(), endRiverDefinition(startRiverDefinition("testfs1")));
+        CountResponse response = client().prepareCount(getRiverName())
                 .setTypes(FsRiverUtil.INDEX_TYPE_DOC)
                 .setQuery(QueryBuilders.termQuery("file.filename", "roottxtfile.txt")).execute().actionGet();
         assertThat("We should have one doc...", response.getCount(), equalTo(1L));
@@ -540,9 +581,9 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
                 .field("password", password)
                 .field("protocol", FsRiver.PROTOCOL.SSH)
                 .field("server", server);
-        startRiver("ssh", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
-        countTestHelper("ssh", null, 2);
+        countTestHelper(getRiverName(), null, 2);
     }
 
     /**
@@ -560,9 +601,9 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
                 .field("pem_path", path_to_pem_file)
                 .field("protocol", FsRiver.PROTOCOL.SSH)
                 .field("server", server);
-        startRiver("ssh", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
-        countTestHelper("ssh", null, 2);
+        countTestHelper(getRiverName(), null, 2);
     }
 
     @Test
@@ -576,7 +617,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         FileSystemUtils.deleteRecursively(new File(fullpath_riverdir), false);
 
         XContentBuilder river = startRiverDefinition(riverdir, 5);
-        startRiver("test_stop_river", endRiverDefinition(river));
+        startRiver(getRiverName(), endRiverDefinition(river));
 
         // While copying files, we stop the river
         int filenumber = 0;
@@ -594,7 +635,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
 
             if (filenumber == filenumber_before_closing_river) {
                 // Close the river
-                stopRiver("test_stop_river");
+                stopRiver(getRiverName());
                 closing_river = true;
                 // We accelerate copies if we want to have a failure
                 sleepTime = 0;
