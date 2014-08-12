@@ -39,7 +39,7 @@ Build Status
 ------------
 
 Thanks to cloudbees for the [build status](https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/) : 
-![build status](https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/badge/icon "Build status")
+[![Build Status](https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/badge/icon)](https://buildhive.cloudbees.com/job/dadoonet/job/fsriver/)
 
 Getting Started
 ===============
