@@ -6,6 +6,6 @@
 .idea
 *.iml
 .local-execution-hints.log
-plugin-tools
+plugin_tools
 config
 logs
