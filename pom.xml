@@ -16,7 +16,7 @@
     <groupId>fr.pilato.elasticsearch.river</groupId>
     <artifactId>fsriver</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.0</version>
+    <version>1.2.1-SNAPSHOT</version>
     <name>Elasticsearch File System River Plugin</name>
     <url>https://github.com/dadoonet/fsriver/</url>
     <description>FS River Plugin offers a simple way to index local files into elasticsearch.</description>
