@@ -37,6 +37,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
+import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -69,6 +70,12 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
                 .put(super.nodeSettings(nodeOrdinal))
                 .put("plugins." + PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, true);
         return settings.build();
+    }
+
+    // We need to clean the rivers
+    @After
+    public void removeRivers() throws Exception {
+        stopRiver(null);
     }
 
     private static final String testRiverPrefix = "fsriver_test_";
