@@ -9,7 +9,7 @@ This river plugin helps to index documents from your local file system and using
 can access files on the same mounting point. If not, when a node stop, the other node will _think_ that your
 local dir is empty and will **erase** all your docs.
 
-## Version 1.3.0 for Elasticsearch: 1.3
+## Version 1.3.1-SNAPSHOT for Elasticsearch: 1.3
 
 If you are looking for another version documentation, please refer to the 
 [compatibility matrix](https://github.com/dadoonet/fsriver/#filesystem-river-for-elasticsearch).
