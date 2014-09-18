@@ -20,7 +20,8 @@ You need to install a version matching your Elasticsearch version:
 |       Elasticsearch    |  FS River Plugin  |                                                            Docs                                                                    |
 |------------------------|-------------------|------------------------------------------------------------------------------------------------------------------------------------|
 |    master              | Build from source | See below                                                                                                                          |
-|    es-1.x              | Build from source | [1.4.0-SNAPSHOT](https://github.com/dadoonet/fsriver/tree/es-1.x/#version-140-snapshot-for-elasticsearch-1x)                       |
+|    es-1.x              | Build from source | [1.5.0-SNAPSHOT](https://github.com/dadoonet/fsriver/tree/es-1.x/#version-150-snapshot-for-elasticsearch-1x)                       |
+|    es-1.4              | Build from source | [1.4.0-SNAPSHOT](https://github.com/dadoonet/fsriver/tree/es-1.4/#version-140-snapshot-for-elasticsearch-1x)                       |
 |    es-1.3              |     1.3.1         | [1.3.1](https://github.com/dadoonet/fsriver/tree/v1.3.1/#version-131-for-elasticsearch-13)                  |
 |    es-1.2              |     1.2.0         | [1.2.0](https://github.com/dadoonet/fsriver/tree/v1.2.0/#version-120-for-elasticsearch-12)                  |
 |    es-1.0              |     1.0.0         | [1.0.0](https://github.com/dadoonet/fsriver/tree/v1.0.0/#filesystem-river-for-elasticsearch)                                       |
