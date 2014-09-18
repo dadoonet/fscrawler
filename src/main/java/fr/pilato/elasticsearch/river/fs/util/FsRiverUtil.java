@@ -29,10 +29,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.BasicFileAttributeView;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
@@ -262,14 +261,54 @@ public class FsRiverUtil {
             int i = 0;
             includes = new String[includesarray.size()];
             for (String include : includesarray) {
-                includes[i++] = Strings.trimAllWhitespace(include);
+                includes[i++] = trimAllWhitespace(include);
             }
         } else {
             String includedef = (String) XContentMapValues.extractValue(path, settings);
-            includes = Strings.commaDelimitedListToStringArray(Strings.trimAllWhitespace(includedef));
+            includes = Strings.commaDelimitedListToStringArray(trimAllWhitespace(includedef));
         }
 
-        return Strings.removeDuplicateStrings(includes);
+        return removeDuplicateStrings(includes);
+    }
+
+    /**
+      * Trim <i>all</i> whitespace from the given String:
+      * leading, trailing, and inbetween characters.
+      *
+      * @param str the String to check
+      * @return the trimmed String
+      * @see java.lang.Character#isWhitespace
+      */
+    public static String trimAllWhitespace(String str) {
+        if (!Strings.hasLength(str)) {
+                return str;
+            }
+        StringBuilder sb = new StringBuilder(str);
+        int index = 0;
+        while (sb.length() > index) {
+                if (Character.isWhitespace(sb.charAt(index))) {
+                        sb.deleteCharAt(index);
+                    } else {
+                        index++;
+                    }
+            }
+        return sb.toString();
+    }
+
+    /**
+      * Remove duplicate Strings from the given array.
+      * Also sorts the array, as it uses a TreeSet.
+      *
+      * @param array the String array
+      * @return an array without duplicates, in natural sort order
+      */
+    public static String[] removeDuplicateStrings(String[] array) {
+        if (array == null || array.length == 0) {
+            return array;
+        }
+        Set<String> set = new TreeSet<>();
+        set.addAll(Arrays.asList(array));
+        return Strings.toStringArray(set);
     }
 
     /**

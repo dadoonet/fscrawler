@@ -39,7 +39,7 @@
         <elasticsearch.version>1.4.0-SNAPSHOT</elasticsearch.version>
         <tika.version>1.5</tika.version>
         <poi.version>3.10.1</poi.version>
-        <lucene.version>4.9.0</lucene.version>
+        <lucene.version>4.10.0</lucene.version>
         <tests.output>onerror</tests.output>
         <tests.shuffle>true</tests.shuffle>
         <tests.output>onerror</tests.output>

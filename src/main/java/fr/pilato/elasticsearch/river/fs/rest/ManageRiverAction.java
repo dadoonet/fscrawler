@@ -35,7 +35,7 @@ public class ManageRiverAction extends BaseRestHandler {
 
     @Inject
     public ManageRiverAction(Settings settings, Client client, RestController controller) {
-        super(settings, client);
+        super(settings, controller, client);
 
         // Define _start / _stop REST Endpoints
         controller.registerHandler(Method.GET, "/_river/{rivername}/{command}", this);
