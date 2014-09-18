@@ -681,5 +681,17 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         }
     }
 
+    /**
+     * Test for #87: https://github.com/dadoonet/fsriver/issues/87
+     */
+    @Test
+    public void test_mp3() throws Exception {
+        XContentBuilder river = startRiverDefinition("test_mp3", "1h");
+        startRiver(getRiverName(), endRiverDefinition(river));
+
+        // We expect to have one file
+        countTestHelper(getRiverName(), null, 1);
+    }
+
 
 }
