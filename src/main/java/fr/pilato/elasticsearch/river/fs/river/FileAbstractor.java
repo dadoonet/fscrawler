@@ -28,13 +28,19 @@ import java.util.Collection;
 public abstract class FileAbstractor<T> {
     protected ESLogger logger = Loggers.getLogger(this.getClass());
 
+    protected FsRiverFeedDefinition fsDef;
+
     public abstract FileAbstractModel toFileAbstractModel(String path, T file);
 
     public abstract InputStream getInputStream(FileAbstractModel file) throws Exception;
 
     public abstract Collection<FileAbstractModel> getFiles(String dir) throws Exception;
 
+    public abstract void open() throws Exception;
+
+    public abstract void close() throws Exception;
+
     public FileAbstractor(FsRiverFeedDefinition fsDef) {
-        // Do nothing here
+        this.fsDef = fsDef;
     }
 }

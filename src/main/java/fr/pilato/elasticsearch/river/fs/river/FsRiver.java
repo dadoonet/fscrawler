@@ -520,77 +520,82 @@ public class FsRiver extends AbstractRiverComponent implements River {
 
             if (logger.isDebugEnabled()) logger.debug("Indexing [{}] content", filepath);
             FileAbstractor path = buildFileAbstractor();
+            path.open();
 
-            final Collection<FileAbstractModel> children = path.getFiles(filepath);
-            Collection<String> fsFiles = new ArrayList<String>();
-            Collection<String> fsFolders = new ArrayList<String>();
+            try {
+                final Collection<FileAbstractModel> children = path.getFiles(filepath);
+                Collection<String> fsFiles = new ArrayList<String>();
+                Collection<String> fsFolders = new ArrayList<String>();
 
-            if (children != null) {
-                for (FileAbstractModel child : children) {
-                    String filename = child.name;
+                if (children != null) {
+                    for (FileAbstractModel child : children) {
+                        String filename = child.name;
 
-                    // Ignore temporary files
-                    if (filename.contains("~")) {
-                        continue;
-                    }
-
-                    if (child.file) {
-                        logger.debug("  - file: {}", filename);
-
-                        // https://github.com/dadoonet/fsriver/issues/1 : Filter documents
-                        if (FsRiverUtil.isIndexable(filename, fsdef.getIncludes(), fsdef.getExcludes())) {
-                            fsFiles.add(filename);
-                            if ((lastScanDate == null || child.lastModifiedDate > lastScanDate
-                                    .getTime()) || (child.creationDate > 0 && child.creationDate > lastScanDate.getTime())) {
-                                indexFile(stats, child.name, filepath, path.getInputStream(child), child.lastModifiedDate);
-                                stats.addFile();
-                            } else if (logger.isDebugEnabled()) {
-                                logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
-                                        child.creationDate, child.lastModifiedDate, lastScanDate.getTime());
-                            }
+                        // Ignore temporary files
+                        if (filename.contains("~")) {
+                            continue;
                         }
-                    } else if (child.directory) {
-                        logger.debug("  - folder: {}", filename);
-                        fsFolders.add(filename);
-                        indexDirectory(stats, filename, child.fullpath.concat(File.separator));
-                        addFilesRecursively(child.fullpath.concat(File.separator), lastScanDate);
-                    } else {
-                        logger.debug("  - other: {}", filename);
-                        if (logger.isDebugEnabled())
-                            logger.debug("Not a file nor a dir. Skipping {}", child.fullpath);
+
+                        if (child.file) {
+                            logger.debug("  - file: {}", filename);
+
+                            // https://github.com/dadoonet/fsriver/issues/1 : Filter documents
+                            if (FsRiverUtil.isIndexable(filename, fsdef.getIncludes(), fsdef.getExcludes())) {
+                                fsFiles.add(filename);
+                                if ((lastScanDate == null || child.lastModifiedDate > lastScanDate
+                                        .getTime()) || (child.creationDate > 0 && child.creationDate > lastScanDate.getTime())) {
+                                    indexFile(stats, child.name, filepath, path.getInputStream(child), child.lastModifiedDate);
+                                    stats.addFile();
+                                } else if (logger.isDebugEnabled()) {
+                                    logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
+                                            child.creationDate, child.lastModifiedDate, lastScanDate.getTime());
+                                }
+                            }
+                        } else if (child.directory) {
+                            logger.debug("  - folder: {}", filename);
+                            fsFolders.add(filename);
+                            indexDirectory(stats, filename, child.fullpath.concat(File.separator));
+                            addFilesRecursively(child.fullpath.concat(File.separator), lastScanDate);
+                        } else {
+                            logger.debug("  - other: {}", filename);
+                            if (logger.isDebugEnabled())
+                                logger.debug("Not a file nor a dir. Skipping {}", child.fullpath);
+                        }
                     }
                 }
-            }
 
-            // TODO Optimize
-            // if (path.isDirectory() && path.lastModified() > lastScanDate
-            // && lastScanDate != 0) {
+                // TODO Optimize
+                // if (path.isDirectory() && path.lastModified() > lastScanDate
+                // && lastScanDate != 0) {
 
-            if (fsdef.isRemoveDeleted()) {
-                Collection<String> esFiles = getFileDirectory(filepath);
+                if (fsdef.isRemoveDeleted()) {
+                    Collection<String> esFiles = getFileDirectory(filepath);
 
-                // for the delete files
-                for (String esfile : esFiles) {
-                    if (FsRiverUtil.isIndexable(esfile, fsdef.getIncludes(), fsdef.getExcludes()) && !fsFiles.contains(esfile)) {
-                        File file = new File(filepath, esfile);
+                    // for the delete files
+                    for (String esfile : esFiles) {
+                        if (FsRiverUtil.isIndexable(esfile, fsdef.getIncludes(), fsdef.getExcludes()) && !fsFiles.contains(esfile)) {
+                            File file = new File(filepath, esfile);
 
-                        esDelete(indexName, typeName,
-                                SignTool.sign(file.getAbsolutePath()));
-                        stats.removeFile();
+                            esDelete(indexName, typeName,
+                                    SignTool.sign(file.getAbsolutePath()));
+                            stats.removeFile();
+                        }
+                    }
+
+                    Collection<String> esFolders = getFolderDirectory(filepath);
+
+                    // for the delete folder
+                    for (String esfolder : esFolders) {
+
+                        if (!fsFolders.contains(esfolder)) {
+
+                            removeEsDirectoryRecursively(filepath,
+                                    esfolder);
+                        }
                     }
                 }
-
-                Collection<String> esFolders = getFolderDirectory(filepath);
-
-                // for the delete folder
-                for (String esfolder : esFolders) {
-
-                    if (!fsFolders.contains(esfolder)) {
-
-                        removeEsDirectoryRecursively(filepath,
-                                esfolder);
-                    }
-                }
+            } finally {
+                path.close();
             }
         }
 
