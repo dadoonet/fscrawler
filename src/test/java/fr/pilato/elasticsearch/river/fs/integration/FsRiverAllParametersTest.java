@@ -186,7 +186,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
         if (term == null) {
             query = QueryBuilders.matchAllQuery();
         } else {
-            query = QueryBuilders.queryString(term);
+            query = QueryBuilders.queryStringQuery(term);
         }
 
         // We wait up to 5 seconds before considering a failing test
@@ -493,7 +493,7 @@ public class FsRiverAllParametersTest extends ElasticsearchIntegrationTest {
             @Override
             public boolean apply(Object o) {
                 SearchResponse searchResponse = client().prepareSearch(getRiverName())
-                        .setQuery(QueryBuilders.queryString("tweet")).execute().actionGet();
+                        .setQuery(QueryBuilders.queryStringQuery("tweet")).execute().actionGet();
                 return searchResponse.getHits().getTotalHits() == 2;
             }
         }, 10, TimeUnit.SECONDS), equalTo(true));
