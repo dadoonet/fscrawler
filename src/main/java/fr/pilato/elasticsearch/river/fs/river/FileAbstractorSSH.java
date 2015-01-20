@@ -35,7 +35,6 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
 
     public FileAbstractorSSH(FsRiverFeedDefinition fsDef) throws Exception {
         super(fsDef);
-        sftp = openSSHConnection(fsDef);
     }
 
     @Override
@@ -75,6 +74,16 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
 
         if (logger.isDebugEnabled()) logger.debug("{} local files found", result.size());
         return result;
+    }
+
+    @Override
+    public void open() throws Exception {
+        sftp = openSSHConnection(fsDef);
+    }
+
+    @Override
+    public void close() throws Exception {
+        sftp.disconnect();
     }
 
     public ChannelSftp openSSHConnection(FsRiverFeedDefinition fsdef) throws Exception {

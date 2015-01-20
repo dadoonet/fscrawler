@@ -66,5 +66,13 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         return result;
     }
 
+    @Override
+    public void open() throws Exception {
 
+    }
+
+    @Override
+    public void close() throws Exception {
+
+    }
 }
