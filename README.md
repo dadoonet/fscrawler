@@ -1,7 +1,7 @@
 FileSystem River for Elasticsearch (DEPRECATED)
 ==================================
 
-** BIG WARNING ** : Elasticsearch 2.0.0 won't support anymore rivers.
+**BIG WARNING** : Elasticsearch 2.0.0 won't support anymore rivers.
 This project will most likely stops living when logstash project will be able to provide same service or will move to a standalone project (if time permits).
 So, please use it with caution and don't put it in production...
 
