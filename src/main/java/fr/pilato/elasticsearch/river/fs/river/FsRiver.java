@@ -723,7 +723,7 @@ public class FsRiver extends AbstractRiverComponent implements River {
                 String parsedContent;
                 try {
                     // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
-                    parsedContent = tika().parseToString(new BytesStreamInput(data, false), metadata, indexedChars);
+                    parsedContent = tika().parseToString(new BytesStreamInput(data), metadata, indexedChars);
                 } catch (Throwable e) {
                     logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "]", e);
                     parsedContent = "";
