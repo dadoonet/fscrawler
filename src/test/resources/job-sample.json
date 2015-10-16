@@ -1,0 +1,36 @@
+{
+  "name": "fscrawler_test_filesize_disabled",
+  "fs": {
+    "url": "/var/folders/r_/r14sy86n2zb91jyz1ptb5b4w0000gn/T/junit5338713198519120249/resources/test_filesize_disabled",
+    "updateRate": {
+      "duration": 5,
+      "timeUnit": "SECONDS"
+    },
+    "includes": null,
+    "excludes": [
+      "*.json"
+    ],
+    "jsonSupport": false,
+    "filenameAsId": false,
+    "addFilesize": false,
+    "removeDeleted": true,
+    "storeSource": false,
+    "indexedChars": 0.0
+  },
+  "server": null,
+  "elasticsearch": {
+    "nodes": [
+      {
+        "host": "127.0.0.1",
+        "port": 9300
+      }
+    ],
+    "index": "fscrawler_test_filesize_disabled",
+    "type": "doc",
+    "bulkSize": 1,
+    "flushInterval": {
+      "duration": 5,
+      "timeUnit": "SECONDS"
+    }
+  }
+}
