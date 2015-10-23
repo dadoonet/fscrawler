@@ -17,27 +17,20 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler;
+package fr.pilato.elasticsearch.crawler.fs.meta.doc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
-import org.apache.log4j.Logger;
-import org.junit.Test;
+import java.io.IOException;
 
-public class FsMappingTest {
+public class PathParser extends MetaParser {
 
-    private Logger logger = Logger.getLogger(FsMappingTest.class);
-
-    @Test
-    public void fs_mapping_for_files() throws Exception {
-        ObjectNode xb = FsCrawlerUtil.buildFsFileMapping();
-        logger.info("Mapping used for files : " + xb.toString());
+    public static String toJson(Path path) throws JsonProcessingException {
+        return prettyMapper.writeValueAsString(path);
     }
 
-    @Test
-    public void fs_mapping_for_folders() throws Exception {
-        ObjectNode xb = FsCrawlerUtil.buildFsFolderMapping();
-        logger.info("Mapping used for folders : " + xb.toString());
+    public static Path fromJson(String json) throws IOException {
+        return prettyMapper.readValue(json, Path.class);
     }
 }

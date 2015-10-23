@@ -25,6 +25,9 @@ import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -39,7 +42,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         model.name = file.getName();
         model.file = file.isFile();
         model.directory = !model.file;
-        model.lastModifiedDate = file.lastModified();
+        model.lastModifiedDate = Instant.ofEpochMilli(file.lastModified());
         model.creationDate = FsCrawlerUtil.getCreationTime(file);
         model.path = path;
         model.fullpath = file.getAbsolutePath();

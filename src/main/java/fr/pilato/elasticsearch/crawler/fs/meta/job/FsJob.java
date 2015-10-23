@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.job;
 
-import java.util.Date;
+import java.time.Instant;
 
 /**
  * Define a FS Job meta data
@@ -27,13 +27,13 @@ import java.util.Date;
 public class FsJob {
 
     private String name;
-    private Date lastrun;
+    private Instant lastrun;
     private long indexed;
     private long deleted;
 
     public static class Builder {
         private String name;
-        private Date lastrun;
+        private Instant lastrun;
         private long indexed = 0;
         private long deleted = 0;
 
@@ -42,7 +42,7 @@ public class FsJob {
             return this;
         }
 
-        public Builder setLastrun(Date lastrun) {
+        public Builder setLastrun(Instant lastrun) {
             this.lastrun = lastrun;
             return this;
         }
@@ -70,7 +70,7 @@ public class FsJob {
 
     }
 
-    public FsJob(String name, Date lastrun, long indexed, long deleted) {
+    public FsJob(String name, Instant lastrun, long indexed, long deleted) {
         this.name = name;
         this.lastrun = lastrun;
         this.indexed = indexed;
@@ -85,11 +85,11 @@ public class FsJob {
         this.name = name;
     }
 
-    public Date getLastrun() {
+    public Instant getLastrun() {
         return lastrun;
     }
 
-    public void setLastrun(Date lastrun) {
+    public void setLastrun(Instant lastrun) {
         this.lastrun = lastrun;
     }
 

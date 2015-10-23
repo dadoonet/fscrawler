@@ -19,12 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
-import org.elasticsearch.common.Strings;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
-import org.joda.time.format.PeriodFormat;
-import org.joda.time.format.PeriodFormatter;
-
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -137,19 +131,6 @@ public class TimeValue {
         return ((double) nanos()) / C6;
     }
 
-    private final PeriodFormatter defaultFormatter = PeriodFormat.getDefault()
-            .withParseType(PeriodType.standard());
-
-    public String format() {
-        Period period = new Period(millis());
-        return defaultFormatter.print(period);
-    }
-
-    public String format(PeriodType type) {
-        Period period = new Period(millis());
-        return PeriodFormat.getDefault().withParseType(type).print(period);
-    }
-
     @Override
     public String toString() {
         if (duration < 0) {
@@ -180,7 +161,27 @@ public class TimeValue {
             value = microsFrac();
             suffix = "micros";
         }
-        return Strings.format1Decimals(value, suffix);
+        return format1Decimals(value, suffix);
+    }
+
+    public static String format1Decimals(double value, String suffix) {
+        String p = String.valueOf(value);
+        int ix = p.indexOf('.') + 1;
+        int ex = p.indexOf('E');
+        char fraction = p.charAt(ix);
+        if (fraction == '0') {
+            if (ex != -1) {
+                return p.substring(0, ix - 1) + p.substring(ex) + suffix;
+            } else {
+                return p.substring(0, ix - 1) + suffix;
+            }
+        } else {
+            if (ex != -1) {
+                return p.substring(0, ix) + fraction + p.substring(ex) + suffix;
+            } else {
+                return p.substring(0, ix) + fraction + suffix;
+            }
+        }
     }
 
     public static TimeValue parseTimeValue(String sValue, TimeValue defaultValue) {

@@ -19,10 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.util;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.support.XContentMapValues;
+import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,11 +30,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.time.Instant;
+import java.util.List;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-
-public class FsCrawlerUtil {
+public class FsCrawlerUtil extends MetaParser {
     public static final String INDEX_TYPE_DOC = "doc";
     public static final String INDEX_TYPE_FOLDER = "folder";
 
@@ -82,212 +80,129 @@ public class FsCrawlerUtil {
         public static final String REAL = "real";
     }
 
-    public static XContentBuilder buildFsFileMapping(String type) throws Exception {
-        return buildFsFileMapping(type, true, false);
-    }
-
     /**
      * Build the mapping for documents
      *
-     * @param type         elasticsearch type you will use
      * @param enableSource Do you want to enable _source?
      * @param storeSource  Do you want to store file source as binary BASE64 encoded?
      * @return a mapping
      * @throws Exception
      */
-    public static XContentBuilder buildFsFileMapping(String type, boolean enableSource, boolean storeSource) throws Exception {
-        XContentBuilder xbMapping = jsonBuilder().prettyPrint().startObject();
-
-        // Type
-        xbMapping.startObject(type);
+    public static ObjectNode buildFsFileMapping(boolean enableSource, boolean storeSource) throws Exception {
+        ObjectNode root = prettyMapper.createObjectNode();
 
         // Manage _source
         if (!enableSource) {
             // Disable source
-            xbMapping.startObject("_source").field("enabled", false).endObject();
+            root.putObject("_source").put("enabled", false);
         } else {
             if (storeSource) {
                 // We store binary source as a stored field so we don't need it in _source
-                xbMapping.startObject("_source").array("excludes", Doc.ATTACHMENT).endObject();
+                root.putObject("_source").putArray("excludes").add(Doc.ATTACHMENT);
             }
         }
 
-        xbMapping.startObject("properties");
+        ObjectNode properties = root.putObject("properties");
 
         // Doc content
-        addAnalyzedString(xbMapping, Doc.CONTENT);
+        addAnalyzedString(properties, Doc.CONTENT);
 
         // Doc source
         if (storeSource) {
-            addBinary(xbMapping, Doc.ATTACHMENT);
+            addBinary(properties, Doc.ATTACHMENT);
         }
 
         // Meta
-        xbMapping.startObject(Doc.META).startObject("properties");
-        addAnalyzedString(xbMapping, Doc.Meta.AUTHOR);
-        addAnalyzedString(xbMapping, Doc.Meta.TITLE);
-        addDate(xbMapping, Doc.Meta.DATE);
-        addAnalyzedString(xbMapping, Doc.Meta.KEYWORDS);
-        xbMapping.endObject().endObject(); // End Meta
+        ObjectNode meta = properties.putObject(Doc.META).putObject("properties");
+        addAnalyzedString(meta, Doc.Meta.AUTHOR);
+        addAnalyzedString(meta, Doc.Meta.TITLE);
+        addDate(meta, Doc.Meta.DATE);
+        addAnalyzedString(meta, Doc.Meta.KEYWORDS);
+        // End Meta
 
         // File
-        xbMapping.startObject(Doc.FILE).startObject("properties");
-        addNotAnalyzedString(xbMapping, Doc.File.CONTENT_TYPE);
-        addDate(xbMapping, Doc.File.LAST_MODIFIED);
-        addDate(xbMapping, Doc.File.INDEXING_DATE);
-        addLong(xbMapping, Doc.File.FILESIZE);
-        addLong(xbMapping, Doc.File.INDEXED_CHARS);
-        addNotAnalyzedString(xbMapping, Doc.File.FILENAME);
-        addNotIndexedString(xbMapping, Doc.File.URL);
-        xbMapping.endObject().endObject(); // End File
+        ObjectNode file = properties.putObject(Doc.FILE).putObject("properties");
+        addNotAnalyzedString(file, Doc.File.CONTENT_TYPE);
+        addDate(file, Doc.File.LAST_MODIFIED);
+        addDate(file, Doc.File.INDEXING_DATE);
+        addLong(file, Doc.File.FILESIZE);
+        addLong(file, Doc.File.INDEXED_CHARS);
+        addNotAnalyzedString(file, Doc.File.FILENAME);
+        addNotIndexedString(file, Doc.File.URL);
+        // End File
 
         // Path
-        xbMapping.startObject(Doc.PATH).startObject("properties");
-        addNotAnalyzedString(xbMapping, Doc.Path.ENCODED);
-        addNotAnalyzedString(xbMapping, Doc.Path.VIRTUAL);
-        addNotAnalyzedString(xbMapping, Doc.Path.ROOT);
-        addNotAnalyzedString(xbMapping, Doc.Path.REAL);
-        xbMapping.endObject().endObject(); // End Path
+        ObjectNode path = properties.putObject(Doc.PATH).putObject("properties");
+        addNotAnalyzedString(path, Doc.Path.ENCODED);
+        addNotAnalyzedString(path, Doc.Path.VIRTUAL);
+        addNotAnalyzedString(path, Doc.Path.ROOT);
+        addNotAnalyzedString(path, Doc.Path.REAL);
+        // End Path
 
-        xbMapping.endObject().endObject().endObject(); // End Type
-        return xbMapping;
+        // End Type
+        return root;
     }
 
 
-    public static XContentBuilder buildFsFolderMapping(String type) throws Exception {
-        XContentBuilder xbMapping = jsonBuilder().prettyPrint().startObject()
-                // Type
-                .startObject(type).startObject("properties");
+    public static ObjectNode buildFsFolderMapping() throws Exception {
+        ObjectNode root = prettyMapper.createObjectNode();
 
-        addNotAnalyzedString(xbMapping, Dir.NAME);
-        addNotAnalyzedString(xbMapping, Dir.REAL);
-        addNotAnalyzedString(xbMapping, Dir.ENCODED);
-        addNotAnalyzedString(xbMapping, Dir.ROOT);
-        addNotAnalyzedString(xbMapping, Dir.VIRTUAL);
+        ObjectNode properties = root.putObject("properties");
 
-        xbMapping.endObject().endObject().endObject(); // End Type
+        addNotAnalyzedString(properties, Dir.NAME);
+        addNotAnalyzedString(properties, Dir.REAL);
+        addNotAnalyzedString(properties, Dir.ENCODED);
+        addNotAnalyzedString(properties, Dir.ROOT);
+        addNotAnalyzedString(properties, Dir.VIRTUAL);
 
-        return xbMapping;
+        // End Type
+
+        return root;
     }
 
-    public static XContentBuilder buildFsFileMapping() throws Exception {
-        return buildFsFileMapping(INDEX_TYPE_DOC);
+    public static ObjectNode buildFsFileMapping() throws Exception {
+        return buildFsFileMapping(true, false);
     }
 
-    public static XContentBuilder buildFsFolderMapping() throws Exception {
-        return buildFsFolderMapping(INDEX_TYPE_FOLDER);
+    private static void addAnalyzedString(ObjectNode node, String fieldName) throws IOException {
+        node.putObject(fieldName)
+                .put("type", "string")
+                .put("store", "yes");
     }
 
-    private static void addAnalyzedString(XContentBuilder xcb, String fieldName) throws IOException {
-        xcb.startObject(fieldName)
-                .field("type", "string")
-                .field("store", "yes")
-                .endObject();
+    private static void addNotAnalyzedString(ObjectNode node, String fieldName) throws IOException {
+        node.putObject(fieldName)
+                .put("type", "string")
+                .put("store", "yes")
+                .put("index", "not_analyzed");
     }
 
-    private static void addNotAnalyzedString(XContentBuilder xcb, String fieldName) throws IOException {
-        xcb.startObject(fieldName)
-                .field("type", "string")
-                .field("store", "yes")
-                .field("index", "not_analyzed")
-                .endObject();
+    private static void addNotIndexedString(ObjectNode node, String fieldName) throws IOException {
+        node.putObject(fieldName)
+                .put("type", "string")
+                .put("store", "yes")
+                .put("index", "no");
     }
 
-    private static void addNotIndexedString(XContentBuilder xcb, String fieldName) throws IOException {
-        xcb.startObject(fieldName)
-                .field("type", "string")
-                .field("store", "yes")
-                .field("index", "no")
-                .endObject();
+    private static void addDate(ObjectNode node, String fieldName) throws IOException {
+        node.putObject(fieldName)
+                .put("type", "date")
+                .put("format", "dateOptionalTime")
+                .put("store", "yes");
     }
 
-    private static void addDate(XContentBuilder xcb, String fieldName) throws IOException {
-        xcb.startObject(fieldName)
-                .field("type", "date")
-                .field("format", "dateOptionalTime")
-                .field("store", "yes")
-                .endObject();
+    private static void addLong(ObjectNode node, String fieldName) throws IOException {
+        node.putObject(fieldName)
+                .put("type", "long")
+                .put("store", "yes");
     }
 
-    private static void addLong(XContentBuilder xcb, String fieldName) throws IOException {
-        xcb.startObject(fieldName)
-                .field("type", "long")
-                .field("store", "yes")
-                .endObject();
+    private static void addBinary(ObjectNode node, String fieldName) throws IOException {
+        node.putObject(fieldName)
+                .put("type", "binary")
+                .put("store", "yes");
     }
 
-    private static void addBinary(XContentBuilder xcb, String fieldName) throws IOException {
-        xcb.startObject(fieldName)
-                .field("type", "binary")
-                .endObject();
-    }
-
-
-    /**
-     * Extract array from settings (array or ; delimited String)
-     *
-     * @param settings Settings
-     * @param path     Path to definition : "fs.includes"
-     */
-    @SuppressWarnings("unchecked")
-    public static String[] buildArrayFromSettings(Map<String, Object> settings, String path) {
-        String[] includes;
-
-        // We manage comma separated format and arrays
-        if (XContentMapValues.isArray(XContentMapValues.extractValue(path, settings))) {
-            List<String> includesarray = (List<String>) XContentMapValues.extractValue(path, settings);
-            int i = 0;
-            includes = new String[includesarray.size()];
-            for (String include : includesarray) {
-                includes[i++] = trimAllWhitespace(include);
-            }
-        } else {
-            String includedef = (String) XContentMapValues.extractValue(path, settings);
-            includes = Strings.commaDelimitedListToStringArray(trimAllWhitespace(includedef));
-        }
-
-        return removeDuplicateStrings(includes);
-    }
-
-    /**
-      * Trim <i>all</i> whitespace from the given String:
-      * leading, trailing, and inbetween characters.
-      *
-      * @param str the String to check
-      * @return the trimmed String
-      * @see java.lang.Character#isWhitespace
-      */
-    public static String trimAllWhitespace(String str) {
-        if (!Strings.hasLength(str)) {
-                return str;
-            }
-        StringBuilder sb = new StringBuilder(str);
-        int index = 0;
-        while (sb.length() > index) {
-                if (Character.isWhitespace(sb.charAt(index))) {
-                        sb.deleteCharAt(index);
-                    } else {
-                        index++;
-                    }
-            }
-        return sb.toString();
-    }
-
-    /**
-      * Remove duplicate Strings from the given array.
-      * Also sorts the array, as it uses a TreeSet.
-      *
-      * @param array the String array
-      * @return an array without duplicates, in natural sort order
-      */
-    public static String[] removeDuplicateStrings(String[] array) {
-        if (array == null || array.length == 0) {
-            return array;
-        }
-        Set<String> set = new TreeSet<>();
-        set.addAll(Arrays.asList(array));
-        return Strings.toStringArray(set);
-    }
 
     /**
      * We check if we can index the file or if we should ignore it
@@ -331,16 +246,16 @@ public class FsCrawlerUtil {
                 .replace("\\", "/");
     }
 
-    public static long getCreationTime(File file) {
-        long time;
+    public static Instant getCreationTime(File file) {
+        Instant time;
         try  {
             Path path = Paths.get(file.getAbsolutePath());
             BasicFileAttributes fileattr = Files
                     .getFileAttributeView(path, BasicFileAttributeView.class)
                     .readAttributes();
-            time = fileattr.creationTime().toMillis();
+            time = Instant.ofEpochMilli(fileattr.creationTime().toMillis());
         } catch (Exception e) {
-            time = 0L;
+            time = null;
         }
         return time;
     }

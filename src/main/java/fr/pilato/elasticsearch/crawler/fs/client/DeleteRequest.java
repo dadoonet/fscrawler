@@ -17,27 +17,13 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler;
+package fr.pilato.elasticsearch.crawler.fs.client;
 
-
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
-import org.apache.log4j.Logger;
-import org.junit.Test;
-
-public class FsMappingTest {
-
-    private Logger logger = Logger.getLogger(FsMappingTest.class);
-
-    @Test
-    public void fs_mapping_for_files() throws Exception {
-        ObjectNode xb = FsCrawlerUtil.buildFsFileMapping();
-        logger.info("Mapping used for files : " + xb.toString());
-    }
-
-    @Test
-    public void fs_mapping_for_folders() throws Exception {
-        ObjectNode xb = FsCrawlerUtil.buildFsFolderMapping();
-        logger.info("Mapping used for folders : " + xb.toString());
+/**
+ * An delete operation
+ */
+public class DeleteRequest extends SingleBulkRequest {
+    public DeleteRequest(String index, String type, String id) {
+        super(index, type, id);
     }
 }

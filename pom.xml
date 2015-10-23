@@ -144,6 +144,23 @@
     </build>
 
     <dependencies>
+        <!--
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.1</version>
+        </dependency>
+        -->
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client</artifactId>
+            <version>1.20.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client-jackson2</artifactId>
+            <version>1.20.0</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-test-framework</artifactId>
@@ -160,21 +177,63 @@
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
             <version>${elasticsearch.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
-            <version>${tika.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
             <version>${tika.version}</version>
+            <exclusions>
+                <!-- Not Apache2 License compatible -->
+                <exclusion>
+                    <groupId>edu.ucar</groupId>
+                    <artifactId>netcdf</artifactId>
+                </exclusion>
+                <!-- Not Apache2 License compatible -->
+                <exclusion>
+                    <groupId>edu.ucar</groupId>
+                    <artifactId>cdm</artifactId>
+                </exclusion>
+                <!-- Not Apache2 License compatible -->
+                <exclusion>
+                    <groupId>edu.ucar</groupId>
+                    <artifactId>httpservices</artifactId>
+                </exclusion>
+                <!-- Not Apache2 License compatible -->
+                <exclusion>
+                    <groupId>edu.ucar</groupId>
+                    <artifactId>grib</artifactId>
+                </exclusion>
+                <!-- Not Apache2 License compatible -->
+                <exclusion>
+                    <groupId>edu.ucar</groupId>
+                    <artifactId>netcdf4</artifactId>
+                </exclusion>
+                <!-- Not Apache2 License compatible -->
+                <exclusion>
+                    <groupId>com.uwyn</groupId>
+                    <artifactId>jhighlight</artifactId>
+                </exclusion>
+                <!-- ES core already has these -->
+                <exclusion>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm-debug-all</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!--Dependency for parsing remote ssh directory [http://www.jcraft.com/jsch/]-->
         <dependency>

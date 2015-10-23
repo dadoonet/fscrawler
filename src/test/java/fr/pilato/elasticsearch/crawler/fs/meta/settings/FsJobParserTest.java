@@ -26,7 +26,7 @@ import org.elasticsearch.common.logging.support.LoggerMessageFormat;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Date;
+import java.time.Instant;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -53,7 +53,7 @@ public class FsJobParserTest extends AbstractFSCrawlerTest {
         jobTester(
                 FsJob.builder()
                         .setName(getCurrentTestName())
-                        .setLastrun(new Date())
+                        .setLastrun(Instant.now())
                         .setIndexed(1000)
                         .setDeleted(5)
                         .build()

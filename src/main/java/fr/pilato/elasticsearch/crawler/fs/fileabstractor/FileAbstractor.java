@@ -20,14 +20,14 @@
 package fr.pilato.elasticsearch.crawler.fs.fileabstractor;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import org.elasticsearch.common.logging.ESLogger;
-import org.elasticsearch.common.logging.Loggers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
 import java.util.Collection;
 
 public abstract class FileAbstractor<T> {
-    protected ESLogger logger = Loggers.getLogger(this.getClass());
+    protected static final Logger logger = LogManager.getLogger(FileAbstractor.class);
 
     protected FsSettings fsSettings;
 

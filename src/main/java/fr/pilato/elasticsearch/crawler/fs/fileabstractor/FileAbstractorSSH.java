@@ -27,6 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
@@ -45,7 +46,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         model.name = file.getFilename();
         model.directory = file.getAttrs().isDir();
         model.file = !model.directory;
-        model.lastModifiedDate = file.getAttrs().getMTime();
+        model.lastModifiedDate = Instant.ofEpochMilli(file.getAttrs().getMTime());
         model.path = path;
         model.fullpath = model.path.concat("/").concat(model.name);
         return model;
@@ -59,7 +60,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
     @Override
     public Collection<FileAbstractModel> getFiles(String dir) throws Exception {
         if (logger.isDebugEnabled()) logger.debug("Listing local files from {}", dir);
-        Vector<ChannelSftp.LsEntry> ls = null;
+        Vector<ChannelSftp.LsEntry> ls;
 
         ls = sftp.ls(dir);
         if (ls == null) return null;

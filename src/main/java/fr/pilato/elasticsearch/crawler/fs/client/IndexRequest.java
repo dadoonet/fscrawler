@@ -17,27 +17,24 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler;
+package fr.pilato.elasticsearch.crawler.fs.client;
 
+/**
+ * An index operation
+ */
+public class IndexRequest extends SingleBulkRequest {
+    private String content;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
-import org.apache.log4j.Logger;
-import org.junit.Test;
-
-public class FsMappingTest {
-
-    private Logger logger = Logger.getLogger(FsMappingTest.class);
-
-    @Test
-    public void fs_mapping_for_files() throws Exception {
-        ObjectNode xb = FsCrawlerUtil.buildFsFileMapping();
-        logger.info("Mapping used for files : " + xb.toString());
+    public IndexRequest(String index, String type, String id) {
+        super(index, type, id);
     }
 
-    @Test
-    public void fs_mapping_for_folders() throws Exception {
-        ObjectNode xb = FsCrawlerUtil.buildFsFolderMapping();
-        logger.info("Mapping used for folders : " + xb.toString());
+    public String content() {
+        return content;
+    }
+
+    public IndexRequest source(String content) {
+        this.content = content;
+        return this;
     }
 }

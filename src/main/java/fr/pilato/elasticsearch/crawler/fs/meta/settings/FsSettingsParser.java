@@ -27,10 +27,10 @@ import java.io.IOException;
 public class FsSettingsParser extends MetaParser {
 
     public static String toJson(FsSettings settings) throws JsonProcessingException {
-        return mapper.writeValueAsString(settings);
+        return prettyMapper.writeValueAsString(settings);
     }
 
     public static FsSettings fromJson(String json) throws IOException {
-        return mapper.readValue(json, FsSettings.class);
+        return prettyMapper.readValue(json, FsSettings.class);
     }
 }

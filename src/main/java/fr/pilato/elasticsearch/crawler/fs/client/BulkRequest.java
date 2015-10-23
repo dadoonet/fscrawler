@@ -17,27 +17,25 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler;
+package fr.pilato.elasticsearch.crawler.fs.client;
 
+import com.google.common.collect.Lists;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
-import org.apache.log4j.Logger;
-import org.junit.Test;
+import java.util.List;
 
-public class FsMappingTest {
+public class BulkRequest {
 
-    private Logger logger = Logger.getLogger(FsMappingTest.class);
+    private final List<SingleBulkRequest> requests = Lists.newArrayList();
 
-    @Test
-    public void fs_mapping_for_files() throws Exception {
-        ObjectNode xb = FsCrawlerUtil.buildFsFileMapping();
-        logger.info("Mapping used for files : " + xb.toString());
+    public int numberOfActions() {
+        return requests.size();
     }
 
-    @Test
-    public void fs_mapping_for_folders() throws Exception {
-        ObjectNode xb = FsCrawlerUtil.buildFsFolderMapping();
-        logger.info("Mapping used for folders : " + xb.toString());
+    public void add(SingleBulkRequest request) {
+        requests.add(request);
+    }
+
+    public List<SingleBulkRequest> getRequests() {
+        return requests;
     }
 }

@@ -27,10 +27,10 @@ import java.io.IOException;
 public class FsJobParser extends MetaParser {
 
     public static String toJson(FsJob job) throws JsonProcessingException {
-        return mapper.writeValueAsString(job);
+        return prettyMapper.writeValueAsString(job);
     }
 
     public static FsJob fromJson(String json) throws IOException {
-        return mapper.readValue(json, FsJob.class);
+        return prettyMapper.readValue(json, FsJob.class);
     }
 }

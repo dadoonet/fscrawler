@@ -20,10 +20,12 @@
 package fr.pilato.elasticsearch.crawler.fs.meta;
 
 import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.*;
 
 /**
@@ -31,19 +33,33 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.*;
  */
 public class MetaParser {
 
-    protected static final ObjectMapper mapper;
+    public static final ObjectMapper prettyMapper;
+    public static final ObjectMapper mapper;
 
     static {
-        mapper = new ObjectMapper();
         SimpleModule fscrawler = new SimpleModule("FsCrawler", new Version(2, 0, 0, null,
                 "fr.pilato.elasticsearch.crawler", "fscrawler"));
         fscrawler.addSerializer(new TimeValueSerializer());
         fscrawler.addDeserializer(TimeValue.class, new TimeValueDeserializer());
         fscrawler.addSerializer(new PercentageSerializer());
         fscrawler.addDeserializer(Percentage.class, new PercentageDeserializer());
+
+        mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
         mapper.registerModule(fscrawler);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+        mapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+
+        prettyMapper = new ObjectMapper();
+        prettyMapper.registerModule(new JavaTimeModule());
+        prettyMapper.registerModule(fscrawler);
+        prettyMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        prettyMapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+        prettyMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        prettyMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        prettyMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
     }
 
 }

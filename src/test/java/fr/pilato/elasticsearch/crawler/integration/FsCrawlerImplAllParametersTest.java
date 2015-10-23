@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.AbstractFSCrawlerTest;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.*;
@@ -27,23 +26,17 @@ import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
 import org.elasticsearch.search.SearchHit;
-import org.junit.*;
-import org.junit.rules.ExternalResource;
-import org.junit.rules.TemporaryFolder;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
@@ -58,60 +51,11 @@ import static org.hamcrest.Matchers.*;
 /**
  * Test all crawler settings
  */
-public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
+public class FsCrawlerImplAllParametersTest extends AbstractITest {
 
-    @ClassRule
-    public static TemporaryFolder folder = new TemporaryFolder();
-
-    private final static int TRANSPORT_TEST_PORT = 9380;
-
-    protected static Node node = null;
-    protected static Client client = null;
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
     protected Path metadataDir;
-
-    @ClassRule
-    public static ExternalResource elasticsearch = new ExternalResource() {
-        @Override
-        protected void before() throws Throwable {
-            folder.create();
-            File home = folder.newFolder("elasticsearch");
-            staticLogger.info("  --> Starting elasticsearch test node in [{}]", home.toString());
-
-            node = NodeBuilder.nodeBuilder()
-                    .settings(Settings.builder()
-                                    .put("path.home", home)
-                                    .put("cluster.name", "fscrawler-integration-tests")
-                                    .put("transport.tcp.port", TRANSPORT_TEST_PORT)
-                    )
-                    .node();
-
-            client = TransportClient.builder()
-                    .settings(Settings.builder()
-                                    .put("path.home", folder.newFolder("client"))
-                                    .put("cluster.name", "fscrawler-integration-tests")
-                                    .build()
-                    )
-                    .build()
-                    .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"), TRANSPORT_TEST_PORT));
-        }
-
-        @Override
-        protected void after() {
-            if (client != null) {
-                staticLogger.info("  --> Stopping elasticsearch client");
-                client.close();
-                client = null;
-            }
-
-            if (node != null) {
-                staticLogger.info("  --> Stopping elasticsearch test node");
-                node.close();
-                node = null;
-            }
-        }
-    };
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -185,7 +129,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
     private Elasticsearch endCrawlerDefinition(String indexName) throws IOException {
         return Elasticsearch.builder()
                 .setIndex(indexName)
-                .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(TRANSPORT_TEST_PORT).build())
+                .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
                 .setBulkSize(1)
                 .build();
     }
@@ -208,7 +152,8 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
 
     private void startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
-        createIndex(jobName);
+
+        // TODO do this rarely() createIndex(jobName);
 
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).build());
         crawler.start();
@@ -222,6 +167,8 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
                 return false;
             }
         }, 10, TimeUnit.SECONDS), equalTo(true));
+
+        countTestHelper(jobName, null, null);
 
         // Make sure we refresh indexed docs before launching tests
         refresh();
@@ -280,7 +227,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
         }
 
         // We wait up to 5 seconds before considering a failing test
-        assertThat(awaitBusy(() -> {
+        assertThat("We waited for 5 seconds but no document has been added", awaitBusy(() -> {
             long totalHits;
             if (logger.isDebugEnabled()) {
                 // We want traces, so let's run a search query and trace results
@@ -325,16 +272,16 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
 
     @Test
     public void test_filesize() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .addExclude("*.json")
-                .build();
+        Fs fs = startCrawlerDefinition().build();
 
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes("doc")
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .get();
         logger.info(searchResponse.toString());
+
+        assertThat(searchResponse.getHits().totalHits(), is(1L));
 
         for (SearchHit hit : searchResponse.getHits()) {
             Map<String, Object> file = (Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE);
@@ -350,11 +297,11 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes("doc")
-                .setQuery(QueryBuilders.matchAllQuery())
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .addField("*")
                 .get();
         logger.info(searchResponse.toString());
+        assertThat(searchResponse.getHits().totalHits(), equalTo(1L));
 
         for (SearchHit hit : searchResponse.getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.CONTENT), notNullValue());
@@ -373,11 +320,12 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes("doc")
-                .setQuery(QueryBuilders.matchAllQuery())
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .addField("*")
                 .get();
         logger.info(searchResponse.toString());
+
+        assertThat(searchResponse.getHits().totalHits(), is(1L));
 
         for (SearchHit hit : searchResponse.getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.CONTENT), notNullValue());
@@ -396,11 +344,13 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes("doc")
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .addField("*")
                 .get();
         logger.info(searchResponse.toString());
+
+        assertThat(searchResponse.getHits().totalHits(), equalTo(1L));
 
         for (SearchHit hit : searchResponse.getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.CONTENT), notNullValue());
@@ -414,15 +364,16 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
     @Test
     public void test_filesize_disabled() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .addExclude("*.json")
                 .setAddFilesize(false)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes("doc")
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .get();
         logger.info(searchResponse.toString());
+
+        assertThat(searchResponse.getHits().totalHits(), is(1L));
 
         for (SearchHit hit : searchResponse.getHits()) {
             assertThat(hit.getFields().get("filesize"), nullValue());
@@ -435,21 +386,21 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
                 .addInclude("*_include.txt")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        countTestHelper(getCrawlerName(), null, null);
+        countTestHelper(getCrawlerName(), null, 1);
     }
 
     @Test
     public void test_metadata() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .addExclude("*.json")
                 .setIndexedChars(new Percentage(1))
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes("doc")
-                .setQuery(QueryBuilders.matchAllQuery())
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .addField("*")
                 .get();
+
+        assertThat(searchResponse.getHits().totalHits(), is(1L));
 
         for (SearchHit hit : searchResponse.getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
@@ -461,21 +412,22 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.LAST_MODIFIED), notNullValue());
 
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.TITLE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.DATE), notNullValue());
+            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.KEYWORDS), notNullValue());
         }
     }
 
     @Test
     public void test_default_metadata() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .addExclude("*.json")
-                .build();
+        Fs fs = startCrawlerDefinition().build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes("doc")
-                .setQuery(QueryBuilders.matchAllQuery())
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .addField("*")
                 .get();
+
+        assertThat(searchResponse.getHits().totalHits(), equalTo(1L));
+
+        logger.info("response: {}", searchResponse.toString());
 
         for (SearchHit hit : searchResponse.getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
@@ -489,7 +441,6 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.LAST_MODIFIED), notNullValue());
 
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.TITLE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.DATE), notNullValue());
         }
     }
 
@@ -617,20 +568,45 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
     @Test
     public void test_store_source() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .setJsonSupport(true)
-                .setFilenameAsId(true)
+                .setStoreSource(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes("doc")
-                .setQuery(QueryBuilders.matchAllQuery())
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .addField("_source")
                 .addField("*")
                 .get();
 
+        assertThat(searchResponse.getHits().totalHits(), equalTo(1L));
+
+        logger.info("response: {}", searchResponse.toString());
+
         for (SearchHit hit : searchResponse.getHits()) {
             // We check that the field has been stored
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), notNullValue());
+
+            // We check that the field is not part of _source
+            assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
+        }
+    }
+
+    @Test
+    public void test_do_not_store_source() throws Exception {
+        Fs fs = startCrawlerDefinition().build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
+                .addField("_source")
+                .addField("*")
+                .get();
+
+        assertThat(searchResponse.getHits().totalHits(), equalTo(1L));
+
+        logger.info("response: {}", searchResponse.toString());
+
+        for (SearchHit hit : searchResponse.getHits()) {
+            // We check that the field has not been stored
+            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
 
             // We check that the field is not part of _source
             assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
@@ -761,6 +737,23 @@ public class FsCrawlerImplAllParametersTest extends AbstractFSCrawlerTest {
 
         // We expect to have one file
         countTestHelper(getCrawlerName(), null, 2);
+    }
+
+    @Test
+    public void test_bulk_flush() throws Exception {
+        Fs fs = startCrawlerDefinition().build();
+        startCrawler(getCrawlerName(), fs, Elasticsearch.builder()
+                .setIndex(getCrawlerName())
+                .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
+                .setBulkSize(100)
+                .setFlushInterval(TimeValue.timeValueSeconds(2))
+                .build(), null);
+
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC).get();
+
+        logger.info("response: {}", searchResponse.toString());
+
+        assertThat(searchResponse.getHits().totalHits(), equalTo(1L));
     }
 
     private class InternalFileVisitor extends SimpleFileVisitor<Path> {
