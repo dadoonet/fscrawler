@@ -52,7 +52,7 @@ public class FileAbstractModel {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("FileAbstractModel{");
+        final StringBuilder sb = new StringBuilder("FileAbstractModel{");
         sb.append("name='").append(name).append('\'');
         sb.append(", file=").append(file);
         sb.append(", directory=").append(directory);

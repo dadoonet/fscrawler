@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
@@ -35,7 +34,7 @@ public class PercentageDeserializer extends StdDeserializer<Percentage> {
     }
 
     @Override
-    public Percentage deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+    public Percentage deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         return Percentage.parse(p.getText(), null);
     }
 }

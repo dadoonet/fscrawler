@@ -29,7 +29,7 @@ import java.util.Collection;
 public abstract class FileAbstractor<T> {
     protected static final Logger logger = LogManager.getLogger(FileAbstractor.class);
 
-    protected FsSettings fsSettings;
+    protected final FsSettings fsSettings;
 
     public abstract FileAbstractModel toFileAbstractModel(String path, T file);
 

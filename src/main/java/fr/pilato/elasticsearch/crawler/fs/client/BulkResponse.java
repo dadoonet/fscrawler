@@ -44,7 +44,7 @@ public class BulkResponse {
     }
 
     public Throwable buildFailureMessage() {
-        StringBuffer sbf = new StringBuffer();
+        StringBuilder sbf = new StringBuilder();
         int failures = 0;
         for (BulkItemResponse item : items) {
             if (item.failed) {
@@ -58,7 +58,7 @@ public class BulkResponse {
         if (logger.isTraceEnabled()) {
             sbf.append("\n");
         }
-        sbf.append(failures + " failures");
+        sbf.append(failures).append(" failures");
         return new RuntimeException(sbf.toString());
     }
 
@@ -120,7 +120,7 @@ public class BulkResponse {
 
         @Override
         public String toString() {
-            final StringBuffer sb = new StringBuffer("BulkItemResponse{");
+            final StringBuilder sb = new StringBuilder("BulkItemResponse{");
             sb.append("failed=").append(failed);
             sb.append(", index='").append(index).append('\'');
             sb.append(", type='").append(type).append('\'');
@@ -134,7 +134,7 @@ public class BulkResponse {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("BulkResponse{");
+        final StringBuilder sb = new StringBuilder("BulkResponse{");
         sb.append("items=").append(items == null ? "null" : Arrays.asList(items).toString());
         sb.append('}');
         return sb.toString();

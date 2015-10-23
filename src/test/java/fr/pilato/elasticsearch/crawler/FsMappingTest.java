@@ -27,7 +27,7 @@ import org.junit.Test;
 
 public class FsMappingTest {
 
-    private Logger logger = Logger.getLogger(FsMappingTest.class);
+    private final Logger logger = Logger.getLogger(FsMappingTest.class);
 
     @Test
     public void fs_mapping_for_files() throws Exception {

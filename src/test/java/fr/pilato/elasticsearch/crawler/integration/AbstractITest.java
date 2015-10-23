@@ -33,7 +33,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.net.InetAddress;
 
-public class AbstractITest extends AbstractFSCrawlerTest {
+public abstract class AbstractITest extends AbstractFSCrawlerTest {
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder();
 

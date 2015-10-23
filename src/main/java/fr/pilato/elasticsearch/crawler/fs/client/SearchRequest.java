@@ -22,9 +22,9 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import java.util.Arrays;
 
 public class SearchRequest {
-    private String query;
-    private String[] fields;
-    private Integer size;
+    private final String query;
+    private final String[] fields;
+    private final Integer size;
 
     public static Builder builder() {
         return new Builder();
@@ -50,7 +50,7 @@ public class SearchRequest {
 
     @Override
     public String   toString() {
-        final StringBuffer sb = new StringBuffer("SearchRequest{");
+        final StringBuilder sb = new StringBuilder("SearchRequest{");
         sb.append("query=").append(query);
         sb.append(", fields=").append(fields == null ? "null" : Arrays.asList(fields).toString());
         sb.append(", size=").append(size);

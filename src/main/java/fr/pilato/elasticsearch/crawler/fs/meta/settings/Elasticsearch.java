@@ -221,8 +221,7 @@ public class Elasticsearch {
         if (nodes != null ? !nodes.equals(that.nodes) : that.nodes != null) return false;
         if (index != null ? !index.equals(that.index) : that.index != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
-        if (flushInterval != null ? !flushInterval.equals(that.flushInterval) : that.flushInterval != null) return false;
-        return true;
+        return !(flushInterval != null ? !flushInterval.equals(that.flushInterval) : that.flushInterval != null);
 
     }
 
@@ -231,7 +230,7 @@ public class Elasticsearch {
         int result = nodes != null ? nodes.hashCode() : 0;
         result = 31 * result + (index != null ? index.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
-        result = 31 * result + (int) (bulkSize ^ (bulkSize >>> 32));
+        result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
         return result;
     }

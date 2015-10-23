@@ -30,7 +30,7 @@ import static org.hamcrest.Matchers.nullValue;
 public class FsIncludesExcludesTest {
 
     @Test
-    public void include_with_duplicates() throws Exception {
+    public void include_with_duplicates() {
         Fs fs = Fs.builder()
                 .addInclude("*.txt")
                 .addInclude("*.txt")
@@ -40,7 +40,7 @@ public class FsIncludesExcludesTest {
     }
 
     @Test
-    public void include_3_values() throws Exception {
+    public void include_3_values() {
         Fs fs = Fs.builder()
                 .addInclude("*.txt")
                 .addInclude("*.doc")
@@ -50,7 +50,7 @@ public class FsIncludesExcludesTest {
     }
 
     @Test
-    public void include_single_value() throws Exception {
+    public void include_single_value() {
         Fs fs = Fs.builder()
                 .addInclude("*.txt")
                 .build();
@@ -58,13 +58,13 @@ public class FsIncludesExcludesTest {
     }
 
     @Test
-    public void include_no_value() throws Exception {
+    public void include_no_value() {
         Fs fs = Fs.builder().build();
         assertThat(fs.getIncludes(), nullValue());
     }
 
     @Test
-    public void exclude_with_duplicates() throws Exception {
+    public void exclude_with_duplicates() {
         Fs fs = Fs.builder()
                 .addExclude("*.txt")
                 .addExclude("*.txt")
@@ -74,7 +74,7 @@ public class FsIncludesExcludesTest {
     }
 
     @Test
-    public void exclude_3_values() throws Exception {
+    public void exclude_3_values() {
         Fs fs = Fs.builder()
                 .addExclude("*.txt")
                 .addExclude("*.doc")
@@ -84,7 +84,7 @@ public class FsIncludesExcludesTest {
     }
 
     @Test
-    public void exclude_single_value() throws Exception {
+    public void exclude_single_value() {
         Fs fs = Fs.builder()
                 .addExclude("*.txt")
                 .build();
@@ -92,7 +92,7 @@ public class FsIncludesExcludesTest {
     }
 
     @Test
-    public void exclude_no_value() throws Exception {
+    public void exclude_no_value() {
         Fs fs = Fs.builder().build();
         assertThat(fs.getIncludes(), nullValue());
     }

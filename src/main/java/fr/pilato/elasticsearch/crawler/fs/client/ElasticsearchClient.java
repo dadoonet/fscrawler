@@ -51,7 +51,7 @@ public class ElasticsearchClient {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
 
-    private List<Node> nodes;
+    private final List<Node> nodes;
 
     private ElasticsearchClient() {
         nodes = new ArrayList<>();

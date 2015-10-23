@@ -24,7 +24,6 @@ import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -164,40 +163,40 @@ public class FsCrawlerUtil extends MetaParser {
         return buildFsFileMapping(true, false);
     }
 
-    private static void addAnalyzedString(ObjectNode node, String fieldName) throws IOException {
+    private static void addAnalyzedString(ObjectNode node, String fieldName) {
         node.putObject(fieldName)
                 .put("type", "string")
                 .put("store", "yes");
     }
 
-    private static void addNotAnalyzedString(ObjectNode node, String fieldName) throws IOException {
+    private static void addNotAnalyzedString(ObjectNode node, String fieldName) {
         node.putObject(fieldName)
                 .put("type", "string")
                 .put("store", "yes")
                 .put("index", "not_analyzed");
     }
 
-    private static void addNotIndexedString(ObjectNode node, String fieldName) throws IOException {
+    private static void addNotIndexedString(ObjectNode node, String fieldName) {
         node.putObject(fieldName)
                 .put("type", "string")
                 .put("store", "yes")
                 .put("index", "no");
     }
 
-    private static void addDate(ObjectNode node, String fieldName) throws IOException {
+    private static void addDate(ObjectNode node, String fieldName) {
         node.putObject(fieldName)
                 .put("type", "date")
                 .put("format", "dateOptionalTime")
                 .put("store", "yes");
     }
 
-    private static void addLong(ObjectNode node, String fieldName) throws IOException {
+    private static void addLong(ObjectNode node, String fieldName) {
         node.putObject(fieldName)
                 .put("type", "long")
                 .put("store", "yes");
     }
 
-    private static void addBinary(ObjectNode node, String fieldName) throws IOException {
+    private static void addBinary(ObjectNode node, String fieldName) {
         node.putObject(fieldName)
                 .put("type", "binary")
                 .put("store", "yes");

@@ -31,12 +31,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
 
     private ChannelSftp sftp;
 
-    public FileAbstractorSSH(FsSettings fsSettings) throws Exception {
+    public FileAbstractorSSH(FsSettings fsSettings) {
         super(fsSettings);
     }
 
@@ -65,15 +66,13 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         ls = sftp.ls(dir);
         if (ls == null) return null;
 
-        Collection<FileAbstractModel> result = new ArrayList<FileAbstractModel>(ls.size());
+        Collection<FileAbstractModel> result = new ArrayList<>(ls.size());
         // Iterate other files
-        for (ChannelSftp.LsEntry file : ls) {
-            // We ignore here all files like . and ..
-            if (!".".equals(file.getFilename()) &&
-                    !"..".equals(file.getFilename())) {
-                result.add(toFileAbstractModel(dir, file));
-            }
-        }
+        // We ignore here all files like . and ..
+        result.addAll(ls.stream().filter(file -> !".".equals(file.getFilename()) &&
+                !"..".equals(file.getFilename()))
+                .map(file -> toFileAbstractModel(dir, file))
+                .collect(Collectors.toList()));
 
         if (logger.isDebugEnabled()) logger.debug("{} local files found", result.size());
         return result;

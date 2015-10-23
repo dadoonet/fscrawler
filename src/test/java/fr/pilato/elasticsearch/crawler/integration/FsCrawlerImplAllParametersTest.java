@@ -43,7 +43,6 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -64,7 +63,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
      * about it.
      */
     @Before
-    public void copyTestResources() throws IOException, InterruptedException {
+    public void copyTestResources() throws IOException {
         Path testResourceTarget = Paths.get(folder.getRoot().toURI()).resolve("resources");
         if (Files.notExists(testResourceTarget)) {
             Files.createDirectory(testResourceTarget);
@@ -118,7 +117,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
         return startCrawlerDefinition(dir, TimeValue.timeValueSeconds(5));
     }
 
-    private Fs.Builder startCrawlerDefinition(String dir, TimeValue updateRate) throws IOException {
+    private Fs.Builder startCrawlerDefinition(String dir, TimeValue updateRate) {
         logger.info("  --> creating crawler for dir [{}]", dir);
         return Fs
                 .builder()
@@ -126,7 +125,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
                 .setUpdateRate(updateRate);
     }
 
-    private Elasticsearch endCrawlerDefinition(String indexName) throws IOException {
+    private Elasticsearch endCrawlerDefinition(String indexName) {
         return Elasticsearch.builder()
                 .setIndex(indexName)
                 .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
@@ -142,7 +141,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
         }
     }
 
-    private String getUrl(String dir) throws IOException {
+    private String getUrl(String dir) {
         URL resource = FsCrawlerImplAllParametersTest.class.getResource("/job-sample.json");
         File resourceDir = new File(URItoFile(resource).getParentFile(), "samples");
         File dataDir = new File(resourceDir, dir);
@@ -166,7 +165,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
             } catch (IOException e) {
                 return false;
             }
-        }, 10, TimeUnit.SECONDS), equalTo(true));
+        }), equalTo(true));
 
         countTestHelper(jobName, null, null);
 
@@ -248,7 +247,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
             if (expected == null) {
                 return (totalHits >= 1);
             } else {
-                if (expected.intValue() == totalHits) {
+                if (expected == totalHits) {
                     return true;
                 } else {
                     logger.info("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
@@ -267,7 +266,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
                     return false;
                 }
             }
-        }, 10, TimeUnit.SECONDS), equalTo(true));
+        }), equalTo(true));
     }
 
     @Test
@@ -517,7 +516,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
             SearchResponse searchResponse = client.prepareSearch(getCrawlerName())
                     .setQuery(QueryBuilders.termQuery("text", "tweet")).get();
             return searchResponse.getHits().getTotalHits() == 2;
-        }, 10, TimeUnit.SECONDS), equalTo(true));
+        }), equalTo(true));
     }
 
     /**
@@ -534,13 +533,13 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
             SearchResponse searchResponse = client.prepareSearch(getCrawlerName())
                     .setQuery(QueryBuilders.termQuery("text", "tweet")).get();
             return searchResponse.getHits().getTotalHits() == 0;
-        }, 10, TimeUnit.SECONDS), equalTo(true));
+        }), equalTo(true));
 
         assertThat("We should have 2 docs for tweet in _all...", awaitBusy(() -> {
             SearchResponse searchResponse = client.prepareSearch(getCrawlerName())
                     .setQuery(QueryBuilders.queryStringQuery("tweet")).get();
             return searchResponse.getHits().getTotalHits() == 2;
-        }, 10, TimeUnit.SECONDS), equalTo(true));
+        }), equalTo(true));
     }
 
     /**
@@ -557,12 +556,12 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
         assertThat("Document should exists with [tweet1] id...", awaitBusy(() -> {
             GetResponse getResponse = client.prepareGet(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "tweet1").get();
             return getResponse.isExists();
-        }, 10, TimeUnit.SECONDS), equalTo(true));
+        }), equalTo(true));
 
         assertThat("Document should exists with [tweet2] id...", awaitBusy(() -> {
             GetResponse getResponse = client.prepareGet(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "tweet2").get();
             return getResponse.isExists();
-        }, 10, TimeUnit.SECONDS), equalTo(true));
+        }), equalTo(true));
     }
 
     @Test
@@ -758,9 +757,9 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
 
     private class InternalFileVisitor extends SimpleFileVisitor<Path> {
 
-        private Path fromPath;
-        private Path toPath;
-        private StandardCopyOption copyOption;
+        private final Path fromPath;
+        private final Path toPath;
+        private final StandardCopyOption copyOption;
 
         public InternalFileVisitor(Path fromPath, Path toPath, StandardCopyOption copyOption) {
             this.fromPath = fromPath;

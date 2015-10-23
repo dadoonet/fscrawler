@@ -29,7 +29,6 @@ import fr.pilato.elasticsearch.crawler.fs.meta.doc.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.PathParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
@@ -126,9 +125,7 @@ public class FsCrawlerImpl {
             // Create an elasticsearch client
             client = ElasticsearchClient.builder().build();
 
-            for (Elasticsearch.Node node : settings.getElasticsearch().getNodes()) {
-                client.addNode(node);
-            }
+            settings.getElasticsearch().getNodes().forEach(client::addNode);
 
             client.createIndex(settings.getElasticsearch().getIndex(), true);
         } catch (Exception e) {
@@ -178,7 +175,7 @@ public class FsCrawlerImpl {
     }
 
     private class FSParser implements Runnable {
-        private FsSettings fsSettings;
+        private final FsSettings fsSettings;
 
         private ScanStatistic stats;
 
@@ -647,7 +644,7 @@ public class FsCrawlerImpl {
         /**
          * Add to bulk an IndexRequest in JSon format
          */
-        private void esIndex(String index, String type, String id, String json) throws Exception {
+        private void esIndex(String index, String type, String id, String json) {
             logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
             logger.trace("JSon indexed : {}", json);
 
@@ -661,7 +658,7 @@ public class FsCrawlerImpl {
         /**
          * Add to bulk a DeleteRequest
          */
-        private void esDelete(String index, String type, String id) throws Exception {
+        private void esDelete(String index, String type, String id) {
             logger.debug("Deleting from ES " + index + ", " + type + ", " + id);
             if (!closed) {
                 bulkProcessor.add(new DeleteRequest(index, type, id));

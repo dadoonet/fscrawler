@@ -26,8 +26,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -59,7 +57,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         if (logger.isDebugEnabled()) logger.debug("Listing local files from {}", dir);
         File[] files = new File(dir).listFiles();
 
-        Collection<FileAbstractModel> result = new ArrayList<FileAbstractModel>(files.length);
+        Collection<FileAbstractModel> result = new ArrayList<>(files.length);
 
         // Iterate other files
         for (File file : files) {

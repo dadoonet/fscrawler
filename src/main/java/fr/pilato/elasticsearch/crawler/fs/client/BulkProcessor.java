@@ -43,7 +43,7 @@ public class BulkProcessor {
     private volatile boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
 
-    public BulkProcessor(ElasticsearchClient client, Listener listener, int bulkActions, TimeValue flushInterval) {
+    private BulkProcessor(ElasticsearchClient client, Listener listener, int bulkActions, TimeValue flushInterval) {
         this.bulkActions = bulkActions;
         this.bulkRequest = new BulkRequest();
         this.client = client;
@@ -90,11 +90,11 @@ public class BulkProcessor {
     /**
      * Adds either a delete or an index request.
      */
-    public BulkProcessor add(SingleBulkRequest request) {
+    private BulkProcessor add(SingleBulkRequest request) {
         return internalAdd(request);
     }
 
-    protected void ensureOpen() {
+    private void ensureOpen() {
         if (closed) {
             throw new IllegalStateException("bulk process already closed");
         }

@@ -1,12 +1,7 @@
-/data
 /target
 /.settings
 /.classpath
 /.project
 .idea
 *.iml
-.local-execution-hints.log
-.local-*-execution-hints.log
 plugin_tools
-config
-logs

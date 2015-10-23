@@ -39,7 +39,7 @@ public class SearchResponse extends GenericJson {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("SearchResponse{");
+        final StringBuilder sb = new StringBuilder("SearchResponse{");
         sb.append("hits=").append(hits);
         sb.append('}');
         return sb.toString();
@@ -63,7 +63,7 @@ public class SearchResponse extends GenericJson {
 
         @Override
         public String toString() {
-            final StringBuffer sb = new StringBuffer("Hits{");
+            final StringBuilder sb = new StringBuilder("Hits{");
             sb.append("hits=").append(hits);
             sb.append(", total=").append(total);
             sb.append('}');
@@ -88,7 +88,7 @@ public class SearchResponse extends GenericJson {
 
         @Override
         public String toString() {
-            final StringBuffer sb = new StringBuffer("Hit{");
+            final StringBuilder sb = new StringBuilder("Hit{");
             sb.append("source=").append(source);
             sb.append(", fields=").append(fields);
             sb.append('}');
