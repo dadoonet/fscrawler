@@ -19,7 +19,7 @@
     </licenses>
 
     <properties>
-        <elasticsearch.version>2.0.0-rc1</elasticsearch.version>
+        <elasticsearch.version>2.0.0</elasticsearch.version>
         <tika.version>1.10</tika.version>
         <jackson.version>2.6.2</jackson.version>
         <log4j.version>2.4.1</log4j.version>
