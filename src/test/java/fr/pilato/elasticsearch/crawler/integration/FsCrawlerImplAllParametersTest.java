@@ -680,7 +680,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
         String password = "PASSWORD";
         String hostname = "localhost";
 
-        Fs fs = startCrawlerDefinition("testsubdir").build();
+        Fs fs = startCrawlerDefinition().build();
         Server server = Server.builder()
                 .setHostname(hostname)
                 .setUsername(username)
@@ -702,7 +702,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
         String path_to_pem_file = "/path/to/private_key.pem";
         String hostname = "localhost";
 
-        Fs fs = startCrawlerDefinition("testsubdir").build();
+        Fs fs = startCrawlerDefinition().build();
         Server server = Server.builder()
                 .setHostname(hostname)
                 .setUsername(username)
@@ -711,7 +711,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractITest {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
 
-        countTestHelper(getCrawlerName(), null, 2);
+        countTestHelper(getCrawlerName(), null, 1);
     }
 
     /**
