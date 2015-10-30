@@ -85,6 +85,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
 
     @Override
     public void close() throws Exception {
+        sftp.getSession().disconnect();
         sftp.disconnect();
     }
 
