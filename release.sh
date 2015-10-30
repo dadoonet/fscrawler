@@ -125,7 +125,7 @@ tail -7 /tmp/fscrawler-${RELEASE_VERSION}.log
 
 # Tagging
 echo "Tag version with fscrawler-$RELEASE_VERSION"
-git tag -a fscrawler-${RELEASE_VERSION} -m 'Release FsCrawler version $RELEASE_VERSION'
+git tag -a fscrawler-${RELEASE_VERSION} -m "Release FsCrawler version $RELEASE_VERSION"
 if [ $? -ne 0 ]
 then
     tail -20 /tmp/fscrawler-${RELEASE_VERSION}.log
@@ -137,8 +137,8 @@ fi
 echo "Preparing announcement"
 mvn changes:announcement-generate >> /tmp/fscrawler-${RELEASE_VERSION}.log
 
-echo "Check or modify announcement message"
-sublime target/announcement/announcement.vm
+echo "Check the announcement message"
+cat target/announcement/announcement.vm
 
 if promptyn "Is message ok?"
 then
@@ -201,7 +201,10 @@ then
         git push origin ${CURRENT_BRANCH} fscrawler-${RELEASE_VERSION}
         if promptyn "Do you want to announce the release?"
         then
+            # We need to checkout the tag, announce and checkout the branch we started from
+            git checkout -q fscrawler-${RELEASE_VERSION}
             mvn changes:announcement-mail >> /tmp/fscrawler-${RELEASE_VERSION}.log
+            git checkout -q ${CURRENT_BRANCH}
         else
             echo "Message not sent. You can send it manually using:"
             echo "mvn changes:announcement-mail"
