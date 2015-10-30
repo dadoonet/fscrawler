@@ -27,6 +27,8 @@ Thanks to cloudbees for the [build status](https://buildhive.cloudbees.com/job/d
 
 # Getting Started
 
+**You need to have at least Java 1.8.**
+
 ```sh
 fscrawler job_name
 ```
