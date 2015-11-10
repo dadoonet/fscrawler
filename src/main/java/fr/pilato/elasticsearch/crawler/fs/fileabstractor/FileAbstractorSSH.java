@@ -50,6 +50,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         model.lastModifiedDate = Instant.ofEpochMilli(file.getAttrs().getMTime());
         model.path = path;
         model.fullpath = model.path.concat("/").concat(model.name);
+        model.size = file.getAttrs().getSize();
         return model;
     }
 

@@ -42,6 +42,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTest {
             .setIndexedChars(new Percentage(10000))
             .setRemoveDeleted(true)
             .setUpdateRate(TimeValue.timeValueMinutes(5))
+            .setIndexContent(true)
             .build();
     private static final Elasticsearch ELASTICSEARCH_EMPTY = Elasticsearch.builder().build();
     private static final Elasticsearch ELASTICSEARCH_FULL = Elasticsearch.builder()

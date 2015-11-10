@@ -44,6 +44,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         model.creationDate = FsCrawlerUtil.getCreationTime(file);
         model.path = path;
         model.fullpath = file.getAbsolutePath();
+        model.size = file.length();
         return model;
     }
 

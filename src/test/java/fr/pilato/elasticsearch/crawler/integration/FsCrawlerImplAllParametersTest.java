@@ -754,6 +754,38 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         countTestHelper(getCrawlerName(), null, 2);
     }
 
+    /**
+     * Test for #103: https://github.com/dadoonet/fscrawler/issues/103
+     */
+    @Test
+    public void test_index_content() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setIndexContent(false)
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        // We expect to have one file
+        countTestHelper(getCrawlerName(), null, 1);
+
+        SearchResponse searchResponse = client
+                .prepareSearch(getCrawlerName())
+                .setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
+                .setQuery(QueryBuilders.prefixQuery("content", "file"))
+                .get();
+
+        logger.info("response: {}", searchResponse.toString());
+        assertThat(searchResponse.getHits().totalHits(), equalTo(0L));
+
+        searchResponse = client
+                .prepareSearch(getCrawlerName())
+                .setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
+                .setQuery(QueryBuilders.prefixQuery("file.content_type", "text/plain"))
+                .get();
+
+        logger.info("response: {}", searchResponse.toString());
+        assertThat(searchResponse.getHits().totalHits(), equalTo(0L));
+    }
+
     @Test
     public void test_bulk_flush() throws Exception {
         Fs fs = startCrawlerDefinition().build();

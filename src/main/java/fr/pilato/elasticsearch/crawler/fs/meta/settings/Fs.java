@@ -32,6 +32,7 @@ public class Fs {
     private boolean addFilesize;
     private boolean removeDeleted;
     private boolean storeSource;
+    private boolean indexContent;
     private Percentage indexedChars;
 
     public static Builder builder() {
@@ -50,6 +51,7 @@ public class Fs {
         private boolean addFilesize = true;
         private boolean removeDeleted = true;
         private boolean storeSource = false;
+        private boolean indexContent = true;
         private Percentage indexedChars = null;
 
         public Builder setUrl(String url) {
@@ -128,9 +130,14 @@ public class Fs {
             return this;
         }
 
+        public Builder setIndexContent(boolean indexContent) {
+            this.indexContent = indexContent;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
-                    removeDeleted, storeSource, indexedChars);
+                    removeDeleted, storeSource, indexedChars, indexContent);
         }
     }
 
@@ -139,7 +146,8 @@ public class Fs {
     }
 
     Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
-       boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean storeSource, Percentage indexedChars) {
+       boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean storeSource, Percentage indexedChars,
+       boolean indexContent) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -150,6 +158,7 @@ public class Fs {
         this.removeDeleted = removeDeleted;
         this.storeSource = storeSource;
         this.indexedChars = indexedChars;
+        this.indexContent = indexContent;
     }
 
     public String getUrl() {
@@ -232,6 +241,14 @@ public class Fs {
         this.indexedChars = indexedChars;
     }
 
+    public boolean isIndexContent() {
+        return indexContent;
+    }
+
+    public void setIndexContent(boolean indexContent) {
+        this.indexContent = indexContent;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -244,6 +261,7 @@ public class Fs {
         if (addFilesize != fs.addFilesize) return false;
         if (removeDeleted != fs.removeDeleted) return false;
         if (storeSource != fs.storeSource) return false;
+        if (indexContent != fs.indexContent) return false;
         if (url != null ? !url.equals(fs.url) : fs.url != null) return false;
         if (updateRate != null ? !updateRate.equals(fs.updateRate) : fs.updateRate != null) return false;
         if (includes != null ? !includes.equals(fs.includes) : fs.includes != null) return false;
@@ -263,6 +281,7 @@ public class Fs {
         result = 31 * result + (addFilesize ? 1 : 0);
         result = 31 * result + (removeDeleted ? 1 : 0);
         result = 31 * result + (storeSource ? 1 : 0);
+        result = 31 * result + (indexContent ? 1 : 0);
         result = 31 * result + (indexedChars != null ? indexedChars.hashCode() : 0);
         return result;
     }

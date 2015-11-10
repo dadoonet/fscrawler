@@ -49,6 +49,7 @@ public class FileAbstractModel {
     public Instant creationDate;
     public String path;
     public String fullpath;
+    public long size;
 
     @Override
     public String toString() {
@@ -60,6 +61,7 @@ public class FileAbstractModel {
         sb.append(", creationDate=").append(creationDate);
         sb.append(", path='").append(path).append('\'');
         sb.append(", fullpath='").append(fullpath).append('\'');
+        sb.append(", size=").append(size);
         sb.append('}');
         return sb.toString();
     }

@@ -305,7 +305,7 @@ public class FsCrawlerImpl {
                                 if (lastScanDate == null
                                         || child.lastModifiedDate.isAfter(lastScanDate)
                                         || (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
-                                    indexFile(stats, child.name, filepath, path.getInputStream(child), child.lastModifiedDate);
+                                    indexFile(stats, child.name, filepath, path.getInputStream(child), child.lastModifiedDate, child.size);
                                     stats.addFile();
                                 } else {
                                     logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
@@ -443,122 +443,123 @@ public class FsCrawlerImpl {
         /**
          * Index a file
          */
-        private void indexFile(ScanStatistic stats, String filename, String filepath, InputStream fileReader, Instant lastmodified) throws Exception {
+        private void indexFile(ScanStatistic stats, String filename, String filepath, InputStream fileReader,
+                               Instant lastmodified, long size) throws Exception {
             logger.debug("fetching content from [{}],[{}]", filepath, filename);
 
-            // write it to a byte[] using a buffer since we don't know the exact
-            // image size
-            byte[] buffer = new byte[1024];
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            int i;
-            while (-1 != (i = fileReader.read(buffer))) {
-                bos.write(buffer, 0, i);
-            }
-            byte[] data = bos.toByteArray();
+            // Create the Doc object
+            Doc doc = new Doc();
 
-            fileReader.close();
-            bos.close();
+            // File
+            doc.getFile().setFilename(filename);
+            doc.getFile().setLastModified(lastmodified);
+            doc.getFile().setIndexingDate(Instant.now());
+            doc.getFile().setUrl("file://" + (new File(filepath, filename)).toString());
+            doc.getFile().setFilesize(size);
 
-            // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-            if (fsSettings.getFs().isJsonSupport()) {
-                String id;
-                if (fsSettings.getFs().isFilenameAsId()) {
-                    id = filename;
-                    int pos = id.lastIndexOf(".");
-                    if (pos > 0) {
-                        id = id.substring(0, pos);
+            // Path
+            doc.getPath().setEncoded(SignTool.sign(filepath));
+            doc.getPath().setRoot(stats.getRootPathId());
+            doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats, filepath));
+            doc.getPath().setReal((new File(filepath, filename)).toString());
+            // Path
+
+
+            if (fsSettings.getFs().isIndexContent()) {
+                byte[] buffer = new byte[1024];
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                int i;
+                while (-1 != (i = fileReader.read(buffer))) {
+                    bos.write(buffer, 0, i);
+                }
+                byte[] data = bos.toByteArray();
+
+                fileReader.close();
+                bos.close();
+
+                // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                if (fsSettings.getFs().isJsonSupport()) {
+                    String id;
+                    if (fsSettings.getFs().isFilenameAsId()) {
+                        id = filename;
+                        int pos = id.lastIndexOf(".");
+                        if (pos > 0) {
+                            id = id.substring(0, pos);
+                        }
+                    } else {
+                        id = SignTool.sign((new File(filepath, filename)).toString());
                     }
+                    esIndex(fsSettings.getElasticsearch().getIndex(),
+                            fsSettings.getElasticsearch().getType(),
+                            id,
+                            new String(data, "UTF-8"));
+                    return;
                 } else {
-                    id = SignTool.sign((new File(filepath, filename)).toString());
-                }
-                esIndex(fsSettings.getElasticsearch().getIndex(),
-                        fsSettings.getElasticsearch().getType(),
-                        id,
-                        new String(data, "UTF-8"));
-            } else {
-                // Extracting content with Tika
-                // See #38: https://github.com/dadoonet/fscrawler/issues/38
-                int indexedChars = 100000;
-                if (fsSettings.getFs().getIndexedChars() != null) {
-                    if (fsSettings.getFs().getIndexedChars().percentage()) {
-                        indexedChars = (int) Math.round(data.length * fsSettings.getFs().getIndexedChars().asDouble());
-                        logger.trace("using percentage [{}] to define indexed chars: [{}]",
-                                fsSettings.getFs().getIndexedChars(), indexedChars);
-                    } else {
-                        indexedChars = (int) fsSettings.getFs().getIndexedChars().value();
-                        logger.trace("indexed chars [{}]",
-                                indexedChars == -1 ? "has been disabled. All text will be extracted" : indexedChars);
+                    // Extracting content with Tika
+                    // See #38: https://github.com/dadoonet/fscrawler/issues/38
+                    int indexedChars = 100000;
+                    if (fsSettings.getFs().getIndexedChars() != null) {
+                        if (fsSettings.getFs().getIndexedChars().percentage()) {
+                            indexedChars = (int) Math.round(data.length * fsSettings.getFs().getIndexedChars().asDouble());
+                            logger.trace("using percentage [{}] to define indexed chars: [{}]",
+                                    fsSettings.getFs().getIndexedChars(), indexedChars);
+                        } else {
+                            indexedChars = (int) fsSettings.getFs().getIndexedChars().value();
+                            logger.trace("indexed chars [{}]",
+                                    indexedChars == -1 ? "has been disabled. All text will be extracted" : indexedChars);
+                        }
                     }
-                }
-                Metadata metadata = new Metadata();
+                    Metadata metadata = new Metadata();
 
-                String parsedContent;
-                try {
-                    // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
-                    parsedContent = tika().parseToString(new ByteArrayInputStream(data), metadata, indexedChars);
-                } catch (Throwable e) {
-                    logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "]", e);
-                    parsedContent = "";
-                }
-
-                // Create the Doc object
-                Doc doc = new Doc();
-
-                // File
-                doc.getFile().setFilename(filename);
-                doc.getFile().setLastModified(lastmodified);
-                doc.getFile().setIndexingDate(Instant.now());
-                doc.getFile().setContentType(metadata.get(Metadata.CONTENT_TYPE));
-                doc.getFile().setUrl("file://" + (new File(filepath, filename)).toString());
-
-                // We only add `indexed_chars` if we have other value than default or -1
-                if (fsSettings.getFs().getIndexedChars() != null && fsSettings.getFs().getIndexedChars().value() != -1) {
-                    doc.getFile().setIndexedChars(indexedChars);
-                }
-
-                if (fsSettings.getFs().isAddFilesize()) {
-                    if (metadata.get(Metadata.CONTENT_LENGTH) != null) {
-                        // We try to get CONTENT_LENGTH from Tika first
-                        doc.getFile().setFilesize(Long.parseLong(metadata.get(Metadata.CONTENT_LENGTH)));
-                    } else {
-                        // Otherwise, we use our byte[] length
-                        doc.getFile().setFilesize((long) data.length);
+                    String parsedContent = null;
+                    try {
+                        // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
+                        parsedContent = tika().parseToString(new ByteArrayInputStream(data), metadata, indexedChars);
+                    } catch (Throwable e) {
+                        logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "]", e);
                     }
+
+                    // Adding what we found to the document we want to index
+
+                    // File
+                    doc.getFile().setContentType(metadata.get(Metadata.CONTENT_TYPE));
+
+                    // We only add `indexed_chars` if we have other value than default or -1
+                    if (fsSettings.getFs().getIndexedChars() != null && fsSettings.getFs().getIndexedChars().value() != -1) {
+                        doc.getFile().setIndexedChars(indexedChars);
+                    }
+
+                    if (fsSettings.getFs().isAddFilesize()) {
+                        if (metadata.get(Metadata.CONTENT_LENGTH) != null) {
+                            // We try to get CONTENT_LENGTH from Tika first
+                            doc.getFile().setFilesize(Long.parseLong(metadata.get(Metadata.CONTENT_LENGTH)));
+                        }
+                    }
+
+                    // Meta
+                    doc.getMeta().setAuthor(metadata.get(Metadata.AUTHOR));
+                    doc.getMeta().setTitle(metadata.get(Metadata.TITLE));
+                    // TODO Fix that as the date we get from Tika might be not parseable as a Date
+                    // doc.getMeta().setDate(metadata.get(Metadata.DATE));
+                    doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(Metadata.KEYWORDS)));
+                    // Meta
+
+                    // Doc content
+                    doc.setContent(parsedContent);
+
+                    // Doc as binary attachment
+                    if (fsSettings.getFs().isStoreSource()) {
+                        doc.setAttachment(new String(Base64.getEncoder().encode(data), "UTF-8"));
+                    }
+                    // End of our document
                 }
-                // File
-
-                // Path
-                doc.getPath().setEncoded(SignTool.sign(filepath));
-                doc.getPath().setRoot(stats.getRootPathId());
-                doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats, filepath));
-                doc.getPath().setReal((new File(filepath, filename)).toString());
-                // Path
-
-                // Meta
-                doc.getMeta().setAuthor(metadata.get(Metadata.AUTHOR));
-                doc.getMeta().setTitle(metadata.get(Metadata.TITLE));
-                // TODO Fix that as the date we get from Tika might be not parseable as a Date
-                // doc.getMeta().setDate(metadata.get(Metadata.DATE));
-                doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(Metadata.KEYWORDS)));
-                // Meta
-
-                // Doc content
-                doc.setContent(parsedContent);
-
-                // Doc as binary attachment
-                if (fsSettings.getFs().isStoreSource()) {
-                    doc.setAttachment(new String(Base64.getEncoder().encode(data), "UTF-8"));
-                }
-
-                // End of our document
-
-                // We index
-                esIndex(fsSettings.getElasticsearch().getIndex(),
-                        fsSettings.getElasticsearch().getType(),
-                        SignTool.sign((new File(filepath, filename)).toString()),
-                        doc);
             }
 
+            // We index
+            esIndex(fsSettings.getElasticsearch().getIndex(),
+                    fsSettings.getElasticsearch().getType(),
+                    SignTool.sign((new File(filepath, filename)).toString()),
+                    doc);
         }
 
         private void indexDirectory(String id, String name, String root, String virtual, String encoded)
