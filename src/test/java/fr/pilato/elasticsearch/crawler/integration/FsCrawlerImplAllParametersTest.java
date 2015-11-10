@@ -750,7 +750,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
     public void test_unparsable() throws Exception {
         startCrawler();
 
-        // We expect to have one file
+        // We expect to have two files
         countTestHelper(getCrawlerName(), null, 2);
     }
 
