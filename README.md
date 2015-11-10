@@ -22,8 +22,8 @@ You need to install a version matching your Elasticsearch version:
 
 ## Build Status
 
-Thanks to cloudbees for the [build status](https://buildhive.cloudbees.com/job/dadoonet/job/fscrawler/) : 
-[![Build Status](https://buildhive.cloudbees.com/job/dadoonet/job/fscrawler/badge/icon)](https://buildhive.cloudbees.com/job/dadoonet/job/fscrawler/)
+Thanks to Travis for the [build status](https://travis-ci.org/dadoonet/fscrawler): 
+[![Build Status](https://travis-ci.org/dadoonet/fscrawler.svg)](https://travis-ci.org/dadoonet/fscrawler)
 
 # Getting Started
 
