@@ -19,41 +19,43 @@
 
 package fr.pilato.elasticsearch.crawler.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.AbstractFSCrawlerTest;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.node.Node;
+import org.elasticsearch.node.NodeBuilder;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.net.InetAddress;
 
-public abstract class AbstractITest extends AbstractFSCrawlerTest {
-    @ClassRule
-    public static TemporaryFolder folder = new TemporaryFolder();
+public abstract class AbstractMonoNodeITest extends AbstractITest {
 
-    protected final static int TRANSPORT_TEST_PORT = 9380;
-    protected final static int HTTP_TEST_PORT = 9280;
-    protected static final Logger staticLogger = LogManager.getLogger(AbstractMultiNodesITest.class);
-
+    protected static Node node = null;
     protected static Client client = null;
 
     @ClassRule
-    public static ExternalResource elasticsearchClient = new ExternalResource() {
+    public static ExternalResource elasticsearch = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
             folder.create();
-            File home = folder.newFolder("client");
-            staticLogger.info("  --> Starting elasticsearch client in [{}]", home.toString());
+            File home = folder.newFolder("elasticsearch");
+            staticLogger.info("  --> Starting elasticsearch test node in [{}]", home.toString());
+
+            node = NodeBuilder.nodeBuilder()
+                    .settings(Settings.builder()
+                                    .put("path.home", home)
+                                    .put("cluster.name", "fscrawler-integration-tests")
+                                    .put("transport.tcp.port", TRANSPORT_TEST_PORT)
+                                    .put("http.port", HTTP_TEST_PORT)
+                    )
+                    .node();
 
             client = TransportClient.builder()
                     .settings(Settings.builder()
-                                    .put("path.home", home)
+                                    .put("path.home", folder.newFolder("client"))
                                     .put("cluster.name", "fscrawler-integration-tests")
                                     .build()
                     )
@@ -67,6 +69,12 @@ public abstract class AbstractITest extends AbstractFSCrawlerTest {
                 staticLogger.info("  --> Stopping elasticsearch client");
                 client.close();
                 client = null;
+            }
+
+            if (node != null) {
+                staticLogger.info("  --> Stopping elasticsearch test node");
+                node.close();
+                node = null;
             }
         }
     };

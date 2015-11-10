@@ -50,7 +50,7 @@ import static org.hamcrest.Matchers.*;
 /**
  * Test all crawler settings
  */
-public class FsCrawlerImplAllParametersTest extends AbstractITest {
+public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;

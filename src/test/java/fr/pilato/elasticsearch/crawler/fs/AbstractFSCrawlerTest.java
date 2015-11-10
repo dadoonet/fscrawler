@@ -37,7 +37,6 @@ public abstract class AbstractFSCrawlerTest {
     public TestName name = new TestName();
 
     protected final Logger logger = LogManager.getLogger(this.getClass());
-    protected static final Logger staticLogger = LogManager.getLogger(AbstractFSCrawlerTest.class);
 
     protected String getCurrentTestName() {
         return Strings.toUnderscoreCase(name.getMethodName());

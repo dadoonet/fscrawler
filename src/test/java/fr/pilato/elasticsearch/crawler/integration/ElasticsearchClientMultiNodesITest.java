@@ -37,16 +37,24 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.fail;
 
 /**
- * Test elasticsearch HTTP client
+ * Test elasticsearch HTTP client with multiple nodes
  */
-public class ElasticsearchClientITest extends AbstractMonoNodeITest {
+public class ElasticsearchClientMultiNodesITest extends AbstractMultiNodesITest {
 
     private static ElasticsearchClient elasticsearchClient;
 
     @BeforeClass
-    public static void startClient() {
+    public static void startClient() throws IOException {
+        // Starts 3 nodes
+        for (int i = 0; i < NUMBER_OF_NODES; i++) {
+            startNewNode(i, null);
+        }
+
         elasticsearchClient = ElasticsearchClient.builder().build();
-        elasticsearchClient.addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build());
+        for (int i = 0; i < NUMBER_OF_NODES; i++) {
+            elasticsearchClient
+                    .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT + i).build());
+        }
     }
 
     @AfterClass
@@ -55,7 +63,7 @@ public class ElasticsearchClientITest extends AbstractMonoNodeITest {
     }
 
     @Test
-    public void testCreateIndex() throws IOException {
+    public void testCreateIndex() throws IOException, InterruptedException {
         elasticsearchClient.createIndex(getCurrentTestName());
         boolean exists = client.admin().indices().prepareExists(getCurrentTestName()).get().isExists();
         assertThat(exists, is(true));

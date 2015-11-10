@@ -35,9 +35,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Simple Elasticsearch client over HTTP.
@@ -48,6 +51,9 @@ public class ElasticsearchClient {
     static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
     static final JsonFactory JSON_FACTORY = new JacksonFactory();
     private final HttpRequestFactory requestFactory;
+    private final AtomicInteger counter;
+
+    public static final int NODE_SKIP_BEFORE_RETRY = 10;
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
 
@@ -63,13 +69,70 @@ public class ElasticsearchClient {
                         request.setParser(new JsonObjectParser(JSON_FACTORY));
                     }
                 });
+
+        counter = new AtomicInteger();
     }
 
-    private ElasticsearchUrl buildUrl() {
-        ElasticsearchUrl url = new ElasticsearchUrl();
+    public Node getNode(int node) {
+        return nodes.get(node);
+    }
 
-        // Get the first node
-        Node node = nodes.get(0);
+    public Node findNextNode() throws IOException {
+        Node node = null;
+
+        // We have no node! WTF?
+        if (nodes.size() == 0) {
+            throw new IOException("no node has been declared. Check your code and call addNode(Node).");
+        }
+
+        // If we have only one node, just return it if active!
+        if (nodes.size() == 1) {
+            node = nodes.get(0);
+        } else {
+            AtomicInteger localTries = new AtomicInteger();
+            // Get a random running node from the list
+            int nextNode = nodes.size() > 1 ? new Random().nextInt(nodes.size()) : 0;
+            while (node == null && localTries.incrementAndGet() < 10) {
+                logger.trace("Trying node #{}", nextNode);
+                node = nodes.get(nextNode);
+                if (!node.active()) {
+                    logger.trace("Nonactive node #{}", nextNode);
+                    checkAndSetActive(node);
+
+                    // If the node is still inactive, let's try the next one
+                    if (!node.active()) {
+                        node = null;
+                        nextNode++;
+                        if (nextNode >= nodes.size()) {
+                            nextNode = 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (node == null || !node.active()) {
+            throw new IOException(buildErrorMessage());
+        }
+
+        return node;
+    }
+
+    private String buildErrorMessage() {
+        StringBuilder sb = new StringBuilder("no active node found. Start an elasticsearch cluster first! ");
+        sb.append("Expecting something running at ");
+        for (Node node : nodes) {
+            sb.append("[").append(node.getHost()).append(":").append(node.getPort()).append("]");
+        }
+        return sb.toString();
+    }
+
+    private ElasticsearchUrl buildUrl(Node node) throws IOException {
+        if (node == null) {
+            throw new IOException("no node seems to be available");
+        }
+
+        ElasticsearchUrl url = new ElasticsearchUrl();
 
         url.setScheme("http");
         url.setHost(node.getHost());
@@ -77,17 +140,41 @@ public class ElasticsearchClient {
         return url;
     }
 
-    public void addNode(Node node) {
+    public ElasticsearchClient addNode(Node node) {
+        // We first check if the node is responding
+        checkAndSetActive(node);
         nodes.add(node);
+        return this;
     }
 
     public void createIndex(String index) throws IOException {
         createIndex(index, false);
     }
 
-    public void createIndex(String index, boolean ignoreErrors) throws IOException {
+    public boolean isActive(Node node) {
+        logger.debug("is node [{}] active?", node);
+        boolean active = false;
+        try {
+            GenericUrl genericUrl = buildUrl(node);
+            genericUrl.appendRawPath("/");
+            HttpResponse httpResponse = requestFactory.buildGetRequest(genericUrl).execute();
+            logger.trace("get / response: {}", httpResponse.parseAsString());
+            active = true;
+        } catch (IOException e) {
+            logger.trace("error received", e);
+        }
+        logger.debug("is node active? -> [{}]", active);
+        return active;
+    }
+
+    public boolean checkAndSetActive(Node node) {
+        node.active(isActive(node));
+        return node.active();
+    }
+
+    public void createIndex(Node node, String index, boolean ignoreErrors) throws IOException {
         logger.debug("create index [{}]", index);
-        GenericUrl genericUrl = buildUrl();
+        GenericUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/" + index);
         HttpRequest request = requestFactory.buildPutRequest(genericUrl, null);
 
@@ -102,12 +189,22 @@ public class ElasticsearchClient {
                 logger.trace("index already exists. Ignoring error...");
                 return;
             }
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
+            throw e;
+        } catch (ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
             throw e;
         }
         logger.trace("create index response: {}", httpResponse.parseAsString());
     }
 
-    public BulkResponse bulk(BulkRequest bulkRequest) throws Exception {
+    public void createIndex(String index, boolean ignoreErrors) throws IOException {
+        createIndex(findNextNode(), index, ignoreErrors);
+    }
+
+    public BulkResponse bulk(Node node, BulkRequest bulkRequest) throws Exception {
         StringBuffer sbf = new StringBuffer();
         for (SingleBulkRequest request : bulkRequest.getRequests()) {
             sbf.append("{");
@@ -125,29 +222,48 @@ public class ElasticsearchClient {
         logger.trace("going to send a bulk");
         logger.trace("{}", sbf);
 
-        ElasticsearchUrl genericUrl = buildUrl();
+        GenericUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/_bulk");
         HttpRequest request = requestFactory.buildPostRequest(genericUrl,
                 ByteArrayContent.fromString("application/json", sbf.toString()));
-        HttpResponse httpResponse = request.execute();
-        BulkResponse response = httpResponse.parseAs(BulkResponse.class);
-        logger.debug("bulk response: {}", response);
 
-
-        return new BulkResponse();
+        try {
+            HttpResponse httpResponse = request.execute();
+            BulkResponse response = httpResponse.parseAs(BulkResponse.class);
+            logger.debug("bulk response: {}", response);
+            return response;
+        } catch (HttpResponseException|ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
+            throw e;
+        }
     }
 
-    public void putMapping(String index, String type, ObjectNode mapping) throws IOException {
+    public BulkResponse bulk(BulkRequest bulkRequest) throws Exception {
+        return bulk(findNextNode(), bulkRequest);
+    }
+
+    public void putMapping(Node node, String index, String type, ObjectNode mapping) throws Exception {
         logger.debug("put mapping [{}/{}]", index, type);
-        GenericUrl genericUrl = buildUrl();
+        GenericUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/" + index);
         genericUrl.appendRawPath("/_mapping");
         genericUrl.appendRawPath("/" + type);
         HttpRequest request = requestFactory.buildPutRequest(genericUrl,
                 ByteArrayContent.fromString("application/json", mapping.toString()));
 
-        HttpResponse httpResponse = request.execute();
-        logger.trace("put mapping response: {}", httpResponse.parseAsString());
+        try {
+            HttpResponse httpResponse = request.execute();
+            logger.trace("put mapping response: {}", httpResponse.parseAsString());
+        } catch (HttpResponseException|ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
+            throw e;
+        }
+    }
+
+    public void putMapping(String index, String type, ObjectNode mapping) throws Exception {
+        putMapping(findNextNode(), index, type, mapping);
     }
 
     public static class ElasticsearchUrl extends GenericUrl {
@@ -160,14 +276,13 @@ public class ElasticsearchClient {
     }
 
     public SearchResponse search(String index, String type, String query, Integer size, String field) throws IOException {
-        logger.debug("search [{}]/[{}], query [{}], size [{}], field [{}]", index, type, query, size, field);
         return search(index, type, SearchRequest.builder().setQuery(query).setSize(size).setFields(field).build());
     }
 
-    public SearchResponse search(String index, String type, SearchRequest searchRequest) throws IOException {
-        logger.debug("search [{}]/[{}], request [{}]", index, type, searchRequest);
+    public SearchResponse search(Node node, String index, String type, SearchRequest searchRequest) throws IOException {
+        logger.debug("search [{}]/[{}], request [{}] with node [{}]", index, type, searchRequest, node);
 
-        ElasticsearchUrl genericUrl = buildUrl();
+        ElasticsearchUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/" + index);
         genericUrl.appendRawPath("/" + type);
         genericUrl.appendRawPath("/_search");
@@ -175,17 +290,27 @@ public class ElasticsearchClient {
             genericUrl.q = searchRequest.getQuery();
         }
         HttpRequest request = requestFactory.buildPostRequest(genericUrl, new JsonHttpContent(JSON_FACTORY, searchRequest));
-        HttpResponse httpResponse = request.execute();
-        SearchResponse response = httpResponse.parseAs(SearchResponse.class);
-        logger.debug("search response: {}", response);
+        try {
+            HttpResponse httpResponse = request.execute();
+            SearchResponse response = httpResponse.parseAs(SearchResponse.class);
+            logger.debug("search response: {}", response);
 
-        return response;
+            return response;
+        } catch (HttpResponseException|ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
+            throw e;
+        }
     }
 
-    public boolean isExistingType(String index, String type) throws IOException {
+    public SearchResponse search(String index, String type, SearchRequest searchRequest) throws IOException {
+        return search(findNextNode(), index, type, searchRequest);
+    }
+
+    public boolean isExistingType(Node node, String index, String type) throws IOException {
         logger.debug("is existing type [{}]/[{}]", index, type);
 
-        GenericUrl genericUrl = buildUrl();
+        GenericUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/" + index);
         HttpRequest request = requestFactory.buildGetRequest(genericUrl);
         try {
@@ -200,8 +325,17 @@ public class ElasticsearchClient {
                 logger.debug("type [{}]/[{}] does not exist", index, type);
                 return false;
             }
+            node.active(false);
+            throw e;
+        } catch (ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
             throw e;
         }
+    }
+
+    public boolean isExistingType(String index, String type) throws IOException {
+        return isExistingType(findNextNode(), index, type);
     }
 
     public static class Builder {

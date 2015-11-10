@@ -55,10 +55,12 @@ public class Elasticsearch {
         private Node(String host, int port) {
             this.host = host;
             this.port = port;
+            this.active = false;
         }
 
         private String host;
         private int port;
+        private boolean active;
 
         public String getHost() {
             return host;
@@ -74,6 +76,14 @@ public class Elasticsearch {
 
         public void setPort(int port) {
             this.port = port;
+        }
+
+        public boolean active() {
+            return active;
+        }
+
+        public void active(boolean active) {
+            this.active = active;
         }
 
         public static Builder builder() {
@@ -116,6 +126,16 @@ public class Elasticsearch {
             int result = host != null ? host.hashCode() : 0;
             result = 31 * result + port;
             return result;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuffer sb = new StringBuffer("Node{");
+            sb.append("active=").append(active);
+            sb.append(", host='").append(host).append('\'');
+            sb.append(", port=").append(port);
+            sb.append('}');
+            return sb.toString();
         }
     }
 

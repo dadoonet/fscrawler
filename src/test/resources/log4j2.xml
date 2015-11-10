@@ -6,7 +6,7 @@
       </Console>
    </Appenders>
    <Loggers>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs" level="trace" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="org.elasticsearch" level="error" additivity="false">
