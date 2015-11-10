@@ -149,6 +149,14 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         return dataDir.getAbsoluteFile().getAbsolutePath();
     }
 
+    private void startCrawler() throws Exception {
+        startCrawler(getCrawlerName());
+    }
+
+    private void startCrawler(final String jobName) throws Exception {
+        startCrawler(jobName, startCrawlerDefinition().build(), endCrawlerDefinition(jobName), null);
+    }
+
     private void startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
@@ -271,9 +279,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
     @Test
     public void test_filesize() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler();
 
         SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .setQuery(QueryBuilders.matchAllQuery())
@@ -417,9 +423,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
     @Test
     public void test_default_metadata() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-
+        startCrawler();
         SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .addField("*")
                 .get();
@@ -443,7 +447,6 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         }
     }
 
-    // FIXME: This test fails. We never remove docs
     @Test
     public void test_remove_deleted_enabled() throws Exception {
         Fs fs = startCrawlerDefinition()
@@ -456,7 +459,6 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
         // We remove a file
         logger.info(" ---> Removing file deleted_roottxtfile.txt");
-        // We create a copy of a file
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
         // We expect to have two files
@@ -475,7 +477,6 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
         // We remove a file
         logger.info(" ---> Removing file deleted_roottxtfile.txt");
-        // We create a copy of a file
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
         // We expect to have two files
@@ -483,12 +484,32 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
     }
 
     /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/110
+     * @throws Exception In case something is wrong
+     */
+    @Test
+    public void test_rename_file() throws Exception {
+        startCrawler();
+
+        // We should have two docs first
+        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+
+        // We rename the file
+        logger.info(" ---> Renaming file roottxtfile.txt to renamed_roottxtfile.txt");
+        // We create a copy of a file
+        Files.move(currentTestResourceDir.resolve("roottxtfile.txt"),
+                currentTestResourceDir.resolve("renamed_roottxtfile.txt"));
+
+        // We expect to have one file only with a new name
+        countTestHelper(getCrawlerName(), "file.filename:renamed_roottxtfile.txt", 1, currentTestResourceDir);
+    }
+
+    /**
      * Test case for issue #60: https://github.com/dadoonet/fscrawler/issues/60 : new files are not added
      */
     @Test
     public void test_add_new_file() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler();
 
         // We should have one doc first
         countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
@@ -591,8 +612,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
     @Test
     public void test_do_not_store_source() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler();
 
         SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
                 .addField("_source")
@@ -614,8 +634,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
     @Test
     public void test_defaults() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler();
 
         // We expect to have one file
         countTestHelper(getCrawlerName(), null, 1);
@@ -623,8 +642,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
     @Test
     public void test_subdirs() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler();
 
         // We expect to have one file
         countTestHelper(getCrawlerName(), null, 2);
@@ -648,8 +666,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
     @Test
     public void test_filename_analyzer() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler();
 
         CountResponse response = client.prepareCount(getCrawlerName())
                 .setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
@@ -731,8 +748,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
      */
     @Test
     public void test_unparsable() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler();
 
         // We expect to have one file
         countTestHelper(getCrawlerName(), null, 2);
