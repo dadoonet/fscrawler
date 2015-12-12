@@ -43,7 +43,7 @@ public class Elasticsearch {
     }
 
     public static final Elasticsearch DEFAULT = Elasticsearch.builder()
-            .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(9300).build())
+            .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(9200).build())
             .build();
 
     public static class Node {
