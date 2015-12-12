@@ -1,23 +1,15 @@
 # FileSystem Crawler for Elasticsearch
 
-**BIG WARNING** : Elasticsearch 2.0.0 doesn't support anymore rivers. 
-
-This project has moved to a standalone application which crawls your file system and index new files, update existing 
-ones and removes old ones.
-
-**Please use it with caution and don't put it in production without a lot of tests...**
-
-----------
-
 Welcome to the FS Crawler for [Elasticsearch](https://elastic.co/)
 
 This crawler helps to index documents from your local file system and over SSH.
+It crawls your file system and index new files, update existing ones and removes old ones.
 
 You need to install a version matching your Elasticsearch version:
 
-| Elasticsearch |  FS Crawler |                                                            Docs                                                                    |
-|---------------|-------------|------------------------------------------------------------------------------------------------------------------------------------|
-|    es-2.0     | 2.0.0       | See below                                                                                                                          |
+| Elasticsearch |  FS Crawler |                   Docs               |
+|---------------|-------------|--------------------------------------|
+|    es-2.0     | 2.0.0       | See below                            |
 
 
 ## Build Status
