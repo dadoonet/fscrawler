@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.*;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
@@ -275,6 +276,22 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
                 }
             }
         }), equalTo(true));
+    }
+
+    @Test
+    public void test_default_settings() throws Exception {
+        ElasticsearchClient client = ElasticsearchClient.builder().build();
+        boolean active = client.isActive(Elasticsearch.DEFAULT.getNodes().get(0));
+        if (active) {
+            logger.warn("you have a local elasticsearch node running on 9200 port. We will skip the test.");
+            return;
+        }
+
+        try {
+            startCrawler(getCrawlerName(), null, null, null);
+        } catch (IOException e) {
+            // We expect it as we probably don't have an elasticsearch node running with default 9200 port
+        }
     }
 
     @Test

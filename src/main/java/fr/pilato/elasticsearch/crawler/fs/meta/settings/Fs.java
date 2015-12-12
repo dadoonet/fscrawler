@@ -39,7 +39,8 @@ public class Fs {
         return new Builder();
     }
 
-    public static final Fs DEFAULT = Fs.builder().setUrl("/tmp/es").build();
+    public static final String DEFAULT_DIR = "/tmp/es";
+    public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).build();
 
     public static class Builder {
         private String url;

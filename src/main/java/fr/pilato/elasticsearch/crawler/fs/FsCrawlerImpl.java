@@ -29,6 +29,8 @@ import fr.pilato.elasticsearch.crawler.fs.meta.doc.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.PathParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
@@ -81,11 +83,18 @@ public class FsCrawlerImpl {
         this.fsJobFileHandler = new FsJobFileHandler(config);
 
         this.settings = settings;
-        if (settings.getFs().getUrl() == null) {
-            logger.warn("`url` is not set. Please define it. Falling back to default: /esdir.");
-            settings.getFs().setUrl("/esdir");
+        if (settings.getFs() == null || settings.getFs().getUrl() == null) {
+            logger.warn("`url` is not set. Please define it. Falling back to default: [{}].", Fs.DEFAULT_DIR);
+            if (settings.getFs() == null) {
+                settings.setFs(Fs.DEFAULT);
+            } else {
+                settings.getFs().setUrl(Fs.DEFAULT_DIR);
+            }
         }
 
+        if (settings.getElasticsearch() == null) {
+            settings.setElasticsearch(Elasticsearch.DEFAULT);
+        }
         if (settings.getElasticsearch().getIndex() == null) {
             // When index is not set, we fallback to the config name
             settings.getElasticsearch().setIndex(settings.getName());
