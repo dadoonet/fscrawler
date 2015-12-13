@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Test elasticsearch HTTP client with multiple nodes
@@ -66,7 +67,8 @@ public class ElasticsearchClientFailureDetectionITest extends AbstractMultiNodes
         // We have 0 running node
         try {
             elasticsearchClient.findNextNode();
-            fail("We should get a IOException here as no node is available");
+            assumeTrue("We should get a IOException here as no node is available. May be you have a cluster " +
+                    "running on " + HTTP_TEST_PORT + " port?", false);
         } catch (IOException e) {
             // We expect it!
             assertThat(e.getMessage(), containsString("no active node found. Start an elasticsearch cluster first!"));

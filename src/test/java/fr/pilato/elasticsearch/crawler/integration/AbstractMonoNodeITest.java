@@ -23,13 +23,17 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.http.BindHttpException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
+import org.elasticsearch.transport.BindTransportException;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
 import java.io.File;
 import java.net.InetAddress;
+
+import static org.junit.Assume.assumeTrue;
 
 public abstract class AbstractMonoNodeITest extends AbstractITest {
 
@@ -44,14 +48,20 @@ public abstract class AbstractMonoNodeITest extends AbstractITest {
             File home = folder.newFolder("elasticsearch");
             staticLogger.info("  --> Starting elasticsearch test node in [{}]", home.toString());
 
-            node = NodeBuilder.nodeBuilder()
-                    .settings(Settings.builder()
-                                    .put("path.home", home)
-                                    .put("cluster.name", "fscrawler-integration-tests")
-                                    .put("transport.tcp.port", TRANSPORT_TEST_PORT)
-                                    .put("http.port", HTTP_TEST_PORT)
-                    )
-                    .node();
+            try {
+                node = NodeBuilder.nodeBuilder()
+                        .settings(Settings.builder()
+                                        .put("path.home", home)
+                                        .put("cluster.name", "fscrawler-integration-tests")
+                                        .put("transport.tcp.port", TRANSPORT_TEST_PORT)
+                                        .put("http.port", HTTP_TEST_PORT)
+                        )
+                        .node();
+            } catch (BindHttpException|BindTransportException e) {
+                staticLogger.warn("  --> Can not start elasticsearch node: {}", e.getMessage());
+            }
+
+            assumeTrue(node != null);
 
             client = TransportClient.builder()
                     .settings(Settings.builder()

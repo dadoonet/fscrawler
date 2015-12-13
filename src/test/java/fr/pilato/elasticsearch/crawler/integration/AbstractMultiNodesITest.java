@@ -22,8 +22,10 @@ package fr.pilato.elasticsearch.crawler.integration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.http.BindHttpException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
+import org.elasticsearch.transport.BindTransportException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -33,6 +35,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.Assume.assumeTrue;
 
 public abstract class AbstractMultiNodesITest extends AbstractITest {
 
@@ -68,17 +72,26 @@ public abstract class AbstractMultiNodesITest extends AbstractITest {
 
     private static Node internalStart(File home, int nodeNumber) {
         staticLogger.info("  --> Starting elasticsearch test node [{}] in [{}]", nodeNumber, home.toString());
-        return NodeBuilder.nodeBuilder()
-                .settings(Settings.builder()
-                                .put("path.home", home)
-                                .put("cluster.name", "fscrawler-integration-tests")
-                                .put("transport.tcp.port", TRANSPORT_TEST_PORT + nodeNumber)
-                                .put("http.port", HTTP_TEST_PORT + nodeNumber)
-                                .put("cluster.routing.allocation.disk.threshold_enabled", false)
-                                .putArray("discovery.zen.ping.unicast.hosts",
-                                        "127.0.0.1:" + TRANSPORT_TEST_PORT + "-" + TRANSPORT_TEST_PORT + NUMBER_OF_NODES)
-                )
-                .node();
+        Node node = null;
+        try {
+            node = NodeBuilder.nodeBuilder()
+                    .settings(Settings.builder()
+                                    .put("path.home", home)
+                                    .put("cluster.name", "fscrawler-integration-tests")
+                                    .put("transport.tcp.port", TRANSPORT_TEST_PORT + nodeNumber)
+                                    .put("http.port", HTTP_TEST_PORT + nodeNumber)
+                                    .put("cluster.routing.allocation.disk.threshold_enabled", false)
+                                    .putArray("discovery.zen.ping.unicast.hosts",
+                                            "127.0.0.1:" + TRANSPORT_TEST_PORT + "-" + TRANSPORT_TEST_PORT + NUMBER_OF_NODES)
+                    )
+                    .node();
+        } catch (BindHttpException|BindTransportException e) {
+            staticLogger.warn("  --> Can not start elasticsearch node: {}", e.getMessage());
+        }
+
+        assumeTrue(node != null);
+
+        return node;
     }
 
     protected static void closeNode(int node) {
