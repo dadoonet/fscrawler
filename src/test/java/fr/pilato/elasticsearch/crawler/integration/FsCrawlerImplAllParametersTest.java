@@ -820,6 +820,18 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         assertThat(searchResponse.getHits().totalHits(), equalTo(1L));
     }
 
+    /**
+     * Test for word document
+     */
+    @Test
+    public void test_word() throws Exception {
+        startCrawler();
+
+        // We expect to have two files
+        countTestHelper(getCrawlerName(), "figure", 1);
+    }
+
+
     private class InternalFileVisitor extends SimpleFileVisitor<Path> {
 
         private final Path fromPath;
