@@ -179,6 +179,9 @@ Define `fs.includes` and `fs.excludes` properties in your `~/.fscrawler/test.jso
 }
 ```
 
+It also applies to directory names. So if you want to ignore `.ignore` dir, just add `.ignore` as an excluded name.
+
+
 ### Update rate
 
 By default, `update_rate` is set to `15m`. You can modify this value using any compatible 
