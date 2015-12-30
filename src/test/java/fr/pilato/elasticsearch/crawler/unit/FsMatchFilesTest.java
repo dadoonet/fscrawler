@@ -40,6 +40,7 @@ public class FsMatchFilesTest {
         assertThat(FsCrawlerUtil.isIndexable("my.doc.xls", new ArrayList<>(), Arrays.asList("*.doc", "*.xls")), is(false));
         assertThat(FsCrawlerUtil.isIndexable("my.doc.xls", new ArrayList<>(), Collections.singletonList("my.d?c*.xls")), is(false));
         assertThat(FsCrawlerUtil.isIndexable("my.douc.xls", new ArrayList<>(), Collections.singletonList("my.d?c*.xls")), is(true));
+        assertThat(FsCrawlerUtil.isIndexable(".snapshots", new ArrayList<>(), Collections.singletonList(".snapshots")), is(false));
     }
 
     @Test
@@ -60,4 +61,10 @@ public class FsMatchFilesTest {
         assertThat(FsCrawlerUtil.isIndexable("my.douc.xls", Collections.singletonList("*.xls"), Collections.singletonList("my.d?c*.xls")), is(true));
     }
 
+    @Test
+    public void default_ignored_file() {
+        assertThat(FsCrawlerUtil.isIndexable("~mydoc", new ArrayList<>(), new ArrayList<>()), is(false));
+        assertThat(FsCrawlerUtil.isIndexable("~", new ArrayList<>(), new ArrayList<>()), is(false));
+        assertThat(FsCrawlerUtil.isIndexable("adoc.doc", new ArrayList<>(), new ArrayList<>()), is(true));
+    }
 }

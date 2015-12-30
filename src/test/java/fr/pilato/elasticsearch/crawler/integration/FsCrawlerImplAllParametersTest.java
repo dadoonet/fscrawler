@@ -661,8 +661,19 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
     public void test_subdirs() throws Exception {
         startCrawler();
 
-        // We expect to have one file
+        // We expect to have two files
         countTestHelper(getCrawlerName(), null, 2);
+    }
+
+    @Test
+    public void test_ignore_dir() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .addExclude(".ignore")
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        // We expect to have one file
+        countTestHelper(getCrawlerName(), null, 1);
     }
 
     @Test

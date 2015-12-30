@@ -22,6 +22,8 @@ package fr.pilato.elasticsearch.crawler.fs.util;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -78,6 +80,8 @@ public class FsCrawlerUtil extends MetaParser {
         public static final String VIRTUAL = "virtual";
         public static final String REAL = "real";
     }
+
+    private static final Logger logger = LogManager.getLogger(FsCrawlerUtil.class);
 
     /**
      * Build the mapping for documents
@@ -211,25 +215,48 @@ public class FsCrawlerUtil extends MetaParser {
      * @param excludes exclude rules, may be empty not null
      */
     public static boolean isIndexable(String filename, List<String> includes, List<String> excludes) {
+        logger.debug("filename = [{}], includes = [{}], excludes = [{}]", filename, includes, excludes);
+
+        // Ignore temporary files
+        if (filename.contains("~")) {
+            logger.trace("filename contains ~");
+            return false;
+        }
+
         // No rules ? Fine, we index everything
-        if ((includes == null || includes.isEmpty()) && (excludes == null || excludes.isEmpty())) return true;
+        if ((includes == null || includes.isEmpty()) && (excludes == null || excludes.isEmpty())) {
+            logger.trace("no rules");
+            return true;
+        }
 
         // Exclude rules : we know that whatever includes rules are, we should exclude matching files
         if (excludes != null) {
             for (String exclude : excludes) {
                 String regex = exclude.replace("?", ".?").replace("*", ".*?");
-                if (filename.matches(regex)) return false;
+                logger.trace("regex is [{}]", regex);
+                if (filename.matches(regex)) {
+                    logger.trace("does match exclude regex");
+                    return false;
+                }
             }
         }
 
         // Include rules : we should add document if it match include rules
-        if (includes == null || includes.isEmpty()) return true;
+        if (includes == null || includes.isEmpty()) {
+            logger.trace("no include rules");
+            return true;
+        }
 
         for (String include : includes) {
             String regex = include.replace("?", ".?").replace("*", ".*?");
-            if (filename.matches(regex)) return true;
+            logger.trace("regex is [{}]", regex);
+            if (filename.matches(regex)) {
+                logger.trace("does match include regex");
+                return true;
+            }
         }
 
+        logger.trace("does not match any include pattern");
         return false;
     }
 
