@@ -88,7 +88,7 @@ The job file must comply to the following `json` specifications:
   "elasticsearch" : {
     "nodes" : [ {
       "host" : "127.0.0.1",
-      "port" : 9300
+      "port" : 9200
     } ],
     "index" : "docs",
     "type" : "doc",
@@ -125,7 +125,7 @@ Here is a full list of existing settings:
 | `elasticsearch.type`             | `"doc"`       | [Type Name](#type-name)                                                           |
 | `elasticsearch.bulk_size`        | `100`         | [Bulk settings](#bulk-settings)                                                   |
 | `elasticsearch.flush_interval`   | `"5s"`        | [Bulk settings](#bulk-settings)                                                   |
-| `elasticsearch.nodes`            |127.0.0.1:9300 | [Node settings](#node-settings)                                                   |
+| `elasticsearch.nodes`            |127.0.0.1:9200 | [Node settings](#node-settings)                                                   |
 
 
 ### The most simple crawler
@@ -139,7 +139,7 @@ You can define the most simple crawler job by writing a `~/.fscrawler/test.json`
 ```
 
 This will scan every 15 minutes all documents available in `/tmp/es` dir and will index them into `test` index with
-`doc` type. It will connect to an elasticsearch cluster running on `127.0.0.1`, port `9300`.
+`doc` type. It will connect to an elasticsearch cluster running on `127.0.0.1`, port `9200`.
 
 **Note**: `name` is a mandatory field.
 
