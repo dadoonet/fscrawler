@@ -19,7 +19,7 @@
     </licenses>
 
     <properties>
-        <elasticsearch.version>2.0.0</elasticsearch.version>
+        <elasticsearch.version>2.3.1</elasticsearch.version>
         <tika.version>1.10</tika.version>
         <jackson.version>2.6.3</jackson.version>
         <log4j.version>2.4.1</log4j.version>
@@ -201,7 +201,7 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-test-framework</artifactId>
-            <version>5.2.1</version>
+            <version>5.5.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
