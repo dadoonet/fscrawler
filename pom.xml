@@ -5,7 +5,7 @@
     <groupId>de.codecentric</groupId>
     <artifactId>fscrawler</artifactId>
     <packaging>jar</packaging>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.3.0-SNAPSHOT</version>
     <name>Elasticsearch File System Crawler</name>
     <url>https://github.com/dadoonet/fscrawler/</url>
     <description>FS Crawler offers a simple way to index local files into elasticsearch.</description>
@@ -36,17 +36,24 @@
             <url>https://david.pilato.fr/</url>
             <timezone>+1</timezone>
         </developer>
+        <developer>
+            <id>codecentric</id>
+            <name>Rolf Felker</name>
+            <email>rolf.felker@codecentric.de</email>
+            <url>http://www.codecentric.de</url>
+            <timezone>+1</timezone>
+        </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:dadoonet/fscrawler.git</connection>
-        <url>scm:git:git@github.com:dadoonet/fscrawler.git</url>
-        <developerConnection>scm:git:git@github.com:dadoonet/fscrawler.git</developerConnection>
+        <connection>scm:git:git@github.com:codecentric/fscrawler.git</connection>
+        <url>scm:git:git@github.com:codecentric/fscrawler.git</url>
+        <developerConnection>scm:git:git@github.com:codecentric/fscrawler.git</developerConnection>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/dadoonet/fscrawler/issues/</url>
+        <url>https://github.com/codecentric/fscrawler/issues/</url>
     </issueManagement>
 
     <build>
@@ -154,6 +161,7 @@
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
             </plugin>
+<!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-changes-plugin</artifactId>
@@ -177,6 +185,7 @@
                     <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/${project.version}/</urlDownload>
                 </configuration>
             </plugin>
+-->
         </plugins>
     </build>
 

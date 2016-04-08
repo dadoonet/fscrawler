@@ -1,21 +1,13 @@
+This repo is a fork of dadoonet/fscrawler. Many thanks to David Pilato for his great work!
+
 # FileSystem Crawler for Elasticsearch
-
-Welcome to the FS Crawler for [Elasticsearch](https://elastic.co/)
-
 This crawler helps to index documents from your local file system and over SSH.
 It crawls your file system and index new files, update existing ones and removes old ones.
 
-You need to install a version matching your Elasticsearch version:
-
-| Elasticsearch |  FS Crawler |                   Docs               |
-|---------------|-------------|--------------------------------------|
-|    es-2.0     | 2.0.0       | See below                            |
-
-
-## Build Status
-
-Thanks to Travis for the [build status](https://travis-ci.org/dadoonet/fscrawler): 
-[![Build Status](https://travis-ci.org/dadoonet/fscrawler.svg)](https://travis-ci.org/dadoonet/fscrawler)
+## Versions
+| Elasticsearch |  FS Crawler |
+|---------------|-------------|
+|         2.3.1 |       2.3.0 |
 
 # Getting Started
 
