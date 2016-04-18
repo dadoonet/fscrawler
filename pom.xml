@@ -5,9 +5,9 @@
     <groupId>de.codecentric</groupId>
     <artifactId>fscrawler</artifactId>
     <packaging>jar</packaging>
-    <version>2.3.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
     <name>Elasticsearch File System Crawler</name>
-    <url>https://github.com/dadoonet/fscrawler/</url>
+    <url>https://github.com/codecentric/fscrawler</url>
     <description>FS Crawler offers a simple way to index local files into elasticsearch.</description>
 
     <licenses>
@@ -38,8 +38,8 @@
         </developer>
         <developer>
             <id>codecentric</id>
-            <name>Rolf Felker</name>
-            <email>rolf.felker@codecentric.de</email>
+            <name>codecentric</name>
+            <email>info@codecentric.de</email>
             <url>http://www.codecentric.de</url>
             <timezone>+1</timezone>
         </developer>
