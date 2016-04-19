@@ -5,7 +5,7 @@
     <groupId>de.codecentric</groupId>
     <artifactId>fscrawler</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <name>Elasticsearch File System Crawler</name>
     <url>https://github.com/codecentric/fscrawler</url>
     <description>FS Crawler offers a simple way to index local files into elasticsearch.</description>
@@ -19,6 +19,7 @@
     </licenses>
 
     <properties>
+        <docker.image.prefix>de.codecentric</docker.image.prefix>
         <elasticsearch.version>2.3.1</elasticsearch.version>
         <tika.version>1.10</tika.version>
         <jackson.version>2.6.3</jackson.version>
@@ -105,6 +106,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>2.10</version>
+<!--
                 <executions>
                     <execution>
                         <id>copy</id>
@@ -127,6 +129,7 @@
                         </configuration>
                     </execution>
                 </executions>
+-->
             </plugin>
             <plugin>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
@@ -182,6 +185,52 @@
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.2.3</version>
+               <executions>
+                   <execution>
+                       <id>build-image</id>
+                       <phase>package</phase>
+                       <goals>
+                           <goal>build</goal>
+                       </goals>
+                       <configuration>
+                           <imageName>${docker.image.prefix}/${project.artifactId}:${project.version}</imageName>
+                           <dockerDirectory>docker</dockerDirectory>
+                           <resources>
+                               <resource>
+                                   <targetPath>/</targetPath>
+                                   <directory>${project.build.directory}</directory>
+                                   <include>${project.build.finalName}.jar</include>
+                               </resource>
+                           </resources>
+                       </configuration>
+                   </execution>
+                   <execution>
+                       <id>tag-image</id>
+                       <phase>package</phase>
+                       <goals>
+                           <goal>tag</goal>
+                       </goals>
+                       <configuration>
+                           <image>${project.artifactId}:${project.version}</image>
+                           <newName>${docker.image.prefix}/${project.artifactId}:${project.version}</newName>
+                       </configuration>
+                   </execution>
+                   <execution>
+                       <id>push-image</id>
+                       <phase>deploy</phase>
+                       <goals>
+                           <goal>push</goal>
+                       </goals>
+                       <configuration>
+                           <imageName>${docker.image.prefix}/${project.artifactId}:${project.version}</imageName>
+                       </configuration>
+                   </execution>
+               </executions>
             </plugin>
 <!--
             <plugin>
