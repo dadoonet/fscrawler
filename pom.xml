@@ -103,35 +103,6 @@
             <!-- Copy dependencies into lib folder -->
             <!-- To see full classpath use  mvn dependency:build-classpath -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.10</version>
-<!--
-                <executions>
-                    <execution>
-                        <id>copy</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>de.codecentric</groupId>
-                                    <artifactId>fscrawler</artifactId>
-                                    <version>0.0.1-SNAPSHOT</version>
-                                    <type>jar</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>docker</outputDirectory>
-                                    <destFileName>fscrawler.jar</destFileName>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
--->
-            </plugin>
-            <plugin>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
                 <artifactId>junit4-maven-plugin</artifactId>
                 <version>2.1.17</version>
@@ -142,27 +113,8 @@
                 <version>2.19</version>
             </plugin>
 
-            <!-- Generate the release zip file (run during package step) -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <descriptors>
-                        <descriptor>src/main/assembly/assembly.xml</descriptor>
-                    </descriptors>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>generate-release-plugin</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -186,6 +138,30 @@
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
             </plugin>
+            <!-- Generate fscrawler jar with all dependencies -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>fr.pilato.elasticsearch.crawler.fs.FsCrawler</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
@@ -204,7 +180,7 @@
                                <resource>
                                    <targetPath>/</targetPath>
                                    <directory>${project.build.directory}</directory>
-                                   <include>${project.build.finalName}.jar</include>
+                                   <include>${project.build.finalName}-jar-with-dependencies.jar</include>
                                </resource>
                            </resources>
                        </configuration>
