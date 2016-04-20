@@ -284,7 +284,6 @@ public class ElasticsearchClient {
                 Thread.sleep(sleepTimeInSec * 1000);
 
             } catch (InterruptedException e) {
-                e.printStackTrace();
             }
         }
 
