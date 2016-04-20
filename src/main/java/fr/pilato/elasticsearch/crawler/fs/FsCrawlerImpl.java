@@ -134,6 +134,10 @@ public class FsCrawlerImpl {
             // Create an elasticsearch client
             client = ElasticsearchClient.builder().build();
 
+            if (!client.waitUntilClusterIsRunning(15, 10, settings.getElasticsearch().getNodes())){
+                return;
+            }
+
             settings.getElasticsearch().getNodes().forEach(client::addNode);
 
             client.createIndex(settings.getElasticsearch().getIndex(), true);
@@ -251,7 +255,8 @@ public class FsCrawlerImpl {
 
         /**
          * Update the job metadata
-         * @param jobName job name
+         *
+         * @param jobName  job name
          * @param scanDate last date we scan the dirs
          * @throws Exception
          */
@@ -692,7 +697,7 @@ public class FsCrawlerImpl {
      *
      * @param str the CharSequence to check (may be <code>null</code>)
      * @return <code>true</code> if the CharSequence is not <code>null</code>,
-     *         its length is greater than 0, and it does not contain whitespace only
+     * its length is greater than 0, and it does not contain whitespace only
      * @see java.lang.Character#isWhitespace
      */
     public static boolean hasText(CharSequence str) {
