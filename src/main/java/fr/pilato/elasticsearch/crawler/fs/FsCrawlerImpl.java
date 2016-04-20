@@ -134,7 +134,10 @@ public class FsCrawlerImpl {
             // Create an elasticsearch client
             client = ElasticsearchClient.builder().build();
 
-            if (!client.waitUntilClusterIsRunning(15, 10, settings.getElasticsearch().getNodes())){
+            if (!client.waitUntilClusterIsRunning(
+                    settings.getElasticsearch().getWaitSeconds(),
+                    settings.getElasticsearch().getWaitInterval(),
+                    settings.getElasticsearch().getNodes())){
                 return;
             }
 
@@ -230,12 +233,13 @@ public class FsCrawlerImpl {
 
                     updateFsJob(fsSettings.getName(), scanDatenew);
                 } catch (Exception e) {
-                    logger.warn("Error while indexing content from {}", fsSettings.getFs().getUrl());
-                    logger.debug("", e);
+                    logger.warn("Error while indexing content from {}", fsSettings.getFs().getUrl(), e);
                 }
 
                 try {
-                    logger.debug("Fs crawler is going to sleep for {}", fsSettings.getFs().getUpdateRate());
+                    if(logger.isInfoEnabled()) {
+                        logger.info("Fs crawler is going to sleep for {}", fsSettings.getFs().getUpdateRate());
+                    }
                     Thread.sleep(fsSettings.getFs().getUpdateRate().millis());
                 } catch (InterruptedException e1) {
                 }
