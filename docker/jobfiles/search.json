@@ -24,7 +24,7 @@
         "index": null,
         "type": "doc",
         "bulk_size": 100,
-        "flush_interval": "5s"
+        "flush_interval": "5s",
         "wait_seconds": 10,
         "wait_interval": 12,
     }
