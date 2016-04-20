@@ -266,6 +266,28 @@ public class ElasticsearchClient {
         putMapping(findNextNode(), index, type, mapping);
     }
 
+    public boolean waitUntilClusterIsRunning(int sleepTimeInSec, int counts, List<Node> nodes) {
+
+        for (int i = 1; i <= counts; i++) {
+
+            if (nodes.stream().anyMatch(this::isActive)) {
+                return true;
+            }
+
+            if (logger.isInfoEnabled()) {
+                logger.info("Waiting until elasticsearch cluster is up ({}/{})...", i, counts);
+            }
+            try {
+                Thread.sleep(sleepTimeInSec * 1000);
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return false;
+    }
+
     public static class ElasticsearchUrl extends GenericUrl {
         @Key
         public String q;
