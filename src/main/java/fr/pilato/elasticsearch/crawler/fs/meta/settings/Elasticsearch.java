@@ -26,16 +26,26 @@ import java.util.List;
 
 public class Elasticsearch {
 
+    private List<Node> nodes;
+    private String index;
+    private String type;
+    private int bulkSize;
+    private TimeValue flushInterval;
+    private int waitSeconds;
+    private int waitInterval;
+
     public Elasticsearch() {
 
     }
 
-    private Elasticsearch(List<Node> nodes, String index, String type, int bulkSize, TimeValue flushInterval) {
+    private Elasticsearch(List<Node> nodes, String index, String type, int bulkSize, TimeValue flushInterval, int waitSeconds, int waitInterval) {
         this.nodes = nodes;
         this.index = index;
         this.type = type;
         this.bulkSize = bulkSize;
         this.flushInterval = flushInterval;
+        this.waitSeconds = waitSeconds;
+        this.waitInterval = waitInterval;
     }
 
     public static Builder builder() {
@@ -45,6 +55,7 @@ public class Elasticsearch {
     public static final Elasticsearch DEFAULT = Elasticsearch.builder()
             .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(9200).build())
             .build();
+
 
     public static class Node {
 
@@ -139,11 +150,6 @@ public class Elasticsearch {
         }
     }
 
-    private List<Node> nodes;
-    private String index;
-    private String type;
-    private int bulkSize;
-    private TimeValue flushInterval;
 
     public List<Node> getNodes() {
         return nodes;
@@ -185,12 +191,32 @@ public class Elasticsearch {
         this.flushInterval = flushInterval;
     }
 
+    public int getWaitSeconds() {
+        return waitSeconds;
+    }
+
+    public void setWaitSeconds(int waitSeconds) {
+        this.waitSeconds = waitSeconds;
+    }
+
+    public int getWaitInterval() {
+        return waitInterval;
+    }
+
+    public void setWaitInterval(int waitInterval) {
+        this.waitInterval = waitInterval;
+    }
+
+
+
     public static class Builder {
         private List<Node> nodes;
         private String index;
         private String type = FsCrawlerUtil.INDEX_TYPE_DOC;
         private int bulkSize = 100;
         private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
+        private int waitSeconds = 1;
+        private int waitInterval = 1;
 
         public Builder setNodes(List<Node> nodes) {
             this.nodes = nodes;
@@ -225,8 +251,18 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setWaitSeconds(int waitSeconds){
+            this.waitSeconds = waitSeconds;
+            return this;
+        }
+
+        public Builder setWaitInterval(int waitInterval){
+            this.waitInterval = waitInterval;
+            return this;
+        }
+
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, type, bulkSize, flushInterval);
+            return new Elasticsearch(nodes, index, type, bulkSize, flushInterval, waitSeconds, waitInterval);
         }
     }
 
