@@ -26,6 +26,6 @@
         "bulk_size": 100,
         "flush_interval": "5s",
         "wait_seconds": 10,
-        "wait_interval": 12,
+        "wait_interval": 12
     }
 }
