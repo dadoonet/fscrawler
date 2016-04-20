@@ -271,11 +271,14 @@ public class ElasticsearchClient {
         for (int i = 1; i <= counts; i++) {
 
             if (nodes.stream().anyMatch(this::isActive)) {
+                if (logger.isInfoEnabled()) {
+                    logger.info("elasticsearch cluster is running", i, counts);
+                }
                 return true;
             }
 
             if (logger.isInfoEnabled()) {
-                logger.info("Waiting until elasticsearch cluster is up ({}/{})...", i, counts);
+                logger.info("waiting until elasticsearch cluster is up ({}/{})...", i, counts);
             }
             try {
                 Thread.sleep(sleepTimeInSec * 1000);
