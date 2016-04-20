@@ -152,18 +152,31 @@ public class ElasticsearchClient {
     }
 
     public boolean isActive(Node node) {
-        logger.debug("is node [{}] active?", node);
+
+        if(logger.isInfoEnabled()) {
+            logger.info("is node [{}] active?", node);
+        }
+
         boolean active = false;
+
         try {
             GenericUrl genericUrl = buildUrl(node);
             genericUrl.appendRawPath("/");
             HttpResponse httpResponse = requestFactory.buildGetRequest(genericUrl).execute();
-            logger.trace("get / response: {}", httpResponse.parseAsString());
+
+            if(logger.isInfoEnabled()) {
+                logger.info("get / response: {}", httpResponse.parseAsString());
+            }
+
             active = true;
         } catch (IOException e) {
-            logger.trace("error received", e);
+            // seems it isn't active...
         }
-        logger.debug("is node active? -> [{}]", active);
+
+        if(logger.isInfoEnabled()) {
+            logger.info("is node active? -> [{}]", active);
+        }
+
         return active;
     }
 
