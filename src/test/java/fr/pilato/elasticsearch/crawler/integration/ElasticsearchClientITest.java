@@ -30,6 +30,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -53,6 +55,22 @@ public class ElasticsearchClientITest extends AbstractMonoNodeITest {
     public static void stopClient() {
         elasticsearchClient = null;
     }
+
+    @Test
+    public void testIfElasticsearchClusterIsIsntRunning() throws IOException {
+
+        List<Elasticsearch.Node> nodes = new ArrayList<>();
+        nodes.add(elasticsearchClient.getNode(0));
+
+        stopTestNode();
+        boolean isRunning = elasticsearchClient.waitUntilClusterIsRunning(5, 1, nodes);
+        assertThat(isRunning, is(false));
+
+        startTestNode();
+        isRunning = elasticsearchClient.waitUntilClusterIsRunning(5, 1, nodes);
+        assertThat(isRunning, is(true));
+    }
+
 
     @Test
     public void testCreateIndex() throws IOException {
