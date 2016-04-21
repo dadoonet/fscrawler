@@ -1,7 +1,7 @@
 {
     "name": "exampleConfigFile",
     "fs": {
-        "url": "/data/folder/with/documents",
+        "url": "/opt/fscrawler/data",
         "update_rate": "15m",
         "includes": null,
         "excludes": null,
