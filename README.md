@@ -85,7 +85,9 @@ The job file must comply to the following `json` specifications:
     "index" : "docs",
     "type" : "doc",
     "bulk_size" : 100,
-    "flush_interval" : "5s"
+    "flush_interval" : "5s",
+    "wait_seconds": 10,
+    "wait_interval": 12
   }
 }
 ```
@@ -118,6 +120,8 @@ Here is a full list of existing settings:
 | `elasticsearch.bulk_size`        | `100`         | [Bulk settings](#bulk-settings)                                                   |
 | `elasticsearch.flush_interval`   | `"5s"`        | [Bulk settings](#bulk-settings)                                                   |
 | `elasticsearch.nodes`            |127.0.0.1:9200 | [Node settings](#node-settings)                                                   |
+| `elasticsearch.wait_seconds`     | `1`           | [fs startup, is cluster running? seconds until next attempt]                      |
+| `elasticsearch.wait_interval`    | `1`           | [fs startup, is cluster running? number of attempts]                              |
 
 
 ### The most simple crawler
