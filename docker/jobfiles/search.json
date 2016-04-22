@@ -1,8 +1,8 @@
 {
-    "name": "exampleConfigFile",
+    "name": "search",
     "fs": {
         "url": "/opt/fscrawler/data",
-        "update_rate": "15m",
+        "update_rate": "1m",
         "includes": null,
         "excludes": null,
         "json_support": false,
