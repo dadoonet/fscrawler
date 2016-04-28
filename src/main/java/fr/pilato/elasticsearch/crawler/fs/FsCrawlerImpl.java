@@ -402,7 +402,7 @@ public class FsCrawlerImpl {
                     FILE_FILENAME
             );
 
-            logger.trace("Response [{}]", response.toString());
+            logger.trace("Response [{} hits]", response.getHits() != null ? response.getHits().getTotal() : 0);
             if (response.getHits() != null && response.getHits().getHits() != null) {
                 for (SearchResponse.Hit hit : response.getHits().getHits()) {
                     String name;
@@ -665,7 +665,6 @@ public class FsCrawlerImpl {
          */
         private void esIndex(String index, String type, String id, String json) {
             logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
-            logger.trace("JSon indexed : {}", json);
 
             if (!closed) {
                 bulkProcessor.add(new IndexRequest(index, type, id).source(json));
