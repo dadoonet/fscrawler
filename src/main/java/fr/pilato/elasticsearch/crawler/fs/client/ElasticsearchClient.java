@@ -233,7 +233,6 @@ public class ElasticsearchClient {
         }
 
         logger.trace("going to send a bulk");
-        logger.trace("{}", sbf);
 
         GenericUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/_bulk");
@@ -330,7 +329,7 @@ public class ElasticsearchClient {
         try {
             HttpResponse httpResponse = request.execute();
             SearchResponse response = httpResponse.parseAs(SearchResponse.class);
-            logger.debug("search response: {}", response);
+            logger.debug("search response: {} hits", response.getHits() != null ? response.getHits().getTotal():0);
 
             return response;
         } catch (HttpResponseException|ConnectException e) {
