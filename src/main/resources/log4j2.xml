@@ -2,7 +2,7 @@
 <Configuration status="fatal">
    <Appenders>
       <Console name="CONSOLE" target="SYSTEM_OUT">
-         <PatternLayout pattern="%d{ABSOLUTE} %highlight{%-5p} [%c{1.}] %m%n"/>
+          <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight{%-5p} [%c]:%L - %m%n"/>
       </Console>
    </Appenders>
    <Loggers>
