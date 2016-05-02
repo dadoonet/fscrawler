@@ -234,6 +234,12 @@ public class ElasticsearchClient {
 
         logger.trace("going to send a bulk");
 
+        if(logger.isInfoEnabled()){
+            int bulkSize = bulkRequest.getRequests() != null ? bulkRequest.getRequests().size() : 0;
+            logger.info("sending {} documents to es...", bulkSize);
+            logger.info("request:" + System.getProperty("line.separator") + sbf.toString());
+        }
+
         GenericUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/_bulk");
         HttpRequest request = requestFactory.buildPostRequest(genericUrl,
