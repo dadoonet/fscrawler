@@ -234,10 +234,10 @@ public class ElasticsearchClient {
 
         logger.trace("going to send a bulk");
 
-        if(logger.isInfoEnabled()){
+        if(logger.isDebugEnabled()){
             int bulkSize = bulkRequest.getRequests() != null ? bulkRequest.getRequests().size() : 0;
-            logger.info("sending {} documents to es...", bulkSize);
-            logger.info("request:" + System.getProperty("line.separator") + sbf.toString());
+            logger.debug("bulk request, sending {} documents to es...", bulkSize);
+            logger.debug("request:" + System.getProperty("line.separator") + sbf.toString());
         }
 
         GenericUrl genericUrl = buildUrl(node);
