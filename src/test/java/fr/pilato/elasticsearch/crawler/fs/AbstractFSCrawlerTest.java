@@ -47,7 +47,7 @@ public abstract class AbstractFSCrawlerTest {
     }
 
     public static boolean awaitBusy(BooleanSupplier breakSupplier) throws InterruptedException {
-        return awaitBusy(breakSupplier, 10, TimeUnit.SECONDS);
+        return awaitBusy(breakSupplier, 5, TimeUnit.SECONDS);
     }
 
     // After 1s, we stop growing the sleep interval exponentially and just sleep 1s until maxWaitTime
