@@ -482,7 +482,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         logger.info(" ---> Removing file deleted_roottxtfile.txt");
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
-        // We expect to have two files
+        // We expect to have one file
         countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
     }
 
