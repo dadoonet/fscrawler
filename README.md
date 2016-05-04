@@ -1,21 +1,13 @@
+This repo is a fork of dadoonet/fscrawler. Many thanks to David Pilato for his great work!
+
 # FileSystem Crawler for Elasticsearch
-
-Welcome to the FS Crawler for [Elasticsearch](https://elastic.co/)
-
 This crawler helps to index documents from your local file system and over SSH.
 It crawls your file system and index new files, update existing ones and removes old ones.
 
-You need to install a version matching your Elasticsearch version:
-
-| Elasticsearch |  FS Crawler |                   Docs               |
-|---------------|-------------|--------------------------------------|
-|    es-2.0     | 2.0.0       | See below                            |
-
-
-## Build Status
-
-Thanks to Travis for the [build status](https://travis-ci.org/dadoonet/fscrawler): 
-[![Build Status](https://travis-ci.org/dadoonet/fscrawler.svg)](https://travis-ci.org/dadoonet/fscrawler)
+## Versions
+| Elasticsearch |  FS Crawler |
+|---------------|-------------|
+|         2.3.1 |       2.3.0 |
 
 # Getting Started
 
@@ -50,8 +42,10 @@ It will give you the list of existing jobs and will allow you to choose one.
 
 `--help` displays help
 `--silent` runs in silent mode. No output is generated.
-`--debug` runs in debug mode.
-`--trace` runs in trace mode (more verbose than debug).
+`--warn` runs logger in warn mode.
+`--info` runs logger in info mode.
+`--debug` runs logger in debug mode.
+`--trace` runs logger in trace mode (more verbose than debug).
 `--config_dir` defines directory where jobs are stored instead of default `~/.fscrawler`.
 
 ## Job file specification
@@ -93,7 +87,9 @@ The job file must comply to the following `json` specifications:
     "index" : "docs",
     "type" : "doc",
     "bulk_size" : 100,
-    "flush_interval" : "5s"
+    "flush_interval" : "5s",
+    "wait_seconds": 10,
+    "wait_interval": 12
   }
 }
 ```
@@ -126,6 +122,8 @@ Here is a full list of existing settings:
 | `elasticsearch.bulk_size`        | `100`         | [Bulk settings](#bulk-settings)                                                   |
 | `elasticsearch.flush_interval`   | `"5s"`        | [Bulk settings](#bulk-settings)                                                   |
 | `elasticsearch.nodes`            |127.0.0.1:9200 | [Node settings](#node-settings)                                                   |
+| `elasticsearch.wait_seconds`     | `1`           | [fs startup, is cluster running? seconds until next attempt]                      |
+| `elasticsearch.wait_interval`    | `1`           | [fs startup, is cluster running? number of attempts]                              |
 
 
 ### The most simple crawler

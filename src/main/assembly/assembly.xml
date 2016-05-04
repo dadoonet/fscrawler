@@ -17,7 +17,7 @@
             <directory>${project.build.scriptSourceDirectory}</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
-                <include>fscrawler*</include>
+                <include>fscrawler*.jar</include>
             </includes>
             <filtered>true</filtered>
         </fileSet>

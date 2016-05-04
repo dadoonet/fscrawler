@@ -2,12 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>fr.pilato.elasticsearch.crawler</groupId>
+    <groupId>de.codecentric</groupId>
     <artifactId>fscrawler</artifactId>
     <packaging>jar</packaging>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <name>Elasticsearch File System Crawler</name>
-    <url>https://github.com/dadoonet/fscrawler/</url>
+    <url>https://github.com/codecentric/fscrawler</url>
     <description>FS Crawler offers a simple way to index local files into elasticsearch.</description>
 
     <licenses>
@@ -19,7 +19,8 @@
     </licenses>
 
     <properties>
-        <elasticsearch.version>2.0.0</elasticsearch.version>
+        <docker.image.prefix>de.codecentric</docker.image.prefix>
+        <elasticsearch.version>2.3.1</elasticsearch.version>
         <tika.version>1.10</tika.version>
         <jackson.version>2.6.3</jackson.version>
         <log4j.version>2.4.1</log4j.version>
@@ -36,17 +37,24 @@
             <url>https://david.pilato.fr/</url>
             <timezone>+1</timezone>
         </developer>
+        <developer>
+            <id>codecentric</id>
+            <name>codecentric</name>
+            <email>info@codecentric.de</email>
+            <url>http://www.codecentric.de</url>
+            <timezone>+1</timezone>
+        </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:dadoonet/fscrawler.git</connection>
-        <url>scm:git:git@github.com:dadoonet/fscrawler.git</url>
-        <developerConnection>scm:git:git@github.com:dadoonet/fscrawler.git</developerConnection>
+        <connection>scm:git:git@github.com:codecentric/fscrawler.git</connection>
+        <url>scm:git:git@github.com:codecentric/fscrawler.git</url>
+        <developerConnection>scm:git:git@github.com:codecentric/fscrawler.git</developerConnection>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/dadoonet/fscrawler/issues/</url>
+        <url>https://github.com/codecentric/fscrawler/issues/</url>
     </issueManagement>
 
     <build>
@@ -95,11 +103,6 @@
             <!-- Copy dependencies into lib folder -->
             <!-- To see full classpath use  mvn dependency:build-classpath -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.10</version>
-            </plugin>
-            <plugin>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
                 <artifactId>junit4-maven-plugin</artifactId>
                 <version>2.1.17</version>
@@ -110,27 +113,8 @@
                 <version>2.19</version>
             </plugin>
 
-            <!-- Generate the release zip file (run during package step) -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <descriptors>
-                        <descriptor>src/main/assembly/assembly.xml</descriptor>
-                    </descriptors>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>generate-release-plugin</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -154,6 +138,77 @@
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
             </plugin>
+            <!-- Generate fscrawler jar with all dependencies -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>fr.pilato.elasticsearch.crawler.fs.FsCrawler</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.2.3</version>
+               <executions>
+                   <execution>
+                       <id>build-image</id>
+                       <phase>package</phase>
+                       <goals>
+                           <goal>build</goal>
+                       </goals>
+                       <configuration>
+                           <imageName>${docker.image.prefix}/${project.artifactId}:${project.version}</imageName>
+                           <dockerDirectory>docker</dockerDirectory>
+                           <resources>
+                               <resource>
+                                   <targetPath>/</targetPath>
+                                   <directory>${project.build.directory}</directory>
+                                   <include>${project.build.finalName}-jar-with-dependencies.jar</include>
+                               </resource>
+                           </resources>
+                       </configuration>
+                   </execution>
+                   <execution>
+                       <id>tag-image</id>
+                       <phase>package</phase>
+                       <goals>
+                           <goal>tag</goal>
+                       </goals>
+                       <configuration>
+                           <image>${project.artifactId}:${project.version}</image>
+                           <newName>${docker.image.prefix}/${project.artifactId}:${project.version}</newName>
+                       </configuration>
+                   </execution>
+                   <execution>
+                       <id>push-image</id>
+                       <phase>deploy</phase>
+                       <goals>
+                           <goal>push</goal>
+                       </goals>
+                       <configuration>
+                           <imageName>${docker.image.prefix}/${project.artifactId}:${project.version}</imageName>
+                       </configuration>
+                   </execution>
+               </executions>
+            </plugin>
+<!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-changes-plugin</artifactId>
@@ -177,6 +232,7 @@
                     <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/${project.version}/</urlDownload>
                 </configuration>
             </plugin>
+-->
         </plugins>
     </build>
 
@@ -201,7 +257,7 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-test-framework</artifactId>
-            <version>5.2.1</version>
+            <version>5.5.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>

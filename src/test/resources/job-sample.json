@@ -19,6 +19,8 @@
   },
   "server": null,
   "elasticsearch": {
+    "wait_seconds" : 1,
+    "wait_interval" : 3,
     "nodes": [
       {
         "host": "127.0.0.1",

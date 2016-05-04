@@ -152,18 +152,31 @@ public class ElasticsearchClient {
     }
 
     public boolean isActive(Node node) {
-        logger.debug("is node [{}] active?", node);
+
+        if(logger.isInfoEnabled()) {
+            logger.info("is node [{}] active?", node);
+        }
+
         boolean active = false;
+
         try {
             GenericUrl genericUrl = buildUrl(node);
             genericUrl.appendRawPath("/");
             HttpResponse httpResponse = requestFactory.buildGetRequest(genericUrl).execute();
-            logger.trace("get / response: {}", httpResponse.parseAsString());
+
+            if(logger.isInfoEnabled()) {
+                logger.info("get / response: {}", httpResponse.parseAsString());
+            }
+
             active = true;
         } catch (IOException e) {
-            logger.trace("error received", e);
+            // seems it isn't active...
         }
-        logger.debug("is node active? -> [{}]", active);
+
+        if(logger.isInfoEnabled()) {
+            logger.info("is node active? -> [{}]", active);
+        }
+
         return active;
     }
 
@@ -220,7 +233,12 @@ public class ElasticsearchClient {
         }
 
         logger.trace("going to send a bulk");
-        logger.trace("{}", sbf);
+
+        if(logger.isDebugEnabled()){
+            int bulkSize = bulkRequest.getRequests() != null ? bulkRequest.getRequests().size() : 0;
+            logger.debug("bulk request, sending {} documents to es...", bulkSize);
+            logger.debug("request:" + System.getProperty("line.separator") + sbf.toString());
+        }
 
         GenericUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/_bulk");
@@ -266,6 +284,30 @@ public class ElasticsearchClient {
         putMapping(findNextNode(), index, type, mapping);
     }
 
+    public boolean waitUntilClusterIsRunning(int sleepTimeInSec, int counts, List<Node> nodes) {
+
+        for (int i = 1; i <= counts; i++) {
+
+            if (nodes.stream().anyMatch(this::isActive)) {
+                if (logger.isInfoEnabled()) {
+                    logger.info("elasticsearch cluster is running", i, counts);
+                }
+                return true;
+            }
+
+            if (logger.isInfoEnabled()) {
+                logger.info("waiting until elasticsearch cluster is up ({}/{})...", i, counts);
+            }
+            try {
+                Thread.sleep(sleepTimeInSec * 1000);
+
+            } catch (InterruptedException e) {
+            }
+        }
+
+        return false;
+    }
+
     public static class ElasticsearchUrl extends GenericUrl {
         @Key
         public String q;
@@ -293,7 +335,7 @@ public class ElasticsearchClient {
         try {
             HttpResponse httpResponse = request.execute();
             SearchResponse response = httpResponse.parseAs(SearchResponse.class);
-            logger.debug("search response: {}", response);
+            logger.debug("search response: {} hits", response.getHits() != null ? response.getHits().getTotal():0);
 
             return response;
         } catch (HttpResponseException|ConnectException e) {

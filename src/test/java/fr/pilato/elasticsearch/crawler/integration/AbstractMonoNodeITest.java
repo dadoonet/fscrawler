@@ -31,6 +31,7 @@ import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 
 import static org.junit.Assume.assumeTrue;
@@ -44,24 +45,8 @@ public abstract class AbstractMonoNodeITest extends AbstractITest {
     public static ExternalResource elasticsearch = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            folder.create();
-            File home = folder.newFolder("elasticsearch");
-            staticLogger.info("  --> Starting elasticsearch test node in [{}]", home.toString());
 
-            try {
-                node = NodeBuilder.nodeBuilder()
-                        .settings(Settings.builder()
-                                        .put("path.home", home)
-                                        .put("cluster.name", "fscrawler-integration-tests")
-                                        .put("transport.tcp.port", TRANSPORT_TEST_PORT)
-                                        .put("http.port", HTTP_TEST_PORT)
-                        )
-                        .node();
-            } catch (BindHttpException|BindTransportException e) {
-                staticLogger.warn("  --> Can not start elasticsearch node: {}", e.getMessage());
-            }
-
-            assumeTrue(node != null);
+            startTestNode();
 
             client = TransportClient.builder()
                     .settings(Settings.builder()
@@ -81,12 +66,36 @@ public abstract class AbstractMonoNodeITest extends AbstractITest {
                 client = null;
             }
 
-            if (node != null) {
-                staticLogger.info("  --> Stopping elasticsearch test node");
-                node.close();
-                node = null;
-            }
+            stopTestNode();
         }
     };
 
+    protected static void startTestNode() throws IOException {
+        folder.create();
+        File home = folder.newFolder("elasticsearch");
+        staticLogger.info("  --> Starting elasticsearch test node in [{}]", home.toString());
+
+        try {
+            node = NodeBuilder.nodeBuilder()
+                    .settings(Settings.builder()
+                                    .put("path.home", home)
+                                    .put("cluster.name", "fscrawler-integration-tests")
+                                    .put("transport.tcp.port", TRANSPORT_TEST_PORT)
+                                    .put("http.port", HTTP_TEST_PORT)
+                    )
+                    .node();
+        } catch (BindHttpException |BindTransportException e) {
+            staticLogger.warn("  --> Can not start elasticsearch node: {}", e.getMessage());
+        }
+
+        assumeTrue(node != null);
+    }
+
+    protected static void stopTestNode() {
+        if (node != null) {
+            staticLogger.info("  --> Stopping elasticsearch test node");
+            node.close();
+            node = null;
+        }
+    }
 }

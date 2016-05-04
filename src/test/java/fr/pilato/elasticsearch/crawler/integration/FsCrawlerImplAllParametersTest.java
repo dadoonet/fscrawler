@@ -183,7 +183,10 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
         // Print crawler settings
         FsSettings fsSettings = new FsSettingsFileHandler(metadataDir).read(jobName);
-        logger.info("  --> Index settings [{}]", FsSettingsParser.toJson(fsSettings));
+
+        if(logger.isDebugEnabled()) {
+            logger.debug("  --> Index settings [{}]", FsSettingsParser.toJson(fsSettings));
+        }
     }
 
     private void refresh() {
@@ -279,6 +282,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
     }
 
     @Test
+    @Ignore
     public void test_default_settings() throws Exception {
         ElasticsearchClient client = ElasticsearchClient.builder().build();
         boolean active = client.isActive(Elasticsearch.DEFAULT.getNodes().get(0));
@@ -478,7 +482,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         logger.info(" ---> Removing file deleted_roottxtfile.txt");
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
-        // We expect to have two files
+        // We expect to have one file
         countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
     }
 
