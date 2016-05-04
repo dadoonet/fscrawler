@@ -42,8 +42,10 @@ It will give you the list of existing jobs and will allow you to choose one.
 
 `--help` displays help
 `--silent` runs in silent mode. No output is generated.
-`--debug` runs in debug mode.
-`--trace` runs in trace mode (more verbose than debug).
+`--warn` runs logger in warn mode.
+`--info` runs logger in info mode.
+`--debug` runs logger in debug mode.
+`--trace` runs logger in trace mode (more verbose than debug).
 `--config_dir` defines directory where jobs are stored instead of default `~/.fscrawler`.
 
 ## Job file specification

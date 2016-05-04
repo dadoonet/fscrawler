@@ -55,6 +55,12 @@ public class FsCrawler {
         @Parameter(names = "--config_dir", description = "Config directory. Default to ~/.fscrawler")
         private String configDir = null;
 
+        @Parameter(names = "--warn", description = "Warn mode")
+        private boolean warn = false;
+
+        @Parameter(names = "--info", description = "Info mode")
+        private boolean info = false;
+
         @Parameter(names = "--debug", description = "Debug mode")
         private boolean debug = false;
 
@@ -68,7 +74,6 @@ public class FsCrawler {
         protected boolean help;
     }
 
-
     public static void main(String[] args) throws Exception {
         // create a scanner so we can read the command-line input
         Scanner scanner = new Scanner(System.in);
@@ -77,7 +82,7 @@ public class FsCrawler {
         JCommander jCommander = new JCommander(commands, args);
 
         // Change debug level if needed
-        if (commands.debug || commands.trace || commands.silent) {
+        if (commands.warn || commands.info || commands.debug || commands.trace || commands.silent) {
             LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
             Configuration config = ctx.getConfiguration();
             LoggerConfig loggerConfig = config.getLoggerConfig(FsCrawler.class.getPackage().getName());
@@ -88,8 +93,20 @@ public class FsCrawler {
                 loggerConfig.setLevel(Level.OFF);
                 rootLogger.setLevel(Level.OFF);
             } else {
-                loggerConfig.setLevel(commands.debug ? Level.DEBUG : Level.TRACE);
+                if(commands.warn){
+                    loggerConfig.setLevel(Level.WARN);
+                }
+                else if(commands.info){
+                    loggerConfig.setLevel(Level.INFO);
+                }
+                else if(commands.debug){
+                    loggerConfig.setLevel(Level.DEBUG);
+                }
+                else if(commands.trace){
+                    loggerConfig.setLevel(Level.TRACE);
+                }
             }
+
             ctx.updateLoggers();
         }
 
