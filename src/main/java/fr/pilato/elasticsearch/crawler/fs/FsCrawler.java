@@ -45,8 +45,9 @@ import java.util.Scanner;
  */
 public class FsCrawler {
 
-    private static final Logger logger = LogManager.getLogger(FsCrawler.class);
+    private static final long CLOSE_POLLING_WAIT_MS = 100;
 
+    private static final Logger logger = LogManager.getLogger(FsCrawler.class);
 
     public static class FsCrawlerCommand {
         @Parameter(description = "job_name")
@@ -185,12 +186,20 @@ public class FsCrawler {
             fsCrawler.start();
             // We just have to wait until the process is stopped
             while (!fsCrawler.isClosed()) {
-                // We wait...
+                sleep(CLOSE_POLLING_WAIT_MS);
             }
         } catch (Exception e) {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
             logger.debug("error caught", e);
             System.exit(-1);
+        }
+    }
+
+    private static void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        }
+        catch(InterruptedException e) {
         }
     }
 }
