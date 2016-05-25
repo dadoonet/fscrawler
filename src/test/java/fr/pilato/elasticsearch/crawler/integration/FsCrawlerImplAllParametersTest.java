@@ -465,6 +465,22 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
     }
 
     @Test
+    public void test_attributes() throws Exception {
+        startCrawler();
+        SearchResponse searchResponse = client.prepareSearch(getCrawlerName()).setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
+                .addField("attributes.owner")
+                .get();
+
+        assertThat(searchResponse.getHits().totalHits(), equalTo(1L));
+
+        logger.info("response: {}", searchResponse.toString());
+
+        for (SearchHit hit : searchResponse.getHits()) {
+            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTRIBUTES + "." + FsCrawlerUtil.Doc.Attributes.OWNER), notNullValue());
+        }
+    }
+
+    @Test
     public void test_remove_deleted_enabled() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setRemoveDeleted(true)
