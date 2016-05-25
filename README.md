@@ -17,12 +17,42 @@ You need to install a version matching your Elasticsearch version:
 Thanks to Travis for the [build status](https://travis-ci.org/dadoonet/fscrawler): 
 [![Build Status](https://travis-ci.org/dadoonet/fscrawler.svg)](https://travis-ci.org/dadoonet/fscrawler)
 
+
+# Download fscrawler
+
+FS Crawler binary is available on [Maven Central](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/).
+Just download the latest release (or any other specific version you want to try).
+
+The filename ends with `.zip`.
+
+For example, if you wish to download [fscrawler-2.0.0](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.0.0/fscrawler-2.0.0.zip):
+
+```sh
+wget https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.0.0/fscrawler-2.0.0.zip
+unzip fscrawler-2.0.0.zip
+```
+
+The distribution contains:
+
+```
+$ tree
+.
+├── LICENSE
+├── NOTICE
+├── README.md
+├── bin
+│   ├── fscrawler
+│   └── fscrawler.bat
+└── lib
+    ├── ... All needed jars
+```
+
 # Getting Started
 
 **You need to have at least Java 1.8.**
 
 ```sh
-fscrawler job_name
+bin/fscrawler job_name
 ```
 
 FS crawler will read a local file (default to `~/.fscrawler/{job_name}.json`).
@@ -41,7 +71,7 @@ If needed, you can manually edit / remove those files to restart.
 You can also run:
 
 ```sh
-fscrawler
+bin/fscrawler
 ```
 
 It will give you the list of existing jobs and will allow you to choose one.
