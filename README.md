@@ -488,89 +488,103 @@ When the FS crawler detects a new type, it creates automatically a mapping for t
 {
   "doc" : {
     "properties" : {
-      "content" : {
-        "type" : "string",
-        "store" : "yes"
-      },
-      "meta" : {
+      "attributes" : {
         "properties" : {
-          "author" : {
-              "type" : "string",
-              "store" : "yes"
+          "group" : {
+            "type" : "string",
+            "index" : "not_analyzed",
+            "store" : true
           },
-          "title" : {
-              "type" : "string",
-              "store" : "yes"
-          },
-          "date" : {
-              "type" : "date",
-              "format" : "dateOptionalTime",
-              "store" : "yes"
-          },
-          "keywords" : {
-              "type" : "string",
-              "store" : "yes"
+          "owner" : {
+            "type" : "string",
+            "index" : "not_analyzed",
+            "store" : true
           }
         }
+      },
+      "content" : {
+        "type" : "string",
+        "store" : true
       },
       "file" : {
         "properties" : {
           "content_type" : {
-              "type" : "string",
-              "analyzer" : "not_analyzed",
-              "store" : "yes"
-          },
-          "last_modified" : {
-              "type" : "date",
-              "format" : "dateOptionalTime",
-              "store" : "yes"
-          },
-          "indexing_date" : {
-              "type" : "date",
-              "format" : "dateOptionalTime",
-              "store" : "yes"
-          },
-          "filesize" : {
-              "type" : "long",
-              "store" : "yes"
-          },
-          "indexed_chars" : {
-              "type" : "long",
-              "store" : "yes"
+            "type" : "string",
+            "index" : "not_analyzed",
+            "store" : true
           },
           "filename" : {
-              "type" : "string",
-              "analyzer" : "not_analyzed",
-              "store" : "yes"
+            "type" : "string",
+            "index" : "not_analyzed",
+            "store" : true
+          },
+          "filesize" : {
+            "type" : "long",
+            "store" : true
+          },
+          "indexed_chars" : {
+            "type" : "long",
+            "store" : true
+          },
+          "indexing_date" : {
+            "type" : "date",
+            "store" : true,
+            "format" : "dateOptionalTime"
+          },
+          "last_modified" : {
+            "type" : "date",
+            "store" : true,
+            "format" : "dateOptionalTime"
           },
           "url" : {
-              "type" : "string",
-              "store" : "yes",
-              "index" : "no"
+            "type" : "string",
+            "index" : "no",
+            "store" : true
+          }
+        }
+      },
+      "meta" : {
+        "properties" : {
+          "author" : {
+            "type" : "string",
+            "store" : true
+          },
+          "date" : {
+            "type" : "date",
+            "store" : true,
+            "format" : "dateOptionalTime"
+          },
+          "keywords" : {
+            "type" : "string",
+            "store" : true
+          },
+          "title" : {
+            "type" : "string",
+            "store" : true
           }
         }
       },
       "path" : {
         "properties" : {
           "encoded" : {
-              "type" : "string",
-              "store" : "yes",
-              "index" : "not_analyzed"
-          },
-          "virtual" : {
-              "type" : "string",
-              "store" : "yes",
-              "index" : "not_analyzed"
-          },
-          "root" : {
-              "type" : "string",
-              "store" : "yes",
-              "index" : "not_analyzed"
+            "type" : "string",
+            "index" : "not_analyzed",
+            "store" : true
           },
           "real" : {
-              "type" : "string",
-              "store" : "yes",
-              "index" : "not_analyzed"
+            "type" : "string",
+            "index" : "not_analyzed",
+            "store" : true
+          },
+          "root" : {
+            "type" : "string",
+            "index" : "not_analyzed",
+            "store" : true
+          },
+          "virtual" : {
+            "type" : "string",
+            "index" : "not_analyzed",
+            "store" : true
           }
         }
       },
@@ -593,10 +607,18 @@ When the FS crawler detects a new type, it creates automatically a mapping for t
 }
 ```
 
+You can display the index mapping being used with Kibana
+
+```GET docs/doc/_mapping```
+
+or fall back to the command line
+
+```curl 'http://localhost:9200/docs/_mapping?pretty'```
+
 ## Creating your own mapping (analyzers)
 
 If you want to define your own mapping to set analyzers for example, you can push the mapping **before** starting the 
-FS crawler.
+FS crawler. The following example uses a `french` analyzer to index the `content` field.
 
 ```
 # Create index
@@ -605,92 +627,106 @@ PUT docs
 # Create the mapping
 PUT docs/doc/_mapping
 {
-  "doc" : {
-    "properties" : {
-      "content" : {
-        "type" : "string",
-        "store" : "yes",
-        "analyzer" : "french"
-      },
-      "meta" : {
-        "properties" : {
-          "author" : {
-              "type" : "string",
-              "store" : "yes"
+  "doc": {
+    "properties": {
+      "attributes": {
+        "properties": {
+          "group": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": true
           },
-          "title" : {
-              "type" : "string",
-              "store" : "yes"
-          },
-          "date" : {
-              "type" : "date",
-              "format" : "dateOptionalTime",
-              "store" : "yes"
-          },
-          "keywords" : {
-              "type" : "string",
-              "store" : "yes"
+          "owner": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": true
           }
         }
       },
-      "file" : {
-        "properties" : {
-          "content_type" : {
-              "type" : "string",
-              "analyzer" : "not_analyzed",
-              "store" : "yes"
+      "content": {
+        "type": "string",
+        "analyzer": "french",
+        "store": true
+      },
+      "file": {
+        "properties": {
+          "content_type": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": true
           },
-          "last_modified" : {
-              "type" : "date",
-              "format" : "dateOptionalTime",
-              "store" : "yes"
+          "filename": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": true
           },
-          "indexing_date" : {
-              "type" : "date",
-              "format" : "dateOptionalTime",
-              "store" : "yes"
+          "filesize": {
+            "type": "long",
+            "store": true
           },
-          "filesize" : {
-              "type" : "long",
-              "store" : "yes"
+          "indexed_chars": {
+            "type": "long",
+            "store": true
           },
-          "indexed_chars" : {
-              "type" : "long",
-              "store" : "yes"
+          "indexing_date": {
+            "type": "date",
+            "store": true,
+            "format": "dateOptionalTime"
           },
-          "filename" : {
-              "type" : "string",
-              "analyzer" : "not_analyzed",
-              "store" : "yes"
+          "last_modified": {
+            "type": "date",
+            "store": true,
+            "format": "dateOptionalTime"
           },
-          "url" : {
-              "type" : "string",
-              "store" : "yes",
-              "index" : "no"
+          "url": {
+            "type": "string",
+            "index": "no",
+            "store": true
           }
         }
       },
-      "path" : {
-        "properties" : {
-          "encoded" : {
-              "type" : "string",
-              "store" : "yes",
-              "index" : "not_analyzed"
+      "meta": {
+        "properties": {
+          "author": {
+            "type": "string",
+            "store": true
           },
-          "virtual" : {
-              "type" : "string",
-              "store" : "yes",
-              "index" : "not_analyzed"
+          "date": {
+            "type": "date",
+            "store": true,
+            "format": "dateOptionalTime"
           },
-          "root" : {
-              "type" : "string",
-              "store" : "yes",
-              "index" : "not_analyzed"
+          "keywords": {
+            "type": "string",
+            "store": true
           },
-          "real" : {
-              "type" : "string",
-              "store" : "yes",
-              "index" : "not_analyzed"
+          "title": {
+            "type": "string",
+            "store": true
+          }
+        }
+      },
+      "path": {
+        "properties": {
+          "encoded": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": true
+          },
+          "real": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": true
+          },
+          "root": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": true
+          },
+          "virtual": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": true
           }
         }
       },
@@ -777,6 +813,20 @@ Here is a typical JSON document generated by the crawler:
 }
 ```
 
+## Simple Search
+
+You can use the content field to perform full-text search on
+
+```
+GET docs/doc/_search
+{
+  "query" : {
+    "match" : {
+        "content" : "the quick brown fox"
+    }
+  }
+}
+```
 
 ## Advanced search
 
