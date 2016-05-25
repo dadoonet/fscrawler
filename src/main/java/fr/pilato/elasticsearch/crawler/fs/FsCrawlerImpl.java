@@ -310,7 +310,7 @@ public class FsCrawlerImpl {
                                 if (lastScanDate == null
                                         || child.lastModifiedDate.isAfter(lastScanDate)
                                         || (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
-                                    indexFile(stats, child.name, filepath, path.getInputStream(child), child.lastModifiedDate, child.size);
+                                    indexFile(child, stats, filepath, path.getInputStream(child));
                                     stats.addFile();
                                 } else {
                                     logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
@@ -452,8 +452,11 @@ public class FsCrawlerImpl {
         /**
          * Index a file
          */
-        private void indexFile(ScanStatistic stats, String filename, String filepath, InputStream fileReader,
-                               Instant lastmodified, long size) throws Exception {
+        private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String filepath, InputStream fileReader) throws Exception {
+            final String filename = fileAbstractModel.name;
+            final Instant lastmodified = fileAbstractModel.lastModifiedDate;
+            final long size = fileAbstractModel.size;
+
             logger.debug("fetching content from [{}],[{}]", filepath, filename);
 
             // Create the Doc object
@@ -473,6 +476,10 @@ public class FsCrawlerImpl {
             doc.getPath().setReal((new File(filepath, filename)).toString());
             // Path
 
+            // Attributes
+            doc.getAttributes().setOwner(fileAbstractModel.owner);
+            doc.getAttributes().setGroup(fileAbstractModel.group);
+            // Attributes
 
             if (fsSettings.getFs().isIndexContent()) {
                 byte[] buffer = new byte[1024];

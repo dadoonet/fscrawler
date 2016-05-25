@@ -28,11 +28,13 @@ public class Doc {
     private Meta meta;
     private File file;
     private Path path;
+    private Attributes attributes;
 
     public Doc() {
         meta = new Meta();
         file = new File();
         path = new Path();
+        attributes = new Attributes();
     }
 
     public String getContent() {
@@ -75,6 +77,14 @@ public class Doc {
         this.path = path;
     }
 
+    public Attributes getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Attributes attributes) {
+        this.attributes = attributes;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -86,8 +96,8 @@ public class Doc {
         if (attachment != null ? !attachment.equals(doc.attachment) : doc.attachment != null) return false;
         if (meta != null ? !meta.equals(doc.meta) : doc.meta != null) return false;
         if (file != null ? !file.equals(doc.file) : doc.file != null) return false;
+        if (attributes != null ? !attributes.equals(doc.attributes) : doc.attributes != null) return false;
         return !(path != null ? !path.equals(doc.path) : doc.path != null);
-
     }
 
     @Override
@@ -97,6 +107,7 @@ public class Doc {
         result = 31 * result + (meta != null ? meta.hashCode() : 0);
         result = 31 * result + (file != null ? file.hashCode() : 0);
         result = 31 * result + (path != null ? path.hashCode() : 0);
+        result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
         return result;
     }
 }

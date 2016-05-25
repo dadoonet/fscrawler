@@ -558,6 +558,20 @@ When the FS crawler detects a new type, it creates automatically a mapping for t
               "index" : "not_analyzed"
           }
         }
+      },
+      "attributes": {
+        "properties": {
+          "owner": {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "group": {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          }
+        }
       }
     }
   }
@@ -664,6 +678,20 @@ PUT docs/doc/_mapping
               "index" : "not_analyzed"
           }
         }
+      },
+      "attributes": {
+        "properties": {
+          "group": {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          },
+          "owner": {
+              "type" : "string",
+              "store" : "yes",
+              "index" : "not_analyzed"
+          }
+        }
       }
     }
   }
@@ -674,25 +702,28 @@ PUT docs/doc/_mapping
 
 FS crawler creates the following fields :
 
-|         Field        |                Description                  |                    Example                  |
-|----------------------|---------------------------------------------|---------------------------------------------|
-| `content`            | Extracted content                           | `"This is my text!"`                        |
-| `attachment`         | BASE64 encoded binary file                  | BASE64 Encoded document                     |
-| `meta.author`        | Author if any in document metadata          | `"David Pilato"`                            |
-| `meta.title`         | Title if any in document metadata           | `"My document title"`                       |
-| `meta.date`          | Document date if any in document metadata   | `"2013-04-04T15:21:35"`                     |
-| `meta.keywords`      | Keywords if any in document metadata        | `["river","fs","elasticsearch"]`            |
-| `file.content_type`  | Content Type                                | `"application/vnd.oasis.opendocument.text"` |
-| `file.last_modified` | Last modification date                      | `1386855978000`                             |
-| `file.indexing_date` | Indexing date                               | `"2013-12-12T13:50:58.758Z"`                |
-| `file.filesize`      | File size in bytes                          | `1256362`                                   |
-| `file.indexed_chars` | Extracted chars if `fs.indexed_chars` > 0   | `100000`                                    |
-| `file.filename`      | Original file name                          | `"mydocument.pdf"`                          |
-| `file.url`           | Original file url                           | `"file://tmp/mydir/otherdir/mydocument.pdf"`|
-| `path.encoded`       | MD5 encoded file path (for internal use)    | `"112aed83738239dbfe4485f024cd4ce1"`        |
-| `path.virtual`       | Relative path from root path                | `"mydir/otherdir"`                          |
-| `path.root`          | MD5 encoded root path (for internal use)    | `"112aed83738239dbfe4485f024cd4ce1"`        |
-| `path.real`          | Actual real path name                       | `"/tmp/mydir/otherdir/mydocument.pdf"`      |
+|         Field                          |                Description                  |                    Example                  |
+|----------------------------------------|---------------------------------------------|---------------------------------------------|
+| `content`                              | Extracted content                           | `"This is my text!"`                        |
+| `attachment`                           | BASE64 encoded binary file                  | BASE64 Encoded document                     |
+| `meta.author`                          | Author if any in document metadata          | `"David Pilato"`                            |
+| `meta.title`                           | Title if any in document metadata           | `"My document title"`                       |
+| `meta.date`                            | Document date if any in document metadata   | `"2013-04-04T15:21:35"`                     |
+| `meta.keywords`                        | Keywords if any in document metadata        | `["river","fs","elasticsearch"]`            |
+| `file.content_type`                    | Content Type                                | `"application/vnd.oasis.opendocument.text"` |
+| `file.last_modified`                   | Last modification date                      | `1386855978000`                             |
+| `file.indexing_date`                   | Indexing date                               | `"2013-12-12T13:50:58.758Z"`                |
+| `file.filesize`                        | File size in bytes                          | `1256362`                                   |
+| `file.indexed_chars`                   | Extracted chars if `fs.indexed_chars` > 0   | `100000`                                    |
+| `file.filename`                        | Original file name                          | `"mydocument.pdf"`                          |
+| `file.url`                             | Original file url                           | `"file://tmp/mydir/otherdir/mydocument.pdf"`|
+| `path.encoded`                         | MD5 encoded file path (for internal use)    | `"112aed83738239dbfe4485f024cd4ce1"`        |
+| `path.virtual`                         | Relative path from root path                | `"mydir/otherdir"`                          |
+| `path.root`                            | MD5 encoded root path (for internal use)    | `"112aed83738239dbfe4485f024cd4ce1"`        |
+| `path.real`                            | Actual real path name                       | `"/tmp/mydir/otherdir/mydocument.pdf"`      |
+| `attributes.owner`                     | Owner name                                  | `"david"`                                   |
+| `attributes.group`                     | Group name                                  | `"staff"`                                   |
+
 
 Here is a typical JSON document generated by the crawler:
 
@@ -712,6 +743,10 @@ Here is a typical JSON document generated by the crawler:
       "root":"bceb3913f6d793e915beb70a4735592",
       "virtual":"",
       "real":"/tmp/testfs_metadata/test.odt"
+   },
+   "attributes": {
+      "owner": "david",
+      "group": "staff"
    },
    "meta":{
       "author":"David Pilato",

@@ -50,6 +50,8 @@ public class FileAbstractModel {
     public String path;
     public String fullpath;
     public long size;
+    public String owner;
+    public String group;
 
     @Override
     public String toString() {
@@ -60,6 +62,8 @@ public class FileAbstractModel {
         sb.append(", lastModifiedDate=").append(lastModifiedDate);
         sb.append(", creationDate=").append(creationDate);
         sb.append(", path='").append(path).append('\'');
+        sb.append(", owner='").append(owner).append('\'');
+        sb.append(", group='").append(group).append('\'');
         sb.append(", fullpath='").append(fullpath).append('\'');
         sb.append(", size=").append(size);
         sb.append('}');
