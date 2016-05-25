@@ -31,6 +31,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileOwnerAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.time.Instant;
 import java.util.List;
 
@@ -71,6 +74,14 @@ public class FsCrawlerUtil extends MetaParser {
             public static final String VIRTUAL = "virtual";
             public static final String REAL = "real";
         }
+
+        public static final String ATTRIBUTES = "attributes";
+
+        static public final class Attributes {
+            public static final String OWNER = "owner";
+            public static final String GROUP = "group";
+        }
+
     }
 
     static public final class Dir {
@@ -141,6 +152,13 @@ public class FsCrawlerUtil extends MetaParser {
         addNotAnalyzedString(path, Doc.Path.ROOT);
         addNotAnalyzedString(path, Doc.Path.REAL);
         // End Path
+
+        // Attributes
+        ObjectNode attributes = properties.putObject(Doc.ATTRIBUTES).putObject("properties");
+        addNotAnalyzedString(attributes, Doc.Attributes.OWNER);
+        addNotAnalyzedString(attributes, Doc.Attributes.GROUP);
+        // End Attributes
+
 
         // End Type
         return root;
@@ -284,5 +302,35 @@ public class FsCrawlerUtil extends MetaParser {
             time = null;
         }
         return time;
+    }
+
+    /**
+     * Determines the 'owner' of the file.
+     */
+    public static String getOwnerName(final File file) {
+        try {
+            final Path path = Paths.get(file.getAbsolutePath());
+            final FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
+            return ownerAttributeView != null ? ownerAttributeView.getOwner().getName() : null;
+        }
+        catch(Exception e) {
+            logger.warn("Failed to determine 'owner' of {}: {}", file, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Determines the 'group' of the file. Please note that 'group' is not
+     * available of Windows OS.
+     */
+    public static String getGroupName(final File file) {
+        try {
+            final Path path = Paths.get(file.getAbsolutePath());
+            final PosixFileAttributes posixFileAttributes = Files.getFileAttributeView(path, PosixFileAttributeView.class).readAttributes();
+            return posixFileAttributes != null ? posixFileAttributes.group().getName() : null;
+        } catch (Exception e) {
+            logger.warn("Failed to determine 'group' of {}: {}", file, e.getMessage());
+            return null;
+        }
     }
 }

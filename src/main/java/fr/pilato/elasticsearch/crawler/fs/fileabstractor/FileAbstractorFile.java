@@ -45,6 +45,9 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         model.path = path;
         model.fullpath = file.getAbsolutePath();
         model.size = file.length();
+        model.owner = FsCrawlerUtil.getOwnerName(file);
+        model.group = FsCrawlerUtil.getGroupName(file);
+
         return model;
     }
 
