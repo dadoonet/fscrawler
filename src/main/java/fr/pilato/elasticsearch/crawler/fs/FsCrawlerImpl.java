@@ -203,6 +203,8 @@ public class FsCrawlerImpl {
                     return;
                 }
 
+                FileAbstractor path = null;
+
                 try {
                     stats = new ScanStatistic(fsSettings.getFs().getUrl());
 
@@ -223,12 +225,24 @@ public class FsCrawlerImpl {
                         indexRootDirectory(directory);
                     }
 
-                    addFilesRecursively(fsSettings.getFs().getUrl(), scanDate);
+                    path = buildFileAbstractor();
+                    path.open();
+
+                    addFilesRecursively(path, fsSettings.getFs().getUrl(), scanDate);
 
                     updateFsJob(fsSettings.getName(), scanDatenew);
                 } catch (Exception e) {
                     logger.warn("Error while indexing content from {}", fsSettings.getFs().getUrl());
                     logger.debug("", e);
+                } finally {
+                    if (path != null) {
+                        try {
+                            path.close();
+                        } catch (Exception e) {
+                            logger.warn("Error while closing the connection: {}", e.getMessage());
+                            logger.debug("", e);
+                        }
+                    }
                 }
 
                 try {
@@ -285,92 +299,86 @@ public class FsCrawlerImpl {
                     PROTOCOL.LOCAL + " or " + PROTOCOL.SSH);
         }
 
-        private void addFilesRecursively(String filepath, Instant lastScanDate)
+        private void addFilesRecursively(FileAbstractor path, String filepath, Instant lastScanDate)
                 throws Exception {
 
             logger.debug("indexing [{}] content", filepath);
-            FileAbstractor path = buildFileAbstractor();
-            path.open();
 
-            try {
-                final Collection<FileAbstractModel> children = path.getFiles(filepath);
-                Collection<String> fsFiles = new ArrayList<>();
-                Collection<String> fsFolders = new ArrayList<>();
+            final Collection<FileAbstractModel> children = path.getFiles(filepath);
+            Collection<String> fsFiles = new ArrayList<>();
+            Collection<String> fsFolders = new ArrayList<>();
 
-                if (children != null) {
-                    for (FileAbstractModel child : children) {
-                        String filename = child.name;
+            if (children != null) {
+                for (FileAbstractModel child : children) {
+                    String filename = child.name;
 
-                        // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
-                        boolean isIndexable = FsCrawlerUtil.isIndexable(filename, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
-                        logger.debug("[{}] can be indexed: [{}]", filename, isIndexable);
-                        if (isIndexable) {
-                            if (child.file) {
-                                logger.debug("  - file: {}", filename);
-                                fsFiles.add(filename);
-                                if (lastScanDate == null
-                                        || child.lastModifiedDate.isAfter(lastScanDate)
-                                        || (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
-                                    indexFile(child, stats, filepath, path.getInputStream(child));
-                                    stats.addFile();
-                                } else {
-                                    logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
-                                            child.creationDate, child.lastModifiedDate, lastScanDate);
-                                }
-                            } else if (child.directory) {
-                                logger.debug("  - folder: {}", filename);
-                                fsFolders.add(filename);
-                                indexDirectory(stats, filename, child.fullpath.concat(File.separator));
-                                addFilesRecursively(child.fullpath.concat(File.separator), lastScanDate);
+                    // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
+                    boolean isIndexable = FsCrawlerUtil.isIndexable(filename, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
+                    logger.debug("[{}] can be indexed: [{}]", filename, isIndexable);
+                    if (isIndexable) {
+                        if (child.file) {
+                            logger.debug("  - file: {}", filename);
+                            fsFiles.add(filename);
+                            if (lastScanDate == null
+                                    || child.lastModifiedDate.isAfter(lastScanDate)
+                                    || (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
+                                indexFile(child, stats, filepath, path.getInputStream(child));
+                                stats.addFile();
                             } else {
-                                logger.debug("  - other: {}", filename);
-                                logger.debug("Not a file nor a dir. Skipping {}", child.fullpath);
+                                logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
+                                        child.creationDate, child.lastModifiedDate, lastScanDate);
                             }
+                        } else if (child.directory) {
+                            logger.debug("  - folder: {}", filename);
+                            fsFolders.add(filename);
+                            indexDirectory(stats, filename, child.fullpath.concat(File.separator));
+                            addFilesRecursively(path, child.fullpath.concat(File.separator), lastScanDate);
                         } else {
-                            logger.debug("  - ignored file/dir: {}", filename);
+                            logger.debug("  - other: {}", filename);
+                            logger.debug("Not a file nor a dir. Skipping {}", child.fullpath);
                         }
+                    } else {
+                        logger.debug("  - ignored file/dir: {}", filename);
+                    }
+                }
+            }
+
+            // TODO Optimize
+            // if (path.isDirectory() && path.lastModified() > lastScanDate
+            // && lastScanDate != 0) {
+
+            if (fsSettings.getFs().isRemoveDeleted()) {
+                logger.debug("Looking for removed files in [{}]...", filepath);
+                Collection<String> esFiles = getFileDirectory(filepath);
+
+                // for the delete files
+                for (String esfile : esFiles) {
+                    logger.trace("Checking file [{}]", esfile);
+
+                    if (FsCrawlerUtil.isIndexable(esfile, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
+                            && !fsFiles.contains(esfile)) {
+                        File file = new File(filepath, esfile);
+
+                        logger.trace("Removing file [{}] in elasticsearch", esfile);
+                        esDelete(fsSettings.getElasticsearch().getIndex(), fsSettings.getElasticsearch().getType(),
+                                SignTool.sign(file.getAbsolutePath()));
+                        stats.removeFile();
                     }
                 }
 
-                // TODO Optimize
-                // if (path.isDirectory() && path.lastModified() > lastScanDate
-                // && lastScanDate != 0) {
+                logger.debug("Looking for removed directories in [{}]...", filepath);
+                Collection<String> esFolders = getFolderDirectory(filepath);
 
-                if (fsSettings.getFs().isRemoveDeleted()) {
-                    logger.debug("Looking for removed files in [{}]...", filepath);
-                    Collection<String> esFiles = getFileDirectory(filepath);
-
-                    // for the delete files
-                    for (String esfile : esFiles) {
-                        logger.trace("Checking file [{}]", esfile);
-
-                        if (FsCrawlerUtil.isIndexable(esfile, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
-                                && !fsFiles.contains(esfile)) {
-                            File file = new File(filepath, esfile);
-
-                            logger.trace("Removing file [{}] in elasticsearch", esfile);
-                            esDelete(fsSettings.getElasticsearch().getIndex(), fsSettings.getElasticsearch().getType(),
-                                    SignTool.sign(file.getAbsolutePath()));
-                            stats.removeFile();
-                        }
-                    }
-
-                    logger.debug("Looking for removed directories in [{}]...", filepath);
-                    Collection<String> esFolders = getFolderDirectory(filepath);
-
-                    // for the delete folder
-                    for (String esfolder : esFolders) {
-                        if (FsCrawlerUtil.isIndexable(esfolder, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
-                            logger.trace("Checking directory [{}]", esfolder);
-                            if (!fsFolders.contains(esfolder)) {
-                                logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
-                                removeEsDirectoryRecursively(filepath, esfolder);
-                            }
+                // for the delete folder
+                for (String esfolder : esFolders) {
+                    if (FsCrawlerUtil.isIndexable(esfolder, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
+                        logger.trace("Checking directory [{}]", esfolder);
+                        if (!fsFolders.contains(esfolder)) {
+                            logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
+                            removeEsDirectoryRecursively(filepath, esfolder);
                         }
                     }
                 }
-            } finally {
-                path.close();
             }
         }
 
