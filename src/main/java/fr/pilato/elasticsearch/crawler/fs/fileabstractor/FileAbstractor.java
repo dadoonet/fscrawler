@@ -37,6 +37,8 @@ public abstract class FileAbstractor<T> {
 
     public abstract Collection<FileAbstractModel> getFiles(String dir) throws Exception;
 
+    public abstract boolean exists(String dir) throws Exception;
+
     public abstract void open() throws Exception;
 
     public abstract void close() throws Exception;

@@ -208,12 +208,14 @@ public class FsCrawlerImpl {
                 try {
                     stats = new ScanStatistic(fsSettings.getFs().getUrl());
 
-                    File directory = new File(fsSettings.getFs().getUrl());
-                    if (!directory.exists()) {
+                    path = buildFileAbstractor();
+                    path.open();
+
+                    if (!path.exists(fsSettings.getFs().getUrl())) {
                         throw new RuntimeException(fsSettings.getFs().getUrl() + " doesn't exists.");
                     }
 
-                    String rootPathId = SignTool.sign(directory.getAbsolutePath());
+                    String rootPathId = SignTool.sign(fsSettings.getFs().getUrl());
                     stats.setRootPathId(rootPathId);
 
                     Instant scanDatenew = Instant.now();
@@ -222,11 +224,8 @@ public class FsCrawlerImpl {
                     // We only index the root directory once (first run)
                     // That means that we don't have a scanDate yet
                     if (scanDate == null) {
-                        indexRootDirectory(directory);
+                        indexRootDirectory(fsSettings.getFs().getUrl());
                     }
-
-                    path = buildFileAbstractor();
-                    path.open();
 
                     addFilesRecursively(path, fsSettings.getFs().getUrl(), scanDate);
 
@@ -620,12 +619,12 @@ public class FsCrawlerImpl {
         /**
          * Add the root directory as a folder
          */
-        private void indexRootDirectory(File file) throws Exception {
-            indexDirectory(SignTool.sign(file.getAbsolutePath()),
-                    file.getName(),
+        private void indexRootDirectory(String path) throws Exception {
+            indexDirectory(SignTool.sign(path),
+                    path,
                     stats.getRootPathId(),
                     null,
-                    SignTool.sign(file.getParent()));
+                    SignTool.sign(path));
         }
 
         /**

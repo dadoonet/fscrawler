@@ -31,6 +31,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
+import java.util.concurrent.Exchanger;
 import java.util.stream.Collectors;
 
 public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
@@ -79,6 +80,16 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
 
         if (logger.isDebugEnabled()) logger.debug("{} local files found", result.size());
         return result;
+    }
+
+    @Override
+    public boolean exists(String dir) throws Exception {
+        try {
+            sftp.ls(dir);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     @Override

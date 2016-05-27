@@ -73,6 +73,11 @@ public class FileAbstractorFile extends FileAbstractor<File> {
     }
 
     @Override
+    public boolean exists(String dir) throws Exception {
+        return new File(dir).exists();
+    }
+
+    @Override
     public void open() throws Exception {
 
     }
