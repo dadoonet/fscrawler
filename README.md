@@ -101,6 +101,7 @@ The job file must comply to the following `json` specifications:
       "*.json"
     ],
     "json_support" : false,
+    "attributes_support" : false,
     "filename_as_id" : false,
     "add_filesize" : true,
     "remove_deleted" : true,
@@ -140,6 +141,7 @@ Here is a full list of existing settings:
 | `fs.includes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.excludes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
+| `fs.attributes_support`          | `false`       | [Adding file attributes](#adding-file-attributes)                                 |
 | `fs.filename_as_id`              | `false`       | [Using Filename as `_id`](#using-filename-as-elasticsearch-_id)                   |
 | `fs.add_filesize`                | `true`        | [Disabling file size field](#disabling-file-size-field)                           |
 | `fs.remove_deleted`              | `true`        | [Ignore deleted files](#ignore-deleted-files)                                     |
@@ -415,6 +417,19 @@ You can force to use the `_id` to be the filename using `filename_as_id` attribu
   "fs" : {
     "json_support" : true,
     "filename_as_id" : true
+  }
+}
+```
+
+# Adding file attributes
+
+If you want to add file attributes such as `attributes.owner` and `attributes.group`, you can set `attributes_support` to `true`.
+
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "attributes_support" : true
   }
 }
 ```

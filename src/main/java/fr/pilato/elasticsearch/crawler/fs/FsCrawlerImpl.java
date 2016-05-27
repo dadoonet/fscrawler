@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractorFile;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractorSSH;
+import fr.pilato.elasticsearch.crawler.fs.meta.doc.Attributes;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.PathParser;
@@ -477,8 +478,11 @@ public class FsCrawlerImpl {
             // Path
 
             // Attributes
-            doc.getAttributes().setOwner(fileAbstractModel.owner);
-            doc.getAttributes().setGroup(fileAbstractModel.group);
+            if (fsSettings.getFs().isAttributesSupport()) {
+                doc.setAttributes(new Attributes());
+                doc.getAttributes().setOwner(fileAbstractModel.owner);
+                doc.getAttributes().setGroup(fileAbstractModel.group);
+            }
             // Attributes
 
             if (fsSettings.getFs().isIndexContent()) {

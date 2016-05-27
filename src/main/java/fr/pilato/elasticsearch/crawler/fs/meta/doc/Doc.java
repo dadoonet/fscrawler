@@ -34,7 +34,6 @@ public class Doc {
         meta = new Meta();
         file = new File();
         path = new Path();
-        attributes = new Attributes();
     }
 
     public String getContent() {
