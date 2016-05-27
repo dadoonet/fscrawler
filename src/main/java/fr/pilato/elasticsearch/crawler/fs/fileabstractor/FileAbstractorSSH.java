@@ -51,6 +51,8 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         model.path = path;
         model.fullpath = model.path.concat("/").concat(model.name);
         model.size = file.getAttrs().getSize();
+        model.owner = Integer.toString(file.getAttrs().getUId());
+        model.group = Integer.toString(file.getAttrs().getGId());
         return model;
     }
 
