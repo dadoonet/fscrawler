@@ -19,11 +19,18 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import com.google.api.client.json.GenericJson;
+import com.google.api.client.util.Key;
+
 import java.util.Arrays;
 
-public class SearchRequest {
+public class SearchRequest  extends GenericJson {
     private final String query;
+
+    @Key
     private final String[] fields;
+
+    @Key
     private final Integer size;
 
     public static Builder builder() {
