@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
@@ -243,14 +242,14 @@ public class ElasticsearchClient {
         return bulk(findNextNode(), bulkRequest);
     }
 
-    public void putMapping(Node node, String index, String type, ObjectNode mapping) throws Exception {
+    public void putMapping(Node node, String index, String type, String mapping) throws Exception {
         logger.debug("put mapping [{}/{}]", index, type);
         GenericUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/" + index);
         genericUrl.appendRawPath("/_mapping");
         genericUrl.appendRawPath("/" + type);
         HttpRequest request = requestFactory.buildPutRequest(genericUrl,
-                ByteArrayContent.fromString("application/json", mapping.toString()));
+                ByteArrayContent.fromString("application/json", mapping));
 
         try {
             HttpResponse httpResponse = request.execute();
@@ -262,7 +261,7 @@ public class ElasticsearchClient {
         }
     }
 
-    public void putMapping(String index, String type, ObjectNode mapping) throws Exception {
+    public void putMapping(String index, String type, String mapping) throws Exception {
         putMapping(findNextNode(), index, type, mapping);
     }
 
@@ -373,11 +372,11 @@ public class ElasticsearchClient {
      * @param mapping Elasticsearch mapping
      * @throws Exception in case of error
      */
-    public static void pushMapping(ElasticsearchClient client, String index, String type, ObjectNode mapping) throws Exception {
+    public static void pushMapping(ElasticsearchClient client, String index, String type, String mapping) throws Exception {
         boolean mappingExist = client.isExistingType(index, type);
         if (!mappingExist) {
             logger.debug("Mapping [{}]/[{}] doesn't exist. Creating it.", index, type);
-            logger.trace("Mapping for [{}]/[{}]: [{}]", index, type, mapping.toString());
+            logger.trace("Mapping for [{}]/[{}]: [{}]", index, type, mapping);
             client.putMapping(index, type, mapping);
         } else {
             logger.debug("Mapping [" + index + "]/[" + type + "] already exists.");

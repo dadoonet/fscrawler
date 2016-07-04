@@ -19,13 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.util;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -95,133 +96,15 @@ public class FsCrawlerUtil extends MetaParser {
     private static final Logger logger = LogManager.getLogger(FsCrawlerUtil.class);
 
     /**
-     * Build the mapping for documents
-     *
-     * @param enableSource Do you want to enable _source?
-     * @param storeSource  Do you want to store file source as binary BASE64 encoded?
-     * @return a mapping
-     * @throws Exception
+     * Reads a mapping definition file from fscrawler resources
+     * @param type The expected type (will be expanded to type.json)
+     * @return the mapping
+     * @throws URISyntaxException
+     * @throws IOException
      */
-    public static ObjectNode buildFsFileMapping(boolean enableSource, boolean storeSource) throws Exception {
-        ObjectNode root = prettyMapper.createObjectNode();
-
-        // Manage _source
-        if (!enableSource) {
-            // Disable source
-            root.putObject("_source").put("enabled", false);
-        } else {
-            if (storeSource) {
-                // We store binary source as a stored field so we don't need it in _source
-                root.putObject("_source").putArray("excludes").add(Doc.ATTACHMENT);
-            }
-        }
-
-        ObjectNode properties = root.putObject("properties");
-
-        // Doc content
-        addAnalyzedString(properties, Doc.CONTENT);
-
-        // Doc source
-        if (storeSource) {
-            addBinary(properties, Doc.ATTACHMENT);
-        }
-
-        // Meta
-        ObjectNode meta = properties.putObject(Doc.META).putObject("properties");
-        addAnalyzedString(meta, Doc.Meta.AUTHOR);
-        addAnalyzedString(meta, Doc.Meta.TITLE);
-        addDate(meta, Doc.Meta.DATE);
-        addAnalyzedString(meta, Doc.Meta.KEYWORDS);
-        // End Meta
-
-        // File
-        ObjectNode file = properties.putObject(Doc.FILE).putObject("properties");
-        addNotAnalyzedString(file, Doc.File.CONTENT_TYPE);
-        addDate(file, Doc.File.LAST_MODIFIED);
-        addDate(file, Doc.File.INDEXING_DATE);
-        addLong(file, Doc.File.FILESIZE);
-        addLong(file, Doc.File.INDEXED_CHARS);
-        addNotAnalyzedString(file, Doc.File.FILENAME);
-        addNotIndexedString(file, Doc.File.URL);
-        // End File
-
-        // Path
-        ObjectNode path = properties.putObject(Doc.PATH).putObject("properties");
-        addNotAnalyzedString(path, Doc.Path.ENCODED);
-        addNotAnalyzedString(path, Doc.Path.VIRTUAL);
-        addNotAnalyzedString(path, Doc.Path.ROOT);
-        addNotAnalyzedString(path, Doc.Path.REAL);
-        // End Path
-
-        // Attributes
-        ObjectNode attributes = properties.putObject(Doc.ATTRIBUTES).putObject("properties");
-        addNotAnalyzedString(attributes, Doc.Attributes.OWNER);
-        addNotAnalyzedString(attributes, Doc.Attributes.GROUP);
-        // End Attributes
-
-
-        // End Type
-        return root;
-    }
-
-
-    public static ObjectNode buildFsFolderMapping() throws Exception {
-        ObjectNode root = prettyMapper.createObjectNode();
-
-        ObjectNode properties = root.putObject("properties");
-
-        addNotAnalyzedString(properties, Dir.NAME);
-        addNotAnalyzedString(properties, Dir.REAL);
-        addNotAnalyzedString(properties, Dir.ENCODED);
-        addNotAnalyzedString(properties, Dir.ROOT);
-        addNotAnalyzedString(properties, Dir.VIRTUAL);
-
-        // End Type
-
-        return root;
-    }
-
-    public static ObjectNode buildFsFileMapping() throws Exception {
-        return buildFsFileMapping(true, false);
-    }
-
-    private static void addAnalyzedString(ObjectNode node, String fieldName) {
-        node.putObject(fieldName)
-                .put("type", "string")
-                .put("store", "yes");
-    }
-
-    private static void addNotAnalyzedString(ObjectNode node, String fieldName) {
-        node.putObject(fieldName)
-                .put("type", "string")
-                .put("store", "yes")
-                .put("index", "not_analyzed");
-    }
-
-    private static void addNotIndexedString(ObjectNode node, String fieldName) {
-        node.putObject(fieldName)
-                .put("type", "string")
-                .put("store", "yes")
-                .put("index", "no");
-    }
-
-    private static void addDate(ObjectNode node, String fieldName) {
-        node.putObject(fieldName)
-                .put("type", "date")
-                .put("format", "dateOptionalTime")
-                .put("store", "yes");
-    }
-
-    private static void addLong(ObjectNode node, String fieldName) {
-        node.putObject(fieldName)
-                .put("type", "long")
-                .put("store", "yes");
-    }
-
-    private static void addBinary(ObjectNode node, String fieldName) {
-        node.putObject(fieldName)
-                .put("type", "binary")
-                .put("store", "yes");
+    public static String readMapping(String type) throws URISyntaxException, IOException {
+        Path file = Paths.get(FsCrawlerUtil.class.getResource("/fr/pilato/elasticsearch/crawler/fs/" + type + ".json").toURI());
+        return new String(Files.readAllBytes(file), "UTF-8");
     }
 
 

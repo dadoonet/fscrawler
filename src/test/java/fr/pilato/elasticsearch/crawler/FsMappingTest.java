@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler;
 
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -31,13 +30,13 @@ public class FsMappingTest {
 
     @Test
     public void fs_mapping_for_files() throws Exception {
-        ObjectNode xb = FsCrawlerUtil.buildFsFileMapping();
-        logger.info("Mapping used for files : " + xb.toString());
+        String mapping = FsCrawlerUtil.readMapping("doc");
+        logger.info("Mapping used for files : " + mapping);
     }
 
     @Test
     public void fs_mapping_for_folders() throws Exception {
-        ObjectNode xb = FsCrawlerUtil.buildFsFolderMapping();
-        logger.info("Mapping used for folders : " + xb.toString());
+        String mapping = FsCrawlerUtil.readMapping("folder");
+        logger.info("Mapping used for folders : " + mapping);
     }
 }

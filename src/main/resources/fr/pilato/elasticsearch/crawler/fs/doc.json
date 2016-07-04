@@ -1,0 +1,113 @@
+{
+  "_source": {
+    "excludes": [
+      "attachment"
+    ]
+  },
+  "properties": {
+    "content": {
+      "type": "string",
+      "store": true
+    },
+    "attachment": {
+      "type": "binary",
+      "store": true
+    },
+    "meta": {
+      "properties": {
+        "author": {
+          "type": "string",
+          "store": true
+        },
+        "title": {
+          "type": "string",
+          "store": true
+        },
+        "date": {
+          "type": "date",
+          "format": "dateOptionalTime",
+          "store": true
+        },
+        "keywords": {
+          "type": "string",
+          "store": true
+        }
+      }
+    },
+    "file": {
+      "properties": {
+        "content_type": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        },
+        "last_modified": {
+          "type": "date",
+          "format": "dateOptionalTime",
+          "store": true
+        },
+        "indexing_date": {
+          "type": "date",
+          "format": "dateOptionalTime",
+          "store": true
+        },
+        "filesize": {
+          "type": "long",
+          "store": true
+        },
+        "indexed_chars": {
+          "type": "long",
+          "store": true
+        },
+        "filename": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        },
+        "url": {
+          "type": "string",
+          "store": true,
+          "index": "no"
+        }
+      }
+    },
+    "path": {
+      "properties": {
+        "encoded": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        },
+        "virtual": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        },
+        "root": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        },
+        "real": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        }
+      }
+    },
+    "attributes": {
+      "properties": {
+        "owner": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        },
+        "group": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        }
+      }
+    }
+  }
+}

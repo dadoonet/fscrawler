@@ -1,0 +1,29 @@
+{
+  "properties": {
+    "name": {
+      "type": "string",
+      "store": true,
+      "index": "not_analyzed"
+    },
+    "real": {
+      "type": "string",
+      "store": true,
+      "index": "not_analyzed"
+    },
+    "encoded": {
+      "type": "string",
+      "store": true,
+      "index": "not_analyzed"
+    },
+    "root": {
+      "type": "string",
+      "store": true,
+      "index": "not_analyzed"
+    },
+    "virtual": {
+      "type": "string",
+      "store": true,
+      "index": "not_analyzed"
+    }
+  }
+}

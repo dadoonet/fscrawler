@@ -146,12 +146,15 @@ public class FsCrawlerImpl {
         try {
             // If needed, we create the new mapping for files
             if (!settings.getFs().isJsonSupport()) {
+                // Read file mapping from resources
+                String mapping = FsCrawlerUtil.readMapping(FsCrawlerUtil.INDEX_TYPE_DOC);
                 ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
-                        FsCrawlerUtil.buildFsFileMapping(true, settings.getFs().isStoreSource()));
+                        mapping);
             }
             // If needed, we create the new mapping for folders
+            String mapping = FsCrawlerUtil.readMapping(FsCrawlerUtil.INDEX_TYPE_FOLDER);
             ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
-                    FsCrawlerUtil.buildFsFolderMapping());
+                    mapping);
         } catch (Exception e) {
             logger.warn("failed to create mapping for [{}/{}], disabling crawler...",
                     settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType());

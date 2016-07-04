@@ -31,7 +31,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
-import java.util.concurrent.Exchanger;
 import java.util.stream.Collectors;
 
 public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
