@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultResources;
+
 /**
  * Main entry point to launch FsCrawler
  */
@@ -106,6 +108,9 @@ public class FsCrawler {
         } else {
             configDir = Paths.get(commands.configDir);
         }
+
+        // We copy default mapping and settings to the default settings dir .fscrawler/_default/
+        copyDefaultResources(configDir);
 
         FsSettings fsSettings = null;
         FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(configDir);

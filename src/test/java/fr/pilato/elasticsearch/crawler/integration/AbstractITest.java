@@ -34,8 +34,6 @@ import java.io.File;
 import java.net.InetAddress;
 
 public abstract class AbstractITest extends AbstractFSCrawlerTest {
-    @ClassRule
-    public static TemporaryFolder folder = new TemporaryFolder();
 
     protected final static int TRANSPORT_TEST_PORT = 9380;
     protected final static int HTTP_TEST_PORT = 9280;
@@ -47,7 +45,6 @@ public abstract class AbstractITest extends AbstractFSCrawlerTest {
     public static ExternalResource elasticsearchClient = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            folder.create();
             File home = folder.newFolder("client");
             staticLogger.info("  --> Starting elasticsearch client in [{}]", home.toString());
 

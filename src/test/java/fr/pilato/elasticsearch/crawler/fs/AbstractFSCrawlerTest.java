@@ -22,10 +22,20 @@ package fr.pilato.elasticsearch.crawler.fs;
 import com.carrotsearch.randomizedtesting.generators.RandomInts;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
@@ -35,6 +45,14 @@ public abstract class AbstractFSCrawlerTest {
 
     @Rule
     public TestName name = new TestName();
+
+    @ClassRule
+    public static TemporaryFolder folder = new TemporaryFolder();
+
+    @BeforeClass
+    public static void createTmpDir() throws IOException {
+        folder.create();
+    }
 
     protected final Logger logger = LogManager.getLogger(this.getClass());
 

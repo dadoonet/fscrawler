@@ -74,6 +74,7 @@ public class FsCrawlerImpl {
      * We store config files here...
      * Default to ~/.fscrawler
      */
+    private final Path config;
     private final FsSettings settings;
     private final FsSettingsFileHandler fsSettingsFileHandler;
     private final FsJobFileHandler fsJobFileHandler;
@@ -81,6 +82,7 @@ public class FsCrawlerImpl {
     private ElasticsearchClient client;
 
     public FsCrawlerImpl(Path config, FsSettings settings) {
+        this.config = config;
         this.fsSettingsFileHandler = new FsSettingsFileHandler(config);
         this.fsJobFileHandler = new FsJobFileHandler(config);
 
@@ -156,12 +158,12 @@ public class FsCrawlerImpl {
             // If needed, we create the new mapping for files
             if (!settings.getFs().isJsonSupport()) {
                 // Read file mapping from resources
-                String mapping = FsCrawlerUtil.readMapping(elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
+                String mapping = FsCrawlerUtil.readMapping(config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
                 ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
                         mapping);
             }
             // If needed, we create the new mapping for folders
-            String mapping = FsCrawlerUtil.readMapping(elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
+            String mapping = FsCrawlerUtil.readMapping(config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
             ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     mapping);
         } catch (Exception e) {

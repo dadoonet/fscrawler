@@ -48,17 +48,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.EnumSet;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultResources;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -81,7 +76,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
      * about it.
      */
     @Before
-    public void copyTestResources() throws IOException {
+    public void copyTestResources() throws IOException, URISyntaxException {
         Path testResourceTarget = Paths.get(folder.getRoot().toURI()).resolve("resources");
         if (Files.notExists(testResourceTarget)) {
             Files.createDirectory(testResourceTarget);
@@ -104,8 +99,10 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        Files.walkFileTree(from, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
-                new InternalFileVisitor(from, currentTestResourceDir));
+        FsCrawlerUtil.copyDirs(from, currentTestResourceDir);
+
+        // We also need to create default mapping files
+        copyDefaultResources(metadataDir);
 
         staticLogger.info("  --> Test resources ready in [{}]", currentTestResourceDir);
     }
@@ -801,40 +798,4 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         // We expect to have two files
         countTestHelper(getCrawlerName(), "figure", 1);
     }
-
-
-    private class InternalFileVisitor extends SimpleFileVisitor<Path> {
-
-        private final Path fromPath;
-        private final Path toPath;
-        private final StandardCopyOption copyOption;
-
-        public InternalFileVisitor(Path fromPath, Path toPath, StandardCopyOption copyOption) {
-            this.fromPath = fromPath;
-            this.toPath = toPath;
-            this.copyOption = copyOption;
-        }
-
-        public InternalFileVisitor(Path fromPath, Path toPath) {
-            this(fromPath, toPath, StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-
-            Path targetPath = toPath.resolve(fromPath.relativize(dir));
-            if(!Files.exists(targetPath)){
-                Files.createDirectory(targetPath);
-            }
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-
-            Files.copy(file, toPath.resolve(fromPath.relativize(file)), copyOption);
-            return FileVisitResult.CONTINUE;
-        }
-    }
-
 }

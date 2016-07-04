@@ -19,24 +19,36 @@
 
 package fr.pilato.elasticsearch.crawler.fs.util;
 
+import fr.pilato.elasticsearch.crawler.fs.FsCrawler;
 import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.CopyOption;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.List;
 
 public class FsCrawlerUtil extends MetaParser {
@@ -98,21 +110,24 @@ public class FsCrawlerUtil extends MetaParser {
 
     /**
      * Reads a mapping definition file from fscrawler resources
+     *
+     * @param config Root dir where we can find the configuration
      * @param version Elasticsearch version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param type The expected type (will be expanded to type.json)
      * @return the mapping
      * @throws URISyntaxException
      * @throws IOException
      */
-    public static String readMapping(String version, String type) throws URISyntaxException, IOException {
-        URL resource = FsCrawlerUtil.class.getResource("/fr/pilato/elasticsearch/crawler/fs/" + version + "/" + type + ".json");
-        if (resource == null) {
-            throw new IllegalArgumentException("Mapping file " + type + ".json does not exist for elasticsearch version " + version);
+    public static String readMapping(Path config, String version, String type) throws URISyntaxException, IOException {
+        Path defaultConfigDir = config.resolve("_default");
+        Path file = defaultConfigDir.resolve(version).resolve(type + ".json");
+        try {
+            return new String(Files.readAllBytes(file), "UTF-8");
+        } catch (NoSuchFileException e) {
+            throw new IllegalArgumentException("Mapping file " + type + ".json does not exist for elasticsearch version " + version +
+                " in [" + defaultConfigDir + "] dir");
         }
-        Path file = Paths.get(resource.toURI());
-        return new String(Files.readAllBytes(file), "UTF-8");
     }
-
 
     /**
      * We check if we can index the file or if we should ignore it
@@ -231,5 +246,92 @@ public class FsCrawlerUtil extends MetaParser {
     public static String extractMajorVersionNumber(String version) {
         String[] digits = version.split("\\.");
         return digits[0];
+    }
+
+    private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
+    private static final String[] MAPPING_RESOURCES = { "2/doc.json", "2/folder.json" };
+
+    /**
+     * Copy default resources files which are available as project resources under
+     * fr.pilato.elasticsearch.crawler.fs._default package to a given configuration path
+     * under a _default sub directory.
+     * @param configPath The config path which is by default .fscrawler
+     * @throws IOException If copying does not work
+     */
+    public static void copyDefaultResources(Path configPath) throws IOException, URISyntaxException {
+        Path targetResourceDir = configPath.resolve("_default");
+
+        for (String filename : MAPPING_RESOURCES) {
+            logger.debug("Copying [{}]...", filename);
+            Path target = targetResourceDir.resolve(filename);
+            copyResourceFile(CLASSPATH_RESOURCES_ROOT + filename, target);
+        }
+    }
+
+    /**
+     * Copy a single resource file from the classpath or from a JAR.
+     * @param target The target
+     * @throws IOException If copying does not work
+     */
+    public static void copyResourceFile(String source, Path target) throws IOException, URISyntaxException {
+        InputStream resource = FsCrawler.class.getResourceAsStream(source);
+        FileUtils.copyInputStreamToFile(resource, target.toFile());
+    }
+
+    /**
+     * Copy files from a source to a target
+     * under a _default sub directory.
+     * @param source The source dir
+     * @param target The target dir
+     * @param options Potential options
+     * @throws IOException If copying does not work
+     */
+    public static void copyDirs(Path source, Path target, CopyOption... options) throws IOException {
+        if (Files.notExists(target)) {
+            Files.createDirectory(target);
+        }
+
+        logger.debug("  --> Copying resources from [{}]", source);
+        if (Files.notExists(source)) {
+            throw new RuntimeException(source + " doesn't seem to exist.");
+        }
+
+        Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                new InternalFileVisitor(source, target, options));
+
+        logger.debug("  --> Resources ready in [{}]", target);
+    }
+
+    private static class InternalFileVisitor extends SimpleFileVisitor<Path> {
+
+        private final Path fromPath;
+        private final Path toPath;
+        private final CopyOption[] copyOption;
+
+        public InternalFileVisitor(Path fromPath, Path toPath, CopyOption... copyOption) {
+            this.fromPath = fromPath;
+            this.toPath = toPath;
+            this.copyOption = copyOption;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+
+            Path targetPath = toPath.resolve(fromPath.relativize(dir));
+            if(!Files.exists(targetPath)){
+                Files.createDirectory(targetPath);
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            try {
+                Files.copy(file, toPath.resolve(fromPath.relativize(file)), copyOption);
+            } catch (FileAlreadyExistsException ignored) {
+                // The file already exists we just ignore it
+            }
+            return FileVisitResult.CONTINUE;
+        }
     }
 }
