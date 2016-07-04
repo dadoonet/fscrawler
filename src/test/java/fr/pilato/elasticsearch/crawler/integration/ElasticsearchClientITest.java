@@ -165,4 +165,11 @@ public class ElasticsearchClientITest extends AbstractMonoNodeITest {
         assertThat(response.getHits().getTotal(), is(10L));
     }
 
+    @Test
+    public void testFindVersion() throws IOException {
+        String version = elasticsearchClient.findVersion();
+        logger.info("Current elasticsearch version: [{}]", version);
+
+        // TODO if we store in a property file the elasticsearch version we are running tests against we can add some assertions
+    }
 }

@@ -265,6 +265,24 @@ public class ElasticsearchClient {
         putMapping(findNextNode(), index, type, mapping);
     }
 
+    public String findVersion() throws IOException {
+        return findVersion(findNextNode());
+    }
+
+    public String findVersion(Node node) throws IOException {
+        logger.debug("findVersion [{}]", node);
+        String version = null;
+        GenericUrl genericUrl = buildUrl(node);
+        genericUrl.appendRawPath("/");
+        HttpResponse httpResponse = requestFactory.buildGetRequest(genericUrl).execute();
+        GenericJson json = httpResponse.parseAs(GenericJson.class);
+        logger.debug("get server response: {}", json);
+        Object oVersion = extractFromPath(json, "version").get("number");
+        version = (String) oVersion;
+        logger.debug("findVersion [{}] -> [{}]", node, version);
+        return version;
+    }
+
     public static class ElasticsearchUrl extends GenericUrl {
         @Key
         public String q;

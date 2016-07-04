@@ -47,6 +47,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static fr.pilato.elasticsearch.crawler.fs.TikaInstance.tika;
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 
 /**
  * @author dadoonet (David Pilato)
@@ -131,6 +132,8 @@ public class FsCrawlerImpl {
             return;
         }
 
+        String elasticsearchVersion;
+
         try {
             // Create an elasticsearch client
             client = ElasticsearchClient.builder().build();
@@ -138,6 +141,12 @@ public class FsCrawlerImpl {
             settings.getElasticsearch().getNodes().forEach(client::addNode);
 
             client.createIndex(settings.getElasticsearch().getIndex(), true);
+
+            // Let's read the current version of elasticsearch cluster
+            String version = client.findVersion();
+            logger.info("FS crawler connected to an elasticsearch [{}] node.", version);
+
+            elasticsearchVersion = extractMajorVersionNumber(version);
         } catch (Exception e) {
             logger.warn("failed to create index [{}], disabling crawler...", settings.getElasticsearch().getIndex());
             throw e;
@@ -147,12 +156,12 @@ public class FsCrawlerImpl {
             // If needed, we create the new mapping for files
             if (!settings.getFs().isJsonSupport()) {
                 // Read file mapping from resources
-                String mapping = FsCrawlerUtil.readMapping(FsCrawlerUtil.INDEX_TYPE_DOC);
+                String mapping = FsCrawlerUtil.readMapping(elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
                 ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
                         mapping);
             }
             // If needed, we create the new mapping for folders
-            String mapping = FsCrawlerUtil.readMapping(FsCrawlerUtil.INDEX_TYPE_FOLDER);
+            String mapping = FsCrawlerUtil.readMapping(elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
             ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     mapping);
         } catch (Exception e) {

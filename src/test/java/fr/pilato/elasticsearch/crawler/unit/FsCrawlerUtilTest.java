@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -45,5 +46,14 @@ public class FsCrawlerUtilTest {
 
     private void testHelper(String rootPath, String realPath, String expectedPath) {
         assertThat(FsCrawlerUtil.computeVirtualPathName(new ScanStatistic(rootPath), realPath), is(expectedPath));
+    }
+
+    @Test
+    public void testExtractingVersion() {
+        assertThat(extractMajorVersionNumber("1.2.3"), is("1"));
+        assertThat(extractMajorVersionNumber("2.3.1"), is("2"));
+        assertThat(extractMajorVersionNumber("5.0.0-SNAPSHOT"), is("5"));
+        assertThat(extractMajorVersionNumber("5.0.0.beta4-SNAPSHOT"), is("5"));
+        assertThat(extractMajorVersionNumber("1"), is("1"));
     }
 }

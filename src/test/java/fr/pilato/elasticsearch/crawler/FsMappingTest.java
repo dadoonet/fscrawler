@@ -24,19 +24,42 @@ import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.fail;
+
 public class FsMappingTest {
 
     private final Logger logger = Logger.getLogger(FsMappingTest.class);
 
     @Test
-    public void fs_mapping_for_files() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping("doc");
+    public void fs_mapping_for_files_version_2() throws Exception {
+        String mapping = FsCrawlerUtil.readMapping("2", FsCrawlerUtil.INDEX_TYPE_DOC);
         logger.info("Mapping used for files : " + mapping);
     }
 
     @Test
-    public void fs_mapping_for_folders() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping("folder");
+    public void fs_mapping_for_folders_version_2() throws Exception {
+        String mapping = FsCrawlerUtil.readMapping("2", FsCrawlerUtil.INDEX_TYPE_FOLDER);
         logger.info("Mapping used for folders : " + mapping);
+    }
+    @Test
+    public void fs_mapping_for_files_version_not_supported() throws Exception {
+        try {
+            FsCrawlerUtil.readMapping("0", FsCrawlerUtil.INDEX_TYPE_DOC);
+            fail("We should have thrown an exception for an unknown elasticsearch version");
+        } catch (IllegalArgumentException ignored) {
+            assertThat(ignored.getMessage(), containsString("does not exist for elasticsearch version"));
+        }
+    }
+
+    @Test
+    public void fs_mapping_for_folders_version_not_supported() throws Exception {
+        try {
+            FsCrawlerUtil.readMapping("0", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+            fail("We should have thrown an exception for an unknown elasticsearch version");
+        } catch (IllegalArgumentException ignored) {
+            assertThat(ignored.getMessage(), containsString("does not exist for elasticsearch version"));
+        }
     }
 }

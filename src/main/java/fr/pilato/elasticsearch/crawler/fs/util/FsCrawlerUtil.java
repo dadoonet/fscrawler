@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -97,13 +98,18 @@ public class FsCrawlerUtil extends MetaParser {
 
     /**
      * Reads a mapping definition file from fscrawler resources
+     * @param version Elasticsearch version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param type The expected type (will be expanded to type.json)
      * @return the mapping
      * @throws URISyntaxException
      * @throws IOException
      */
-    public static String readMapping(String type) throws URISyntaxException, IOException {
-        Path file = Paths.get(FsCrawlerUtil.class.getResource("/fr/pilato/elasticsearch/crawler/fs/" + type + ".json").toURI());
+    public static String readMapping(String version, String type) throws URISyntaxException, IOException {
+        URL resource = FsCrawlerUtil.class.getResource("/fr/pilato/elasticsearch/crawler/fs/" + version + "/" + type + ".json");
+        if (resource == null) {
+            throw new IllegalArgumentException("Mapping file " + type + ".json does not exist for elasticsearch version " + version);
+        }
+        Path file = Paths.get(resource.toURI());
         return new String(Files.readAllBytes(file), "UTF-8");
     }
 
@@ -215,5 +221,15 @@ public class FsCrawlerUtil extends MetaParser {
             logger.warn("Failed to determine 'group' of {}: {}", file, e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Extracts the major digits from a version string
+     * @param version A version like x.y.z-WHATEVER
+     * @return x
+     */
+    public static String extractMajorVersionNumber(String version) {
+        String[] digits = version.split("\\.");
+        return digits[0];
     }
 }
