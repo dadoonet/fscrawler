@@ -7,9 +7,10 @@ It crawls your file system and index new files, update existing ones and removes
 
 You need to install a version matching your Elasticsearch version:
 
-| Elasticsearch |  FS Crawler |                   Docs               |
-|---------------|-------------|--------------------------------------|
-|    es-2.0     | 2.0.0       | See below                            |
+| Elasticsearch |  FS Crawler | Released |                                       Docs                                   |
+|---------------|-------------|----------|------------------------------------------------------------------------------|
+|    es-2.0     | 2.0.0       |2015-10-30|[2.0.0](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.0.0/README.md) |
+|    es-2.x     | 2.1-SNAPSHOT|          |See below                                                                     |
 
 
 ## Build Status
