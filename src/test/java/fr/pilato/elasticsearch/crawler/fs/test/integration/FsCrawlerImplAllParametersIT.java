@@ -17,10 +17,13 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.integration;
+package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import com.google.api.client.util.Data;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
@@ -31,13 +34,6 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -45,12 +41,14 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -62,7 +60,7 @@ import static org.hamcrest.Matchers.nullValue;
 /**
  * Test all crawler settings
  */
-public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
+public class FsCrawlerImplAllParametersIT extends AbstractIT {
 
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
@@ -87,7 +85,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         Path from = Paths.get(url);
         currentTestResourceDir = testResourceTarget.resolve(currentTestName);
 
-        staticLogger.info("  --> Copying test resources from [{}]", from);
+        staticLogger.debug("  --> Copying test resources from [{}]", from);
         if (Files.notExists(from)) {
             logger.error("directory [{}] should be copied to [{}]", from, currentTestResourceDir);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -95,20 +93,12 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
         FsCrawlerUtil.copyDirs(from, currentTestResourceDir);
 
-        staticLogger.info("  --> Test resources ready in [{}]", currentTestResourceDir);
+        staticLogger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
     }
 
     @After
     public void shutdownCrawler() {
         stopCrawler();
-    }
-
-
-    private static final String testCrawlerPrefix = "fscrawler_";
-
-    private String getCrawlerName() {
-        String testName = testCrawlerPrefix.concat(getCurrentTestName());
-        return testName.contains(" ") ? Strings.split(testName, " ")[0] : testName;
     }
 
     private Fs.Builder startCrawlerDefinition() throws IOException {
@@ -148,7 +138,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
     }
 
     private String getUrl(String dir) {
-        URL resource = FsCrawlerImplAllParametersTest.class.getResource("/job-sample.json");
+        URL resource = FsCrawlerImplAllParametersIT.class.getResource("/job-sample.json");
         File resourceDir = new File(URItoFile(resource).getParentFile(), "samples");
         File dataDir = new File(resourceDir, dir);
 
@@ -188,16 +178,11 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
         // Print crawler settings
         FsSettings fsSettings = new FsSettingsFileHandler(metadataDir).read(jobName);
-        logger.info("  --> Index settings [{}]", FsSettingsParser.toJson(fsSettings));
+        logger.debug("  --> Index settings [{}]", FsSettingsParser.toJson(fsSettings));
     }
 
-    private void refresh() {
-        client.admin().indices().prepareRefresh().get();
-    }
-
-    private void createIndex(String index) {
-        logger.info("  --> createIndex({})", index);
-        client.admin().indices().prepareCreate(index).get();
+    private void refresh() throws IOException {
+        elasticsearchClient.refresh(null);
     }
 
     private void stopCrawler() {
@@ -219,49 +204,49 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
      * @throws Exception
      */
     public SearchResponse countTestHelper(final String indexName, String term, final Integer expected) throws Exception {
-        return countTestHelper(indexName, term, expected, null, null);
+        return countTestHelper(indexName, term, expected, null);
     }
 
     /**
      * Check that we have the expected number of docs or at least one if expected is null
      *
      * @param indexName Index we will search in.
-     * @param term      Term you search for. MatchAll if null.
+     * @param query     QueryString query, like foo:bar. MatchAll if null.
      * @param expected  expected number of docs. Null if at least 1.
      * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
-     * @param esQuery   If we want to use a specific elasticsearch query for a test instead of queryStringQuery or MathAll
      * @param fields    If we want to add some fields within the response
      * @return the search response if further tests are needed
      * @throws Exception
      */
-    public SearchResponse countTestHelper(final String indexName, String term, final Integer expected, final Path path,
-                                          final QueryBuilder esQuery, final String... fields) throws Exception {
-        // Let's search for entries
-        final QueryBuilder query;
-        if (esQuery != null) {
-            query = esQuery;
-        } else {
-            if (term == null) {
-                query = QueryBuilders.matchAllQuery();
-            } else {
-                query = QueryBuilders.queryStringQuery(term);
-            }
-        }
+    public SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
+                                          final String... fields) throws Exception {
 
         final SearchResponse[] response = new SearchResponse[1];
 
         // We wait up to 5 seconds before considering a failing test
+        logger.info("  ---> Waiting up to 5 seconds for {} documents in index {}", expected == null ? "some" : expected, indexName);
         assertThat("We waited for 5 seconds but no document has been added", awaitBusy(() -> {
             long totalHits;
-            SearchRequestBuilder requestBuilder = client.prepareSearch(indexName)
-                    .setTypes(FsCrawlerUtil.INDEX_TYPE_DOC)
-                    .setQuery(query);
-            for (String field : fields) {
-                requestBuilder.addField(field);
+
+            // Let's search for entries
+            SearchRequest.Builder sr = SearchRequest.builder();
+
+            if (query != null) {
+                sr.setQuery(query);
             }
-            response[0] = requestBuilder.get();
-            logger.debug("result {}", response[0].toString());
-            totalHits = response[0].getHits().getTotalHits();
+
+            if (fields.length > 0) {
+                sr.setFields(fields);
+            }
+
+            try {
+                response[0] = elasticsearchClient.search(indexName, FsCrawlerUtil.INDEX_TYPE_DOC, sr.build());
+            } catch (IOException e) {
+                logger.warn("error caught", e);
+                return false;
+            }
+            logger.trace("result {}", response[0].toString());
+            totalHits = response[0].getHits().getTotal();
 
             if (expected == null) {
                 return (totalHits >= 1);
@@ -269,12 +254,12 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
                 if (expected == totalHits) {
                     return true;
                 } else {
-                    logger.info("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
+                    logger.debug("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
                     if (path != null) {
-                        logger.info("     ---> content of [{}]:", path);
+                        logger.debug("     ---> content of [{}]:", path);
                         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path)) {
                             for (Path file : directoryStream) {
-                                logger.info("         - {} {}",
+                                logger.debug("         - {} {}",
                                         file.getFileName().toString(),
                                         Files.getLastModifiedTime(file));
                             }
@@ -311,10 +296,10 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler();
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1);
-        for (SearchHit hit : searchResponse.getHits()) {
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Map<String, Object> file = (Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE);
             assertThat(file, notNullValue());
-            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), is(30));
+            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), is(new BigDecimal(30)));
         }
     }
 
@@ -326,13 +311,18 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "*");
-        for (SearchHit hit : searchResponse.getHits()) {
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+            Object content = hit.getFields().get(FsCrawlerUtil.Doc.CONTENT);
+            Object indexedChars = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS);
+            assertThat(content, notNullValue());
+            assertThat(indexedChars, notNullValue());
+
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.CONTENT), notNullValue());
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS), notNullValue());
 
             // Our original text: "Bonjour David..." should be truncated
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.CONTENT).getValue(), is("Bonjour"));
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS).getValue(), is(7L));
+            assertThat(((ArrayList<Object>) content).get(0), is("Bonjour"));
+            assertThat(((ArrayList<Object>) indexedChars).get(0), is(new BigDecimal(7)));
         }
     }
 
@@ -344,13 +334,15 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "*");
-        for (SearchHit hit : searchResponse.getHits()) {
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.CONTENT), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS), notNullValue());
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+            Object content = hit.getFields().get(FsCrawlerUtil.Doc.CONTENT);
+            Object indexedChars = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS);
+            assertThat(content, notNullValue());
+            assertThat(indexedChars, notNullValue());
 
             // Our original text: "Bonjour David..." should be truncated
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.CONTENT).getValue(), is("Bonjour "));
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS).getValue(), is(8L));
+            assertThat(((ArrayList<Object>) content).get(0), is("Bonjour "));
+            assertThat(((ArrayList<Object>) indexedChars).get(0), is(new BigDecimal(8)));
         }
     }
 
@@ -362,12 +354,13 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "*");
-        for (SearchHit hit : searchResponse.getHits()) {
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.CONTENT), notNullValue());
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+            Object content = hit.getFields().get(FsCrawlerUtil.Doc.CONTENT);
+            assertThat(content, notNullValue());
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS), nullValue());
 
             // Our original text: "Bonjour David\n\n\n" should not be truncated
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.CONTENT).getValue(), is("Bonjour David\n\n\n"));
+            assertThat(((ArrayList<Object>) content).get(0), is("Bonjour David\n\n\n"));
         }
     }
 
@@ -379,10 +372,10 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1);
-        for (SearchHit hit : searchResponse.getHits()) {
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Map<String, Object> file = (Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE);
             assertThat(file, notNullValue());
-            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), nullValue());
+            assertThat(Data.isNull(file.get(FsCrawlerUtil.Doc.File.FILESIZE)), is(true));
         }
     }
 
@@ -403,7 +396,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "*");
-        for (SearchHit hit : searchResponse.getHits()) {
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CONTENT_TYPE), notNullValue());
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.URL), notNullValue());
@@ -422,7 +415,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler();
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "*");
-        for (SearchHit hit : searchResponse.getHits()) {
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
 
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
@@ -444,7 +437,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "attributes.owner");
-        for (SearchHit hit : searchResponse.getHits()) {
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTRIBUTES + "." + FsCrawlerUtil.Doc.Attributes.OWNER), notNullValue());
         }
     }
@@ -457,14 +450,14 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
-        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir, null);
+        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
 
         // We remove a file
-        logger.info(" ---> Removing file deleted_roottxtfile.txt");
+        logger.info("  ---> Removing file deleted_roottxtfile.txt");
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir, null);
+        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
     }
 
     @Test
@@ -475,14 +468,14 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
-        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir, null);
+        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
 
         // We remove a file
         logger.info(" ---> Removing file deleted_roottxtfile.txt");
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir, null);
+        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
     }
 
     /**
@@ -494,7 +487,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler();
 
         // We should have two docs first
-        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir, null);
+        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
 
         // We rename the file
         logger.info(" ---> Renaming file roottxtfile.txt to renamed_roottxtfile.txt");
@@ -503,7 +496,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
                 currentTestResourceDir.resolve("renamed_roottxtfile.txt"));
 
         // We expect to have one file only with a new name
-        countTestHelper(getCrawlerName(), "file.filename:renamed_roottxtfile.txt", 1, currentTestResourceDir, null);
+        countTestHelper(getCrawlerName(), "file.filename:renamed_roottxtfile.txt", 1, currentTestResourceDir);
     }
 
     /**
@@ -514,7 +507,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler();
 
         // We should have one doc first
-        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir, null);
+        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
 
         logger.info(" ---> Adding a copy of roottxtfile.txt");
         // We create a copy of a file
@@ -522,7 +515,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
                 currentTestResourceDir.resolve("new_roottxtfile.txt"));
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir, null);
+        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
     }
 
     /**
@@ -536,9 +529,13 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
-            SearchResponse searchResponse = client.prepareSearch(getCrawlerName())
-                    .setQuery(QueryBuilders.termQuery("text", "tweet")).get();
-            return searchResponse.getHits().getTotalHits() == 2;
+            try {
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "text:tweet");
+                return response.getHits().getTotal() == 2;
+            } catch (IOException e) {
+                logger.warn("Caught exception while running the test", e);
+                return false;
+            }
         }), equalTo(true));
     }
 
@@ -553,15 +550,23 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
-            SearchResponse searchResponse = client.prepareSearch(getCrawlerName())
-                    .setQuery(QueryBuilders.termQuery("text", "tweet")).get();
-            return searchResponse.getHits().getTotalHits() == 0;
+            try {
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "text:tweet");
+                return response.getHits().getTotal() == 0;
+            } catch (IOException e) {
+                logger.warn("Caught exception while running the test", e);
+                return false;
+            }
         }), equalTo(true));
 
         assertThat("We should have 2 docs for tweet in _all...", awaitBusy(() -> {
-            SearchResponse searchResponse = client.prepareSearch(getCrawlerName())
-                    .setQuery(QueryBuilders.queryStringQuery("tweet")).get();
-            return searchResponse.getHits().getTotalHits() == 2;
+            try {
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "_all:tweet");
+                return response.getHits().getTotal() == 2;
+            } catch (IOException e) {
+                logger.warn("Caught exception while running the test", e);
+                return false;
+            }
         }), equalTo(true));
     }
 
@@ -577,13 +582,19 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         assertThat("Document should exists with [tweet1] id...", awaitBusy(() -> {
-            GetResponse getResponse = client.prepareGet(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "tweet1").get();
-            return getResponse.isExists();
+            try {
+                return elasticsearchClient.isExistingDocument(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "tweet1");
+            } catch (IOException e) {
+                return false;
+            }
         }), equalTo(true));
 
         assertThat("Document should exists with [tweet2] id...", awaitBusy(() -> {
-            GetResponse getResponse = client.prepareGet(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "tweet2").get();
-            return getResponse.isExists();
+            try {
+                return elasticsearchClient.isExistingDocument(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "tweet2");
+            } catch (IOException e) {
+                return false;
+            }
         }), equalTo(true));
     }
 
@@ -595,7 +606,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "_source", "*");
-        for (SearchHit hit : searchResponse.getHits()) {
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             // We check that the field has been stored
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), notNullValue());
 
@@ -609,7 +620,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler();
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "_source", "*");
-        for (SearchHit hit : searchResponse.getHits()) {
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             // We check that the field has not been stored
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
 
@@ -626,8 +637,8 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1);
 
         // The default configuration should not add file attributes
-        for (SearchHit hit : searchResponse.getHits()) {
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTRIBUTES + "." + FsCrawlerUtil.Doc.Attributes.OWNER), nullValue());
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+            assertThat(Data.isNull(hit.getSource().get(FsCrawlerUtil.Doc.ATTRIBUTES)), is(true));
         }
 
     }
@@ -668,7 +679,7 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         startCrawler();
 
         // We should have one doc
-        countTestHelper(getCrawlerName(), null, 1, null, QueryBuilders.termQuery("file.filename", "roottxtfile.txt"));
+        countTestHelper(getCrawlerName(), "file.filename:roottxtfile.txt", 1, null);
     }
 
     /**
@@ -764,8 +775,8 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         // We expect to have one file
         countTestHelper(getCrawlerName(), null, 1);
 
-        countTestHelper(getCrawlerName(), null, 0, null, QueryBuilders.prefixQuery("content", "file"));
-        countTestHelper(getCrawlerName(), null, 0, null, QueryBuilders.prefixQuery("file.content_type", "text/plain"));
+        countTestHelper(getCrawlerName(), "content:file*", 0, null);
+        countTestHelper(getCrawlerName(), "file.content_type:text*", 0, null);
     }
 
     @Test

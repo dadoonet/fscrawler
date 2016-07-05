@@ -17,9 +17,9 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.meta.settings;
+package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.AbstractFSCrawlerTest;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobParser;
 import org.elasticsearch.common.logging.support.LoggerMessageFormat;

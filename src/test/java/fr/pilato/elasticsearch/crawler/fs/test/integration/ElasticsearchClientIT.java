@@ -1,0 +1,167 @@
+/*
+ * Licensed to David Pilato (the "Author") under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. Author licenses this
+ * file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package fr.pilato.elasticsearch.crawler.fs.test.integration;
+
+import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
+import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
+import org.junit.Test;
+
+import java.io.IOException;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
+import static org.junit.Assert.fail;
+
+/**
+ * Test elasticsearch HTTP client
+ */
+public class ElasticsearchClientIT extends AbstractIT {
+
+    @Test
+    public void testCreateIndex() throws IOException {
+        elasticsearchClient.createIndex(getCrawlerName());
+        boolean exists = elasticsearchClient.isExistingIndex(getCrawlerName());
+        assertThat(exists, is(true));
+    }
+
+    @Test
+    public void testRefresh() throws IOException {
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.refresh(null);
+    }
+
+    @Test
+    public void testCreateIndexAlreadyExists() throws IOException {
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
+        try {
+            elasticsearchClient.createIndex(getCrawlerName());
+            fail("we should reject creation of an already existing index");
+        } catch (RuntimeException e) {
+            assertThat(e.getMessage(), is("index already exists"));
+        }
+    }
+
+    @Test
+    public void testIsExistingTypeWithNoIndex() throws IOException {
+        boolean existingType = elasticsearchClient.isExistingType(getCrawlerName(), "doc");
+        assertThat(existingType, is(false));
+    }
+
+    @Test
+    public void testIsExistingTypeWithIndexNoType() throws IOException {
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
+        boolean existingType = elasticsearchClient.isExistingType(getCrawlerName(), "doc");
+        assertThat(existingType, is(false));
+    }
+
+    @Test
+    public void testIsExistingTypeWithIndexAndType() throws IOException {
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
+        elasticsearchClient.putMapping(getCrawlerName(), "doc", "{\"doc\":{}}");
+        boolean existingType = elasticsearchClient.isExistingType(getCrawlerName(), "doc");
+        assertThat(existingType, is(true));
+    }
+
+    @Test
+    public void testSearch() throws IOException {
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
+
+        elasticsearchClient.index(getCrawlerName(), "doc", "1", "{ \"foo\" : \"bar\" }");
+        elasticsearchClient.index(getCrawlerName(), "doc", "2", "{ \"foo\" : \"baz\" }");
+
+        elasticsearchClient.refresh(getCrawlerName());
+
+        // match_all
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        assertThat(response.getHits().getTotal(), is(2L));
+
+        // term
+        response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar");
+        assertThat(response.getHits().getTotal(), is(1L));
+    }
+
+    @Test
+    public void testBulkWithTime() throws IOException, InterruptedException {
+        // Create the index first
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
+
+        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 100, TimeValue.timeValueSeconds(2));
+        for (int i = 0; i < 10; i++) {
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}"));
+        }
+
+        elasticsearchClient.refresh(getCrawlerName());
+
+        // If we search just after sending the requests, we won't have all data
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        assertThat(response.getHits().getTotal(), lessThan(10L));
+
+        // We wait for 3 seconds (2 should be enough)
+        Thread.sleep(3000L);
+
+        elasticsearchClient.refresh(getCrawlerName());
+
+        // We should have now our docs
+        response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        assertThat(response.getHits().getTotal(), is(10L));
+    }
+
+    @Test
+    public void testBulkWithoutTime() throws IOException, InterruptedException {
+        // Create the index first
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
+
+        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 10, null);
+        for (int i = 0; i < 9; i++) {
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}"));
+        }
+
+        elasticsearchClient.refresh(getCrawlerName());
+
+        // If we search just after sending the requests, we won't have all data
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        assertThat(response.getHits().getTotal(), is(0L));
+
+        bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + 9).source("{\"foo\":\"bar\"}"));
+
+        elasticsearchClient.refresh(getCrawlerName());
+
+        // We should have now our docs
+        response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        assertThat(response.getHits().getTotal(), is(10L));
+    }
+
+    @Test
+    public void testFindVersion() throws IOException {
+        String version = elasticsearchClient.findVersion();
+        logger.info("Current elasticsearch version: [{}]", version);
+
+        // TODO if we store in a property file the elasticsearch version we are running tests against we can add some assertions
+    }
+}

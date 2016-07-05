@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.unit;
+package fr.pilato.elasticsearch.crawler.fs.test.unit;
 
 
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;

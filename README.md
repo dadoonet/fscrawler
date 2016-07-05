@@ -906,8 +906,8 @@ every 5 seconds. You can change default settings using `bulk_size` and `flush_in
 
 ## Node settings
 
-FS crawler is using elasticsearch transport client to send data to your running cluster.
-By default, it connects to `127.0.0.1` on port `9300` which are the default settings when
+FS crawler is using elasticsearch REST layer to send data to your running cluster.
+By default, it connects to `127.0.0.1` on port `9200` which are the default settings when
 running a local node on your machine.
 
 Of course, in production, you would probably change this and connect to a production cluster:
@@ -917,7 +917,7 @@ Of course, in production, you would probably change this and connect to a produc
   "name" : "test",
   "elasticsearch" : {
     "nodes" : [
-      { "host" : "mynode1.mycompany.com", "port" : 9300 }
+      { "host" : "mynode1.mycompany.com", "port" : 9200 }
     ]
   }
 }
@@ -930,15 +930,66 @@ You can define multiple nodes:
   "name" : "test",
   "elasticsearch" : {
     "nodes" : [
-      { "host" : "mynode1.mycompany.com", "port" : 9300 },
-      { "host" : "mynode2.mycompany.com", "port" : 9300 },
-      { "host" : "mynode3.mycompany.com", "port" : 9300 }
+      { "host" : "mynode1.mycompany.com", "port" : 9200 },
+      { "host" : "mynode2.mycompany.com", "port" : 9200 },
+      { "host" : "mynode3.mycompany.com", "port" : 9200 }
     ]
   }
 }
 ```
 
-**Note:** the `cluster.name` does not have to be set as it's ignored.
+
+# Developing on FS Crawler project
+
+If you are thinking of contributing on the project, which is highly appreciated, here are
+some tricks which might help.
+
+## Building
+
+The project is built using [Apache Maven](https://maven.apache.org/).
+It needs Java >= 1.8.
+
+To build it, just run:
+
+```sh
+git clone https://github.com/dadoonet/fscrawler.git
+cd fscrawler
+mvn clean install
+```
+
+You can also skip running tests with:
+
+```sh
+mvn clean install -DskipTests
+```
+
+## Testing
+
+Tests are now separated between unit tests and integration tests:
+
+* Unit tests are defined in [fr.pilato.elasticsearch.crawler.fs.test.unit](src/test/java/fr/pilato/elasticsearch/crawler/fs/test/unit)
+package.
+* Integration tests are defined in [fr.pilato.elasticsearch.crawler.fs.test.integration](src/test/java/fr/pilato/elasticsearch/crawler/fs/test/integration)
+package.
+
+Integration tests only run when an elasticsearch cluster is running at [127.0.0.1:9400](http://127.0.0.1:9400).
+When running with maven, an elasticsearch instance is automatically downloaded from maven central, installed
+and launched before integration tests start and stopped after integration tests.
+
+This local test instance is installed under `target/integration-tests/run`.
+If you have any trouble, you can stop any running instance, then run `mvn clean` to clean all left data.
+
+Note that a PID file is generated in `target/integration-tests/run/es.pid`.
+
+For debugging purpose, you can still run integration tests from your IDE.
+Just download any version of elasticsearch you wish, and launch it with:
+
+```sh
+# elasticsearch 2.x
+bin/elasticsearch -Des.http.port=9400
+```
+
+Integration tests will detect the running instance and will not ignore anymore those tests.
 
 
 # License

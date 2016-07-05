@@ -17,9 +17,9 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.meta.settings;
+package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.AbstractFSCrawlerTest;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
 import org.junit.Test;
 
 import java.io.IOException;

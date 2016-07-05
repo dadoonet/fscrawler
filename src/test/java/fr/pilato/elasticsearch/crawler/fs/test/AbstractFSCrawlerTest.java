@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs;
+package fr.pilato.elasticsearch.crawler.fs.test;
 
 import com.carrotsearch.randomizedtesting.generators.RandomInts;
 import org.apache.logging.log4j.LogManager;
@@ -62,7 +62,7 @@ public abstract class AbstractFSCrawlerTest {
             Files.createDirectory(metadataDir);
         }
         copyDefaultResources(metadataDir);
-        staticLogger.info("  --> Test metadata dir ready in [{}]", metadataDir);
+        staticLogger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
     protected final Logger logger = LogManager.getLogger(this.getClass());

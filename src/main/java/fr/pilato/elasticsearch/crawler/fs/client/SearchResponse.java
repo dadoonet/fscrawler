@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import com.google.api.client.json.GenericJson;
 import com.google.api.client.util.Key;
 
 import java.util.List;
@@ -28,7 +27,7 @@ import java.util.Map;
 /**
  * Search response object. We only unwrap needed fields.
  */
-public class SearchResponse extends GenericJson {
+public class SearchResponse {
 
     @Key
     private Hits hits;
@@ -45,7 +44,7 @@ public class SearchResponse extends GenericJson {
         return sb.toString();
     }
 
-    public static class Hits extends GenericJson {
+    public static class Hits {
 
         @Key
         private List<Hit> hits;
@@ -71,11 +70,12 @@ public class SearchResponse extends GenericJson {
         }
     }
 
-    public static class Hit extends GenericJson {
+    public static class Hit {
 
         @Key("_source")
         private Map<String, Object> source;
-        @Key("_fields")
+
+        @Key
         private Map<String, Object> fields;
 
         public Map<String, Object> getSource() {

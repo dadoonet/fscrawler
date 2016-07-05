@@ -42,6 +42,7 @@ import org.apache.tika.metadata.Metadata;
 import java.io.*;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.security.acl.Owner;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -65,6 +66,7 @@ public class FsCrawlerImpl {
     private static final String PATH_ENCODED = FsCrawlerUtil.Doc.PATH + "." + FsCrawlerUtil.Doc.Path.ENCODED;
     private static final String FILE_FILENAME = FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME;
 
+    public static final int REQUEST_SIZE = 10000;
 
     private volatile BulkProcessor bulkProcessor;
 
@@ -146,7 +148,7 @@ public class FsCrawlerImpl {
 
             // Let's read the current version of elasticsearch cluster
             String version = client.findVersion();
-            logger.info("FS crawler connected to an elasticsearch [{}] node.", version);
+            logger.debug("FS crawler connected to an elasticsearch [{}] node.", version);
 
             elasticsearchVersion = extractMajorVersionNumber(version);
         } catch (Exception e) {
@@ -187,12 +189,13 @@ public class FsCrawlerImpl {
     }
 
     public void close() {
-        logger.info("Closing fs crawler");
+        logger.debug("Closing FS crawler [{}]", settings.getName());
         closed = true;
 
         if (this.bulkProcessor != null) {
             this.bulkProcessor.close();
         }
+        logger.info("FS crawler [{}] stopped", settings.getName());
     }
 
     public boolean isClosed() {
@@ -206,13 +209,16 @@ public class FsCrawlerImpl {
 
         public FSParser(FsSettings fsSettings) {
             this.fsSettings = fsSettings;
-            logger.info("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
+            logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
                     fsSettings.getFs().getUrl(),
                     fsSettings.getFs().getUpdateRate());
         }
 
         @Override
         public void run() {
+            logger.info("FS crawler started for [{}] for [{}] every [{}]", fsSettings.getName(),
+                    fsSettings.getFs().getUrl(),
+                    fsSettings.getFs().getUpdateRate());
             while (true) {
                 if (closed) {
                     return;
@@ -397,7 +403,7 @@ public class FsCrawlerImpl {
         }
 
         // TODO Optimize it. We can probably use a search for a big array of filenames instead of
-        // Searching fo 50000 files (which is somehow limited).
+        // Searching fo 10000 files (which is somehow limited).
         private Collection<String> getFileDirectory(String path)
                 throws Exception {
             Collection<String> files = new ArrayList<>();
@@ -412,7 +418,7 @@ public class FsCrawlerImpl {
                     fsSettings.getElasticsearch().getIndex(),
                     fsSettings.getElasticsearch().getType(),
                     PATH_ENCODED + ":" + SignTool.sign(path),
-                    50000, // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                    REQUEST_SIZE, // TODO: WHAT? DID I REALLY WROTE THAT? :p
                     FILE_FILENAME
             );
 
@@ -421,13 +427,11 @@ public class FsCrawlerImpl {
                 for (SearchResponse.Hit hit : response.getHits().getHits()) {
                     String name;
                     if (hit.getSource() != null
-                            && hit.getSource().get(FsCrawlerUtil.Doc.FILE) != null
-                            && ((Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE)).get(FsCrawlerUtil.Doc.File.FILENAME) != null) {
-                        name = ((Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE)).get(FsCrawlerUtil.Doc.File.FILENAME).toString();
+                            && hit.getSource().get(FILE_FILENAME) != null) {
+                        name = getName(hit.getSource().get(FILE_FILENAME));
                     } else if (hit.getFields() != null
-                            && hit.getFields().get(FsCrawlerUtil.Doc.FILE) != null
-                            && ((Map<String, Object>) hit.getFields().get(FsCrawlerUtil.Doc.FILE)).get(FsCrawlerUtil.Doc.File.FILENAME) != null) {
-                        name = ((Map<String, Object>) hit.getFields().get(FsCrawlerUtil.Doc.FILE)).get(FsCrawlerUtil.Doc.File.FILENAME).toString();
+                            && hit.getFields().get(FILE_FILENAME) != null) {
+                        name = getName(hit.getFields().get(FILE_FILENAME));
                     } else {
                         // Houston, we have a problem ! We can't get the old files from ES
                         logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
@@ -440,7 +444,16 @@ public class FsCrawlerImpl {
             }
 
             return files;
+        }
 
+        private String getName(Object nameObject) {
+            if (nameObject instanceof List) {
+                return String.valueOf (((List) nameObject).get(0));
+            }
+
+            throw new RuntimeException("search result, " + nameObject +
+                    " not of type List<String> but " +
+                    nameObject.getClass().getName() + " with value " + nameObject);
         }
 
         private Collection<String> getFolderDirectory(String path)
@@ -456,7 +469,7 @@ public class FsCrawlerImpl {
                     fsSettings.getElasticsearch().getIndex(),
                     FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     PATH_ENCODED + ":" + SignTool.sign(path),
-                    50000, // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                    REQUEST_SIZE, // TODO: WHAT? DID I REALLY WROTE THAT? :p
                     null
             );
 

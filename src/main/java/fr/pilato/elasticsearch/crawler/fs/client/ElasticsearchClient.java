@@ -242,7 +242,7 @@ public class ElasticsearchClient {
         return bulk(findNextNode(), bulkRequest);
     }
 
-    public void putMapping(Node node, String index, String type, String mapping) throws Exception {
+    public void putMapping(Node node, String index, String type, String mapping) throws IOException {
         logger.debug("put mapping [{}/{}]", index, type);
         GenericUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/" + index);
@@ -261,7 +261,7 @@ public class ElasticsearchClient {
         }
     }
 
-    public void putMapping(String index, String type, String mapping) throws Exception {
+    public void putMapping(String index, String type, String mapping) throws IOException {
         putMapping(findNextNode(), index, type, mapping);
     }
 
@@ -271,21 +271,152 @@ public class ElasticsearchClient {
 
     public String findVersion(Node node) throws IOException {
         logger.debug("findVersion [{}]", node);
-        String version = null;
+        String version;
         GenericUrl genericUrl = buildUrl(node);
         genericUrl.appendRawPath("/");
         HttpResponse httpResponse = requestFactory.buildGetRequest(genericUrl).execute();
         GenericJson json = httpResponse.parseAs(GenericJson.class);
-        logger.debug("get server response: {}", json);
+        logger.trace("get server response: {}", json);
         Object oVersion = extractFromPath(json, "version").get("number");
         version = (String) oVersion;
         logger.debug("findVersion [{}] -> [{}]", node, version);
         return version;
     }
 
+    public void refresh(String index) throws IOException {
+        refresh(findNextNode(), index);
+    }
+
+    public void refresh(Node node, String index) throws IOException {
+        logger.debug("refresh index [{}] with node [{}]", index, node);
+
+        ElasticsearchUrl genericUrl = buildUrl(node);
+        if (index != null) {
+            genericUrl.appendRawPath("/" + index);
+        }
+        genericUrl.appendRawPath("/_refresh");
+        HttpRequest request = requestFactory.buildPostRequest(genericUrl, null);
+        try {
+            HttpResponse httpResponse = request.execute();
+            String response = httpResponse.parseAsString();
+            logger.trace("refresh raw response: {}", response);
+        } catch (HttpResponseException|ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
+            throw e;
+        }
+    }
+
+    public void waitForHealthyIndex(String index) throws IOException {
+        waitForHealthyIndex(findNextNode(), index);
+    }
+
+    public void waitForHealthyIndex(Node node, String index) throws IOException {
+        logger.debug("wait for yellow health on index [{}] with node [{}]", index, node);
+
+        ElasticsearchUrl genericUrl = buildUrl(node);
+        genericUrl.appendRawPath("/_cluster/health/" + index);
+        genericUrl.waitForStatus = "yellow";
+        HttpRequest request = requestFactory.buildGetRequest(genericUrl);
+        try {
+            HttpResponse httpResponse = request.execute();
+            String response = httpResponse.parseAsString();
+            logger.trace("health response: {}", response);
+            // TODO if health is incorrect
+        } catch (HttpResponseException|ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
+            throw e;
+        }
+    }
+
+    public void index(String index, String type, String id, String json) throws IOException {
+        index(findNextNode(), index, type, id, json);
+    }
+
+    public void index(Node node, String index, String type, String id, String json) throws IOException {
+        logger.debug("put document [{}/{}/{}]", index, type, id);
+        GenericUrl genericUrl = buildUrl(node);
+        genericUrl.appendRawPath("/" + index);
+        genericUrl.appendRawPath("/" + type);
+        genericUrl.appendRawPath("/" + id);
+        HttpRequest request = requestFactory.buildPutRequest(genericUrl,
+                ByteArrayContent.fromString("application/json", json));
+
+        try {
+            HttpResponse httpResponse = request.execute();
+            logger.trace("put document response: {}", httpResponse.parseAsString());
+        } catch (HttpResponseException|ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
+            throw e;
+        }
+
+    }
+
+    public boolean isExistingDocument(String index, String type, String id) throws IOException {
+        return isExistingDocument(findNextNode(), index, type, id);
+    }
+
+    public boolean isExistingDocument(Node node, String index, String type, String id) throws IOException {
+        logger.debug("is existing doc [{}]/[{}]/[{}]", index, type, id);
+
+        GenericUrl genericUrl = buildUrl(node);
+        genericUrl.appendRawPath("/" + index);
+        genericUrl.appendRawPath("/" + type);
+        genericUrl.appendRawPath("/" + id);
+        HttpRequest request = requestFactory.buildGetRequest(genericUrl);
+        try {
+            HttpResponse httpResponse = request.execute();
+            String json = httpResponse.parseAsString();
+            logger.debug("get document response: {}", json);
+            return true;
+        } catch (HttpResponseException e) {
+            if (e.getStatusCode() == 404) {
+                logger.debug("doc [{}]/[{}]/[{}] does not exist", index, type, id);
+                return false;
+            }
+            node.active(false);
+            throw e;
+        } catch (ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
+            throw e;
+        }
+    }
+
+    public void deleteIndex(String index) throws IOException {
+        deleteIndex(findNextNode(), index);
+    }
+
+    public void deleteIndex(Node node, String index) throws IOException {
+        logger.debug("delete index [{}] from node [{}]", index, node);
+        GenericUrl genericUrl = buildUrl(node);
+        genericUrl.appendRawPath("/" + index);
+        HttpRequest request = requestFactory.buildDeleteRequest(genericUrl);
+        try {
+            HttpResponse httpResponse = request.execute();
+            String json = httpResponse.parseAsString();
+            logger.debug("delete index response: {}", json);
+        } catch (HttpResponseException e) {
+            if (e.getStatusCode() == 404) {
+                logger.debug("index [{}] does not exist", index);
+                return;
+            }
+            node.active(false);
+            throw e;
+        } catch (ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
+            throw e;
+        }
+    }
+
     public static class ElasticsearchUrl extends GenericUrl {
         @Key
         public String q;
+        @Key
+        public String waitForStatus;
     }
 
     public SearchResponse search(String index, String type, String query) throws IOException {
@@ -300,8 +431,12 @@ public class ElasticsearchClient {
         logger.debug("search [{}]/[{}], request [{}] with node [{}]", index, type, searchRequest, node);
 
         ElasticsearchUrl genericUrl = buildUrl(node);
-        genericUrl.appendRawPath("/" + index);
-        genericUrl.appendRawPath("/" + type);
+        if (index != null) {
+            genericUrl.appendRawPath("/" + index);
+        }
+        if (type != null) {
+            genericUrl.appendRawPath("/" + type);
+        }
         genericUrl.appendRawPath("/_search");
         if (searchRequest.getQuery() !=  null) {
             genericUrl.q = searchRequest.getQuery();
@@ -315,7 +450,7 @@ public class ElasticsearchClient {
             return response;
         } catch (HttpResponseException|ConnectException e) {
             node.active(false);
-            logger.debug("caught exception. disabling node [{}]", node);
+            logger.debug("caught exception. disabling node [{}]", e, node);
             throw e;
         }
     }
@@ -353,6 +488,35 @@ public class ElasticsearchClient {
 
     public boolean isExistingType(String index, String type) throws IOException {
         return isExistingType(findNextNode(), index, type);
+    }
+
+    public boolean isExistingIndex(Node node, String index) throws IOException {
+        logger.debug("is existing index [{}]", index);
+
+        GenericUrl genericUrl = buildUrl(node);
+        genericUrl.appendRawPath("/" + index);
+        HttpRequest request = requestFactory.buildGetRequest(genericUrl);
+        try {
+            HttpResponse httpResponse = request.execute();
+            String json = httpResponse.parseAsString();
+            logger.debug("get index metadata response: {}", json);
+            return true;
+        } catch (HttpResponseException e) {
+            if (e.getStatusCode() == 404) {
+                logger.debug("index [{}] does not exist", index);
+                return false;
+            }
+            node.active(false);
+            throw e;
+        } catch (ConnectException e) {
+            node.active(false);
+            logger.debug("caught exception. disabling node [{}]", node);
+            throw e;
+        }
+    }
+
+    public boolean isExistingIndex(String index) throws IOException {
+        return isExistingIndex(findNextNode(), index);
     }
 
     public static class Builder {

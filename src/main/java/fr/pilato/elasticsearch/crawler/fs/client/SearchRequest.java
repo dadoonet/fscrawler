@@ -19,11 +19,18 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import com.google.api.client.util.Key;
+
 import java.util.Arrays;
 
 public class SearchRequest {
+
     private final String query;
+
+    @Key
     private final String[] fields;
+
+    @Key
     private final Integer size;
 
     public static Builder builder() {
@@ -60,7 +67,11 @@ public class SearchRequest {
 
     public static class Builder {
         private String query;
+
+        @Key
         private String[] fields;
+
+        @Key
         private Integer size;
 
         public Builder setQuery(String query) {
