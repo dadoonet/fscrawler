@@ -380,7 +380,9 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1);
         for (SearchHit hit : searchResponse.getHits()) {
-            assertThat(hit.getFields().get("filesize"), nullValue());
+            Map<String, Object> file = (Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE);
+            assertThat(file, notNullValue());
+            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), nullValue());
         }
     }
 

@@ -490,7 +490,9 @@ public class FsCrawlerImpl {
             doc.getFile().setLastModified(lastmodified);
             doc.getFile().setIndexingDate(Instant.now());
             doc.getFile().setUrl("file://" + (new File(filepath, filename)).toString());
-            doc.getFile().setFilesize(size);
+            if (fsSettings.getFs().isAddFilesize()) {
+                doc.getFile().setFilesize(size);
+            }
 
             // Path
             doc.getPath().setEncoded(SignTool.sign(filepath));
