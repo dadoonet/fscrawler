@@ -54,6 +54,8 @@ import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajor
  */
 public class FsCrawlerImpl {
 
+    public static final int REQUEST_SIZE = 10000;
+
     public static final class PROTOCOL {
         public static final String LOCAL = "local";
         public static final String SSH = "ssh";
@@ -398,8 +400,8 @@ public class FsCrawlerImpl {
 
         // TODO Optimize it. We can probably use a search for a big array of filenames instead of
         // Searching fo 50000 files (which is somehow limited).
-        private Collection<String> getFileDirectory(String path)
-                throws Exception {
+        // --> changed to 10000 which is the max. Higher values results to a default of 10 (pagination)
+        private Collection<String> getFileDirectory(String path) throws Exception {
             Collection<String> files = new ArrayList<>();
 
             // If the crawler is being closed, we return
@@ -412,35 +414,47 @@ public class FsCrawlerImpl {
                     fsSettings.getElasticsearch().getIndex(),
                     fsSettings.getElasticsearch().getType(),
                     PATH_ENCODED + ":" + SignTool.sign(path),
-                    50000, // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                    REQUEST_SIZE,
                     FILE_FILENAME
             );
 
-            logger.trace("Response [{}]", response.toString());
-            if (response.getHits() != null && response.getHits().getHits() != null) {
-                for (SearchResponse.Hit hit : response.getHits().getHits()) {
-                    String name;
-                    if (hit.getSource() != null
-                            && hit.getSource().get(FsCrawlerUtil.Doc.FILE) != null
-                            && ((Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE)).get(FsCrawlerUtil.Doc.File.FILENAME) != null) {
-                        name = ((Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE)).get(FsCrawlerUtil.Doc.File.FILENAME).toString();
-                    } else if (hit.getFields() != null
-                            && hit.getFields().get(FsCrawlerUtil.Doc.FILE) != null
-                            && ((Map<String, Object>) hit.getFields().get(FsCrawlerUtil.Doc.FILE)).get(FsCrawlerUtil.Doc.File.FILENAME) != null) {
-                        name = ((Map<String, Object>) hit.getFields().get(FsCrawlerUtil.Doc.FILE)).get(FsCrawlerUtil.Doc.File.FILENAME).toString();
-                    } else {
-                        // Houston, we have a problem ! We can't get the old files from ES
-                        logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
-                                "Please enable _source or store field [{}]", path, FILE_FILENAME);
-                        throw new RuntimeException("Mapping is incorrect: please enable _source or store field [" +
-                                FILE_FILENAME + "].");
+            if (response.getHits() != null) {
+                logger.trace("Response [{} hits]", response.getHits().getTotal());
+
+                if (response.getHits().getHits() != null) {
+                    List<SearchResponse.Hit> hits = response.getHits().getHits();
+
+                    for (SearchResponse.Hit hit : hits) {
+                        String name;
+                        if (hit.getSource() != null && hit.getSource().get(FILE_FILENAME) != null) {
+                            name = getName(hit.getSource().get(FILE_FILENAME));
+
+                        } else if (hit.getFields() != null && hit.getFields().get(FILE_FILENAME) != null) {
+                            name = getName(hit.getFields().get(FILE_FILENAME));
+
+                        } else {
+                            // Houston, we have a problem ! We can't get the old files from ES
+                            logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
+                                    "Please enable _source or store field [{}]", path, FILE_FILENAME);
+                            throw new RuntimeException("Mapping is incorrect: please enable _source or store field [" +
+                                    FILE_FILENAME + "].");
+                        }
+
+                        files.add(name);
                     }
-                    files.add(name);
                 }
             }
 
             return files;
+        }
 
+        private String getName(Object nameObject) {
+
+            if(nameObject instanceof List){
+                return String.valueOf (((List) nameObject).get(0));
+            }
+
+            throw new RuntimeException("search result, file.name not of type List<String>");
         }
 
         private Collection<String> getFolderDirectory(String path)
@@ -456,7 +470,7 @@ public class FsCrawlerImpl {
                     fsSettings.getElasticsearch().getIndex(),
                     FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     PATH_ENCODED + ":" + SignTool.sign(path),
-                    50000, // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                    REQUEST_SIZE,
                     null
             );
 

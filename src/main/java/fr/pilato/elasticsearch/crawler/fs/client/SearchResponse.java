@@ -75,7 +75,7 @@ public class SearchResponse extends GenericJson {
 
         @Key("_source")
         private Map<String, Object> source;
-        @Key("_fields")
+        @Key("fields")
         private Map<String, Object> fields;
 
         public Map<String, Object> getSource() {
