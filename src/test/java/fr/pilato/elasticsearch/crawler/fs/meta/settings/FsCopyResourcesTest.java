@@ -20,10 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
 import fr.pilato.elasticsearch.crawler.fs.AbstractFSCrawlerTest;
-import fr.pilato.elasticsearch.crawler.fs.meta.MetaFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
-import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobParser;
-import org.elasticsearch.common.logging.support.LoggerMessageFormat;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -35,11 +31,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Instant;
 import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultResources;
 import static org.hamcrest.MatcherAssert.assertThat;

@@ -20,15 +20,12 @@
 package fr.pilato.elasticsearch.crawler.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.AbstractFSCrawlerTest;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -37,7 +34,6 @@ public abstract class AbstractITest extends AbstractFSCrawlerTest {
 
     protected final static int TRANSPORT_TEST_PORT = 9380;
     protected final static int HTTP_TEST_PORT = 9280;
-    protected static final Logger staticLogger = LogManager.getLogger(AbstractMultiNodesITest.class);
 
     protected static Client client = null;
 

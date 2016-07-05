@@ -22,36 +22,47 @@ package fr.pilato.elasticsearch.crawler.fs;
 import com.carrotsearch.randomizedtesting.generators.RandomInts;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultResources;
 import static org.apache.lucene.util.LuceneTestCase.random;
 
 public abstract class AbstractFSCrawlerTest {
+
+    protected static final Logger staticLogger = LogManager.getLogger(AbstractFSCrawlerTest.class);
 
     @Rule
     public TestName name = new TestName();
 
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder();
+    protected static Path rootTmpDir;
+    protected static Path metadataDir;
 
     @BeforeClass
-    public static void createTmpDir() throws IOException {
+    public static void createTmpDir() throws IOException, URISyntaxException {
         folder.create();
+        rootTmpDir = Paths.get(folder.getRoot().toURI());
+        // We also need to create default mapping files
+        metadataDir = rootTmpDir.resolve(".fscrawler");
+        if (Files.notExists(metadataDir)) {
+            Files.createDirectory(metadataDir);
+        }
+        copyDefaultResources(metadataDir);
+        staticLogger.info("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
     protected final Logger logger = LogManager.getLogger(this.getClass());

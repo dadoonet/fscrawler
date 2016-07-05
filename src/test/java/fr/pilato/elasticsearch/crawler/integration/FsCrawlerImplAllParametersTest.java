@@ -53,7 +53,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultResources;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -67,7 +66,6 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
 
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
-    protected Path metadataDir;
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -77,13 +75,9 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
      */
     @Before
     public void copyTestResources() throws IOException, URISyntaxException {
-        Path testResourceTarget = Paths.get(folder.getRoot().toURI()).resolve("resources");
+        Path testResourceTarget = rootTmpDir.resolve("resources");
         if (Files.notExists(testResourceTarget)) {
             Files.createDirectory(testResourceTarget);
-        }
-        metadataDir = Paths.get(folder.getRoot().toURI()).resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
-            Files.createDirectory(metadataDir);
         }
 
         String currentTestName = getCurrentTestName();
@@ -100,9 +94,6 @@ public class FsCrawlerImplAllParametersTest extends AbstractMonoNodeITest {
         }
 
         FsCrawlerUtil.copyDirs(from, currentTestResourceDir);
-
-        // We also need to create default mapping files
-        copyDefaultResources(metadataDir);
 
         staticLogger.info("  --> Test resources ready in [{}]", currentTestResourceDir);
     }

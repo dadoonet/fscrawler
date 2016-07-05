@@ -29,9 +29,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.CopyOption;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileVisitOption;
@@ -41,7 +39,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileOwnerAttributeView;
@@ -109,23 +106,58 @@ public class FsCrawlerUtil extends MetaParser {
     private static final Logger logger = LogManager.getLogger(FsCrawlerUtil.class);
 
     /**
-     * Reads a mapping definition file from fscrawler resources
+     * Reads a mapping from config/_default/version/type.json file
      *
-     * @param config Root dir where we can find the configuration
-     * @param version Elasticsearch version number (only major digit is kept so for 2.3.4 it will be 2)
+     * @param config Root dir where we can find the configuration (default to ~/.fscrawler)
+     * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param type The expected type (will be expanded to type.json)
      * @return the mapping
      * @throws URISyntaxException
      * @throws IOException
      */
-    public static String readMapping(Path config, String version, String type) throws URISyntaxException, IOException {
+    public static String readDefaultMapping(Path config, String version, String type) throws URISyntaxException, IOException {
         Path defaultConfigDir = config.resolve("_default");
-        Path file = defaultConfigDir.resolve(version).resolve(type + ".json");
         try {
-            return new String(Files.readAllBytes(file), "UTF-8");
+            return readMapping(defaultConfigDir, version, type);
         } catch (NoSuchFileException e) {
             throw new IllegalArgumentException("Mapping file " + type + ".json does not exist for elasticsearch version " + version +
-                " in [" + defaultConfigDir + "] dir");
+                    " in [" + defaultConfigDir + "] dir");
+        }
+    }
+
+    /**
+     * Reads a mapping from dir/version/type.json file
+     *
+     * @param dir Directory containing mapping files per major version
+     * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
+     * @param type The expected type (will be expanded to type.json)
+     * @return the mapping
+     * @throws URISyntaxException
+     * @throws IOException
+     */
+    public static String readMapping(Path dir, String version, String type) throws URISyntaxException, IOException {
+        Path file = dir.resolve(version).resolve(type + ".json");
+        return new String(Files.readAllBytes(file), "UTF-8");
+    }
+
+    /**
+     * Reads a mapping from dir/version/type.json file.
+     * If not found, read from ~/.fscrawler/_default/version/type.json
+     *
+     * @param dir Directory which might contain mapping files per major version (job dir)
+     * @param config Root dir where we can find the configuration (default to ~/.fscrawler)
+     * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
+     * @param type The expected type (will be expanded to type.json)
+     * @return the mapping
+     * @throws URISyntaxException
+     * @throws IOException
+     */
+    public static String readMapping(Path dir, Path config, String version, String type) throws URISyntaxException, IOException {
+        try {
+            return readMapping(dir, version, type);
+        } catch (NoSuchFileException e) {
+            // We fall back to default mappings in config dir
+            return readDefaultMapping(config, version, type);
         }
     }
 
