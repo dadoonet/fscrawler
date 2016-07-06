@@ -42,7 +42,7 @@ public class FsMappingTest extends AbstractFSCrawlerTest {
     private final Logger logger = LogManager.getLogger(FsMappingTest.class);
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/jobtest/";
-    private static final String[] MAPPING_RESOURCES = { "2/doc.json", "2/folder.json" };
+    private static final String[] MAPPING_RESOURCES = { "2/doc.json", "2/folder.json", "5/doc.json", "5/folder.json" };
 
     @BeforeClass
     public static void generateSpecificJobMappings() throws IOException, URISyntaxException {
@@ -237,7 +237,7 @@ public class FsMappingTest extends AbstractFSCrawlerTest {
         String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_DOC);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
-                "  // This is a doc mapping\n" +
+                "  // This is a doc mapping version 2\n" +
                 "}\n"));
     }
 
@@ -246,7 +246,166 @@ public class FsMappingTest extends AbstractFSCrawlerTest {
         String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_FOLDER);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
-                "  // This is a folder mapping\n" +
+                "  // This is a folder mapping version 2\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsMappingForFilesVersion5() throws Exception {
+        String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_DOC);
+        logger.info("Mapping used for files : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  \"_source\" : {\n" +
+                "    \"excludes\" : [\n" +
+                "      \"attachment\"\n" +
+                "    ]\n" +
+                "  },\n" +
+                "  \"properties\" : {\n" +
+                "    \"attachment\" : {\n" +
+                "      \"type\" : \"binary\",\n" +
+                "      \"store\" : true\n" +
+                "    },\n" +
+                "    \"attributes\" : {\n" +
+                "      \"properties\" : {\n" +
+                "        \"group\" : {\n" +
+                "          \"type\" : \"keyword\",\n" +
+                "          \"store\" : true\n" +
+                "        },\n" +
+                "        \"owner\" : {\n" +
+                "          \"type\" : \"keyword\",\n" +
+                "          \"store\" : true\n" +
+                "        }\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"content\" : {\n" +
+                "      \"type\" : \"text\",\n" +
+                "      \"store\" : true\n" +
+                "    },\n" +
+                "    \"file\" : {\n" +
+                "      \"properties\" : {\n" +
+                "        \"content_type\" : {\n" +
+                "          \"type\" : \"keyword\",\n" +
+                "          \"store\" : true\n" +
+                "        },\n" +
+                "        \"filename\" : {\n" +
+                "          \"type\" : \"keyword\",\n" +
+                "          \"store\" : true\n" +
+                "        },\n" +
+                "        \"filesize\" : {\n" +
+                "          \"type\" : \"long\",\n" +
+                "          \"store\" : true\n" +
+                "        },\n" +
+                "        \"indexed_chars\" : {\n" +
+                "          \"type\" : \"long\",\n" +
+                "          \"store\" : true\n" +
+                "        },\n" +
+                "        \"indexing_date\" : {\n" +
+                "          \"type\" : \"date\",\n" +
+                "          \"store\" : true,\n" +
+                "          \"format\" : \"dateOptionalTime\"\n" +
+                "        },\n" +
+                "        \"last_modified\" : {\n" +
+                "          \"type\" : \"date\",\n" +
+                "          \"store\" : true,\n" +
+                "          \"format\" : \"dateOptionalTime\"\n" +
+                "        },\n" +
+                "        \"url\" : {\n" +
+                "          \"type\" : \"keyword\",\n" +
+                "          \"index\" : false,\n" +
+                "          \"store\" : true\n" +
+                "        }\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"meta\" : {\n" +
+                "      \"properties\" : {\n" +
+                "        \"author\" : {\n" +
+                "          \"type\" : \"text\",\n" +
+                "          \"store\" : true\n" +
+                "        },\n" +
+                "        \"date\" : {\n" +
+                "          \"type\" : \"date\",\n" +
+                "          \"store\" : true,\n" +
+                "          \"format\" : \"dateOptionalTime\"\n" +
+                "        },\n" +
+                "        \"keywords\" : {\n" +
+                "          \"type\" : \"text\",\n" +
+                "          \"store\" : true\n" +
+                "        },\n" +
+                "        \"title\" : {\n" +
+                "          \"type\" : \"text\",\n" +
+                "          \"store\" : true\n" +
+                "        }\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"path\" : {\n" +
+                "      \"properties\" : {\n" +
+                "        \"encoded\" : {\n" +
+                "          \"type\" : \"keyword\",\n" +
+                "          \"store\" : true\n" +
+                "        },\n" +
+                "        \"real\" : {\n" +
+                "          \"type\" : \"keyword\",\n" +
+                "          \"store\" : true\n" +
+                "        },\n" +
+                "        \"root\" : {\n" +
+                "          \"type\" : \"keyword\",\n" +
+                "          \"store\" : true\n" +
+                "        },\n" +
+                "        \"virtual\" : {\n" +
+                "          \"type\" : \"keyword\",\n" +
+                "          \"store\" : true\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsMappingForFoldersVersion5() throws Exception {
+        String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        logger.info("Mapping used for folders : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  \"properties\" : {\n" +
+                "    \"encoded\" : {\n" +
+                "      \"type\" : \"keyword\",\n" +
+                "      \"store\" : true\n" +
+                "    },\n" +
+                "    \"name\" : {\n" +
+                "      \"type\" : \"keyword\",\n" +
+                "      \"store\" : true\n" +
+                "    },\n" +
+                "    \"real\" : {\n" +
+                "      \"type\" : \"keyword\",\n" +
+                "      \"store\" : true\n" +
+                "    },\n" +
+                "    \"root\" : {\n" +
+                "      \"type\" : \"keyword\",\n" +
+                "      \"store\" : true\n" +
+                "    },\n" +
+                "    \"virtual\" : {\n" +
+                "      \"type\" : \"keyword\",\n" +
+                "      \"store\" : true\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsMappingForFilesForSpecificJobVersion5() throws Exception {
+        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_DOC);
+        logger.info("Mapping used for files : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  // This is a doc mapping version 5\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsMappingForFoldersForSpecificJobVersion5() throws Exception {
+        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        logger.info("Mapping used for files : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  // This is a folder mapping version 5\n" +
                 "}\n"));
     }
 }

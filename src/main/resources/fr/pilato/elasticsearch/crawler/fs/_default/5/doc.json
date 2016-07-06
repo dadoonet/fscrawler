@@ -1,0 +1,105 @@
+{
+  "_source" : {
+    "excludes" : [
+      "attachment"
+    ]
+  },
+  "properties" : {
+    "attachment" : {
+      "type" : "binary",
+      "store" : true
+    },
+    "attributes" : {
+      "properties" : {
+        "group" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "owner" : {
+          "type" : "keyword",
+          "store" : true
+        }
+      }
+    },
+    "content" : {
+      "type" : "text",
+      "store" : true
+    },
+    "file" : {
+      "properties" : {
+        "content_type" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "filename" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "filesize" : {
+          "type" : "long",
+          "store" : true
+        },
+        "indexed_chars" : {
+          "type" : "long",
+          "store" : true
+        },
+        "indexing_date" : {
+          "type" : "date",
+          "store" : true,
+          "format" : "dateOptionalTime"
+        },
+        "last_modified" : {
+          "type" : "date",
+          "store" : true,
+          "format" : "dateOptionalTime"
+        },
+        "url" : {
+          "type" : "keyword",
+          "index" : false,
+          "store" : true
+        }
+      }
+    },
+    "meta" : {
+      "properties" : {
+        "author" : {
+          "type" : "text",
+          "store" : true
+        },
+        "date" : {
+          "type" : "date",
+          "store" : true,
+          "format" : "dateOptionalTime"
+        },
+        "keywords" : {
+          "type" : "text",
+          "store" : true
+        },
+        "title" : {
+          "type" : "text",
+          "store" : true
+        }
+      }
+    },
+    "path" : {
+      "properties" : {
+        "encoded" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "real" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "root" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "virtual" : {
+          "type" : "keyword",
+          "store" : true
+        }
+      }
+    }
+  }
+}

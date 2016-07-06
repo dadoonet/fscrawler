@@ -57,6 +57,23 @@ promptyn () {
     done
 }
 
+test_against_version () {
+    if [ -z "$1" ]; then
+        echo "Building and testing against elasticsearch $1.x..."
+        mvn clean verify -Pes-$1.x >> /tmp/fscrawler-${RELEASE_VERSION}.log
+    else
+        echo "Building and testing the release..."
+        mvn clean install -Prelease >> /tmp/fscrawler-${RELEASE_VERSION}.log
+    fi
+
+    if [ $? -ne 0 ]
+    then
+        tail -20 /tmp/fscrawler-${RELEASE_VERSION}.log
+        echo "Something went wrong. Full log available at /tmp/fscrawler-$RELEASE_VERSION.log"
+        exit 1
+    fi
+}
+
 # determine fscrawler home
 FS_HOME=`dirname "$SCRIPT"`
 
@@ -110,15 +127,11 @@ mvn versions:set -DnewVersion=${RELEASE_VERSION} >> /tmp/fscrawler-${RELEASE_VER
 # Git commit release
 git commit -q -a -m "prepare release fscrawler-$RELEASE_VERSION"
 
-# Test everything is correct
-echo "Building the package and running tests..."
-mvn clean install -Prelease >> /tmp/fscrawler-${RELEASE_VERSION}.log
-if [ $? -ne 0 ]
-then
-    tail -20 /tmp/fscrawler-${RELEASE_VERSION}.log
-    echo "Something went wrong. Full log available at /tmp/fscrawler-$RELEASE_VERSION.log"
-    exit 1
-fi
+# Testing against different elasticsearch versions
+test_against_version 2
+
+# The actual build is made against latest version
+test_against_version
 
 # Just display the end of the build
 tail -7 /tmp/fscrawler-${RELEASE_VERSION}.log

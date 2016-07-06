@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
@@ -27,7 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
-import org.elasticsearch.common.logging.support.LoggerMessageFormat;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -76,7 +75,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTest {
     private void settingsTester(FsSettings source) throws IOException {
         String json = FsSettingsParser.toJson(source);
 
-        logger.info(LoggerMessageFormat.format("", "-> generated settings: [{}]", json));
+        logger.info("-> generated settings: [{}]", json);
         FsSettings generated = FsSettingsParser.fromJson(json);
         assertThat(generated, is(source));
     }

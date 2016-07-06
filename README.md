@@ -987,9 +987,21 @@ Just download any version of elasticsearch you wish, and launch it with:
 ```sh
 # elasticsearch 2.x
 bin/elasticsearch -Des.http.port=9400
+# elasticsearch 5.x
+bin/elasticsearch -Ehttp.port=9400
 ```
 
 Integration tests will detect the running instance and will not ignore anymore those tests.
+
+You can also tell maven to run integration tests by deploying another version of elasticsearch:
+
+```sh
+mvn install -Pes-2x
+```
+
+By default, it will run integration tests against elasticsearch 5.x series cluster.
+
+
 
 
 # License

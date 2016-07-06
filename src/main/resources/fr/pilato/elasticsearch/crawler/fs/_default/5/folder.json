@@ -1,0 +1,24 @@
+{
+  "properties" : {
+    "encoded" : {
+      "type" : "keyword",
+      "store" : true
+    },
+    "name" : {
+      "type" : "keyword",
+      "store" : true
+    },
+    "real" : {
+      "type" : "keyword",
+      "store" : true
+    },
+    "root" : {
+      "type" : "keyword",
+      "store" : true
+    },
+    "virtual" : {
+      "type" : "keyword",
+      "store" : true
+    }
+  }
+}

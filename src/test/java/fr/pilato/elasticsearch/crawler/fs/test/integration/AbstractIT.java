@@ -19,10 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
-import org.elasticsearch.common.Strings;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -85,6 +84,23 @@ public abstract class AbstractIT extends AbstractFSCrawlerTest {
 
     protected String getCrawlerName() {
         String testName = testCrawlerPrefix.concat(getCurrentTestName());
-        return testName.contains(" ") ? Strings.split(testName, " ")[0] : testName;
+        return testName.contains(" ") ? split(testName, " ")[0] : testName;
+    }
+
+    /**
+     * Split a String at the first occurrence of the delimiter.
+     * Does not include the delimiter in the result.
+     *
+     * @param toSplit   the string to split
+     * @param delimiter to split the string up with
+     * @return a two element array with index 0 being before the delimiter, and
+     *         index 1 being after the delimiter (neither element includes the delimiter);
+     *         or <code>null</code> if the delimiter wasn't found in the given input String
+     */
+    public static String[] split(String toSplit, String delimiter) {
+        int offset = toSplit.indexOf(delimiter);
+        String beforeDelimiter = toSplit.substring(0, offset);
+        String afterDelimiter = toSplit.substring(offset + delimiter.length());
+        return new String[]{beforeDelimiter, afterDelimiter};
     }
 }

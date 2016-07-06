@@ -19,13 +19,15 @@
     </licenses>
 
     <properties>
-        <elasticsearch.version>2.3.3</elasticsearch.version>
+        <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
+        <elasticsearch.version>5.0.0-alpha4</elasticsearch.version>
+
         <tika.version>1.10</tika.version>
         <jackson.version>2.6.3</jackson.version>
         <log4j.version>2.4.1</log4j.version>
 
         <!-- Only Lucene test framework is used here -->
-        <lucene.version>5.5.0</lucene.version>
+        <lucene.version>6.1.0</lucene.version>
         <skipTests>false</skipTests>
 
         <!-- For integration tests using ANT -->
@@ -118,7 +120,7 @@
                             <skip>${skipTests}</skip>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>org.elasticsearch.distribution.zip</groupId>
+                                    <groupId>${elasticsearch.groupid}</groupId>
                                     <artifactId>elasticsearch</artifactId>
                                     <version>${elasticsearch.version}</version>
                                     <type>zip</type>
@@ -276,13 +278,6 @@
     </build>
 
     <dependencies>
-        <!--
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.1</version>
-        </dependency>
-        -->
         <dependency>
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client</artifactId>
@@ -315,12 +310,6 @@
             <version>${jackson.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${elasticsearch.version}</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
@@ -436,6 +425,13 @@
     </repositories>
 
     <profiles>
+        <profile>
+            <id>es-2x</id>
+            <properties>
+                <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
+                <elasticsearch.version>2.3.3</elasticsearch.version>
+            </properties>
+        </profile>
         <profile>
             <id>release</id>
             <build>

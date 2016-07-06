@@ -19,10 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobParser;
-import org.elasticsearch.common.logging.support.LoggerMessageFormat;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -38,7 +37,7 @@ public class FsJobParserTest extends AbstractFSCrawlerTest {
     private void jobTester(FsJob source) throws IOException {
         String json = FsJobParser.toJson(source);
 
-        logger.info(LoggerMessageFormat.format("", "-> generated job: [{}]", json));
+        logger.info("-> generated job: [{}]", json);
         FsJob generated = FsJobParser.fromJson(json);
         assertThat(generated, is(source));
     }

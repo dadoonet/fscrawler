@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.test;
 import com.carrotsearch.randomizedtesting.generators.RandomInts;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.Strings;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -68,7 +67,7 @@ public abstract class AbstractFSCrawlerTest {
     protected final Logger logger = LogManager.getLogger(this.getClass());
 
     protected String getCurrentTestName() {
-        return Strings.toUnderscoreCase(name.getMethodName());
+        return toUnderscoreCase(name.getMethodName());
     }
 
     public static int between(int min, int max) {
@@ -99,5 +98,39 @@ public abstract class AbstractFSCrawlerTest {
         return breakSupplier.getAsBoolean();
     }
 
+    public static String toUnderscoreCase(String value) {
+        StringBuilder sb = new StringBuilder();
+        boolean changed = false;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (Character.isUpperCase(c)) {
+                if (!changed) {
+                    sb.setLength(0);
+                    // copy it over here
+                    for (int j = 0; j < i; j++) {
+                        sb.append(value.charAt(j));
+                    }
+                    changed = true;
+                    if (i == 0) {
+                        sb.append(Character.toLowerCase(c));
+                    } else {
+                        sb.append('_');
+                        sb.append(Character.toLowerCase(c));
+                    }
+                } else {
+                    sb.append('_');
+                    sb.append(Character.toLowerCase(c));
+                }
+            } else {
+                if (changed) {
+                    sb.append(c);
+                }
+            }
+        }
+        if (!changed) {
+            return value;
+        }
+        return sb.toString();
+    }
 
 }
