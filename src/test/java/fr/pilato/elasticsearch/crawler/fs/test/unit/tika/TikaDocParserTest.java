@@ -82,16 +82,33 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
         Doc doc = extractFromFile("mp3");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("Heavy Metal"));
+        assertThat(doc.getContent(), containsString("Test Tika"));
 
         // Content Type
         assertThat(doc.getFile().getContentType(), is("audio/mpeg"));
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is("Iron Maiden"));
+        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
         assertThat(doc.getMeta().getDate(), is(nullValue()));
         assertThat(doc.getMeta().getKeywords(), emptyIterable());
-        assertThat(doc.getMeta().getTitle(), is("Fear Of The Dark"));
+        assertThat(doc.getMeta().getTitle(), is("Test Tika"));
+    }
+
+    @Test
+    public void testExtractFromWav() throws IOException {
+        Doc doc = extractFromFile("wav");
+
+        // Extracted content
+        assertThat(doc.getContent(), is(""));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), is("audio/x-wav"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getTitle(), is(nullValue()));
     }
 
     @Test
