@@ -1017,7 +1017,34 @@ mvn install -Pes-2x
 
 By default, it will run integration tests against elasticsearch 5.x series cluster.
 
+## Releasing
 
+To release a version, just run:
+
+```sh
+./release.sh
+```
+
+The release script will:
+
+* Create a release branch
+* Replace SNAPSHOT version by the final version number
+* Commit the change
+* Run tests against elasticsearch 1.x series
+* Run tests against elasticsearch 2.x series
+* Run tests against elasticsearch 5.x series
+* Build the final artifacts using release profile (signing artifacts and generating all needed files)
+* Tag the version
+* Prepare the announcement email
+* Deploy to https://oss.sonatype.org/
+* Prepare the next SNAPSHOT version
+* Commit the change
+* Release the Sonatype staging repository
+* Merge the release branch to the branch we started from
+* Push the changes to origin
+* Announce the version on https://discuss.elastic.co/c/annoucements/community-ecosystem
+
+You will be guided through all the steps.
 
 
 # License
