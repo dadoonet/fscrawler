@@ -426,6 +426,13 @@
 
     <profiles>
         <profile>
+            <id>es-1x</id>
+            <properties>
+                <elasticsearch.groupid>org.elasticsearch</elasticsearch.groupid>
+                <elasticsearch.version>1.7.5</elasticsearch.version>
+            </properties>
+        </profile>
+        <profile>
             <id>es-2x</id>
             <properties>
                 <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>

@@ -80,11 +80,12 @@ public class FsCopyResourcesTest extends AbstractFSCrawlerTest {
         // We have 3 dirs for now:
         // root test dir ".fscrawler-test-copy-resources"
         // "_default" dir
+        // "1" for elasticsearch version 1
         // "2" for elasticsearch version 2
         // "5" for elasticsearch version 5
-        assertThat(dirCounter.get(), is(4));
+        assertThat(dirCounter.get(), is(5));
 
         // We have 2 files that must be copied per version: folder.json and doc.json
-        assertThat(fileCounter.get(), is(4));
+        assertThat(fileCounter.get(), is(6));
     }
 }

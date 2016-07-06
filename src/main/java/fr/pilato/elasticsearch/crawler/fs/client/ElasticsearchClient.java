@@ -181,7 +181,8 @@ public class ElasticsearchClient {
         try {
             httpResponse = request.execute();
         } catch (HttpResponseException e) {
-            if (e.getStatusCode() == 400 && e.getContent().contains("index_already_exists_exception")) {
+            if (e.getStatusCode() == 400 &&
+                    (e.getContent().contains("index_already_exists_exception") || e.getContent().contains("IndexAlreadyExistsException") )) {
                 if (!ignoreErrors) {
                     throw new RuntimeException("index already exists");
                 }

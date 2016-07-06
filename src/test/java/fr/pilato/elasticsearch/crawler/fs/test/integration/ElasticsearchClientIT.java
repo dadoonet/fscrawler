@@ -23,9 +23,12 @@ import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.BooleanSupplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -117,9 +120,36 @@ public class ElasticsearchClientIT extends AbstractIT {
 
         elasticsearchClient.refresh(getCrawlerName());
 
-        // If we search just after sending the requests, we won't have all data
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
-        assertThat(response.getHits().getTotal(), lessThan(10L));
+        // If we search just a few ms after sending the requests, we won't have all data
+        // But in elasticsearch 1.x series that might fail with:
+        //        [2016-07-06 19:35:58,613][DEBUG][action.search.type       ] [Mentus] All shards failed for phase: [query]
+        //        org.elasticsearch.index.IndexShardMissingException: [fscrawler_test_bulk_without_time][4] missing
+        //        at org.elasticsearch.index.IndexService.shardSafe(IndexService.java:210)
+        //        at org.elasticsearch.search.SearchService.createContext(SearchService.java:560)
+        //        at org.elasticsearch.search.SearchService.createAndPutContext(SearchService.java:544)
+        //        at org.elasticsearch.search.SearchService.executeQueryPhase(SearchService.java:306)
+        //        at org.elasticsearch.search.action.SearchServiceTransportAction$5.call(SearchServiceTransportAction.java:231)
+        //        at org.elasticsearch.search.action.SearchServiceTransportAction$5.call(SearchServiceTransportAction.java:228)
+        //        at org.elasticsearch.search.action.SearchServiceTransportAction$23.run(SearchServiceTransportAction.java:559)
+        //        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+        //        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+        //        at java.lang.Thread.run(Thread.java:745)
+        awaitBusy(() -> {
+            try {
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+                assertThat(response.getHits().getTotal(), is(0L));
+            } catch (IOException e) {
+                // For elasticsearch 1.x series
+                if (e.getMessage().contains("SearchPhaseExecutionException")) {
+                    logger.warn("Error while running against 1.x cluster. Trying again...");
+                    // We make the node active again
+                    elasticsearchClient.getNode(0).active(true);
+                    return false;
+                }
+                fail("We got an unexpected exception: " + e.getMessage());
+            }
+            return true;
+        });
 
         // We wait for 3 seconds (2 should be enough)
         Thread.sleep(3000L);
@@ -127,7 +157,7 @@ public class ElasticsearchClientIT extends AbstractIT {
         elasticsearchClient.refresh(getCrawlerName());
 
         // We should have now our docs
-        response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
         assertThat(response.getHits().getTotal(), is(10L));
     }
 
@@ -144,16 +174,43 @@ public class ElasticsearchClientIT extends AbstractIT {
 
         elasticsearchClient.refresh(getCrawlerName());
 
-        // If we search just after sending the requests, we won't have all data
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
-        assertThat(response.getHits().getTotal(), is(0L));
+        // If we search just a few ms after sending the requests, we won't have all data
+        // But in elasticsearch 1.x series that might fail with:
+        //        [2016-07-06 19:35:58,613][DEBUG][action.search.type       ] [Mentus] All shards failed for phase: [query]
+        //        org.elasticsearch.index.IndexShardMissingException: [fscrawler_test_bulk_without_time][4] missing
+        //        at org.elasticsearch.index.IndexService.shardSafe(IndexService.java:210)
+        //        at org.elasticsearch.search.SearchService.createContext(SearchService.java:560)
+        //        at org.elasticsearch.search.SearchService.createAndPutContext(SearchService.java:544)
+        //        at org.elasticsearch.search.SearchService.executeQueryPhase(SearchService.java:306)
+        //        at org.elasticsearch.search.action.SearchServiceTransportAction$5.call(SearchServiceTransportAction.java:231)
+        //        at org.elasticsearch.search.action.SearchServiceTransportAction$5.call(SearchServiceTransportAction.java:228)
+        //        at org.elasticsearch.search.action.SearchServiceTransportAction$23.run(SearchServiceTransportAction.java:559)
+        //        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+        //        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+        //        at java.lang.Thread.run(Thread.java:745)
+        awaitBusy(() -> {
+            try {
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+                assertThat(response.getHits().getTotal(), is(0L));
+            } catch (IOException e) {
+                // For elasticsearch 1.x series
+                if (e.getMessage().contains("SearchPhaseExecutionException")) {
+                    logger.warn("Error while running against 1.x cluster. Trying again...");
+                    // We make the node active again
+                    elasticsearchClient.getNode(0).active(true);
+                    return false;
+                }
+                fail("We got an unexpected exception: " + e.getMessage());
+            }
+            return true;
+        });
 
         bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + 9).source("{\"foo\":\"bar\"}"));
 
         elasticsearchClient.refresh(getCrawlerName());
 
         // We should have now our docs
-        response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
         assertThat(response.getHits().getTotal(), is(10L));
     }
 

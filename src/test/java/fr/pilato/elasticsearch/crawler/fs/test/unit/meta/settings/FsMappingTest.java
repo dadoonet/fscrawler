@@ -42,13 +42,12 @@ public class FsMappingTest extends AbstractFSCrawlerTest {
     private final Logger logger = LogManager.getLogger(FsMappingTest.class);
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/jobtest/";
-    private static final String[] MAPPING_RESOURCES = { "2/doc.json", "2/folder.json", "5/doc.json", "5/folder.json" };
 
     @BeforeClass
     public static void generateSpecificJobMappings() throws IOException, URISyntaxException {
         Path targetResourceDir = metadataDir.resolve("jobtest");
 
-        for (String filename : MAPPING_RESOURCES) {
+        for (String filename : FsCrawlerUtil.MAPPING_RESOURCES) {
             staticLogger.debug("Copying [{}]...", filename);
             Path target = targetResourceDir.resolve(filename);
             copyResourceFile(CLASSPATH_RESOURCES_ROOT + filename, target);
@@ -57,6 +56,160 @@ public class FsMappingTest extends AbstractFSCrawlerTest {
         staticLogger.info("  --> Mappings generated in [{}]", targetResourceDir);
     }
 
+
+    @Test
+    public void fsMappingForFilesVersion1() throws Exception {
+        String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_DOC);
+        logger.info("Mapping used for files : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  \"_source\": {\n" +
+                "    \"excludes\": [\n" +
+                "      \"attachment\"\n" +
+                "    ]\n" +
+                "  },\n" +
+                "  \"properties\": {\n" +
+                "    \"content\": {\n" +
+                "      \"type\": \"string\",\n" +
+                "      \"store\": true\n" +
+                "    },\n" +
+                "    \"attachment\": {\n" +
+                "      \"type\": \"binary\",\n" +
+                "      \"store\": true\n" +
+                "    },\n" +
+                "    \"meta\": {\n" +
+                "      \"properties\": {\n" +
+                "        \"author\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true\n" +
+                "        },\n" +
+                "        \"title\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true\n" +
+                "        },\n" +
+                "        \"date\": {\n" +
+                "          \"type\": \"date\",\n" +
+                "          \"format\": \"dateOptionalTime\",\n" +
+                "          \"store\": true\n" +
+                "        },\n" +
+                "        \"keywords\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true\n" +
+                "        }\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"file\": {\n" +
+                "      \"properties\": {\n" +
+                "        \"content_type\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"not_analyzed\"\n" +
+                "        },\n" +
+                "        \"last_modified\": {\n" +
+                "          \"type\": \"date\",\n" +
+                "          \"format\": \"dateOptionalTime\",\n" +
+                "          \"store\": true\n" +
+                "        },\n" +
+                "        \"indexing_date\": {\n" +
+                "          \"type\": \"date\",\n" +
+                "          \"format\": \"dateOptionalTime\",\n" +
+                "          \"store\": true\n" +
+                "        },\n" +
+                "        \"filesize\": {\n" +
+                "          \"type\": \"long\",\n" +
+                "          \"store\": true\n" +
+                "        },\n" +
+                "        \"indexed_chars\": {\n" +
+                "          \"type\": \"long\",\n" +
+                "          \"store\": true\n" +
+                "        },\n" +
+                "        \"filename\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"not_analyzed\"\n" +
+                "        },\n" +
+                "        \"url\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"no\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"path\": {\n" +
+                "      \"properties\": {\n" +
+                "        \"encoded\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"not_analyzed\"\n" +
+                "        },\n" +
+                "        \"virtual\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"not_analyzed\"\n" +
+                "        },\n" +
+                "        \"root\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"not_analyzed\"\n" +
+                "        },\n" +
+                "        \"real\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"not_analyzed\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    },\n" +
+                "    \"attributes\": {\n" +
+                "      \"properties\": {\n" +
+                "        \"owner\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"not_analyzed\"\n" +
+                "        },\n" +
+                "        \"group\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"not_analyzed\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsMappingForFoldersVersion1() throws Exception {
+        String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        logger.info("Mapping used for folders : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  \"properties\": {\n" +
+                "    \"name\": {\n" +
+                "      \"type\": \"string\",\n" +
+                "      \"store\": true,\n" +
+                "      \"index\": \"not_analyzed\"\n" +
+                "    },\n" +
+                "    \"real\": {\n" +
+                "      \"type\": \"string\",\n" +
+                "      \"store\": true,\n" +
+                "      \"index\": \"not_analyzed\"\n" +
+                "    },\n" +
+                "    \"encoded\": {\n" +
+                "      \"type\": \"string\",\n" +
+                "      \"store\": true,\n" +
+                "      \"index\": \"not_analyzed\"\n" +
+                "    },\n" +
+                "    \"root\": {\n" +
+                "      \"type\": \"string\",\n" +
+                "      \"store\": true,\n" +
+                "      \"index\": \"not_analyzed\"\n" +
+                "    },\n" +
+                "    \"virtual\": {\n" +
+                "      \"type\": \"string\",\n" +
+                "      \"store\": true,\n" +
+                "      \"index\": \"not_analyzed\"\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n"));
+    }
 
     @Test
     public void fsMappingForFilesVersion2() throws Exception {
@@ -230,6 +383,24 @@ public class FsMappingTest extends AbstractFSCrawlerTest {
         } catch (IllegalArgumentException ignored) {
             assertThat(ignored.getMessage(), containsString("does not exist for elasticsearch version"));
         }
+    }
+
+    @Test
+    public void fsMappingForFilesForSpecificJobVersion1() throws Exception {
+        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_DOC);
+        logger.info("Mapping used for files : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  // This is a doc mapping version 1\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsMappingForFoldersForSpecificJobVersion1() throws Exception {
+        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        logger.info("Mapping used for files : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  // This is a folder mapping version 1\n" +
+                "}\n"));
     }
 
     @Test

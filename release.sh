@@ -128,6 +128,7 @@ mvn versions:set -DnewVersion=${RELEASE_VERSION} >> /tmp/fscrawler-${RELEASE_VER
 git commit -q -a -m "prepare release fscrawler-$RELEASE_VERSION"
 
 # Testing against different elasticsearch versions
+test_against_version 1
 test_against_version 2
 
 # The actual build is made against latest version

@@ -281,7 +281,11 @@ public class FsCrawlerUtil extends MetaParser {
     }
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
-    private static final String[] MAPPING_RESOURCES = { "2/doc.json", "2/folder.json", "5/doc.json", "5/folder.json" };
+    public static final String[] MAPPING_RESOURCES = {
+            "1/doc.json", "1/folder.json",
+            "2/doc.json", "2/folder.json",
+            "5/doc.json", "5/folder.json"
+    };
 
     /**
      * Copy default resources files which are available as project resources under
