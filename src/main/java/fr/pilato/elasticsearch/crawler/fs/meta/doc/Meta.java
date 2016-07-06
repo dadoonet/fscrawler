@@ -20,7 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.meta.doc;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents document metadata
@@ -30,6 +32,8 @@ public class Meta {
     private String title;
     private Date date;
     private List<String> keywords;
+
+    private Map<String, String> raw;
 
     public String getAuthor() {
         return author;
@@ -62,6 +66,22 @@ public class Meta {
     public void setKeywords(List<String> keywords) {
         this.keywords = keywords;
     }
+
+    public Map<String, String> getRaw() {
+        return raw;
+    }
+
+    public void setRaw(Map<String, String> raw) {
+        this.raw = raw;
+    }
+
+    public void addRaw(String key, String value) {
+        if (this.raw == null) {
+            this.raw = new HashMap<>();
+        }
+        this.raw.put(key, value);
+    }
+
 
     @Override
     public boolean equals(Object o) {

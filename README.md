@@ -115,6 +115,7 @@ The job file must comply to the following `json` specifications:
     ],
     "json_support" : false,
     "attributes_support" : false,
+    "raw_metadata" : false,
     "filename_as_id" : false,
     "add_filesize" : true,
     "remove_deleted" : true,
@@ -155,6 +156,7 @@ Here is a full list of existing settings:
 | `fs.excludes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
 | `fs.attributes_support`          | `false`       | [Adding file attributes](#adding-file-attributes)                                 |
+| `fs.raw_metadata`                | `true`        | [Disabling raw metadata](#disabling-raw-metadata)                                 |
 | `fs.filename_as_id`              | `false`       | [Using Filename as `_id`](#using-filename-as-elasticsearch-_id)                   |
 | `fs.add_filesize`                | `true`        | [Disabling file size field](#disabling-file-size-field)                           |
 | `fs.remove_deleted`              | `true`        | [Ignore deleted files](#ignore-deleted-files)                                     |
@@ -446,6 +448,89 @@ If you want to add file attributes such as `attributes.owner` and `attributes.gr
   }
 }
 ```
+
+# Disabling raw metadata
+
+By default, FS Crawler will extract all found metadata within `meta.raw` object.
+If you want to disable this feature, you can set `raw_metadata` to `false`.
+
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "raw_metadata" : false
+  }
+}
+```
+
+Generated raw metadata depends on the file format itself.
+
+For example, a PDF document could generate:
+
+* `"date" : "2016-07-07T08:37:42Z"`
+* `"pdf:PDFVersion" : "1.5"`
+* `"xmp:CreatorTool" : "Microsoft Word"`
+* `"Keywords" : "keyword1, keyword2"`
+* `"access_permission:modify_annotations" : "true"`
+* `"access_permission:can_print_degraded" : "true"`
+* `"subject" : "Test Tika Object"`
+* `"dc:creator" : "David Pilato"`
+* `"dcterms:created" : "2016-07-07T08:37:42Z"`
+* `"Last-Modified" : "2016-07-07T08:37:42Z"`
+* `"dcterms:modified" : "2016-07-07T08:37:42Z"`
+* `"dc:format" : "application/pdf; version=1.5"`
+* `"title" : "Test Tika title"`
+* `"Last-Save-Date" : "2016-07-07T08:37:42Z"`
+* `"access_permission:fill_in_form" : "true"`
+* `"meta:save-date" : "2016-07-07T08:37:42Z"`
+* `"pdf:encrypted" : "false"`
+* `"dc:title" : "Test Tika title"`
+* `"modified" : "2016-07-07T08:37:42Z"`
+* `"cp:subject" : "Test Tika Object"`
+* `"Content-Type" : "application/pdf"`
+* `"X-Parsed-By" : "org.apache.tika.parser.DefaultParser"`
+* `"creator" : "David Pilato"`
+* `"meta:author" : "David Pilato"`
+* `"dc:subject" : "keyword1, keyword2"`
+* `"meta:creation-date" : "2016-07-07T08:37:42Z"`
+* `"created" : "Thu Jul 07 10:37:42 CEST 2016"`
+* `"access_permission:extract_for_accessibility" : "true"`
+* `"access_permission:assemble_document" : "true"`
+* `"xmpTPg:NPages" : "2"`
+* `"Creation-Date" : "2016-07-07T08:37:42Z"`
+* `"access_permission:extract_content" : "true"`
+* `"access_permission:can_print" : "true"`
+* `"meta:keyword" : "keyword1, keyword2"`
+* `"Author" : "David Pilato"`
+* `"access_permission:can_modify" : "true"`
+
+Where a MP3 file would generate:
+
+* `"xmpDM:genre" : "Vocal"`
+* `"X-Parsed-By" : "org.apache.tika.parser.DefaultParser"`
+* `"creator" : "David Pilato"`
+* `"xmpDM:album" : "FS Crawler"`
+* `"xmpDM:trackNumber" : "1"`
+* `"xmpDM:releaseDate" : "2016"`
+* `"meta:author" : "David Pilato"`
+* `"xmpDM:artist" : "David Pilato"`
+* `"dc:creator" : "David Pilato"`
+* `"xmpDM:audioCompressor" : "MP3"`
+* `"title" : "Test Tika"`
+* `"xmpDM:audioChannelType" : "Stereo"`
+* `"version" : "MPEG 3 Layer III Version 1"`
+* `"xmpDM:logComment" : "Hello but reverted"`
+* `"xmpDM:audioSampleRate" : "44100"`
+* `"channels" : "2"`
+* `"dc:title" : "Test Tika"`
+* `"Author" : "David Pilato"`
+* `"xmpDM:duration" : "1018.775146484375"`
+* `"Content-Type" : "audio/mpeg"`
+* `"samplerate" : "44100"`
+
+As elasticsearch will by default to automatically guess the type, you could end up having conflicts between
+metadata raw fields: a field which is first detected as a date but is getting for another document a value like
+"in the seventies". In such a case, you could imagine forcing the mapping or defining an index mapping template.
 
 # Disabling file size field
 

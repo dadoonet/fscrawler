@@ -88,12 +88,18 @@ public class TikaDocParser {
         // TODO Fix that as the date we get from Tika might be not parseable as a Date
         // doc.getMeta().setDate(metadata.get(Metadata.DATE));
         doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(Metadata.KEYWORDS)));
-        // Meta
 
-        logger.debug("Listing all available metadata:");
-        for (String metadataName : metadata.names()) {
-            logger.debug(" - [{}] = [{}]", metadataName, metadata.getValues(metadataName));
+        if (fsSettings.getFs().isRawMetadata()) {
+            logger.trace("Listing all available metadata:");
+            for (String metadataName : metadata.names()) {
+                String value = metadata.get(metadataName);
+                // This is a logger trick which helps to generate our unit tests
+                // You need to change test/resources/log4j2.xml fr.pilato.elasticsearch.crawler.fs.tika level to trace
+                logger.trace("  assertThat(raw, hasEntry(\"{}\", \"{}\"));", metadataName, value);
+                doc.getMeta().addRaw(metadataName, value);
+            }
         }
+        // Meta
 
         // Doc content
         doc.setContent(parsedContent);

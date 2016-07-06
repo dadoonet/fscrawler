@@ -35,6 +35,7 @@ public class Fs {
     private boolean indexContent;
     private Percentage indexedChars;
     private boolean attributesSupport;
+    private boolean rawMetadata;
 
     public static Builder builder() {
         return new Builder();
@@ -56,6 +57,7 @@ public class Fs {
         private boolean indexContent = true;
         private Percentage indexedChars = null;
         private boolean attributesSupport = false;
+        private boolean rawMetadata = true;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -143,9 +145,14 @@ public class Fs {
             return this;
         }
 
+        public Builder setRawMetadata(boolean rawMetadata) {
+            this.rawMetadata = rawMetadata;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
-                    removeDeleted, storeSource, indexedChars, indexContent, attributesSupport);
+                    removeDeleted, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata);
         }
     }
 
@@ -155,7 +162,7 @@ public class Fs {
 
     Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
        boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean storeSource, Percentage indexedChars,
-       boolean indexContent, boolean attributesSupport) {
+       boolean indexContent, boolean attributesSupport, boolean rawMetadata) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -168,6 +175,7 @@ public class Fs {
         this.indexedChars = indexedChars;
         this.indexContent = indexContent;
         this.attributesSupport = attributesSupport;
+        this.rawMetadata = rawMetadata;
     }
 
     public String getUrl() {
@@ -266,6 +274,14 @@ public class Fs {
         this.attributesSupport = attributesSupport;
     }
 
+    public boolean isRawMetadata() {
+        return rawMetadata;
+    }
+
+    public void setRawMetadata(boolean rawMetadata) {
+        this.rawMetadata = rawMetadata;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -280,6 +296,7 @@ public class Fs {
         if (storeSource != fs.storeSource) return false;
         if (indexContent != fs.indexContent) return false;
         if (attributesSupport != fs.attributesSupport) return false;
+        if (rawMetadata != fs.rawMetadata) return false;
         if (url != null ? !url.equals(fs.url) : fs.url != null) return false;
         if (updateRate != null ? !updateRate.equals(fs.updateRate) : fs.updateRate != null) return false;
         if (includes != null ? !includes.equals(fs.includes) : fs.includes != null) return false;
@@ -302,6 +319,7 @@ public class Fs {
         result = 31 * result + (indexContent ? 1 : 0);
         result = 31 * result + (indexedChars != null ? indexedChars.hashCode() : 0);
         result = 31 * result + (attributesSupport ? 1 : 0);
+        result = 31 * result + (rawMetadata ? 1 : 0);
         return result;
     }
 }
