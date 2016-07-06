@@ -28,8 +28,10 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -131,6 +133,25 @@ public abstract class AbstractFSCrawlerTest {
             return value;
         }
         return sb.toString();
+    }
+
+    public static File URLtoFile(URL url) {
+        try {
+            return new File(url.toURI());
+        } catch(URISyntaxException e) {
+            return new File(url.getPath());
+        }
+    }
+
+    public static String getUrl(String... subdirs) {
+        URL resource = AbstractFSCrawlerTest.class.getResource("/job-sample.json");
+        File dir = URLtoFile(resource).getParentFile();
+
+        for (String subdir : subdirs) {
+            dir = new File(dir, subdir);
+        }
+
+        return dir.getAbsoluteFile().getAbsolutePath();
     }
 
 }

@@ -81,7 +81,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractIT {
         String currentTestName = getCurrentTestName();
         // We copy files from the src dir to the temp dir
         staticLogger.info("  --> Launching test [{}]", currentTestName);
-        String url = getUrl(currentTestName);
+        String url = getUrl("samples", currentTestName);
         Path from = Paths.get(url);
         currentTestResourceDir = testResourceTarget.resolve(currentTestName);
 
@@ -127,22 +127,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractIT {
                 .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
                 .setBulkSize(1)
                 .build();
-    }
-
-    private File URItoFile(URL url) {
-        try {
-            return new File(url.toURI());
-        } catch(URISyntaxException e) {
-            return new File(url.getPath());
-        }
-    }
-
-    private String getUrl(String dir) {
-        URL resource = FsCrawlerImplAllParametersIT.class.getResource("/job-sample.json");
-        File resourceDir = new File(URItoFile(resource).getParentFile(), "samples");
-        File dataDir = new File(resourceDir, dir);
-
-        return dataDir.getAbsoluteFile().getAbsolutePath();
     }
 
     private void startCrawler() throws Exception {
