@@ -22,7 +22,7 @@
         <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
         <elasticsearch.version>5.0.0-alpha4</elasticsearch.version>
 
-        <tika.version>1.10</tika.version>
+        <tika.version>1.13</tika.version>
         <jackson.version>2.6.3</jackson.version>
         <log4j.version>2.4.1</log4j.version>
 

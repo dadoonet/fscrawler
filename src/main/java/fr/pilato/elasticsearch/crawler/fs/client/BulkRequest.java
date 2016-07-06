@@ -19,13 +19,12 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import com.google.common.collect.Lists;
-
+import java.util.ArrayList;
 import java.util.List;
 
 public class BulkRequest {
 
-    private final List<SingleBulkRequest> requests = Lists.newArrayList();
+    private final List<SingleBulkRequest> requests = new ArrayList<>();
 
     public int numberOfActions() {
         return requests.size();
