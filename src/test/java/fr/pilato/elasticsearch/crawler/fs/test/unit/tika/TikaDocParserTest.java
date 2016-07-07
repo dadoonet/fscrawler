@@ -42,6 +42,29 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/163
+     */
+    @Test
+    public void testXmlIssue163() throws IOException {
+        Doc doc = extractFromFile("issue-163.xml");
+
+        // Extracted content
+        assertThat(doc.getContent(), is("   \n"));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), containsString("application/xml"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+
+        Map<String, String> raw = doc.getMeta().getRaw();
+        assertThat(raw, hasEntry("X-Parsed-By", "org.apache.tika.parser.DefaultParser"));
+        assertThat(raw, hasEntry(is("Content-Type"), containsString("application/xml")));
+    }
 
     @Test
     public void testExtractFromDoc() throws IOException {
@@ -463,30 +486,6 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
         assertThat(raw, hasEntry("xmpDM:audioSampleType", "16Int"));
         assertThat(raw, hasEntry("Content-Type", "audio/x-wav"));
         assertThat(raw, hasEntry("samplerate", "44100.0"));
-    }
-
-    /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/163
-     */
-    @Test
-    public void testXmlIssue163() throws IOException {
-        Doc doc = extractFromFile("issue-163.xml");
-
-        // Extracted content
-        assertThat(doc.getContent(), is("   \n"));
-
-        // Content Type
-        assertThat(doc.getFile().getContentType(), containsString("application/xml"));
-
-        // Meta data
-        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), emptyIterable());
-        assertThat(doc.getMeta().getTitle(), is(nullValue()));
-
-        Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw, hasEntry("X-Parsed-By", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry(is("Content-Type"), containsString("application/xml")));
     }
 
     private byte[] getBinaryContent(String filename) throws IOException {
