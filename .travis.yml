@@ -3,8 +3,6 @@ sudo: false
 jdk:
   - oraclejdk8
 script:
-  - echo "Running integration tests against 1.x series" ; mvn verify -Pes-1x
-  - echo "Running integration tests against 1.x series" ; mvn verify -Pes-2x
-  - echo "Running integration tests against 1.x series" ; mvn verify
+  - mvn -B verify -Pes-1x ; mvn -B verify -Pes-2x ; mvn -B verify
 
 
