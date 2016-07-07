@@ -39,11 +39,9 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,7 +58,7 @@ import static org.hamcrest.Matchers.nullValue;
 /**
  * Test all crawler settings
  */
-public class FsCrawlerImplAllParametersIT extends AbstractIT {
+public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;

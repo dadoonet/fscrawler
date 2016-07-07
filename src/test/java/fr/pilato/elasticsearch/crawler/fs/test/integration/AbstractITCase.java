@@ -21,7 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -45,7 +45,7 @@ import static org.junit.Assume.assumeThat;
  *
  * Note that all existing data in this cluster might be removed
  */
-public abstract class AbstractIT extends AbstractFSCrawlerTest {
+public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     protected final static int HTTP_TEST_PORT = 9400;
 

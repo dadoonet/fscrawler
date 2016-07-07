@@ -21,7 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.unit.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import org.junit.Test;
 
@@ -37,11 +37,10 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-public class TikaDocParserTest extends AbstractFSCrawlerTest {
+public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
 
     @Test
@@ -365,7 +364,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
         assertThat(raw, hasEntry("meta:author", "David Pilato"));
         assertThat(raw, hasEntry("dc:subject", "keyword1, keyword2"));
         assertThat(raw, hasEntry("meta:creation-date", "2016-07-07T08:37:42Z"));
-        assertThat(raw, hasEntry("created", "Thu Jul 07 10:37:42 CEST 2016"));
+        assertThat(raw, hasEntry(is("created"), containsString("Jul 0")));
         assertThat(raw, hasEntry("access_permission:extract_for_accessibility", "true"));
         assertThat(raw, hasEntry("access_permission:assemble_document", "true"));
         assertThat(raw, hasEntry("xmpTPg:NPages", "2"));
@@ -400,12 +399,12 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
         assertThat(raw, hasEntry("meta:word-count", "19"));
         assertThat(raw, hasEntry("meta:author", "David Pilato"));
         assertThat(raw, hasEntry("dc:subject", "keyword1, keyword2"));
-        assertThat(raw, hasEntry("meta:creation-date", "2016-07-07T08:38:00Z"));
+        assertThat(raw, hasEntry(is("meta:creation-date"), containsString("2016-07-0")));
         assertThat(raw, hasEntry("subject", "Test Tika Object"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
         assertThat(raw, hasEntry("extended-properties:Company", "elastic"));
-        assertThat(raw, hasEntry("Creation-Date", "2016-07-07T08:38:00Z"));
-        assertThat(raw, hasEntry("dcterms:created", "2016-07-07T08:38:00Z"));
+        assertThat(raw, hasEntry(is("Creation-Date"), containsString("2016-07-")));
+        assertThat(raw, hasEntry(is("dcterms:created"), containsString("2016-07-")));
         assertThat(raw, hasEntry("title", "Test Tika title"));
         assertThat(raw, hasEntry("meta:character-count", "68"));
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));

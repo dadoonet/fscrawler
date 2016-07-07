@@ -23,22 +23,18 @@ import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.function.BooleanSupplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.fail;
 
 /**
  * Test elasticsearch HTTP client
  */
-public class ElasticsearchClientIT extends AbstractIT {
+public class ElasticsearchClientIT extends AbstractITCase {
 
     @Test
     public void testCreateIndex() throws IOException {

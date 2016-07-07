@@ -34,6 +34,16 @@
         <integ.http.port>9400</integ.http.port>
         <integ.transport.port>9500</integ.transport.port>
 
+        <!-- Randomized testing framework -->
+        <tests.locale>random</tests.locale>
+        <tests.timezone>random</tests.timezone>
+        <tests.output>onError</tests.output>
+        <tests.verbose>false</tests.verbose>
+        <tests.leaveTemporary>false</tests.leaveTemporary>
+        <tests.jvms>2</tests.jvms>
+        <tests.parallelism>auto</tests.parallelism>
+        <tests.seed></tests.seed>
+
         <java.compiler.version>1.8</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -136,11 +146,71 @@
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
                 <artifactId>junit4-maven-plugin</artifactId>
                 <version>2.1.17</version>
+                <configuration>
+                    <heartbeat>10</heartbeat>
+                    <jvmOutputAction>pipe,ignore</jvmOutputAction>
+                    <leaveTemporary>${tests.leaveTemporary}</leaveTemporary>
+                    <ifNoTests>warn</ifNoTests>
+                    <parallelism>${tests.parallelism}</parallelism>
+                    <listeners>
+                        <report-text showThrowable="true" showStackTraces="true" showOutput="${tests.output}"
+                                     showStatusOk="${tests.verbose}" showStatusError="true" showStatusFailure="true"
+                                     showStatusIgnored="true" showSuiteSummary="${tests.verbose}" />
+                    </listeners>
+                    <seed>${tests.seed}</seed>
+                    <systemProperties combine.children="append">
+                        <arg.common>arg.common</arg.common>
+                        <tests.locale>${tests.locale}</tests.locale>
+                        <tests.timezone>${tests.timezone}</tests.timezone>
+                    </systemProperties>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>unit-tests</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>junit4</goal>
+                        </goals>
+                        <inherited>true</inherited>
+                        <configuration>
+                            <includes>
+                                <include>**/*Test.class</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/*$*</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>integration-tests</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>junit4</goal>
+                        </goals>
+                        <inherited>true</inherited>
+                        <configuration>
+                            <includes>
+                                <include>**/*IT.class</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/*$*</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
+            <!-- Disable surefire so we can use randomize testing framework -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19</version>
+                <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Generate the release zip file (run during package step) -->
@@ -260,20 +330,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
         </plugins>
     </build>
 
@@ -401,6 +457,12 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.carrotsearch.randomizedtesting</groupId>
+            <artifactId>randomizedtesting-runner</artifactId>
+            <version>2.3.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -1069,6 +1069,8 @@ package.
 * Integration tests are defined in [fr.pilato.elasticsearch.crawler.fs.test.integration](src/test/java/fr/pilato/elasticsearch/crawler/fs/test/integration)
 package.
 
+### Integration tests
+
 Integration tests only run when an elasticsearch cluster is running at [127.0.0.1:9400](http://127.0.0.1:9400).
 When running with maven, an elasticsearch instance is automatically downloaded from maven central, installed
 and launched before integration tests start and stopped after integration tests.
@@ -1101,6 +1103,69 @@ mvn install -Pes-2x
 ```
 
 By default, it will run integration tests against elasticsearch 5.x series cluster.
+
+### Randomized testing
+
+FS Crawler uses [Randomized testing framework](https://github.com/randomizedtesting/randomizedtesting).
+In case of failure, it will print a line like:
+
+```
+REPRODUCE WITH:
+mvn test -Dtests.seed=AC6992149EB4B547 -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.unit.tika.TikaDocParserTest -Dtests.method="testExtractFromRtf" -Dtests.locale=ga-IE -Dtests.timezone=Canada/Saskatchewan
+```
+
+
+It also exposes some parameters you can use at build time:
+
+* `tests.output`: display test output. For example:
+
+```sh
+mvn install -Dtests.output=always
+mvn install -Dtests.output=onError
+```
+
+* `tests.locale`: run the tests using a given Locale. For example:
+
+```sh
+mvn install -Dtests.locale=random
+mvn install -Dtests.locale=fr-FR
+```
+
+* `tests.timezone`: run the tests using a given Timezone. For example:
+
+```sh
+mvn install -Dtests.timezone=random
+mvn install -Dtests.timezone=CEST
+mvn install -Dtests.timezone=-0200
+```
+
+* `tests.verbose`: adds running tests details while executing tests
+
+```sh
+mvn install -Dtests.verbose
+```
+
+* `tests.parallelism`: number of JVMs to start to run tests
+
+```sh
+mvn install -Dtests.parallelism=auto
+mvn install -Dtests.parallelism=max
+mvn install -Dtests.parallelism=1
+```
+
+* `tests.seed`: specify the seed to use to run the test suite if you need to reproduce a failure
+given a specific test context.
+
+```sh
+mvn test -Dtests.seed=E776CE45185A6E7A
+```
+
+* `tests.leaveTemporary`: leave temporary files on disk
+
+```sh
+mvn test -Dtests.leaveTemporary
+```
+
 
 ## Releasing
 

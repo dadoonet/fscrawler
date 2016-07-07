@@ -26,7 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ import java.io.IOException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class FsSettingsParserTest extends AbstractFSCrawlerTest {
+public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
     private static final Fs FS_EMPTY = Fs.builder().build();
     private static final Fs FS_FULL = Fs.builder()

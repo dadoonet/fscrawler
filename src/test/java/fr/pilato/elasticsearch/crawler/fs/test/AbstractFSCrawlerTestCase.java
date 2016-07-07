@@ -19,14 +19,18 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test;
 
+import com.carrotsearch.randomizedtesting.RandomizedRunner;
+import com.carrotsearch.randomizedtesting.annotations.Listeners;
 import com.carrotsearch.randomizedtesting.generators.RandomInts;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,15 +39,21 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultResources;
 import static org.apache.lucene.util.LuceneTestCase.random;
 
-public abstract class AbstractFSCrawlerTest {
+@RunWith(RandomizedRunner.class)
+@Listeners({FSCrawlerReproduceInfoPrinter.class})
+public abstract class AbstractFSCrawlerTestCase {
 
-    protected static final Logger staticLogger = LogManager.getLogger(AbstractFSCrawlerTest.class);
+    protected static final Logger staticLogger = LogManager.getLogger(AbstractFSCrawlerTestCase.class);
 
     @Rule
     public TestName name = new TestName();
@@ -64,6 +74,35 @@ public abstract class AbstractFSCrawlerTest {
         }
         copyDefaultResources(metadataDir);
         staticLogger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
+    }
+
+    private static final Locale savedLocale = Locale.getDefault();
+    private static final TimeZone savedTimeZone = TimeZone.getDefault();
+
+    @BeforeClass
+    public static void setLocale() {
+        String testLocale = System.getProperty("tests.locale", "random");
+        Locale locale = testLocale.equals("random") ? randomLocale() : new Locale.Builder().setLanguageTag(testLocale).build();
+        staticLogger.debug("Running test suite with Locale [{}]", locale);
+        Locale.setDefault(locale);
+    }
+
+    @AfterClass
+    public static void resetLocale() {
+        Locale.setDefault(savedLocale);
+    }
+
+    @BeforeClass
+    public static void setTimeZone() {
+        String testTimeZone = System.getProperty("tests.timezone", "random");
+        TimeZone timeZone = testTimeZone.equals("random") ? randomTimeZone() : TimeZone.getTimeZone(testTimeZone);
+        staticLogger.debug("Running test suite with TimeZone [{}]/[{}]", timeZone.getID(), timeZone.getDisplayName());
+        TimeZone.setDefault(timeZone);
+    }
+
+    @AfterClass
+    public static void resetTimeZone() {
+        TimeZone.setDefault(savedTimeZone);
     }
 
     protected final Logger logger = LogManager.getLogger(this.getClass());
@@ -144,7 +183,7 @@ public abstract class AbstractFSCrawlerTest {
     }
 
     public static String getUrl(String... subdirs) {
-        URL resource = AbstractFSCrawlerTest.class.getResource("/job-sample.json");
+        URL resource = AbstractFSCrawlerTestCase.class.getResource("/job-sample.json");
         File dir = URLtoFile(resource).getParentFile();
 
         for (String subdir : subdirs) {

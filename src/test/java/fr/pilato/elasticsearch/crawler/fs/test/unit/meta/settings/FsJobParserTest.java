@@ -21,7 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobParser;
-import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ import java.time.Instant;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class FsJobParserTest extends AbstractFSCrawlerTest {
+public class FsJobParserTest extends AbstractFSCrawlerTestCase {
 
     private static final FsJob JOB_EMPTY = FsJob.builder().build();
 

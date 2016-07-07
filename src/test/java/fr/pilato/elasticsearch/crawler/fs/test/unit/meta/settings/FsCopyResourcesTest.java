@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTest;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultR
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class FsCopyResourcesTest extends AbstractFSCrawlerTest {
+public class FsCopyResourcesTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testCopyResources() throws IOException, URISyntaxException {
