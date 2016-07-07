@@ -43,21 +43,22 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
+
     @Test
-    public void testExtractFromOdt() throws IOException {
-        Doc doc = extractFromFile("odt");
+    public void testExtractFromDoc() throws IOException {
+        Doc doc = extractFromFile("doc");
 
         // Extracted content
-        assertThat(doc.getContent(), is("Bonjour David\n\n\n"));
+        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), is("application/vnd.oasis.opendocument.text"));
+        assertThat(doc.getFile().getContentType(), is("application/msword"));
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
+        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
         assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("Mot cle", " elasticsearch"));
-        assertThat(doc.getMeta().getTitle(), is("Mon titre"));
+        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1"," keyword2"));
+        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
     }
 
     @Test
@@ -65,16 +66,33 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
         Doc doc = extractFromFile("docx");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("A short explanation of"));
+        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
 
         // Content Type
         assertThat(doc.getFile().getContentType(), is("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is("Admin"));
+        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
+        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1"," keyword2"));
+        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
+    }
+
+    @Test
+    public void testExtractFromHtml() throws IOException {
+        Doc doc = extractFromFile("html");
+
+        // Extracted content
+        assertThat(doc.getContent(), containsString("a sample text available in"));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), containsString("text/html"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
         assertThat(doc.getMeta().getDate(), is(nullValue()));
         assertThat(doc.getMeta().getKeywords(), emptyIterable());
-        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
     }
 
     @Test
@@ -95,20 +113,55 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
     }
 
     @Test
-    public void testExtractFromWav() throws IOException {
-        Doc doc = extractFromFile("wav");
+    public void testExtractFromOdt() throws IOException {
+        Doc doc = extractFromFile("odt");
 
         // Extracted content
-        assertThat(doc.getContent(), is(""));
+        // TODO Fix when issue https://issues.apache.org/jira/browse/TIKA-2030 will be resolved
+        assertThat(doc.getContent(), containsString("This isa sample text available in page"));
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), is("audio/x-wav"));
+        assertThat(doc.getFile().getContentType(), is("application/vnd.oasis.opendocument.text"));
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
+        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
         assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), emptyIterable());
-        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1", "  keyword2"));
+        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
+    }
+
+    @Test
+    public void testExtractFromPdf() throws IOException {
+        Doc doc = extractFromFile("pdf");
+
+        // Extracted content
+        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), is("application/pdf"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
+        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1", " keyword2"));
+        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
+    }
+
+    @Test
+    public void testExtractFromRtf() throws IOException {
+        Doc doc = extractFromFile("rtf");
+
+        // Extracted content
+        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), is("application/rtf"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
+        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1", " keyword2"));
+        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
     }
 
     @Test
@@ -120,6 +173,23 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
         // Content Type
         assertThat(doc.getFile().getContentType(), containsString("text/plain"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+    }
+
+    @Test
+    public void testExtractFromWav() throws IOException {
+        Doc doc = extractFromFile("wav");
+
+        // Extracted content
+        assertThat(doc.getContent(), is(""));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), is("audio/x-wav"));
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is(nullValue()));
