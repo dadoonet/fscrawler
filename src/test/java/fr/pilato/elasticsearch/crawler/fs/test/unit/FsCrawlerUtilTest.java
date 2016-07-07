@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.unit;
 
 import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.junit.Test;
 
@@ -30,7 +31,7 @@ import static org.hamcrest.Matchers.is;
 /**
  * We want to test some utilities
  */
-public class FsCrawlerUtilTest {
+public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testComputePathLinux() {

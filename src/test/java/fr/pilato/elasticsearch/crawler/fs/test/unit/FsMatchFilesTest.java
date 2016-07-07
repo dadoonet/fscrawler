@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.unit;
 
 
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.junit.Test;
 
@@ -30,7 +31,7 @@ import java.util.Collections;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class FsMatchFilesTest {
+public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void exclude_only() {
