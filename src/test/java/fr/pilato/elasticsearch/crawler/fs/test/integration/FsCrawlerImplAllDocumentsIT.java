@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -66,10 +67,12 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
         staticLogger.debug("  --> Test resources ready in [{}]", testResourceTarget);
 
+        Long numFiles = Files.list(testResourceTarget).count();
+
         staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents]");
         elasticsearchClient.deleteIndex("fscrawler_test_all_documents");
 
-        staticLogger.info("  --> starting crawler in [{}]", testResourceTarget);
+        staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
         FsCrawlerImpl crawler = new FsCrawlerImpl(metadataDir,
                 FsSettings.builder("fscrawler_test_all_documents")
@@ -94,7 +97,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
             }
         }), equalTo(true));
 
-        countTestHelper("fscrawler_test_all_documents", null, 10, null);
+        countTestHelper("fscrawler_test_all_documents", null, numFiles.intValue(), null);
 
         // Make sure we refresh indexed docs before launching tests
         refresh();

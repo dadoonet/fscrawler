@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -151,7 +152,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     return false;
                 }
             }
-        }), equalTo(true));
+        }, 20, TimeUnit.SECONDS), equalTo(true));
 
         return response[0];
     }
