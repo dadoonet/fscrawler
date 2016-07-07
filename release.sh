@@ -59,11 +59,11 @@ promptyn () {
 
 test_against_version () {
     if [ -z "$1" ]; then
-        echo "Building and testing against elasticsearch $1.x..."
-        mvn clean verify -Pes-$1.x >> /tmp/fscrawler-${RELEASE_VERSION}.log
-    else
         echo "Building and testing the release..."
         mvn clean install -Prelease >> /tmp/fscrawler-${RELEASE_VERSION}.log
+    else
+        echo "Building and testing against elasticsearch $1.x..."
+        mvn clean verify -Pes-$1.x >> /tmp/fscrawler-${RELEASE_VERSION}.log
     fi
 
     if [ $? -ne 0 ]
