@@ -2,3 +2,9 @@ language: java
 sudo: false
 jdk:
   - oraclejdk8
+script:
+  - echo "Running integration tests against 1.x series" ; mvn verify -Pes-1x
+  - echo "Running integration tests against 1.x series" ; mvn verify -Pes-2x
+  - echo "Running integration tests against 1.x series" ; mvn verify
+
+
