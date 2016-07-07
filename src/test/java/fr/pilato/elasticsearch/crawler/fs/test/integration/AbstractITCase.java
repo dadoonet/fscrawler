@@ -20,15 +20,22 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
@@ -75,13 +82,79 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         staticLogger.info("Stopping integration tests against an external cluster");
     }
 
-    @Before
-    public void cleanExistingIndex() throws IOException {
-        logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        elasticsearchClient.deleteIndex(getCrawlerName() + "*");
+    private static final String testCrawlerPrefix = "fscrawler_";
+
+    protected static void refresh() throws IOException {
+        elasticsearchClient.refresh(null);
     }
 
-    private static final String testCrawlerPrefix = "fscrawler_";
+    /**
+     * Check that we have the expected number of docs or at least one if expected is null
+     *
+     * @param indexName Index we will search in.
+     * @param query     QueryString query, like foo:bar. MatchAll if null.
+     * @param expected  expected number of docs. Null if at least 1.
+     * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
+     * @param fields    If we want to add some fields within the response
+     * @return the search response if further tests are needed
+     * @throws Exception
+     */
+    public static SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
+                                                 final String... fields) throws Exception {
+
+        final SearchResponse[] response = new SearchResponse[1];
+
+        // We wait up to 5 seconds before considering a failing test
+        staticLogger.info("  ---> Waiting up to 5 seconds for {} documents in index {}", expected == null ? "some" : expected, indexName);
+        assertThat("We waited for 5 seconds but no document has been added", awaitBusy(() -> {
+            long totalHits;
+
+            // Let's search for entries
+            SearchRequest.Builder sr = SearchRequest.builder();
+
+            if (query != null) {
+                sr.setQuery(query);
+            }
+
+            if (fields.length > 0) {
+                sr.setFields(fields);
+            }
+
+            try {
+                response[0] = elasticsearchClient.search(indexName, FsCrawlerUtil.INDEX_TYPE_DOC, sr.build());
+            } catch (IOException e) {
+                staticLogger.warn("error caught", e);
+                return false;
+            }
+            staticLogger.trace("result {}", response[0].toString());
+            totalHits = response[0].getHits().getTotal();
+
+            if (expected == null) {
+                return (totalHits >= 1);
+            } else {
+                if (expected == totalHits) {
+                    return true;
+                } else {
+                    staticLogger.debug("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
+                    if (path != null) {
+                        staticLogger.debug("     ---> content of [{}]:", path);
+                        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path)) {
+                            for (Path file : directoryStream) {
+                                staticLogger.debug("         - {} {}",
+                                        file.getFileName().toString(),
+                                        Files.getLastModifiedTime(file));
+                            }
+                        } catch (IOException ex) {
+                            staticLogger.error("can not read content of [{}]:", path);
+                        }
+                    }
+                    return false;
+                }
+            }
+        }), equalTo(true));
+
+        return response[0];
+    }
 
     protected String getCrawlerName() {
         String testName = testCrawlerPrefix.concat(getCurrentTestName());

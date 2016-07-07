@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import com.google.api.client.util.Data;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
@@ -42,7 +41,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -92,6 +90,12 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         FsCrawlerUtil.copyDirs(from, currentTestResourceDir);
 
         staticLogger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
+    }
+
+    @Before
+    public void cleanExistingIndex() throws IOException {
+        logger.info(" -> Removing existing index [{}*]", getCrawlerName());
+        elasticsearchClient.deleteIndex(getCrawlerName() + "*");
     }
 
     @After
@@ -165,10 +169,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         return crawler;
     }
 
-    private void refresh() throws IOException {
-        elasticsearchClient.refresh(null);
-    }
-
     private void stopCrawler() throws InterruptedException, IOException {
         logger.info("  --> stopping crawler");
         if (crawler != null) {
@@ -189,74 +189,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     public SearchResponse countTestHelper(final String indexName, String term, final Integer expected) throws Exception {
         return countTestHelper(indexName, term, expected, null);
-    }
-
-    /**
-     * Check that we have the expected number of docs or at least one if expected is null
-     *
-     * @param indexName Index we will search in.
-     * @param query     QueryString query, like foo:bar. MatchAll if null.
-     * @param expected  expected number of docs. Null if at least 1.
-     * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
-     * @param fields    If we want to add some fields within the response
-     * @return the search response if further tests are needed
-     * @throws Exception
-     */
-    public SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
-                                          final String... fields) throws Exception {
-
-        final SearchResponse[] response = new SearchResponse[1];
-
-        // We wait up to 5 seconds before considering a failing test
-        logger.info("  ---> Waiting up to 5 seconds for {} documents in index {}", expected == null ? "some" : expected, indexName);
-        assertThat("We waited for 5 seconds but no document has been added", awaitBusy(() -> {
-            long totalHits;
-
-            // Let's search for entries
-            SearchRequest.Builder sr = SearchRequest.builder();
-
-            if (query != null) {
-                sr.setQuery(query);
-            }
-
-            if (fields.length > 0) {
-                sr.setFields(fields);
-            }
-
-            try {
-                response[0] = elasticsearchClient.search(indexName, FsCrawlerUtil.INDEX_TYPE_DOC, sr.build());
-            } catch (IOException e) {
-                logger.warn("error caught", e);
-                return false;
-            }
-            logger.trace("result {}", response[0].toString());
-            totalHits = response[0].getHits().getTotal();
-
-            if (expected == null) {
-                return (totalHits >= 1);
-            } else {
-                if (expected == totalHits) {
-                    return true;
-                } else {
-                    logger.debug("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
-                    if (path != null) {
-                        logger.debug("     ---> content of [{}]:", path);
-                        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path)) {
-                            for (Path file : directoryStream) {
-                                logger.debug("         - {} {}",
-                                        file.getFileName().toString(),
-                                        Files.getLastModifiedTime(file));
-                            }
-                        } catch (IOException ex) {
-                            logger.error("can not read content of [{}]:", path);
-                        }
-                    }
-                    return false;
-                }
-            }
-        }), equalTo(true));
-
-        return response[0];
     }
 
     @Test
@@ -370,28 +302,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         countTestHelper(getCrawlerName(), null, 1);
-    }
-
-    @Test
-    public void test_metadata() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setIndexedChars(new Percentage(1))
-                .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "*");
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CONTENT_TYPE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.URL), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILESIZE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXING_DATE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.LAST_MODIFIED), notNullValue());
-
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.TITLE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.KEYWORDS), notNullValue());
-        }
     }
 
     @Test
@@ -727,18 +637,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     /**
-     * Test for #87: https://github.com/dadoonet/fscrawler/issues/87
-     */
-    @Test
-    public void test_mp3() throws Exception {
-        Fs fs = startCrawlerDefinition(TimeValue.timeValueHours(1)).build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-
-        // We expect to have one file
-        countTestHelper(getCrawlerName(), null, 1);
-    }
-
-    /**
      * Test for #105: https://github.com/dadoonet/fscrawler/issues/105
      */
     @Test
@@ -777,16 +675,5 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build(), null);
 
         countTestHelper(getCrawlerName(), null, 1);
-    }
-
-    /**
-     * Test for word document
-     */
-    @Test
-    public void test_word() throws Exception {
-        startCrawler();
-
-        // We expect to have two files
-        countTestHelper(getCrawlerName(), "figure", 1);
     }
 }

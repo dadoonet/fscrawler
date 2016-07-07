@@ -242,6 +242,9 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
         assertThat(raw, hasEntry("Generator", "Microsoft Word 15"));
     }
 
+    /**
+     * Test for #87: https://github.com/dadoonet/fscrawler/issues/87
+     */
     @Test
     public void testExtractFromMp3() throws IOException {
         Doc doc = extractFromFileExtension("mp3");

@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -36,6 +37,12 @@ import static org.junit.Assert.fail;
  */
 public class ElasticsearchClientIT extends AbstractITCase {
 
+    @Before
+    public void cleanExistingIndex() throws IOException {
+        logger.info(" -> Removing existing index [{}*]", getCrawlerName());
+        elasticsearchClient.deleteIndex(getCrawlerName() + "*");
+    }
+
     @Test
     public void testCreateIndex() throws IOException {
         elasticsearchClient.createIndex(getCrawlerName());
@@ -46,7 +53,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     @Test
     public void testRefresh() throws IOException {
         elasticsearchClient.createIndex(getCrawlerName());
-        elasticsearchClient.refresh(null);
+        refresh();
     }
 
     @Test
