@@ -37,6 +37,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -45,7 +46,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
     @Test
     public void testExtractFromDoc() throws IOException {
-        Doc doc = extractFromFile("doc");
+        Doc doc = extractFromFileExtension("doc");
 
         // Extracted content
         assertThat(doc.getContent(), containsString("This is a sample text available in page"));
@@ -113,7 +114,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
     @Test
     public void testExtractFromDocx() throws IOException {
-        Doc doc = extractFromFile("docx");
+        Doc doc = extractFromFileExtension("docx");
 
         // Extracted content
         assertThat(doc.getContent(), containsString("This is a sample text available in page"));
@@ -190,7 +191,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
     @Test
     public void testExtractFromHtml() throws IOException {
-        Doc doc = extractFromFile("html");
+        Doc doc = extractFromFileExtension("html");
 
         // Extracted content
         assertThat(doc.getContent(), containsString("a sample text available in"));
@@ -221,7 +222,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
     @Test
     public void testExtractFromMp3() throws IOException {
-        Doc doc = extractFromFile("mp3");
+        Doc doc = extractFromFileExtension("mp3");
 
         // Extracted content
         assertThat(doc.getContent(), containsString("Test Tika"));
@@ -261,7 +262,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
     @Test
     public void testExtractFromOdt() throws IOException {
-        Doc doc = extractFromFile("odt");
+        Doc doc = extractFromFileExtension("odt");
 
         // Extracted content
         // TODO Fix when issue https://issues.apache.org/jira/browse/TIKA-2030 will be resolved
@@ -323,7 +324,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
     @Test
     public void testExtractFromPdf() throws IOException {
-        Doc doc = extractFromFile("pdf");
+        Doc doc = extractFromFileExtension("pdf");
 
         // Extracted content
         assertThat(doc.getContent(), containsString("This is a sample text available in page"));
@@ -378,7 +379,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
     @Test
     public void testExtractFromRtf() throws IOException {
-        Doc doc = extractFromFile("rtf");
+        Doc doc = extractFromFileExtension("rtf");
 
         // Extracted content
         assertThat(doc.getContent(), containsString("This is a sample text available in page"));
@@ -418,7 +419,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
     @Test
     public void testExtractFromTxt() throws IOException {
-        Doc doc = extractFromFile("txt");
+        Doc doc = extractFromFileExtension("txt");
 
         // Extracted content
         assertThat(doc.getContent(), containsString("This file contains some words."));
@@ -440,7 +441,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
 
     @Test
     public void testExtractFromWav() throws IOException {
-        Doc doc = extractFromFile("wav");
+        Doc doc = extractFromFileExtension("wav");
 
         // Extracted content
         assertThat(doc.getContent(), is(""));
@@ -465,6 +466,30 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
         assertThat(raw, hasEntry("samplerate", "44100.0"));
     }
 
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/163
+     */
+    @Test
+    public void testXmlIssue163() throws IOException {
+        Doc doc = extractFromFile("issue-163.xml");
+
+        // Extracted content
+        assertThat(doc.getContent(), is("   \n"));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), containsString("application/xml"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+
+        Map<String, String> raw = doc.getMeta().getRaw();
+        assertThat(raw, hasEntry("X-Parsed-By", "org.apache.tika.parser.DefaultParser"));
+        assertThat(raw, hasEntry(is("Content-Type"), containsString("application/xml")));
+    }
+
     private byte[] getBinaryContent(String filename) throws IOException {
         String url = getUrl("documents", filename);
         Path file = Paths.get(url);
@@ -473,14 +498,18 @@ public class TikaDocParserTest extends AbstractFSCrawlerTest {
         return data;
     }
 
-    private Doc extractFromFile(String extension) throws IOException {
+    private Doc extractFromFileExtension(String extension) throws IOException {
         logger.info("Test extraction of [{}] file", extension);
-        byte[] data = getBinaryContent("test." + extension);
+        return extractFromFile("test." + extension);
+    }
+
+    private Doc extractFromFile(String filename) throws IOException {
+        byte[] data = getBinaryContent(filename);
         Doc doc = new Doc();
         TikaDocParser.generate(
                 FsSettings.builder(getCurrentTestName()).build(),
                 data,
-                "test." + extension,
+                filename,
                 doc);
 
         logger.debug("Generated Content: [{}]", doc.getContent());
