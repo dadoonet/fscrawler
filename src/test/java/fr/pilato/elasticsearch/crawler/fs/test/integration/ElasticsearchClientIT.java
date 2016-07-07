@@ -155,6 +155,8 @@ public class ElasticsearchClientIT extends AbstractITCase {
         // We should have now our docs
         SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
         assertThat(response.getHits().getTotal(), is(10L));
+
+        bulkProcessor.close();
     }
 
     @Test
@@ -208,6 +210,8 @@ public class ElasticsearchClientIT extends AbstractITCase {
         // We should have now our docs
         SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
         assertThat(response.getHits().getTotal(), is(10L));
+
+        bulkProcessor.close();
     }
 
     @Test

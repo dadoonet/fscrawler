@@ -413,6 +413,14 @@ public class ElasticsearchClient {
         }
     }
 
+    public void shutdown() throws IOException {
+        logger.debug("Closing REST client");
+
+        if (HTTP_TRANSPORT != null) {
+            HTTP_TRANSPORT.shutdown();
+        }
+    }
+
     public static class ElasticsearchUrl extends GenericUrl {
         @Key
         public String q;

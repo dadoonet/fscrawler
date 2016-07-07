@@ -95,7 +95,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     @After
-    public void shutdownCrawler() {
+    public void shutdownCrawler() throws InterruptedException, IOException {
         stopCrawler();
     }
 
@@ -135,7 +135,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(jobName, startCrawlerDefinition().build(), endCrawlerDefinition(jobName), null);
     }
 
-    private void startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
+    private FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
         // TODO do this rarely() createIndex(jobName);
@@ -161,14 +161,16 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         // Print crawler settings
         FsSettings fsSettings = new FsSettingsFileHandler(metadataDir).read(jobName);
         logger.debug("  --> Index settings [{}]", FsSettingsParser.toJson(fsSettings));
+
+        return crawler;
     }
 
     private void refresh() throws IOException {
         elasticsearchClient.refresh(null);
     }
 
-    private void stopCrawler() {
-        logger.info("  --> stopping all crawlers");
+    private void stopCrawler() throws InterruptedException, IOException {
+        logger.info("  --> stopping crawler");
         if (crawler != null) {
             staticLogger.info("  --> Stopping crawler");
             crawler.close();
@@ -648,12 +650,15 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_multiple_crawlers() throws Exception {
         Fs fs1 = startCrawlerDefinition(currentTestResourceDir.resolve("crawler1").toString()).build();
         Fs fs2 = startCrawlerDefinition(currentTestResourceDir.resolve("crawler2").toString()).build();
-        startCrawler(getCrawlerName() + "_1", fs1, endCrawlerDefinition(getCrawlerName() + "_1"), null);
-        startCrawler(getCrawlerName() + "_2", fs2, endCrawlerDefinition(getCrawlerName() + "_2"), null);
+        FsCrawlerImpl crawler1 = startCrawler(getCrawlerName() + "_1", fs1, endCrawlerDefinition(getCrawlerName() + "_1"), null);
+        FsCrawlerImpl crawler2 = startCrawler(getCrawlerName() + "_2", fs2, endCrawlerDefinition(getCrawlerName() + "_2"), null);
         // We should have one doc in index 1...
         countTestHelper(getCrawlerName() + "_1", null, 1);
         // We should have one doc in index 2...
         countTestHelper(getCrawlerName() + "_2", null, 1);
+
+        crawler1.close();
+        crawler2.close();
     }
 
     @Test

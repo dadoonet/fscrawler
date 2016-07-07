@@ -78,6 +78,7 @@ public class FsCrawlerImpl {
     private volatile BulkProcessor bulkProcessor;
 
     private volatile boolean closed = false;
+    private final Object semaphore = new Object();
 
     /**
      * We store config files here...
@@ -89,6 +90,7 @@ public class FsCrawlerImpl {
     private final FsJobFileHandler fsJobFileHandler;
 
     private ElasticsearchClient client;
+    private Thread fsCrawlerThread;
 
     public FsCrawlerImpl(Path config, FsSettings settings) {
         this.config = config;
@@ -191,17 +193,35 @@ public class FsCrawlerImpl {
         fsSettingsFileHandler.write(settings);
 
         // Start the crawler thread
-        Thread thread = new Thread(new FSParser(settings));
-        thread.start();
+        fsCrawlerThread = new Thread(new FSParser(settings), "fs-crawler");
+        fsCrawlerThread.start();
     }
 
-    public void close() {
+    public void close() throws InterruptedException, IOException {
         logger.debug("Closing FS crawler [{}]", settings.getName());
         closed = true;
+
+        synchronized(semaphore) {
+            semaphore.notify();
+        }
+
+        if (this.fsCrawlerThread != null) {
+            while (fsCrawlerThread.isAlive()) {
+                // We check that the crawler has been closed effectively
+                logger.debug("FS crawler thread is still running");
+                Thread.sleep(500);
+            }
+            logger.debug("FS crawler thread is now stopped");
+        }
 
         if (this.bulkProcessor != null) {
             this.bulkProcessor.close();
         }
+
+        if (client != null) {
+            client.shutdown();
+        }
+
         logger.info("FS crawler [{}] stopped", settings.getName());
     }
 
@@ -274,8 +294,14 @@ public class FsCrawlerImpl {
 
                 try {
                     logger.debug("Fs crawler is going to sleep for {}", fsSettings.getFs().getUpdateRate());
-                    Thread.sleep(fsSettings.getFs().getUpdateRate().millis());
-                } catch (InterruptedException e1) {
+
+                    // The problem here is that there is no wait to close the thread while we are sleeping.
+                    // Which leads to Zombie threads in our tests
+
+                    synchronized (semaphore) {
+                        semaphore.wait(fsSettings.getFs().getUpdateRate().millis());
+                    }
+                } catch (InterruptedException ignored) {
                 }
             }
         }

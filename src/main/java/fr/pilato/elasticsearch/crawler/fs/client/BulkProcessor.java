@@ -57,14 +57,17 @@ public class BulkProcessor {
         }
     }
 
-    public void close() {
+    public void close() throws InterruptedException {
         if (closed) {
             return;
         }
         closed = true;
 
         if (executor != null) {
+            logger.debug("Closing BulkProcessor");
             executor.shutdown();
+            executor.awaitTermination(10, TimeUnit.SECONDS);
+            logger.debug("BulkProcessor is now closed");
         }
 
         if (bulkRequest.numberOfActions() > 0) {

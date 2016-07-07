@@ -69,7 +69,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @AfterClass
-    public static void stopRestClient() {
+    public static void stopRestClient() throws IOException {
+        elasticsearchClient.shutdown();
         elasticsearchClient = null;
         staticLogger.info("Stopping integration tests against an external cluster");
     }
