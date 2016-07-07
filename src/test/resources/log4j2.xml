@@ -18,10 +18,10 @@
       <Logger name="fr.pilato.elasticsearch.crawler.fs.util" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.test" level="info" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.test" level="debug" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.test.integration" level="info" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.test.integration" level="debug" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.test.unit" level="info" additivity="false">
