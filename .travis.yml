@@ -3,6 +3,6 @@ sudo: false
 jdk:
   - oraclejdk8
 script:
-  - mvn -B verify -Pes-1x ; mvn -B verify -Pes-2x ; mvn -B verify
+  - mvn -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B verify -Pes-1x ; mvn -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B verify -Pes-2x ; mvn -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -B verify
 
 
