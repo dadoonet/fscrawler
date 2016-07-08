@@ -51,22 +51,32 @@ public class MetaFileHandler {
     }
 
     /**
-     * Read a file in ~/.fscrawler/ dir
+     * Read a file in ~/.fscrawler/{subdir} dir
+     * @param subdir subdir where we can read the file (null if we read in the root dir)
      * @param filename filename
      * @return The String UTF-8 content
      * @throws IOException in case of error while reading
      */
-    public String readFile(String filename) throws IOException {
-        return new String(Files.readAllBytes(root.resolve(filename)), "UTF-8");
+    public String readFile(String subdir, String filename) throws IOException {
+        Path dir = root;
+        if (subdir != null) {
+            dir = dir.resolve(subdir);
+        }
+        return new String(Files.readAllBytes(dir.resolve(filename)), "UTF-8");
     }
 
     /**
-     * Write a file in ~/.fscrawler/ dir
+     * Write a file in ~/.fscrawler/{subdir} dir
+     * @param subdir subdir where we can read the file (null if we read in the root dir)
      * @param filename filename
      * @param content The String UTF-8 content to write
      * @throws IOException in case of error while reading
      */
-    public void writeFile(String filename, String content) throws IOException {
-        Files.write(root.resolve(filename), content.getBytes(Charset.forName("UTF-8")));
+    public void writeFile(String subdir, String filename, String content) throws IOException {
+        Path dir = root;
+        if (subdir != null) {
+            dir = dir.resolve(subdir);
+        }
+        Files.write(dir.resolve(filename), content.getBytes(Charset.forName("UTF-8")));
     }
 }

@@ -25,33 +25,35 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Provides utility methods to read and write job files
+ * Provides utility methods to read and write job status files (_status.json)
  */
 public class FsJobFileHandler extends MetaFileHandler {
 
-    public static final String EXTENSION = "_status.json";
+    @Deprecated
+    public static final String LEGACY_EXTENSION = "_status.json";
+    public static final String FILENAME = "_status.json";
 
     public FsJobFileHandler(Path root) {
         super(root);
     }
 
     /**
-     * We read settings in ~/.fscrawler/{job_name}_status.json
+     * We read settings in ~/.fscrawler/{job_name}/_status.json
      * @param jobname is the job_name
-     * @return Settings settings
+     * @return Status status file
      * @throws IOException in case of error while reading
      */
     public FsJob read(String jobname) throws IOException {
-        return FsJobParser.fromJson(readFile(jobname + EXTENSION));
+        return FsJobParser.fromJson(readFile(jobname, FILENAME));
     }
 
     /**
-     * We write settings to ~/.fscrawler/{job_name}.json
+     * We write settings to ~/.fscrawler/{job_name}/_status.json
      * @param jobname is the job_name
-     * @param job Settings to write
+     * @param job Status file to write
      * @throws IOException in case of error while reading
      */
     public void write(String jobname, FsJob job) throws IOException {
-        writeFile(jobname + EXTENSION, FsJobParser.toJson(job));
+        writeFile(jobname, FILENAME, FsJobParser.toJson(job));
     }
 }

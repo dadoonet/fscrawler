@@ -1,0 +1,28 @@
+{
+  "name" : "david",
+  "fs" : {
+    "url" : "/Users/dpilato/tmp",
+    "update_rate" : "5s",
+    "includes" : null,
+    "excludes" : null,
+    "json_support" : false,
+    "filename_as_id" : false,
+    "add_filesize" : true,
+    "remove_deleted" : true,
+    "store_source" : false,
+    "index_content" : false,
+    "indexed_chars" : "0.0",
+    "attributes_support" : false
+  },
+  "server" : null,
+  "elasticsearch" : {
+    "nodes" : [ {
+      "host" : "127.0.0.1",
+      "port" : 9200
+    } ],
+    "index" : "david",
+    "type" : "doc",
+    "bulk_size" : 100,
+    "flush_interval" : "5s"
+  }
+}

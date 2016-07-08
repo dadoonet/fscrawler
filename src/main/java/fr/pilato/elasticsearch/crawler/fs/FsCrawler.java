@@ -23,7 +23,11 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.meta.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.*;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsParser;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,6 +45,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultResources;
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.moveLegacyResource;
 
 /**
  * Main entry point to launch FsCrawler
@@ -112,6 +117,9 @@ public class FsCrawler {
         // We copy default mapping and settings to the default settings dir .fscrawler/_default/
         copyDefaultResources(configDir);
 
+        // We move the legacy stuff which might come from version 2.0
+        moveLegacyResources(configDir);
+
         FsSettings fsSettings = null;
         FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(configDir);
 
@@ -126,8 +134,8 @@ public class FsCrawler {
             try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(configDir)) {
                 for (Path path : directoryStream) {
                     String fileName = path.getFileName().toString();
-                    if (fileName.endsWith(FsSettingsFileHandler.EXTENSION) && !fileName.endsWith(FsJobFileHandler.EXTENSION)) {
-                        files.add(fileName.substring(0, fileName.lastIndexOf(FsSettingsFileHandler.EXTENSION)));
+                    if (fileName.endsWith(FsSettingsFileHandler.LEGACY_EXTENSION) && !fileName.endsWith(FsJobFileHandler.LEGACY_EXTENSION)) {
+                        files.add(fileName.substring(0, fileName.lastIndexOf(FsSettingsFileHandler.LEGACY_EXTENSION)));
                         logger.info("[{}] - {}", files.size(), files.get(files.size()-1));
                     }
                 }
@@ -197,6 +205,31 @@ public class FsCrawler {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
             logger.debug("error caught", e);
             System.exit(-1);
+        }
+    }
+
+    public static void moveLegacyResources(Path root) {
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(root)) {
+            for (Path path : directoryStream) {
+                String fileName = path.getFileName().toString();
+                if (fileName.endsWith(FsJobFileHandler.LEGACY_EXTENSION)) {
+                    // We have a Legacy Job Settings file {job_name.json} which needs to move to job_name/_settings.json
+                    String jobName = fileName.substring(0, fileName.length() - FsJobFileHandler.LEGACY_EXTENSION.length());
+                    Path jobDir = root.resolve(jobName);
+                    Files.createDirectories(jobDir);
+                    Path destination = jobDir.resolve(FsJobFileHandler.FILENAME);
+                    moveLegacyResource(path, destination);
+                } else if (fileName.endsWith(FsSettingsFileHandler.LEGACY_EXTENSION)) {
+                    // We have a Legacy Job Settings file {job_name.json} which needs to move to job_name/_settings.json
+                    String jobName = fileName.substring(0, fileName.length() - FsSettingsFileHandler.LEGACY_EXTENSION.length());
+                    Path jobDir = root.resolve(jobName);
+                    Files.createDirectories(jobDir);
+                    Path destination = jobDir.resolve(FsSettingsFileHandler.FILENAME);
+                    moveLegacyResource(path, destination);
+                }
+            }
+        } catch (IOException e) {
+            logger.warn("Got error while moving legacy content", e);
         }
     }
 

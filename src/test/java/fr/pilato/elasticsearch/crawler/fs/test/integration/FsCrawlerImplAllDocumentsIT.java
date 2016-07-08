@@ -88,7 +88,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         crawler.start();
 
         // We wait up to 10 seconds before considering a failing test
-        assertThat("Job meta file should exists in ~/.fscrawler...", awaitBusy(() -> {
+        assertThat("Job meta file _status.json should exists in ~/.fscrawler/fscrawler_test_all_documents...", awaitBusy(() -> {
             try {
                 new FsJobFileHandler(metadataDir).read("fscrawler_test_all_documents");
                 return true;

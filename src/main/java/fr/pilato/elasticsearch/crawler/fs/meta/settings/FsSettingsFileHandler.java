@@ -29,28 +29,30 @@ import java.nio.file.Path;
  */
 public class FsSettingsFileHandler extends MetaFileHandler {
 
-    public static final String EXTENSION = ".json";
+    @Deprecated
+    public static final String LEGACY_EXTENSION = ".json";
+    public static final String FILENAME = "_settings.json";
 
     public FsSettingsFileHandler(Path root) {
         super(root);
     }
 
     /**
-     * We read settings in ~/.fscrawler/{job_name}.json
+     * We read settings in ~/.fscrawler/{job_name}/_settings.json
      * @param jobname is the job_name
      * @return Settings settings
      * @throws IOException in case of error while reading
      */
     public FsSettings read(String jobname) throws IOException {
-        return FsSettingsParser.fromJson(readFile(jobname + EXTENSION));
+        return FsSettingsParser.fromJson(readFile(jobname, FILENAME));
     }
 
     /**
-     * We write settings to ~/.fscrawler/{job_name}.json
+     * We write settings to ~/.fscrawler/{job_name}/_settings.json
      * @param settings Settings to write (settings.getName() contains the job name)
      * @throws IOException in case of error while reading
      */
     public void write(FsSettings settings) throws IOException {
-        writeFile(settings.getName() + EXTENSION, FsSettingsParser.toJson(settings));
+        writeFile(settings.getName(), FILENAME, FsSettingsParser.toJson(settings));
     }
 }

@@ -46,6 +46,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -56,6 +58,7 @@ import java.util.List;
 
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.moveLegacyResource;
 
 /**
  * @author dadoonet (David Pilato)
@@ -96,8 +99,16 @@ public class FsCrawlerImpl {
         this.config = config;
         this.fsSettingsFileHandler = new FsSettingsFileHandler(config);
         this.fsJobFileHandler = new FsJobFileHandler(config);
-
         this.settings = settings;
+
+        // Generate the directory where we write status and other files
+        Path jobSettingsFolder = config.resolve(settings.getName());
+        try {
+            Files.createDirectories(jobSettingsFolder);
+        } catch (IOException e) {
+            throw new RuntimeException("Can not create the job config directory", e);
+        }
+
         if (settings.getFs() == null || settings.getFs().getUrl() == null) {
             logger.warn("`url` is not set. Please define it. Falling back to default: [{}].", Fs.DEFAULT_DIR);
             if (settings.getFs() == null) {

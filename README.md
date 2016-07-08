@@ -57,13 +57,13 @@ $ tree
 bin/fscrawler job_name
 ```
 
-FS crawler will read a local file (default to `~/.fscrawler/{job_name}.json`).
+FS crawler will read a local file (default to `~/.fscrawler/{job_name}/_settings.json`).
 If the file does not exist, FS crawler will propose to create your first job.
 
 Once the crawler is running, it will write status information and statistics in:
 
-* `~/.fscrawler/{job_name}.json`
-* `~/.fscrawler/{job_name}_status.json`
+* `~/.fscrawler/{job_name}/_settings.json`
+* `~/.fscrawler/{job_name}/_status.json`
 
 It means that if you stop the job at some point, FS crawler will restart it from where it stops.
 If needed, you can manually edit / remove those files to restart.
@@ -176,7 +176,7 @@ Here is a full list of existing settings:
 
 ### The most simple crawler
 
-You can define the most simple crawler job by writing a `~/.fscrawler/test.json` file as follow:
+You can define the most simple crawler job by writing a `~/.fscrawler/test/_settings.json` file as follow:
 
 ```json
 {
@@ -191,7 +191,7 @@ This will scan every 15 minutes all documents available in `/tmp/es` dir and wil
 
 ### Root directory
 
-Define `fs.url` property in your `~/.fscrawler/test.json` file:
+Define `fs.url` property in your `~/.fscrawler/test/_settings.json` file:
 
 ```json
 {
@@ -208,7 +208,7 @@ For Windows users, use a form like `c:/tmp` or `c:\\tmp`.
 
 Let's say you want to index only docs like `*.doc` and `*.pdf` but `resume*`. So `resume_david.pdf` won't be indexed.
 
-Define `fs.includes` and `fs.excludes` properties in your `~/.fscrawler/test.json` file:
+Define `fs.includes` and `fs.excludes` properties in your `~/.fscrawler/test/_settings.json` file:
 
 ```json
 {
@@ -348,7 +348,7 @@ Of course, if you did not define a mapping before launching the crawler, Elastic
 
 If you have more than one type, create as many crawlers as types:
 
-`~/.fscrawler/test_type1.json`:
+`~/.fscrawler/test_type1/_settings.json`:
 
 ```json
 {
@@ -364,7 +364,7 @@ If you have more than one type, create as many crawlers as types:
 }
 ```
 
-`~/.fscrawler/test_type2.json`:
+`~/.fscrawler/test_type2/_settings.json`:
 
 ```json
 {
