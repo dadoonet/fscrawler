@@ -188,10 +188,6 @@ public class FsCrawlerImpl {
         this.bulkProcessor = BulkProcessor.simpleBulkProcessor(client, settings.getElasticsearch().getBulkSize(),
                 settings.getElasticsearch().getFlushInterval());
 
-        // We save crawler settings
-        // TODO May be do that in another place?
-        fsSettingsFileHandler.write(settings);
-
         // Start the crawler thread
         fsCrawlerThread = new Thread(new FSParser(settings), "fs-crawler");
         fsCrawlerThread.start();

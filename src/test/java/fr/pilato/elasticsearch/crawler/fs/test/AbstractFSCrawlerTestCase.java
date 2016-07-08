@@ -105,6 +105,12 @@ public abstract class AbstractFSCrawlerTestCase {
         TimeZone.setDefault(savedTimeZone);
     }
 
+    @AfterClass
+    public static void printMetadataDirContent() throws IOException {
+        staticLogger.debug("ls -l {}", metadataDir);
+        Files.list(metadataDir).forEach(path -> staticLogger.debug("{}", path));
+    }
+
     protected final Logger logger = LogManager.getLogger(this.getClass());
 
     protected String getCurrentTestName() {

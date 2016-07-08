@@ -27,8 +27,6 @@ import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
@@ -161,10 +159,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // Make sure we refresh indexed docs before launching tests
         refresh();
-
-        // Print crawler settings
-        FsSettings fsSettings = new FsSettingsFileHandler(metadataDir).read(jobName);
-        logger.debug("  --> Index settings [{}]", FsSettingsParser.toJson(fsSettings));
 
         return crawler;
     }
