@@ -64,7 +64,6 @@ Once the crawler is running, it will write status information and statistics in:
 
 * `~/.fscrawler/{job_name}.json`
 * `~/.fscrawler/{job_name}_status.json`
-* `~/.fscrawler/{job_name}_stats.json`
 
 It means that if you stop the job at some point, FS crawler will restart it from where it stops.
 If needed, you can manually edit / remove those files to restart.
