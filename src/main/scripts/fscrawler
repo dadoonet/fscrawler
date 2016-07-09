@@ -33,6 +33,13 @@ if [ ! -x "$JAVA" ]; then
     exit 1
 fi
 
-FS_OPTS="$JAVA_OPTS -Djava.awt.headless=true"
+# set to headless, just in case
+JAVA_OPTS="$JAVA_OPTS -Djava.awt.headless=true"
 
-exec "$JAVA" ${FS_OPTS} -cp "$FS_CLASSPATH" -jar "$FS_HOME/lib/${project.build.finalName}.jar" "$@"
+# Ensure UTF-8 encoding by default (e.g. filenames)
+JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF-8"
+
+# If the user defined FS_JAVA_OPTS, we will use it to start the crawler
+JAVA_OPTS="$JAVA_OPTS $FS_JAVA_OPTS"
+
+exec "$JAVA" ${JAVA_OPTS} -cp "$FS_CLASSPATH" -jar "$FS_HOME/lib/${project.build.finalName}.jar" "$@"

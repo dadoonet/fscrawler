@@ -12,6 +12,9 @@ set JAVA_OPTS=%JAVA_OPTS% -Djava.awt.headless=true
 REM Ensure UTF-8 encoding by default (e.g. filenames)
 set JAVA_OPTS=%JAVA_OPTS% -Dfile.encoding=UTF-8
 
+REM If the user defined FS_JAVA_OPTS, we will use it to start the crawler
+set JAVA_OPTS=%JAVA_OPTS% %FS_JAVA_OPTS%
+
 set FS_CLASSPATH=%FS_HOME%/lib/*
 
 SET params='%*'
