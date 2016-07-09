@@ -417,7 +417,9 @@ public class ElasticsearchClient {
         logger.debug("Closing REST client");
 
         if (HTTP_TRANSPORT != null) {
+            logger.debug("Closing HTTP Client");
             HTTP_TRANSPORT.shutdown();
+            logger.debug("HTTP Client closed");
         }
     }
 
