@@ -75,6 +75,7 @@ public class FsCrawlerUtil extends MetaParser {
             public static final String FILENAME = "filename";
             public static final String URL = "url";
             public static final String INDEXED_CHARS = "indexed_chars";
+            public static final String CHECKSUM = "checksum";
         }
 
         public static final String PATH = "path";

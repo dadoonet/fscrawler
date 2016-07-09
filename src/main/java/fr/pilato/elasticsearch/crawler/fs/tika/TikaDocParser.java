@@ -26,7 +26,12 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tika.metadata.Metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -40,7 +45,7 @@ public class TikaDocParser {
 
     private final static Logger logger = LogManager.getLogger(TikaDocParser.class);
 
-    public static void generate(FsSettings fsSettings, byte[] data, String filename, Doc doc) throws UnsupportedEncodingException {
+    public static void generate(FsSettings fsSettings, byte[] data, String filename, Doc doc, MessageDigest messageDigest) throws UnsupportedEncodingException {
         // Extracting content with Tika
         // See #38: https://github.com/dadoonet/fscrawler/issues/38
         int indexedChars = 100000;
@@ -58,9 +63,18 @@ public class TikaDocParser {
         Metadata metadata = new Metadata();
 
         String parsedContent = null;
+        InputStream dataStream = new ByteArrayInputStream(data);
+        DigestInputStream dis = null;
+
+        if (messageDigest != null) {
+            logger.trace("Generating hash with [{}]", messageDigest.getAlgorithm());
+            dis = new DigestInputStream(dataStream, messageDigest);
+            dataStream = dis;
+        }
+
         try {
             // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
-            parsedContent = tika().parseToString(new ByteArrayInputStream(data), metadata, indexedChars);
+            parsedContent = tika().parseToString(dataStream, metadata, indexedChars);
         } catch (Throwable e) {
             logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "]", e);
         }
@@ -81,6 +95,16 @@ public class TikaDocParser {
                 doc.getFile().setFilesize(Long.parseLong(metadata.get(Metadata.CONTENT_LENGTH)));
             }
         }
+        if (messageDigest != null) {
+            byte[] digest = messageDigest.digest();
+            String result = "";
+            // Convert to Hexa
+            for (int i=0; i < digest.length; i++) {
+                result += Integer.toString( ( digest[i] & 0xff ) + 0x100, 16).substring( 1 );
+            }
+            doc.getFile().setChecksum(result);
+        }
+        // File
 
         // Meta
         doc.getMeta().setAuthor(metadata.get(Metadata.AUTHOR));

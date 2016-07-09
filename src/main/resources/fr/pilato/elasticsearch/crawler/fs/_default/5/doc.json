@@ -53,6 +53,10 @@
           "store" : true,
           "format" : "dateOptionalTime"
         },
+        "checksum": {
+          "type": "keyword",
+          "store": true
+        },
         "url" : {
           "type" : "keyword",
           "index" : false,

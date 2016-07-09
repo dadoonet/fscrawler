@@ -50,6 +50,8 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -91,6 +93,7 @@ public class FsCrawlerImpl {
     private final FsSettings settings;
     private final FsSettingsFileHandler fsSettingsFileHandler;
     private final FsJobFileHandler fsJobFileHandler;
+    private MessageDigest messageDigest = null;
 
     private ElasticsearchClient client;
     private Thread fsCrawlerThread;
@@ -142,6 +145,17 @@ public class FsCrawlerImpl {
                     !hasText(settings.getServer().getUsername())) {
                 // Non supported protocol
                 logger.error("When using SSH, you need to set a username and probably a password or a pem file. Disabling crawler");
+                closed = true;
+            }
+        }
+
+        // Checking Checksum Algorithm
+        if (settings.getFs().getChecksum() != null) {
+            try {
+                messageDigest = MessageDigest.getInstance(settings.getFs().getChecksum());
+            } catch (NoSuchAlgorithmException e) {
+                // Non supported protocol
+                logger.error("Algorithm [{}] not found. Disabling crawler", settings.getFs().getChecksum());
                 closed = true;
             }
         }
@@ -546,6 +560,7 @@ public class FsCrawlerImpl {
             if (fsSettings.getFs().isAddFilesize()) {
                 doc.getFile().setFilesize(size);
             }
+            // File
 
             // Path
             doc.getPath().setEncoded(SignTool.sign(filepath));
@@ -593,7 +608,7 @@ public class FsCrawlerImpl {
                     return;
                 } else {
                     // Extracting content with Tika
-                    generate(fsSettings, data, filename, doc);
+                    generate(fsSettings, data, filename, doc, messageDigest);
                 }
             }
 

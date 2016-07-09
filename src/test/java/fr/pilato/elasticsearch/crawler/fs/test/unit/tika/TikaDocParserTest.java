@@ -511,7 +511,8 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
                 FsSettings.builder(getCurrentTestName()).build(),
                 data,
                 filename,
-                doc);
+                doc,
+                null);
 
         logger.debug("Generated Content: [{}]", doc.getContent());
         logger.debug("Generated Raw Metadata: [{}]", doc.getMeta().getRaw());

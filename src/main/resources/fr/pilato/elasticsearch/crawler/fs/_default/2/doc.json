@@ -64,6 +64,11 @@
           "store": true,
           "index": "not_analyzed"
         },
+        "checksum": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        },
         "url": {
           "type": "string",
           "store": true,

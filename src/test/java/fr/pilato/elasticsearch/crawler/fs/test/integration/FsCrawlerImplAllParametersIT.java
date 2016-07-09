@@ -670,4 +670,45 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         countTestHelper(getCrawlerName(), null, 1);
     }
+
+    @Test
+    public void test_checksum_md5() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setChecksum("MD5")
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null,
+                FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+            Object checksum = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
+            assertThat(checksum, notNullValue());
+            assertThat(((ArrayList<Object>) checksum).get(0), is("c32eafae2587bef4b3b32f73743c3c61"));
+        }
+    }
+
+    @Test
+    public void test_checksum_sha1() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setChecksum("SHA-1")
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null,
+                FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+            Object checksum = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
+            assertThat(checksum, notNullValue());
+            assertThat(((ArrayList<Object>) checksum).get(0), is("3e99cc50a64f53cf1cef011797400abb73b447a7"));
+        }
+    }
+
+    @Test
+    public void test_checksum_non_existing_algorithm() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setChecksum("FSCRAWLER")
+                .build();
+        crawler = new FsCrawlerImpl(metadataDir,
+                FsSettings.builder(getCrawlerName()).setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build());
+        crawler.start();
+        assertThat(crawler.isClosed(), is(true));
+    }
 }

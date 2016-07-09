@@ -36,6 +36,7 @@ public class Fs {
     private Percentage indexedChars;
     private boolean attributesSupport;
     private boolean rawMetadata;
+    private String checksum;
 
     public static Builder builder() {
         return new Builder();
@@ -58,6 +59,7 @@ public class Fs {
         private Percentage indexedChars = null;
         private boolean attributesSupport = false;
         private boolean rawMetadata = true;
+        private String checksum = null;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -150,9 +152,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setChecksum(String checksum) {
+            this.checksum = checksum;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
-                    removeDeleted, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata);
+                    removeDeleted, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
+                    checksum);
         }
     }
 
@@ -162,7 +170,7 @@ public class Fs {
 
     Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
        boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean storeSource, Percentage indexedChars,
-       boolean indexContent, boolean attributesSupport, boolean rawMetadata) {
+       boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -176,6 +184,7 @@ public class Fs {
         this.indexContent = indexContent;
         this.attributesSupport = attributesSupport;
         this.rawMetadata = rawMetadata;
+        this.checksum = checksum;
     }
 
     public String getUrl() {
@@ -282,6 +291,14 @@ public class Fs {
         this.rawMetadata = rawMetadata;
     }
 
+    public String getChecksum() {
+        return checksum;
+    }
+
+    public void setChecksum(String checksum) {
+        this.checksum = checksum;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -301,7 +318,8 @@ public class Fs {
         if (updateRate != null ? !updateRate.equals(fs.updateRate) : fs.updateRate != null) return false;
         if (includes != null ? !includes.equals(fs.includes) : fs.includes != null) return false;
         if (excludes != null ? !excludes.equals(fs.excludes) : fs.excludes != null) return false;
-        return !(indexedChars != null ? !indexedChars.equals(fs.indexedChars) : fs.indexedChars != null);
+        if (indexedChars != null ? !indexedChars.equals(fs.indexedChars) : fs.indexedChars != null) return false;
+        return checksum != null ? checksum.equals(fs.checksum) : fs.checksum == null;
 
     }
 
@@ -320,6 +338,7 @@ public class Fs {
         result = 31 * result + (indexedChars != null ? indexedChars.hashCode() : 0);
         result = 31 * result + (attributesSupport ? 1 : 0);
         result = 31 * result + (rawMetadata ? 1 : 0);
+        result = 31 * result + (checksum != null ? checksum.hashCode() : 0);
         return result;
     }
 }

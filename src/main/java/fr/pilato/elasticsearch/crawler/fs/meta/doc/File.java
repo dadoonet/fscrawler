@@ -32,6 +32,7 @@ public class File {
     private String filename;
     private String url;
     private Integer indexedChars;
+    private String checksum;
 
     public String getContentType() {
         return contentType;
@@ -89,6 +90,14 @@ public class File {
         this.indexedChars = indexedChars;
     }
 
+    public void setChecksum(String checksum) {
+        this.checksum = checksum;
+    }
+
+    public String getChecksum() {
+        return checksum;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -102,7 +111,8 @@ public class File {
         if (filesize != null ? !filesize.equals(file.filesize) : file.filesize != null) return false;
         if (filename != null ? !filename.equals(file.filename) : file.filename != null) return false;
         if (url != null ? !url.equals(file.url) : file.url != null) return false;
-        return !(indexedChars != null ? !indexedChars.equals(file.indexedChars) : file.indexedChars != null);
+        if (indexedChars != null ? !indexedChars.equals(file.indexedChars) : file.indexedChars != null) return false;
+        return checksum != null ? checksum.equals(file.checksum) : file.checksum == null;
 
     }
 
@@ -115,6 +125,7 @@ public class File {
         result = 31 * result + (filename != null ? filename.hashCode() : 0);
         result = 31 * result + (url != null ? url.hashCode() : 0);
         result = 31 * result + (indexedChars != null ? indexedChars.hashCode() : 0);
+        result = 31 * result + (checksum != null ? checksum.hashCode() : 0);
         return result;
     }
 }

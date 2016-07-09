@@ -161,6 +161,7 @@ Here is a full list of existing settings:
 | `fs.remove_deleted`              | `true`        | [Ignore deleted files](#ignore-deleted-files)                                     |
 | `fs.store_source`                | `false`       | [Storing binary source document](#storing-binary-source-document-base64-encoded)  |
 | `fs.indexed_chars`               | `0.0`         | [Extracted characters](#extracted-characters)                                     |
+| `fs.checksum`                    | `null`        | [File signature](#file-signature)                                                 |
 | `server.hostname`                | `null`        | [Indexing using SSH](#indexing-using-ssh)                                         |
 | `server.port`                    | `22`          | [Indexing using SSH](#indexing-using-ssh)                                         |
 | `server.username`                | `null`        | [Indexing using SSH](#indexing-using-ssh)                                         |
@@ -602,127 +603,116 @@ or fall back to the command line
 ## Creating your own mapping (analyzers)
 
 If you want to define your own mapping to set analyzers for example, you can either push the mapping or define a 
-`~/.fscrawler/_default/2/doc.json` document which contains the mapping you wish **before starting the FS crawler**.
+`~/.fscrawler/_default/5/doc.json` document which contains the mapping you wish **before starting the FS crawler**.
 
 The following example uses a `french` analyzer to index the `content` field.
 
 ```json
 {
-  "doc": {
-    "properties": {
-      "attributes": {
-        "properties": {
-          "group": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": true
-          },
-          "owner": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": true
-          }
+  "_source" : {
+    "excludes" : [
+      "attachment"
+    ]
+  },
+  "properties" : {
+    "attachment" : {
+      "type" : "binary",
+      "store" : true
+    },
+    "attributes" : {
+      "properties" : {
+        "group" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "owner" : {
+          "type" : "keyword",
+          "store" : true
         }
-      },
-      "content": {
-        "type": "string",
-        "analyzer": "french",
-        "store": true
-      },
-      "file": {
-        "properties": {
-          "content_type": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": true
-          },
-          "filename": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": true
-          },
-          "filesize": {
-            "type": "long",
-            "store": true
-          },
-          "indexed_chars": {
-            "type": "long",
-            "store": true
-          },
-          "indexing_date": {
-            "type": "date",
-            "store": true,
-            "format": "dateOptionalTime"
-          },
-          "last_modified": {
-            "type": "date",
-            "store": true,
-            "format": "dateOptionalTime"
-          },
-          "url": {
-            "type": "string",
-            "index": "no",
-            "store": true
-          }
+      }
+    },
+    "content" : {
+      "type" : "text",
+      "analyzer" : "french",
+      "store" : true
+    },
+    "file" : {
+      "properties" : {
+        "content_type" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "filename" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "filesize" : {
+          "type" : "long",
+          "store" : true
+        },
+        "indexed_chars" : {
+          "type" : "long",
+          "store" : true
+        },
+        "indexing_date" : {
+          "type" : "date",
+          "store" : true,
+          "format" : "dateOptionalTime"
+        },
+        "last_modified" : {
+          "type" : "date",
+          "store" : true,
+          "format" : "dateOptionalTime"
+        },
+        "checksum": {
+          "type": "keyword",
+          "store": true
+        },
+        "url" : {
+          "type" : "keyword",
+          "index" : false,
+          "store" : true
         }
-      },
-      "meta": {
-        "properties": {
-          "author": {
-            "type": "string",
-            "store": true
-          },
-          "date": {
-            "type": "date",
-            "store": true,
-            "format": "dateOptionalTime"
-          },
-          "keywords": {
-            "type": "string",
-            "store": true
-          },
-          "title": {
-            "type": "string",
-            "store": true
-          }
+      }
+    },
+    "meta" : {
+      "properties" : {
+        "author" : {
+          "type" : "text",
+          "store" : true
+        },
+        "date" : {
+          "type" : "date",
+          "store" : true,
+          "format" : "dateOptionalTime"
+        },
+        "keywords" : {
+          "type" : "text",
+          "store" : true
+        },
+        "title" : {
+          "type" : "text",
+          "store" : true
         }
-      },
-      "path": {
-        "properties": {
-          "encoded": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": true
-          },
-          "real": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": true
-          },
-          "root": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": true
-          },
-          "virtual": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": true
-          }
-        }
-      },
-      "attributes": {
-        "properties": {
-          "group": {
-              "type" : "string",
-              "store" : true,
-              "index" : "not_analyzed"
-          },
-          "owner": {
-              "type" : "string",
-              "store" : true,
-              "index" : "not_analyzed"
-          }
+      }
+    },
+    "path" : {
+      "properties" : {
+        "encoded" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "real" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "root" : {
+          "type" : "keyword",
+          "store" : true
+        },
+        "virtual" : {
+          "type" : "keyword",
+          "store" : true
         }
       }
     }
@@ -789,6 +779,7 @@ FS crawler creates the following fields :
 | `file.indexed_chars` | Extracted chars if `fs.indexed_chars` > 0   | `100000`                                    |
 | `file.filename`      | Original file name                          | `"mydocument.pdf"`                          |
 | `file.url`           | Original file url                           | `"file://tmp/mydir/otherdir/mydocument.pdf"`|
+| `file.checksum`      | Checksum if `fs.checksum` set               | `"c32eafae2587bef4b3b32f73743c3c61"`        |
 | `path.encoded`       | MD5 encoded file path (for internal use)    | `"112aed83738239dbfe4485f024cd4ce1"`        |
 | `path.virtual`       | Relative path from root path                | `"mydir/otherdir"`                          |
 | `path.root`          | MD5 encoded root path (for internal use)    | `"112aed83738239dbfe4485f024cd4ce1"`        |
@@ -808,7 +799,8 @@ Here is a typical JSON document generated by the crawler:
       "content_type":"application/vnd.oasis.opendocument.text",
       "url":"file:///tmp/testfs_metadata/test.odt",
       "indexed_chars":100000,
-      "filesize":8355
+      "filesize":8355,
+      "checksum":"c32eafae2587bef4b3b32f73743c3c61"
    },
    "path":{
       "encoded":"bceb3913f6d793e915beb70a4735592",
@@ -961,6 +953,20 @@ If you want to extract the full content, define `indexed_chars` to `"-1"`.
 
 **Note**: Tika requires to allocate in memory a data structure to extract text. Setting `indexed_chars` to a high
 number will require more memory!
+
+## File checksum
+
+If you want FS crawler to generate a checksum for each file, set `checksum` to the algorithm you wish to use
+to compute the checksum, such as `MD5` or `SHA-1`.
+
+```json
+{
+  "name": "test",
+  "fs": {
+    "checksum": "MD5"
+  }
+}
+```
 
 # Elasticsearch settings
 

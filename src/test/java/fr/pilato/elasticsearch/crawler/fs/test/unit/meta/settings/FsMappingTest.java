@@ -127,6 +127,11 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
+                "        \"checksum\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"not_analyzed\"\n" +
+                "        },\n" +
                 "        \"url\": {\n" +
                 "          \"type\": \"string\",\n" +
                 "          \"store\": true,\n" +
@@ -277,6 +282,11 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "          \"store\": true\n" +
                 "        },\n" +
                 "        \"filename\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"store\": true,\n" +
+                "          \"index\": \"not_analyzed\"\n" +
+                "        },\n" +
+                "        \"checksum\": {\n" +
                 "          \"type\": \"string\",\n" +
                 "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
@@ -479,6 +489,10 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "          \"type\" : \"date\",\n" +
                 "          \"store\" : true,\n" +
                 "          \"format\" : \"dateOptionalTime\"\n" +
+                "        },\n" +
+                "        \"checksum\": {\n" +
+                "          \"type\": \"keyword\",\n" +
+                "          \"store\": true\n" +
                 "        },\n" +
                 "        \"url\" : {\n" +
                 "          \"type\" : \"keyword\",\n" +
