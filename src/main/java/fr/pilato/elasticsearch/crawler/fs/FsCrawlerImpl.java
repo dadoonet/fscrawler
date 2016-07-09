@@ -300,7 +300,7 @@ public class FsCrawlerImpl {
 
                     updateFsJob(fsSettings.getName(), scanDatenew);
                 } catch (Exception e) {
-                    logger.warn("Error [{}] while indexing content from {}", e, fsSettings.getFs().getUrl());
+                    logger.warn("Error while indexing content from {}", e, fsSettings.getFs().getUrl());
                 } finally {
                     if (path != null) {
                         try {
