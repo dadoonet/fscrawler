@@ -300,15 +300,13 @@ public class FsCrawlerImpl {
 
                     updateFsJob(fsSettings.getName(), scanDatenew);
                 } catch (Exception e) {
-                    logger.warn("Error while indexing content from {}", fsSettings.getFs().getUrl());
-                    logger.debug("", e);
+                    logger.warn("Error [{}] while indexing content from {}", e, fsSettings.getFs().getUrl());
                 } finally {
                     if (path != null) {
                         try {
                             path.close();
                         } catch (Exception e) {
-                            logger.warn("Error while closing the connection: {}", e.getMessage());
-                            logger.debug("", e);
+                            logger.warn("Error while closing the connection: {}", e, e.getMessage());
                         }
                     }
                 }
