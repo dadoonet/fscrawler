@@ -42,6 +42,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -50,6 +52,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assume.assumeNoException;
 
 /**
  * Test all crawler settings
@@ -673,6 +676,12 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
     @Test
     public void test_checksum_md5() throws Exception {
+        try {
+            MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            assumeNoException(e);
+        }
+
         Fs fs = startCrawlerDefinition()
                 .setChecksum("MD5")
                 .build();
@@ -688,6 +697,12 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
     @Test
     public void test_checksum_sha1() throws Exception {
+        try {
+            MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
+            assumeNoException(e);
+        }
+
         Fs fs = startCrawlerDefinition()
                 .setChecksum("SHA-1")
                 .build();
