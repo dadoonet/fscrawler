@@ -130,18 +130,12 @@ public class FsCrawler {
             // We can list available jobs for him
             logger.info("No job specified. Here is the list of existing jobs:");
 
-            List<String> files = new ArrayList<>();
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(configDir)) {
-                for (Path path : directoryStream) {
-                    String fileName = path.getFileName().toString();
-                    if (fileName.endsWith(FsSettingsFileHandler.LEGACY_EXTENSION) && !fileName.endsWith(FsJobFileHandler.LEGACY_EXTENSION)) {
-                        files.add(fileName.substring(0, fileName.lastIndexOf(FsSettingsFileHandler.LEGACY_EXTENSION)));
-                        logger.info("[{}] - {}", files.size(), files.get(files.size()-1));
-                    }
-                }
-            } catch (IOException ignored) {}
+            List<String> files = listExistingJobs(configDir);
 
             if (files.size() > 0) {
+                for (int i = 0; i < files.size(); i++) {
+                    logger.info("[{}] - {}", i+1, files.get(i));
+                }
                 int chosenFile = 0;
                 while (chosenFile <= 0 || chosenFile > files.size()) {
                     logger.info("Choose your job [1-{}]...", files.size());
@@ -206,6 +200,27 @@ public class FsCrawler {
             logger.debug("error caught", e);
             System.exit(-1);
         }
+    }
+
+    public static List<String> listExistingJobs(Path configDir) {
+        List<String> files = new ArrayList<>();
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(configDir)) {
+            for (Path path : directoryStream) {
+                // This is a directory. Let's see if we have the _settings.json file in it
+                if (Files.isDirectory(path)) {
+                    String jobName = path.getFileName().toString();
+                    Path jobSettingsFile = path.resolve(FsSettingsFileHandler.FILENAME);
+                    if (Files.exists(jobSettingsFile)) {
+                        files.add(jobName);
+                        logger.debug("Adding job [{}]", jobName, FsSettingsFileHandler.FILENAME);
+                    } else {
+                        logger.debug("Ignoring [{}] dir as no [{}] has been found", jobName, FsSettingsFileHandler.FILENAME);
+                    }
+                }
+            }
+        } catch (IOException ignored) {}
+
+        return files;
     }
 
     public static void moveLegacyResources(Path root) {
