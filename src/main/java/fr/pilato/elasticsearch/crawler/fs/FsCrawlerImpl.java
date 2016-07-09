@@ -178,15 +178,15 @@ public class FsCrawlerImpl {
 
         try {
             // If needed, we create the new mapping for files
-            Path jobSettingsDir = config.resolve(settings.getName());
+            Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
             if (!settings.getFs().isJsonSupport()) {
                 // Read file mapping from resources
-                String mapping = FsCrawlerUtil.readMapping(jobSettingsDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
+                String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
                 ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
                         mapping);
             }
             // If needed, we create the new mapping for folders
-            String mapping = FsCrawlerUtil.readMapping(jobSettingsDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
+            String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
             ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     mapping);
         } catch (Exception e) {

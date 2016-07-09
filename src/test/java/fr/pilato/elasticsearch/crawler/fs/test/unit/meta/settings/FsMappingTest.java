@@ -45,7 +45,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void generateSpecificJobMappings() throws IOException, URISyntaxException {
-        Path targetResourceDir = metadataDir.resolve("jobtest");
+        Path targetResourceDir = metadataDir.resolve("jobtest").resolve("_mappings");
 
         for (String filename : FsCrawlerUtil.MAPPING_RESOURCES) {
             staticLogger.debug("Copying [{}]...", filename);
@@ -53,7 +53,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
             copyResourceFile(CLASSPATH_RESOURCES_ROOT + filename, target);
         }
 
-        staticLogger.info("  --> Mappings generated in [{}]", targetResourceDir);
+        staticLogger.debug("  --> Mappings generated in [{}]", targetResourceDir);
     }
 
 
@@ -387,7 +387,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFilesForSpecificJobVersion1() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_DOC);
+        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_DOC);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  // This is a doc mapping version 1\n" +
@@ -396,7 +396,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFoldersForSpecificJobVersion1() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_FOLDER);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  // This is a folder mapping version 1\n" +
@@ -405,7 +405,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFilesForSpecificJobVersion2() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_DOC);
+        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_DOC);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  // This is a doc mapping version 2\n" +
@@ -414,7 +414,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFoldersForSpecificJobVersion2() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_FOLDER);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  // This is a folder mapping version 2\n" +
@@ -564,7 +564,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFilesForSpecificJobVersion5() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_DOC);
+        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_DOC);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  // This is a doc mapping version 5\n" +
@@ -573,7 +573,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFoldersForSpecificJobVersion5() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest"), metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_FOLDER);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  // This is a folder mapping version 5\n" +
