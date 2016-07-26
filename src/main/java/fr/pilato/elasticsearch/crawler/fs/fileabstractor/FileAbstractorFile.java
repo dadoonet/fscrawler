@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 public class FileAbstractorFile extends FileAbstractor<File> {
     public FileAbstractorFile(FsSettings fsSettings) {
@@ -58,17 +59,24 @@ public class FileAbstractorFile extends FileAbstractor<File> {
 
     @Override
     public Collection<FileAbstractModel> getFiles(String dir) {
-        if (logger.isDebugEnabled()) logger.debug("Listing local files from {}", dir);
+        logger.debug("Listing local files from {}", dir);
         File[] files = new File(dir).listFiles();
+        Collection<FileAbstractModel> result;
 
-        Collection<FileAbstractModel> result = new ArrayList<>(files.length);
+        if (files != null) {
+            result = new ArrayList<>(files.length);
 
-        // Iterate other files
-        for (File file : files) {
-            result.add(toFileAbstractModel(dir, file));
+            // Iterate other files
+            for (File file : files) {
+                result.add(toFileAbstractModel(dir, file));
+            }
+        } else {
+            logger.debug("Symlink on windows gives null for listFiles(). Skipping [{}]", dir);
+            result = Collections.EMPTY_LIST;
         }
 
-        if (logger.isDebugEnabled()) logger.debug("{} local files found", result.size());
+
+        logger.debug("{} local files found", result.size());
         return result;
     }
 
