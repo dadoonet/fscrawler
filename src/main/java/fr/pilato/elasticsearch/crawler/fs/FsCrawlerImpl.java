@@ -162,8 +162,7 @@ public class FsCrawlerImpl {
     }
 
     public void start() throws Exception {
-        if (logger.isInfoEnabled())
-            logger.info("Starting FS crawler");
+        logger.info("Starting FS crawler");
 
         if (closed) {
             logger.info("Fs crawler is closed. Exiting");

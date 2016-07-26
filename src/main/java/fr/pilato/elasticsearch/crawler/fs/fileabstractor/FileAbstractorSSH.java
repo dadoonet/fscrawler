@@ -63,7 +63,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
 
     @Override
     public Collection<FileAbstractModel> getFiles(String dir) throws Exception {
-        if (logger.isDebugEnabled()) logger.debug("Listing local files from {}", dir);
+        logger.debug("Listing local files from {}", dir);
         Vector<ChannelSftp.LsEntry> ls;
 
         ls = sftp.ls(dir);
@@ -77,7 +77,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
                 .map(file -> toFileAbstractModel(dir, file))
                 .collect(Collectors.toList()));
 
-        if (logger.isDebugEnabled()) logger.debug("{} local files found", result.size());
+        logger.debug("{} local files found", result.size());
         return result;
     }
 
@@ -103,8 +103,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
     }
 
     public ChannelSftp openSSHConnection(Server server) throws Exception {
-        if (logger.isDebugEnabled()) logger.debug("Opening SSH connection to {}@{}", server.getUsername(),
-                server.getHostname());
+        logger.debug("Opening SSH connection to {}@{}", server.getUsername(), server.getHostname());
 
         JSch jsch = new JSch();
         Session session = jsch.getSession(server.getUsername(), server.getHostname(), server.getPort());
@@ -129,7 +128,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
                     server.getHostname());
             throw new RuntimeException("Can not connect to " + server.getUsername() + "@" + server.getHostname());
         }
-        if (logger.isDebugEnabled()) logger.debug("SSH connection successful");
+        logger.debug("SSH connection successful");
         return (ChannelSftp) channel;
     }
 }
