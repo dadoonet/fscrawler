@@ -10,7 +10,8 @@ You need to install a version matching your Elasticsearch version:
 | Elasticsearch |  FS Crawler | Released |                                       Docs                                   |
 |---------------|-------------|----------|------------------------------------------------------------------------------|
 |    es-2.0     | 2.0.0       |2015-10-30|[2.0.0](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.0.0/README.md) |
-| 1.x, 2.x, 5.x | 2.1-SNAPSHOT|          |See below                                                                     |
+| 1.x, 2.x, 5.x | **2.1**     |2016-07-26|[2.1](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.1/README.md)     |
+| 1.x, 2.x, 5.x | 2.2-SNAPSHOT|          |See below                                                                     |
 
 From FS Crawler 2.1, all elasticsearch versions since 1.0 are supported.
 
@@ -27,11 +28,11 @@ Just download the latest release (or any other specific version you want to try)
 
 The filename ends with `.zip`.
 
-For example, if you wish to download [fscrawler-2.0.0](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.0.0/fscrawler-2.0.0.zip):
+For example, if you wish to download [fscrawler-2.1](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.1/fscrawler-2.1.zip):
 
 ```sh
-wget https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.0.0/fscrawler-2.0.0.zip
-unzip fscrawler-2.0.0.zip
+wget https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.1/fscrawler-2.1.zip
+unzip fscrawler-2.1.zip
 ```
 
 The distribution contains:
