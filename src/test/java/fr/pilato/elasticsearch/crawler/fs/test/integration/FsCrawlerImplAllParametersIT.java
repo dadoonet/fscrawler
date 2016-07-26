@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -61,6 +62,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
+
+    protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -82,10 +85,11 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         Path from = Paths.get(url);
         currentTestResourceDir = testResourceTarget.resolve(currentTestName);
 
-        staticLogger.debug("  --> Copying test resources from [{}]", from);
-        if (Files.notExists(from)) {
-            logger.error("directory [{}] should be copied to [{}]", from, currentTestResourceDir);
-            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+        if (Files.exists(from)) {
+            staticLogger.debug("  --> Copying test resources from [{}]", from);
+        } else {
+            staticLogger.debug("  --> Copying test resources from [{}]", DEFAULT_RESOURCES);
+            from = DEFAULT_RESOURCES;
         }
 
         FsCrawlerUtil.copyDirs(from, currentTestResourceDir);
@@ -212,7 +216,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Map<String, Object> file = (Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE);
             assertThat(file, notNullValue());
-            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), is(new BigDecimal(30)));
+            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), is(new BigDecimal(12230)));
         }
     }
 
@@ -234,7 +238,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS), notNullValue());
 
             // Our original text: "Bonjour David..." should be truncated
-            assertThat(((ArrayList<Object>) content).get(0), is("Bonjour"));
+            assertThat(((ArrayList<Object>) content).get(0), is("Novo de"));
             assertThat(((ArrayList<Object>) indexedChars).get(0), is(new BigDecimal(7)));
         }
     }
@@ -253,9 +257,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             assertThat(content, notNullValue());
             assertThat(indexedChars, notNullValue());
 
-            // Our original text: "Bonjour David..." should be truncated
-            assertThat(((ArrayList<Object>) content).get(0), is("Bonjour "));
-            assertThat(((ArrayList<Object>) indexedChars).get(0), is(new BigDecimal(8)));
+            // Our original text should be truncated
+            assertThat(((ArrayList<Object>) content).get(0), is("Novo denique"));
+            assertThat(((ArrayList<Object>) indexedChars).get(0), is(new BigDecimal(12)));
         }
     }
 
@@ -272,8 +276,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             assertThat(content, notNullValue());
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS), nullValue());
 
-            // Our original text: "Bonjour David\n\n\n" should not be truncated
-            assertThat(((ArrayList<Object>) content).get(0), is("Bonjour David\n\n\n"));
+            // Our original text should not be truncated so we must have its end extracted
+            assertThat(((ArrayList<String>) content).get(0), containsString("haecque non diu sunt perpetrata."));
         }
     }
 
@@ -691,7 +695,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Object checksum = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
             assertThat(checksum, notNullValue());
-            assertThat(((ArrayList<Object>) checksum).get(0), is("c32eafae2587bef4b3b32f73743c3c61"));
+            assertThat(((ArrayList<Object>) checksum).get(0), is("caa71e1914ecbcf5ae4f46cf85de8648"));
         }
     }
 
@@ -712,7 +716,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Object checksum = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
             assertThat(checksum, notNullValue());
-            assertThat(((ArrayList<Object>) checksum).get(0), is("3e99cc50a64f53cf1cef011797400abb73b447a7"));
+            assertThat(((ArrayList<Object>) checksum).get(0), is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
         }
     }
 
