@@ -47,6 +47,7 @@ import static org.junit.Assume.assumeThat;
  *
  * You can run one by launching:
  * bin/elasticsearch -Des.http.port=9400
+ * bin/elasticsearch -Ehttp.port=9400
  *
  * The node can be run manually or when using maven, it's automatically started as
  * during the pre-integration phase and stopped after the tests.
@@ -106,8 +107,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         final SearchResponse[] response = new SearchResponse[1];
 
         // We wait up to 5 seconds before considering a failing test
-        staticLogger.info("  ---> Waiting up to 5 seconds for {} documents in index {}", expected == null ? "some" : expected, indexName);
-        assertThat("We waited for 5 seconds but no document has been added", awaitBusy(() -> {
+        staticLogger.info("  ---> Waiting up to 20 seconds for {} documents in index {}", expected == null ? "some" : expected, indexName);
+        assertThat("We waited for 20 seconds but no document has been added", awaitBusy(() -> {
             long totalHits;
 
             // Let's search for entries

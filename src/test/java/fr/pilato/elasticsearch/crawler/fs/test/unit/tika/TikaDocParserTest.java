@@ -20,15 +20,19 @@
 package fr.pilato.elasticsearch.crawler.fs.test.unit.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,6 +43,8 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNoException;
 
 public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
@@ -462,6 +468,9 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
         assertThat(raw, hasEntry("X-Parsed-By", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry(is("Content-Encoding"), notNullValue()));
         assertThat(raw, hasEntry(is("Content-Type"), containsString("text/plain")));
+
+        assertThat(doc.getAttachment(), nullValue());
+        assertThat(doc.getFile().getChecksum(), nullValue());
     }
 
     @Test
@@ -491,12 +500,58 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
         assertThat(raw, hasEntry("samplerate", "44100.0"));
     }
 
-    private byte[] getBinaryContent(String filename) throws IOException {
-        String url = getUrl("documents", filename);
-        Path file = Paths.get(url);
-        byte[] data = Files.readAllBytes(file);
+    @Test
+    public void testExtractFromTxtAndStoreSource() throws IOException {
+        Doc doc = extractFromFile("test.txt",
+                FsSettings.builder(getCurrentTestName())
+                        .setFs(Fs.builder().setStoreSource(true).build())
+                        .build());
 
-        return data;
+        // Extracted content
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getAttachment(), notNullValue());
+    }
+
+    @Test
+    public void testExtractFromTxtAndStoreSourceWithDigest() throws IOException {
+        try {
+            MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            assumeNoException(e);
+        }
+
+        Doc doc = extractFromFile("test.txt",
+                FsSettings.builder(getCurrentTestName())
+                        .setFs(Fs.builder().setStoreSource(true).setChecksum("MD5").build())
+                        .build());
+
+        // Extracted content
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getAttachment(), notNullValue());
+        assertThat(doc.getFile().getChecksum(), notNullValue());
+    }
+
+    @Test
+    public void testExtractFromTxtWithDigest() throws IOException {
+        try {
+            MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            assumeNoException(e);
+        }
+
+        Doc doc = extractFromFile("test.txt",
+                FsSettings.builder(getCurrentTestName())
+                        .setFs(Fs.builder().setChecksum("MD5").build())
+                        .build());
+
+        // Extracted content
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getAttachment(), nullValue());
+        assertThat(doc.getFile().getChecksum(), notNullValue());
+    }
+
+    private InputStream getBinaryContent(String filename) throws IOException {
+        return Files.newInputStream(Paths.get(getUrl("documents", filename)));
     }
 
     private Doc extractFromFileExtension(String extension) throws IOException {
@@ -505,14 +560,28 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
     }
 
     private Doc extractFromFile(String filename) throws IOException {
-        byte[] data = getBinaryContent(filename);
+        return extractFromFile(filename, FsSettings.builder(getCurrentTestName()).build());
+    }
+
+    private Doc extractFromFile(String filename, FsSettings fsSettings) throws IOException {
+        InputStream data = getBinaryContent(filename);
         Doc doc = new Doc();
+        MessageDigest messageDigest = null;
+        if (fsSettings.getFs() != null && fsSettings.getFs().getChecksum() != null) {
+            try {
+                messageDigest = MessageDigest.getInstance(fsSettings.getFs().getChecksum());
+            } catch (NoSuchAlgorithmException e) {
+                fail("Algorithm [" + fsSettings.getFs().getChecksum() + "] not found: " + e.getMessage());
+            }
+        }
+
         TikaDocParser.generate(
-                FsSettings.builder(getCurrentTestName()).build(),
+                fsSettings,
                 data,
                 filename,
                 doc,
-                null);
+                messageDigest,
+                0);
 
         logger.debug("Generated Content: [{}]", doc.getContent());
         logger.debug("Generated Raw Metadata: [{}]", doc.getMeta().getRaw());

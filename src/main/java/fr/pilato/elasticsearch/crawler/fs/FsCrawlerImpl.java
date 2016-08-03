@@ -42,11 +42,11 @@ import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileAlreadyExistsException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -57,10 +57,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.moveLegacyResource;
 
 /**
  * @author dadoonet (David Pilato)
@@ -393,7 +393,7 @@ public class FsCrawlerImpl {
                             if (lastScanDate == null
                                     || child.lastModifiedDate.isAfter(lastScanDate)
                                     || (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
-                                indexFile(child, stats, filepath, path.getInputStream(child));
+                                indexFile(child, stats, filepath, path.getInputStream(child), child.size);
                                 stats.addFile();
                             } else {
                                 logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
@@ -539,7 +539,8 @@ public class FsCrawlerImpl {
         /**
          * Index a file
          */
-        private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String filepath, InputStream fileReader) throws Exception {
+        private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String filepath, InputStream inputStream,
+                               long filesize) throws Exception {
             final String filename = fileAbstractModel.name;
             final Instant lastmodified = fileAbstractModel.lastModifiedDate;
             final long size = fileAbstractModel.size;
@@ -575,17 +576,6 @@ public class FsCrawlerImpl {
             // Attributes
 
             if (fsSettings.getFs().isIndexContent()) {
-                byte[] buffer = new byte[1024];
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                int i;
-                while (-1 != (i = fileReader.read(buffer))) {
-                    bos.write(buffer, 0, i);
-                }
-                byte[] data = bos.toByteArray();
-
-                fileReader.close();
-                bos.close();
-
                 // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
                 if (fsSettings.getFs().isJsonSupport()) {
                     String id;
@@ -598,14 +588,15 @@ public class FsCrawlerImpl {
                     } else {
                         id = SignTool.sign((new File(filepath, filename)).toString());
                     }
+
                     esIndex(fsSettings.getElasticsearch().getIndex(),
                             fsSettings.getElasticsearch().getType(),
                             id,
-                            new String(data, "UTF-8"));
+                            read(inputStream));
                     return;
                 } else {
                     // Extracting content with Tika
-                    generate(fsSettings, data, filename, doc, messageDigest);
+                    generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
                 }
             }
 
@@ -614,6 +605,12 @@ public class FsCrawlerImpl {
                     fsSettings.getElasticsearch().getType(),
                     SignTool.sign((new File(filepath, filename)).toString()),
                     doc);
+        }
+
+        private String read(InputStream input) throws IOException {
+            try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input, "UTF-8"))) {
+                return buffer.lines().collect(Collectors.joining("\n"));
+            }
         }
 
         private void indexDirectory(String id, String name, String root, String virtual, String encoded)

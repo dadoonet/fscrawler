@@ -21,15 +21,14 @@ package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
+import org.apache.commons.io.input.TeeInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.metadata.Metadata;
 
-import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -45,13 +44,15 @@ public class TikaDocParser {
 
     private final static Logger logger = LogManager.getLogger(TikaDocParser.class);
 
-    public static void generate(FsSettings fsSettings, byte[] data, String filename, Doc doc, MessageDigest messageDigest) throws UnsupportedEncodingException {
+    public static void generate(FsSettings fsSettings, InputStream inputStream, String filename, Doc doc, MessageDigest messageDigest,
+                                long filesize) throws IOException {
+        logger.trace("Generating document [{}]", filename);
         // Extracting content with Tika
         // See #38: https://github.com/dadoonet/fscrawler/issues/38
         int indexedChars = 100000;
         if (fsSettings.getFs().getIndexedChars() != null) {
             if (fsSettings.getFs().getIndexedChars().percentage()) {
-                indexedChars = (int) Math.round(data.length * fsSettings.getFs().getIndexedChars().asDouble());
+                indexedChars = (int) Math.round(filesize * fsSettings.getFs().getIndexedChars().asDouble());
                 logger.trace("using percentage [{}] to define indexed chars: [{}]",
                         fsSettings.getFs().getIndexedChars(), indexedChars);
             } else {
@@ -63,18 +64,24 @@ public class TikaDocParser {
         Metadata metadata = new Metadata();
 
         String parsedContent = null;
-        InputStream dataStream = new ByteArrayInputStream(data);
-        DigestInputStream dis = null;
 
         if (messageDigest != null) {
             logger.trace("Generating hash with [{}]", messageDigest.getAlgorithm());
-            dis = new DigestInputStream(dataStream, messageDigest);
-            dataStream = dis;
+            inputStream = new DigestInputStream(inputStream, messageDigest);
+        }
+
+        ByteArrayOutputStream bos = null;
+        if (fsSettings.getFs().isStoreSource()) {
+            logger.debug("Using a TeeInputStream as we need to store the source");
+            bos = new ByteArrayOutputStream();
+            inputStream = new TeeInputStream(inputStream, bos);
         }
 
         try {
             // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
-            parsedContent = tika().parseToString(dataStream, metadata, indexedChars);
+            logger.trace("Beginning Tika extraction");
+            parsedContent = tika().parseToString(inputStream, metadata, indexedChars);
+            logger.trace("End of Tika extraction");
         } catch (Throwable e) {
             logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "]", e);
         }
@@ -130,8 +137,9 @@ public class TikaDocParser {
 
         // Doc as binary attachment
         if (fsSettings.getFs().isStoreSource()) {
-            doc.setAttachment(new String(Base64.getEncoder().encode(data), "UTF-8"));
+            doc.setAttachment(Base64.getEncoder().encodeToString(bos.toByteArray()));
         }
+        logger.trace("End document generation");
         // End of our document
     }
 
