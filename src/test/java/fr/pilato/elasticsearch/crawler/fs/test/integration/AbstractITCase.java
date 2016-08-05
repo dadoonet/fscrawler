@@ -25,13 +25,17 @@ import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import org.apache.http.Header;
+import org.elasticsearch.client.Response;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -62,16 +66,18 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startRestClient() throws IOException {
-        elasticsearchClient = ElasticsearchClient.builder().build();
-        elasticsearchClient.addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build());
+        elasticsearchClient = ElasticsearchClient.builder()
+                .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
+                .build();
 
         try {
-            String version = elasticsearchClient.findVersion();
+            Response version = elasticsearchClient.getClient().performRequest("GET", "/", Collections.emptyMap());
             staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
-        } catch (IOException e) {
+        } catch (ConnectException e) {
             // If we have an exception here, let's ignore the test
             staticLogger.warn("Integration tests are skipped: [{}]", e.getMessage());
-            assumeThat("Integration tests are skipped", e.getMessage(), not(containsString("no active node found")));
+            assumeThat("Integration tests are skipped", e.getMessage(), not(containsString("Connection refused")));
+        } catch (IOException e) {
             staticLogger.error("Full error is", e);
             fail("Something wrong is happening. REST Client seemed to raise an exception.");
         }
@@ -79,8 +85,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @AfterClass
     public static void stopRestClient() throws IOException {
-        elasticsearchClient.shutdown();
-        elasticsearchClient = null;
+        if (elasticsearchClient != null) {
+            elasticsearchClient.shutdown();
+            elasticsearchClient = null;
+        }
         staticLogger.info("Stopping integration tests against an external cluster");
     }
 

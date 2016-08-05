@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import com.google.api.client.util.Key;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,6 @@ import java.util.Map;
  */
 public class SearchResponse {
 
-    @Key
     private Hits hits;
 
     public Hits getHits() {
@@ -46,10 +45,8 @@ public class SearchResponse {
 
     public static class Hits {
 
-        @Key
         private List<Hit> hits;
 
-        @Key
         private long total;
 
         public List<Hit> getHits() {
@@ -72,10 +69,9 @@ public class SearchResponse {
 
     public static class Hit {
 
-        @Key("_source")
+        @JsonProperty("_source")
         private Map<String, Object> source;
 
-        @Key
         private Map<String, Object> fields;
 
         public Map<String, Object> getSource() {

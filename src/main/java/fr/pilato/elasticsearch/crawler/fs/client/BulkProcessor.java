@@ -206,7 +206,8 @@ public class BulkProcessor {
                 if (response.hasFailures()) {
                     logger.warn("There was failures while executing bulk", response.buildFailureMessage());
                     if (logger.isDebugEnabled()) {
-                        for (BulkResponse.BulkItemResponse item : response.getItems()) {
+                        for (BulkResponse.BulkItemTopLevelResponse topLevelItem : response.getItems()) {
+                            BulkResponse.BulkItemResponse item = topLevelItem.getItemContent();
                             if (item.isFailed()) {
                                 logger.debug("Error for {}/{}/{} for {} operation: {}", item.getIndex(),
                                         item.getType(), item.getId(), item.getOpType(), item.getFailureMessage());

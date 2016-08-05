@@ -190,8 +190,6 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 // For elasticsearch 1.x series
                 if (e.getMessage().contains("SearchPhaseExecutionException")) {
                     logger.warn("Error while running against 1.x cluster. Trying again...");
-                    // We make the node active again
-                    elasticsearchClient.getNode(0).active(true);
                     return false;
                 }
                 fail("We got an unexpected exception: " + e.getMessage());

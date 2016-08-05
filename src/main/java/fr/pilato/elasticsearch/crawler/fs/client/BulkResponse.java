@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,10 +29,13 @@ public class BulkResponse {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
 
-    private BulkItemResponse[] items;
+    private boolean errors;
+    private BulkItemTopLevelResponse[] items;
 
     public boolean hasFailures() {
-        for (BulkItemResponse item : items) {
+        if (errors) return errors;
+        for (BulkItemTopLevelResponse topLevelItem : items) {
+            BulkItemResponse item = topLevelItem.getItemContent();
             if (item.failed) {
                 return true;
             }
@@ -39,14 +43,19 @@ public class BulkResponse {
         return false;
     }
 
-    public BulkItemResponse[] getItems() {
+    public BulkItemTopLevelResponse[] getItems() {
         return items;
+    }
+
+    public boolean isErrors() {
+        return errors;
     }
 
     public Throwable buildFailureMessage() {
         StringBuilder sbf = new StringBuilder();
         int failures = 0;
-        for (BulkItemResponse item : items) {
+        for (BulkItemTopLevelResponse topLevelItem : items) {
+            BulkItemResponse item = topLevelItem.getItemContent();
             if (item.failed) {
                 if (logger.isTraceEnabled()) {
                     sbf.append(item.getIndex()).append("/").append(item.getType()).append("/").append(item.getId());
@@ -62,10 +71,42 @@ public class BulkResponse {
         return new RuntimeException(sbf.toString());
     }
 
+    public static class BulkItemTopLevelResponse {
+
+        private BulkItemResponse index;
+        private BulkItemResponse delete;
+
+        public BulkItemResponse getDelete() {
+            return delete;
+        }
+
+        public BulkItemResponse getIndex() {
+            return index;
+        }
+
+        public BulkItemResponse getItemContent() {
+            if (index != null) return index;
+            if (delete != null) return delete;
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuffer sb = new StringBuffer("BulkItemTopLevelResponse{");
+            sb.append("index=").append(index);
+            sb.append(", delete=").append(delete);
+            sb.append('}');
+            return sb.toString();
+        }
+    }
+
     public static class BulkItemResponse {
         private boolean failed;
+        @JsonProperty("_index")
         private String index;
+        @JsonProperty("_type")
         private String type;
+        @JsonProperty("_id")
         private String id;
         private String opType;
         private String failureMessage;

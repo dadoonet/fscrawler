@@ -19,9 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import com.google.api.client.util.Data;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
@@ -193,22 +191,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     @Test
-    public void test_default_settings() throws Exception {
-        ElasticsearchClient client = ElasticsearchClient.builder().build();
-        boolean active = client.isActive(Elasticsearch.DEFAULT.getNodes().get(0));
-        if (active) {
-            logger.warn("you have a local elasticsearch node running on 9200 port. We will skip the test.");
-            return;
-        }
-
-        try {
-            startCrawler(getCrawlerName(), null, null, null);
-        } catch (IOException e) {
-            // We expect it as we probably don't have an elasticsearch node running with default 9200 port
-        }
-    }
-
-    @Test
     public void test_filesize() throws Exception {
         startCrawler();
 
@@ -216,7 +198,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Map<String, Object> file = (Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE);
             assertThat(file, notNullValue());
-            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), is(new BigDecimal(12230)));
+            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), is(12230));
         }
     }
 
@@ -239,7 +221,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
             // Our original text: "Bonjour David..." should be truncated
             assertThat(((ArrayList<Object>) content).get(0), is("Novo de"));
-            assertThat(((ArrayList<Object>) indexedChars).get(0), is(new BigDecimal(7)));
+            assertThat(((ArrayList<Object>) indexedChars).get(0), is(7));
         }
     }
 
@@ -259,7 +241,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
             // Our original text should be truncated
             assertThat(((ArrayList<Object>) content).get(0), is("Novo denique"));
-            assertThat(((ArrayList<Object>) indexedChars).get(0), is(new BigDecimal(12)));
+            assertThat(((ArrayList<Object>) indexedChars).get(0), is(12));
         }
     }
 
@@ -292,7 +274,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Map<String, Object> file = (Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE);
             assertThat(file, notNullValue());
-            assertThat(Data.isNull(file.get(FsCrawlerUtil.Doc.File.FILESIZE)), is(true));
+            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), nullValue());
         }
     }
 
@@ -533,7 +515,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // The default configuration should not add file attributes
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            assertThat(Data.isNull(hit.getSource().get(FsCrawlerUtil.Doc.ATTRIBUTES)), is(true));
+            assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTRIBUTES), nullValue());
         }
 
     }

@@ -19,22 +19,22 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import com.google.api.client.util.Key;
-
 import java.util.Arrays;
 
 public class SearchRequest {
 
-    private final String query;
+    private String query;
 
-    @Key
-    private final String[] fields;
+    private String[] fields;
 
-    @Key
-    private final Integer size;
+    private Integer size;
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public SearchRequest() {
+
     }
 
     public SearchRequest(String query, String[] fields, Integer size) {
@@ -65,13 +65,33 @@ public class SearchRequest {
         return sb.toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SearchRequest that = (SearchRequest) o;
+
+        if (query != null ? !query.equals(that.query) : that.query != null) return false;
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
+        if (!Arrays.equals(fields, that.fields)) return false;
+        return size != null ? size.equals(that.size) : that.size == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = query != null ? query.hashCode() : 0;
+        result = 31 * result + Arrays.hashCode(fields);
+        result = 31 * result + (size != null ? size.hashCode() : 0);
+        return result;
+    }
+
     public static class Builder {
         private String query;
 
-        @Key
         private String[] fields;
 
-        @Key
         private Integer size;
 
         public Builder setQuery(String query) {

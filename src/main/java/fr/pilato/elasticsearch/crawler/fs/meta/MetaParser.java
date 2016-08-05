@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,6 +52,9 @@ public class MetaParser {
         mapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+
 
         prettyMapper = new ObjectMapper();
         prettyMapper.registerModule(new JavaTimeModule());
@@ -60,6 +64,8 @@ public class MetaParser {
         prettyMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         prettyMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         prettyMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        prettyMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        prettyMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
     }
 
 }

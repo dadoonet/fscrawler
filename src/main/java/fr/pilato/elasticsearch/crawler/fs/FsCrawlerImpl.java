@@ -173,9 +173,9 @@ public class FsCrawlerImpl {
 
         try {
             // Create an elasticsearch client
-            client = ElasticsearchClient.builder().build();
-
-            settings.getElasticsearch().getNodes().forEach(client::addNode);
+            ElasticsearchClient.Builder builder = ElasticsearchClient.builder();
+            settings.getElasticsearch().getNodes().forEach(builder::addNode);
+            client = builder.build();
 
             client.createIndex(settings.getElasticsearch().getIndex(), true);
 
@@ -589,6 +589,8 @@ public class FsCrawlerImpl {
                         id = SignTool.sign((new File(filepath, filename)).toString());
                     }
 
+                    // TODO Fix that: we are indexing the same document 2 times
+                    // Here as a JSON and later as a Doc
                     esIndex(fsSettings.getElasticsearch().getIndex(),
                             fsSettings.getElasticsearch().getType(),
                             id,
