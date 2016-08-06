@@ -730,4 +730,27 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         crawler.start();
         assertThat(crawler.isClosed(), is(true));
     }
+
+    /**
+     * Test case for issue #204: https://github.com/dadoonet/fscrawler/issues/204 : JSON files are indexed twice
+     */
+    @Test
+    public void test_json_support_and_other_files() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setJsonSupport(true)
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        assertThat("We should have 2 docs only...", awaitBusy(() -> {
+            try {
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+                return response.getHits().getTotal() == 2;
+            } catch (IOException e) {
+                logger.warn("Caught exception while running the test", e);
+                return false;
+            }
+        }), equalTo(true));
+    }
+
+
 }
