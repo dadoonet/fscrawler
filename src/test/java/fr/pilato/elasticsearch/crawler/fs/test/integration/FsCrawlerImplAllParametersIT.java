@@ -194,7 +194,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
     @Test
     public void test_default_settings() throws Exception {
-        startCrawler(getCrawlerName(), null, null, null);
+        startCrawler();
     }
 
     @Test
