@@ -25,6 +25,7 @@ import java.time.Instant;
  * Represents File attributes
  */
 public class File {
+    private String extension;
     private String contentType;
     private Instant lastModified;
     private Instant indexingDate;
@@ -33,6 +34,14 @@ public class File {
     private String url;
     private Integer indexedChars;
     private String checksum;
+
+    public String getExtension() {
+        return extension;
+    }
+
+    public void setExtension(String extension) {
+        this.extension = extension;
+    }
 
     public String getContentType() {
         return contentType;
@@ -105,6 +114,7 @@ public class File {
 
         File file = (File) o;
 
+        if (extension != null ? !extension.equals(file.extension) : file.extension != null) return false;
         if (contentType != null ? !contentType.equals(file.contentType) : file.contentType != null) return false;
         if (lastModified != null ? !lastModified.equals(file.lastModified) : file.lastModified != null) return false;
         if (indexingDate != null ? !indexingDate.equals(file.indexingDate) : file.indexingDate != null) return false;
@@ -118,7 +128,8 @@ public class File {
 
     @Override
     public int hashCode() {
-        int result = contentType != null ? contentType.hashCode() : 0;
+        int result = extension != null ? extension.hashCode() : 0;
+        result = 31 * result + (contentType != null ? contentType.hashCode() : 0);
         result = 31 * result + (lastModified != null ? lastModified.hashCode() : 0);
         result = 31 * result + (indexingDate != null ? indexingDate.hashCode() : 0);
         result = 31 * result + (filesize != null ? filesize.hashCode() : 0);

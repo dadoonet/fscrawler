@@ -35,6 +35,10 @@
           "type" : "keyword",
           "store" : true
         },
+        "extension" : {
+          "type" : "keyword",
+          "store" : true
+        },
         "filesize" : {
           "type" : "long",
           "store" : true

@@ -191,6 +191,11 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     @Test
+    public void test_default_settings() throws Exception {
+        startCrawler();
+    }
+
+    @Test
     public void test_filesize() throws Exception {
         startCrawler();
 
