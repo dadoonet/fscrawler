@@ -64,6 +64,11 @@
           "store": true,
           "index": "not_analyzed"
         },
+        "extension": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        },
         "checksum": {
           "type": "string",
           "store": true,

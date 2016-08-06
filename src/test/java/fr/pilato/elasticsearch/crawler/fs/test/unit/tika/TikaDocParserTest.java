@@ -556,7 +556,9 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
     private Doc extractFromFileExtension(String extension) throws IOException {
         logger.info("Test extraction of [{}] file", extension);
-        return extractFromFile("test." + extension);
+        Doc doc = extractFromFile("test." + extension);
+        assertThat(doc.getFile().getExtension(), is(extension));
+        return doc;
     }
 
     private Doc extractFromFile(String filename) throws IOException {
