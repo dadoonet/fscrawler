@@ -38,6 +38,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -159,6 +160,12 @@ public class FsCrawlerImpl {
                 closed = true;
             }
         }
+
+        // Checking That we don't try to do both xml and json
+        if (settings.getFs().isJsonSupport() && settings.getFs().isXmlSupport()) {
+            logger.error("Can not support both xml and json parsing. Disabling crawler");
+            closed = true;
+        }
     }
 
     public void start() throws Exception {
@@ -192,7 +199,7 @@ public class FsCrawlerImpl {
         try {
             // If needed, we create the new mapping for files
             Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
-            if (!settings.getFs().isJsonSupport()) {
+            if (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport()) {
                 // Read file mapping from resources
                 String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
                 ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
@@ -576,23 +583,19 @@ public class FsCrawlerImpl {
             // Attributes
 
             if (fsSettings.getFs().isIndexContent()) {
-                // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
                 if (fsSettings.getFs().isJsonSupport()) {
-                    String id;
-                    if (fsSettings.getFs().isFilenameAsId()) {
-                        id = filename;
-                        int pos = id.lastIndexOf(".");
-                        if (pos > 0) {
-                            id = id.substring(0, pos);
-                        }
-                    } else {
-                        id = SignTool.sign((new File(filepath, filename)).toString());
-                    }
-
+                    // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
                     esIndex(fsSettings.getElasticsearch().getIndex(),
                             fsSettings.getElasticsearch().getType(),
-                            id,
+                            generateIdFromFilename(filename, filepath),
                             read(inputStream));
+                    return;
+                } else if (fsSettings.getFs().isXmlSupport()) {
+                    // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
+                    esIndex(fsSettings.getElasticsearch().getIndex(),
+                            fsSettings.getElasticsearch().getType(),
+                            generateIdFromFilename(filename, filepath),
+                            XmlDocParser.generate(inputStream));
                     return;
                 } else {
                     // Extracting content with Tika
@@ -605,6 +608,20 @@ public class FsCrawlerImpl {
                     fsSettings.getElasticsearch().getType(),
                     SignTool.sign((new File(filepath, filename)).toString()),
                     doc);
+        }
+
+        private String generateIdFromFilename(String filename, String filepath) throws NoSuchAlgorithmException {
+            String id;
+            if (fsSettings.getFs().isFilenameAsId()) {
+                id = filename;
+                int pos = id.lastIndexOf(".");
+                if (pos > 0) {
+                    id = id.substring(0, pos);
+                }
+            } else {
+                id = SignTool.sign((new File(filepath, filename)).toString());
+            }
+            return id;
         }
 
         private String read(InputStream input) throws IOException {

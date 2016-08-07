@@ -114,6 +114,7 @@ The job file must comply to the following `json` specifications:
       "*.json"
     ],
     "json_support" : false,
+    "xml_support" : false,
     "attributes_support" : false,
     "raw_metadata" : false,
     "filename_as_id" : false,
@@ -155,6 +156,7 @@ Here is a full list of existing settings:
 | `fs.includes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.excludes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
+| `fs.xml_support`                 | `false`       | [Indexing XML docs](#indexing-xml-docs)                                           |
 | `fs.attributes_support`          | `false`       | [Adding file attributes](#adding-file-attributes)                                 |
 | `fs.raw_metadata`                | `true`        | [Disabling raw metadata](#disabling-raw-metadata)                                 |
 | `fs.filename_as_id`              | `false`       | [Using Filename as `_id`](#using-filename-as-elasticsearch-_id)                   |
@@ -346,6 +348,21 @@ If you want to index JSon files directly without parsing with Tika, you can set 
 
 Of course, if you did not define a mapping before launching the crawler, Elasticsearch will auto guess the mapping.
 
+# Indexing XML docs
+
+If you want to index XML files and convert them to JSON, you can set `xml_support` to `true`.
+
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "xml_support" : true
+  }
+}
+```
+
+Of course, if you did not define a mapping before launching the crawler, Elasticsearch will auto guess the mapping.
+
 ## Dealing with multiple types and multiple dirs
 
 If you have more than one type, create as many crawlers as types:
@@ -378,6 +395,22 @@ If you have more than one type, create as many crawlers as types:
   "elasticsearch": {
     "index": "mydocs",
     "type": "type2"
+  }
+}
+```
+
+`~/.fscrawler/test_type3/_settings.json`:
+
+```json
+{
+  "name": "test_type3",
+  "fs": {
+	"url": "/tmp/type3",
+	"xml_support" : true
+  },
+  "elasticsearch": {
+    "index": "mydocs",
+    "type": "type3"
   }
 }
 ```
@@ -421,6 +454,23 @@ You can also index many types from one single dir using two crawlers scanning th
 }
 ```
 
+`~/.fscrawler/test_type3.json`:
+
+```json
+{
+  "name": "test_type3",
+  "fs": {
+	"url": "/tmp",
+    "includes": [ "*.xml" ],
+	"xml_support" : true
+  },
+  "elasticsearch": {
+    "index": "mydocs",
+    "type": "type3"
+  }
+}
+```
+
 ## Using filename as elasticsearch `_id`
 
 Please note that the document `_id` is always generated (hash value) from the JSon filename to avoid issues with
@@ -436,6 +486,8 @@ You can force to use the `_id` to be the filename using `filename_as_id` attribu
   }
 }
 ```
+
+This option can also be used with XML files when you set `xml_support` to `true`.
 
 # Adding file attributes
 

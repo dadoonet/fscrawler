@@ -36,6 +36,7 @@ public class Fs {
     private Percentage indexedChars;
     private boolean attributesSupport;
     private boolean rawMetadata;
+    private boolean xmlSupport;
     private String checksum;
 
     public static Builder builder() {
@@ -60,6 +61,7 @@ public class Fs {
         private boolean attributesSupport = false;
         private boolean rawMetadata = true;
         private String checksum = null;
+        private boolean xmlSupport = false;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -157,10 +159,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setXmlSupport(boolean xmlSupport) {
+            this.xmlSupport = xmlSupport;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum);
+                    checksum, xmlSupport);
         }
     }
 
@@ -170,7 +177,7 @@ public class Fs {
 
     Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
        boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean storeSource, Percentage indexedChars,
-       boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum) {
+       boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -185,6 +192,7 @@ public class Fs {
         this.attributesSupport = attributesSupport;
         this.rawMetadata = rawMetadata;
         this.checksum = checksum;
+        this.xmlSupport = xmlSupport;
     }
 
     public String getUrl() {
@@ -299,6 +307,14 @@ public class Fs {
         this.checksum = checksum;
     }
 
+    public boolean isXmlSupport() {
+        return xmlSupport;
+    }
+
+    public void setXmlSupport(boolean xmlSupport) {
+        this.xmlSupport = xmlSupport;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -307,6 +323,7 @@ public class Fs {
         Fs fs = (Fs) o;
 
         if (jsonSupport != fs.jsonSupport) return false;
+        if (xmlSupport != fs.xmlSupport) return false;
         if (filenameAsId != fs.filenameAsId) return false;
         if (addFilesize != fs.addFilesize) return false;
         if (removeDeleted != fs.removeDeleted) return false;
@@ -330,6 +347,7 @@ public class Fs {
         result = 31 * result + (includes != null ? includes.hashCode() : 0);
         result = 31 * result + (excludes != null ? excludes.hashCode() : 0);
         result = 31 * result + (jsonSupport ? 1 : 0);
+        result = 31 * result + (xmlSupport ? 1 : 0);
         result = 31 * result + (filenameAsId ? 1 : 0);
         result = 31 * result + (addFilesize ? 1 : 0);
         result = 31 * result + (removeDeleted ? 1 : 0);
