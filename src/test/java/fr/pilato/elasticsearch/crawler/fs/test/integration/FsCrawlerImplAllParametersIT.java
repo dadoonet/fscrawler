@@ -739,5 +739,45 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         }), equalTo(true));
     }
 
+    /**
+     * Test case for issue #185: https://github.com/dadoonet/fscrawler/issues/185 : Add xml_support setting
+     */
+    @Test
+    public void test_xml_enabled() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setXmlSupport(true)
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        SearchResponse response = countTestHelper(getCrawlerName(), null, 3);
+
+        countTestHelper(getCrawlerName(), "title:maeve", 1);
+        countTestHelper(getCrawlerName(), "price:[5 TO 6]", 2);
+
+        logger.info("XML documents converted to:");
+        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+            logger.info("{}", hit.toString());
+        }
+    }
+
+    /**
+     * Test case for issue #185: https://github.com/dadoonet/fscrawler/issues/185 : Add xml_support setting
+     */
+    @Test
+    public void test_xml_and_json_enabled() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setXmlSupport(true)
+                .setJsonSupport(true)
+                .build();
+
+        logger.info("  --> starting crawler [{}]", getCrawlerName());
+
+        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build());
+        crawler.start();
+
+        // We wait up to 10 seconds before considering a failing test
+        assertThat("Job should not start", awaitBusy(() -> crawler.isClosed()), equalTo(true));
+    }
+
 
 }
