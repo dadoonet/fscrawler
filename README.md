@@ -156,7 +156,7 @@ Here is a full list of existing settings:
 | `fs.includes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.excludes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
-| `fs.xml_support`                 | `false`       | [Indexing XML docs](#indexing-xml-docs)                                           |
+| `fs.xml_support`                 | `false`       | [Indexing XML docs](#indexing-xml-docs) (from 2.2)                                |
 | `fs.attributes_support`          | `false`       | [Adding file attributes](#adding-file-attributes)                                 |
 | `fs.raw_metadata`                | `true`        | [Disabling raw metadata](#disabling-raw-metadata)                                 |
 | `fs.filename_as_id`              | `false`       | [Using Filename as `_id`](#using-filename-as-elasticsearch-_id)                   |
@@ -835,7 +835,7 @@ FS crawler creates the following fields :
 | `file.filesize`      | File size in bytes                          | `1256362`                                   |
 | `file.indexed_chars` | Extracted chars if `fs.indexed_chars` > 0   | `100000`                                    |
 | `file.filename`      | Original file name                          | `"mydocument.pdf"`                          |
-| `file.extension`     | Original file name extension                | `"pdf"`                                     |
+| `file.extension`     | Original file name extension (from 2.2)     | `"pdf"`                                     |
 | `file.url`           | Original file url                           | `"file://tmp/mydir/otherdir/mydocument.pdf"`|
 | `file.checksum`      | Checksum if `fs.checksum` set               | `"c32eafae2587bef4b3b32f73743c3c61"`        |
 | `path.encoded`       | MD5 encoded file path (for internal use)    | `"112aed83738239dbfe4485f024cd4ce1"`        |
