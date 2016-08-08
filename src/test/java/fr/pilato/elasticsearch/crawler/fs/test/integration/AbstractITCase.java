@@ -127,11 +127,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @AfterClass
     public static void stopRestClient() throws IOException {
+        staticLogger.info("Stopping integration tests against an external cluster");
         if (elasticsearchClient != null) {
             elasticsearchClient.shutdown();
             elasticsearchClient = null;
+            staticLogger.info("Elasticsearch client stopped");
         }
-        staticLogger.info("Stopping integration tests against an external cluster");
     }
 
     private static final String testCrawlerPrefix = "fscrawler_";
