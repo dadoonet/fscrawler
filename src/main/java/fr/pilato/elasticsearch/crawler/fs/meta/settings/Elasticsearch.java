@@ -30,12 +30,15 @@ public class Elasticsearch {
 
     }
 
-    private Elasticsearch(List<Node> nodes, String index, String type, int bulkSize, TimeValue flushInterval) {
+    private Elasticsearch(List<Node> nodes, String index, String type, int bulkSize, TimeValue flushInterval,
+                          String username, String password) {
         this.nodes = nodes;
         this.index = index;
         this.type = type;
         this.bulkSize = bulkSize;
         this.flushInterval = flushInterval;
+        this.username = username;
+        this.password = password;
     }
 
     public static Builder builder() {
@@ -144,13 +147,11 @@ public class Elasticsearch {
     private String type;
     private int bulkSize;
     private TimeValue flushInterval;
+    private String username;
+    private String password;
 
     public List<Node> getNodes() {
         return nodes;
-    }
-
-    public void setNodes(List<Node> nodes) {
-        this.nodes = nodes;
     }
 
     public String getIndex() {
@@ -165,24 +166,20 @@ public class Elasticsearch {
         return type;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
     public int getBulkSize() {
         return bulkSize;
-    }
-
-    public void setBulkSize(int bulkSize) {
-        this.bulkSize = bulkSize;
     }
 
     public TimeValue getFlushInterval() {
         return flushInterval;
     }
 
-    public void setFlushInterval(TimeValue flushInterval) {
-        this.flushInterval = flushInterval;
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public static class Builder {
@@ -191,6 +188,8 @@ public class Elasticsearch {
         private String type = FsCrawlerUtil.INDEX_TYPE_DOC;
         private int bulkSize = 100;
         private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
+        private String username = null;
+        private String password = null;
 
         public Builder setNodes(List<Node> nodes) {
             this.nodes = nodes;
@@ -225,8 +224,18 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setUsername(String username) {
+            this.username = username;
+            return this;
+        }
+
+        public Builder setPassword(String password) {
+            this.password = password;
+            return this;
+        }
+
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, type, bulkSize, flushInterval);
+            return new Elasticsearch(nodes, index, type, bulkSize, flushInterval, username, password);
         }
     }
 
@@ -241,6 +250,8 @@ public class Elasticsearch {
         if (nodes != null ? !nodes.equals(that.nodes) : that.nodes != null) return false;
         if (index != null ? !index.equals(that.index) : that.index != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
+        if (username != null ? !username.equals(that.username) : that.username != null) return false;
+        if (username != null ? !username.equals(that.username) : that.username != null) return false;
         return !(flushInterval != null ? !flushInterval.equals(that.flushInterval) : that.flushInterval != null);
 
     }
@@ -250,6 +261,8 @@ public class Elasticsearch {
         int result = nodes != null ? nodes.hashCode() : 0;
         result = 31 * result + (index != null ? index.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (username != null ? username.hashCode() : 0);
+        result = 31 * result + (password != null ? password.hashCode() : 0);
         result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
         return result;

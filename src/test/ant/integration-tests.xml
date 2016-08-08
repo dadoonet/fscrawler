@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
-<project name="fscrawler-integration-tests" xmlns:if="ant:if" xmlns:unless="ant:unless">
+<project name="integration-tests"
+         xmlns:if="ant:if"
+         xmlns:unless="ant:unless"
+         xmlns:ac="antlib:net.sf.antcontrib">
+
     <!-- our pid file for easy cleanup -->
     <property name="integ.pidfile" location="${project.build.directory}/integration-tests/run/es.pid"/>
 
@@ -7,7 +11,7 @@
     <available property="integ.pidfile.exists" file="${integ.pidfile}"/>
 
     <!-- name of our cluster, maybe needs changing -->
-    <property name="integ.cluster.name" value="fscrawler_integration"/>
+    <property name="integ.cluster.name" value="elasticsearch_integration"/>
 
     <!-- runs an OS script -->
     <macrodef name="run-script">
@@ -22,7 +26,7 @@
 
             <!-- create a temp CWD, to enforce that commands don't rely on CWD -->
             <local name="temp.cwd"/>
-            <tempfile property="temp.cwd" destDir="${project.build.directory}/integration-tests/run/tmp"/>
+            <tempfile property="temp.cwd" destDir="${project.build.directory}/integration-tests/run/tmp" deleteonexit="true"/>
             <mkdir dir="${temp.cwd}"/>
 
             <!-- print commands we run -->
@@ -79,27 +83,22 @@
     <macrodef name="waitfor-elasticsearch">
         <attribute name="port"/>
         <attribute name="timeoutproperty"/>
+        <attribute name="username"/>
+        <attribute name="password"/>
         <sequential>
             <echo>Waiting for elasticsearch to become available on port @{port}...</echo>
             <waitfor maxwait="30" maxwaitunit="second"
                      checkevery="500" checkeveryunit="millisecond"
                      timeoutproperty="@{timeoutproperty}">
-                <http url="http://localhost:@{port}"/>
+                <socket server="127.0.0.1" port="@{port}"/>
             </waitfor>
-        </sequential>
-    </macrodef>
-
-    <!-- waits for cluster to form and have exactly two nodes -->
-    <macrodef name="waitfor-two-nodes">
-        <attribute name="port"/>
-        <attribute name="timeoutproperty"/>
-        <sequential>
-            <echo>Waiting for elasticsearch to form a cluster of two...</echo>
-            <waitfor maxwait="30" maxwaitunit="second"
-                     checkevery="500" checkeveryunit="millisecond"
-                     timeoutproperty="@{timeoutproperty}">
-                <http url="http://localhost:@{port}/_cluster/health?wait_for_nodes=2"/>
-            </waitfor>
+            <echo>Elasticsearch is running on port @{port}...</echo>
+            <echo>Check that we can authenticate with user @{username}/@{password}...</echo>
+            <local name="temp.file"/>
+            <tempfile property="temp.file" destdir="${java.io.tmpdir}" deleteonexit="false"/>
+            <get src="http://127.0.0.1:@{port}/" dest="${temp.file}"
+                 username="@{username}" password="@{password}" verbose="true" retries="10" ignoreerrors="true"/>
+            <echo>We can access http://127.0.0.1:@{port}/...</echo>
         </sequential>
     </macrodef>
 
@@ -176,7 +175,10 @@
             <!-- wait for startup -->
             <local name="failed.to.start"/>
             <waitfor-elasticsearch port="@{es.http.port}"
-                                   timeoutproperty="failed.to.start"/>
+                                   timeoutproperty="failed.to.start"
+                                   username="${integ.security.username}"
+                                   password="${integ.security.password}"
+            />
 
             <!-- best effort, print console log. useful if it fails especially -->
             <local name="log.contents"/>
@@ -238,6 +240,18 @@
         </sequential>
     </macrodef>
 
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+
+    <macrodef name="convert-plugin-name">
+        <attribute name="file"/>
+        <attribute name="outputproperty"/>
+        <sequential>
+            <local name="file.base"/>
+            <basename file="@{file}" property="file.base"/>
+            <propertyregex property="@{outputproperty}" input="${file.base}" regexp="^(.*)-[0-9].*\.zip" select="\1" />
+        </sequential>
+    </macrodef>
+
     <target name="stop-external-cluster" if="integ.pidfile.exists">
         <stop-node/>
     </target>
@@ -248,10 +262,79 @@
             <unzip src="${project.build.directory}/integration-tests/binaries/elasticsearch-${elasticsearch.version}.zip"
                    dest="${project.build.directory}/integration-tests/run"/>
         </sequential>
+        <condition property="plugins.exists">
+            <available file="${project.build.directory}/integration-tests/plugins" type="dir"/>
+        </condition>
     </target>
 
-    <target name="start-external-cluster" depends="setup-workspace">
+    <target name="install-plugins" depends="setup-workspace" if="plugins.exists">
+        <ac:for param="file">
+            <path>
+                <fileset dir="${project.build.directory}/integration-tests/plugins"/>
+            </path>
+            <sequential>
+                <local name="plugin.name"/>
+                <convert-plugin-name file="@{file}" outputproperty="plugin.name"/>
+                <install-plugin name="${plugin.name}" file="@{file}"/>
+            </sequential>
+        </ac:for>
+        <condition property="license.exists">
+            <available file="${project.build.directory}/integration-tests/run/elasticsearch-${elasticsearch.version}/plugins/license" type="dir"/>
+        </condition>
+    </target>
+
+    <target name="create-shield-users" depends="setup-workspace" if="license.exists">
+        <local name="home"/>
+        <property name="home" location="${project.build.directory}/integration-tests/run/elasticsearch-${elasticsearch.version}"/>
+
+        <echo>Setting up Shield auth</echo>
+        <run-script script="${home}/bin/shield/esusers">
+            <nested>
+                <arg value="useradd"/>
+                <arg value="elastic"/>
+                <arg value="-p"/>
+                <arg value="changeme"/>
+                <arg value="-r"/>
+                <arg value="admin"/>
+            </nested>
+        </run-script>
+    </target>
+
+    <target name="start-external-cluster" depends="setup-workspace,install-plugins,create-shield-users">
         <startup-elasticsearch/>
     </target>
 
+    <!-- installs a plugin into elasticsearch -->
+    <macrodef name="install-plugin">
+        <attribute name="home" default="${project.build.directory}/integration-tests/run/elasticsearch-${elasticsearch.version}"/>
+        <attribute name="name"/>
+        <attribute name="file"/>
+        <sequential>
+            <local name="url"/>
+            <makeurl property="url" file="@{file}"/>
+
+            <isGreater v1="${elasticsearch.version}" v2="5.0.0" />
+            <property name="commandline" value="@{home}/bin/plugin" unless:true="${compare-result}"/>
+            <property name="commandline" value="@{home}/bin/elasticsearch-plugin" if:true="${compare-result}"/>
+
+            <!-- install plugin -->
+            <echo>Installing plugin @{name}...</echo>
+            <run-script script="${commandline}">
+                <nested>
+                    <arg value="install"/>
+                    <arg value="${url}"/>
+                </nested>
+            </run-script>
+
+            <fail message="did not find plugin installed as @{name}">
+                <condition>
+                    <not>
+                        <resourceexists>
+                            <file file="@{home}/plugins/@{name}"/>
+                        </resourceexists>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
 </project>

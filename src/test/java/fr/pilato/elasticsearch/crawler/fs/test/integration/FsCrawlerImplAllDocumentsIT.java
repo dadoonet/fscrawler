@@ -22,11 +22,11 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -45,6 +44,8 @@ import static org.hamcrest.Matchers.notNullValue;
  * Test all type of documents we have
  */
 public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
+
+    protected static FsCrawlerImpl crawler = null;
 
     @BeforeClass
     public static void startCrawling() throws Exception {
@@ -74,17 +75,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
-        FsCrawlerImpl crawler = new FsCrawlerImpl(metadataDir,
+        crawler = new FsCrawlerImpl(metadataDir,
                 FsSettings.builder("fscrawler_test_all_documents")
-                        .setElasticsearch(Elasticsearch.builder()
-                                .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
-                                .setBulkSize(5)
-                                .setFlushInterval(TimeValue.timeValueSeconds(1))
-                                .build())
+                        .setElasticsearch(generateElasticsearchConfig("fscrawler_test_all_documents", securityInstalled, 5,
+                                TimeValue.timeValueSeconds(1)))
                         .setFs(Fs.builder()
                                 .setUrl(testResourceTarget.toString())
                                 .build())
                         .build());
+
         crawler.start();
 
         // We wait up to 10 seconds before considering a failing test
@@ -102,8 +101,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         // Make sure we refresh indexed docs before launching tests
         refresh();
 
-        staticLogger.info("  --> Stopping crawler");
-        crawler.close();
+    }
+
+    @AfterClass
+    public static void stopCrawling() throws Exception {
+        if (crawler != null) {
+            staticLogger.info("  --> Stopping crawler");
+            crawler.close();
+            crawler = null;
+        }
     }
 
     /**

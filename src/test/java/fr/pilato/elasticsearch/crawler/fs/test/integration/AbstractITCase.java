@@ -20,13 +20,15 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
-import org.apache.http.Header;
 import org.elasticsearch.client.Response;
+import org.elasticsearch.client.ResponseException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -36,13 +38,13 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 /**
@@ -57,6 +59,9 @@ import static org.junit.Assume.assumeThat;
  * during the pre-integration phase and stopped after the tests.
  *
  * Note that all existing data in this cluster might be removed
+ *
+ * If the cluster is running with x-pack and using the default username and passwords
+ * of x-pack, tests can be run as well.
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
@@ -64,22 +69,59 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     protected static ElasticsearchClient elasticsearchClient;
 
+    protected static boolean securityInstalled;
+
+    protected final static String DEFAULT_USERNAME = "elastic";
+    protected final static String DEFAULT_PASSWORD = "changeme";
+
     @BeforeClass
     public static void startRestClient() throws IOException {
         elasticsearchClient = ElasticsearchClient.builder()
                 .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
                 .build();
 
+        securityInstalled = testClusterRunning(false);
+
+        if (securityInstalled) {
+            // We have a secured cluster. So we need to create a secured client
+            // But first we need to close the previous client we built
+            if (elasticsearchClient != null) {
+                elasticsearchClient.shutdown();
+            }
+
+            elasticsearchClient = ElasticsearchClient.builder()
+                    .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
+                    .setUsername(DEFAULT_USERNAME)
+                    .setPassword(DEFAULT_PASSWORD)
+                    .build();
+            securityInstalled = testClusterRunning(true);
+        }
+    }
+
+    private static boolean testClusterRunning(boolean withSecurity) throws IOException {
         try {
-            Response version = elasticsearchClient.getClient().performRequest("GET", "/", Collections.emptyMap());
-            staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
+            Response response = elasticsearchClient.getClient().performRequest("GET", "/", Collections.emptyMap());
+            Map<String, Object> asMap = (Map<String, Object>) JsonUtil.asMap(response).get("version");
+
+            staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}] with {}",
+                    asMap.get("number"), withSecurity ? "security" : "no security" );
+            return withSecurity;
         } catch (ConnectException e) {
             // If we have an exception here, let's ignore the test
             staticLogger.warn("Integration tests are skipped: [{}]", e.getMessage());
             assumeThat("Integration tests are skipped", e.getMessage(), not(containsString("Connection refused")));
+            return withSecurity;
+        } catch (ResponseException e) {
+            if (e.getResponse().getStatusLine().getStatusCode() == 401) {
+                staticLogger.debug("The cluster is secured. So we need to build a client with security", e);
+                return true;
+            } else {
+                staticLogger.error("Full error is", e);
+                throw e;
+            }
         } catch (IOException e) {
             staticLogger.error("Full error is", e);
-            fail("Something wrong is happening. REST Client seemed to raise an exception.");
+            throw e;
         }
     }
 
@@ -93,6 +135,29 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     private static final String testCrawlerPrefix = "fscrawler_";
+
+    protected static Elasticsearch generateElasticsearchConfig(String indexName, boolean securityInstalled, int bulkSize,
+                                                               TimeValue timeValue) {
+        Elasticsearch.Builder builder = Elasticsearch.builder()
+                .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
+                .setBulkSize(bulkSize)
+                .setFlushInterval(timeValue);
+
+        if (indexName != null) {
+            builder.setIndex(indexName);
+        }
+
+        if (timeValue != null) {
+            builder.setFlushInterval(timeValue);
+        }
+
+        if (securityInstalled) {
+            builder.setUsername(DEFAULT_USERNAME);
+            builder.setPassword(DEFAULT_PASSWORD);
+        }
+
+        return builder.build();
+    }
 
     protected static void refresh() throws IOException {
         elasticsearchClient.refresh(null);

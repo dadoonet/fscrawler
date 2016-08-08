@@ -182,6 +182,8 @@ public class FsCrawlerImpl {
             // Create an elasticsearch client
             ElasticsearchClient.Builder builder = ElasticsearchClient.builder();
             settings.getElasticsearch().getNodes().forEach(builder::addNode);
+            builder.setUsername(settings.getElasticsearch().getUsername());
+            builder.setPassword(settings.getElasticsearch().getPassword());
             client = builder.build();
 
             client.createIndex(settings.getElasticsearch().getIndex(), true);

@@ -22,7 +22,11 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch.Node;
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Response;
@@ -48,13 +52,27 @@ public class ElasticsearchClient {
 
     private final RestClient client;
 
-    private ElasticsearchClient(List<Node> nodes) {
+    private ElasticsearchClient(List<Node> nodes, String username, String password) {
         List<HttpHost> hosts = new ArrayList<>(nodes.size());
         for (Node node : nodes) {
             hosts.add(new HttpHost(node.getHost(), node.getPort()));
         }
 
+        CredentialsProvider credentialsProvider = null;
+
+        if (username != null) {
+            credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
+        }
+
         RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
+
+        if (credentialsProvider != null) {
+            CredentialsProvider finalCredentialsProvider = credentialsProvider;
+            builder.setHttpClientConfigCallback(httpClientBuilder ->
+                    httpClientBuilder.setDefaultCredentialsProvider(finalCredentialsProvider));
+        }
+
         client = builder.build();
     }
 
@@ -283,14 +301,26 @@ public class ElasticsearchClient {
     public static class Builder {
 
         private List<Node> nodes = new ArrayList<>();
+        private String username = null;
+        private String password = null;
 
-        public ElasticsearchClient build() {
-            return new ElasticsearchClient(nodes);
+        public Builder setUsername(String username) {
+            this.username = username;
+            return this;
+        }
+
+        public Builder setPassword(String password) {
+            this.password = password;
+            return this;
         }
 
         public Builder addNode(Node node) {
             nodes.add(node);
             return this;
+        }
+
+        public ElasticsearchClient build() {
+            return new ElasticsearchClient(nodes, username, password);
         }
 
     }

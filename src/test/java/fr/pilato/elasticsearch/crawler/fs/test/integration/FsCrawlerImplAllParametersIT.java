@@ -127,11 +127,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     private Elasticsearch endCrawlerDefinition(String indexName) {
-        return Elasticsearch.builder()
-                .setIndex(indexName)
-                .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
-                .setBulkSize(1)
-                .build();
+        return generateElasticsearchConfig(indexName, securityInstalled, 1, null);
     }
 
     private void startCrawler() throws Exception {
@@ -655,12 +651,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     @Test
     public void test_bulk_flush() throws Exception {
         Fs fs = startCrawlerDefinition().build();
-        startCrawler(getCrawlerName(), fs, Elasticsearch.builder()
-                .setIndex(getCrawlerName())
-                .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
-                .setBulkSize(100)
-                .setFlushInterval(TimeValue.timeValueSeconds(2))
-                .build(), null);
+        startCrawler(getCrawlerName(), fs,
+                generateElasticsearchConfig(getCrawlerName(), securityInstalled, 100, TimeValue.timeValueSeconds(2)), null);
 
         countTestHelper(getCrawlerName(), null, 1);
     }

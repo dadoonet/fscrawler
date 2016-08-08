@@ -139,7 +139,9 @@ The job file must comply to the following `json` specifications:
     "index" : "docs",
     "type" : "doc",
     "bulk_size" : 100,
-    "flush_interval" : "5s"
+    "flush_interval" : "5s",
+    "username" : "username",
+    "password" : "password"
   }
 }
 ```
@@ -176,6 +178,8 @@ Here is a full list of existing settings:
 | `elasticsearch.bulk_size`        | `100`         | [Bulk settings](#bulk-settings)                                                   |
 | `elasticsearch.flush_interval`   | `"5s"`        | [Bulk settings](#bulk-settings)                                                   |
 | `elasticsearch.nodes`            |127.0.0.1:9200 | [Node settings](#node-settings)                                                   |
+| `elasticsearch.username`         | `null`        | [Credentials](#using-credentials) (from 2.2)                                      |
+| `elasticsearch.password`         | `null`        | [Credentials](#using-credentials) (from 2.2)                                      |
 
 
 ### The most simple crawler
@@ -1122,6 +1126,24 @@ You can define multiple nodes:
 }
 ```
 
+
+## Using Credentials
+
+If you secured your elasticsearch cluster with [X-Pack](), you can provide
+`username` and `password` to FS crawler:
+
+```json
+{
+  "name" : "test",
+  "elasticsearch" : {
+    "username" : "elastic",
+    "password" : "changeme"
+  }
+}
+```
+
+**WARNING**: note that for the current version, the elasticsearch password is stored in plain text in
+your job setting file.
 
 # Developing on FS Crawler project
 
