@@ -1129,7 +1129,7 @@ You can define multiple nodes:
 
 ## Using Credentials
 
-If you secured your elasticsearch cluster with [X-Pack](), you can provide
+If you secured your elasticsearch cluster with [X-Pack](https://www.elastic.co/downloads/x-pack), you can provide
 `username` and `password` to FS crawler:
 
 ```json
