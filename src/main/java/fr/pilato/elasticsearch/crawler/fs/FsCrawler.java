@@ -63,6 +63,9 @@ public class FsCrawler {
         @Parameter(names = "--config_dir", description = "Config directory. Default to ~/.fscrawler")
         private String configDir = null;
 
+        @Parameter(names = "--username", description = "Elasticsearch username when running with security.")
+        private String username = null;
+
         @Parameter(names = "--debug", description = "Debug mode")
         private boolean debug = false;
 
@@ -164,6 +167,19 @@ public class FsCrawler {
             if (fsSettings.getElasticsearch() == null) {
                 fsSettings.setElasticsearch(Elasticsearch.DEFAULT);
             }
+
+            String username = commands.username;
+            if (fsSettings.getElasticsearch().getUsername() != null) {
+                username = fsSettings.getElasticsearch().getUsername();
+            }
+
+            if (username != null && fsSettings.getElasticsearch().getPassword() == null) {
+                logger.info("Password for " +  username + ":");
+                String password = scanner.next();
+                fsSettings.getElasticsearch().setUsername(username);
+                fsSettings.getElasticsearch().setPassword(password);
+            }
+
         } catch (IOException e) {
             logger.warn("job [{}] does not exist", jobName);
 
@@ -180,7 +196,8 @@ public class FsCrawler {
                         .build();
                 fsSettingsFileHandler.write(fsSettings);
 
-                logger.info("Settings have been created in [{}]. Please review and edit before relaunch", configDir);
+                Path config = configDir.resolve(jobName).resolve(FsSettingsFileHandler.FILENAME);
+                logger.info("Settings have been created in [{}]. Please review and edit before relaunch", config);
             }
 
             System.exit(1);
