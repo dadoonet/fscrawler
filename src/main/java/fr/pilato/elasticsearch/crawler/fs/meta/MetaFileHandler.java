@@ -76,6 +76,11 @@ public class MetaFileHandler {
         Path dir = root;
         if (subdir != null) {
             dir = dir.resolve(subdir);
+
+            // If the dir does not exist, we need to create it
+            if (Files.notExists(dir)) {
+                Files.createDirectory(dir);
+            }
         }
         Files.write(dir.resolve(filename), content.getBytes(Charset.forName("UTF-8")));
     }
