@@ -51,6 +51,7 @@ public class ElasticsearchClient {
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
 
     private final RestClient client;
+    private String FIELDS = null;
 
     private ElasticsearchClient(List<Node> nodes, String username, String password) {
         List<HttpHost> hosts = new ArrayList<>(nodes.size());
@@ -252,7 +253,11 @@ public class ElasticsearchClient {
             params.put("q", searchRequest.getQuery());
         }
         if (searchRequest.getFields() !=  null) {
-            params.put("fields", String.join(",", (CharSequence[]) searchRequest.getFields()));
+            // If we never set elasticsearch behavior, it's time to do so
+            if (FIELDS == null) {
+                setElasticsearchBehavior();
+            }
+            params.put(FIELDS, String.join(",", (CharSequence[]) searchRequest.getFields()));
         }
 
         Response restResponse = client.performRequest("GET", path, params);
@@ -261,6 +266,21 @@ public class ElasticsearchClient {
         logger.trace("search response: {}", searchResponse);
         return searchResponse;
     }
+
+    protected String setElasticsearchBehavior() throws IOException {
+        String version = findVersion();
+
+        // With elasticsearch 5.0.0, we need to use `stored_fields` instead of `fields`
+        if (new VersionComparator().compare(version, "5") >= 0) {
+            FIELDS = "source_fields";
+            logger.debug("Using elasticsearch >= 5, so we use [{}] as fields option", FIELDS);
+        } else {
+            FIELDS = "fields";
+            logger.debug("Using elasticsearch < 5, so we use [{}] as fields option", FIELDS);
+        }
+        return FIELDS;
+    }
+
 
     public boolean isExistingType(String index, String type) throws IOException {
         logger.debug("is existing type [{}]/[{}]", index, type);

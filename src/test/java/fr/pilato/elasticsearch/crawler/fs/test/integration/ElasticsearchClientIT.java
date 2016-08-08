@@ -109,6 +109,10 @@ public class ElasticsearchClientIT extends AbstractITCase {
         // term
         response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar");
         assertThat(response.getHits().getTotal(), is(1L));
+
+        // using fields
+        response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar", 10, "_source");
+        assertThat(response.getHits().getTotal(), is(1L));
     }
 
     @Test
