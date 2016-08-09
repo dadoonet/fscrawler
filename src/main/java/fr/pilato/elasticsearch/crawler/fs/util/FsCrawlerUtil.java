@@ -261,6 +261,10 @@ public class FsCrawlerUtil extends MetaParser {
      * available of Windows OS.
      */
     public static String getGroupName(final File file) {
+        if (OsValidator.windows) {
+            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            return null;
+        }
         try {
             final Path path = Paths.get(file.getAbsolutePath());
             final PosixFileAttributes posixFileAttributes = Files.getFileAttributeView(path, PosixFileAttributeView.class).readAttributes();
