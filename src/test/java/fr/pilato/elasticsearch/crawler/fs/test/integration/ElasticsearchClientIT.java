@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
@@ -28,8 +27,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 
@@ -97,6 +98,18 @@ public class ElasticsearchClientIT extends AbstractITCase {
         elasticsearchClient.createIndex(getCrawlerName());
         elasticsearchClient.waitForHealthyIndex(getCrawlerName());
 
+        elasticsearchClient.putMapping(getCrawlerName(), "doc", "{\n" +
+                "      \"doc\" : {\n" +
+                "        \"properties\" : {\n" +
+                "          \"foo\" : {\n" +
+                "            \"type\" : \"text\",\n" +
+                "            \"store\" : true\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }");
+
         elasticsearchClient.index(getCrawlerName(), "doc", "1", "{ \"foo\" : \"bar\" }");
         elasticsearchClient.index(getCrawlerName(), "doc", "2", "{ \"foo\" : \"baz\" }");
 
@@ -113,6 +126,9 @@ public class ElasticsearchClientIT extends AbstractITCase {
         // using fields
         response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar", 10, "_source");
         assertThat(response.getHits().getTotal(), is(1L));
+        response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar", 10, "foo");
+        assertThat(response.getHits().getTotal(), is(1L));
+        assertThat(response.getHits().getHits().get(0).getFields(), hasEntry("foo", Collections.singletonList("bar")));
     }
 
     @Test

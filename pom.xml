@@ -20,8 +20,8 @@
 
     <properties>
         <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-        <elasticsearch.version>5.0.0-alpha4</elasticsearch.version>
-        <elasticsearch.client.version>5.0.0-alpha5-SNAPSHOT</elasticsearch.client.version>
+        <elasticsearch.version>5.0.0-alpha5</elasticsearch.version>
+        <elasticsearch.client.version>${elasticsearch.version}</elasticsearch.client.version>
 
         <tika.version>1.13</tika.version>
         <jackson.version>2.6.3</jackson.version>
@@ -379,24 +379,6 @@
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>rest</artifactId>
             <version>${elasticsearch.client.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore</artifactId>
-            <version>4.4.5</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpasyncclient</artifactId>
-            <version>4.1.2</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.2</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>

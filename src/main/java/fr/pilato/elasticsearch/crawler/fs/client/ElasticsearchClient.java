@@ -231,7 +231,13 @@ public class ElasticsearchClient {
     }
 
     public SearchResponse search(String index, String type, String query, Integer size, String field) throws IOException {
-        return search(index, type, SearchRequest.builder().setQuery(query).setSize(size).setFields(field).build());
+        SearchRequest.Builder builder = SearchRequest.builder().setQuery(query).setSize(size);
+        if (field != null) {
+            builder.setFields(field);
+        }
+        SearchRequest request = builder.build();
+
+        return search(index, type, request);
     }
 
     public SearchResponse search(String index, String type, SearchRequest searchRequest) throws IOException {
@@ -272,7 +278,7 @@ public class ElasticsearchClient {
 
         // With elasticsearch 5.0.0, we need to use `stored_fields` instead of `fields`
         if (new VersionComparator().compare(version, "5") >= 0) {
-            FIELDS = "source_fields";
+            FIELDS = "stored_fields";
             logger.debug("Using elasticsearch >= 5, so we use [{}] as fields option", FIELDS);
         } else {
             FIELDS = "fields";
