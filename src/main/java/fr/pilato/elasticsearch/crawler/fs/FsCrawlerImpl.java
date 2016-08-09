@@ -61,6 +61,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator.validateSettings;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 
@@ -106,6 +107,12 @@ public class FsCrawlerImpl {
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.settings = settings;
 
+        closed = validateSettings(logger, settings);
+        if (closed) {
+            // We don't go further as we have critical errors
+            return;
+        }
+
         // Generate the directory where we write status and other files
         Path jobSettingsFolder = config.resolve(settings.getName());
         try {
@@ -114,63 +121,13 @@ public class FsCrawlerImpl {
             throw new RuntimeException("Can not create the job config directory", e);
         }
 
-        if (settings.getFs() == null || settings.getFs().getUrl() == null) {
-            logger.warn("`url` is not set. Please define it. Falling back to default: [{}].", Fs.DEFAULT_DIR);
-            if (settings.getFs() == null) {
-                settings.setFs(Fs.DEFAULT);
-            } else {
-                settings.getFs().setUrl(Fs.DEFAULT_DIR);
-            }
-        }
-
-        if (settings.getElasticsearch() == null) {
-            settings.setElasticsearch(Elasticsearch.DEFAULT);
-        }
-        if (settings.getElasticsearch().getIndex() == null) {
-            // When index is not set, we fallback to the config name
-            settings.getElasticsearch().setIndex(settings.getName());
-        }
-
-        // Checking protocol
-        if (settings.getServer() != null) {
-            if (!PROTOCOL.LOCAL.equals(settings.getServer().getProtocol()) &&
-                    !PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
-                // Non supported protocol
-                logger.error(settings.getServer().getProtocol() + " is not supported yet. Please use " +
-                        PROTOCOL.LOCAL + " or " + PROTOCOL.SSH + ". Disabling crawler");
-                closed = true;
-                return;
-            }
-
-            // Checking username/password
-            if (PROTOCOL.SSH.equals(settings.getServer().getProtocol()) &&
-                    !hasText(settings.getServer().getUsername())) {
-                // Non supported protocol
-                logger.error("When using SSH, you need to set a username and probably a password or a pem file. Disabling crawler");
-                closed = true;
-            }
-        }
-
-        // Checking Checksum Algorithm
+        // Create MessageDigest instance
         if (settings.getFs().getChecksum() != null) {
             try {
                 messageDigest = MessageDigest.getInstance(settings.getFs().getChecksum());
             } catch (NoSuchAlgorithmException e) {
-                // Non supported protocol
-                logger.error("Algorithm [{}] not found. Disabling crawler", settings.getFs().getChecksum());
-                closed = true;
+                throw new RuntimeException("This should never happen as we checked that previously");
             }
-        }
-
-        // Checking That we don't try to do both xml and json
-        if (settings.getFs().isJsonSupport() && settings.getFs().isXmlSupport()) {
-            logger.error("Can not support both xml and json parsing. Disabling crawler");
-            closed = true;
-        }
-
-        // We just warn the user if he is running on windows but want to get attributes
-        if (OsValidator.windows && settings.getFs().isAttributesSupport()) {
-            logger.info("attributes_support is set to true but getting group is not available on [{}].", OsValidator.OS);
         }
     }
 
