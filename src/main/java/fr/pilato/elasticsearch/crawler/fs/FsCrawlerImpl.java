@@ -40,6 +40,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.util.OsValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -165,6 +166,11 @@ public class FsCrawlerImpl {
         if (settings.getFs().isJsonSupport() && settings.getFs().isXmlSupport()) {
             logger.error("Can not support both xml and json parsing. Disabling crawler");
             closed = true;
+        }
+
+        // We just warn the user if he is running on windows but want to get attributes
+        if (OsValidator.windows && settings.getFs().isAttributesSupport()) {
+            logger.info("attributes_support is set to true but getting group is not available on [{}].", OsValidator.OS);
         }
     }
 
