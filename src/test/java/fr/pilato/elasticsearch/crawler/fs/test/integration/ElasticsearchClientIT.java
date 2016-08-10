@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.VersionComparator;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import org.junit.Before;
 import org.junit.Test;
@@ -98,17 +99,39 @@ public class ElasticsearchClientIT extends AbstractITCase {
         elasticsearchClient.createIndex(getCrawlerName());
         elasticsearchClient.waitForHealthyIndex(getCrawlerName());
 
-        elasticsearchClient.putMapping(getCrawlerName(), "doc", "{\n" +
-                "      \"doc\" : {\n" +
-                "        \"properties\" : {\n" +
-                "          \"foo\" : {\n" +
-                "            \"type\" : \"text\",\n" +
-                "            \"store\" : true\n" +
-                "            }\n" +
-                "          }\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }");
+        // Depending on the version we are using, we need to adapt the test mapping
+        String version = elasticsearchClient.findVersion();
+
+        String mapping;
+        // With elasticsearch 5.0.0, we need to use `type: text` instead of `type: string`
+        if (new VersionComparator().compare(version, "5") >= 0) {
+            mapping = "{\n" +
+                    "      \"doc\" : {\n" +
+                    "        \"properties\" : {\n" +
+                    "          \"foo\" : {\n" +
+                    "            \"type\" : \"text\",\n" +
+                    "            \"store\" : true\n" +
+                    "            }\n" +
+                    "          }\n" +
+                    "        }\n" +
+                    "      }\n" +
+                    "    }";
+        } else {
+            mapping = "{\n" +
+                    "      \"doc\" : {\n" +
+                    "        \"properties\" : {\n" +
+                    "          \"foo\" : {\n" +
+                    "            \"type\" : \"string\",\n" +
+                    "            \"store\" : true\n" +
+                    "            }\n" +
+                    "          }\n" +
+                    "        }\n" +
+                    "      }\n" +
+                    "    }";
+        }
+
+
+        elasticsearchClient.putMapping(getCrawlerName(), "doc", mapping);
 
         elasticsearchClient.index(getCrawlerName(), "doc", "1", "{ \"foo\" : \"bar\" }");
         elasticsearchClient.index(getCrawlerName(), "doc", "2", "{ \"foo\" : \"baz\" }");
