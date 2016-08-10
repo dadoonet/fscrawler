@@ -71,6 +71,7 @@ public class BulkProcessor {
         }
 
         if (bulkRequest.numberOfActions() > 0) {
+            logger.debug("Executing [{}] remaining actions", bulkRequest.numberOfActions());
             execute();
         }
     }
