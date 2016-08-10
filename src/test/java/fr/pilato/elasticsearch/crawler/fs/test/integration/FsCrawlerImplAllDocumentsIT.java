@@ -49,6 +49,7 @@ import static org.hamcrest.Matchers.notNullValue;
  */
 public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
+    protected static FsCrawlerImpl crawler = null;
 
     @BeforeClass
     public static void startCrawling() throws Exception {
@@ -82,7 +83,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
-        FsCrawlerImpl crawler = new FsCrawlerImpl(metadataDir,
+        crawler = new FsCrawlerImpl(metadataDir,
                 FsSettings.builder("fscrawler_test_all_documents")
                         .setElasticsearch(generateElasticsearchConfig("fscrawler_test_all_documents", securityInstalled, 5,
                                 TimeValue.timeValueSeconds(1)))
@@ -103,12 +104,20 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
             }
         }), equalTo(true));
 
-        SearchResponse response = countTestHelper("fscrawler_test_all_documents", null, numFiles.intValue(), null);
+        countTestHelper("fscrawler_test_all_documents", null, numFiles.intValue(), null);
 
-        staticLogger.debug("SearchResponse: {}", response.toString());
+        // Make sure we refresh indexed docs before launching tests
+        refresh();
 
-        staticLogger.info("  --> Stopping crawler");
-        crawler.close();
+    }
+
+    @AfterClass
+    public static void stopCrawling() throws Exception {
+        if (crawler != null) {
+            staticLogger.info("  --> Stopping crawler");
+            crawler.close();
+            crawler = null;
+        }
     }
 
     /**
