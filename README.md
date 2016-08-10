@@ -50,6 +50,10 @@ $ tree
     ├── ... All needed jars
 ```
 
+Note that you can also download a SNAPSHOT version
+[from sonatype](https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/2.2-SNAPSHOT/)
+without needing to build it by yourself.
+
 # Getting Started
 
 **You need to have at least Java 1.8.**
