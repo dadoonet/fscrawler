@@ -2,6 +2,7 @@ language: java
 sudo: false
 jdk:
   - oraclejdk8
+install: true
 script:
   - mvn -B clean verify -Pes-1x
   - mvn -B clean verify -Pes-2x
