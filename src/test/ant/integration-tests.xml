@@ -319,6 +319,7 @@
 
             <!-- install plugin -->
             <echo>Installing plugin @{name}...</echo>
+            <echo>DEBUG: ${commandline} install ${url}</echo>
             <run-script script="${commandline}">
                 <nested>
                     <arg value="install"/>
