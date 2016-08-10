@@ -4,6 +4,7 @@ jdk:
   - oraclejdk8
 before_script:
   - echo "MAVEN_OPTS=-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" > ~/.mavenrc
+  - bash --version
 install: true
 script:
   - mvn -B clean verify -Pes-1x
