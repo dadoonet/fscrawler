@@ -21,7 +21,8 @@
     <properties>
         <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
         <elasticsearch.version>5.0.0-alpha5</elasticsearch.version>
-        <elasticsearch.client.version>${elasticsearch.version}</elasticsearch.client.version>
+        <!-- Don't depend on elasticsearch.version here as it will fail with 1.x and 2.x series -->
+        <elasticsearch.client.version>5.0.0-alpha5</elasticsearch.client.version>
 
         <tika.version>1.13</tika.version>
         <jackson.version>2.6.3</jackson.version>
