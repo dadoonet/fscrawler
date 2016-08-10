@@ -165,7 +165,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     private void stopCrawler() throws InterruptedException, IOException {
-        logger.info("  --> stopping crawler");
         if (crawler != null) {
             staticLogger.info("  --> Stopping crawler");
             crawler.close();
