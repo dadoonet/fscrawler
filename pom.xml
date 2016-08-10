@@ -597,6 +597,14 @@
             </build>
         </profile>
         <profile>
+            <id>es-2x-travis</id>
+            <properties>
+                <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
+                <elasticsearch.version>2.3.3</elasticsearch.version>
+                <skipXPack>true</skipXPack>
+            </properties>
+        </profile>
+        <profile>
             <id>skipXPack</id>
             <activation>
                 <property>
