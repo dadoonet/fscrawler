@@ -7,8 +7,9 @@ before_script:
   - bash --version
 install: true
 script:
-  - mvn -B clean verify -Pes-1x
-  - mvn -B clean verify -Pes-2x
+#  - mvn -B clean verify -Pes-1x
+#  - mvn -B clean verify -Pes-2x
   - mvn -B clean verify
+  - bash -x target/integration-tests/run/elasticsearch-5.0.0-alpha5/bin/elasticsearch-plugin install file:/home/travis/build/dadoonet/fscrawler/target/integration-tests/plugins/x-pack-5.0.0-alpha5.zip
 after_success:
   - "[[ ${TRAVIS_PULL_REQUEST} == 'false' ]] && [[ ${TRAVIS_TAG} == '' ]] && mvn deploy -DskipTests --settings deploy-settings.xml"
