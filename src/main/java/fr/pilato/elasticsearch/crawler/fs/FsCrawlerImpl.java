@@ -240,13 +240,14 @@ public class FsCrawlerImpl {
                     fsSettings.getFs().getUpdateRate());
             while (true) {
                 if (closed) {
-                    logger.info("FS crawler thread [{}] is now stooped...", fsSettings.getName());
+                    logger.debug("FS crawler thread [{}] is now marked as closed...", fsSettings.getName());
                     return;
                 }
 
                 FileAbstractor path = null;
 
                 try {
+                    logger.debug("Fs crawler thread [{}] is now running...", fsSettings.getName());
                     stats = new ScanStatistic(fsSettings.getFs().getUrl());
 
                     path = buildFileAbstractor();

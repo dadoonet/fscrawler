@@ -34,6 +34,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -66,8 +70,12 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
         FsCrawlerUtil.copyDirs(from, testResourceTarget);
 
-        staticLogger.debug("  --> Test resources ready in [{}]", testResourceTarget);
-
+        staticLogger.debug("  --> Test resources ready in [{}]:", testResourceTarget);
+        Files.walk(testResourceTarget)
+                .filter(path -> Files.isRegularFile(path))
+                .forEach(path -> {
+            staticLogger.debug("    - [{}]", path);
+        });
         Long numFiles = Files.list(testResourceTarget).count();
 
         staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents]");
@@ -117,21 +125,17 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
      */
     @Test
     public void testXmlIssue163() throws IOException {
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, "file.filename:\"issue-163.xml\"");
-        assertThat(response.getHits().getTotal(), is(1L));
+        runSearch("issue-163.xml");
     }
 
     @Test
     public void testExtractFromDoc() throws IOException {
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, "+content:sample +file.filename:\"test.doc\"");
-        assertThat(response.getHits().getTotal(), is(1L));
+        runSearch("test.doc", "sample");
     }
 
     @Test
     public void testExtractFromDocx() throws IOException {
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, "+content:sample +file.filename:\"test.docx\"", null, "*");
-        assertThat(response.getHits().getTotal(), is(1L));
-
+        SearchResponse response = runSearch("test.docx", "sample");
         for (SearchResponse.Hit hit : response.getHits().getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CONTENT_TYPE), notNullValue());
@@ -143,50 +147,56 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.TITLE), notNullValue());
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.KEYWORDS), notNullValue());
         }
-
     }
 
     @Test
     public void testExtractFromHtml() throws IOException {
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, "+content:sample +file.filename:\"test.html\"");
-        assertThat(response.getHits().getTotal(), is(1L));
+        runSearch("test.html", "sample");
     }
 
     @Test
     public void testExtractFromMp3() throws IOException {
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, "+content:tika +file.filename:\"test.mp3\"");
-        assertThat(response.getHits().getTotal(), is(1L));
+        runSearch("test.mp3", "tika");
     }
 
     @Test
     public void testExtractFromOdt() throws IOException {
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, "+content:sample +file.filename:\"test.odt\"");
-        assertThat(response.getHits().getTotal(), is(1L));
+        runSearch("test.odt", "sample");
     }
 
     @Test
     public void testExtractFromPdf() throws IOException {
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, "+content:sample +file.filename:\"test.pdf\"");
-        assertThat(response.getHits().getTotal(), is(1L));
+        runSearch("test.pdf", "sample");
     }
 
     @Test
     public void testExtractFromRtf() throws IOException {
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, "+content:sample +file.filename:\"test.rtf\"");
-        assertThat(response.getHits().getTotal(), is(1L));
+        runSearch("test.rtf", "sample");
     }
 
     @Test
     public void testExtractFromTxt() throws IOException {
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, "+content:contains +file.filename:\"test.txt\"");
-        assertThat(response.getHits().getTotal(), is(1L));
+        runSearch("test.txt", "contains");
     }
 
     @Test
     public void testExtractFromWav() throws IOException {
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, "file.filename:\"test.wav\"");
-        assertThat(response.getHits().getTotal(), is(1L));
+        runSearch("test.wav");
     }
 
+    private SearchResponse runSearch(String filename) throws IOException {
+        return runSearch(filename, null);
+    }
 
+    private SearchResponse runSearch(String filename, String content) throws IOException {
+        logger.info(" -> Testing if file [{}] has been indexed correctly{}.", filename,
+                content == null ? "" : " and contains [" + content + "]");
+        String fullQuery = "+file.filename:\"" + filename + "\"";
+        if (content != null) {
+            fullQuery += " +content:" + content;
+        }
+        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, fullQuery, null, "*");
+        assertThat(response.getHits().getTotal(), is(1L));
+        return response;
+    }
 }
