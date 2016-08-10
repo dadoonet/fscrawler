@@ -94,21 +94,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
         crawler.start();
 
-        // We wait up to 10 seconds before considering a failing test
-        assertThat("Job meta file _status.json should exists in ~/.fscrawler/fscrawler_test_all_documents...", awaitBusy(() -> {
-            try {
-                new FsJobFileHandler(metadataDir).read("fscrawler_test_all_documents");
-                return true;
-            } catch (IOException e) {
-                return false;
-            }
-        }), equalTo(true));
-
+        // We wait until we have all docs
         countTestHelper("fscrawler_test_all_documents", null, numFiles.intValue(), null);
-
-        // Make sure we refresh indexed docs before launching tests
-        refresh();
-
     }
 
     @AfterClass

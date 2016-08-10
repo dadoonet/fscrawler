@@ -209,6 +209,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 return (totalHits >= 1);
             } else {
                 if (expected == totalHits) {
+                    staticLogger.debug("     ---> expected [{}] and got [{}] documents in [{}]", expected, totalHits, indexName);
                     return true;
                 } else {
                     staticLogger.debug("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
