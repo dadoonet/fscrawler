@@ -21,9 +21,11 @@ package fr.pilato.elasticsearch.crawler.fs.test;
 
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.annotations.Listeners;
+import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import com.carrotsearch.randomizedtesting.generators.RandomInts;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.util.TimeUnits;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -51,6 +53,7 @@ import static org.apache.lucene.util.LuceneTestCase.random;
 
 @RunWith(RandomizedRunner.class)
 @Listeners({FSCrawlerReproduceInfoPrinter.class})
+@TimeoutSuite(millis = 5 * TimeUnits.MINUTE)
 public abstract class AbstractFSCrawlerTestCase {
 
     protected static final Logger staticLogger = LogManager.getLogger(AbstractFSCrawlerTestCase.class);
