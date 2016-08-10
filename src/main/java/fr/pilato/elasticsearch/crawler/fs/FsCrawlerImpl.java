@@ -240,6 +240,7 @@ public class FsCrawlerImpl {
                     fsSettings.getFs().getUpdateRate());
             while (true) {
                 if (closed) {
+                    logger.info("FS crawler thread [{}] is now stooped...", fsSettings.getName());
                     return;
                 }
 
@@ -290,8 +291,10 @@ public class FsCrawlerImpl {
 
                     synchronized (semaphore) {
                         semaphore.wait(fsSettings.getFs().getUpdateRate().millis());
+                        logger.debug("Fs crawler is now waking up again...");
                     }
-                } catch (InterruptedException ignored) {
+                } catch (InterruptedException e) {
+                    logger.debug("Fs crawler thread has been interrupted: [{}]", e.getMessage());
                 }
             }
         }
