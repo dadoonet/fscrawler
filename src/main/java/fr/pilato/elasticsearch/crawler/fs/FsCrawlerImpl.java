@@ -362,7 +362,7 @@ public class FsCrawlerImpl {
                     // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
                     boolean isIndexable = FsCrawlerUtil.isIndexable(filename, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
                     logger.debug("[{}] can be indexed: [{}]", filename, isIndexable);
-                    if (isIndexable) {
+                    if (child.directory || isIndexable) {
                         if (child.file) {
                             logger.debug("  - file: {}", filename);
                             fsFiles.add(filename);
