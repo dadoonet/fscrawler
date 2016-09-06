@@ -58,20 +58,13 @@ public class ElasticsearchClient {
         for (Node node : nodes) {
             hosts.add(new HttpHost(node.getHost(), node.getPort()));
         }
-
-        CredentialsProvider credentialsProvider = null;
-
-        if (username != null) {
-            credentialsProvider = new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
-        }
-
         RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
 
-        if (credentialsProvider != null) {
-            CredentialsProvider finalCredentialsProvider = credentialsProvider;
+        if (username != null) {
+            CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
             builder.setHttpClientConfigCallback(httpClientBuilder ->
-                    httpClientBuilder.setDefaultCredentialsProvider(finalCredentialsProvider));
+                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
         }
 
         client = builder.build();
