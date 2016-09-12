@@ -1160,6 +1160,11 @@ If the password is not defined, you will be prompted when starting the job:
 22:46:42,528 INFO  [f.p.e.c.f.FsCrawler] Password for elastic:
 ```
 
+# OCR integration (using Tika and Tesseract)
+
+To deal with images containing text, just [install Tesseract](https://github.com/tesseract-ocr/tesseract/wiki). Tesseract will be auto-detected by Tika.
+Then add an image (png, jpg, ...) into your Fscrawler [root directory](#root-directory). After the next index update, the text will be indexed and placed in "_source.content".
+
 # Developing on FS Crawler project
 
 If you are thinking of contributing on the project, which is highly appreciated, here are
