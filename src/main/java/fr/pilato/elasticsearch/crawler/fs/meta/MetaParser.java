@@ -27,7 +27,12 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.*;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.PercentageDeserializer;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.PercentageSerializer;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValueDeserializer;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValueSerializer;
 
 /**
  * Helper to parse from and to Json

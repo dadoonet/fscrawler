@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.test.unit.client;
 
 import fr.pilato.elasticsearch.crawler.fs.client.JsonUtil;
-import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import org.junit.Test;
@@ -28,17 +27,12 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
 public class SearchResponseTest extends AbstractFSCrawlerTestCase {

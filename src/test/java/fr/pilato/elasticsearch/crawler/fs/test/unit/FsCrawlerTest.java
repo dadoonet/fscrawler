@@ -20,11 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.test.unit;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawler;
-import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -33,11 +31,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomInt;
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
 
 /**
  * We want to test FSCrawler main app
