@@ -184,6 +184,33 @@ public class FsCrawlerUtil extends MetaParser {
             return true;
         }
 
+        boolean excluded = isExcluded(filename, excludes);
+        if (excluded) return false;
+
+        return isIncluded(filename, includes);
+    }
+
+    /**
+     * We check if we can index the file or if we should ignore it
+     *
+     * @param filename The filename to scan
+     * @param excludes exclude rules, may be empty not null
+     */
+    public static boolean isExcluded(String filename, List<String> excludes) {
+        logger.debug("filename = [{}], excludes = [{}]", filename, excludes);
+
+        // Ignore temporary files
+        if (filename.contains("~")) {
+            logger.trace("filename contains ~");
+            return true;
+        }
+
+        // No rules ? Fine, we index everything
+        if (excludes == null || excludes.isEmpty()) {
+            logger.trace("no rules");
+            return false;
+        }
+
         // Exclude rules : we know that whatever includes rules are, we should exclude matching files
         if (excludes != null) {
             for (String exclude : excludes) {
@@ -191,9 +218,34 @@ public class FsCrawlerUtil extends MetaParser {
                 logger.trace("regex is [{}]", regex);
                 if (filename.matches(regex)) {
                     logger.trace("does match exclude regex");
-                    return false;
+                    return true;
                 }
             }
+        }
+
+        logger.trace("does not match any exclude pattern");
+        return false;
+    }
+
+    /**
+     * We check if we can index the file or if we should ignore it
+     *
+     * @param filename The filename to scan
+     * @param includes include rules, may be empty not null
+     */
+    public static boolean isIncluded(String filename, List<String> includes) {
+        logger.debug("filename = [{}], includes = [{}]", filename, includes);
+
+        // Ignore temporary files
+        if (filename.contains("~")) {
+            logger.trace("filename contains ~");
+            return false;
+        }
+
+        // No rules ? Fine, we index everything
+        if (includes == null || includes.isEmpty()) {
+            logger.trace("no rules");
+            return true;
         }
 
         // Include rules : we should add document if it match include rules

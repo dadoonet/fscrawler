@@ -361,8 +361,15 @@ public class FsCrawlerImpl {
 
                     // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
                     boolean isIndexable = FsCrawlerUtil.isIndexable(filename, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
+
+                    // It can happen that we a dir "foo" which does not match the include name like "*.txt"
+                    // We need to go in it unless it has been explicitly excluded by the user
+                    if (child.directory && !FsCrawlerUtil.isExcluded(filename, fsSettings.getFs().getExcludes())) {
+                        isIndexable = true;
+                    }
+
                     logger.debug("[{}] can be indexed: [{}]", filename, isIndexable);
-                    if (child.directory || isIndexable) {
+                    if (isIndexable) {
                         if (child.file) {
                             logger.debug("  - file: {}", filename);
                             fsFiles.add(filename);

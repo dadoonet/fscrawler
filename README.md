@@ -240,6 +240,7 @@ Define `fs.includes` and `fs.excludes` properties in your `~/.fscrawler/test/_se
 ```
 
 It also applies to directory names. So if you want to ignore `.ignore` dir, just add `.ignore` as an excluded name.
+Note that `includes` does not apply to directory names but only to filenames.
 
 
 ### Update rate
