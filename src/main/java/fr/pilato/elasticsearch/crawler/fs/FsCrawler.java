@@ -66,6 +66,9 @@ public class FsCrawler {
         @Parameter(names = "--username", description = "Elasticsearch username when running with security.")
         private String username = null;
 
+        @Parameter(names = "--loop", description = "Number of scan loop before exiting.")
+        private Integer loop = -1;
+
         @Parameter(names = "--debug", description = "Debug mode")
         private boolean debug = false;
 
@@ -204,7 +207,7 @@ public class FsCrawler {
         }
 
         logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toJson(fsSettings));
-        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings);
+        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop);
         Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
         try {
             fsCrawler.start();

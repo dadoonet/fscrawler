@@ -781,5 +781,43 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat("Job should not start", awaitBusy(() -> crawler.isClosed()), equalTo(true));
     }
 
+    /**
+     * Test case for #227: https://github.com/dadoonet/fscrawler/issues/227 : Add support for run only once
+     */
+    @Test
+    public void test_single_loop() throws Exception {
+        Fs fs = startCrawlerDefinition().build();
+
+        logger.info("  --> starting crawler [{}]", getCrawlerName());
+
+        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1);
+        crawler.start();
+
+        countTestHelper(getCrawlerName(), null, 1);
+
+        assertThat("Job should stop after one run", crawler.isClosed(), is(true));
+        assertThat(crawler.getRunNumber(), is(1));
+    }
+
+    /**
+     * Test case for #227: https://github.com/dadoonet/fscrawler/issues/227 : Add support for run only once
+     */
+    @Test
+    public void test_two_loops() throws Exception {
+        Fs fs = startCrawlerDefinition().build();
+
+        logger.info("  --> starting crawler [{}]", getCrawlerName());
+
+        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2);
+        crawler.start();
+
+        countTestHelper(getCrawlerName(), null, 1);
+
+        assertThat("Job should stop after two runs", awaitBusy(() -> crawler.isClosed()), is(true));
+        assertThat(crawler.getRunNumber(), is(2));
+    }
+
 
 }

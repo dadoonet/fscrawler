@@ -34,13 +34,10 @@ import fr.pilato.elasticsearch.crawler.fs.meta.doc.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.PathParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.util.OsValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -59,6 +56,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator.validateSettings;
@@ -81,7 +79,10 @@ public class FsCrawlerImpl {
     private static final String PATH_ENCODED = FsCrawlerUtil.Doc.PATH + "." + FsCrawlerUtil.Doc.Path.ENCODED;
     private static final String FILE_FILENAME = FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME;
 
+    private final AtomicInteger runNumber = new AtomicInteger(0);
+
     public static final int REQUEST_SIZE = 10000;
+    public static final int LOOP_INFINITE = -1;
 
     private volatile BulkProcessor bulkProcessor;
 
@@ -96,16 +97,22 @@ public class FsCrawlerImpl {
     private final FsSettings settings;
     private final FsSettingsFileHandler fsSettingsFileHandler;
     private final FsJobFileHandler fsJobFileHandler;
+    private final Integer loop;
     private MessageDigest messageDigest = null;
 
     private ElasticsearchClient client;
     private Thread fsCrawlerThread;
 
     public FsCrawlerImpl(Path config, FsSettings settings) {
+        this(config, settings, LOOP_INFINITE);
+    }
+
+    public FsCrawlerImpl(Path config, FsSettings settings, Integer loop) {
         this.config = config;
         this.fsSettingsFileHandler = new FsSettingsFileHandler(config);
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.settings = settings;
+        this.loop = loop;
 
         closed = validateSettings(logger, settings);
         if (closed) {
@@ -133,6 +140,13 @@ public class FsCrawlerImpl {
 
     public void start() throws Exception {
         logger.info("Starting FS crawler");
+        if (loop < 0) {
+            logger.info("FS crawler started in watch mode. It will run unless you stop it with CTRL+C.");
+        }
+
+        if (loop == 0) {
+            closed = true;
+        }
 
         if (closed) {
             logger.info("Fs crawler is closed. Exiting");
@@ -244,10 +258,11 @@ public class FsCrawlerImpl {
                     return;
                 }
 
+                int run = runNumber.incrementAndGet();
                 FileAbstractor path = null;
 
                 try {
-                    logger.debug("Fs crawler thread [{}] is now running...", fsSettings.getName());
+                    logger.debug("Fs crawler thread [{}] is now running. Run #{}...", fsSettings.getName(), run);
                     stats = new ScanStatistic(fsSettings.getFs().getUrl());
 
                     path = buildFileAbstractor();
@@ -282,6 +297,12 @@ public class FsCrawlerImpl {
                             logger.warn("Error while closing the connection: {}", e, e.getMessage());
                         }
                     }
+                }
+
+                if (loop > 0 && run >= loop) {
+                    logger.info("FS crawler is stopping after {} run{}", run, run > 1 ? "s" : "");
+                    closed = true;
+                    return;
                 }
 
                 try {
@@ -747,5 +768,7 @@ public class FsCrawlerImpl {
         return str != null && str.length() > 0;
     }
 
-
+    public int getRunNumber() {
+        return runNumber.get();
+    }
 }
