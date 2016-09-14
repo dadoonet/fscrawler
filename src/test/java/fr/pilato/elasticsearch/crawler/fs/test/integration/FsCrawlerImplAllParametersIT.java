@@ -529,6 +529,17 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     @Test
+    public void test_subdirs_with_patterns() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .addInclude("*.txt")
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        // We expect to have seven files
+        countTestHelper(getCrawlerName(), null, 7);
+    }
+
+    @Test
     public void test_ignore_dir() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .addExclude(".ignore")
