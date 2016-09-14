@@ -112,7 +112,7 @@ The job file must comply to the following `json` specifications:
   "name" : "job_name",
   "fs" : {
     "url" : "/path/to/data/dir",
-    "update_rate" : "5s",
+    "update_rate" : "15m",
     "includes": [
       "*.*"
     ],
@@ -269,6 +269,11 @@ Or a 3 hours update rate:
   }
 }
 ```
+
+`update_rate` is the pause duration between the last time we read the file system and another run.
+Which means that if you set it to `15m`, the next scan will happen on 15 minutes after the end of
+the current scan, whatever its duration.
+
 
 ### Indexing using SSH
 
