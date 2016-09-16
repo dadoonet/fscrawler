@@ -343,6 +343,13 @@ Let's say you want to index from a remote server using SSH:
 }
 ```
 
+### Indexing on HDFS
+
+There is no specific support for HDFS in FS crawler. But you can [mount your HDFS on your machine](https://wiki.apache.org/hadoop/MountableHDFS)
+and run FS crawler on this mount point. You can also read details about
+[HDFS NFS Gateway](http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsNfsGateway.html).
+
+
 # Searching for docs
 
 This is a common use case in elasticsearch, we want to search for something! ;-)
