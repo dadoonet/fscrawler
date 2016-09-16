@@ -37,9 +37,12 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -885,6 +888,40 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), -1, true);
 
         crawler.start();
+    }
+
+    /**
+     * Test case for #95: https://github.com/dadoonet/fscrawler/issues/95 : Folder index is not getting delete on delete of folder
+     * This test is marked as Ignored because it fails. Which proves that the issue reported is real!
+     */
+    @Test @Ignore
+    public void test_remove_folder_deleted_enabled() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setRemoveDeleted(true)
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        // We should have 7 docs first
+        countTestHelper(getCrawlerName(), null, 7, currentTestResourceDir);
+
+        // We remove a directory
+        logger.info("  ---> Removing dir subdir1");
+        Files.walkFileTree(currentTestResourceDir.resolve("subdir1"), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        // We expect to have 4 docs now
+        countTestHelper(getCrawlerName(), null, 4, currentTestResourceDir);
     }
 
 
