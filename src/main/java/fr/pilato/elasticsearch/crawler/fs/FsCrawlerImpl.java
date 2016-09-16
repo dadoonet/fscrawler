@@ -98,21 +98,23 @@ public class FsCrawlerImpl {
     private final FsSettingsFileHandler fsSettingsFileHandler;
     private final FsJobFileHandler fsJobFileHandler;
     private final Integer loop;
+    private final boolean updateMapping;
     private MessageDigest messageDigest = null;
 
     private ElasticsearchClient client;
     private Thread fsCrawlerThread;
 
     public FsCrawlerImpl(Path config, FsSettings settings) {
-        this(config, settings, LOOP_INFINITE);
+        this(config, settings, LOOP_INFINITE, false);
     }
 
-    public FsCrawlerImpl(Path config, FsSettings settings, Integer loop) {
+    public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean updateMapping) {
         this.config = config;
         this.fsSettingsFileHandler = new FsSettingsFileHandler(config);
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.settings = settings;
         this.loop = loop;
+        this.updateMapping = updateMapping;
 
         closed = validateSettings(logger, settings);
         if (closed) {
@@ -144,15 +146,6 @@ public class FsCrawlerImpl {
             logger.info("FS crawler started in watch mode. It will run unless you stop it with CTRL+C.");
         }
 
-        if (loop == 0) {
-            closed = true;
-        }
-
-        if (closed) {
-            logger.info("Fs crawler is closed. Exiting");
-            return;
-        }
-
         String elasticsearchVersion;
 
         try {
@@ -182,16 +175,25 @@ public class FsCrawlerImpl {
                 // Read file mapping from resources
                 String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
                 ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
-                        mapping);
+                        mapping, updateMapping);
             }
             // If needed, we create the new mapping for folders
             String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
             ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
-                    mapping);
+                    mapping, updateMapping);
         } catch (Exception e) {
-            logger.warn("failed to create mapping for [{}/{}], disabling crawler...",
+            logger.warn("failed to {} mapping for [{}/{}], disabling crawler...", updateMapping ? "update" : "create",
                     settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType());
             throw e;
+        }
+
+        if (loop == 0) {
+            closed = true;
+        }
+
+        if (closed) {
+            logger.info("Fs crawler is closed. Exiting");
+            return;
         }
 
         // Creating bulk processor

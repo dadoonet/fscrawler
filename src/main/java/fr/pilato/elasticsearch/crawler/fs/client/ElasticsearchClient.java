@@ -369,12 +369,17 @@ public class ElasticsearchClient {
      * @param index index name
      * @param type type name
      * @param mapping Elasticsearch mapping
+     * @param forceUpdate If true, it will try to update the mapping
      * @throws Exception in case of error
      */
-    public static void pushMapping(ElasticsearchClient client, String index, String type, String mapping) throws Exception {
+    public static void pushMapping(ElasticsearchClient client, String index, String type, String mapping, boolean forceUpdate) throws Exception {
         boolean mappingExist = client.isExistingType(index, type);
-        if (!mappingExist) {
-            logger.debug("Mapping [{}]/[{}] doesn't exist. Creating it.", index, type);
+        if (!mappingExist || forceUpdate) {
+            if (forceUpdate) {
+                logger.debug("Mapping [{}]/[{}] will be updated if existing.", index, type);
+            } else {
+                logger.debug("Mapping [{}]/[{}] doesn't exist. Creating it.", index, type);
+            }
             logger.trace("Mapping for [{}]/[{}]: [{}]", index, type, mapping);
             client.putMapping(index, type, mapping);
         } else {

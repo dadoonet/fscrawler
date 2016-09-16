@@ -69,6 +69,9 @@ public class FsCrawler {
         @Parameter(names = "--loop", description = "Number of scan loop before exiting.")
         private Integer loop = -1;
 
+        @Parameter(names = "--update_mapping", description = "Update elasticsearch mapping")
+        private boolean updateMapping = false;
+
         @Parameter(names = "--debug", description = "Debug mode")
         private boolean debug = false;
 
@@ -207,7 +210,7 @@ public class FsCrawler {
         }
 
         logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toJson(fsSettings));
-        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop);
+        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.updateMapping);
         Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
         try {
             fsCrawler.start();

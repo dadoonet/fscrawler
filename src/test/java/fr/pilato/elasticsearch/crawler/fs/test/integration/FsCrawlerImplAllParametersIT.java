@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import org.elasticsearch.client.ResponseException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -790,7 +791,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1);
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1, false);
         crawler.start();
 
         countTestHelper(getCrawlerName(), null, 1);
@@ -809,13 +810,81 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2);
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2, false);
         crawler.start();
 
         countTestHelper(getCrawlerName(), null, 1);
 
         assertThat("Job should stop after two runs", awaitBusy(() -> crawler.isClosed()), is(true));
         assertThat(crawler.getRunNumber(), is(2));
+    }
+
+    /**
+     * Test case for #205: https://github.com/dadoonet/fscrawler/issues/205 : Add support for update mapping
+     */
+    @Test
+    public void test_update_mapping() throws Exception {
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
+                "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : {   \"_source\" : {\n" +
+                        "    \"excludes\" : [\n" +
+                        "      \"attachment\"\n" +
+                        "    ]\n" +
+                        "  }\n} }");
+
+        Fs fs = startCrawlerDefinition().build();
+
+        logger.info("  --> starting crawler [{}]", getCrawlerName());
+
+        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), -1, true);
+        crawler.start();
+
+        countTestHelper(getCrawlerName(), null, 1);
+    }
+
+    /**
+     * Test case for #205: https://github.com/dadoonet/fscrawler/issues/205 : Add support for update mapping
+     */
+    @Test
+    public void test_update_mapping_but_dont_launch() throws Exception {
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
+                "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : {   \"_source\" : {\n" +
+                        "    \"excludes\" : [\n" +
+                        "      \"attachment\"\n" +
+                        "    ]\n" +
+                        "  }\n} }");
+
+        Fs fs = startCrawlerDefinition().build();
+
+        logger.info("  --> starting crawler [{}]", getCrawlerName());
+
+        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 0, true);
+        crawler.start();
+
+        assertThat(crawler.isClosed(), is(true));
+        assertThat(crawler.getRunNumber(), is(0));
+    }
+
+    /**
+     * Test case for #205: https://github.com/dadoonet/fscrawler/issues/205 : Add support for update mapping
+     */
+    @Test(expected = ResponseException.class)
+    public void test_fail_update_mapping() throws Exception {
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
+                "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : { } }");
+
+        Fs fs = startCrawlerDefinition().build();
+
+        logger.info("  --> starting crawler [{}]", getCrawlerName());
+
+        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), -1, true);
+
+        crawler.start();
     }
 
 
