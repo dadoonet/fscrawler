@@ -551,60 +551,65 @@ public class FsCrawlerImpl {
 
             logger.debug("fetching content from [{}],[{}]", filepath, filename);
 
-            // Create the Doc object
-            Doc doc = new Doc();
+            try {
+                // Create the Doc object
+                Doc doc = new Doc();
 
-            // File
-            doc.getFile().setFilename(filename);
-            doc.getFile().setLastModified(lastmodified);
-            doc.getFile().setIndexingDate(Instant.now());
-            doc.getFile().setUrl("file://" + (new File(filepath, filename)).toString());
-            if (fsSettings.getFs().isAddFilesize()) {
-                doc.getFile().setFilesize(size);
-            }
-            // File
-
-            // Path
-            doc.getPath().setEncoded(SignTool.sign(filepath));
-            doc.getPath().setRoot(stats.getRootPathId());
-            doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats, filepath));
-            doc.getPath().setReal((new File(filepath, filename)).toString());
-            // Path
-
-            // Attributes
-            if (fsSettings.getFs().isAttributesSupport()) {
-                doc.setAttributes(new Attributes());
-                doc.getAttributes().setOwner(fileAbstractModel.owner);
-                doc.getAttributes().setGroup(fileAbstractModel.group);
-            }
-            // Attributes
-
-            if (fsSettings.getFs().isIndexContent()) {
-                if (fsSettings.getFs().isJsonSupport()) {
-                    // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                    esIndex(fsSettings.getElasticsearch().getIndex(),
-                            fsSettings.getElasticsearch().getType(),
-                            generateIdFromFilename(filename, filepath),
-                            read(inputStream));
-                    return;
-                } else if (fsSettings.getFs().isXmlSupport()) {
-                    // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                    esIndex(fsSettings.getElasticsearch().getIndex(),
-                            fsSettings.getElasticsearch().getType(),
-                            generateIdFromFilename(filename, filepath),
-                            XmlDocParser.generate(inputStream));
-                    return;
-                } else {
-                    // Extracting content with Tika
-                    generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
+                // File
+                doc.getFile().setFilename(filename);
+                doc.getFile().setLastModified(lastmodified);
+                doc.getFile().setIndexingDate(Instant.now());
+                doc.getFile().setUrl("file://" + (new File(filepath, filename)).toString());
+                if (fsSettings.getFs().isAddFilesize()) {
+                    doc.getFile().setFilesize(size);
                 }
-            }
+                // File
 
-            // We index
-            esIndex(fsSettings.getElasticsearch().getIndex(),
-                    fsSettings.getElasticsearch().getType(),
-                    SignTool.sign((new File(filepath, filename)).toString()),
-                    doc);
+                // Path
+                doc.getPath().setEncoded(SignTool.sign(filepath));
+                doc.getPath().setRoot(stats.getRootPathId());
+                doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats, filepath));
+                doc.getPath().setReal((new File(filepath, filename)).toString());
+                // Path
+
+                // Attributes
+                if (fsSettings.getFs().isAttributesSupport()) {
+                    doc.setAttributes(new Attributes());
+                    doc.getAttributes().setOwner(fileAbstractModel.owner);
+                    doc.getAttributes().setGroup(fileAbstractModel.group);
+                }
+                // Attributes
+
+                if (fsSettings.getFs().isIndexContent()) {
+                    if (fsSettings.getFs().isJsonSupport()) {
+                        // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                        esIndex(fsSettings.getElasticsearch().getIndex(),
+                                fsSettings.getElasticsearch().getType(),
+                                generateIdFromFilename(filename, filepath),
+                                read(inputStream));
+                        return;
+                    } else if (fsSettings.getFs().isXmlSupport()) {
+                        // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
+                        esIndex(fsSettings.getElasticsearch().getIndex(),
+                                fsSettings.getElasticsearch().getType(),
+                                generateIdFromFilename(filename, filepath),
+                                XmlDocParser.generate(inputStream));
+                        return;
+                    } else {
+                        // Extracting content with Tika
+                        generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
+                    }
+                }
+
+                // We index
+                esIndex(fsSettings.getElasticsearch().getIndex(),
+                        fsSettings.getElasticsearch().getType(),
+                        SignTool.sign((new File(filepath, filename)).toString()),
+                        doc);
+            } finally {
+                // Let's close the stream
+                inputStream.close();
+            }
         }
 
         private String generateIdFromFilename(String filename, String filepath) throws NoSuchAlgorithmException {
