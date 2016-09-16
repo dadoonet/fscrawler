@@ -165,6 +165,14 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         runSearch("test.wav");
     }
 
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/229
+     */
+    @Test
+    public void testProtectedDocument229() throws IOException {
+        runSearch("test-protected.docx");
+    }
+
     private SearchResponse runSearch(String filename) throws IOException {
         return runSearch(filename, null);
     }
