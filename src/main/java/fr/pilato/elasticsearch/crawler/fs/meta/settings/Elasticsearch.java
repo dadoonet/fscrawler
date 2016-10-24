@@ -260,7 +260,7 @@ public class Elasticsearch {
         if (index != null ? !index.equals(that.index) : that.index != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
         if (username != null ? !username.equals(that.username) : that.username != null) return false;
-        if (username != null ? !username.equals(that.username) : that.username != null) return false;
+        if (password != null ? !password.equals(that.password) : that.password != null) return false;
         return !(flushInterval != null ? !flushInterval.equals(that.flushInterval) : that.flushInterval != null);
 
     }
