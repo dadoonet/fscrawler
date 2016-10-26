@@ -258,7 +258,7 @@ public class ElasticsearchClient {
             }
             params.put(FIELDS, String.join(",", (CharSequence[]) searchRequest.getFields()));
         }
-
+        params.put("size", searchRequest.getSize().toString());
         Response restResponse = client.performRequest("GET", path, params);
         SearchResponse searchResponse = JsonUtil.deserialize(restResponse, SearchResponse.class);
 
