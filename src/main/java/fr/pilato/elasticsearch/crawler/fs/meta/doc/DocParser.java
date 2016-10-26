@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class DocParser extends MetaParser {
 
@@ -32,5 +33,8 @@ public class DocParser extends MetaParser {
 
     public static Doc fromJson(String json) throws IOException {
         return prettyMapper.readValue(json, Doc.class);
+    }
+    public static Map fromJsonToMap(String json) throws IOException {
+        return prettyMapper.readValue(json, Map.class);
     }
 }

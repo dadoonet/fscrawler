@@ -110,6 +110,10 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     }
 
     @Test
+    public void testJson() throws IOException {
+        runSearch("test.json", "json");
+    }
+    @Test
     public void testExtractFromDoc() throws IOException {
         runSearch("test.doc", "sample");
     }

@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.doc;
 
+import java.util.Map;
+
 /**
  * Represents a document we indexed
  */
@@ -29,12 +31,16 @@ public class Doc {
     private File file;
     private Path path;
     private Attributes attributes;
+    private Map jsonContent;
 
     public Doc() {
         meta = new Meta();
         file = new File();
         path = new Path();
     }
+
+    public Map getJsonContent(){return jsonContent;}
+    public void setJsonContent(Map newObject ) { this.jsonContent = newObject; }
 
     public String getContent() {
         return content;

@@ -171,14 +171,12 @@ public class FsCrawlerImpl {
         try {
             // If needed, we create the new mapping for files
             Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
-            if (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport()) {
-                // Read file mapping from resources
-                String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
-                ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
+            // Read file mapping from resources
+            String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
+            ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
                         mapping, updateMapping);
-            }
             // If needed, we create the new mapping for folders
-            String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
+            mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
             ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     mapping, updateMapping);
         } catch (Exception e) {
@@ -556,7 +554,19 @@ public class FsCrawlerImpl {
             try {
                 // Create the Doc object
                 Doc doc = new Doc();
-
+                String id = SignTool.sign((new File(filepath, filename)).toString());
+                if (fsSettings.getFs().isIndexContent()) {
+                    if (fsSettings.getFs().isJsonSupport()) {
+                        // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                        doc.setJsonContent(DocParser.fromJsonToMap(read(inputStream)));
+                    } else if (fsSettings.getFs().isXmlSupport()) {
+                        // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
+                        doc.setJsonContent(XmlDocParser.generateMap(inputStream));
+                    } else {
+                        // Extracting content with Tika
+                        generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
+                    }
+                }
                 // File
                 doc.getFile().setFilename(filename);
                 doc.getFile().setLastModified(lastmodified);
@@ -582,33 +592,18 @@ public class FsCrawlerImpl {
                 }
                 // Attributes
 
-                if (fsSettings.getFs().isIndexContent()) {
-                    if (fsSettings.getFs().isJsonSupport()) {
-                        // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                        esIndex(fsSettings.getElasticsearch().getIndex(),
-                                fsSettings.getElasticsearch().getType(),
-                                generateIdFromFilename(filename, filepath),
-                                read(inputStream));
-                        return;
-                    } else if (fsSettings.getFs().isXmlSupport()) {
-                        // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                        esIndex(fsSettings.getElasticsearch().getIndex(),
-                                fsSettings.getElasticsearch().getType(),
-                                generateIdFromFilename(filename, filepath),
-                                XmlDocParser.generate(inputStream));
-                        return;
-                    } else {
-                        // Extracting content with Tika
-                        generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
-                    }
-                }
 
                 // We index
                 esIndex(fsSettings.getElasticsearch().getIndex(),
                         fsSettings.getElasticsearch().getType(),
-                        SignTool.sign((new File(filepath, filename)).toString()),
+                        id,
                         doc);
-            } finally {
+
+            }
+            catch (Exception e){
+                System.out.println(e.getStackTrace().toString());
+            }
+            finally {
                 // Let's close the stream
                 inputStream.close();
             }
