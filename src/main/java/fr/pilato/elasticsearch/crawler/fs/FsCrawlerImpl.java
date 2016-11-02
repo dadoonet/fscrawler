@@ -554,7 +554,13 @@ public class FsCrawlerImpl {
             try {
                 // Create the Doc object
                 Doc doc = new Doc();
-                String id = SignTool.sign((new File(filepath, filename)).toString());
+                String docId = new String();
+                if(fsSettings.getFs().isFilenameAsId()){
+                    docId = generateIdFromFilename(filename, filepath);
+                } else {
+                    docId = SignTool.sign((new File(filepath, filename)).toString());
+                }
+
                 if (fsSettings.getFs().isIndexContent()) {
                     if (fsSettings.getFs().isJsonSupport()) {
                         // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
@@ -596,7 +602,7 @@ public class FsCrawlerImpl {
                 // We index
                 esIndex(fsSettings.getElasticsearch().getIndex(),
                         fsSettings.getElasticsearch().getType(),
-                        id,
+                        docId,
                         doc);
 
             }
