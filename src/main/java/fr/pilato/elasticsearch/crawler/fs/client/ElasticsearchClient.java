@@ -52,6 +52,7 @@ public class ElasticsearchClient {
 
     private final RestClient client;
     private String FIELDS = null;
+    private Integer defaultSearchSize = 10;
 
     private ElasticsearchClient(List<Node> nodes, String username, String password) {
         List<HttpHost> hosts = new ArrayList<>(nodes.size());
@@ -220,7 +221,7 @@ public class ElasticsearchClient {
     }
 
     public SearchResponse search(String index, String type, String query) throws IOException {
-        return search(index, type, query, null, null);
+        return search(index, type, query, defaultSearchSize, null);
     }
 
     public SearchResponse search(String index, String type, String query, Integer size, String field) throws IOException {

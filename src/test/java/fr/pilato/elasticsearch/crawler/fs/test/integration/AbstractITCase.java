@@ -196,6 +196,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 sr.setFields(fields);
             }
 
+            sr.setSize(0);
+
             try {
                 response[0] = elasticsearchClient.search(indexName, FsCrawlerUtil.INDEX_TYPE_DOC, sr.build());
             } catch (IOException e) {
