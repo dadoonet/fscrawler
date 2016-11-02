@@ -410,7 +410,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "text:tweet");
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "json_content.text:tweet");
                 return response.getHits().getTotal() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
@@ -755,8 +755,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         SearchResponse response = countTestHelper(getCrawlerName(), null, 3);
 
-        countTestHelper(getCrawlerName(), "title:maeve", 1);
-        countTestHelper(getCrawlerName(), "price:[5 TO 6]", 2);
+        countTestHelper(getCrawlerName(), "json_content.title:maeve", 1);
+        countTestHelper(getCrawlerName(), "json_content.price:[5 TO 6]", 2);
+
 
         logger.info("XML documents converted to:");
         for (SearchResponse.Hit hit : response.getHits().getHits()) {
