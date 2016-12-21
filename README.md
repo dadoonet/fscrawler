@@ -368,7 +368,7 @@ and run FS crawler on this mount point. You can also read details about
 
 # Supported formats
 
-FS crawler supports all formats [Tika version 1.13 supports](http://tika.apache.org/1.13/formats.html#Supported_Document_Formats), like:
+FS crawler supports all formats [Tika version 1.14 supports](http://tika.apache.org/1.14/formats.html#Supported_Document_Formats), like:
 
 * HTML
 * Microsoft Office

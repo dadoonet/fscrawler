@@ -295,8 +295,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
         Doc doc = extractFromFileExtension("odt");
 
         // Extracted content
-        // TODO Fix when issue https://issues.apache.org/jira/browse/TIKA-2030 will be resolved
-        assertThat(doc.getContent(), containsString("This isa sample text available in page"));
+        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
 
         // Content Type
         assertThat(doc.getFile().getContentType(), is("application/vnd.oasis.opendocument.text"));

@@ -24,7 +24,7 @@
         <!-- Don't depend on elasticsearch.version here as it will fail with 1.x and 2.x series -->
         <elasticsearch.client.version>5.0.0</elasticsearch.client.version>
 
-        <tika.version>1.13</tika.version>
+        <tika.version>1.14</tika.version>
         <jackson.version>2.8.1</jackson.version>
         <log4j.version>2.6.2</log4j.version>
 
