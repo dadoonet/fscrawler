@@ -40,6 +40,8 @@
         <integ.transport.port>9500</integ.transport.port>
         <elasticsearch.security.artifact>x-pack</elasticsearch.security.artifact>
         <elasticsearch.security.version>${elasticsearch.version}</elasticsearch.security.version>
+        <integ.security.username>elastic</integ.security.username>
+        <integ.security.password>changeme</integ.security.password>
 
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
