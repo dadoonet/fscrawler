@@ -366,6 +366,18 @@ There is no specific support for HDFS in FS crawler. But you can [mount your HDF
 and run FS crawler on this mount point. You can also read details about
 [HDFS NFS Gateway](http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsNfsGateway.html).
 
+# Supported formats
+
+FS crawler supports all formats [Tika version 1.13 supports](http://tika.apache.org/1.13/formats.html#Supported_Document_Formats), like:
+
+* HTML
+* Microsoft Office
+* Open Office
+* PDF
+* Images
+* MP3
+* ...
+
 
 # Searching for docs
 
