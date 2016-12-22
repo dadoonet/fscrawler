@@ -119,11 +119,11 @@ public class TikaDocParser {
         // File
 
         // Meta
-        doc.getMeta().setAuthor(metadata.get(Office.AUTHOR));
+        doc.getMeta().setAuthor(metadata.get(TikaCoreProperties.CREATOR));
         doc.getMeta().setTitle(metadata.get(TikaCoreProperties.TITLE));
         // TODO Fix that as the date we get from Tika might be not parseable as a Date
         // doc.getMeta().setDate(metadata.get(Metadata.DATE));
-        doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(MSOffice.KEYWORDS)));
+        doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(TikaCoreProperties.KEYWORDS)));
 
         if (fsSettings.getFs().isRawMetadata()) {
             logger.trace("Listing all available metadata:");
