@@ -35,6 +35,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -123,11 +124,12 @@ public class TikaDocParser {
         doc.getMeta().setTitle(metadata.get(TikaCoreProperties.TITLE));
         String sDate = metadata.get(TikaCoreProperties.MODIFIED);
         if (sDate != null) {
-            LocalDateTime date = LocalDateTime.parse(sDate, DateTimeFormatter.ISO_DATE_TIME);
-
-            logger.error("{}", date);
-            doc.getMeta().setDate(date);
-
+            try {
+                LocalDateTime date = LocalDateTime.parse(sDate, DateTimeFormatter.ISO_DATE_TIME);
+                doc.getMeta().setDate(date);
+            } catch (DateTimeParseException e) {
+                logger.warn("Can not parse date [{}] for [{}]. Skipping date field...", sDate, filename);
+            }
         }
         doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(TikaCoreProperties.KEYWORDS)));
 
