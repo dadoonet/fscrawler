@@ -4,6 +4,8 @@
          xmlns:unless="ant:unless"
          xmlns:ac="antlib:net.sf.antcontrib">
 
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+
     <!-- our pid file for easy cleanup -->
     <property name="integ.pidfile" location="${project.build.directory}/integration-tests/run/es.pid"/>
 
@@ -99,6 +101,23 @@
             <get src="http://127.0.0.1:@{port}/" dest="${temp.file}"
                  username="@{username}" password="@{password}" verbose="true" retries="10" ignoreerrors="true"/>
             <echo>We can access http://127.0.0.1:@{port}/...</echo>
+        </sequential>
+    </macrodef>
+
+    <!-- waits for elasticsearch to stop -->
+    <macrodef name="waitfor-elasticsearch-stops">
+        <attribute name="port"/>
+        <attribute name="timeoutproperty"/>
+        <sequential>
+            <waitfor maxwait="10" maxwaitunit="second"
+                     checkevery="500" checkeveryunit="millisecond"
+                     timeoutproperty="@{timeoutproperty}">
+                <not>
+                    <socket server="127.0.0.1" port="@{port}"/>
+                </not>
+            </waitfor>
+            <echo unless:set="@{timeoutproperty}"
+                  message="Elasticsearch is not running anymore on port @{port}..."/>
         </sequential>
     </macrodef>
 
@@ -240,8 +259,6 @@
         </sequential>
     </macrodef>
 
-    <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
-
     <macrodef name="convert-plugin-name">
         <attribute name="file"/>
         <attribute name="outputproperty"/>
@@ -254,6 +271,11 @@
 
     <target name="stop-external-cluster" if="integ.pidfile.exists">
         <stop-node/>
+
+        <!-- wait for shutdown -->
+        <local name="failed.to.stop"/>
+        <waitfor-elasticsearch-stops port="9400" timeoutproperty="failed.to.stop" />
+        <fail message="ES instance did not stop" if="failed.to.stop"/>
     </target>
 
     <target name="setup-workspace" depends="stop-external-cluster">
