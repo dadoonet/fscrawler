@@ -177,12 +177,31 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      */
     public static SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
                                                  final String... fields) throws Exception {
+        return countTestHelper(indexName, query, expected, path, TimeValue.timeValueSeconds(20), fields);
+    }
+
+    /**
+     * Check that we have the expected number of docs or at least one if expected is null
+     *
+     * @param indexName Index we will search in.
+     * @param query     QueryString query, like foo:bar. MatchAll if null.
+     * @param expected  expected number of docs. Null if at least 1.
+     * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
+     * @param timeout   Time before we declare a failure
+     * @param fields    If we want to add some fields within the response
+     * @return the search response if further tests are needed
+     * @throws Exception
+     */
+    public static SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
+                                                 final TimeValue timeout,
+                                                 final String... fields) throws Exception {
 
         final SearchResponse[] response = new SearchResponse[1];
 
-        // We wait up to 5 seconds before considering a failing test
-        staticLogger.info("  ---> Waiting up to 20 seconds for {} documents in index {}", expected == null ? "some" : expected, indexName);
-        assertThat("We waited for 20 seconds but no document has been added", awaitBusy(() -> {
+        // We wait before considering a failing test
+        staticLogger.info("  ---> Waiting up to {} seconds for {} documents in index {}", timeout.toString(),
+                expected == null ? "some" : expected, indexName);
+        assertThat("We waited for " + timeout.toString() + " but no document has been added", awaitBusy(() -> {
             long totalHits;
 
             // Let's search for entries
@@ -228,7 +247,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     return false;
                 }
             }
-        }, 20, TimeUnit.SECONDS), equalTo(true));
+        }, timeout.millis(), TimeUnit.MILLISECONDS), equalTo(true));
 
         return response[0];
     }

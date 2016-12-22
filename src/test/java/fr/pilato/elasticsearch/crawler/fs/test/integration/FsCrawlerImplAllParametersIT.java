@@ -212,7 +212,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "*");
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Object content = hit.getFields().get(FsCrawlerUtil.Doc.CONTENT);
             Object indexedChars = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS);
@@ -235,7 +235,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "*");
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Object content = hit.getFields().get(FsCrawlerUtil.Doc.CONTENT);
             Object indexedChars = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS);
@@ -255,7 +255,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "*");
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Object content = hit.getFields().get(FsCrawlerUtil.Doc.CONTENT);
             assertThat(content, notNullValue());
@@ -294,7 +294,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_default_metadata() throws Exception {
         startCrawler();
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "*");
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
 
@@ -316,7 +316,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setAttributesSupport(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "attributes.owner");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "attributes.owner");
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTRIBUTES + "." + FsCrawlerUtil.Doc.Attributes.OWNER), notNullValue());
         }
@@ -485,7 +485,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "_source", "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "_source", "*");
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             // We check that the field has been stored
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), notNullValue());
@@ -499,7 +499,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_do_not_store_source() throws Exception {
         startCrawler();
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null, "_source", "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "_source", "*");
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             // We check that the field has not been stored
             assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
@@ -682,7 +682,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setChecksum("MD5")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null,
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null,
                 FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Object checksum = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
@@ -703,7 +703,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setChecksum("SHA-1")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, null,
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null,
                 FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Object checksum = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);

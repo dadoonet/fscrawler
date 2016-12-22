@@ -89,7 +89,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         crawler.start();
 
         // We wait until we have all docs
-        countTestHelper("fscrawler_test_all_documents", null, numFiles.intValue(), null);
+        countTestHelper("fscrawler_test_all_documents", null, numFiles.intValue(), null, TimeValue.timeValueMinutes(1));
     }
 
     @AfterClass
