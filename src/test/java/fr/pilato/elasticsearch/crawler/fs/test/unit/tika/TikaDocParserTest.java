@@ -40,12 +40,49 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 
 public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
+
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/221
+     */
+    @Test
+    public void testPdfIssue221() throws IOException {
+        // We test document 1
+        Doc doc = extractFromFile("issue-221-doc1.pdf");
+
+        // Extracted content
+        assertThat(doc.getContent(), containsString("Formations"));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), containsString("application/pdf"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is(notNullValue()));
+        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), not(emptyIterable()));
+        assertThat(doc.getMeta().getTitle(), containsString("Recherche"));
+
+        // We test document 2
+        doc = extractFromFile("issue-221-doc2.pdf");
+
+        // Extracted content
+        assertThat(doc.getContent(), containsString("FORMATIONS"));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), containsString("application/pdf"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+    }
 
     /**
      * Test case for https://github.com/dadoonet/fscrawler/issues/163

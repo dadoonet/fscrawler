@@ -173,6 +173,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         runSearch("test-protected.docx");
     }
 
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/221
+     */
+    @Test
+    public void testProtectedDocument221() throws IOException {
+        runSearch("issue-221-doc1.pdf", "Formations");
+        runSearch("issue-221-doc2.pdf", "FORMATIONS");
+    }
+
     private SearchResponse runSearch(String filename) throws IOException {
         return runSearch(filename, null);
     }
