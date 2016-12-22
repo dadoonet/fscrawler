@@ -25,9 +25,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tika.metadata.MSOffice;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.Office;
 import org.apache.tika.metadata.TikaCoreProperties;
 
 import java.io.ByteArrayOutputStream;
@@ -35,6 +33,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -121,8 +121,14 @@ public class TikaDocParser {
         // Meta
         doc.getMeta().setAuthor(metadata.get(TikaCoreProperties.CREATOR));
         doc.getMeta().setTitle(metadata.get(TikaCoreProperties.TITLE));
-        // TODO Fix that as the date we get from Tika might be not parseable as a Date
-        // doc.getMeta().setDate(metadata.get(Metadata.DATE));
+        String sDate = metadata.get(TikaCoreProperties.MODIFIED);
+        if (sDate != null) {
+            LocalDateTime date = LocalDateTime.parse(sDate, DateTimeFormatter.ISO_DATE_TIME);
+
+            logger.error("{}", date);
+            doc.getMeta().setDate(date);
+
+        }
         doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(TikaCoreProperties.KEYWORDS)));
 
         if (fsSettings.getFs().isRawMetadata()) {

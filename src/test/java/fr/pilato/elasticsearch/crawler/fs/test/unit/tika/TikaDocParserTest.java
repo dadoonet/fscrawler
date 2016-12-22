@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -64,7 +65,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is(notNullValue()));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 9, 20, 9, 38, 56)));
         assertThat(doc.getMeta().getKeywords(), not(emptyIterable()));
         assertThat(doc.getMeta().getTitle(), containsString("Recherche"));
 
@@ -79,7 +80,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is(nullValue()));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 9, 19, 14, 29, 37)));
         assertThat(doc.getMeta().getKeywords(), emptyIterable());
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
     }
@@ -120,7 +121,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
         assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1"," keyword2"));
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
@@ -188,7 +189,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 7, 7, 8, 36, 0)));
         assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1"," keyword2"));
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
@@ -339,7 +340,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
         assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1", "  keyword2"));
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
@@ -400,7 +401,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 7, 7, 8, 37, 42)));
         assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1", " keyword2"));
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
