@@ -25,7 +25,10 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tika.metadata.MSOffice;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Office;
+import org.apache.tika.metadata.TikaCoreProperties;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -116,11 +119,11 @@ public class TikaDocParser {
         // File
 
         // Meta
-        doc.getMeta().setAuthor(metadata.get(Metadata.AUTHOR));
-        doc.getMeta().setTitle(metadata.get(Metadata.TITLE));
+        doc.getMeta().setAuthor(metadata.get(Office.AUTHOR));
+        doc.getMeta().setTitle(metadata.get(TikaCoreProperties.TITLE));
         // TODO Fix that as the date we get from Tika might be not parseable as a Date
         // doc.getMeta().setDate(metadata.get(Metadata.DATE));
-        doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(Metadata.KEYWORDS)));
+        doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(MSOffice.KEYWORDS)));
 
         if (fsSettings.getFs().isRawMetadata()) {
             logger.trace("Listing all available metadata:");
