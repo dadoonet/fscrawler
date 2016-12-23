@@ -1304,6 +1304,26 @@ mvn install -Pes-2x
 
 By default, it will run integration tests against elasticsearch 5.x series cluster.
 
+### Running tests against an external cluster
+
+By default, FS Crawler will run tests against a cluster running at `127.0.0.1` on port `9400`.
+It will detect if this cluster is secured with [X-Pack](https://www.elastic.co/downloads/x-pack) and if so, it
+will try to authenticate with user `elastic` and password `changeme`.
+
+But, if you want to run the test suite against another cluster, using other credentials, you can use the following
+system parameters:
+
+* `tests.cluster.host`: hostname or IP (defaults to `127.0.0.1`)
+* `tests.cluster.port`: port (defaults to `9400`)
+* `tests.cluster.user`: username (defaults to `elastic`)
+* `tests.cluster.pass`: password (defaults to `changeme`)
+
+For example, if you have a cluster running on [Elastic Cloud](https://cloud.elastic.co/), you can use:
+
+```sh
+mvn clean install -Dtests.cluster.host=CLUSTERID.eu-west-1.aws.found.io -Dtests.cluster.port=9200 -Dtests.cluster.user=elastic -Dtests.cluster.pass=GENERATEDPASSWORD
+```
+
 ### Randomized testing
 
 FS Crawler uses [Randomized testing framework](https://github.com/randomizedtesting/randomizedtesting).
