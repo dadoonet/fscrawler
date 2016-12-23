@@ -150,6 +150,25 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    public void testParseSettingsElasticsearchTwoNodesWithHttps() throws IOException {
+        settingsTester(
+                FsSettings.builder(getCurrentTestName())
+                        .setElasticsearch(Elasticsearch.builder()
+                                .addNode(Elasticsearch.Node.builder()
+                                        .setHost("127.0.0.1")
+                                        .setPort(9200)
+                                        .build())
+                                .addNode(Elasticsearch.Node.builder()
+                                        .setHost("localhost")
+                                        .setPort(9243)
+                                        .setScheme(Elasticsearch.Node.Scheme.HTTPS)
+                                        .build())
+                                .build())
+                        .build()
+        );
+    }
+
+    @Test
     public void testParseSettingsElasticsearchIndexSettings() throws IOException {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())

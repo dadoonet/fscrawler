@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Simple Elasticsearch client over HTTP.
+ * Simple Elasticsearch client over HTTP or HTTPS.
  * Only needed methods are exposed.
  */
 public class ElasticsearchClient {
@@ -56,7 +56,7 @@ public class ElasticsearchClient {
     private ElasticsearchClient(List<Node> nodes, String username, String password) {
         List<HttpHost> hosts = new ArrayList<>(nodes.size());
         for (Node node : nodes) {
-            hosts.add(new HttpHost(node.getHost(), node.getPort()));
+            hosts.add(new HttpHost(node.getHost(), node.getPort(), node.getScheme().toLowerCase()));
         }
         RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
 

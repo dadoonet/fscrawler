@@ -65,6 +65,10 @@ import static org.junit.Assume.assumeThat;
  *
  * mvn clean install -Dtests.cluster.host=127.0.0.1 -Dtests.cluster.port=9400
  *
+ * You can choose running against http or https with tests.cluster.scheme (defaults to HTTP):
+ *
+ * mvn clean install -Dtests.cluster.scheme=HTTPS
+ *
  * If the cluster is running with x-pack and using the default username and passwords
  * of x-pack, tests can be run as well. You can overwrite default username and password
  * with tests.cluster.user and tests.cluster.password
@@ -86,11 +90,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     final static int testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
     final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
     final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    final static Elasticsearch.Node.Scheme testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
 
     @BeforeClass
     public static void startRestClient() throws IOException {
         elasticsearchClient = ElasticsearchClient.builder()
-                .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).build())
+                .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
                 .build();
 
         securityInstalled = testClusterRunning(false);
@@ -103,7 +108,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
 
             elasticsearchClient = ElasticsearchClient.builder()
-                    .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).build())
+                    .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
                     .setUsername(testClusterUser)
                     .setPassword(testClusterPass)
                     .build();
@@ -153,7 +158,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static Elasticsearch generateElasticsearchConfig(String indexName, boolean securityInstalled, int bulkSize,
                                                                TimeValue timeValue) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
-                .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).build())
+                .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
                 .setBulkSize(bulkSize)
                 .setFlushInterval(timeValue);
 

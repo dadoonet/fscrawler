@@ -166,7 +166,8 @@ The job file must comply to the following `json` specifications:
   "elasticsearch" : {
     "nodes" : [ {
       "host" : "127.0.0.1",
-      "port" : 9200
+      "port" : 9200,
+      "scheme" : "HTTP"
     } ],
     "index" : "docs",
     "type" : "doc",
@@ -209,7 +210,7 @@ Here is a full list of existing settings:
 | `elasticsearch.type`             | `"doc"`       | [Type Name](#type-name)                                                           |
 | `elasticsearch.bulk_size`        | `100`         | [Bulk settings](#bulk-settings)                                                   |
 | `elasticsearch.flush_interval`   | `"5s"`        | [Bulk settings](#bulk-settings)                                                   |
-| `elasticsearch.nodes`            |127.0.0.1:9200 | [Node settings](#node-settings)                                                   |
+| `elasticsearch.nodes`            |http://127.0.0.1:9200 | [Node settings](#node-settings)                                                   |
 | `elasticsearch.username`         | `null`        | [Credentials](#using-credentials) (from 2.2)                                      |
 | `elasticsearch.password`         | `null`        | [Credentials](#using-credentials) (from 2.2)                                      |
 
@@ -1182,7 +1183,7 @@ Of course, in production, you would probably change this and connect to a produc
   "name" : "test",
   "elasticsearch" : {
     "nodes" : [
-      { "host" : "mynode1.mycompany.com", "port" : 9200 }
+      { "host" : "mynode1.mycompany.com", "port" : 9200, "scheme" : "HTTP" }
     ]
   }
 }
@@ -1195,9 +1196,22 @@ You can define multiple nodes:
   "name" : "test",
   "elasticsearch" : {
     "nodes" : [
-      { "host" : "mynode1.mycompany.com", "port" : 9200 },
-      { "host" : "mynode2.mycompany.com", "port" : 9200 },
-      { "host" : "mynode3.mycompany.com", "port" : 9200 }
+      { "host" : "mynode1.mycompany.com", "port" : 9200, "scheme" : "HTTP" },
+      { "host" : "mynode2.mycompany.com", "port" : 9200, "scheme" : "HTTP" },
+      { "host" : "mynode3.mycompany.com", "port" : 9200, "scheme" : "HTTP" }
+    ]
+  }
+}
+```
+
+You can use HTTPS instead of default HTTP (from 2.2):
+
+```json
+{
+  "name" : "test",
+  "elasticsearch" : {
+    "nodes" : [
+      { "host" : "CLUSTERID.eu-west-1.aws.found.io", "port" : 9243, "scheme" : "HTTPS" }
     ]
   }
 }
@@ -1315,6 +1329,7 @@ system parameters:
 
 * `tests.cluster.host`: hostname or IP (defaults to `127.0.0.1`)
 * `tests.cluster.port`: port (defaults to `9400`)
+* `tests.cluster.scheme`: `HTTP` or `HTTPS` (defaults to `HTTP`)
 * `tests.cluster.user`: username (defaults to `elastic`)
 * `tests.cluster.pass`: password (defaults to `changeme`)
 
@@ -1323,6 +1338,13 @@ For example, if you have a cluster running on [Elastic Cloud](https://cloud.elas
 ```sh
 mvn clean install -Dtests.cluster.host=CLUSTERID.eu-west-1.aws.found.io -Dtests.cluster.port=9200 -Dtests.cluster.user=elastic -Dtests.cluster.pass=GENERATEDPASSWORD
 ```
+
+or better:
+
+```sh
+mvn clean install -Dtests.cluster.host=CLUSTERID.eu-west-1.aws.found.io -Dtests.cluster.port=9243 -Dtests.cluster.scheme=HTTPS -Dtests.cluster.user=elastic -Dtests.cluster.pass=GENERATEDPASSWORD
+```
+
 
 ### Randomized testing
 
@@ -1422,7 +1444,7 @@ You will be guided through all the steps.
 ```
 This software is licensed under the Apache 2 license, quoted below.
 
-Copyright 2011-2016 David Pilato
+Copyright 2011-2017 David Pilato
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
 use this file except in compliance with the License. You may obtain a copy of
