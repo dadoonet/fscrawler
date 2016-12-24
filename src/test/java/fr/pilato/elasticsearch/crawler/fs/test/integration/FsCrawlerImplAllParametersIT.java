@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
@@ -37,6 +38,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,6 +49,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -924,5 +927,24 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         countTestHelper(getCrawlerName(), null, 4, currentTestResourceDir);
     }
 
+    /**
+     * Test case for #155: https://github.com/dadoonet/fscrawler/issues/155 : New option: do not index folders
+     */
+    @Test
+    public void test_ignore_folders() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setIndexFolders(false)
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        // We expect to have two files
+        countTestHelper(getCrawlerName(), null, 2);
+
+        // We expect having no folders
+        SearchRequest.Builder sr = SearchRequest.builder();
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_FOLDER, sr.build());
+        staticLogger.trace("result {}", response.toString());
+        assertThat(response.getHits().getTotal(), is(0L));
+    }
 
 }

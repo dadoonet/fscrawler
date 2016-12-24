@@ -147,6 +147,7 @@ The job file must comply to the following `json` specifications:
     ],
     "json_support" : false,
     "xml_support" : false,
+    "ignore_folders" : false,
     "attributes_support" : false,
     "raw_metadata" : false,
     "filename_as_id" : false,
@@ -192,6 +193,7 @@ Here is a full list of existing settings:
 | `fs.excludes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
 | `fs.xml_support`                 | `false`       | [Indexing XML docs](#indexing-xml-docs) (from 2.2)                                |
+| `fs.ignore_folders`              | `false`       | [Ignore folders](#iignore-folders) (from 2.2)                                     |
 | `fs.attributes_support`          | `false`       | [Adding file attributes](#adding-file-attributes)                                 |
 | `fs.raw_metadata`                | `true`        | [Disabling raw metadata](#disabling-raw-metadata)                                 |
 | `fs.filename_as_id`              | `false`       | [Using Filename as `_id`](#using-filename-as-elasticsearch-_id)                   |
@@ -424,6 +426,23 @@ If you want to index XML files and convert them to JSON, you can set `xml_suppor
 ```
 
 Of course, if you did not define a mapping before launching the crawler, Elasticsearch will auto guess the mapping.
+
+# Ignore folders
+
+By default FS Crawler will index folder names in the index using a specific `folder` type.
+If you don't want to index those folders, you can set `ignore_folders` to `true`.
+
+Note that in that case, FS Crawler won't be able to detect removed folders so any document has been indexed
+in elasticsearch, it won't be removed when you remove or move the folder.
+
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "ignore_folders" : true
+  }
+}
+```
 
 ## Dealing with multiple types and multiple dirs
 

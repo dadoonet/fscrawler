@@ -178,9 +178,11 @@ public class FsCrawlerImpl {
                         mapping, updateMapping);
             }
             // If needed, we create the new mapping for folders
-            String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
-            ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
-                    mapping, updateMapping);
+            if (settings.getFs().isIndexFolders()) {
+                String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
+                ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
+                        mapping, updateMapping);
+            }
         } catch (Exception e) {
             logger.warn("failed to {} mapping for [{}/{}], disabling crawler...", updateMapping ? "update" : "create",
                     settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType());
@@ -282,7 +284,7 @@ public class FsCrawlerImpl {
 
                     // We only index the root directory once (first run)
                     // That means that we don't have a scanDate yet
-                    if (scanDate == null) {
+                    if (scanDate == null && fsSettings.getFs().isIndexFolders()) {
                         indexRootDirectory(fsSettings.getFs().getUrl());
                     }
 
@@ -407,8 +409,10 @@ public class FsCrawlerImpl {
                             }
                         } else if (child.directory) {
                             logger.debug("  - folder: {}", filename);
-                            fsFolders.add(filename);
-                            indexDirectory(stats, filename, child.fullpath.concat(File.separator));
+                            if (settings.getFs().isIndexFolders()) {
+                                fsFolders.add(filename);
+                                indexDirectory(stats, filename, child.fullpath.concat(File.separator));
+                            }
                             addFilesRecursively(path, child.fullpath.concat(File.separator), lastScanDate);
                         } else {
                             logger.debug("  - other: {}", filename);
@@ -443,16 +447,18 @@ public class FsCrawlerImpl {
                     }
                 }
 
-                logger.debug("Looking for removed directories in [{}]...", filepath);
-                Collection<String> esFolders = getFolderDirectory(filepath);
+                if (settings.getFs().isIndexFolders()) {
+                    logger.debug("Looking for removed directories in [{}]...", filepath);
+                    Collection<String> esFolders = getFolderDirectory(filepath);
 
-                // for the delete folder
-                for (String esfolder : esFolders) {
-                    if (FsCrawlerUtil.isIndexable(esfolder, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
-                        logger.trace("Checking directory [{}]", esfolder);
-                        if (!fsFolders.contains(esfolder)) {
-                            logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
-                            removeEsDirectoryRecursively(filepath, esfolder);
+                    // for the delete folder
+                    for (String esfolder : esFolders) {
+                        if (FsCrawlerUtil.isIndexable(esfolder, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
+                            logger.trace("Checking directory [{}]", esfolder);
+                            if (!fsFolders.contains(esfolder)) {
+                                logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
+                                removeEsDirectoryRecursively(filepath, esfolder);
+                            }
                         }
                     }
                 }

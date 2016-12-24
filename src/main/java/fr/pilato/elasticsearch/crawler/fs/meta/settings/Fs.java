@@ -38,6 +38,7 @@ public class Fs {
     private boolean rawMetadata;
     private boolean xmlSupport;
     private String checksum;
+    private boolean indexFolders;
 
     public static Builder builder() {
         return new Builder();
@@ -62,6 +63,7 @@ public class Fs {
         private boolean rawMetadata = true;
         private String checksum = null;
         private boolean xmlSupport = false;
+        private boolean indexFolders = true;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -164,10 +166,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setIndexFolders(boolean indexFolders) {
+            this.indexFolders = indexFolders;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport);
+                    checksum, xmlSupport, indexFolders);
         }
     }
 
@@ -177,7 +184,8 @@ public class Fs {
 
     Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
        boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean storeSource, Percentage indexedChars,
-       boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport) {
+       boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
+       boolean indexFolders) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -193,6 +201,7 @@ public class Fs {
         this.rawMetadata = rawMetadata;
         this.checksum = checksum;
         this.xmlSupport = xmlSupport;
+        this.indexFolders = indexFolders;
     }
 
     public String getUrl() {
@@ -315,6 +324,14 @@ public class Fs {
         this.xmlSupport = xmlSupport;
     }
 
+    public boolean isIndexFolders() {
+        return indexFolders;
+    }
+
+    public void setIndexFolders(boolean indexFolders) {
+        this.indexFolders = indexFolders;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -324,6 +341,7 @@ public class Fs {
 
         if (jsonSupport != fs.jsonSupport) return false;
         if (xmlSupport != fs.xmlSupport) return false;
+        if (indexFolders != fs.indexFolders) return false;
         if (filenameAsId != fs.filenameAsId) return false;
         if (addFilesize != fs.addFilesize) return false;
         if (removeDeleted != fs.removeDeleted) return false;
@@ -348,6 +366,7 @@ public class Fs {
         result = 31 * result + (excludes != null ? excludes.hashCode() : 0);
         result = 31 * result + (jsonSupport ? 1 : 0);
         result = 31 * result + (xmlSupport ? 1 : 0);
+        result = 31 * result + (indexFolders ? 1 : 0);
         result = 31 * result + (filenameAsId ? 1 : 0);
         result = 31 * result + (addFilesize ? 1 : 0);
         result = 31 * result + (removeDeleted ? 1 : 0);
