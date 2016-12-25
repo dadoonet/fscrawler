@@ -26,6 +26,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +43,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         model.name = file.getName();
         model.file = file.isFile();
         model.directory = !model.file;
-        model.lastModifiedDate = Instant.ofEpochMilli(file.lastModified());
+        model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault());
         model.creationDate = FsCrawlerUtil.getCreationTime(file);
         model.path = path;
         model.fullpath = file.getAbsolutePath();

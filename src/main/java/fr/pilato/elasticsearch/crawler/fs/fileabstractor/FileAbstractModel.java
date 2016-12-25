@@ -39,14 +39,14 @@
 package fr.pilato.elasticsearch.crawler.fs.fileabstractor;
 
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public class FileAbstractModel {
     public String name;
     public boolean file;
     public boolean directory;
-    public Instant lastModifiedDate;
-    public Instant creationDate;
+    public LocalDateTime lastModifiedDate;
+    public LocalDateTime creationDate;
     public String path;
     public String fullpath;
     public long size;

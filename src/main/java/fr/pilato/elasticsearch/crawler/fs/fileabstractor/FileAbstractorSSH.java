@@ -28,6 +28,8 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 
 import java.io.InputStream;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
@@ -47,7 +49,8 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         model.name = file.getFilename();
         model.directory = file.getAttrs().isDir();
         model.file = !model.directory;
-        model.lastModifiedDate = Instant.ofEpochMilli(file.getAttrs().getMTime());
+        // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
+        model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()), ZoneId.systemDefault());
         model.path = path;
         model.fullpath = model.path.concat("/").concat(model.name);
         model.size = file.getAttrs().getSize();

@@ -25,7 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -52,7 +52,7 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
         jobTester(
                 FsJob.builder()
                         .setName(getCurrentTestName())
-                        .setLastrun(Instant.now())
+                        .setLastrun(LocalDateTime.now())
                         .setIndexed(1000)
                         .setDeleted(5)
                         .build()
