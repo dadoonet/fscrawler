@@ -66,7 +66,10 @@ running instances.
 
 ## From 2.1
 
-* No specific instruction
+* fscrawler comes with new default mappings for files. They have better defaults as they consume less disk space
+and CPU at index time. You should remove existing files in `~/.fscrawler/_default/_mappings` before starting the new
+version so default mappings will be updated. If you modified manually mapping files, apply the modification you made
+on sample files.
 
 
 # Getting Started
@@ -756,101 +759,81 @@ The following example uses a `french` analyzer to index the `content` field.
     "attributes" : {
       "properties" : {
         "group" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "owner" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         }
       }
     },
     "content" : {
       "type" : "text",
-      "analyzer" : "french",
-      "store" : true
+      "analyzer" : "french"
     },
     "file" : {
       "properties" : {
         "content_type" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "filename" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "extension" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "filesize" : {
-          "type" : "long",
-          "store" : true
+          "type" : "long"
         },
         "indexed_chars" : {
-          "type" : "long",
-          "store" : true
+          "type" : "long"
         },
         "indexing_date" : {
           "type" : "date",
-          "store" : true,
           "format" : "dateOptionalTime"
         },
         "last_modified" : {
           "type" : "date",
-          "store" : true,
           "format" : "dateOptionalTime"
         },
         "checksum": {
-          "type": "keyword",
-          "store": true
+          "type": "keyword"
         },
         "url" : {
           "type" : "keyword",
-          "index" : false,
-          "store" : true
+          "index" : false
         }
       }
     },
     "meta" : {
       "properties" : {
         "author" : {
-          "type" : "text",
-          "store" : true
+          "type" : "text"
         },
         "date" : {
           "type" : "date",
-          "store" : true,
           "format" : "dateOptionalTime"
         },
         "keywords" : {
-          "type" : "text",
-          "store" : true
+          "type" : "text"
         },
         "title" : {
-          "type" : "text",
-          "store" : true
+          "type" : "text"
         }
       }
     },
     "path" : {
       "properties" : {
         "encoded" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "real" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "root" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "virtual" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         }
       }
     }
@@ -1043,54 +1026,16 @@ You can store in elasticsearch itself the binary document using `store_source` o
 }
 ```
 
-In that case, a new stored field named `attachment` is added to the generated JSon document.
-If you let FS crawler generates the mapping, FS crawler will exclude `attachment` field from
-`_source` to save some disk space.
-
-That means you need to ask for field `attachment` when querying:
-
-```
-GET mydocs/doc/_search
-{
-  "fields" : ["attachment", "_source"],
-  "query":{
-    "match_all" : {}
-  }
-}
-```
-
-Default generated mapping in this case is:
+In that case, a new field named `attachment` is added to the generated JSon document. This field is not indexed.
+Default mapping for `attachment` field is:
 
 ```json
-{
-  "doc" : {
-    "_source" : {
-      "excludes" : [ "attachment" ]
-    },
-    "properties" : {
-      "attachment" : {
-        "type" : "binary"
-      }
-      // ... Other properties here
-    }
-  }
-}
-```
-
-You can force not to store `attachment` field and keep `attachment` in `_source`:
-
-```
-# Create index
-PUT docs
-
-# Create the mapping
-PUT docs/doc/_mapping
 {
   "doc" : {
     "properties" : {
       "attachment" : {
         "type" : "binary",
-        "store" : "no"
+        "doc_values" : false
       }
       // ... Other properties here
     }

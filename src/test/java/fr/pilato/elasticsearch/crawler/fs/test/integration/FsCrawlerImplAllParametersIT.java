@@ -38,7 +38,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,13 +46,14 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -215,19 +215,16 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Object content = hit.getFields().get(FsCrawlerUtil.Doc.CONTENT);
-            Object indexedChars = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS);
+            Object content = hit.getSource().get(FsCrawlerUtil.Doc.CONTENT);
+            Object indexedChars = extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXED_CHARS);
             assertThat(content, notNullValue());
             assertThat(indexedChars, notNullValue());
 
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.CONTENT), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS), notNullValue());
-
-            // Our original text: "Bonjour David..." should be truncated
-            assertThat(((ArrayList<Object>) content).get(0), is("Novo de"));
-            assertThat(((ArrayList<Object>) indexedChars).get(0), is(7));
+            // Our original text should be truncated
+            assertThat(content, is("Novo de"));
+            assertThat(indexedChars, is(7));
         }
     }
 
@@ -238,16 +235,16 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Object content = hit.getFields().get(FsCrawlerUtil.Doc.CONTENT);
-            Object indexedChars = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS);
+            Object content = hit.getSource().get(FsCrawlerUtil.Doc.CONTENT);
+            Object indexedChars = extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXED_CHARS);
             assertThat(content, notNullValue());
             assertThat(indexedChars, notNullValue());
 
             // Our original text should be truncated
-            assertThat(((ArrayList<Object>) content).get(0), is("Novo denique"));
-            assertThat(((ArrayList<Object>) indexedChars).get(0), is(12));
+            assertThat(content, is("Novo denique"));
+            assertThat(indexedChars, is(12));
         }
     }
 
@@ -258,14 +255,15 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Object content = hit.getFields().get(FsCrawlerUtil.Doc.CONTENT);
+            Object content = hit.getSource().get(FsCrawlerUtil.Doc.CONTENT);
+            Object indexedChars = extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXED_CHARS);
             assertThat(content, notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS), nullValue());
+            assertThat(indexedChars, nullValue());
 
             // Our original text should not be truncated so we must have its end extracted
-            assertThat(((ArrayList<String>) content).get(0), containsString("haecque non diu sunt perpetrata."));
+            assertThat((String) content, containsString("haecque non diu sunt perpetrata."));
         }
     }
 
@@ -297,19 +295,19 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_default_metadata() throws Exception {
         startCrawler();
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
+            assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
 
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CONTENT_TYPE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.URL), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILESIZE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXING_DATE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXED_CHARS), nullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.LAST_MODIFIED), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.CONTENT_TYPE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.URL), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILESIZE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXING_DATE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXED_CHARS), nullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.LAST_MODIFIED), notNullValue());
 
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.TITLE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.META).get(FsCrawlerUtil.Doc.Meta.TITLE), notNullValue());
         }
     }
 
@@ -319,9 +317,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setAttributesSupport(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "attributes.owner");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTRIBUTES + "." + FsCrawlerUtil.Doc.Attributes.OWNER), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.ATTRIBUTES).get(FsCrawlerUtil.Doc.Attributes.OWNER), notNullValue());
         }
     }
 
@@ -488,13 +486,10 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "_source", "*");
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            // We check that the field has been stored
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), notNullValue());
-
-            // We check that the field is not part of _source
-            assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
+            // We check that the field is in _source
+            assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTACHMENT), notNullValue());
         }
     }
 
@@ -505,7 +500,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "_source", "*");
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             // We check that the field has not been stored
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
+            assertThat(hit.getFields(), nullValue());
 
             // We check that the field is not part of _source
             assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
@@ -685,12 +680,10 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setChecksum("MD5")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null,
-                FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Object checksum = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
-            assertThat(checksum, notNullValue());
-            assertThat(((ArrayList<Object>) checksum).get(0), is("caa71e1914ecbcf5ae4f46cf85de8648"));
+            Object checksum = extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.CHECKSUM);
+            assertThat(checksum, is("caa71e1914ecbcf5ae4f46cf85de8648"));
         }
     }
 
@@ -706,12 +699,10 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setChecksum("SHA-1")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null,
-                FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Object checksum = hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CHECKSUM);
-            assertThat(checksum, notNullValue());
-            assertThat(((ArrayList<Object>) checksum).get(0), is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
+            Object checksum = extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.CHECKSUM);
+            assertThat(checksum, is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
         }
     }
 
@@ -881,7 +872,14 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_fail_update_mapping() throws Exception {
         elasticsearchClient.createIndex(getCrawlerName());
         elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
-                "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : { } }");
+                "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : {\n" +
+                        "  \"properties\": {\n" +
+                        "    \"content\": {\n" +
+                        "      \"type\": \"date\"\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "}" +
+                        " }");
 
         Fs fs = startCrawlerDefinition().build();
 
@@ -947,4 +945,38 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat(response.getHits().getTotal(), is(0L));
     }
 
+
+    /**
+     * Test case for #183: https://github.com/dadoonet/fscrawler/issues/183 : Optimize document and folder mappings
+     * We want to make sure we can highlight documents even if we don't store fields
+     */
+    @Test
+    public void test_highlight_documents() throws Exception {
+        startCrawler();
+
+        // We expect to have two files
+        countTestHelper(getCrawlerName(), null, 1);
+
+        // Let's test highlighting
+        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
+                "{\n" +
+                        "  \"query\": {\n" +
+                        "    \"match\": {\n" +
+                        "      \"content\": \"exemplo\"\n" +
+                        "    }\n" +
+                        "  },\n" +
+                        "  \"highlight\": {\n" +
+                        "    \"fields\": {\n" +
+                        "      \"content\": {}\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "}");
+        staticLogger.trace("result {}", response.toString());
+        assertThat(response.getHits().getTotal(), is(1L));
+
+        SearchResponse.Hit hit = response.getHits().getHits().get(0);
+        assertThat(hit.getHighlight(), hasKey("content"));
+        assertThat(hit.getHighlight().get("content"), hasSize(1));
+        assertThat(hit.getHighlight().get("content").get(0), containsString("<em>exemplo</em>"));
+    }
 }

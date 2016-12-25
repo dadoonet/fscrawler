@@ -25,6 +25,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.logging.log4j.LogManager;
@@ -220,16 +221,11 @@ public class ElasticsearchClient {
     }
 
     public SearchResponse search(String index, String type, String query) throws IOException {
-        return search(index, type, query, null, null);
+        return search(index, type, query, null);
     }
 
-    public SearchResponse search(String index, String type, String query, Integer size, String field) throws IOException {
-        SearchRequest.Builder builder = SearchRequest.builder().setQuery(query).setSize(size);
-        if (field != null) {
-            builder.setFields(field);
-        }
-        SearchRequest request = builder.build();
-
+    public SearchResponse search(String index, String type, String query, Integer size, String... fields) throws IOException {
+        SearchRequest request = SearchRequest.builder().setQuery(query).setSize(size).setFields(fields).build();
         return search(index, type, request);
     }
 
@@ -262,6 +258,36 @@ public class ElasticsearchClient {
             params.put("size", searchRequest.getSize().toString());
         }
         Response restResponse = client.performRequest("GET", path, params);
+        SearchResponse searchResponse = JsonUtil.deserialize(restResponse, SearchResponse.class);
+
+        logger.trace("search response: {}", searchResponse);
+        return searchResponse;
+    }
+
+    /**
+     * Search with a JSON Body
+     * @param index Index. Might be null.
+     * @param type  Type. Might be null.
+     * @param json  Json Source
+     * @return The Response object
+     * @throws IOException if something goes wrong
+     */
+    public SearchResponse searchJson(String index, String type, String json) throws IOException {
+        logger.debug("search [{}]/[{}], request [{}]", index, type, json);
+
+        String path = "/";
+
+        if (index != null) {
+            path += index + "/";
+        }
+        if (type != null) {
+            path += type + "/";
+        }
+
+        path += "_search";
+
+        Response restResponse = client.performRequest("GET", path, Collections.emptyMap(),
+                new StringEntity(json, ContentType.APPLICATION_JSON));
         SearchResponse searchResponse = JsonUtil.deserialize(restResponse, SearchResponse.class);
 
         logger.trace("search response: {}", searchResponse);
@@ -350,7 +376,7 @@ public class ElasticsearchClient {
         return new Builder();
     }
 
-    private Map<String, Object> extractFromPath(Map<String, Object> json, String... path) {
+    public static Map<String, Object> extractFromPath(Map<String, Object> json, String... path) {
         Map<String, Object> currentObject = json;
         for (String fieldName : path) {
             Object jObject = currentObject.get(fieldName);

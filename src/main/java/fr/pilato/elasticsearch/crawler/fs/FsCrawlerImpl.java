@@ -60,6 +60,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator.validateSettings;
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 
@@ -482,7 +483,7 @@ public class FsCrawlerImpl {
                     fsSettings.getElasticsearch().getType(),
                     PATH_ENCODED + ":" + SignTool.sign(path),
                     REQUEST_SIZE, // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                    FILE_FILENAME
+                    "_source", FILE_FILENAME
             );
 
             logger.trace("Response [{}]", response.toString());
@@ -490,10 +491,11 @@ public class FsCrawlerImpl {
                 for (SearchResponse.Hit hit : response.getHits().getHits()) {
                     String name;
                     if (hit.getSource() != null
-                            && hit.getSource().get(FILE_FILENAME) != null) {
-                        name = getName(hit.getSource().get(FILE_FILENAME));
+                            && extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME) != null) {
+                        name = (String) extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME);
                     } else if (hit.getFields() != null
                             && hit.getFields().get(FILE_FILENAME) != null) {
+                        // In case someone disabled _source which is not recommended
                         name = getName(hit.getFields().get(FILE_FILENAME));
                     } else {
                         // Houston, we have a problem ! We can't get the old files from ES
@@ -532,8 +534,7 @@ public class FsCrawlerImpl {
                     fsSettings.getElasticsearch().getIndex(),
                     FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     PATH_ENCODED + ":" + SignTool.sign(path),
-                    REQUEST_SIZE, // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                    null
+                    REQUEST_SIZE // TODO: WHAT? DID I REALLY WROTE THAT? :p
             );
 
             if (response.getHits() != null
