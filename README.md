@@ -746,15 +746,10 @@ The following example uses a `french` analyzer to index the `content` field.
 
 ```json
 {
-  "_source" : {
-    "excludes" : [
-      "attachment"
-    ]
-  },
   "properties" : {
     "attachment" : {
       "type" : "binary",
-      "store" : true
+      "doc_values" : false
     },
     "attributes" : {
       "properties" : {
