@@ -47,6 +47,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -145,6 +146,11 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     private FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
+        return startCrawler(jobName, fs, elasticsearch, server, TimeValue.timeValueSeconds(10));
+    }
+
+    private FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, TimeValue duration)
+            throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
         // TODO do this rarely() createIndex(jobName);
@@ -152,7 +158,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).build());
         crawler.start();
 
-        // We wait up to 10 seconds before considering a failing test
+        // We wait up to X seconds before considering a failing test
         assertThat("Job meta file should exists in ~/.fscrawler...", awaitBusy(() -> {
             try {
                 new FsJobFileHandler(metadataDir).read(jobName);
@@ -160,7 +166,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             } catch (IOException e) {
                 return false;
             }
-        }), equalTo(true));
+        }, duration.seconds(), TimeUnit.SECONDS), equalTo(true));
 
         countTestHelper(jobName, null, null);
 
@@ -954,7 +960,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_highlight_documents() throws Exception {
         startCrawler();
 
-        // We expect to have two files
+        // We expect to have one file
         countTestHelper(getCrawlerName(), null, 1);
 
         // Let's test highlighting
@@ -978,5 +984,18 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat(hit.getHighlight(), hasKey("content"));
         assertThat(hit.getHighlight().get("content"), hasSize(1));
         assertThat(hit.getHighlight().get("content").get(0), containsString("<em>exemplo</em>"));
+    }
+
+    /**
+     * Test case for #230: https://github.com/dadoonet/fscrawler/issues/230 : Add support for compressed files
+     * It's a long job, so we let it run up to 2 minutes
+     */
+    @Test
+    public void test_zip() throws Exception {
+        startCrawler(getCrawlerName(), startCrawlerDefinition().build(), endCrawlerDefinition(getCrawlerName()), null,
+                TimeValue.timeValueMinutes(2));
+
+        // We expect to have one file
+        countTestHelper(getCrawlerName(), null, 1);
     }
 }
