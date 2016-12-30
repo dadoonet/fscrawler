@@ -8,7 +8,7 @@ install: true
 script:
 # Let's skip for now branch 1.x
 #  - mvn -B clean verify -Pes-1x
-  - mvn -B clean verify -Pes-2x-travis
+#  - mvn -B clean verify -Pes-2x-travis
   - mvn -B clean verify
   - "[[ ${TRAVIS_PULL_REQUEST} == 'false' ]] && [[ ${TRAVIS_TAG} == '' ]] && mvn deploy -DskipTests --settings deploy-settings.xml"
 #after_success:
