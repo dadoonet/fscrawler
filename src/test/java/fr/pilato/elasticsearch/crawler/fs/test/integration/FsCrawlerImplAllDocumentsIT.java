@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
@@ -198,7 +199,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         if (content != null) {
             fullQuery += " +content:" + content;
         }
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, fullQuery, null, null);
+        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, fullQuery, ElasticsearchClient.defaultSearchSize, null);
         assertThat(response.getHits().getTotal(), is(1L));
         return response;
     }

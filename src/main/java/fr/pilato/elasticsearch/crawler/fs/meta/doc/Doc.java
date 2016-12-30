@@ -39,8 +39,13 @@ public class Doc {
         path = new Path();
     }
 
-    public Map getJsonContent(){return jsonContent;}
-    public void setJsonContent(Map newObject ) { this.jsonContent = newObject; }
+    public Map getJsonContent() {
+        return jsonContent;
+    }
+
+    public void setJsonContent(Map newObject) {
+        this.jsonContent = newObject;
+    }
 
     public String getContent() {
         return content;

@@ -736,7 +736,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat("We should have 2 docs only...", awaitBusy(() -> {
             try {
                 SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
-                return response.getHits().getTotal() == 2;
+                return response.getHits().getTotal() == 3;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;

@@ -34,6 +34,7 @@ public class DocParser extends MetaParser {
     public static Doc fromJson(String json) throws IOException {
         return prettyMapper.readValue(json, Doc.class);
     }
+
     public static Map fromJsonToMap(String json) throws IOException {
         return prettyMapper.readValue(json, Map.class);
     }

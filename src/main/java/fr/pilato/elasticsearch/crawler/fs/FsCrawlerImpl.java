@@ -38,6 +38,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -175,10 +176,10 @@ public class FsCrawlerImpl {
             // Read file mapping from resources
             String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
             ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
-                        mapping, updateMapping);
+                    mapping, updateMapping);
             // If needed, we create the new mapping for folders
             if (settings.getFs().isIndexFolders()) {
-                String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
+                mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
                 ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
                         mapping, updateMapping);
             }
@@ -210,7 +211,7 @@ public class FsCrawlerImpl {
         logger.debug("Closing FS crawler [{}]", settings.getName());
         closed = true;
 
-        synchronized(semaphore) {
+        synchronized (semaphore) {
             semaphore.notify();
         }
 
@@ -337,7 +338,8 @@ public class FsCrawlerImpl {
 
         /**
          * Update the job metadata
-         * @param jobName job name
+         *
+         * @param jobName  job name
          * @param scanDate last date we scan the dirs
          * @throws Exception
          */
@@ -511,7 +513,7 @@ public class FsCrawlerImpl {
 
         private String getName(Object nameObject) {
             if (nameObject instanceof List) {
-                return String.valueOf (((List) nameObject).get(0));
+                return String.valueOf(((List) nameObject).get(0));
             }
 
             throw new RuntimeException("search result, " + nameObject +
@@ -561,18 +563,21 @@ public class FsCrawlerImpl {
             try {
                 // Create the Doc object
                 Doc doc = new Doc();
-                String docId = new String();
-                if(fsSettings.getFs().isFilenameAsId()){
+                String docId;
+                if (fsSettings.getFs().isFilenameAsId()) {
                     docId = generateIdFromFilename(filename, filepath);
                 } else {
                     docId = SignTool.sign((new File(filepath, filename)).toString());
                 }
 
                 if (fsSettings.getFs().isIndexContent()) {
-                    if (fsSettings.getFs().isJsonSupport()) {
+                    String fileExtension = FilenameUtils.getExtension(filename);
+                    if (fsSettings.getFs().isJsonSupport()
+                            && (fileExtension.equals("json") || fileExtension.equals("js"))) {
                         // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
                         doc.setJsonContent(DocParser.fromJsonToMap(read(inputStream)));
-                    } else if (fsSettings.getFs().isXmlSupport()) {
+                    } else if (fsSettings.getFs().isXmlSupport()
+                            && (fileExtension.equals("xml"))) {
                         // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
                         doc.setJsonContent(XmlDocParser.generateMap(inputStream));
                     } else {
@@ -612,11 +617,7 @@ public class FsCrawlerImpl {
                         docId,
                         doc);
 
-            }
-            catch (Exception e){
-                System.out.println(e.getStackTrace().toString());
-            }
-            finally {
+            } finally {
                 // Let's close the stream
                 inputStream.close();
             }
@@ -763,7 +764,7 @@ public class FsCrawlerImpl {
      *
      * @param str the CharSequence to check (may be <code>null</code>)
      * @return <code>true</code> if the CharSequence is not <code>null</code>,
-     *         its length is greater than 0, and it does not contain whitespace only
+     * its length is greater than 0, and it does not contain whitespace only
      * @see java.lang.Character#isWhitespace
      */
     public static boolean hasText(CharSequence str) {
