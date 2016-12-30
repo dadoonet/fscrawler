@@ -30,6 +30,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.ResponseException;
 import org.junit.After;
 import org.junit.Before;
@@ -38,6 +39,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,6 +48,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -59,6 +62,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeThat;
 
 /**
  * Test all crawler settings
@@ -997,5 +1001,42 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // We expect to have one file
         countTestHelper(getCrawlerName(), null, 1);
+    }
+
+    /**
+     * Test case for #234: https://github.com/dadoonet/fscrawler/issues/234 : Support ingest pipeline processing
+     */
+    @Test
+    public void test_ingest_pipeline() throws Exception {
+        String crawlerName = getCrawlerName();
+
+        // We can only run this test against a 5.0 cluster or >
+        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
+                elasticsearchClient.isIngestSupported(), is(true));
+
+        // Create an empty ingest pipeline
+        String pipeline = "{\n" +
+                "  \"description\" : \"describe pipeline\",\n" +
+                "  \"processors\" : [\n" +
+                "    {\n" +
+                "      \"rename\": {\n" +
+                "        \"field\": \"content\",\n" +
+                "        \"target_field\": \"my_content_field\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+        StringEntity entity = new StringEntity(pipeline, Charset.defaultCharset());
+
+        elasticsearchClient.getClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
+                Collections.emptyMap(), entity);
+
+        Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
+        elasticsearch.setPipeline(crawlerName);
+
+        startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+
+        // We expect to have one file
+        countTestHelper(crawlerName, "my_content_field:perniciosoque", 1);
     }
 }

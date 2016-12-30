@@ -42,8 +42,9 @@ public class BulkProcessor {
     private final ScheduledExecutorService executor;
     private volatile boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
+    private final String pipeline;
 
-    private BulkProcessor(ElasticsearchClient client, Listener listener, int bulkActions, TimeValue flushInterval) {
+    private BulkProcessor(ElasticsearchClient client, Listener listener, int bulkActions, TimeValue flushInterval, String pipeline) {
         this.bulkActions = bulkActions;
         this.bulkRequest = new BulkRequest();
         this.client = client;
@@ -55,6 +56,7 @@ public class BulkProcessor {
         } else {
             executor = null;
         }
+        this.pipeline = pipeline;
     }
 
     public void close() throws InterruptedException {
@@ -134,7 +136,7 @@ public class BulkProcessor {
         boolean afterCalled = false;
         try {
             listener.beforeBulk(executionId, bulkRequest);
-            BulkResponse bulkItemResponses = client.bulk(bulkRequest);
+            BulkResponse bulkItemResponses = client.bulk(bulkRequest, pipeline);
             afterCalled = true;
             listener.afterBulk(executionId, bulkRequest, bulkItemResponses);
         } catch (Exception e) {
@@ -154,6 +156,7 @@ public class BulkProcessor {
         private TimeValue flushInterval;
         private final ElasticsearchClient client;
         private final Listener listener;
+        private String pipeline = null;
 
         public Builder(ElasticsearchClient client, Listener listener) {
             this.client = client;
@@ -170,8 +173,13 @@ public class BulkProcessor {
             return this;
         }
 
+        public Builder setPipeline(String pipeline) {
+            this.pipeline = pipeline;
+            return this;
+        }
+
         public BulkProcessor build() {
-            return new BulkProcessor(client, listener, bulkActions, flushInterval);
+            return new BulkProcessor(client, listener, bulkActions, flushInterval, pipeline);
         }
     }
 
@@ -192,9 +200,10 @@ public class BulkProcessor {
      * @param client elasticsearch client
      * @param bulkSize bulk size
      * @param flushInterval flush interval in milliseconds
+     * @param pipeline Node Ingest Pipeline if any. Null otherwise.
      * @return a bulk processor
      */
-    public static BulkProcessor simpleBulkProcessor(ElasticsearchClient client, int bulkSize, TimeValue flushInterval) {
+    public static BulkProcessor simpleBulkProcessor(ElasticsearchClient client, int bulkSize, TimeValue flushInterval, String pipeline) {
         return builder(client, new Listener() {
             @Override
             public void beforeBulk(long executionId, BulkRequest request) {
@@ -225,6 +234,7 @@ public class BulkProcessor {
         })
                 .setBulkActions(bulkSize)
                 .setFlushInterval(flushInterval)
+                .setPipeline(pipeline)
                 .build();
     }
 }

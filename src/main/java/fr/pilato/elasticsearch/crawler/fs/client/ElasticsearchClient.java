@@ -53,6 +53,8 @@ public class ElasticsearchClient {
 
     private final RestClient client;
     private String FIELDS = null;
+    private boolean INGEST_SUPPORT = true;
+    private String VERSION = null;
 
     private ElasticsearchClient(List<Node> nodes, String username, String password) {
         List<HttpHost> hosts = new ArrayList<>(nodes.size());
@@ -97,7 +99,7 @@ public class ElasticsearchClient {
         }
     }
 
-    public BulkResponse bulk(BulkRequest bulkRequest) throws Exception {
+    public BulkResponse bulk(BulkRequest bulkRequest, String pipeline) throws Exception {
         StringBuffer sbf = new StringBuffer();
         for (SingleBulkRequest request : bulkRequest.getRequests()) {
             sbf.append("{");
@@ -115,8 +117,17 @@ public class ElasticsearchClient {
         logger.trace("going to send a bulk");
         logger.trace("{}", sbf);
 
+        Map<String, String> params;
+
+        if (pipeline != null) {
+            params = new HashMap<>(1);
+            params.put("pipeline", pipeline);
+        } else {
+            params = Collections.emptyMap();
+        }
+
         StringEntity entity = new StringEntity(sbf.toString(), Charset.defaultCharset());
-        Response restResponse = client.performRequest("POST", "/_bulk", Collections.emptyMap(), entity);
+        Response restResponse = client.performRequest("POST", "/_bulk", params, entity);
         BulkResponse response = JsonUtil.deserialize(restResponse, BulkResponse.class);
         logger.debug("bulk response: {}", response);
         return response;
@@ -248,10 +259,6 @@ public class ElasticsearchClient {
             params.put("q", searchRequest.getQuery());
         }
         if (searchRequest.getFields() !=  null) {
-            // If we never set elasticsearch behavior, it's time to do so
-            if (FIELDS == null) {
-                setElasticsearchBehavior();
-            }
             params.put(FIELDS, String.join(",", (CharSequence[]) searchRequest.getFields()));
         }
         if (searchRequest.getSize() != null) {
@@ -294,20 +301,24 @@ public class ElasticsearchClient {
         return searchResponse;
     }
 
-    protected String setElasticsearchBehavior() throws IOException {
-        String version = findVersion();
+    private void setElasticsearchBehavior() throws IOException {
+        if (VERSION == null) {
+            VERSION = findVersion();
 
-        // With elasticsearch 5.0.0, we need to use `stored_fields` instead of `fields`
-        if (new VersionComparator().compare(version, "5") >= 0) {
-            FIELDS = "stored_fields";
-            logger.debug("Using elasticsearch >= 5, so we use [{}] as fields option", FIELDS);
-        } else {
-            FIELDS = "fields";
-            logger.debug("Using elasticsearch < 5, so we use [{}] as fields option", FIELDS);
+            // With elasticsearch 5.0.0, we need to use `stored_fields` instead of `fields`
+            if (new VersionComparator().compare(VERSION, "5") >= 0) {
+                FIELDS = "stored_fields";
+                logger.debug("Using elasticsearch >= 5, so we use [{}] as fields option", FIELDS);
+                INGEST_SUPPORT = true;
+                logger.debug("Using elasticsearch >= 5, so we can use ingest node feature");
+            } else {
+                FIELDS = "fields";
+                logger.debug("Using elasticsearch < 5, so we use [{}] as fields option", FIELDS);
+                INGEST_SUPPORT = false;
+                logger.debug("Using elasticsearch < 5, so we can't use ingest node feature");
+            }
         }
-        return FIELDS;
     }
-
 
     public boolean isExistingType(String index, String type) throws IOException {
         logger.debug("is existing type [{}]/[{}]", index, type);
@@ -366,8 +377,11 @@ public class ElasticsearchClient {
             return this;
         }
 
-        public ElasticsearchClient build() {
-            return new ElasticsearchClient(nodes, username, password);
+        public ElasticsearchClient build() throws IOException {
+            ElasticsearchClient elasticsearchClient = new ElasticsearchClient(nodes, username, password);
+            // We set what will be elasticsearch behavior as it depends on the cluster version
+            elasticsearchClient.setElasticsearchBehavior();
+            return elasticsearchClient;
         }
 
     }
@@ -413,5 +427,9 @@ public class ElasticsearchClient {
         } else {
             logger.debug("Mapping [" + index + "]/[" + type + "] already exists.");
         }
+    }
+
+    public boolean isIngestSupported() {
+        return INGEST_SUPPORT;
     }
 }

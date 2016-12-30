@@ -32,7 +32,7 @@ public class Elasticsearch {
     }
 
     private Elasticsearch(List<Node> nodes, String index, String type, int bulkSize, TimeValue flushInterval,
-                          String username, String password) {
+                          String username, String password, String pipeline) {
         this.nodes = nodes;
         this.index = index;
         this.type = type;
@@ -40,6 +40,7 @@ public class Elasticsearch {
         this.flushInterval = flushInterval;
         this.username = username;
         this.password = password;
+        this.pipeline = pipeline;
     }
 
     public static Builder builder() {
@@ -182,6 +183,7 @@ public class Elasticsearch {
     private TimeValue flushInterval;
     private String username;
     private String password;
+    private String pipeline;
 
     public List<Node> getNodes() {
         return nodes;
@@ -223,6 +225,14 @@ public class Elasticsearch {
         this.password = password;
     }
 
+    public String getPipeline() {
+        return pipeline;
+    }
+
+    public void setPipeline(String pipeline) {
+        this.pipeline = pipeline;
+    }
+
     public static class Builder {
         private List<Node> nodes;
         private String index;
@@ -231,6 +241,7 @@ public class Elasticsearch {
         private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
         private String username = null;
         private String password = null;
+        private String pipeline = null;
 
         public Builder setNodes(List<Node> nodes) {
             this.nodes = nodes;
@@ -275,8 +286,13 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setPipeline(String pipeline) {
+            this.pipeline = pipeline;
+            return this;
+        }
+
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, type, bulkSize, flushInterval, username, password);
+            return new Elasticsearch(nodes, index, type, bulkSize, flushInterval, username, password, pipeline);
         }
     }
 
@@ -293,6 +309,7 @@ public class Elasticsearch {
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
         if (username != null ? !username.equals(that.username) : that.username != null) return false;
         if (password != null ? !password.equals(that.password) : that.password != null) return false;
+        if (pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null) return false;
         return !(flushInterval != null ? !flushInterval.equals(that.flushInterval) : that.flushInterval != null);
 
     }
@@ -304,6 +321,7 @@ public class Elasticsearch {
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (username != null ? username.hashCode() : 0);
         result = 31 * result + (password != null ? password.hashCode() : 0);
+        result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
         result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
         return result;
