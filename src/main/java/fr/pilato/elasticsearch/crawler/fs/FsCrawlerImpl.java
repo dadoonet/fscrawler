@@ -156,6 +156,8 @@ public class FsCrawlerImpl {
             builder.setUsername(settings.getElasticsearch().getUsername());
             builder.setPassword(settings.getElasticsearch().getPassword());
             client = builder.build();
+            // We set what will be elasticsearch behavior as it depends on the cluster version
+            client.setElasticsearchBehavior();
 
             client.createIndex(settings.getElasticsearch().getIndex(), true);
 

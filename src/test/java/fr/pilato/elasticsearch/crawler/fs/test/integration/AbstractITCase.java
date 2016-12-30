@@ -74,6 +74,8 @@ import static org.junit.Assume.assumeThat;
  * with tests.cluster.user and tests.cluster.password
  *
  * mvn clean install -Dtests.cluster.user=elastic -Dtests.cluster.pass=changeme
+ *
+ * All integration tests might be skipped if the cluster is not running
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
@@ -99,7 +101,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 .build();
 
         securityInstalled = testClusterRunning(false);
-
         if (securityInstalled) {
             // We have a secured cluster. So we need to create a secured client
             // But first we need to close the previous client we built
@@ -112,8 +113,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     .setUsername(testClusterUser)
                     .setPassword(testClusterPass)
                     .build();
+            // We set what will be elasticsearch behavior as it depends on the cluster version
+            elasticsearchClient.setElasticsearchBehavior();
             securityInstalled = testClusterRunning(true);
         }
+
+        // We set what will be elasticsearch behavior as it depends on the cluster version
+        elasticsearchClient.setElasticsearchBehavior();
     }
 
     private static boolean testClusterRunning(boolean withSecurity) throws IOException {

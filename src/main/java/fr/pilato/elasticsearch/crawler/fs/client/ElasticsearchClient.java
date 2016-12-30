@@ -301,7 +301,7 @@ public class ElasticsearchClient {
         return searchResponse;
     }
 
-    private void setElasticsearchBehavior() throws IOException {
+    public void setElasticsearchBehavior() throws IOException {
         if (VERSION == null) {
             VERSION = findVersion();
 
@@ -378,10 +378,7 @@ public class ElasticsearchClient {
         }
 
         public ElasticsearchClient build() throws IOException {
-            ElasticsearchClient elasticsearchClient = new ElasticsearchClient(nodes, username, password);
-            // We set what will be elasticsearch behavior as it depends on the cluster version
-            elasticsearchClient.setElasticsearchBehavior();
-            return elasticsearchClient;
+            return new ElasticsearchClient(nodes, username, password);
         }
 
     }
