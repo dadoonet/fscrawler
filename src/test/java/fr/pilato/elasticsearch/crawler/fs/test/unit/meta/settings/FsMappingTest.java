@@ -90,7 +90,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "    \"file\": {\n" +
                 "      \"properties\": {\n" +
                 "        \"content_type\": {\n" +
-                "          \"type\": \"string\"\n" +
+                "          \"type\": \"string\",\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"last_modified\": {\n" +
@@ -108,19 +108,19 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "          \"type\": \"long\"\n" +
                 "        },\n" +
                 "        \"filename\": {\n" +
-                "          \"type\": \"string\"\n" +
+                "          \"type\": \"string\",\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"extension\": {\n" +
-                "          \"type\": \"string\"\n" +
+                "          \"type\": \"string\",\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"checksum\": {\n" +
-                "          \"type\": \"string\"\n" +
+                "          \"type\": \"string\",\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"url\": {\n" +
-                "          \"type\": \"string\"\n" +
+                "          \"type\": \"string\",\n" +
                 "          \"index\": \"no\"\n" +
                 "        }\n" +
                 "      }\n" +
@@ -128,19 +128,19 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "    \"path\": {\n" +
                 "      \"properties\": {\n" +
                 "        \"encoded\": {\n" +
-                "          \"type\": \"string\"\n" +
+                "          \"type\": \"string\",\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"virtual\": {\n" +
-                "          \"type\": \"string\"\n" +
+                "          \"type\": \"string\",\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"root\": {\n" +
-                "          \"type\": \"string\"\n" +
+                "          \"type\": \"string\",\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"real\": {\n" +
-                "          \"type\": \"string\"\n" +
+                "          \"type\": \"string\",\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        }\n" +
                 "      }\n" +

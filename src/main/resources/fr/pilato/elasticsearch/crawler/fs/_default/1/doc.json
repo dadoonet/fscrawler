@@ -27,7 +27,7 @@
     "file": {
       "properties": {
         "content_type": {
-          "type": "string"
+          "type": "string",
           "index": "not_analyzed"
         },
         "last_modified": {
@@ -45,19 +45,19 @@
           "type": "long"
         },
         "filename": {
-          "type": "string"
+          "type": "string",
           "index": "not_analyzed"
         },
         "extension": {
-          "type": "string"
+          "type": "string",
           "index": "not_analyzed"
         },
         "checksum": {
-          "type": "string"
+          "type": "string",
           "index": "not_analyzed"
         },
         "url": {
-          "type": "string"
+          "type": "string",
           "index": "no"
         }
       }
@@ -65,19 +65,19 @@
     "path": {
       "properties": {
         "encoded": {
-          "type": "string"
+          "type": "string",
           "index": "not_analyzed"
         },
         "virtual": {
-          "type": "string"
+          "type": "string",
           "index": "not_analyzed"
         },
         "root": {
-          "type": "string"
+          "type": "string",
           "index": "not_analyzed"
         },
         "real": {
-          "type": "string"
+          "type": "string",
           "index": "not_analyzed"
         }
       }
