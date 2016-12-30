@@ -20,19 +20,24 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
+import fr.pilato.elasticsearch.crawler.fs.client.BulkRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.BulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.VersionComparator;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import org.apache.http.entity.StringEntity;
+import org.apache.logging.log4j.LogManager;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
@@ -264,6 +269,40 @@ public class ElasticsearchClientIT extends AbstractITCase {
         assertThat(response.getHits().getTotal(), is(10L));
 
         bulkProcessor.close();
+    }
+
+    @Test
+    public void testBulkWithErrors() throws IOException, InterruptedException {
+        // Create the index first
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
+
+        AtomicReference<BulkResponse> bulkResponse = new AtomicReference<>();
+
+        BulkProcessor bulkProcessor = new BulkProcessor.Builder(elasticsearchClient,
+                new BulkProcessor.Listener() {
+                    @Override public void beforeBulk(long executionId, BulkRequest request) { }
+                    @Override public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+                        bulkResponse.set(response);
+                    }
+                    @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) { }
+                })
+                .setBulkActions(100)
+                .setFlushInterval(TimeValue.timeValueMillis(200))
+                .build();
+        bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id").source("{\"foo\":\"bar\""));
+        bulkProcessor.close();
+
+
+        BulkResponse response = bulkResponse.get();
+        Throwable message = response.buildFailureMessage();
+
+        assertThat(message.getMessage(), containsString("1 failures"));
+
+        // If we run the test with a TRACE level, we can check more things
+        if (LogManager.getLogger(BulkResponse.class).isTraceEnabled()) {
+            assertThat(message.getMessage(), containsString("failed to parse"));
+        }
     }
 
     /**

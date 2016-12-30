@@ -111,6 +111,9 @@ public class BulkResponse {
         private String opType;
         private String failureMessage;
 
+        // We use Object here as in 1.7 it will be a String and from 2.0 it will be a Map
+        private Object error;
+
         public boolean isFailed() {
             return failed;
         }
@@ -157,6 +160,16 @@ public class BulkResponse {
 
         public void setFailureMessage(String failureMessage) {
             this.failureMessage = failureMessage;
+        }
+
+        public Object getError() {
+            return error;
+        }
+
+        public void setError(Object error) {
+            this.error = error;
+            this.failed = true;
+            this.failureMessage = error.toString();
         }
 
         @Override

@@ -150,7 +150,7 @@ public class BulkProcessor {
         return (bulkActions != -1) && (bulkRequest.numberOfActions() >= bulkActions);
     }
 
-    static class Builder {
+    public static class Builder {
 
         private int bulkActions;
         private TimeValue flushInterval;
