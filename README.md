@@ -66,7 +66,10 @@ running instances.
 
 ## From 2.1
 
-* No specific instruction
+* fscrawler comes with new default mappings for files. They have better defaults as they consume less disk space
+and CPU at index time. You should remove existing files in `~/.fscrawler/_default/_mappings` before starting the new
+version so default mappings will be updated. If you modified manually mapping files, apply the modification you made
+on sample files.
 
 
 # Getting Started
@@ -147,6 +150,7 @@ The job file must comply to the following `json` specifications:
     ],
     "json_support" : false,
     "xml_support" : false,
+    "ignore_folders" : false,
     "attributes_support" : false,
     "raw_metadata" : false,
     "filename_as_id" : false,
@@ -166,7 +170,8 @@ The job file must comply to the following `json` specifications:
   "elasticsearch" : {
     "nodes" : [ {
       "host" : "127.0.0.1",
-      "port" : 9200
+      "port" : 9200,
+      "scheme" : "HTTP"
     } ],
     "index" : "docs",
     "type" : "doc",
@@ -191,6 +196,7 @@ Here is a full list of existing settings:
 | `fs.excludes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
 | `fs.xml_support`                 | `false`       | [Indexing XML docs](#indexing-xml-docs) (from 2.2)                                |
+| `fs.ignore_folders`              | `false`       | [Ignore folders](#iignore-folders) (from 2.2)                                     |
 | `fs.attributes_support`          | `false`       | [Adding file attributes](#adding-file-attributes)                                 |
 | `fs.raw_metadata`                | `true`        | [Disabling raw metadata](#disabling-raw-metadata)                                 |
 | `fs.filename_as_id`              | `false`       | [Using Filename as `_id`](#using-filename-as-elasticsearch-_id)                   |
@@ -209,7 +215,7 @@ Here is a full list of existing settings:
 | `elasticsearch.type`             | `"doc"`       | [Type Name](#type-name)                                                           |
 | `elasticsearch.bulk_size`        | `100`         | [Bulk settings](#bulk-settings)                                                   |
 | `elasticsearch.flush_interval`   | `"5s"`        | [Bulk settings](#bulk-settings)                                                   |
-| `elasticsearch.nodes`            |127.0.0.1:9200 | [Node settings](#node-settings)                                                   |
+| `elasticsearch.nodes`            |http://127.0.0.1:9200 | [Node settings](#node-settings)                                                   |
 | `elasticsearch.username`         | `null`        | [Credentials](#using-credentials) (from 2.2)                                      |
 | `elasticsearch.password`         | `null`        | [Credentials](#using-credentials) (from 2.2)                                      |
 
@@ -366,6 +372,18 @@ There is no specific support for HDFS in FS crawler. But you can [mount your HDF
 and run FS crawler on this mount point. You can also read details about
 [HDFS NFS Gateway](http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsNfsGateway.html).
 
+# Supported formats
+
+FS crawler supports all formats [Tika version 1.14 supports](http://tika.apache.org/1.14/formats.html#Supported_Document_Formats), like:
+
+* HTML
+* Microsoft Office
+* Open Office
+* PDF
+* Images
+* MP3
+* ...
+
 
 # Searching for docs
 
@@ -411,6 +429,23 @@ If you want to index XML files and convert them to JSON, you can set `xml_suppor
 ```
 
 Of course, if you did not define a mapping before launching the crawler, Elasticsearch will auto guess the mapping.
+
+# Ignore folders
+
+By default FS Crawler will index folder names in the index using a specific `folder` type.
+If you don't want to index those folders, you can set `ignore_folders` to `true`.
+
+Note that in that case, FS Crawler won't be able to detect removed folders so any document has been indexed
+in elasticsearch, it won't be removed when you remove or move the folder.
+
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "ignore_folders" : true
+  }
+}
+```
 
 ## Dealing with multiple types and multiple dirs
 
@@ -711,114 +746,89 @@ The following example uses a `french` analyzer to index the `content` field.
 
 ```json
 {
-  "_source" : {
-    "excludes" : [
-      "attachment"
-    ]
-  },
   "properties" : {
     "attachment" : {
       "type" : "binary",
-      "store" : true
+      "doc_values" : false
     },
     "attributes" : {
       "properties" : {
         "group" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "owner" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         }
       }
     },
     "content" : {
       "type" : "text",
-      "analyzer" : "french",
-      "store" : true
+      "analyzer" : "french"
     },
     "file" : {
       "properties" : {
         "content_type" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "filename" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "extension" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "filesize" : {
-          "type" : "long",
-          "store" : true
+          "type" : "long"
         },
         "indexed_chars" : {
-          "type" : "long",
-          "store" : true
+          "type" : "long"
         },
         "indexing_date" : {
           "type" : "date",
-          "store" : true,
           "format" : "dateOptionalTime"
         },
         "last_modified" : {
           "type" : "date",
-          "store" : true,
           "format" : "dateOptionalTime"
         },
         "checksum": {
-          "type": "keyword",
-          "store": true
+          "type": "keyword"
         },
         "url" : {
           "type" : "keyword",
-          "index" : false,
-          "store" : true
+          "index" : false
         }
       }
     },
     "meta" : {
       "properties" : {
         "author" : {
-          "type" : "text",
-          "store" : true
+          "type" : "text"
         },
         "date" : {
           "type" : "date",
-          "store" : true,
           "format" : "dateOptionalTime"
         },
         "keywords" : {
-          "type" : "text",
-          "store" : true
+          "type" : "text"
         },
         "title" : {
-          "type" : "text",
-          "store" : true
+          "type" : "text"
         }
       }
     },
     "path" : {
       "properties" : {
         "encoded" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "real" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "root" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "virtual" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         }
       }
     }
@@ -1011,54 +1021,16 @@ You can store in elasticsearch itself the binary document using `store_source` o
 }
 ```
 
-In that case, a new stored field named `attachment` is added to the generated JSon document.
-If you let FS crawler generates the mapping, FS crawler will exclude `attachment` field from
-`_source` to save some disk space.
-
-That means you need to ask for field `attachment` when querying:
-
-```
-GET mydocs/doc/_search
-{
-  "fields" : ["attachment", "_source"],
-  "query":{
-    "match_all" : {}
-  }
-}
-```
-
-Default generated mapping in this case is:
+In that case, a new field named `attachment` is added to the generated JSon document. This field is not indexed.
+Default mapping for `attachment` field is:
 
 ```json
-{
-  "doc" : {
-    "_source" : {
-      "excludes" : [ "attachment" ]
-    },
-    "properties" : {
-      "attachment" : {
-        "type" : "binary"
-      }
-      // ... Other properties here
-    }
-  }
-}
-```
-
-You can force not to store `attachment` field and keep `attachment` in `_source`:
-
-```
-# Create index
-PUT docs
-
-# Create the mapping
-PUT docs/doc/_mapping
 {
   "doc" : {
     "properties" : {
       "attachment" : {
         "type" : "binary",
-        "store" : "no"
+        "doc_values" : false
       }
       // ... Other properties here
     }
@@ -1170,7 +1142,7 @@ Of course, in production, you would probably change this and connect to a produc
   "name" : "test",
   "elasticsearch" : {
     "nodes" : [
-      { "host" : "mynode1.mycompany.com", "port" : 9200 }
+      { "host" : "mynode1.mycompany.com", "port" : 9200, "scheme" : "HTTP" }
     ]
   }
 }
@@ -1183,9 +1155,22 @@ You can define multiple nodes:
   "name" : "test",
   "elasticsearch" : {
     "nodes" : [
-      { "host" : "mynode1.mycompany.com", "port" : 9200 },
-      { "host" : "mynode2.mycompany.com", "port" : 9200 },
-      { "host" : "mynode3.mycompany.com", "port" : 9200 }
+      { "host" : "mynode1.mycompany.com", "port" : 9200, "scheme" : "HTTP" },
+      { "host" : "mynode2.mycompany.com", "port" : 9200, "scheme" : "HTTP" },
+      { "host" : "mynode3.mycompany.com", "port" : 9200, "scheme" : "HTTP" }
+    ]
+  }
+}
+```
+
+You can use HTTPS instead of default HTTP (from 2.2):
+
+```json
+{
+  "name" : "test",
+  "elasticsearch" : {
+    "nodes" : [
+      { "host" : "CLUSTERID.eu-west-1.aws.found.io", "port" : 9243, "scheme" : "HTTPS" }
     ]
   }
 }
@@ -1292,6 +1277,34 @@ mvn install -Pes-2x
 
 By default, it will run integration tests against elasticsearch 5.x series cluster.
 
+### Running tests against an external cluster
+
+By default, FS Crawler will run tests against a cluster running at `127.0.0.1` on port `9400`.
+It will detect if this cluster is secured with [X-Pack](https://www.elastic.co/downloads/x-pack) and if so, it
+will try to authenticate with user `elastic` and password `changeme`.
+
+But, if you want to run the test suite against another cluster, using other credentials, you can use the following
+system parameters:
+
+* `tests.cluster.host`: hostname or IP (defaults to `127.0.0.1`)
+* `tests.cluster.port`: port (defaults to `9400`)
+* `tests.cluster.scheme`: `HTTP` or `HTTPS` (defaults to `HTTP`)
+* `tests.cluster.user`: username (defaults to `elastic`)
+* `tests.cluster.pass`: password (defaults to `changeme`)
+
+For example, if you have a cluster running on [Elastic Cloud](https://cloud.elastic.co/), you can use:
+
+```sh
+mvn clean install -Dtests.cluster.host=CLUSTERID.eu-west-1.aws.found.io -Dtests.cluster.port=9200 -Dtests.cluster.user=elastic -Dtests.cluster.pass=GENERATEDPASSWORD
+```
+
+or better:
+
+```sh
+mvn clean install -Dtests.cluster.host=CLUSTERID.eu-west-1.aws.found.io -Dtests.cluster.port=9243 -Dtests.cluster.scheme=HTTPS -Dtests.cluster.user=elastic -Dtests.cluster.pass=GENERATEDPASSWORD
+```
+
+
 ### Randomized testing
 
 FS Crawler uses [Randomized testing framework](https://github.com/randomizedtesting/randomizedtesting).
@@ -1390,7 +1403,7 @@ You will be guided through all the steps.
 ```
 This software is licensed under the Apache 2 license, quoted below.
 
-Copyright 2011-2016 David Pilato
+Copyright 2011-2017 David Pilato
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
 use this file except in compliance with the License. You may obtain a copy of

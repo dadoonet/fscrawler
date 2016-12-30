@@ -26,12 +26,16 @@ import org.apache.commons.io.input.TeeInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -116,11 +120,18 @@ public class TikaDocParser {
         // File
 
         // Meta
-        doc.getMeta().setAuthor(metadata.get(Metadata.AUTHOR));
-        doc.getMeta().setTitle(metadata.get(Metadata.TITLE));
-        // TODO Fix that as the date we get from Tika might be not parseable as a Date
-        // doc.getMeta().setDate(metadata.get(Metadata.DATE));
-        doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(Metadata.KEYWORDS)));
+        doc.getMeta().setAuthor(metadata.get(TikaCoreProperties.CREATOR));
+        doc.getMeta().setTitle(metadata.get(TikaCoreProperties.TITLE));
+        String sDate = metadata.get(TikaCoreProperties.MODIFIED);
+        if (sDate != null) {
+            try {
+                LocalDateTime date = LocalDateTime.parse(sDate, DateTimeFormatter.ISO_DATE_TIME);
+                doc.getMeta().setDate(date);
+            } catch (DateTimeParseException e) {
+                logger.warn("Can not parse date [{}] for [{}]. Skipping date field...", sDate, filename);
+            }
+        }
+        doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(TikaCoreProperties.KEYWORDS)));
 
         if (fsSettings.getFs().isRawMetadata()) {
             logger.trace("Listing all available metadata:");

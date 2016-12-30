@@ -53,7 +53,7 @@ public class MetaParser {
         mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.registerModule(fscrawler);
-        mapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+        mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         mapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
@@ -65,7 +65,7 @@ public class MetaParser {
         prettyMapper.registerModule(new JavaTimeModule());
         prettyMapper.registerModule(fscrawler);
         prettyMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-        prettyMapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+        prettyMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         prettyMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         prettyMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         prettyMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);

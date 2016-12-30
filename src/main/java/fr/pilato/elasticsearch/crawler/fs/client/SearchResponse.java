@@ -74,6 +74,8 @@ public class SearchResponse {
 
         private Map<String, Object> fields;
 
+        private Map<String, List<String>> highlight;
+
         public Map<String, Object> getSource() {
             return source;
         }
@@ -82,11 +84,16 @@ public class SearchResponse {
             return fields;
         }
 
+        public Map<String, List<String>> getHighlight() {
+            return highlight;
+        }
+
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder("Hit{");
             sb.append("source=").append(source);
             sb.append(", fields=").append(fields);
+            sb.append(", highlight=").append(highlight);
             sb.append('}');
             return sb.toString();
         }

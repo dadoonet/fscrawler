@@ -20,16 +20,16 @@
 
     <properties>
         <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-        <elasticsearch.version>5.0.0</elasticsearch.version>
+        <elasticsearch.version>5.1.1</elasticsearch.version>
         <!-- Don't depend on elasticsearch.version here as it will fail with 1.x and 2.x series -->
-        <elasticsearch.client.version>5.0.0</elasticsearch.client.version>
+        <elasticsearch.client.version>5.1.1</elasticsearch.client.version>
 
-        <tika.version>1.13</tika.version>
+        <tika.version>1.14</tika.version>
         <jackson.version>2.8.1</jackson.version>
-        <log4j.version>2.6.2</log4j.version>
+        <log4j.version>2.7</log4j.version>
 
         <!-- Only Lucene test framework is used here -->
-        <lucene.version>6.1.0</lucene.version>
+        <lucene.version>6.3.0</lucene.version>
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
@@ -40,6 +40,8 @@
         <integ.transport.port>9500</integ.transport.port>
         <elasticsearch.security.artifact>x-pack</elasticsearch.security.artifact>
         <elasticsearch.security.version>${elasticsearch.version}</elasticsearch.security.version>
+        <integ.security.username>elastic</integ.security.username>
+        <integ.security.password>changeme</integ.security.password>
 
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
@@ -525,7 +527,7 @@
         <repository>
             <id>elastic-download-service</id>
             <name>Elastic Download Service</name>
-            <url>https://download.elastic.co/elasticsearch/release/</url>
+            <url>https://artifacts.elastic.co/maven/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -563,6 +565,20 @@
                 <elasticsearch.version>2.3.3</elasticsearch.version>
                 <elasticsearch.security.artifact>shield</elasticsearch.security.artifact>
             </properties>
+            <repositories>
+                <!-- This repository is used to test with license and shield (2.x) -->
+                <repository>
+                    <id>elastic-download-service</id>
+                    <name>Elastic Download Service</name>
+                    <url>https://download.elastic.co/elasticsearch/release/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
             <build>
                 <plugins>
                     <!-- For elasticsearch < 5.0.0 we need also to install the license plugin -->

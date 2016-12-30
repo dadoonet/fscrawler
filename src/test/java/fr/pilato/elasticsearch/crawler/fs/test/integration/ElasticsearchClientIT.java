@@ -152,6 +152,14 @@ public class ElasticsearchClientIT extends AbstractITCase {
         response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar", 10, "foo");
         assertThat(response.getHits().getTotal(), is(1L));
         assertThat(response.getHits().getHits().get(0).getFields(), hasEntry("foo", Collections.singletonList("bar")));
+
+        // match_all
+        response = elasticsearchClient.searchJson(getCrawlerName(), "doc", "{}");
+        assertThat(response.getHits().getTotal(), is(2L));
+
+        // match
+        response = elasticsearchClient.searchJson(getCrawlerName(), "doc", "{ \"query\" : { \"match\": { \"foo\" : \"bar\" } } }");
+        assertThat(response.getHits().getTotal(), is(1L));
     }
 
     @Test

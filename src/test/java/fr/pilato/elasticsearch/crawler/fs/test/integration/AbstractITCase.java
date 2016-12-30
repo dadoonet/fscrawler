@@ -60,24 +60,42 @@ import static org.junit.Assume.assumeThat;
  *
  * Note that all existing data in this cluster might be removed
  *
+ * If you want to run tests against a remote cluster, please launch tests using
+ * tests.cluster.host and tests.cluster.port properties:
+ *
+ * mvn clean install -Dtests.cluster.host=127.0.0.1 -Dtests.cluster.port=9400
+ *
+ * You can choose running against http or https with tests.cluster.scheme (defaults to HTTP):
+ *
+ * mvn clean install -Dtests.cluster.scheme=HTTPS
+ *
  * If the cluster is running with x-pack and using the default username and passwords
- * of x-pack, tests can be run as well.
+ * of x-pack, tests can be run as well. You can overwrite default username and password
+ * with tests.cluster.user and tests.cluster.password
+ *
+ * mvn clean install -Dtests.cluster.user=elastic -Dtests.cluster.pass=changeme
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
-    protected final static int HTTP_TEST_PORT = 9400;
+    protected final static Integer DEFAULT_TEST_CLUSTER_PORT = 9400;
+    protected final static String DEFAULT_TEST_CLUSTER_HOST = "127.0.0.1";
+    protected final static String DEFAULT_USERNAME = "elastic";
+    protected final static String DEFAULT_PASSWORD = "changeme";
 
     protected static ElasticsearchClient elasticsearchClient;
 
     protected static boolean securityInstalled;
 
-    protected final static String DEFAULT_USERNAME = "elastic";
-    protected final static String DEFAULT_PASSWORD = "changeme";
+    final static String testClusterHost = System.getProperty("tests.cluster.host", DEFAULT_TEST_CLUSTER_HOST);
+    final static int testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
+    final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
+    final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    final static Elasticsearch.Node.Scheme testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
 
     @BeforeClass
     public static void startRestClient() throws IOException {
         elasticsearchClient = ElasticsearchClient.builder()
-                .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
+                .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
                 .build();
 
         securityInstalled = testClusterRunning(false);
@@ -90,9 +108,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
 
             elasticsearchClient = ElasticsearchClient.builder()
-                    .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
-                    .setUsername(DEFAULT_USERNAME)
-                    .setPassword(DEFAULT_PASSWORD)
+                    .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
+                    .setUsername(testClusterUser)
+                    .setPassword(testClusterPass)
                     .build();
             securityInstalled = testClusterRunning(true);
         }
@@ -140,7 +158,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static Elasticsearch generateElasticsearchConfig(String indexName, boolean securityInstalled, int bulkSize,
                                                                TimeValue timeValue) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
-                .addNode(Elasticsearch.Node.builder().setHost("127.0.0.1").setPort(HTTP_TEST_PORT).build())
+                .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
                 .setBulkSize(bulkSize)
                 .setFlushInterval(timeValue);
 
@@ -153,8 +171,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
 
         if (securityInstalled) {
-            builder.setUsername(DEFAULT_USERNAME);
-            builder.setPassword(DEFAULT_PASSWORD);
+            builder.setUsername(testClusterUser);
+            builder.setPassword(testClusterPass);
         }
 
         return builder.build();
@@ -177,12 +195,31 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      */
     public static SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
                                                  final String... fields) throws Exception {
+        return countTestHelper(indexName, query, expected, path, TimeValue.timeValueSeconds(20), fields);
+    }
+
+    /**
+     * Check that we have the expected number of docs or at least one if expected is null
+     *
+     * @param indexName Index we will search in.
+     * @param query     QueryString query, like foo:bar. MatchAll if null.
+     * @param expected  expected number of docs. Null if at least 1.
+     * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
+     * @param timeout   Time before we declare a failure
+     * @param fields    If we want to add some fields within the response
+     * @return the search response if further tests are needed
+     * @throws Exception
+     */
+    public static SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
+                                                 final TimeValue timeout,
+                                                 final String... fields) throws Exception {
 
         final SearchResponse[] response = new SearchResponse[1];
 
-        // We wait up to 5 seconds before considering a failing test
-        staticLogger.info("  ---> Waiting up to 20 seconds for {} documents in index {}", expected == null ? "some" : expected, indexName);
-        assertThat("We waited for 20 seconds but no document has been added", awaitBusy(() -> {
+        // We wait before considering a failing test
+        staticLogger.info("  ---> Waiting up to {} seconds for {} documents in index {}", timeout.toString(),
+                expected == null ? "some" : expected, indexName);
+        assertThat("We waited for " + timeout.toString() + " but no document has been added", awaitBusy(() -> {
             long totalHits;
 
             // Let's search for entries
@@ -230,7 +267,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     return false;
                 }
             }
-        }, 20, TimeUnit.SECONDS), equalTo(true));
+        }, timeout.millis(), TimeUnit.MILLISECONDS), equalTo(true));
 
         return response[0];
     }

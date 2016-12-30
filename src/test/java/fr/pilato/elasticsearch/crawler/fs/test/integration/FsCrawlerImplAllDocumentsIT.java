@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -89,7 +90,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         crawler.start();
 
         // We wait until we have all docs
-        countTestHelper("fscrawler_test_all_documents", null, numFiles.intValue(), null);
+        countTestHelper("fscrawler_test_all_documents", null, numFiles.intValue(), null, TimeValue.timeValueMinutes(1));
     }
 
     @AfterClass
@@ -122,15 +123,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     public void testExtractFromDocx() throws IOException {
         SearchResponse response = runSearch("test.docx", "sample");
         for (SearchResponse.Hit hit : response.getHits().getHits()) {
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.CONTENT_TYPE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.URL), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILESIZE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.INDEXING_DATE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.LAST_MODIFIED), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.CONTENT_TYPE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.URL), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILESIZE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXING_DATE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.LAST_MODIFIED), notNullValue());
 
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.TITLE), notNullValue());
-            assertThat(hit.getFields().get(FsCrawlerUtil.Doc.META + "." + FsCrawlerUtil.Doc.Meta.KEYWORDS), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.META).get(FsCrawlerUtil.Doc.Meta.TITLE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.META).get(FsCrawlerUtil.Doc.Meta.KEYWORDS), notNullValue());
         }
     }
 
@@ -177,6 +178,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         runSearch("test-protected.docx");
     }
 
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/221
+     */
+    @Test
+    public void testProtectedDocument221() throws IOException {
+        runSearch("issue-221-doc1.pdf", "Formations");
+        runSearch("issue-221-doc2.pdf", "FORMATIONS");
+    }
+
     private SearchResponse runSearch(String filename) throws IOException {
         return runSearch(filename, null);
     }
@@ -188,7 +198,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         if (content != null) {
             fullQuery += " +content:" + content;
         }
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, fullQuery, 10, "*");
+        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, fullQuery, null, null);
         assertThat(response.getHits().getTotal(), is(1L));
         return response;
     }

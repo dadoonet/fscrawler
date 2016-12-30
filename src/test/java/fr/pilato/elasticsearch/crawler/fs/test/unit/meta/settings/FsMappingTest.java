@@ -62,84 +62,65 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
         String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_DOC);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
-                "  \"_source\": {\n" +
-                "    \"excludes\": [\n" +
-                "      \"attachment\"\n" +
-                "    ]\n" +
-                "  },\n" +
                 "  \"properties\": {\n" +
                 "    \"content\": {\n" +
-                "      \"type\": \"string\",\n" +
-                "      \"store\": true\n" +
+                "      \"type\": \"string\"\n" +
                 "    },\n" +
                 "    \"attachment\": {\n" +
                 "      \"type\": \"binary\",\n" +
-                "      \"store\": true\n" +
+                "      \"doc_values\": false\n" +
                 "    },\n" +
                 "    \"meta\": {\n" +
                 "      \"properties\": {\n" +
                 "        \"author\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"string\"\n" +
                 "        },\n" +
                 "        \"title\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"string\"\n" +
                 "        },\n" +
                 "        \"date\": {\n" +
                 "          \"type\": \"date\",\n" +
-                "          \"format\": \"dateOptionalTime\",\n" +
-                "          \"store\": true\n" +
+                "          \"format\": \"dateOptionalTime\"\n" +
                 "        },\n" +
                 "        \"keywords\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"string\"\n" +
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
                 "    \"file\": {\n" +
                 "      \"properties\": {\n" +
                 "        \"content_type\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
+                "          \"type\": \"string\"\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"last_modified\": {\n" +
                 "          \"type\": \"date\",\n" +
-                "          \"format\": \"dateOptionalTime\",\n" +
-                "          \"store\": true\n" +
+                "          \"format\": \"dateOptionalTime\"\n" +
                 "        },\n" +
                 "        \"indexing_date\": {\n" +
                 "          \"type\": \"date\",\n" +
-                "          \"format\": \"dateOptionalTime\",\n" +
-                "          \"store\": true\n" +
+                "          \"format\": \"dateOptionalTime\"\n" +
                 "        },\n" +
                 "        \"filesize\": {\n" +
-                "          \"type\": \"long\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"long\"\n" +
                 "        },\n" +
                 "        \"indexed_chars\": {\n" +
-                "          \"type\": \"long\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"long\"\n" +
                 "        },\n" +
                 "        \"filename\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
+                "          \"type\": \"string\"\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"extension\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
+                "          \"type\": \"string\"\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"checksum\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
+                "          \"type\": \"string\"\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"url\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
+                "          \"type\": \"string\"\n" +
                 "          \"index\": \"no\"\n" +
                 "        }\n" +
                 "      }\n" +
@@ -147,23 +128,19 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "    \"path\": {\n" +
                 "      \"properties\": {\n" +
                 "        \"encoded\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
+                "          \"type\": \"string\"\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"virtual\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
+                "          \"type\": \"string\"\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"root\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
+                "          \"type\": \"string\"\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"real\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
+                "          \"type\": \"string\"\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        }\n" +
                 "      }\n" +
@@ -172,12 +149,10 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "      \"properties\": {\n" +
                 "        \"owner\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"group\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        }\n" +
                 "      }\n" +
@@ -226,38 +201,28 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
         String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_DOC);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
-                "  \"_source\": {\n" +
-                "    \"excludes\": [\n" +
-                "      \"attachment\"\n" +
-                "    ]\n" +
-                "  },\n" +
                 "  \"properties\": {\n" +
                 "    \"content\": {\n" +
-                "      \"type\": \"string\",\n" +
-                "      \"store\": true\n" +
+                "      \"type\": \"string\"\n" +
                 "    },\n" +
                 "    \"attachment\": {\n" +
                 "      \"type\": \"binary\",\n" +
-                "      \"store\": true\n" +
+                "      \"doc_values\": false\n" +
                 "    },\n" +
                 "    \"meta\": {\n" +
                 "      \"properties\": {\n" +
                 "        \"author\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"string\"\n" +
                 "        },\n" +
                 "        \"title\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"string\"\n" +
                 "        },\n" +
                 "        \"date\": {\n" +
                 "          \"type\": \"date\",\n" +
-                "          \"format\": \"dateOptionalTime\",\n" +
-                "          \"store\": true\n" +
+                "          \"format\": \"dateOptionalTime\"\n" +
                 "        },\n" +
                 "        \"keywords\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"string\"\n" +
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
@@ -265,45 +230,36 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "      \"properties\": {\n" +
                 "        \"content_type\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"last_modified\": {\n" +
                 "          \"type\": \"date\",\n" +
-                "          \"format\": \"dateOptionalTime\",\n" +
-                "          \"store\": true\n" +
+                "          \"format\": \"dateOptionalTime\"\n" +
                 "        },\n" +
                 "        \"indexing_date\": {\n" +
                 "          \"type\": \"date\",\n" +
-                "          \"format\": \"dateOptionalTime\",\n" +
-                "          \"store\": true\n" +
+                "          \"format\": \"dateOptionalTime\"\n" +
                 "        },\n" +
                 "        \"filesize\": {\n" +
-                "          \"type\": \"long\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"long\"\n" +
                 "        },\n" +
                 "        \"indexed_chars\": {\n" +
-                "          \"type\": \"long\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"long\"\n" +
                 "        },\n" +
                 "        \"filename\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"extension\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"checksum\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"url\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"no\"\n" +
                 "        }\n" +
                 "      }\n" +
@@ -312,22 +268,18 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "      \"properties\": {\n" +
                 "        \"encoded\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"virtual\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"root\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"real\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        }\n" +
                 "      }\n" +
@@ -336,12 +288,10 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "      \"properties\": {\n" +
                 "        \"owner\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        },\n" +
                 "        \"group\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"store\": true,\n" +
                 "          \"index\": \"not_analyzed\"\n" +
                 "        }\n" +
                 "      }\n" +
@@ -446,72 +396,55 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
         String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_DOC);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
-                "  \"_source\" : {\n" +
-                "    \"excludes\" : [\n" +
-                "      \"attachment\"\n" +
-                "    ]\n" +
-                "  },\n" +
                 "  \"properties\" : {\n" +
                 "    \"attachment\" : {\n" +
                 "      \"type\" : \"binary\",\n" +
-                "      \"store\" : true\n" +
+                "      \"doc_values\": false\n" +
                 "    },\n" +
                 "    \"attributes\" : {\n" +
                 "      \"properties\" : {\n" +
                 "        \"group\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"owner\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"keyword\"\n" +
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
                 "    \"content\" : {\n" +
-                "      \"type\" : \"text\",\n" +
-                "      \"store\" : true\n" +
+                "      \"type\" : \"text\"\n" +
                 "    },\n" +
                 "    \"file\" : {\n" +
                 "      \"properties\" : {\n" +
                 "        \"content_type\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"filename\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"extension\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"filesize\" : {\n" +
-                "          \"type\" : \"long\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"long\"\n" +
                 "        },\n" +
                 "        \"indexed_chars\" : {\n" +
-                "          \"type\" : \"long\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"long\"\n" +
                 "        },\n" +
                 "        \"indexing_date\" : {\n" +
                 "          \"type\" : \"date\",\n" +
-                "          \"store\" : true,\n" +
                 "          \"format\" : \"dateOptionalTime\"\n" +
                 "        },\n" +
                 "        \"last_modified\" : {\n" +
                 "          \"type\" : \"date\",\n" +
-                "          \"store\" : true,\n" +
                 "          \"format\" : \"dateOptionalTime\"\n" +
                 "        },\n" +
                 "        \"checksum\": {\n" +
-                "          \"type\": \"keyword\",\n" +
-                "          \"store\": true\n" +
+                "          \"type\": \"keyword\"\n" +
                 "        },\n" +
                 "        \"url\" : {\n" +
                 "          \"type\" : \"keyword\",\n" +
-                "          \"index\" : false,\n" +
-                "          \"store\" : true\n" +
+                "          \"index\" : false\n" +
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
@@ -521,41 +454,33 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "    \"meta\" : {\n" +
                 "      \"properties\" : {\n" +
                 "        \"author\" : {\n" +
-                "          \"type\" : \"text\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"text\"\n" +
                 "        },\n" +
                 "        \"date\" : {\n" +
                 "          \"type\" : \"date\",\n" +
-                "          \"store\" : true,\n" +
                 "          \"format\" : \"dateOptionalTime\"\n" +
                 "        },\n" +
                 "        \"keywords\" : {\n" +
-                "          \"type\" : \"text\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"text\"\n" +
                 "        },\n" +
                 "        \"title\" : {\n" +
-                "          \"type\" : \"text\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"text\"\n" +
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
                 "    \"path\" : {\n" +
                 "      \"properties\" : {\n" +
                 "        \"encoded\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"real\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"root\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"virtual\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
+                "          \"type\" : \"keyword\"\n" +
                 "        }\n" +
                 "      }\n" +
                 "    }\n" +

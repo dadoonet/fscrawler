@@ -1,82 +1,63 @@
 {
-  "_source": {
-    "excludes": [
-      "attachment"
-    ]
-  },
   "properties": {
     "content": {
-      "type": "string",
-      "store": true
+      "type": "string"
     },
     "attachment": {
       "type": "binary",
-      "store": true
+      "doc_values": false
     },
     "meta": {
       "properties": {
         "author": {
-          "type": "string",
-          "store": true
+          "type": "string"
         },
         "title": {
-          "type": "string",
-          "store": true
+          "type": "string"
         },
         "date": {
           "type": "date",
-          "format": "dateOptionalTime",
-          "store": true
+          "format": "dateOptionalTime"
         },
         "keywords": {
-          "type": "string",
-          "store": true
+          "type": "string"
         }
       }
     },
     "file": {
       "properties": {
         "content_type": {
-          "type": "string",
-          "store": true,
+          "type": "string"
           "index": "not_analyzed"
         },
         "last_modified": {
           "type": "date",
-          "format": "dateOptionalTime",
-          "store": true
+          "format": "dateOptionalTime"
         },
         "indexing_date": {
           "type": "date",
-          "format": "dateOptionalTime",
-          "store": true
+          "format": "dateOptionalTime"
         },
         "filesize": {
-          "type": "long",
-          "store": true
+          "type": "long"
         },
         "indexed_chars": {
-          "type": "long",
-          "store": true
+          "type": "long"
         },
         "filename": {
-          "type": "string",
-          "store": true,
+          "type": "string"
           "index": "not_analyzed"
         },
         "extension": {
-          "type": "string",
-          "store": true,
+          "type": "string"
           "index": "not_analyzed"
         },
         "checksum": {
-          "type": "string",
-          "store": true,
+          "type": "string"
           "index": "not_analyzed"
         },
         "url": {
-          "type": "string",
-          "store": true,
+          "type": "string"
           "index": "no"
         }
       }
@@ -84,23 +65,19 @@
     "path": {
       "properties": {
         "encoded": {
-          "type": "string",
-          "store": true,
+          "type": "string"
           "index": "not_analyzed"
         },
         "virtual": {
-          "type": "string",
-          "store": true,
+          "type": "string"
           "index": "not_analyzed"
         },
         "root": {
-          "type": "string",
-          "store": true,
+          "type": "string"
           "index": "not_analyzed"
         },
         "real": {
-          "type": "string",
-          "store": true,
+          "type": "string"
           "index": "not_analyzed"
         }
       }
@@ -109,12 +86,10 @@
       "properties": {
         "owner": {
           "type": "string",
-          "store": true,
           "index": "not_analyzed"
         },
         "group": {
           "type": "string",
-          "store": true,
           "index": "not_analyzed"
         }
       }

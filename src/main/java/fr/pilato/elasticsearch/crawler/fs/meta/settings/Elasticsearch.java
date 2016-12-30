@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class Elasticsearch {
 
@@ -50,21 +51,37 @@ public class Elasticsearch {
             .build();
 
     public static class Node {
+
+        public enum Scheme {
+            HTTP,
+            HTTPS;
+
+            public static Scheme parse(String value) {
+                return valueOf(value.toUpperCase(Locale.ROOT));
+            }
+
+            public String toLowerCase() {
+                return this.toString().toLowerCase(Locale.ROOT);
+            }
+        }
+
         public static final Node DEFAULT = Node.builder().setHost("127.0.0.1").setPort(9200).build();
 
         public Node() {
 
         }
 
-        private Node(String host, int port) {
+        private Node(String host, int port, Scheme scheme) {
             this.host = host;
             this.port = port;
             this.active = false;
+            this.scheme = scheme;
         }
 
         private String host;
         private int port;
         private boolean active;
+        private Scheme scheme;
 
         public String getHost() {
             return host;
@@ -90,6 +107,14 @@ public class Elasticsearch {
             this.active = active;
         }
 
+        public Scheme getScheme() {
+            return scheme;
+        }
+
+        public void setScheme(Scheme scheme) {
+            this.scheme = scheme;
+        }
+
         public static Builder builder() {
             return new Builder();
         }
@@ -97,6 +122,7 @@ public class Elasticsearch {
         public static class Builder {
             private String host;
             private int port;
+            private Scheme scheme = Scheme.HTTP;
 
             public Builder setHost(String host) {
                 this.host = host;
@@ -108,8 +134,13 @@ public class Elasticsearch {
                 return this;
             }
 
+            public Builder setScheme(Scheme scheme) {
+                this.scheme = scheme;
+                return this;
+            }
+
             public Node build() {
-                return new Node(host, port);
+                return new Node(host, port, scheme);
             }
         }
 
@@ -138,6 +169,7 @@ public class Elasticsearch {
             sb.append("active=").append(active);
             sb.append(", host='").append(host).append('\'');
             sb.append(", port=").append(port);
+            sb.append(", scheme=").append(scheme);
             sb.append('}');
             return sb.toString();
         }

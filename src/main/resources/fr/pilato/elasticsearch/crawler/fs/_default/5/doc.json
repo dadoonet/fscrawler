@@ -1,70 +1,53 @@
 {
-  "_source" : {
-    "excludes" : [
-      "attachment"
-    ]
-  },
   "properties" : {
     "attachment" : {
       "type" : "binary",
-      "store" : true
+      "doc_values": false
     },
     "attributes" : {
       "properties" : {
         "group" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "owner" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         }
       }
     },
     "content" : {
-      "type" : "text",
-      "store" : true
+      "type" : "text"
     },
     "file" : {
       "properties" : {
         "content_type" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "filename" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "extension" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "filesize" : {
-          "type" : "long",
-          "store" : true
+          "type" : "long"
         },
         "indexed_chars" : {
-          "type" : "long",
-          "store" : true
+          "type" : "long"
         },
         "indexing_date" : {
           "type" : "date",
-          "store" : true,
           "format" : "dateOptionalTime"
         },
         "last_modified" : {
           "type" : "date",
-          "store" : true,
           "format" : "dateOptionalTime"
         },
         "checksum": {
-          "type": "keyword",
-          "store": true
+          "type": "keyword"
         },
         "url" : {
           "type" : "keyword",
-          "index" : false,
-          "store" : true
+          "index" : false
         }
       }
     },
@@ -74,41 +57,33 @@
     "meta" : {
       "properties" : {
         "author" : {
-          "type" : "text",
-          "store" : true
+          "type" : "text"
         },
         "date" : {
           "type" : "date",
-          "store" : true,
           "format" : "dateOptionalTime"
         },
         "keywords" : {
-          "type" : "text",
-          "store" : true
+          "type" : "text"
         },
         "title" : {
-          "type" : "text",
-          "store" : true
+          "type" : "text"
         }
       }
     },
     "path" : {
       "properties" : {
         "encoded" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "real" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "root" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         },
         "virtual" : {
-          "type" : "keyword",
-          "store" : true
+          "type" : "keyword"
         }
       }
     }

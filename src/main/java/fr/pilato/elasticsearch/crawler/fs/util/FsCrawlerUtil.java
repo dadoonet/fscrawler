@@ -44,7 +44,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -279,14 +280,14 @@ public class FsCrawlerUtil extends MetaParser {
                 .replace("\\", "/");
     }
 
-    public static Instant getCreationTime(File file) {
-        Instant time;
+    public static LocalDateTime getCreationTime(File file) {
+        LocalDateTime time;
         try  {
             Path path = Paths.get(file.getAbsolutePath());
             BasicFileAttributes fileattr = Files
                     .getFileAttributeView(path, BasicFileAttributeView.class)
                     .readAttributes();
-            time = Instant.ofEpochMilli(fileattr.creationTime().toMillis());
+            time = LocalDateTime.ofInstant(fileattr.creationTime().toInstant(), ZoneId.systemDefault());
         } catch (Exception e) {
             time = null;
         }
@@ -355,9 +356,13 @@ public class FsCrawlerUtil extends MetaParser {
         Path targetResourceDir = configPath.resolve("_default");
 
         for (String filename : MAPPING_RESOURCES) {
-            logger.debug("Copying [{}]...", filename);
             Path target = targetResourceDir.resolve(filename);
-            copyResourceFile(CLASSPATH_RESOURCES_ROOT + filename, target);
+            if (Files.exists(target)) {
+                logger.debug("Mapping [{}] already exsits", filename);
+            } else {
+                logger.debug("Copying [{}]...", filename);
+                copyResourceFile(CLASSPATH_RESOURCES_ROOT + filename, target);
+            }
         }
     }
 

@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,12 +41,49 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 
 public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
+
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/221
+     */
+    @Test
+    public void testPdfIssue221() throws IOException {
+        // We test document 1
+        Doc doc = extractFromFile("issue-221-doc1.pdf");
+
+        // Extracted content
+        assertThat(doc.getContent(), containsString("Formations"));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), containsString("application/pdf"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is(notNullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 9, 20, 9, 38, 56)));
+        assertThat(doc.getMeta().getKeywords(), not(emptyIterable()));
+        assertThat(doc.getMeta().getTitle(), containsString("Recherche"));
+
+        // We test document 2
+        doc = extractFromFile("issue-221-doc2.pdf");
+
+        // Extracted content
+        assertThat(doc.getContent(), containsString("FORMATIONS"));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), containsString("application/pdf"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 9, 19, 14, 29, 37)));
+        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+    }
 
     /**
      * Test case for https://github.com/dadoonet/fscrawler/issues/163
@@ -83,7 +121,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
         assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1"," keyword2"));
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
@@ -151,7 +189,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 7, 7, 8, 36, 0)));
         assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1"," keyword2"));
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
@@ -295,15 +333,14 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
         Doc doc = extractFromFileExtension("odt");
 
         // Extracted content
-        // TODO Fix when issue https://issues.apache.org/jira/browse/TIKA-2030 will be resolved
-        assertThat(doc.getContent(), containsString("This isa sample text available in page"));
+        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
 
         // Content Type
         assertThat(doc.getFile().getContentType(), is("application/vnd.oasis.opendocument.text"));
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
         assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1", "  keyword2"));
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
@@ -364,7 +401,7 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(LocalDateTime.of(2016, 7, 7, 8, 37, 42)));
         assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1", " keyword2"));
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 

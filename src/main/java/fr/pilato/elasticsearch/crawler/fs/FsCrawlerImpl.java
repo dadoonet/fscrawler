@@ -51,7 +51,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,6 +60,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator.validateSettings;
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 
@@ -176,9 +177,11 @@ public class FsCrawlerImpl {
             ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
                         mapping, updateMapping);
             // If needed, we create the new mapping for folders
-            mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
-            ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
-                    mapping, updateMapping);
+            if (settings.getFs().isIndexFolders()) {
+                String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
+                ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
+                        mapping, updateMapping);
+            }
         } catch (Exception e) {
             logger.warn("failed to {} mapping for [{}/{}], disabling crawler...", updateMapping ? "update" : "create",
                     settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType());
@@ -275,12 +278,12 @@ public class FsCrawlerImpl {
                     String rootPathId = SignTool.sign(fsSettings.getFs().getUrl());
                     stats.setRootPathId(rootPathId);
 
-                    Instant scanDatenew = Instant.now();
-                    Instant scanDate = getLastDateFromMeta(fsSettings.getName());
+                    LocalDateTime scanDatenew = LocalDateTime.now();
+                    LocalDateTime scanDate = getLastDateFromMeta(fsSettings.getName());
 
                     // We only index the root directory once (first run)
                     // That means that we don't have a scanDate yet
-                    if (scanDate == null) {
+                    if (scanDate == null && fsSettings.getFs().isIndexFolders()) {
                         indexRootDirectory(fsSettings.getFs().getUrl());
                     }
 
@@ -322,7 +325,7 @@ public class FsCrawlerImpl {
         }
 
         @SuppressWarnings("unchecked")
-        private Instant getLastDateFromMeta(String jobName) throws IOException {
+        private LocalDateTime getLastDateFromMeta(String jobName) throws IOException {
             try {
                 FsJob fsJob = fsJobFileHandler.read(jobName);
                 return fsJob.getLastrun();
@@ -338,7 +341,7 @@ public class FsCrawlerImpl {
          * @param scanDate last date we scan the dirs
          * @throws Exception
          */
-        private void updateFsJob(String jobName, Instant scanDate) throws Exception {
+        private void updateFsJob(String jobName, LocalDateTime scanDate) throws Exception {
             // We need to round that latest date to the lower second and
             // remove 2 seconds.
             // See #82: https://github.com/dadoonet/fscrawler/issues/82
@@ -367,7 +370,7 @@ public class FsCrawlerImpl {
                     PROTOCOL.LOCAL + " or " + PROTOCOL.SSH);
         }
 
-        private void addFilesRecursively(FileAbstractor path, String filepath, Instant lastScanDate)
+        private void addFilesRecursively(FileAbstractor path, String filepath, LocalDateTime lastScanDate)
                 throws Exception {
 
             logger.debug("indexing [{}] content", filepath);
@@ -405,8 +408,10 @@ public class FsCrawlerImpl {
                             }
                         } else if (child.directory) {
                             logger.debug("  - folder: {}", filename);
-                            fsFolders.add(filename);
-                            indexDirectory(stats, filename, child.fullpath.concat(File.separator));
+                            if (settings.getFs().isIndexFolders()) {
+                                fsFolders.add(filename);
+                                indexDirectory(stats, filename, child.fullpath.concat(File.separator));
+                            }
                             addFilesRecursively(path, child.fullpath.concat(File.separator), lastScanDate);
                         } else {
                             logger.debug("  - other: {}", filename);
@@ -441,16 +446,18 @@ public class FsCrawlerImpl {
                     }
                 }
 
-                logger.debug("Looking for removed directories in [{}]...", filepath);
-                Collection<String> esFolders = getFolderDirectory(filepath);
+                if (settings.getFs().isIndexFolders()) {
+                    logger.debug("Looking for removed directories in [{}]...", filepath);
+                    Collection<String> esFolders = getFolderDirectory(filepath);
 
-                // for the delete folder
-                for (String esfolder : esFolders) {
-                    if (FsCrawlerUtil.isIndexable(esfolder, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
-                        logger.trace("Checking directory [{}]", esfolder);
-                        if (!fsFolders.contains(esfolder)) {
-                            logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
-                            removeEsDirectoryRecursively(filepath, esfolder);
+                    // for the delete folder
+                    for (String esfolder : esFolders) {
+                        if (FsCrawlerUtil.isIndexable(esfolder, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
+                            logger.trace("Checking directory [{}]", esfolder);
+                            if (!fsFolders.contains(esfolder)) {
+                                logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
+                                removeEsDirectoryRecursively(filepath, esfolder);
+                            }
                         }
                     }
                 }
@@ -474,7 +481,7 @@ public class FsCrawlerImpl {
                     fsSettings.getElasticsearch().getType(),
                     PATH_ENCODED + ":" + SignTool.sign(path),
                     REQUEST_SIZE, // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                    FILE_FILENAME
+                    "_source", FILE_FILENAME
             );
 
             logger.trace("Response [{}]", response.toString());
@@ -482,10 +489,11 @@ public class FsCrawlerImpl {
                 for (SearchResponse.Hit hit : response.getHits().getHits()) {
                     String name;
                     if (hit.getSource() != null
-                            && hit.getSource().get(FILE_FILENAME) != null) {
-                        name = getName(hit.getSource().get(FILE_FILENAME));
+                            && extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME) != null) {
+                        name = (String) extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME);
                     } else if (hit.getFields() != null
                             && hit.getFields().get(FILE_FILENAME) != null) {
+                        // In case someone disabled _source which is not recommended
                         name = getName(hit.getFields().get(FILE_FILENAME));
                     } else {
                         // Houston, we have a problem ! We can't get the old files from ES
@@ -524,8 +532,7 @@ public class FsCrawlerImpl {
                     fsSettings.getElasticsearch().getIndex(),
                     FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     PATH_ENCODED + ":" + SignTool.sign(path),
-                    REQUEST_SIZE, // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                    null
+                    REQUEST_SIZE // TODO: WHAT? DID I REALLY WROTE THAT? :p
             );
 
             if (response.getHits() != null
@@ -546,7 +553,7 @@ public class FsCrawlerImpl {
         private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String filepath, InputStream inputStream,
                                long filesize) throws Exception {
             final String filename = fileAbstractModel.name;
-            final Instant lastmodified = fileAbstractModel.lastModifiedDate;
+            final LocalDateTime lastmodified = fileAbstractModel.lastModifiedDate;
             final long size = fileAbstractModel.size;
 
             logger.debug("fetching content from [{}],[{}]", filepath, filename);
@@ -576,7 +583,7 @@ public class FsCrawlerImpl {
                 // File
                 doc.getFile().setFilename(filename);
                 doc.getFile().setLastModified(lastmodified);
-                doc.getFile().setIndexingDate(Instant.now());
+                doc.getFile().setIndexingDate(LocalDateTime.now());
                 doc.getFile().setUrl("file://" + (new File(filepath, filename)).toString());
                 if (fsSettings.getFs().isAddFilesize()) {
                     doc.getFile().setFilesize(size);
