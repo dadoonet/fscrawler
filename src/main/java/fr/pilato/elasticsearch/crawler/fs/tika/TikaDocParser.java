@@ -140,7 +140,9 @@ public class TikaDocParser {
                 // This is a logger trick which helps to generate our unit tests
                 // You need to change test/resources/log4j2.xml fr.pilato.elasticsearch.crawler.fs.tika level to trace
                 logger.trace("  assertThat(raw, hasEntry(\"{}\", \"{}\"));", metadataName, value);
-                doc.getMeta().addRaw(metadataName, value);
+
+                // We need to remove dots in field names if any. See https://github.com/dadoonet/fscrawler/issues/256
+                doc.getMeta().addRaw(metadataName.replaceAll("\\.", ":"), value);
             }
         }
         // Meta

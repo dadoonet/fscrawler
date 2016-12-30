@@ -671,6 +671,9 @@ As elasticsearch will by default to automatically guess the type, you could end 
 metadata raw fields: a field which is first detected as a date but is getting for another document a value like
 "in the seventies". In such a case, you could imagine forcing the mapping or defining an index mapping template.
 
+Note that dots in metadata names will be replaced by a `:`. For example `PTEX.Fullbanner` will be indexed as
+`PTEX:Fullbanner`.
+
 # Disabling file size field
 
 By default, FS crawler will create a field to store the original file size in octets.
