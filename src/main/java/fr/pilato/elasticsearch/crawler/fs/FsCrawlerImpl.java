@@ -170,6 +170,12 @@ public class FsCrawlerImpl {
             throw e;
         }
 
+        // Check that we don't try using an ingest pipeline with a non compatible version
+        if (settings.getElasticsearch().getPipeline() != null && !client.isIngestSupported()) {
+            throw new RuntimeException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
+                    ", but your elasticsearch cluster does not support this feature.");
+        }
+
         try {
             // If needed, we create the new mapping for files
             Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
@@ -200,7 +206,7 @@ public class FsCrawlerImpl {
 
         // Creating bulk processor
         this.bulkProcessor = BulkProcessor.simpleBulkProcessor(client, settings.getElasticsearch().getBulkSize(),
-                settings.getElasticsearch().getFlushInterval());
+                settings.getElasticsearch().getFlushInterval(), settings.getElasticsearch().getPipeline());
 
         // Start the crawler thread
         fsCrawlerThread = new Thread(new FSParser(settings), "fs-crawler");

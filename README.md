@@ -178,7 +178,8 @@ The job file must comply to the following `json` specifications:
     "bulk_size" : 100,
     "flush_interval" : "5s",
     "username" : "username",
-    "password" : "password"
+    "password" : "password",
+    "pipeline" : "pipeline-id-if-any"
   }
 }
 ```
@@ -218,6 +219,7 @@ Here is a full list of existing settings:
 | `elasticsearch.nodes`            |http://127.0.0.1:9200 | [Node settings](#node-settings)                                                   |
 | `elasticsearch.username`         | `null`        | [Credentials](#using-credentials) (from 2.2)                                      |
 | `elasticsearch.password`         | `null`        | [Credentials](#using-credentials) (from 2.2)                                      |
+| `elasticsearch.pipeline`         | `null`        | [Using Ingest Node Pipeline](#using-ingest-node-pipeline) (from 2.2)              |
 
 
 ### The most simple crawler
@@ -731,11 +733,15 @@ The default mapping is read from `~/.fscrawler/_default/2/doc.json` which you ca
 
 You can also display the index mapping being used with Kibana
 
-```GET docs/doc/_mapping```
+```
+GET docs/doc/_mapping
+```
 
 or fall back to the command line
 
-```curl 'http://localhost:9200/docs/_mapping?pretty'```
+```sh
+curl 'http://localhost:9200/docs/_mapping?pretty'
+```
 
 ## Creating your own mapping (analyzers)
 
@@ -1128,6 +1134,41 @@ every 5 seconds. You can change default settings using `bulk_size` and `flush_in
   }
 }
 ```
+
+## Using Ingest Node Pipeline
+
+If you are using an elasticsearch cluster running a 5.0 or superior version, you
+can use an Ingest Node pipeline to transform documents sent by FS crawler before they are actually indexed.
+
+For example, if you have the following pipeline:
+
+```sh
+PUT _ingest/pipeline/fscrawler
+{
+  "description" : "fscrawler pipeline",
+  "processors" : [
+    {
+      "set" : {
+        "field": "foo",
+        "value": "bar"
+      }
+    }
+  ]
+}
+```
+
+In FS crawler settings, set the `elasticsearch.pipeline` option:
+
+```json
+{
+  "name" : "test",
+  "elasticsearch" : {
+    "pipeline" : "fscrawler"
+  }
+}
+```
+
+Note that this option is available from FS crawler 2.2.
 
 ## Node settings
 

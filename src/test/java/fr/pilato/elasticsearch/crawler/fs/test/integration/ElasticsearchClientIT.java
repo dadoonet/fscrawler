@@ -24,16 +24,19 @@ import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.VersionComparator;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
+import org.apache.http.entity.StringEntity;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
 /**
  * Test elasticsearch HTTP client
@@ -168,7 +171,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
         elasticsearchClient.createIndex(getCrawlerName());
         elasticsearchClient.waitForHealthyIndex(getCrawlerName());
 
-        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 100, TimeValue.timeValueSeconds(2));
+        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 100, TimeValue.timeValueSeconds(2), null);
         for (int i = 0; i < 10; i++) {
             bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}"));
         }
@@ -195,7 +198,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
         elasticsearchClient.createIndex(getCrawlerName());
         elasticsearchClient.waitForHealthyIndex(getCrawlerName());
 
-        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 10, null);
+        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 10, null, null);
         for (int i = 0; i < 9; i++) {
             bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}"));
         }
@@ -210,6 +213,54 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
         // We should have now our docs
         SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        assertThat(response.getHits().getTotal(), is(10L));
+
+        bulkProcessor.close();
+    }
+
+    @Test
+    public void testBulkWithPipeline() throws IOException, InterruptedException {
+        // We can only run this test against a 5.0 cluster or >
+        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
+                elasticsearchClient.isIngestSupported(), is(true));
+
+        // Create the index first
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
+
+        // Create an empty ingest pipeline
+        String pipeline = "{\n" +
+                "  \"description\" : \"describe pipeline\",\n" +
+                "  \"processors\" : [\n" +
+                "    {\n" +
+                "      \"set\" : {\n" +
+                "        \"field\": \"foo\",\n" +
+                "        \"value\": \"bar\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+        StringEntity entity = new StringEntity(pipeline, Charset.defaultCharset());
+
+        elasticsearchClient.getClient().performRequest("PUT", "_ingest/pipeline/" + getCrawlerName(),
+                Collections.emptyMap(), entity);
+
+        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 100, TimeValue.timeValueSeconds(2), getCrawlerName());
+        for (int i = 0; i < 10; i++) {
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"field\": \"baz\"}"));
+        }
+
+        elasticsearchClient.refresh(getCrawlerName());
+
+        waitForAllShardsAssigned();
+
+        // We wait for 3 seconds (2 should be enough)
+        Thread.sleep(3000L);
+
+        elasticsearchClient.refresh(getCrawlerName());
+
+        // We should have now our docs
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar");
         assertThat(response.getHits().getTotal(), is(10L));
 
         bulkProcessor.close();
