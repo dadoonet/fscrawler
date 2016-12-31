@@ -205,7 +205,7 @@ Here is a full list of existing settings:
 | `fs.add_filesize`                | `true`        | [Disabling file size field](#disabling-file-size-field)                           |
 | `fs.remove_deleted`              | `true`        | [Ignore deleted files](#ignore-deleted-files)                                     |
 | `fs.store_source`                | `false`       | [Storing binary source document](#storing-binary-source-document-base64-encoded)  |
-| `fs.lang_detect`                 | `false`       | [Language detection](#language detection)                                         |
+| `fs.lang_detect`                 | `false`       | [Language detection](#language detection) (from 2.2)                              |
 | `fs.indexed_chars`               | `0.0`         | [Extracted characters](#extracted-characters)                                     |
 | `fs.checksum`                    | `null`        | [File signature](#file-signature)                                                 |
 | `server.hostname`                | `null`        | [Indexing using SSH](#indexing-using-ssh)                                         |
