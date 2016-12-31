@@ -1012,6 +1012,7 @@ GET docs/doc/_search
 
 Or run some aggregations on top of them, like:
 
+```
 GET docs/doc/_search
 {
   "size": 0,
@@ -1023,6 +1024,7 @@ GET docs/doc/_search
     }
   }
 }
+```
 
 ## Language detection
 
