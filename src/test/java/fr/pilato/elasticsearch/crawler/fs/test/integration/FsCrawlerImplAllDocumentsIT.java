@@ -84,6 +84,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
                                 TimeValue.timeValueSeconds(1)))
                         .setFs(Fs.builder()
                                 .setUrl(testResourceTarget.toString())
+                                .setLangDetect(true)
                                 .build())
                         .build());
 
@@ -181,6 +182,22 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     public void testProtectedDocument221() throws IOException {
         runSearch("issue-221-doc1.pdf", "Formations");
         runSearch("issue-221-doc2.pdf", "FORMATIONS");
+    }
+
+    @Test
+    public void testLanguageDetection() throws IOException {
+        SearchResponse response = runSearch("test-fr.txt", "fichier");
+        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.META).get(FsCrawlerUtil.Doc.Meta.LANGUAGE), is("fr"));
+        }
+        response = runSearch("test-de.txt", "Datei");
+        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.META).get(FsCrawlerUtil.Doc.Meta.LANGUAGE), is("de"));
+        }
+        response = runSearch("test.txt", "contains");
+        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.META).get(FsCrawlerUtil.Doc.Meta.LANGUAGE), is("en"));
+        }
     }
 
     private SearchResponse runSearch(String filename) throws IOException {

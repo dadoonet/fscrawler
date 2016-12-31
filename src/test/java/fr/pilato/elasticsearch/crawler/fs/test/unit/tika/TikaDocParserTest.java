@@ -50,6 +50,24 @@ import static org.junit.Assume.assumeNoException;
 public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
 
     /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/162
+     */
+    @Test
+    public void testLangDetect162() throws IOException {
+        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setLangDetect(true).build())
+                .build();
+        Doc doc = extractFromFile("test.txt", fsSettings);
+        assertThat(doc.getMeta().getLanguage(), is("en"));
+        doc = extractFromFile("test-fr.txt", fsSettings);
+        assertThat(doc.getMeta().getLanguage(), is("fr"));
+        doc = extractFromFile("test-de.txt", fsSettings);
+        assertThat(doc.getMeta().getLanguage(), is("de"));
+        doc = extractFromFile("test-enfrde.txt", fsSettings);
+        assertThat(doc.getMeta().getLanguage(), is("fr"));
+    }
+
+    /**
      * Test case for https://github.com/dadoonet/fscrawler/issues/221
      */
     @Test

@@ -59,7 +59,12 @@ public class ElasticsearchClient {
     private ElasticsearchClient(List<Node> nodes, String username, String password) {
         List<HttpHost> hosts = new ArrayList<>(nodes.size());
         for (Node node : nodes) {
-            hosts.add(new HttpHost(node.getHost(), node.getPort(), node.getScheme().toLowerCase()));
+            Node.Scheme scheme = node.getScheme();
+            if (scheme == null) {
+                // Default to HTTP. In case we are reading an old configuration
+                scheme = Node.Scheme.HTTP;
+            }
+            hosts.add(new HttpHost(node.getHost(), node.getPort(), scheme.toLowerCase()));
         }
         RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
 

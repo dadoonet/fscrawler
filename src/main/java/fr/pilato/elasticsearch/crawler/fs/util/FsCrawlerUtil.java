@@ -64,6 +64,7 @@ public class FsCrawlerUtil extends MetaParser {
             public static final String TITLE = "title";
             public static final String DATE = "date";
             public static final String KEYWORDS = "keywords";
+            public static final String LANGUAGE = "language";
         }
 
         public static final String FILE = "file";

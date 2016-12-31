@@ -21,6 +21,11 @@ package fr.pilato.elasticsearch.crawler.fs.tika;
 
 
 import org.apache.tika.Tika;
+import org.apache.tika.language.detect.LanguageDetector;
+
+import java.io.IOException;
+
+import static org.apache.tika.langdetect.OptimaizeLangDetector.getDefaultLanguageDetector;
 
 /**
  *
@@ -28,8 +33,16 @@ import org.apache.tika.Tika;
 public class TikaInstance {
 
     private static final Tika tika = new Tika();
+    private static LanguageDetector detector;
 
     public static Tika tika() {
         return tika;
+    }
+
+    public static LanguageDetector langDetector() throws IOException {
+        if (detector == null) {
+             detector = getDefaultLanguageDetector().loadModels();
+        }
+        return detector;
     }
 }

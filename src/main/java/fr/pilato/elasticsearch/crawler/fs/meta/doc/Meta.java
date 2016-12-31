@@ -32,6 +32,7 @@ public class Meta {
     private String title;
     private LocalDateTime date;
     private List<String> keywords;
+    private String language;
 
     private Map<String, String> raw;
 
@@ -82,6 +83,13 @@ public class Meta {
         this.raw.put(key, value);
     }
 
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
 
     @Override
     public boolean equals(Object o) {

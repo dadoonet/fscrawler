@@ -21,6 +21,10 @@
         },
         "keywords": {
           "type": "string"
+        },
+        "language" : {
+          "type" : "string",
+          "index": "not_analyzed"
         }
       }
     },

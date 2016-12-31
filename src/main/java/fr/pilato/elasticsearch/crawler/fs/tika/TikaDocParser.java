@@ -25,6 +25,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tika.language.detect.LanguageResult;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.tika;
 
 /**
@@ -143,6 +145,15 @@ public class TikaDocParser {
 
                 // We need to remove dots in field names if any. See https://github.com/dadoonet/fscrawler/issues/256
                 doc.getMeta().addRaw(metadataName.replaceAll("\\.", ":"), value);
+            }
+        }
+
+        if (fsSettings.getFs().isLangDetect() && parsedContent != null) {
+            List<LanguageResult> languages = langDetector().detectAll(parsedContent);
+            if (!languages.isEmpty()) {
+                LanguageResult language = languages.get(0);
+                logger.trace("Main detected language: [{}]", language);
+                doc.getMeta().setLanguage(language.getLanguage());
             }
         }
         // Meta

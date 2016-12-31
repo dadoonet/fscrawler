@@ -66,7 +66,7 @@ public class Elasticsearch {
             }
         }
 
-        public static final Node DEFAULT = Node.builder().setHost("127.0.0.1").setPort(9200).build();
+        public static final Node DEFAULT = Node.builder().setHost("127.0.0.1").setPort(9200).setScheme(Scheme.HTTP).build();
 
         public Node() {
 
