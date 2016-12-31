@@ -50,7 +50,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         model.directory = file.getAttrs().isDir();
         model.file = !model.directory;
         // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
-        model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()), ZoneId.systemDefault());
+        model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()*1000L), ZoneId.systemDefault());
         model.path = path;
         model.fullpath = model.path.concat("/").concat(model.name);
         model.size = file.getAttrs().getSize();
