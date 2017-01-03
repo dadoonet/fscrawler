@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.PROTOCOL;
 
 public class Server {
@@ -39,6 +40,7 @@ public class Server {
     private String hostname;
     private int port;
     private String username;
+    @JsonIgnore
     private String password;
     private String protocol;
     private String pemPath;

@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
@@ -83,6 +84,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected final static String DEFAULT_TEST_CLUSTER_HOST = "127.0.0.1";
     protected final static String DEFAULT_USERNAME = "elastic";
     protected final static String DEFAULT_PASSWORD = "changeme";
+    protected final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
     protected static ElasticsearchClient elasticsearchClient;
 
@@ -93,12 +95,21 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
     final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     final static Elasticsearch.Node.Scheme testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
+    private final static int testRestPort =
+            Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
+    protected static Rest rest = Rest.builder().setPort(testRestPort).build();
+    protected final static Elasticsearch elasticsearch = Elasticsearch.builder()
+            .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
+            .build();
+    protected final static Elasticsearch elasticsearchWithSecurity = Elasticsearch.builder()
+            .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
+            .setUsername(testClusterUser)
+            .setPassword(testClusterPass)
+            .build();
 
     @BeforeClass
-    public static void startRestClient() throws IOException {
-        elasticsearchClient = ElasticsearchClient.builder()
-                .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
-                .build();
+    public static void startElasticsearchRestClient() throws IOException {
+        elasticsearchClient = new ElasticsearchClient(elasticsearch);
 
         securityInstalled = testClusterRunning(false);
         if (securityInstalled) {
@@ -108,13 +119,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 elasticsearchClient.shutdown();
             }
 
-            elasticsearchClient = ElasticsearchClient.builder()
-                    .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
-                    .setUsername(testClusterUser)
-                    .setPassword(testClusterPass)
-                    .build();
-            // We set what will be elasticsearch behavior as it depends on the cluster version
-            elasticsearchClient.setElasticsearchBehavior();
+            elasticsearchClient = new ElasticsearchClient(elasticsearchWithSecurity);
             securityInstalled = testClusterRunning(true);
         }
 

@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 
 import java.util.ArrayList;
@@ -47,9 +48,13 @@ public class Elasticsearch {
         return new Builder();
     }
 
-    public static final Elasticsearch DEFAULT = Elasticsearch.builder()
-            .addNode(Node.DEFAULT)
-            .build();
+    // Using here a method instead of a constant as sadly FSCrawlerValidator can modify this object
+    // TODO fix that: a validator should not modify the original object but return a modified copy
+    public static final Elasticsearch DEFAULT() {
+        return Elasticsearch.builder()
+                .addNode(Node.DEFAULT)
+                .build();
+    }
 
     public static class Node {
 
@@ -182,6 +187,7 @@ public class Elasticsearch {
     private int bulkSize;
     private TimeValue flushInterval;
     private String username;
+    @JsonIgnore
     private String password;
     private String pipeline;
 

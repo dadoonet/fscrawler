@@ -27,6 +27,7 @@
         <tika.version>1.14</tika.version>
         <jackson.version>2.8.1</jackson.version>
         <log4j.version>2.7</log4j.version>
+        <jersey.version>2.25</jersey.version>
 
         <!-- Only Lucene test framework is used here -->
         <lucene.version>6.3.0</lucene.version>
@@ -80,6 +81,12 @@
     </issueManagement>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -191,6 +198,7 @@
                         <arg.common>arg.common</arg.common>
                         <tests.locale>${tests.locale}</tests.locale>
                         <tests.timezone>${tests.timezone}</tests.timezone>
+                        <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                     </systemProperties>
                 </configuration>
 
@@ -454,6 +462,11 @@
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging-api</artifactId>
                 </exclusion>
+                <!-- Must be removed because it conflicts with Jersey (another JaxRS implementation) -->
+                <exclusion>
+                    <groupId>org.apache.cxf</groupId>
+                    <artifactId>cxf-rt-rs-client</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <!-- For Language detection -->
@@ -461,6 +474,13 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-langdetect</artifactId>
             <version>${tika.version}</version>
+            <exclusions>
+                <!-- Must be removed because it conflicts with Jersey (another JaxRS implementation) -->
+                <exclusion>
+                    <groupId>org.apache.cxf</groupId>
+                    <artifactId>cxf-rt-rs-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!--Dependency for parsing remote ssh directory [http://www.jcraft.com/jsch/]-->
         <dependency>
@@ -474,6 +494,23 @@
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>1.48</version>
+        </dependency>
+
+        <!-- For REST Server -->
+        <dependency>
+            <groupId>org.glassfish.jersey.containers</groupId>
+            <artifactId>jersey-container-grizzly2-http</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-multipart</artifactId>
+            <version>${jersey.version}</version>
         </dependency>
 
         <!-- Logging dependencies -->
@@ -498,6 +535,12 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-jcl</artifactId>
+            <version>${log4j.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-jul</artifactId>
             <version>${log4j.version}</version>
             <optional>true</optional>
         </dependency>

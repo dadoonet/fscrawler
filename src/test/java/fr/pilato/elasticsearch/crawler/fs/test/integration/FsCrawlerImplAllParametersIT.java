@@ -27,6 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
@@ -52,6 +53,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -150,16 +152,21 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     private FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
-        return startCrawler(jobName, fs, elasticsearch, server, TimeValue.timeValueSeconds(10));
+        return startCrawler(jobName, fs, elasticsearch, server, null, TimeValue.timeValueSeconds(10));
     }
 
-    private FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, TimeValue duration)
+    private FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest, TimeValue duration)
             throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
         // TODO do this rarely() createIndex(jobName);
 
-        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).build());
+        crawler = new FsCrawlerImpl(
+                metadataDir,
+                FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(),
+                LOOP_INFINITE,
+                false,
+                rest != null);
         crawler.start();
 
         // We wait up to X seconds before considering a failing test
@@ -798,7 +805,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1, false);
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1, false, false);
         crawler.start();
 
         countTestHelper(getCrawlerName(), null, 1);
@@ -817,7 +824,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2, false);
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2, false, false);
         crawler.start();
 
         countTestHelper(getCrawlerName(), null, 1);
@@ -844,7 +851,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), -1, true);
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), -1, true, false);
         crawler.start();
 
         countTestHelper(getCrawlerName(), null, 1);
@@ -868,7 +875,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 0, true);
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 0, true, false);
         crawler.start();
 
         assertThat(crawler.isClosed(), is(true));
@@ -896,7 +903,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), -1, true);
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), -1, true, false);
 
         crawler.start();
     }
@@ -996,7 +1003,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_zip() throws Exception {
-        startCrawler(getCrawlerName(), startCrawlerDefinition().build(), endCrawlerDefinition(getCrawlerName()), null,
+        startCrawler(getCrawlerName(), startCrawlerDefinition().build(), endCrawlerDefinition(getCrawlerName()), null, null,
                 TimeValue.timeValueMinutes(2));
 
         // We expect to have one file
@@ -1038,5 +1045,30 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // We expect to have one file
         countTestHelper(crawlerName, "my_content_field:perniciosoque", 1);
+    }
+
+    /**
+     * Test case for #251: https://github.com/dadoonet/fscrawler/issues/251 : Add a REST Layer
+     */
+    @Test
+    public void test_with_rest_only() throws Exception {
+        logger.info("  --> starting crawler [{}]", getCrawlerName());
+
+        // TODO do this rarely() createIndex(jobName);
+
+        crawler = new FsCrawlerImpl(
+                metadataDir,
+                FsSettings.builder(getCrawlerName())
+                        .setElasticsearch(endCrawlerDefinition(getCrawlerName()))
+                        .setFs(startCrawlerDefinition().build())
+                        .setServer(null)
+                        .setRest(rest).build(),
+                0,
+                false,
+                true);
+        crawler.start();
+
+        // We expect to have one file
+//        countTestHelper(getCrawlerName(), null, 1);
     }
 }

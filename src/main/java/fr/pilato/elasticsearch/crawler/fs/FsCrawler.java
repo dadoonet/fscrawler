@@ -72,6 +72,9 @@ public class FsCrawler {
         @Parameter(names = "--update_mapping", description = "Update elasticsearch mapping")
         private boolean updateMapping = false;
 
+        @Parameter(names = "--rest", description = "Start REST Layer")
+        private boolean rest = false;
+
         @Parameter(names = "--debug", description = "Debug mode")
         private boolean debug = false;
 
@@ -171,7 +174,7 @@ public class FsCrawler {
                 fsSettings.setFs(Fs.DEFAULT);
             }
             if (fsSettings.getElasticsearch() == null) {
-                fsSettings.setElasticsearch(Elasticsearch.DEFAULT);
+                fsSettings.setElasticsearch(Elasticsearch.DEFAULT());
             }
 
             String username = commands.username;
@@ -198,7 +201,7 @@ public class FsCrawler {
             if ("y".equalsIgnoreCase(yesno)) {
                 fsSettings = FsSettings.builder(commands.jobName.get(0))
                         .setFs(Fs.DEFAULT)
-                        .setElasticsearch(Elasticsearch.DEFAULT)
+                        .setElasticsearch(Elasticsearch.DEFAULT())
                         .build();
                 fsSettingsFileHandler.write(fsSettings);
 
@@ -210,7 +213,7 @@ public class FsCrawler {
         }
 
         logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toJson(fsSettings));
-        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.updateMapping);
+        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.updateMapping, commands.rest);
         Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
         try {
             fsCrawler.start();

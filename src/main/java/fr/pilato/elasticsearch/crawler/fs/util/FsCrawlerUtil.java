@@ -447,4 +447,9 @@ public class FsCrawlerUtil extends MetaParser {
             return FileVisitResult.CONTINUE;
         }
     }
+
+    public static String buildUrl(String scheme, String host, int port) {
+        return scheme + "://" + host + ":" + port;
+    }
+
 }

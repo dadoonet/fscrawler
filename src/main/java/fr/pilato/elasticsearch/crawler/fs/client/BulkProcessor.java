@@ -97,6 +97,23 @@ public class BulkProcessor {
      * Adds either a delete or an index request.
      */
     private BulkProcessor add(SingleBulkRequest request) {
+        // We do that only if debug
+        if (logger.isDebugEnabled()) {
+            StringBuffer sbf = new StringBuffer();
+            sbf.append("{");
+            String header = JsonUtil.serialize(request);
+            if (request instanceof DeleteRequest) {
+                sbf.append("\"delete\":").append(header).append("}");
+            }
+            if (request instanceof IndexRequest) {
+                sbf.append("\"index\":").append(header).append("}");
+                // Index Request: header line + body
+                if (logger.isTraceEnabled()) {
+                    sbf.append("\n").append(((IndexRequest) request).content().replaceAll("\n", ""));
+                }
+            }
+            logger.debug("{}", sbf);
+        }
         return internalAdd(request);
     }
 
