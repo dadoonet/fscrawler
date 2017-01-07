@@ -80,28 +80,28 @@ import static org.junit.Assume.assumeThat;
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
-    protected final static Integer DEFAULT_TEST_CLUSTER_PORT = 9400;
-    protected final static String DEFAULT_TEST_CLUSTER_HOST = "127.0.0.1";
-    protected final static String DEFAULT_USERNAME = "elastic";
-    protected final static String DEFAULT_PASSWORD = "changeme";
-    protected final static Integer DEFAULT_TEST_REST_PORT = 8080;
+    private final static Integer DEFAULT_TEST_CLUSTER_PORT = 9400;
+    private final static String DEFAULT_TEST_CLUSTER_HOST = "127.0.0.1";
+    private final static String DEFAULT_USERNAME = "elastic";
+    private final static String DEFAULT_PASSWORD = "changeme";
+    private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
-    protected static ElasticsearchClient elasticsearchClient;
+    static ElasticsearchClient elasticsearchClient;
 
-    protected static boolean securityInstalled;
+    static boolean securityInstalled;
 
-    final static String testClusterHost = System.getProperty("tests.cluster.host", DEFAULT_TEST_CLUSTER_HOST);
-    final static int testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
-    final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
-    final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
-    final static Elasticsearch.Node.Scheme testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
+    private final static String testClusterHost = System.getProperty("tests.cluster.host", DEFAULT_TEST_CLUSTER_HOST);
+    private final static int testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
+    private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
+    private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    private final static Elasticsearch.Node.Scheme testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
     private final static int testRestPort =
             Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
-    protected static Rest rest = Rest.builder().setPort(testRestPort).build();
+    static Rest rest = Rest.builder().setPort(testRestPort).build();
     protected final static Elasticsearch elasticsearch = Elasticsearch.builder()
             .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
             .build();
-    protected final static Elasticsearch elasticsearchWithSecurity = Elasticsearch.builder()
+    final static Elasticsearch elasticsearchWithSecurity = Elasticsearch.builder()
             .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
             .setUsername(testClusterUser)
             .setPassword(testClusterPass)
@@ -202,7 +202,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
      * @param fields    If we want to add some fields within the response
      * @return the search response if further tests are needed
-     * @throws Exception
+     * @throws Exception in case of error
      */
     public static SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
                                                  final String... fields) throws Exception {
@@ -219,7 +219,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      * @param timeout   Time before we declare a failure
      * @param fields    If we want to add some fields within the response
      * @return the search response if further tests are needed
-     * @throws Exception
+     * @throws Exception in case of error
      */
     public static SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
                                                  final TimeValue timeout,

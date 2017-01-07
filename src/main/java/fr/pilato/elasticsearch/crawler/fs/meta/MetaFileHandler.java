@@ -35,19 +35,17 @@ public class MetaFileHandler {
 
     private final Path root;
 
-    public MetaFileHandler() {
+    protected MetaFileHandler() {
         this(DEFAULT_ROOT);
     }
 
-    public MetaFileHandler(Path root) {
+    protected MetaFileHandler(Path root) {
         this.root = root;
         try {
             if (Files.notExists(root)) {
                 Files.createDirectory(root);
             }
-        } catch (IOException e) {
-
-        }
+        } catch (IOException ignored) { }
     }
 
     /**
@@ -57,7 +55,7 @@ public class MetaFileHandler {
      * @return The String UTF-8 content
      * @throws IOException in case of error while reading
      */
-    public String readFile(String subdir, String filename) throws IOException {
+    protected String readFile(String subdir, String filename) throws IOException {
         Path dir = root;
         if (subdir != null) {
             dir = dir.resolve(subdir);
@@ -72,7 +70,7 @@ public class MetaFileHandler {
      * @param content The String UTF-8 content to write
      * @throws IOException in case of error while reading
      */
-    public void writeFile(String subdir, String filename, String content) throws IOException {
+    protected void writeFile(String subdir, String filename, String content) throws IOException {
         Path dir = root;
         if (subdir != null) {
             dir = dir.resolve(subdir);

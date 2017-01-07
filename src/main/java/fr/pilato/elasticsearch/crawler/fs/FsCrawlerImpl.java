@@ -78,13 +78,13 @@ public class FsCrawlerImpl {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerImpl.class);
 
-    private static final String PATH_ENCODED = FsCrawlerUtil.Doc.PATH + "." + FsCrawlerUtil.Doc.Path.ENCODED;
-    private static final String FILE_FILENAME = FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME;
+    private static final String PATH_ENCODED = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ENCODED;
+    private static final String FILE_FILENAME = Doc.FIELD_NAMES.FILE + "." + fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME;
 
     private final AtomicInteger runNumber = new AtomicInteger(0);
 
     private final static String FSCRAWLER_PROPERTIES = "fscrawler.properties";
-    public static Properties properties;
+    public static final Properties properties;
 
     static {
         properties = new Properties();
@@ -96,19 +96,13 @@ public class FsCrawlerImpl {
         }
     }
 
-    public static final int REQUEST_SIZE = 10000;
+    private static final int REQUEST_SIZE = 10000;
     public static final int LOOP_INFINITE = -1;
 
     private volatile boolean closed = false;
     private final Object semaphore = new Object();
 
-    /**
-     * We store config files here...
-     * Default to ~/.fscrawler
-     */
-    private final Path config;
     private final FsSettings settings;
-    private final FsSettingsFileHandler fsSettingsFileHandler;
     private final FsJobFileHandler fsJobFileHandler;
     private final Integer loop;
     private final boolean updateMapping;
@@ -124,8 +118,12 @@ public class FsCrawlerImpl {
     }
 
     public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean updateMapping, boolean rest) {
-        this.config = config;
-        this.fsSettingsFileHandler = new FsSettingsFileHandler(config);
+        /*
+         * We store config files here...
+         * Default to ~/.fscrawler
+         * The dir will be created if needed by calling the following CTOR
+         */
+        new FsSettingsFileHandler(config);
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.settings = settings;
         this.loop = loop;
@@ -188,7 +186,7 @@ public class FsCrawlerImpl {
         }
     }
 
-    public void close() throws InterruptedException, IOException {
+    public void close() throws InterruptedException {
         logger.debug("Closing FS crawler [{}]", settings.getName());
         closed = true;
 
@@ -320,7 +318,7 @@ public class FsCrawlerImpl {
          * Update the job metadata
          * @param jobName job name
          * @param scanDate last date we scan the dirs
-         * @throws Exception
+         * @throws Exception In case of error
          */
         private void updateFsJob(String jobName, LocalDateTime scanDate) throws Exception {
             // We need to round that latest date to the lower second and
@@ -336,7 +334,7 @@ public class FsCrawlerImpl {
             fsJobFileHandler.write(jobName, fsJob);
         }
 
-        private FileAbstractor buildFileAbstractor() throws Exception {
+        private FileAbstractor buildFileAbstractor() {
             // What is the protocol used?
             if (fsSettings.getServer() == null || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
                 // Local FS
@@ -351,7 +349,7 @@ public class FsCrawlerImpl {
                     PROTOCOL.LOCAL + " or " + PROTOCOL.SSH);
         }
 
-        private void addFilesRecursively(FileAbstractor path, String filepath, LocalDateTime lastScanDate)
+        private void addFilesRecursively(FileAbstractor<?> path, String filepath, LocalDateTime lastScanDate)
                 throws Exception {
 
             logger.debug("indexing [{}] content", filepath);
@@ -470,8 +468,9 @@ public class FsCrawlerImpl {
                 for (SearchResponse.Hit hit : response.getHits().getHits()) {
                     String name;
                     if (hit.getSource() != null
-                            && extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME) != null) {
-                        name = (String) extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME);
+                            && extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc
+                            .File.FIELD_NAMES.FILENAME) != null) {
+                        name = (String) extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME);
                     } else if (hit.getFields() != null
                             && hit.getFields().get(FILE_FILENAME) != null) {
                         // In case someone disabled _source which is not recommended

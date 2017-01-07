@@ -36,14 +36,13 @@ import java.util.Map;
 public class XmlDocParser {
 
     private final static Logger logger = LogManager.getLogger(XmlDocParser.class);
-    public static final ObjectMapper xmlMapper;
+    private static final ObjectMapper xmlMapper;
 
     static {
         xmlMapper = new XmlMapper();
     }
 
-
-    public static Map<String, Object> asMap(InputStream stream) {
+    private static Map<String, Object> asMap(InputStream stream) {
         try {
             return xmlMapper.readValue(stream, new TypeReference<Map<String, Object>>(){});
         } catch (IOException e) {

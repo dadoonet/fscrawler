@@ -114,8 +114,8 @@ public class TikaDocParser {
             byte[] digest = messageDigest.digest();
             String result = "";
             // Convert to Hexa
-            for (int i=0; i < digest.length; i++) {
-                result += Integer.toString( ( digest[i] & 0xff ) + 0x100, 16).substring( 1 );
+            for (byte aDigest : digest) {
+                result += Integer.toString((aDigest & 0xff) + 0x100, 16).substring(1);
             }
             doc.getFile().setChecksum(result);
         }
@@ -163,13 +163,14 @@ public class TikaDocParser {
 
         // Doc as binary attachment
         if (fsSettings.getFs().isStoreSource()) {
+            //noinspection ConstantConditions
             doc.setAttachment(Base64.getEncoder().encodeToString(bos.toByteArray()));
         }
         logger.trace("End document generation");
         // End of our document
     }
 
-    public static List<String> commaDelimitedListToStringArray(String str) {
+    private static List<String> commaDelimitedListToStringArray(String str) {
         if (str == null) {
             return new ArrayList<>();
         }

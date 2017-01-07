@@ -89,6 +89,7 @@ public class BulkProcessor {
     /**
      * Adds an {@link DeleteRequest} to the list of actions to execute.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public BulkProcessor add(DeleteRequest request) {
         return add((SingleBulkRequest) request);
     }
@@ -200,7 +201,7 @@ public class BulkProcessor {
         }
     }
 
-    static Builder builder(ElasticsearchClient client, Listener listener) {
+    private static Builder builder(ElasticsearchClient client, Listener listener) {
         return new Builder(client, listener);
     }
 

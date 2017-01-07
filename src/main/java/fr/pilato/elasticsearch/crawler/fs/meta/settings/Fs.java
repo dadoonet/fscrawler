@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("SameParameterValue")
 public class Fs {
     private String url;
     private TimeValue updateRate;
@@ -189,10 +190,10 @@ public class Fs {
 
     }
 
-    Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
-       boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean storeSource, Percentage indexedChars,
-       boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-       boolean indexFolders, boolean langDetect) {
+    private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
+               boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean storeSource, Percentage indexedChars,
+               boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
+               boolean indexFolders, boolean langDetect) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;

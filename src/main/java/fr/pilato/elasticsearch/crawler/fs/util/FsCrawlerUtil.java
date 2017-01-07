@@ -53,51 +53,6 @@ public class FsCrawlerUtil extends MetaParser {
     public static final String INDEX_TYPE_DOC = "doc";
     public static final String INDEX_TYPE_FOLDER = "folder";
 
-    static public final class Doc {
-        public static final String CONTENT = "content";
-        public static final String ATTACHMENT = "attachment";
-
-        public static final String META = "meta";
-
-        static public final class Meta {
-            public static final String AUTHOR = "author";
-            public static final String TITLE = "title";
-            public static final String DATE = "date";
-            public static final String KEYWORDS = "keywords";
-            public static final String LANGUAGE = "language";
-        }
-
-        public static final String FILE = "file";
-
-        static public final class File {
-            public static final String CONTENT_TYPE = "content_type";
-            public static final String LAST_MODIFIED = "last_modified";
-            public static final String INDEXING_DATE = "indexing_date";
-            public static final String FILESIZE = "filesize";
-            public static final String FILENAME = "filename";
-            public static final String URL = "url";
-            public static final String INDEXED_CHARS = "indexed_chars";
-            public static final String CHECKSUM = "checksum";
-        }
-
-        public static final String PATH = "path";
-
-        static public final class Path {
-            public static final String ENCODED = "encoded";
-            public static final String ROOT = "root";
-            public static final String VIRTUAL = "virtual";
-            public static final String REAL = "real";
-        }
-
-        public static final String ATTRIBUTES = "attributes";
-
-        static public final class Attributes {
-            public static final String OWNER = "owner";
-            public static final String GROUP = "group";
-        }
-
-    }
-
     static public final class Dir {
         public static final String NAME = "name";
         public static final String ENCODED = "encoded";
@@ -115,8 +70,8 @@ public class FsCrawlerUtil extends MetaParser {
      * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param type The expected type (will be expanded to type.json)
      * @return the mapping
-     * @throws URISyntaxException
-     * @throws IOException
+     * @throws URISyntaxException If URI is malformed
+     * @throws IOException If the mapping can not be read
      */
     public static String readDefaultMapping(Path config, String version, String type) throws URISyntaxException, IOException {
         Path defaultConfigDir = config.resolve("_default");
@@ -135,10 +90,9 @@ public class FsCrawlerUtil extends MetaParser {
      * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param type The expected type (will be expanded to type.json)
      * @return the mapping
-     * @throws URISyntaxException
-     * @throws IOException
+     * @throws IOException If the mapping can not be read
      */
-    public static String readMapping(Path dir, String version, String type) throws URISyntaxException, IOException {
+    private static String readMapping(Path dir, String version, String type) throws IOException {
         Path file = dir.resolve(version).resolve(type + ".json");
         return new String(Files.readAllBytes(file), "UTF-8");
     }
@@ -152,8 +106,8 @@ public class FsCrawlerUtil extends MetaParser {
      * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param type The expected type (will be expanded to type.json)
      * @return the mapping
-     * @throws URISyntaxException
-     * @throws IOException
+     * @throws URISyntaxException If URI is malformed
+     * @throws IOException If the mapping can not be read
      */
     public static String readMapping(Path dir, Path config, String version, String type) throws URISyntaxException, IOException {
         try {
@@ -214,14 +168,12 @@ public class FsCrawlerUtil extends MetaParser {
         }
 
         // Exclude rules : we know that whatever includes rules are, we should exclude matching files
-        if (excludes != null) {
-            for (String exclude : excludes) {
-                String regex = exclude.replace("?", ".?").replace("*", ".*?");
-                logger.trace("regex is [{}]", regex);
-                if (filename.matches(regex)) {
-                    logger.trace("does match exclude regex");
-                    return true;
-                }
+        for (String exclude : excludes) {
+            String regex = exclude.replace("?", ".?").replace("*", ".*?");
+            logger.trace("regex is [{}]", regex);
+            if (filename.matches(regex)) {
+                logger.trace("does match exclude regex");
+                return true;
             }
         }
 
@@ -245,12 +197,6 @@ public class FsCrawlerUtil extends MetaParser {
         }
 
         // No rules ? Fine, we index everything
-        if (includes == null || includes.isEmpty()) {
-            logger.trace("no rules");
-            return true;
-        }
-
-        // Include rules : we should add document if it match include rules
         if (includes == null || includes.isEmpty()) {
             logger.trace("no include rules");
             return true;
@@ -386,7 +332,7 @@ public class FsCrawlerUtil extends MetaParser {
      * @param target The target
      * @throws IOException If copying does not work
      */
-    public static void copyResourceFile(String source, Path target) throws IOException, URISyntaxException {
+    public static void copyResourceFile(String source, Path target) throws IOException {
         InputStream resource = FsCrawler.class.getResourceAsStream(source);
         FileUtils.copyInputStreamToFile(resource, target.toFile());
     }

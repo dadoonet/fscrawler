@@ -369,6 +369,7 @@ public class ElasticsearchClient {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static Map<String, Object> extractFromPath(Map<String, Object> json, String... path) {
         Map<String, Object> currentObject = json;
         for (String fieldName : path) {

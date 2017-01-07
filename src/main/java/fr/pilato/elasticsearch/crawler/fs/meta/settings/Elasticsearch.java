@@ -50,7 +50,7 @@ public class Elasticsearch {
 
     // Using here a method instead of a constant as sadly FSCrawlerValidator can modify this object
     // TODO fix that: a validator should not modify the original object but return a modified copy
-    public static final Elasticsearch DEFAULT() {
+    public static Elasticsearch DEFAULT() {
         return Elasticsearch.builder()
                 .addNode(Node.DEFAULT)
                 .build();
@@ -171,13 +171,12 @@ public class Elasticsearch {
 
         @Override
         public String toString() {
-            final StringBuffer sb = new StringBuffer("Node{");
-            sb.append("active=").append(active);
-            sb.append(", host='").append(host).append('\'');
-            sb.append(", port=").append(port);
-            sb.append(", scheme=").append(scheme);
-            sb.append('}');
-            return sb.toString();
+            String sb = "Node{" + "active=" + active +
+                    ", host='" + host + '\'' +
+                    ", port=" + port +
+                    ", scheme=" + scheme +
+                    '}';
+            return sb;
         }
     }
 
@@ -314,7 +313,7 @@ public class Elasticsearch {
         if (index != null ? !index.equals(that.index) : that.index != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
         if (username != null ? !username.equals(that.username) : that.username != null) return false;
-        if (password != null ? !password.equals(that.password) : that.password != null) return false;
+        // We can't really test the password as it may be obfuscated
         if (pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null) return false;
         return !(flushInterval != null ? !flushInterval.equals(that.flushInterval) : that.flushInterval != null);
 

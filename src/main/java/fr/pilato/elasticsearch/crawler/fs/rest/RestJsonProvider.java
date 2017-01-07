@@ -20,7 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.pilato.elasticsearch.crawler.fs.client.JsonUtil;
+import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 import org.apache.logging.log4j.LogManager;
 
 import javax.ws.rs.ext.ContextResolver;
@@ -30,8 +30,8 @@ import javax.ws.rs.ext.Provider;
 public class RestJsonProvider implements ContextResolver<ObjectMapper> {
 
     // We initialize the object mapper depending on debug mode
-    private static final ObjectMapper mapper =
-            JsonUtil.getMapper(LogManager.getLogger(RestJsonProvider.class).isDebugEnabled());
+    private static final ObjectMapper mapper = LogManager.getLogger(RestJsonProvider.class).isDebugEnabled() ?
+            MetaParser.prettyMapper : MetaParser.mapper;
 
     @Override
     public ObjectMapper getContext(Class<?> type) {

@@ -66,7 +66,7 @@ public class TimeBasedUUIDGenerator {
         return false;
     }
 
-    public static byte[] getSecureMungedAddress() {
+    private static byte[] getSecureMungedAddress() {
         byte[] address = null;
         try {
             address = getMacAddress();

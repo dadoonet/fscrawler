@@ -19,12 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import java.io.IOException;
-
 /**
  * Shutdown hook so we make sure we close everything
  */
-public class FSCrawlerShutdownHook extends Thread implements Runnable {
+class FSCrawlerShutdownHook extends Thread implements Runnable {
 
     private final FsCrawlerImpl fsCrawler;
 
@@ -36,7 +34,7 @@ public class FSCrawlerShutdownHook extends Thread implements Runnable {
     public void run() {
         try {
             fsCrawler.close();
-        } catch (InterruptedException|IOException ignored) {
+        } catch (InterruptedException ignored) {
         }
     }
 }

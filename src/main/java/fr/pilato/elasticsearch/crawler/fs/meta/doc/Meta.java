@@ -28,6 +28,18 @@ import java.util.Map;
  * Represents document metadata
  */
 public class Meta {
+
+    /**
+     * Generated json field names
+     */
+    static public final class FIELD_NAMES {
+        public static final String AUTHOR = "author";
+        public static final String TITLE = "title";
+        public static final String DATE = "date";
+        public static final String KEYWORDS = "keywords";
+        public static final String LANGUAGE = "language";
+    }
+
     private String author;
     private String title;
     private LocalDateTime date;

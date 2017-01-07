@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 
+@SuppressWarnings("CanBeFinal")
 public class BulkResponse {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
@@ -32,6 +33,7 @@ public class BulkResponse {
     private boolean errors;
     private BulkItemTopLevelResponse[] items;
 
+    @SuppressWarnings("ConstantConditions")
     public boolean hasFailures() {
         if (errors) return errors;
         for (BulkItemTopLevelResponse topLevelItem : items) {
@@ -71,6 +73,7 @@ public class BulkResponse {
         return new RuntimeException(sbf.toString());
     }
 
+    @SuppressWarnings("CanBeFinal")
     public static class BulkItemTopLevelResponse {
 
         private BulkItemResponse index;
@@ -92,11 +95,10 @@ public class BulkResponse {
 
         @Override
         public String toString() {
-            final StringBuffer sb = new StringBuffer("BulkItemTopLevelResponse{");
-            sb.append("index=").append(index);
-            sb.append(", delete=").append(delete);
-            sb.append('}');
-            return sb.toString();
+            String sb = "BulkItemTopLevelResponse{" + "index=" + index +
+                    ", delete=" + delete +
+                    '}';
+            return sb;
         }
     }
 
@@ -174,23 +176,21 @@ public class BulkResponse {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("BulkItemResponse{");
-            sb.append("failed=").append(failed);
-            sb.append(", index='").append(index).append('\'');
-            sb.append(", type='").append(type).append('\'');
-            sb.append(", id='").append(id).append('\'');
-            sb.append(", opType=").append(opType);
-            sb.append(", failureMessage='").append(failureMessage).append('\'');
-            sb.append('}');
-            return sb.toString();
+            String sb = "BulkItemResponse{" + "failed=" + failed +
+                    ", index='" + index + '\'' +
+                    ", type='" + type + '\'' +
+                    ", id='" + id + '\'' +
+                    ", opType=" + opType +
+                    ", failureMessage='" + failureMessage + '\'' +
+                    '}';
+            return sb;
         }
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("BulkResponse{");
-        sb.append("items=").append(items == null ? "null" : Arrays.asList(items).toString());
-        sb.append('}');
-        return sb.toString();
+        String sb = "BulkResponse{" + "items=" + (items == null ? "null" : Arrays.asList(items).toString()) +
+                '}';
+        return sb;
     }
 }

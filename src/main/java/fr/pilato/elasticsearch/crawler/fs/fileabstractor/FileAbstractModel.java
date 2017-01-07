@@ -55,18 +55,17 @@ public class FileAbstractModel {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("FileAbstractModel{");
-        sb.append("name='").append(name).append('\'');
-        sb.append(", file=").append(file);
-        sb.append(", directory=").append(directory);
-        sb.append(", lastModifiedDate=").append(lastModifiedDate);
-        sb.append(", creationDate=").append(creationDate);
-        sb.append(", path='").append(path).append('\'');
-        sb.append(", owner='").append(owner).append('\'');
-        sb.append(", group='").append(group).append('\'');
-        sb.append(", fullpath='").append(fullpath).append('\'');
-        sb.append(", size=").append(size);
-        sb.append('}');
-        return sb.toString();
+        String sb = "FileAbstractModel{" + "name='" + name + '\'' +
+                ", file=" + file +
+                ", directory=" + directory +
+                ", lastModifiedDate=" + lastModifiedDate +
+                ", creationDate=" + creationDate +
+                ", path='" + path + '\'' +
+                ", owner='" + owner + '\'' +
+                ", group='" + group + '\'' +
+                ", fullpath='" + fullpath + '\'' +
+                ", size=" + size +
+                '}';
+        return sb;
     }
 }

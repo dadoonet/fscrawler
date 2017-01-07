@@ -74,7 +74,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
             }
         } else {
             logger.debug("Symlink on windows gives null for listFiles(). Skipping [{}]", dir);
-            result = Collections.EMPTY_LIST;
+            result = Collections.emptyList();
         }
 
 
@@ -83,7 +83,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
     }
 
     @Override
-    public boolean exists(String dir) throws Exception {
+    public boolean exists(String dir) {
         return new File(dir).exists();
     }
 

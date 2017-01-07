@@ -21,32 +21,18 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 import org.elasticsearch.client.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-import static fr.pilato.elasticsearch.crawler.fs.meta.MetaParser.mapper;
-import static fr.pilato.elasticsearch.crawler.fs.meta.MetaParser.prettyMapper;
-
 public class JsonUtil {
-
-    public static ObjectMapper getMapper() {
-        return getMapper(false);
-    }
-
-    public static ObjectMapper getMapper(boolean pretty) {
-        if (pretty) {
-            return prettyMapper;
-        }
-        return mapper;
-    }
 
     public static String serialize(Object object) {
         try {
-            return getMapper().writeValueAsString(object);
+            return MetaParser.mapper.writeValueAsString(object);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -65,7 +51,7 @@ public class JsonUtil {
 
     public static <T> T deserialize(InputStream stream, Class<T> clazz) {
         try {
-            return getMapper().readValue(stream, clazz);
+            return MetaParser.mapper.readValue(stream, clazz);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -84,7 +70,7 @@ public class JsonUtil {
 
     public static Map<String, Object> asMap(InputStream stream) {
         try {
-            return getMapper().readValue(stream, new TypeReference<Map<String, Object>>(){});
+            return MetaParser.mapper.readValue(stream, new TypeReference<Map<String, Object>>(){});
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

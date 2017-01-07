@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("WeakerAccess")
 public class TimeValue {
     /** How many nano-seconds in one milli-second */
     public static final long NSEC_PER_MSEC = 1000000;
@@ -184,9 +185,9 @@ public class TimeValue {
         }
     }
 
-    public static TimeValue parseTimeValue(String sValue, TimeValue defaultValue) {
+    public static TimeValue parseTimeValue(String sValue) {
         if (sValue == null) {
-            return defaultValue;
+            return null;
         }
         try {
             String lowerSValue = sValue.toLowerCase(Locale.ROOT).trim();

@@ -164,7 +164,7 @@
       Maybe the last test run did not manage to shut down the node correctly?
       You must kill it before tests can run.">
                 <condition>
-                    <socket server="localhost" port="@{es.http.port}"></socket>
+                    <socket server="localhost" port="@{es.http.port}"/>
                 </condition>
             </fail>
             <!-- run bin/elasticsearch with args -->

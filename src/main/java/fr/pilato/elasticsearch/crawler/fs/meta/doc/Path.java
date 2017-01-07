@@ -24,6 +24,17 @@ package fr.pilato.elasticsearch.crawler.fs.meta.doc;
  * Represents a Path
  */
 public class Path {
+
+    /**
+     * Generated json field names
+     */
+    static public final class FIELD_NAMES {
+        public static final String ENCODED = "encoded";
+        public static final String ROOT = "root";
+        public static final String VIRTUAL = "virtual";
+        public static final String REAL = "real";
+    }
+
     private String encoded;
     private String root;
     private String virtual;

@@ -40,11 +40,11 @@ import java.util.Map;
 
 public class AbstractRestITCase extends AbstractITCase {
 
-    protected static WebTarget target;
+    private static WebTarget target;
 
     private static ElasticsearchClientManager esClientManager;
 
-    protected static final String REST_INDEX = "fscrawler-rest-tests";
+    static final String REST_INDEX = "fscrawler-rest-tests";
 
     @BeforeClass
     public static void startRestServer() throws Exception {

@@ -27,6 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -61,7 +62,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setBulkSize(1000)
             .setFlushInterval(TimeValue.timeValueSeconds(5))
             .setIndex("docs")
-            .setType("doc")
+            .setType(FsCrawlerUtil.INDEX_TYPE_DOC)
             .build();
     private static final Server SERVER_EMPTY = Server.builder().build();
     private static final Server SERVER_FULL = Server.builder()

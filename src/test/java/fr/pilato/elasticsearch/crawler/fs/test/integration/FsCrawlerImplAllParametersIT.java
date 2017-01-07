@@ -22,6 +22,10 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.meta.doc.Attributes;
+import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
+import fr.pilato.elasticsearch.crawler.fs.meta.doc.File;
+import fr.pilato.elasticsearch.crawler.fs.meta.doc.Meta;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
@@ -71,10 +75,10 @@ import static org.junit.Assume.assumeThat;
  */
 public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
-    protected FsCrawlerImpl crawler = null;
-    protected Path currentTestResourceDir;
+    private FsCrawlerImpl crawler = null;
+    private Path currentTestResourceDir;
 
-    protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
+    private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -202,7 +206,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      * @param term      Term you search for. MatchAll if null.
      * @param expected  expected number of docs. Null if at least 1.
      * @return the search response if further tests are needed
-     * @throws Exception
+     * @throws Exception in case of error
      */
     public SearchResponse countTestHelper(final String indexName, String term, final Integer expected) throws Exception {
         return countTestHelper(indexName, term, expected, null);
@@ -219,9 +223,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Map<String, Object> file = (Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE);
+            Map<String, Object> file = (Map<String, Object>) hit.getSource().get(Doc.FIELD_NAMES.FILE);
             assertThat(file, notNullValue());
-            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), is(12230));
+            assertThat(file.get(File.FIELD_NAMES.FILESIZE), is(12230));
         }
     }
 
@@ -234,8 +238,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Object content = hit.getSource().get(FsCrawlerUtil.Doc.CONTENT);
-            Object indexedChars = extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXED_CHARS);
+            Object content = hit.getSource().get(Doc.FIELD_NAMES.CONTENT);
+            Object indexedChars = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
             assertThat(indexedChars, notNullValue());
 
@@ -254,8 +258,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Object content = hit.getSource().get(FsCrawlerUtil.Doc.CONTENT);
-            Object indexedChars = extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXED_CHARS);
+            Object content = hit.getSource().get(Doc.FIELD_NAMES.CONTENT);
+            Object indexedChars = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
             assertThat(indexedChars, notNullValue());
 
@@ -274,8 +278,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Object content = hit.getSource().get(FsCrawlerUtil.Doc.CONTENT);
-            Object indexedChars = extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXED_CHARS);
+            Object content = hit.getSource().get(Doc.FIELD_NAMES.CONTENT);
+            Object indexedChars = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
             assertThat(indexedChars, nullValue());
 
@@ -293,9 +297,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Map<String, Object> file = (Map<String, Object>) hit.getSource().get(FsCrawlerUtil.Doc.FILE);
+            Map<String, Object> file = (Map<String, Object>) hit.getSource().get(Doc.FIELD_NAMES.FILE);
             assertThat(file, notNullValue());
-            assertThat(file.get(FsCrawlerUtil.Doc.File.FILESIZE), nullValue());
+            assertThat(file.get(File.FIELD_NAMES.FILESIZE), nullValue());
         }
     }
 
@@ -314,17 +318,17 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
+            assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
 
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.CONTENT_TYPE), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.URL), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILESIZE), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXING_DATE), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXED_CHARS), nullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.LAST_MODIFIED), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILENAME), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CONTENT_TYPE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.URL), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILESIZE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS), nullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED), notNullValue());
 
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.META).get(FsCrawlerUtil.Doc.Meta.TITLE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.TITLE), notNullValue());
         }
     }
 
@@ -336,7 +340,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.ATTRIBUTES).get(FsCrawlerUtil.Doc.Attributes.OWNER), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.ATTRIBUTES).get(Attributes.FIELD_NAMES.OWNER), notNullValue());
         }
     }
 
@@ -506,7 +510,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             // We check that the field is in _source
-            assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTACHMENT), notNullValue());
+            assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
         }
     }
 
@@ -520,7 +524,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             assertThat(hit.getFields(), nullValue());
 
             // We check that the field is not part of _source
-            assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTACHMENT), nullValue());
+            assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
         }
     }
 
@@ -533,7 +537,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // The default configuration should not add file attributes
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            assertThat(hit.getSource().get(FsCrawlerUtil.Doc.ATTRIBUTES), nullValue());
+            assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTRIBUTES), nullValue());
         }
 
     }
@@ -699,7 +703,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Object checksum = extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.CHECKSUM);
+            Object checksum = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
             assertThat(checksum, is("caa71e1914ecbcf5ae4f46cf85de8648"));
         }
     }
@@ -718,7 +722,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            Object checksum = extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.CHECKSUM);
+            Object checksum = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
             assertThat(checksum, is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
         }
     }
@@ -746,7 +750,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 docs only...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, (String) null);
                 return response.getHits().getTotal() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);

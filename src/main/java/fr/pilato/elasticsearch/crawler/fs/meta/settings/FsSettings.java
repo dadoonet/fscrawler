@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
+@SuppressWarnings("SameParameterValue")
 public class FsSettings {
 
     private String name;

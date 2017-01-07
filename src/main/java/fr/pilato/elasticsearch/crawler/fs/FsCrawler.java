@@ -56,9 +56,10 @@ public class FsCrawler {
 
     private static final Logger logger = LogManager.getLogger(FsCrawler.class);
 
+    @SuppressWarnings("CanBeFinal")
     public static class FsCrawlerCommand {
         @Parameter(description = "job_name")
-        protected List<String> jobName;
+        List<String> jobName;
 
         @Parameter(names = "--config_dir", description = "Config directory. Default to ~/.fscrawler")
         private String configDir = null;
@@ -85,7 +86,7 @@ public class FsCrawler {
         private boolean silent = false;
 
         @Parameter(names = "--help", description = "display current help", help = true)
-        protected boolean help;
+        boolean help;
     }
 
 
@@ -219,7 +220,7 @@ public class FsCrawler {
             fsCrawler.start();
             // We just have to wait until the process is stopped
             while (!fsCrawler.isClosed()) {
-                sleep(CLOSE_POLLING_WAIT_MS);
+                sleep();
             }
         } catch (Exception e) {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
@@ -274,11 +275,10 @@ public class FsCrawler {
         }
     }
 
-    private static void sleep(long millis) {
+    private static void sleep() {
         try {
-            Thread.sleep(millis);
+            Thread.sleep(CLOSE_POLLING_WAIT_MS);
         }
-        catch(InterruptedException e) {
-        }
+        catch(InterruptedException ignored) { }
     }
 }

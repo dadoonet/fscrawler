@@ -17,32 +17,17 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.tika;
+package fr.pilato.elasticsearch.crawler.fs.test.unit.parser;
 
-
-import org.apache.tika.Tika;
-import org.apache.tika.language.detect.LanguageDetector;
+import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-import static org.apache.tika.langdetect.OptimaizeLangDetector.getDefaultLanguageDetector;
-
-/**
- *
- */
-class TikaInstance {
-
-    private static final Tika tika = new Tika();
-    private static LanguageDetector detector;
-
-    public static Tika tika() {
-        return tika;
-    }
-
-    public static LanguageDetector langDetector() throws IOException {
-        if (detector == null) {
-             detector = getDefaultLanguageDetector().loadModels();
-        }
-        return detector;
+public class DocParserTestCase extends AbstractFSCrawlerTestCase {
+    InputStream getBinaryContent(String filename) throws IOException {
+        return Files.newInputStream(Paths.get(getUrl("documents", filename)));
     }
 }

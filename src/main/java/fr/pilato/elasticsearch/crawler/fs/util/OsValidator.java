@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.util;
 
+@SuppressWarnings("WeakerAccess")
 public class OsValidator {
     public static final String OS;
     public static final boolean windows;
@@ -28,9 +29,9 @@ public class OsValidator {
 
     static {
         OS = System.getProperty("os.name").toLowerCase();
-        windows = (OS.indexOf("win") >= 0);
-        mac = (OS.indexOf("mac") >= 0);
-        unix = (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 );
-        solaris = (OS.indexOf("sunos") >= 0);
+        windows = (OS.contains("win"));
+        mac = (OS.contains("mac"));
+        unix = (OS.contains("nix") || OS.contains("nux") || OS.indexOf("aix") > 0 );
+        solaris = (OS.contains("sunos"));
     }
 }
