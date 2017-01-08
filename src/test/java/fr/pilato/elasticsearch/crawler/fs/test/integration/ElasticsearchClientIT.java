@@ -20,19 +20,25 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
+import fr.pilato.elasticsearch.crawler.fs.client.BulkRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.BulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.VersionComparator;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.http.entity.StringEntity;
+import org.apache.logging.log4j.LogManager;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
@@ -76,7 +82,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
     @Test
     public void testIsExistingTypeWithNoIndex() throws IOException {
-        boolean existingType = elasticsearchClient.isExistingType(getCrawlerName(), "doc");
+        boolean existingType = elasticsearchClient.isExistingType(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC);
         assertThat(existingType, is(false));
     }
 
@@ -84,7 +90,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     public void testIsExistingTypeWithIndexNoType() throws IOException {
         elasticsearchClient.createIndex(getCrawlerName());
         elasticsearchClient.waitForHealthyIndex(getCrawlerName());
-        boolean existingType = elasticsearchClient.isExistingType(getCrawlerName(), "doc");
+        boolean existingType = elasticsearchClient.isExistingType(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC);
         assertThat(existingType, is(false));
     }
 
@@ -92,8 +98,8 @@ public class ElasticsearchClientIT extends AbstractITCase {
     public void testIsExistingTypeWithIndexAndType() throws IOException {
         elasticsearchClient.createIndex(getCrawlerName());
         elasticsearchClient.waitForHealthyIndex(getCrawlerName());
-        elasticsearchClient.putMapping(getCrawlerName(), "doc", "{\"doc\":{}}");
-        boolean existingType = elasticsearchClient.isExistingType(getCrawlerName(), "doc");
+        elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "{\"doc\":{}}");
+        boolean existingType = elasticsearchClient.isExistingType(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC);
         assertThat(existingType, is(true));
     }
 
@@ -134,34 +140,34 @@ public class ElasticsearchClientIT extends AbstractITCase {
         }
 
 
-        elasticsearchClient.putMapping(getCrawlerName(), "doc", mapping);
+        elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, mapping);
 
-        elasticsearchClient.index(getCrawlerName(), "doc", "1", "{ \"foo\" : \"bar\" }");
-        elasticsearchClient.index(getCrawlerName(), "doc", "2", "{ \"foo\" : \"baz\" }");
+        elasticsearchClient.index(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "1", "{ \"foo\" : \"bar\" }");
+        elasticsearchClient.index(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "2", "{ \"foo\" : \"baz\" }");
 
         elasticsearchClient.refresh(getCrawlerName());
 
         // match_all
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, (String) null);
         assertThat(response.getHits().getTotal(), is(2L));
 
         // term
-        response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar");
+        response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "foo:bar");
         assertThat(response.getHits().getTotal(), is(1L));
 
         // using fields
-        response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar", 10, "_source");
+        response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "foo:bar", 10, "_source");
         assertThat(response.getHits().getTotal(), is(1L));
-        response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar", 10, "foo");
+        response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "foo:bar", 10, "foo");
         assertThat(response.getHits().getTotal(), is(1L));
         assertThat(response.getHits().getHits().get(0).getFields(), hasEntry("foo", Collections.singletonList("bar")));
 
         // match_all
-        response = elasticsearchClient.searchJson(getCrawlerName(), "doc", "{}");
+        response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "{}");
         assertThat(response.getHits().getTotal(), is(2L));
 
         // match
-        response = elasticsearchClient.searchJson(getCrawlerName(), "doc", "{ \"query\" : { \"match\": { \"foo\" : \"bar\" } } }");
+        response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "{ \"query\" : { \"match\": { \"foo\" : \"bar\" } } }");
         assertThat(response.getHits().getTotal(), is(1L));
     }
 
@@ -173,7 +179,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
         BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 100, TimeValue.timeValueSeconds(2), null);
         for (int i = 0; i < 10; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}"));
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "id" + i).source("{\"foo\":\"bar\"}"));
         }
 
         elasticsearchClient.refresh(getCrawlerName());
@@ -186,7 +192,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
         elasticsearchClient.refresh(getCrawlerName());
 
         // We should have now our docs
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, (String) null);
         assertThat(response.getHits().getTotal(), is(10L));
 
         bulkProcessor.close();
@@ -200,19 +206,19 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
         BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 10, null, null);
         for (int i = 0; i < 9; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}"));
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "id" + i).source("{\"foo\":\"bar\"}"));
         }
 
         elasticsearchClient.refresh(getCrawlerName());
 
         waitForAllShardsAssigned();
 
-        bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + 9).source("{\"foo\":\"bar\"}"));
+        bulkProcessor.add(new IndexRequest(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "id" + 9).source("{\"foo\":\"bar\"}"));
 
         elasticsearchClient.refresh(getCrawlerName());
 
         // We should have now our docs
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, (String) null);
         assertThat(response.getHits().getTotal(), is(10L));
 
         bulkProcessor.close();
@@ -247,7 +253,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
         BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 100, TimeValue.timeValueSeconds(2), getCrawlerName());
         for (int i = 0; i < 10; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"field\": \"baz\"}"));
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "id" + i).source("{\"field\": \"baz\"}"));
         }
 
         elasticsearchClient.refresh(getCrawlerName());
@@ -260,10 +266,44 @@ public class ElasticsearchClientIT extends AbstractITCase {
         elasticsearchClient.refresh(getCrawlerName());
 
         // We should have now our docs
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "doc", "foo:bar");
+        SearchResponse response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "foo:bar");
         assertThat(response.getHits().getTotal(), is(10L));
 
         bulkProcessor.close();
+    }
+
+    @Test
+    public void testBulkWithErrors() throws IOException, InterruptedException {
+        // Create the index first
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
+
+        AtomicReference<BulkResponse> bulkResponse = new AtomicReference<>();
+
+        BulkProcessor bulkProcessor = new BulkProcessor.Builder(elasticsearchClient,
+                new BulkProcessor.Listener() {
+                    @Override public void beforeBulk(long executionId, BulkRequest request) { }
+                    @Override public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+                        bulkResponse.set(response);
+                    }
+                    @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) { }
+                })
+                .setBulkActions(100)
+                .setFlushInterval(TimeValue.timeValueMillis(200))
+                .build();
+        bulkProcessor.add(new IndexRequest(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "id").source("{\"foo\":\"bar\""));
+        bulkProcessor.close();
+
+
+        BulkResponse response = bulkResponse.get();
+        Throwable message = response.buildFailureMessage();
+
+        assertThat(message.getMessage(), containsString("1 failures"));
+
+        // If we run the test with a TRACE level, we can check more things
+        if (LogManager.getLogger(BulkResponse.class).isTraceEnabled()) {
+            assertThat(message.getMessage(), containsString("failed to parse"));
+        }
     }
 
     /**
@@ -282,12 +322,12 @@ public class ElasticsearchClientIT extends AbstractITCase {
      *    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
      *    at java.lang.Thread.run(Thread.java:745)
      *
-     * @throws InterruptedException
+     * @throws InterruptedException in case of error
      */
     private void waitForAllShardsAssigned() throws InterruptedException {
         awaitBusy(() -> {
             try {
-                elasticsearchClient.search(getCrawlerName(), "doc", (String) null);
+                elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, (String) null);
             } catch (IOException e) {
                 // For elasticsearch 1.x series
                 if (e.getMessage().contains("SearchPhaseExecutionException")) {

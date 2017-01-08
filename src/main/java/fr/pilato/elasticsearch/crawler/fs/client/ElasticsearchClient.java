@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch.Node;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -51,22 +52,30 @@ public class ElasticsearchClient {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
 
+    private final Elasticsearch settings;
     private final RestClient client;
     private String FIELDS = null;
     public static final Integer defaultSearchSize = 10;
     private boolean INGEST_SUPPORT = true;
     private String VERSION = null;
 
-    private ElasticsearchClient(List<Node> nodes, String username, String password) {
-        List<HttpHost> hosts = new ArrayList<>(nodes.size());
-        for (Node node : nodes) {
-            hosts.add(new HttpHost(node.getHost(), node.getPort(), node.getScheme().toLowerCase()));
-        }
+    public ElasticsearchClient(Elasticsearch settings) {
+        this.settings = settings;
+        List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
+        settings.getNodes().forEach(node -> {
+            Node.Scheme scheme = node.getScheme();
+            if (scheme == null) {
+                // Default to HTTP. In case we are reading an old configuration
+                scheme = Node.Scheme.HTTP;
+            }
+            hosts.add(new HttpHost(node.getHost(), node.getPort(), scheme.toLowerCase()));
+        });
+
         RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
 
-        if (username != null) {
+        if (settings.getUsername() != null) {
             CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
+            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(settings.getUsername(), settings.getPassword()));
             builder.setHttpClientConfigCallback(httpClientBuilder ->
                     httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
         }
@@ -76,6 +85,10 @@ public class ElasticsearchClient {
 
     public RestClient getClient() {
         return client;
+    }
+
+    public Elasticsearch getSettings() {
+        return settings;
     }
 
     public void createIndex(String index) throws IOException {
@@ -303,7 +316,7 @@ public class ElasticsearchClient {
         return searchResponse;
     }
 
-    private void setElasticsearchBehavior() throws IOException {
+    public void setElasticsearchBehavior() throws IOException {
         if (VERSION == null) {
             VERSION = findVersion();
 
@@ -358,40 +371,7 @@ public class ElasticsearchClient {
         }
     }
 
-    public static class Builder {
-
-        private List<Node> nodes = new ArrayList<>();
-        private String username = null;
-        private String password = null;
-
-        public Builder setUsername(String username) {
-            this.username = username;
-            return this;
-        }
-
-        public Builder setPassword(String password) {
-            this.password = password;
-            return this;
-        }
-
-        public Builder addNode(Node node) {
-            nodes.add(node);
-            return this;
-        }
-
-        public ElasticsearchClient build() throws IOException {
-            ElasticsearchClient elasticsearchClient = new ElasticsearchClient(nodes, username, password);
-            // We set what will be elasticsearch behavior as it depends on the cluster version
-            elasticsearchClient.setElasticsearchBehavior();
-            return elasticsearchClient;
-        }
-
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
+    @SuppressWarnings("unchecked")
     public static Map<String, Object> extractFromPath(Map<String, Object> json, String... path) {
         Map<String, Object> currentObject = json;
         for (String fieldName : path) {

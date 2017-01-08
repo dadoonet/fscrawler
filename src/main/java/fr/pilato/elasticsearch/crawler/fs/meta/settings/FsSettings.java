@@ -19,22 +19,26 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
+@SuppressWarnings("SameParameterValue")
 public class FsSettings {
 
     private String name;
     private Fs fs;
     private Server server;
     private Elasticsearch elasticsearch;
+    private Rest rest;
+    public boolean useDeprecated = false;
 
     public FsSettings() {
 
     }
 
-    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch) {
+    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch, Rest rest) {
         this.name = name;
         this.fs = fs;
         this.server = server;
         this.elasticsearch = elasticsearch;
+        this.rest = rest;
     }
 
     public static Builder builder(String name) {
@@ -45,7 +49,8 @@ public class FsSettings {
         private String name;
         private Fs fs = Fs.DEFAULT;
         private Server server = null;
-        private Elasticsearch elasticsearch = Elasticsearch.DEFAULT;
+        private Elasticsearch elasticsearch = Elasticsearch.DEFAULT();
+        private Rest rest = Rest.DEFAULT;
 
         private Builder setName(String name) {
             this.name = name;
@@ -67,8 +72,13 @@ public class FsSettings {
             return this;
         }
 
+        public Builder setRest(Rest rest) {
+            this.rest = rest;
+            return this;
+        }
+
         public FsSettings build() {
-            return new FsSettings(name, fs, server, elasticsearch);
+            return new FsSettings(name, fs, server, elasticsearch, rest);
         }
     }
 
@@ -104,6 +114,14 @@ public class FsSettings {
         this.elasticsearch = elasticsearch;
     }
 
+    public Rest getRest() {
+        return rest;
+    }
+
+    public void setRest(Rest rest) {
+        this.rest = rest;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -114,6 +132,7 @@ public class FsSettings {
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (fs != null ? !fs.equals(that.fs) : that.fs != null) return false;
         if (server != null ? !server.equals(that.server) : that.server != null) return false;
+        if (rest != null ? !rest.equals(that.rest) : that.rest != null) return false;
         return !(elasticsearch != null ? !elasticsearch.equals(that.elasticsearch) : that.elasticsearch != null);
 
     }
@@ -123,6 +142,7 @@ public class FsSettings {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (fs != null ? fs.hashCode() : 0);
         result = 31 * result + (server != null ? server.hashCode() : 0);
+        result = 31 * result + (rest != null ? rest.hashCode() : 0);
         result = 31 * result + (elasticsearch != null ? elasticsearch.hashCode() : 0);
         return result;
     }

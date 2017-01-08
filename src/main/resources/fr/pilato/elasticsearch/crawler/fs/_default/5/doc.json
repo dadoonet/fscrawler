@@ -68,6 +68,9 @@
         },
         "title" : {
           "type" : "text"
+        },
+        "language" : {
+          "type" : "keyword"
         }
       }
     },

@@ -34,8 +34,8 @@ public class VersionComparator implements Comparator {
         VersionTokenizer tokenizer1 = new VersionTokenizer(version1);
         VersionTokenizer tokenizer2 = new VersionTokenizer(version2);
 
-        int number1 = 0, number2 = 0;
-        String suffix1 = "", suffix2 = "";
+        int number1, number2;
+        String suffix1, suffix2;
 
         while (tokenizer1.MoveNext()) {
             if (!tokenizer2.MoveNext()) {

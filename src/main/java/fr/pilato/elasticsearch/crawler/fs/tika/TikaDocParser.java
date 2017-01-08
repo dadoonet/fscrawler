@@ -1,11 +1,11 @@
 /*
- * Licensed to Elasticsearch under one or more contributor
- * license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright
- * ownership. Elasticsearch licenses this file to you under
- * the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to David Pilato (the "Author") under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. Author licenses this
+ * file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
  *    http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -25,6 +25,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tika.language.detect.LanguageResult;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.tika;
 
 /**
@@ -112,8 +114,8 @@ public class TikaDocParser {
             byte[] digest = messageDigest.digest();
             String result = "";
             // Convert to Hexa
-            for (int i=0; i < digest.length; i++) {
-                result += Integer.toString( ( digest[i] & 0xff ) + 0x100, 16).substring( 1 );
+            for (byte aDigest : digest) {
+                result += Integer.toString((aDigest & 0xff) + 0x100, 16).substring(1);
             }
             doc.getFile().setChecksum(result);
         }
@@ -140,7 +142,18 @@ public class TikaDocParser {
                 // This is a logger trick which helps to generate our unit tests
                 // You need to change test/resources/log4j2.xml fr.pilato.elasticsearch.crawler.fs.tika level to trace
                 logger.trace("  assertThat(raw, hasEntry(\"{}\", \"{}\"));", metadataName, value);
-                doc.getMeta().addRaw(metadataName, value);
+
+                // We need to remove dots in field names if any. See https://github.com/dadoonet/fscrawler/issues/256
+                doc.getMeta().addRaw(metadataName.replaceAll("\\.", ":"), value);
+            }
+        }
+
+        if (fsSettings.getFs().isLangDetect() && parsedContent != null) {
+            List<LanguageResult> languages = langDetector().detectAll(parsedContent);
+            if (!languages.isEmpty()) {
+                LanguageResult language = languages.get(0);
+                logger.trace("Main detected language: [{}]", language);
+                doc.getMeta().setLanguage(language.getLanguage());
             }
         }
         // Meta
@@ -150,13 +163,14 @@ public class TikaDocParser {
 
         // Doc as binary attachment
         if (fsSettings.getFs().isStoreSource()) {
+            //noinspection ConstantConditions
             doc.setAttachment(Base64.getEncoder().encodeToString(bos.toByteArray()));
         }
         logger.trace("End document generation");
         // End of our document
     }
 
-    public static List<String> commaDelimitedListToStringArray(String str) {
+    private static List<String> commaDelimitedListToStringArray(String str) {
         if (str == null) {
             return new ArrayList<>();
         }

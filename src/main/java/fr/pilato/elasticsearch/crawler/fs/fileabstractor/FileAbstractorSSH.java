@@ -50,7 +50,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         model.directory = file.getAttrs().isDir();
         model.file = !model.directory;
         // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
-        model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()), ZoneId.systemDefault());
+        model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()*1000L), ZoneId.systemDefault());
         model.path = path;
         model.fullpath = model.path.concat("/").concat(model.name);
         model.size = file.getAttrs().getSize();
@@ -64,6 +64,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         return sftp.get(file.fullpath);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Collection<FileAbstractModel> getFiles(String dir) throws Exception {
         logger.debug("Listing local files from {}", dir);
@@ -85,7 +86,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
     }
 
     @Override
-    public boolean exists(String dir) throws Exception {
+    public boolean exists(String dir) {
         try {
             sftp.ls(dir);
         } catch (Exception e) {
@@ -105,7 +106,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         sftp.disconnect();
     }
 
-    public ChannelSftp openSSHConnection(Server server) throws Exception {
+    private ChannelSftp openSSHConnection(Server server) throws Exception {
         logger.debug("Opening SSH connection to {}@{}", server.getUsername(), server.getHostname());
 
         JSch jsch = new JSch();

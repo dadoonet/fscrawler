@@ -25,6 +25,15 @@ import java.util.Objects;
  * Represents additional file attributes.
  */
 public class Attributes {
+
+    /**
+     * Generated json field names
+     */
+    static public final class FIELD_NAMES {
+        public static final String OWNER = "owner";
+        public static final String GROUP = "group";
+    }
+
     private String owner;
     private String group;
 
@@ -61,10 +70,9 @@ public class Attributes {
     }
 
     @Override public String toString() {
-        final StringBuilder sb = new StringBuilder("Attributes{");
-        sb.append("owner='").append(owner).append('\'');
-        sb.append(", group='").append(group).append('\'');
-        sb.append('}');
-        return sb.toString();
+        String sb = "Attributes{" + "owner='" + owner + '\'' +
+                ", group='" + group + '\'' +
+                '}';
+        return sb;
     }
 }

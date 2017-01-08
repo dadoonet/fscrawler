@@ -89,6 +89,7 @@ public class BulkProcessor {
     /**
      * Adds an {@link DeleteRequest} to the list of actions to execute.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public BulkProcessor add(DeleteRequest request) {
         return add((SingleBulkRequest) request);
     }
@@ -97,6 +98,23 @@ public class BulkProcessor {
      * Adds either a delete or an index request.
      */
     private BulkProcessor add(SingleBulkRequest request) {
+        // We do that only if debug
+        if (logger.isDebugEnabled()) {
+            StringBuffer sbf = new StringBuffer();
+            sbf.append("{");
+            String header = JsonUtil.serialize(request);
+            if (request instanceof DeleteRequest) {
+                sbf.append("\"delete\":").append(header).append("}");
+            }
+            if (request instanceof IndexRequest) {
+                sbf.append("\"index\":").append(header).append("}");
+                // Index Request: header line + body
+                if (logger.isTraceEnabled()) {
+                    sbf.append("\n").append(((IndexRequest) request).content().replaceAll("\n", ""));
+                }
+            }
+            logger.debug("{}", sbf);
+        }
         return internalAdd(request);
     }
 
@@ -150,7 +168,7 @@ public class BulkProcessor {
         return (bulkActions != -1) && (bulkRequest.numberOfActions() >= bulkActions);
     }
 
-    static class Builder {
+    public static class Builder {
 
         private int bulkActions;
         private TimeValue flushInterval;
@@ -183,7 +201,7 @@ public class BulkProcessor {
         }
     }
 
-    static Builder builder(ElasticsearchClient client, Listener listener) {
+    private static Builder builder(ElasticsearchClient client, Listener listener) {
         return new Builder(client, listener);
     }
 

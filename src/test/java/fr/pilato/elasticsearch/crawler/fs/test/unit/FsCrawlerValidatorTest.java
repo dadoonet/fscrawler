@@ -74,7 +74,7 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
     private FsSettings buildSettings(Fs fs, Elasticsearch elasticsearch, Server server) {
         FsSettings.Builder settingsBuilder = FsSettings.builder(getCurrentTestName());
         settingsBuilder.setFs(fs == null ? Fs.DEFAULT : fs);
-        settingsBuilder.setElasticsearch(elasticsearch == null ? Elasticsearch.DEFAULT : elasticsearch);
+        settingsBuilder.setElasticsearch(elasticsearch == null ? Elasticsearch.DEFAULT() : elasticsearch);
         settingsBuilder.setServer(server);
 
         return settingsBuilder.build();

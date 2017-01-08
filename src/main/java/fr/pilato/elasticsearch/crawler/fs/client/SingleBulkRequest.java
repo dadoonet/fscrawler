@@ -21,7 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public abstract class SingleBulkRequest {
+abstract class SingleBulkRequest {
 
     @JsonProperty("_index")
     private String index;
@@ -30,7 +30,7 @@ public abstract class SingleBulkRequest {
     @JsonProperty("_id")
     private String id;
 
-    public SingleBulkRequest(String index, String type, String id) {
+    SingleBulkRequest(String index, String type, String id) {
         this.index = index;
         this.type = type;
         this.id = id;

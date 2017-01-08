@@ -50,7 +50,7 @@ public class FsCrawlerValidator {
         }
 
         if (settings.getElasticsearch() == null) {
-            settings.setElasticsearch(Elasticsearch.DEFAULT);
+            settings.setElasticsearch(Elasticsearch.DEFAULT());
         }
         if (settings.getElasticsearch().getIndex() == null) {
             // When index is not set, we fallback to the config name

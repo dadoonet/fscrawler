@@ -56,9 +56,10 @@ public class FsCrawler {
 
     private static final Logger logger = LogManager.getLogger(FsCrawler.class);
 
+    @SuppressWarnings("CanBeFinal")
     public static class FsCrawlerCommand {
         @Parameter(description = "job_name")
-        protected List<String> jobName;
+        List<String> jobName;
 
         @Parameter(names = "--config_dir", description = "Config directory. Default to ~/.fscrawler")
         private String configDir = null;
@@ -72,6 +73,9 @@ public class FsCrawler {
         @Parameter(names = "--update_mapping", description = "Update elasticsearch mapping")
         private boolean updateMapping = false;
 
+        @Parameter(names = "--rest", description = "Start REST Layer")
+        private boolean rest = false;
+
         @Parameter(names = "--debug", description = "Debug mode")
         private boolean debug = false;
 
@@ -82,7 +86,7 @@ public class FsCrawler {
         private boolean silent = false;
 
         @Parameter(names = "--help", description = "display current help", help = true)
-        protected boolean help;
+        boolean help;
     }
 
 
@@ -171,7 +175,7 @@ public class FsCrawler {
                 fsSettings.setFs(Fs.DEFAULT);
             }
             if (fsSettings.getElasticsearch() == null) {
-                fsSettings.setElasticsearch(Elasticsearch.DEFAULT);
+                fsSettings.setElasticsearch(Elasticsearch.DEFAULT());
             }
 
             String username = commands.username;
@@ -198,7 +202,7 @@ public class FsCrawler {
             if ("y".equalsIgnoreCase(yesno)) {
                 fsSettings = FsSettings.builder(commands.jobName.get(0))
                         .setFs(Fs.DEFAULT)
-                        .setElasticsearch(Elasticsearch.DEFAULT)
+                        .setElasticsearch(Elasticsearch.DEFAULT())
                         .build();
                 fsSettingsFileHandler.write(fsSettings);
 
@@ -210,13 +214,13 @@ public class FsCrawler {
         }
 
         logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toJson(fsSettings));
-        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.updateMapping);
+        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.updateMapping, commands.rest);
         Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
         try {
             fsCrawler.start();
             // We just have to wait until the process is stopped
             while (!fsCrawler.isClosed()) {
-                sleep(CLOSE_POLLING_WAIT_MS);
+                sleep();
             }
         } catch (Exception e) {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
@@ -271,11 +275,10 @@ public class FsCrawler {
         }
     }
 
-    private static void sleep(long millis) {
+    private static void sleep() {
         try {
-            Thread.sleep(millis);
+            Thread.sleep(CLOSE_POLLING_WAIT_MS);
         }
-        catch(InterruptedException e) {
-        }
+        catch(InterruptedException ignored) { }
     }
 }

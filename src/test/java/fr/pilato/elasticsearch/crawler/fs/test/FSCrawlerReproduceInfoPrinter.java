@@ -33,6 +33,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -43,7 +44,7 @@ import static com.carrotsearch.randomizedtesting.SysGlobals.SYSPROP_TESTMETHOD;
 
 public class FSCrawlerReproduceInfoPrinter extends RunListener {
 
-    protected static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger();
 
     @Override
     public void testStarted(Description description) throws Exception {
@@ -82,7 +83,7 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
         String[] value();
     }
 
-    protected static class MavenMessageBuilder extends ReproduceErrorMessageBuilder {
+    static class MavenMessageBuilder extends ReproduceErrorMessageBuilder {
 
         public MavenMessageBuilder(StringBuilder b) {
             super(b);
@@ -112,11 +113,9 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
             if (Object.class.equals(c) == false) {
                 scanProperties(c.getSuperclass(), properties);
             }
-            Properties extraParameterAnnocation = c.getAnnotation(Properties.class);
-            if (extraParameterAnnocation != null) {
-                for (String property : extraParameterAnnocation.value()) {
-                    properties.add(property);
-                }
+            Properties extraParameterAnnotation = c.getAnnotation(Properties.class);
+            if (extraParameterAnnotation != null) {
+                Collections.addAll(properties, extraParameterAnnotation.value());
             }
         }
 
@@ -158,7 +157,7 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
             return this;
         }
 
-        protected ReproduceErrorMessageBuilder appendProperties(String... properties) {
+        ReproduceErrorMessageBuilder appendProperties(String... properties) {
             for (String sysPropName : properties) {
                 if (!Strings.isBlank(System.getProperty(sysPropName))) {
                     appendOpt(sysPropName, System.getProperty(sysPropName));

@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.PROTOCOL;
 
 public class Server {
@@ -39,6 +40,7 @@ public class Server {
     private String hostname;
     private int port;
     private String username;
+    @JsonIgnore
     private String password;
     private String protocol;
     private String pemPath;
@@ -148,7 +150,7 @@ public class Server {
         if (port != server.port) return false;
         if (hostname != null ? !hostname.equals(server.hostname) : server.hostname != null) return false;
         if (username != null ? !username.equals(server.username) : server.username != null) return false;
-        if (password != null ? !password.equals(server.password) : server.password != null) return false;
+        // We can't really test the password as it may be obfuscated
         if (protocol != null ? !protocol.equals(server.protocol) : server.protocol != null) return false;
         return !(pemPath != null ? !pemPath.equals(server.pemPath) : server.pemPath != null);
 

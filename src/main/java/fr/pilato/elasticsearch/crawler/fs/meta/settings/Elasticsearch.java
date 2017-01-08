@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 
 import java.util.ArrayList;
@@ -47,9 +48,13 @@ public class Elasticsearch {
         return new Builder();
     }
 
-    public static final Elasticsearch DEFAULT = Elasticsearch.builder()
-            .addNode(Node.DEFAULT)
-            .build();
+    // Using here a method instead of a constant as sadly FSCrawlerValidator can modify this object
+    // TODO fix that: a validator should not modify the original object but return a modified copy
+    public static Elasticsearch DEFAULT() {
+        return Elasticsearch.builder()
+                .addNode(Node.DEFAULT)
+                .build();
+    }
 
     public static class Node {
 
@@ -66,7 +71,7 @@ public class Elasticsearch {
             }
         }
 
-        public static final Node DEFAULT = Node.builder().setHost("127.0.0.1").setPort(9200).build();
+        public static final Node DEFAULT = Node.builder().setHost("127.0.0.1").setPort(9200).setScheme(Scheme.HTTP).build();
 
         public Node() {
 
@@ -166,13 +171,12 @@ public class Elasticsearch {
 
         @Override
         public String toString() {
-            final StringBuffer sb = new StringBuffer("Node{");
-            sb.append("active=").append(active);
-            sb.append(", host='").append(host).append('\'');
-            sb.append(", port=").append(port);
-            sb.append(", scheme=").append(scheme);
-            sb.append('}');
-            return sb.toString();
+            String sb = "Node{" + "active=" + active +
+                    ", host='" + host + '\'' +
+                    ", port=" + port +
+                    ", scheme=" + scheme +
+                    '}';
+            return sb;
         }
     }
 
@@ -182,6 +186,7 @@ public class Elasticsearch {
     private int bulkSize;
     private TimeValue flushInterval;
     private String username;
+    @JsonIgnore
     private String password;
     private String pipeline;
 
@@ -308,7 +313,7 @@ public class Elasticsearch {
         if (index != null ? !index.equals(that.index) : that.index != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
         if (username != null ? !username.equals(that.username) : that.username != null) return false;
-        if (password != null ? !password.equals(that.password) : that.password != null) return false;
+        // We can't really test the password as it may be obfuscated
         if (pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null) return false;
         return !(flushInterval != null ? !flushInterval.equals(that.flushInterval) : that.flushInterval != null);
 

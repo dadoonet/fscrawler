@@ -27,6 +27,7 @@ import java.util.Map;
 /**
  * Search response object. We only unwrap needed fields.
  */
+@SuppressWarnings("CanBeFinal")
 public class SearchResponse {
 
     private Hits hits;
@@ -37,10 +38,9 @@ public class SearchResponse {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("SearchResponse{");
-        sb.append("hits=").append(hits);
-        sb.append('}');
-        return sb.toString();
+        String sb = "SearchResponse{" + "hits=" + hits +
+                '}';
+        return sb;
     }
 
     public static class Hits {
@@ -59,11 +59,10 @@ public class SearchResponse {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("Hits{");
-            sb.append("hits=").append(hits);
-            sb.append(", total=").append(total);
-            sb.append('}');
-            return sb.toString();
+            String sb = "Hits{" + "hits=" + hits +
+                    ", total=" + total +
+                    '}';
+            return sb;
         }
     }
 
@@ -90,12 +89,11 @@ public class SearchResponse {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("Hit{");
-            sb.append("source=").append(source);
-            sb.append(", fields=").append(fields);
-            sb.append(", highlight=").append(highlight);
-            sb.append('}');
-            return sb.toString();
+            String sb = "Hit{" + "source=" + source +
+                    ", fields=" + fields +
+                    ", highlight=" + highlight +
+                    '}';
+            return sb;
         }
     }
 }

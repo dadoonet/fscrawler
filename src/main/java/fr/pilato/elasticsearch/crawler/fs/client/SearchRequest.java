@@ -57,12 +57,11 @@ public class SearchRequest {
 
     @Override
     public String   toString() {
-        final StringBuilder sb = new StringBuilder("SearchRequest{");
-        sb.append("query=").append(query);
-        sb.append(", fields=").append(fields == null ? "null" : Arrays.asList(fields).toString());
-        sb.append(", size=").append(size);
-        sb.append('}');
-        return sb.toString();
+        String sb = "SearchRequest{" + "query=" + query +
+                ", fields=" + (fields == null ? "null" : Arrays.asList(fields).toString()) +
+                ", size=" + size +
+                '}';
+        return sb;
     }
 
     @Override

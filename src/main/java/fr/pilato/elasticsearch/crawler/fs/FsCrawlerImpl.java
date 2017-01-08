@@ -21,7 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.client.DeleteRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractModel;
@@ -36,6 +36,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.commons.io.FilenameUtils;
@@ -57,13 +58,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator.validateSettings;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 
 /**
  * @author dadoonet (David Pilato)
@@ -78,45 +79,58 @@ public class FsCrawlerImpl {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerImpl.class);
 
-    private static final String PATH_ENCODED = FsCrawlerUtil.Doc.PATH + "." + FsCrawlerUtil.Doc.Path.ENCODED;
-    private static final String FILE_FILENAME = FsCrawlerUtil.Doc.FILE + "." + FsCrawlerUtil.Doc.File.FILENAME;
+    private static final String PATH_ENCODED = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ENCODED;
+    private static final String FILE_FILENAME = Doc.FIELD_NAMES.FILE + "." + fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME;
 
     private final AtomicInteger runNumber = new AtomicInteger(0);
 
-    public static final int REQUEST_SIZE = 10000;
-    public static final int LOOP_INFINITE = -1;
+    private final static String FSCRAWLER_PROPERTIES = "fscrawler.properties";
+    public static final Properties properties;
 
-    private volatile BulkProcessor bulkProcessor;
+    static {
+        properties = new Properties();
+        try {
+            properties.load(FsCrawler.class.getClassLoader().getResourceAsStream(FSCRAWLER_PROPERTIES));
+        } catch (IOException e) {
+            logger.error("Can not find [{}] resource in the class loader", FSCRAWLER_PROPERTIES);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static final int REQUEST_SIZE = 10000;
+    public static final int LOOP_INFINITE = -1;
 
     private volatile boolean closed = false;
     private final Object semaphore = new Object();
 
-    /**
-     * We store config files here...
-     * Default to ~/.fscrawler
-     */
-    private final Path config;
     private final FsSettings settings;
-    private final FsSettingsFileHandler fsSettingsFileHandler;
     private final FsJobFileHandler fsJobFileHandler;
     private final Integer loop;
     private final boolean updateMapping;
+    private final boolean rest;
     private MessageDigest messageDigest = null;
 
-    private ElasticsearchClient client;
     private Thread fsCrawlerThread;
 
+    private final ElasticsearchClientManager esClientManager;
+
     public FsCrawlerImpl(Path config, FsSettings settings) {
-        this(config, settings, LOOP_INFINITE, false);
+        this(config, settings, LOOP_INFINITE, false, false);
     }
 
-    public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean updateMapping) {
-        this.config = config;
-        this.fsSettingsFileHandler = new FsSettingsFileHandler(config);
+    public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean updateMapping, boolean rest) {
+        /*
+         * We store config files here...
+         * Default to ~/.fscrawler
+         * The dir will be created if needed by calling the following CTOR
+         */
+        new FsSettingsFileHandler(config);
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.settings = settings;
         this.loop = loop;
+        this.rest = rest;
         this.updateMapping = updateMapping;
+        this.esClientManager = new ElasticsearchClientManager(config, settings);
 
         closed = validateSettings(logger, settings);
         if (closed) {
@@ -148,54 +162,10 @@ public class FsCrawlerImpl {
             logger.info("FS crawler started in watch mode. It will run unless you stop it with CTRL+C.");
         }
 
-        String elasticsearchVersion;
+        esClientManager.start();
+        esClientManager.createIndexAndMappings(settings, updateMapping);
 
-        try {
-            // Create an elasticsearch client
-            ElasticsearchClient.Builder builder = ElasticsearchClient.builder();
-            settings.getElasticsearch().getNodes().forEach(builder::addNode);
-            builder.setUsername(settings.getElasticsearch().getUsername());
-            builder.setPassword(settings.getElasticsearch().getPassword());
-            client = builder.build();
-
-            client.createIndex(settings.getElasticsearch().getIndex(), true);
-
-            // Let's read the current version of elasticsearch cluster
-            String version = client.findVersion();
-            logger.debug("FS crawler connected to an elasticsearch [{}] node.", version);
-
-            elasticsearchVersion = extractMajorVersionNumber(version);
-        } catch (Exception e) {
-            logger.warn("failed to create index [{}], disabling crawler...", settings.getElasticsearch().getIndex());
-            throw e;
-        }
-
-        // Check that we don't try using an ingest pipeline with a non compatible version
-        if (settings.getElasticsearch().getPipeline() != null && !client.isIngestSupported()) {
-            throw new RuntimeException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
-                    ", but your elasticsearch cluster does not support this feature.");
-        }
-
-        try {
-            // If needed, we create the new mapping for files
-            Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
-            // Read file mapping from resources
-            String mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
-            ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),
-                    mapping, updateMapping);
-            // If needed, we create the new mapping for folders
-            if (settings.getFs().isIndexFolders()) {
-                mapping = FsCrawlerUtil.readMapping(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_FOLDER);
-                ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
-                        mapping, updateMapping);
-            }
-        } catch (Exception e) {
-            logger.warn("failed to {} mapping for [{}/{}], disabling crawler...", updateMapping ? "update" : "create",
-                    settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType());
-            throw e;
-        }
-
-        if (loop == 0) {
+        if (loop == 0 && !rest) {
             closed = true;
         }
 
@@ -204,16 +174,20 @@ public class FsCrawlerImpl {
             return;
         }
 
-        // Creating bulk processor
-        this.bulkProcessor = BulkProcessor.simpleBulkProcessor(client, settings.getElasticsearch().getBulkSize(),
-                settings.getElasticsearch().getFlushInterval(), settings.getElasticsearch().getPipeline());
+        // Start the REST Server if needed
+        if (rest) {
+            RestServer.start(settings, esClientManager);
+            logger.info("FS crawler Rest service started on [{}]", settings.getRest().url());
+        }
 
-        // Start the crawler thread
-        fsCrawlerThread = new Thread(new FSParser(settings), "fs-crawler");
-        fsCrawlerThread.start();
+        // Start the crawler thread - but not if only in rest mode
+        if (loop != 0) {
+            fsCrawlerThread = new Thread(new FSParser(settings), "fs-crawler");
+            fsCrawlerThread.start();
+        }
     }
 
-    public void close() throws InterruptedException, IOException {
+    public void close() throws InterruptedException {
         logger.debug("Closing FS crawler [{}]", settings.getName());
         closed = true;
 
@@ -230,13 +204,12 @@ public class FsCrawlerImpl {
             logger.debug("FS crawler thread is now stopped");
         }
 
-        if (this.bulkProcessor != null) {
-            this.bulkProcessor.close();
-        }
+        // Stop the REST Server if needed
+        RestServer.close();
+        logger.debug("FS crawler Rest service stopped");
 
-        if (client != null) {
-            client.shutdown();
-        }
+        esClientManager.close();
+        logger.debug("ES Client Manager stopped");
 
         logger.info("FS crawler [{}] stopped", settings.getName());
     }
@@ -298,7 +271,7 @@ public class FsCrawlerImpl {
 
                     updateFsJob(fsSettings.getName(), scanDatenew);
                 } catch (Exception e) {
-                    logger.warn("Error while indexing content from {}", e, fsSettings.getFs().getUrl());
+                    logger.warn("Error while indexing content from {}: {}", fsSettings.getFs().getUrl(), e.getMessage());
                 } finally {
                     if (path != null) {
                         try {
@@ -347,7 +320,7 @@ public class FsCrawlerImpl {
          *
          * @param jobName  job name
          * @param scanDate last date we scan the dirs
-         * @throws Exception
+         * @throws Exception In case of error
          */
         private void updateFsJob(String jobName, LocalDateTime scanDate) throws Exception {
             // We need to round that latest date to the lower second and
@@ -363,7 +336,7 @@ public class FsCrawlerImpl {
             fsJobFileHandler.write(jobName, fsJob);
         }
 
-        private FileAbstractor buildFileAbstractor() throws Exception {
+        private FileAbstractor buildFileAbstractor() {
             // What is the protocol used?
             if (fsSettings.getServer() == null || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
                 // Local FS
@@ -378,7 +351,7 @@ public class FsCrawlerImpl {
                     PROTOCOL.LOCAL + " or " + PROTOCOL.SSH);
         }
 
-        private void addFilesRecursively(FileAbstractor path, String filepath, LocalDateTime lastScanDate)
+        private void addFilesRecursively(FileAbstractor<?> path, String filepath, LocalDateTime lastScanDate)
                 throws Exception {
 
             logger.debug("indexing [{}] content", filepath);
@@ -484,7 +457,7 @@ public class FsCrawlerImpl {
             }
 
             logger.trace("Querying elasticsearch for files in dir [{}:{}]", PATH_ENCODED, SignTool.sign(path));
-            SearchResponse response = client.search(
+            SearchResponse response = esClientManager.client().search(
                     fsSettings.getElasticsearch().getIndex(),
                     fsSettings.getElasticsearch().getType(),
                     PATH_ENCODED + ":" + SignTool.sign(path),
@@ -497,8 +470,9 @@ public class FsCrawlerImpl {
                 for (SearchResponse.Hit hit : response.getHits().getHits()) {
                     String name;
                     if (hit.getSource() != null
-                            && extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME) != null) {
-                        name = (String) extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME);
+                            && extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc
+                            .File.FIELD_NAMES.FILENAME) != null) {
+                        name = (String) extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME);
                     } else if (hit.getFields() != null
                             && hit.getFields().get(FILE_FILENAME) != null) {
                         // In case someone disabled _source which is not recommended
@@ -536,7 +510,7 @@ public class FsCrawlerImpl {
                 return files;
             }
 
-            SearchResponse response = client.search(
+            SearchResponse response = esClientManager.client().search(
                     fsSettings.getElasticsearch().getIndex(),
                     FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     PATH_ENCODED + ":" + SignTool.sign(path),
@@ -618,7 +592,7 @@ public class FsCrawlerImpl {
 
 
                 // We index
-                esIndex(fsSettings.getElasticsearch().getIndex(),
+                esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                         fsSettings.getElasticsearch().getType(),
                         docId,
                         doc);
@@ -657,7 +631,7 @@ public class FsCrawlerImpl {
             path.setRoot(root);
             path.setVirtual(virtual);
             path.setEncoded(encoded);
-            esIndex(fsSettings.getElasticsearch().getIndex(),
+            esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                     FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     id,
                     path);
@@ -719,20 +693,20 @@ public class FsCrawlerImpl {
         /**
          * Add to bulk an IndexRequest
          */
-        private void esIndex(String index, String type, String id,
+        public void esIndex(BulkProcessor bulkProcessor, String index, String type, String id,
                              Doc doc) throws Exception {
-            esIndex(index, type, id, DocParser.toJson(doc));
+            esIndex(bulkProcessor, index, type, id, DocParser.toJson(doc));
         }
 
-        private void esIndex(String index, String type, String id, fr.pilato.elasticsearch.crawler.fs.meta.doc.Path path)
+        public void esIndex(BulkProcessor bulkProcessor, String index, String type, String id, fr.pilato.elasticsearch.crawler.fs.meta.doc.Path path)
                 throws Exception {
-            esIndex(index, type, id, PathParser.toJson(path));
+            esIndex(bulkProcessor, index, type, id, PathParser.toJson(path));
         }
 
         /**
          * Add to bulk an IndexRequest in JSon format
          */
-        private void esIndex(String index, String type, String id, String json) {
+        public void esIndex(BulkProcessor bulkProcessor, String index, String type, String id, String json) {
             logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
             logger.trace("JSon indexed : {}", json);
 
@@ -746,10 +720,10 @@ public class FsCrawlerImpl {
         /**
          * Add to bulk a DeleteRequest
          */
-        private void esDelete(String index, String type, String id) {
+        public void esDelete(String index, String type, String id) {
             logger.debug("Deleting from ES " + index + ", " + type + ", " + id);
             if (!closed) {
-                bulkProcessor.add(new DeleteRequest(index, type, id));
+                esClientManager.bulkProcessor().add(new DeleteRequest(index, type, id));
             } else {
                 logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, type, id);
             }

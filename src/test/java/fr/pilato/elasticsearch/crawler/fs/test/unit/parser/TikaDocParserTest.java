@@ -1,11 +1,11 @@
 /*
- * Licensed to Elasticsearch under one or more contributor
- * license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright
- * ownership. Elasticsearch licenses this file to you under
- * the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to David Pilato (the "Author") under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. Author licenses this
+ * file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
  *    http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -17,19 +17,16 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.unit.tika;
+package fr.pilato.elasticsearch.crawler.fs.test.unit.parser;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
@@ -47,7 +44,25 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 
-public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
+public class TikaDocParserTest extends DocParserTestCase {
+
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/162
+     */
+    @Test
+    public void testLangDetect162() throws IOException {
+        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setLangDetect(true).build())
+                .build();
+        Doc doc = extractFromFile("test.txt", fsSettings);
+        assertThat(doc.getMeta().getLanguage(), is("en"));
+        doc = extractFromFile("test-fr.txt", fsSettings);
+        assertThat(doc.getMeta().getLanguage(), is("fr"));
+        doc = extractFromFile("test-de.txt", fsSettings);
+        assertThat(doc.getMeta().getLanguage(), is("de"));
+        doc = extractFromFile("test-enfrde.txt", fsSettings);
+        assertThat(doc.getMeta().getLanguage(), is("fr"));
+    }
 
     /**
      * Test case for https://github.com/dadoonet/fscrawler/issues/221
@@ -584,10 +599,6 @@ public class TikaDocParserTest extends AbstractFSCrawlerTestCase {
         assertThat(doc.getContent(), containsString("This file contains some words."));
         assertThat(doc.getAttachment(), nullValue());
         assertThat(doc.getFile().getChecksum(), notNullValue());
-    }
-
-    private InputStream getBinaryContent(String filename) throws IOException {
-        return Files.newInputStream(Paths.get(getUrl("documents", filename)));
     }
 
     private Doc extractFromFileExtension(String extension) throws IOException {

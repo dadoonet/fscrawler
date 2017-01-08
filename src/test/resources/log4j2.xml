@@ -18,6 +18,12 @@
       <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.rest" level="info" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider" level="debug" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.tika" level="info" additivity="false">
          <AppenderRef ref="CONSOLE_NO_DECORATOR"/>
       </Logger>
@@ -34,6 +40,9 @@
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="org.elasticsearch" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="org.glassfish" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Root level="info">

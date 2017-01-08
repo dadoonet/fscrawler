@@ -35,6 +35,6 @@ public class TimeValueDeserializer extends StdDeserializer<TimeValue> {
 
     @Override
     public TimeValue deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        return TimeValue.parseTimeValue(p.getText(), null);
+        return TimeValue.parseTimeValue(p.getText());
     }
 }

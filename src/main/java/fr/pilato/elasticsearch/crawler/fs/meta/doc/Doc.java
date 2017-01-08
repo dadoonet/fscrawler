@@ -25,6 +25,19 @@ import java.util.Map;
  * Represents a document we indexed
  */
 public class Doc {
+
+    /**
+     * Generated json field names
+     */
+    static public final class FIELD_NAMES {
+        public static final String CONTENT = "content";
+        public static final String ATTACHMENT = "attachment";
+        public static final String META = "meta";
+        public static final String FILE = "file";
+        public static final String PATH = "path";
+        public static final String ATTRIBUTES = "attributes";
+    }
+
     private String content;
     private String attachment;
     private Meta meta;

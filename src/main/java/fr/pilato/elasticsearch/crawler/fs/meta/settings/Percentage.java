@@ -75,12 +75,8 @@ public class Percentage {
     }
 
     public static Percentage parse(String sValue) {
-       return parse(sValue, null);
-    }
-
-    public static Percentage parse(String sValue, Percentage defaultValue) {
         if (sValue == null) {
-            return defaultValue;
+            return null;
         }
         try {
             String lowerSValue = sValue.toLowerCase(Locale.ROOT).trim();

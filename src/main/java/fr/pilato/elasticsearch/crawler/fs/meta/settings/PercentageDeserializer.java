@@ -35,6 +35,6 @@ public class PercentageDeserializer extends StdDeserializer<Percentage> {
 
     @Override
     public Percentage deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        return Percentage.parse(p.getText(), null);
+        return Percentage.parse(p.getText());
     }
 }

@@ -27,9 +27,9 @@ import java.io.InputStream;
 import java.util.Collection;
 
 public abstract class FileAbstractor<T> {
-    protected static final Logger logger = LogManager.getLogger(FileAbstractor.class);
+    static final Logger logger = LogManager.getLogger(FileAbstractor.class);
 
-    protected final FsSettings fsSettings;
+    final FsSettings fsSettings;
 
     public abstract FileAbstractModel toFileAbstractModel(String path, T file);
 
@@ -37,13 +37,13 @@ public abstract class FileAbstractor<T> {
 
     public abstract Collection<FileAbstractModel> getFiles(String dir) throws Exception;
 
-    public abstract boolean exists(String dir) throws Exception;
+    public abstract boolean exists(String dir);
 
     public abstract void open() throws Exception;
 
     public abstract void close() throws Exception;
 
-    public FileAbstractor(FsSettings fsSettings) {
+    FileAbstractor(FsSettings fsSettings) {
         this.fsSettings = fsSettings;
     }
 }

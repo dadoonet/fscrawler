@@ -22,6 +22,9 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
+import fr.pilato.elasticsearch.crawler.fs.meta.doc.File;
+import fr.pilato.elasticsearch.crawler.fs.meta.doc.Meta;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
@@ -45,7 +48,7 @@ import static org.hamcrest.Matchers.notNullValue;
  */
 public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
-    protected static FsCrawlerImpl crawler = null;
+    private static FsCrawlerImpl crawler = null;
 
     @BeforeClass
     public static void startCrawling() throws Exception {
@@ -69,9 +72,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         staticLogger.debug("  --> Test resources ready in [{}]:", testResourceTarget);
         Files.walk(testResourceTarget)
                 .filter(path -> Files.isRegularFile(path))
-                .forEach(path -> {
-            staticLogger.debug("    - [{}]", path);
-        });
+                .forEach(path -> staticLogger.debug("    - [{}]", path));
         Long numFiles = Files.list(testResourceTarget).count();
 
         staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents]");
@@ -85,6 +86,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
                                 TimeValue.timeValueSeconds(1)))
                         .setFs(Fs.builder()
                                 .setUrl(testResourceTarget.toString())
+                                .setLangDetect(true)
                                 .build())
                         .build());
 
@@ -124,15 +126,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     public void testExtractFromDocx() throws IOException {
         SearchResponse response = runSearch("test.docx", "sample");
         for (SearchResponse.Hit hit : response.getHits().getHits()) {
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILENAME), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.CONTENT_TYPE), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.URL), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.FILESIZE), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.INDEXING_DATE), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.FILE).get(FsCrawlerUtil.Doc.File.LAST_MODIFIED), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILENAME), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CONTENT_TYPE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.URL), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILESIZE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED), notNullValue());
 
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.META).get(FsCrawlerUtil.Doc.Meta.TITLE), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), FsCrawlerUtil.Doc.META).get(FsCrawlerUtil.Doc.Meta.KEYWORDS), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.TITLE), notNullValue());
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.KEYWORDS), notNullValue());
         }
     }
 
@@ -186,6 +188,22 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     public void testProtectedDocument221() throws IOException {
         runSearch("issue-221-doc1.pdf", "Formations");
         runSearch("issue-221-doc2.pdf", "FORMATIONS");
+    }
+
+    @Test
+    public void testLanguageDetection() throws IOException {
+        SearchResponse response = runSearch("test-fr.txt", "fichier");
+        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("fr"));
+        }
+        response = runSearch("test-de.txt", "Datei");
+        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("de"));
+        }
+        response = runSearch("test.txt", "contains");
+        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("en"));
+        }
     }
 
     private SearchResponse runSearch(String filename) throws IOException {
