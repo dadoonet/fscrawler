@@ -115,6 +115,7 @@ public class ElasticsearchClientManager {
     }
 
     public void close() {
+        logger.debug("Closing Elasticsearch client manager");
         if (bulkProcessor != null) {
             try {
                 bulkProcessor.close();

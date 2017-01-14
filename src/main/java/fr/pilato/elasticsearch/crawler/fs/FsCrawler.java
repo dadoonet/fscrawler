@@ -222,6 +222,7 @@ public class FsCrawler {
             while (!fsCrawler.isClosed()) {
                 sleep();
             }
+            fsCrawler.close();
         } catch (Exception e) {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
             logger.debug("error caught", e);
