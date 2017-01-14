@@ -65,8 +65,10 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeThat;
 
@@ -409,15 +411,44 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We should have one doc first
-        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+        SearchResponse response = countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+        checkDocVersions(response, 1L);
 
-        logger.info(" ---> Adding a copy of roottxtfile.txt");
-        // We create a copy of a file
-        Files.copy(currentTestResourceDir.resolve("roottxtfile.txt"),
-                currentTestResourceDir.resolve("new_roottxtfile.txt"));
+        logger.info(" ---> Creating a new file new_roottxtfile.txt");
+        Files.write(currentTestResourceDir.resolve("new_roottxtfile.txt"), "This is a second file".getBytes());
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
+        response = countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
+
+        // It should be only version <= 2 for both docs
+        checkDocVersions(response, 2L);
+
+        logger.info(" ---> Creating a new file new_new_roottxtfile.txt");
+        Files.write(currentTestResourceDir.resolve("new_new_roottxtfile.txt"), "This is a third file".getBytes());
+
+        // We expect to have three files
+        response = countTestHelper(getCrawlerName(), null, 3, currentTestResourceDir);
+
+        // It should be only version <= 2 for all docs
+        checkDocVersions(response, 2L);
+    }
+
+    /**
+     * Iterate other response hits and check that _version is at most a given version
+     * @param response The search response object
+     * @param maxVersion Maximum version number we can have
+     */
+    private void checkDocVersions(SearchResponse response, long maxVersion) {
+        // It should be only version <= maxVersion for all docs
+        response.getHits().getHits().forEach(hit -> {
+            // Read the document. This is needed since 5.0 as search does not return the _version field
+            try {
+                SearchResponse.Hit getHit = elasticsearchClient.get(hit.getIndex(), hit.getType(), hit.getId());
+                assertThat(getHit.getVersion(), lessThanOrEqualTo(maxVersion));
+            } catch (IOException e) {
+                fail("We got an IOException: " + e.getMessage());
+            }
+        });
     }
 
     /**

@@ -264,6 +264,7 @@ public class FsCrawlerImpl {
                     // That means that we don't have a scanDate yet
                     if (scanDate == null && fsSettings.getFs().isIndexFolders()) {
                         indexRootDirectory(fsSettings.getFs().getUrl());
+                        scanDate = LocalDateTime.MIN;
                     }
 
                     addFilesRecursively(path, fsSettings.getFs().getUrl(), scanDate);
@@ -376,9 +377,8 @@ public class FsCrawlerImpl {
                         if (child.file) {
                             logger.debug("  - file: {}", filename);
                             fsFiles.add(filename);
-                            if (lastScanDate == null
-                                    || child.lastModifiedDate.isAfter(lastScanDate)
-                                    || (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
+                            if (child.lastModifiedDate.isAfter(lastScanDate) ||
+                                    (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
                                 indexFile(child, stats, filepath, path.getInputStream(child), child.size);
                                 stats.addFile();
                             } else {

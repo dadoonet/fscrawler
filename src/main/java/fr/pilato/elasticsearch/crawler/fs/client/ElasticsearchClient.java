@@ -412,4 +412,15 @@ public class ElasticsearchClient {
     public boolean isIngestSupported() {
         return INGEST_SUPPORT;
     }
+
+    public SearchResponse.Hit get(String index, String type, String id) throws IOException {
+        logger.debug("get [{}]/[{}]/[{}]", index, type, id);
+
+        String path = "/" + index + "/" + type + "/" + id;
+        Response restResponse = client.performRequest("GET", path);
+        SearchResponse.Hit hit = JsonUtil.deserialize(restResponse, SearchResponse.Hit.class);
+
+        logger.trace("Hit: {}", hit);
+        return hit;
+    }
 }
