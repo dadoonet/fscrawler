@@ -70,6 +70,10 @@ public class FsCrawler {
         @Parameter(names = "--loop", description = "Number of scan loop before exiting.")
         private Integer loop = -1;
 
+        @Parameter(names = "--restart", description = "Restart fscrawler job like if it never ran before. " +
+                "This does not clean elasticsearch indices.")
+        private boolean restart = false;
+
         @Parameter(names = "--update_mapping", description = "Update elasticsearch mapping")
         private boolean updateMapping = false;
 
@@ -164,6 +168,12 @@ public class FsCrawler {
 
         } else {
             jobName = commands.jobName.get(0);
+        }
+
+        // If we ask to reinit, we need to clean the status for the job
+        if (commands.restart) {
+            logger.debug("Cleaning existing status for job [{}]...", jobName);
+            new FsJobFileHandler(configDir).clean(jobName);
         }
 
         try {

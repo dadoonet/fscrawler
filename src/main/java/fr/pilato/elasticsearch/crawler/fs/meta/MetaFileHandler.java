@@ -82,4 +82,18 @@ public class MetaFileHandler {
         }
         Files.write(dir.resolve(filename), content.getBytes(Charset.forName("UTF-8")));
     }
+
+    /**
+     * Remove a file from ~/.fscrawler/{subdir} dir
+     * @param subdir subdir where we can read the file (null if we read in the root dir)
+     * @param filename filename
+     * @throws IOException in case of error while reading
+     */
+    protected void removeFile(String subdir, String filename) throws IOException {
+        Path dir = root;
+        if (subdir != null) {
+            dir = dir.resolve(subdir);
+        }
+        Files.deleteIfExists(dir.resolve(filename));
+    }
 }
