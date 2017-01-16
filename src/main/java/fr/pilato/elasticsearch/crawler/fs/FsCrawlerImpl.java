@@ -264,6 +264,9 @@ public class FsCrawlerImpl {
                     // That means that we don't have a scanDate yet
                     if (scanDate == null && fsSettings.getFs().isIndexFolders()) {
                         indexRootDirectory(fsSettings.getFs().getUrl());
+                    }
+
+                    if (scanDate == null) {
                         scanDate = LocalDateTime.MIN;
                     }
 
