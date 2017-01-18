@@ -63,6 +63,18 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
+    public void testCreateIndexWithSettings() throws IOException {
+        elasticsearchClient.createIndex(getCrawlerName(), false, "{\n" +
+                "  \"settings\": {\n" +
+                "    \"number_of_shards\": 1,\n" +
+                "    \"number_of_replicas\": 1\n" +
+                "  }\n" +
+                "}");
+        boolean exists = elasticsearchClient.isExistingIndex(getCrawlerName());
+        assertThat(exists, is(true));
+    }
+
+    @Test
     public void testRefresh() throws IOException {
         elasticsearchClient.createIndex(getCrawlerName());
         refresh();

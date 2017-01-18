@@ -59,8 +59,8 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFilesVersion1() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_DOC);
-        logger.info("Mapping used for files : " + mapping);
+        String mapping = FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_DOC);
+        logger.info("Mapping used for files v1 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  \"properties\": {\n" +
                 "    \"content\": {\n" +
@@ -137,7 +137,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "        },\n" +
                 "        \"virtual\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"index\": \"not_analyzed\"\n" +
+                "          \"analyzer\": \"fscrawler_path\"\n" +
                 "        },\n" +
                 "        \"root\": {\n" +
                 "          \"type\": \"string\",\n" +
@@ -145,7 +145,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "        },\n" +
                 "        \"real\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"index\": \"not_analyzed\"\n" +
+                "          \"analyzer\": \"fscrawler_path\"\n" +
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
@@ -167,8 +167,8 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFoldersVersion1() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_FOLDER);
-        logger.info("Mapping used for folders : " + mapping);
+        String mapping = FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        logger.info("Mapping used for folders v1 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  \"properties\": {\n" +
                 "    \"name\": {\n" +
@@ -201,9 +201,58 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    public void fsIndexSettingsVersion1() throws Exception {
+        String settings = FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "1", FsCrawlerUtil.INDEX_SETTINGS_FILE);
+        logger.info("Settings used for index v1 : " + settings);
+        assertThat(settings, is("{\n" +
+                "  \"settings\": {\n" +
+                "    \"analysis\": {\n" +
+                "      \"analyzer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"tokenizer\": \"fscrawler_path\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"tokenizer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"type\": \"path_hierarchy\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsMappingForFilesForSpecificJobVersion1() throws Exception {
+        String mapping = FsCrawlerUtil.readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_DOC);
+        logger.info("Mapping used for files v1 : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  // This is a doc mapping version 1\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsMappingForFoldersForSpecificJobVersion1() throws Exception {
+        String mapping = FsCrawlerUtil.readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        logger.info("Mapping used for files v1 : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  // This is a folder mapping version 1\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsIndexSettingsForSpecificJobVersion1() throws Exception {
+        String settings = FsCrawlerUtil.readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "1", FsCrawlerUtil.INDEX_SETTINGS_FILE);
+        logger.info("Settings used for index v1 : " + settings);
+        assertThat(settings, is("{\n" +
+                "  // This is settings for version 1\n" +
+                "}\n"));
+    }
+
+    @Test
     public void fsMappingForFilesVersion2() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_DOC);
-        logger.info("Mapping used for files : " + mapping);
+        String mapping = FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_DOC);
+        logger.info("Mapping used for files v2 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  \"properties\": {\n" +
                 "    \"content\": {\n" +
@@ -280,7 +329,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "        },\n" +
                 "        \"virtual\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"index\": \"not_analyzed\"\n" +
+                "          \"analyzer\": \"fscrawler_path\"\n" +
                 "        },\n" +
                 "        \"root\": {\n" +
                 "          \"type\": \"string\",\n" +
@@ -288,7 +337,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "        },\n" +
                 "        \"real\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"index\": \"not_analyzed\"\n" +
+                "          \"analyzer\": \"fscrawler_path\"\n" +
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
@@ -310,8 +359,8 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFoldersVersion2() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_FOLDER);
-        logger.info("Mapping used for folders : " + mapping);
+        String mapping = FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        logger.info("Mapping used for folders v2 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  \"properties\": {\n" +
                 "    \"name\": {\n" +
@@ -344,47 +393,31 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void fsMappingForFilesVersionNotSupported() throws Exception {
-        try {
-            FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "0", FsCrawlerUtil.INDEX_TYPE_DOC);
-            fail("We should have thrown an exception for an unknown elasticsearch version");
-        } catch (IllegalArgumentException ignored) {
-            assertThat(ignored.getMessage(), containsString("does not exist for elasticsearch version"));
-        }
-    }
-
-    @Test
-    public void fsMappingForFoldersVersionNotSupported() throws Exception {
-        try {
-            FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "0", FsCrawlerUtil.INDEX_TYPE_FOLDER);
-            fail("We should have thrown an exception for an unknown elasticsearch version");
-        } catch (IllegalArgumentException ignored) {
-            assertThat(ignored.getMessage(), containsString("does not exist for elasticsearch version"));
-        }
-    }
-
-    @Test
-    public void fsMappingForFilesForSpecificJobVersion1() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_DOC);
-        logger.info("Mapping used for files : " + mapping);
-        assertThat(mapping, is("{\n" +
-                "  // This is a doc mapping version 1\n" +
-                "}\n"));
-    }
-
-    @Test
-    public void fsMappingForFoldersForSpecificJobVersion1() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "1", FsCrawlerUtil.INDEX_TYPE_FOLDER);
-        logger.info("Mapping used for files : " + mapping);
-        assertThat(mapping, is("{\n" +
-                "  // This is a folder mapping version 1\n" +
+    public void fsIndexSettingsVersion2() throws Exception {
+        String settings = FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "2", FsCrawlerUtil.INDEX_SETTINGS_FILE);
+        logger.info("Settings used for index v2 : " + settings);
+        assertThat(settings, is("{\n" +
+                "  \"settings\": {\n" +
+                "    \"analysis\": {\n" +
+                "      \"analyzer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"tokenizer\": \"fscrawler_path\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"tokenizer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"type\": \"path_hierarchy\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
                 "}\n"));
     }
 
     @Test
     public void fsMappingForFilesForSpecificJobVersion2() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_DOC);
-        logger.info("Mapping used for files : " + mapping);
+        String mapping = FsCrawlerUtil.readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_DOC);
+        logger.info("Mapping used for files v2 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  // This is a doc mapping version 2\n" +
                 "}\n"));
@@ -392,16 +425,25 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFoldersForSpecificJobVersion2() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_FOLDER);
-        logger.info("Mapping used for files : " + mapping);
+        String mapping = FsCrawlerUtil.readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "2", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        logger.info("Mapping used for folders v2 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  // This is a folder mapping version 2\n" +
                 "}\n"));
     }
 
     @Test
+    public void fsIndexSettingsForSpecificJobVersion2() throws Exception {
+        String settings = FsCrawlerUtil.readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "2", FsCrawlerUtil.INDEX_SETTINGS_FILE);
+        logger.info("Settings used for index v2 : " + settings);
+        assertThat(settings, is("{\n" +
+                "  // This is settings for version 2\n" +
+                "}\n"));
+    }
+
+    @Test
     public void fsMappingForFilesVersion5() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_DOC);
+        String mapping = FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_DOC);
         logger.info("Mapping used for files : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  \"properties\" : {\n" +
@@ -482,13 +524,25 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"real\" : {\n" +
-                "          \"type\" : \"keyword\"\n" +
+                "          \"type\" : \"text\",\n" +
+                "          \"analyzer\": \"fscrawler_path\",\n" +
+                "          \"fields\": {\n" +
+                "            \"keyword\": {\n" +
+                "              \"type\" : \"keyword\"\n" +
+                "            }\n" +
+                "          }\n" +
                 "        },\n" +
                 "        \"root\" : {\n" +
                 "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"virtual\" : {\n" +
-                "          \"type\" : \"keyword\"\n" +
+                "          \"type\" : \"text\",\n" +
+                "          \"analyzer\": \"fscrawler_path\",\n" +
+                "          \"fields\": {\n" +
+                "            \"keyword\": {\n" +
+                "              \"type\" : \"keyword\"\n" +
+                "            }\n" +
+                "          }\n" +
                 "        }\n" +
                 "      }\n" +
                 "    }\n" +
@@ -498,8 +552,8 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFoldersVersion5() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(rootTmpDir, metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_FOLDER);
-        logger.info("Mapping used for folders : " + mapping);
+        String mapping = FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        logger.info("Mapping used for folders v5 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  \"properties\" : {\n" +
                 "    \"encoded\" : {\n" +
@@ -527,9 +581,31 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    public void fsIndexSettingsVersion5() throws Exception {
+        String settings = FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "5", FsCrawlerUtil.INDEX_SETTINGS_FILE);
+        logger.info("Settings used for index v5 : " + settings);
+        assertThat(settings, is("{\n" +
+                "  \"settings\": {\n" +
+                "    \"analysis\": {\n" +
+                "      \"analyzer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"tokenizer\": \"fscrawler_path\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"tokenizer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"type\": \"path_hierarchy\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n"));
+    }
+
+    @Test
     public void fsMappingForFilesForSpecificJobVersion5() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_DOC);
-        logger.info("Mapping used for files : " + mapping);
+        String mapping = FsCrawlerUtil.readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_DOC);
+        logger.info("Mapping used for files v5 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  // This is a doc mapping version 5\n" +
                 "}\n"));
@@ -537,10 +613,49 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void fsMappingForFoldersForSpecificJobVersion5() throws Exception {
-        String mapping = FsCrawlerUtil.readMapping(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_FOLDER);
-        logger.info("Mapping used for files : " + mapping);
+        String mapping = FsCrawlerUtil.readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+        logger.info("Mapping used for folders v5 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  // This is a folder mapping version 5\n" +
                 "}\n"));
+    }
+
+    @Test
+    public void fsIndexSettingsForSpecificJobVersion5() throws Exception {
+        String mapping = FsCrawlerUtil.readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "5", FsCrawlerUtil.INDEX_SETTINGS_FILE);
+        logger.info("Settings used for index v5 : " + mapping);
+        assertThat(mapping, is("{\n" +
+                "  // This is settings for version 5\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsMappingForFilesVersionNotSupported() throws Exception {
+        try {
+            FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "0", FsCrawlerUtil.INDEX_TYPE_DOC);
+            fail("We should have thrown an exception for an unknown elasticsearch version");
+        } catch (IllegalArgumentException ignored) {
+            assertThat(ignored.getMessage(), containsString("does not exist for elasticsearch version"));
+        }
+    }
+
+    @Test
+    public void fsMappingForFoldersVersionNotSupported() throws Exception {
+        try {
+            FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "0", FsCrawlerUtil.INDEX_TYPE_FOLDER);
+            fail("We should have thrown an exception for an unknown elasticsearch version");
+        } catch (IllegalArgumentException ignored) {
+            assertThat(ignored.getMessage(), containsString("does not exist for elasticsearch version"));
+        }
+    }
+
+    @Test
+    public void fsIndexSettingsVersionNotSupported() throws Exception {
+        try {
+            FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "0", FsCrawlerUtil.INDEX_SETTINGS_FILE);
+            fail("We should have thrown an exception for an unknown elasticsearch version");
+        } catch (IllegalArgumentException ignored) {
+            assertThat(ignored.getMessage(), containsString("does not exist for elasticsearch version"));
+        }
     }
 }
