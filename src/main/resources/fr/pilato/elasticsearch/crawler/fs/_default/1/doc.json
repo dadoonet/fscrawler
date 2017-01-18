@@ -74,7 +74,13 @@
         },
         "virtual": {
           "type": "string",
-          "index": "not_analyzed"
+          "index": "not_analyzed",
+          "fields": {
+            "tree": {
+              "type": "string",
+              "analyzer": "fscrawler_path"
+            }
+          }
         },
         "root": {
           "type": "string",
@@ -82,7 +88,13 @@
         },
         "real": {
           "type": "string",
-          "index": "not_analyzed"
+          "index": "not_analyzed",
+          "fields": {
+            "tree": {
+              "type": "string",
+              "analyzer": "fscrawler_path"
+            }
+          }
         }
       }
     },

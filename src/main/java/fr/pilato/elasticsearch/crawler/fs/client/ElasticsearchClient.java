@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 
+import com.google.common.base.Strings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch.Node;
 import org.apache.http.HttpHost;
@@ -38,6 +39,7 @@ import org.elasticsearch.client.RestClientBuilder;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -91,13 +93,18 @@ public class ElasticsearchClient {
     }
 
     public void createIndex(String index) throws IOException {
-        createIndex(index, false);
+        createIndex(index, false, null);
     }
 
-    public void createIndex(String index, boolean ignoreErrors) throws IOException {
+    public void createIndex(String index, boolean ignoreErrors, String indexSettings) throws IOException {
         logger.debug("create index [{}]", index);
+        logger.trace("index settings: [{}]", indexSettings);
         try {
-            Response response = client.performRequest("PUT", "/" + index, Collections.emptyMap());
+            StringEntity entity = null;
+            if (!Strings.isNullOrEmpty(indexSettings)) {
+                entity = new StringEntity(indexSettings, StandardCharsets.UTF_8);
+            }
+            Response response = client.performRequest("PUT", "/" + index, Collections.emptyMap(), entity);
             logger.trace("create index response: {}", response.getEntity().getContent());
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 400 &&

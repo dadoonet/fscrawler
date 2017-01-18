@@ -579,6 +579,14 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // We expect to have two files
         countTestHelper(getCrawlerName(), null, 2);
+
+        // We check that the subdir document has his meta path data correctly set
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), "testcase", 1);
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+            Object virtual = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.PATH)
+                    .get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.VIRTUAL);
+            assertThat(virtual, is("/subdir/"));
+        }
     }
 
     @Test
@@ -873,7 +881,22 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_update_mapping() throws Exception {
-        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.createIndex(getCrawlerName(), false, "{\n" +
+                "  \"settings\": {\n" +
+                "    \"analysis\": {\n" +
+                "      \"analyzer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"tokenizer\": \"fscrawler_path\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"tokenizer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"type\": \"path_hierarchy\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n");
         elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
                 "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : {   \"_source\" : {\n" +
                         "    \"excludes\" : [\n" +
@@ -897,7 +920,22 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_update_mapping_but_dont_launch() throws Exception {
-        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.createIndex(getCrawlerName(), false, "{\n" +
+                "  \"settings\": {\n" +
+                "    \"analysis\": {\n" +
+                "      \"analyzer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"tokenizer\": \"fscrawler_path\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"tokenizer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"type\": \"path_hierarchy\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n");
         elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
                 "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : {   \"_source\" : {\n" +
                         "    \"excludes\" : [\n" +
