@@ -38,7 +38,6 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -146,7 +145,7 @@ public class ElasticsearchClient {
             params = Collections.emptyMap();
         }
 
-        StringEntity entity = new StringEntity(sbf.toString(), Charset.defaultCharset());
+        StringEntity entity = new StringEntity(sbf.toString(), StandardCharsets.UTF_8);
         Response restResponse = client.performRequest("POST", "/_bulk", params, entity);
         BulkResponse response = JsonUtil.deserialize(restResponse, BulkResponse.class);
         logger.debug("bulk response: {}", response);
@@ -156,7 +155,7 @@ public class ElasticsearchClient {
     public void putMapping(String index, String type, String mapping) throws IOException {
         logger.debug("put mapping [{}/{}]", index, type);
 
-        StringEntity entity = new StringEntity(mapping, Charset.defaultCharset());
+        StringEntity entity = new StringEntity(mapping, StandardCharsets.UTF_8);
         Response restResponse = client.performRequest("PUT", "/" + index + "/_mapping/" + type, Collections.emptyMap(), entity);
         Map<String, Object> responseAsMap = JsonUtil.asMap(restResponse);
         logger.trace("put mapping response: {}", responseAsMap);
@@ -203,7 +202,7 @@ public class ElasticsearchClient {
     public void index(String index, String type, String id, String json) throws IOException {
         logger.debug("put document [{}/{}/{}]", index, type, id);
 
-        StringEntity entity = new StringEntity(json, Charset.defaultCharset());
+        StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
         Response restResponse = client.performRequest("PUT", "/" + index + "/" + type+ "/" + id, Collections.emptyMap(), entity);
         Map<String, Object> responseAsMap = JsonUtil.asMap(restResponse);
 

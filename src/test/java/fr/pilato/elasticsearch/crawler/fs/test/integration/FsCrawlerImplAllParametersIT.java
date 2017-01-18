@@ -44,7 +44,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1106,7 +1106,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        StringEntity entity = new StringEntity(pipeline, Charset.defaultCharset());
+        StringEntity entity = new StringEntity(pipeline, StandardCharsets.UTF_8);
 
         elasticsearchClient.getClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
                 Collections.emptyMap(), entity);
