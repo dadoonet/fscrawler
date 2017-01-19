@@ -137,7 +137,13 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "        },\n" +
                 "        \"virtual\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"analyzer\": \"fscrawler_path\"\n" +
+                "          \"index\": \"not_analyzed\",\n" +
+                "          \"fields\": {\n" +
+                "            \"tree\": {\n" +
+                "              \"type\": \"string\",\n" +
+                "              \"analyzer\": \"fscrawler_path\"\n" +
+                "            }\n" +
+                "          }\n" +
                 "        },\n" +
                 "        \"root\": {\n" +
                 "          \"type\": \"string\",\n" +
@@ -145,7 +151,13 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "        },\n" +
                 "        \"real\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"analyzer\": \"fscrawler_path\"\n" +
+                "          \"index\": \"not_analyzed\",\n" +
+                "          \"fields\": {\n" +
+                "            \"tree\": {\n" +
+                "              \"type\": \"string\",\n" +
+                "              \"analyzer\": \"fscrawler_path\"\n" +
+                "            }\n" +
+                "          }\n" +
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
@@ -329,7 +341,13 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "        },\n" +
                 "        \"virtual\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"analyzer\": \"fscrawler_path\"\n" +
+                "          \"index\": \"not_analyzed\",\n" +
+                "          \"fields\": {\n" +
+                "            \"tree\": {\n" +
+                "              \"type\": \"string\",\n" +
+                "              \"analyzer\": \"fscrawler_path\"\n" +
+                "            }\n" +
+                "          }\n" +
                 "        },\n" +
                 "        \"root\": {\n" +
                 "          \"type\": \"string\",\n" +
@@ -337,7 +355,13 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "        },\n" +
                 "        \"real\": {\n" +
                 "          \"type\": \"string\",\n" +
-                "          \"analyzer\": \"fscrawler_path\"\n" +
+                "          \"index\": \"not_analyzed\",\n" +
+                "          \"fields\": {\n" +
+                "            \"tree\": {\n" +
+                "              \"type\": \"string\",\n" +
+                "              \"analyzer\": \"fscrawler_path\"\n" +
+                "            }\n" +
+                "          }\n" +
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
@@ -444,7 +468,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
     @Test
     public void fsMappingForFilesVersion5() throws Exception {
         String mapping = FsCrawlerUtil.readJsonFile(rootTmpDir, metadataDir, "5", FsCrawlerUtil.INDEX_TYPE_DOC);
-        logger.info("Mapping used for files : " + mapping);
+        logger.info("Mapping used for files v5 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  \"properties\" : {\n" +
                 "    \"attachment\" : {\n" +
@@ -524,11 +548,12 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"real\" : {\n" +
-                "          \"type\" : \"text\",\n" +
-                "          \"analyzer\": \"fscrawler_path\",\n" +
+                "          \"type\" : \"keyword\",\n" +
                 "          \"fields\": {\n" +
-                "            \"keyword\": {\n" +
-                "              \"type\" : \"keyword\"\n" +
+                "            \"tree\": {\n" +
+                "              \"type\" : \"text\",\n" +
+                "              \"analyzer\": \"fscrawler_path\",\n" +
+                "              \"fielddata\": true\n" +
                 "            }\n" +
                 "          }\n" +
                 "        },\n" +
@@ -536,11 +561,12 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "          \"type\" : \"keyword\"\n" +
                 "        },\n" +
                 "        \"virtual\" : {\n" +
-                "          \"type\" : \"text\",\n" +
-                "          \"analyzer\": \"fscrawler_path\",\n" +
+                "          \"type\" : \"keyword\",\n" +
                 "          \"fields\": {\n" +
-                "            \"keyword\": {\n" +
-                "              \"type\" : \"keyword\"\n" +
+                "            \"tree\": {\n" +
+                "              \"type\" : \"text\",\n" +
+                "              \"analyzer\": \"fscrawler_path\",\n" +
+                "              \"fielddata\": true\n" +
                 "            }\n" +
                 "          }\n" +
                 "        }\n" +
