@@ -36,11 +36,17 @@ public class SearchResponse {
         return hits;
     }
 
+    private Map<String, Object> aggregations;
+
+    public Map<String, Object> getAggregations() {
+        return aggregations;
+    }
+
     @Override
     public String toString() {
-        String sb = "SearchResponse{" + "hits=" + hits +
+        return "SearchResponse{" + "hits=" + hits +
+                ", aggregations=" + aggregations +
                 '}';
-        return sb;
     }
 
     public static class Hits {

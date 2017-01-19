@@ -874,7 +874,8 @@ The following example uses a `french` analyzer to index the `content` field.
           "fields": {
             "tree": {
               "type" : "text",
-              "analyzer": "fscrawler_path"
+              "analyzer": "fscrawler_path",
+              "fielddata": true
             }
           }
         },
@@ -886,7 +887,8 @@ The following example uses a `french` analyzer to index the `content` field.
           "fields": {
             "tree": {
               "type" : "text",
-              "analyzer": "fscrawler_path"
+              "analyzer": "fscrawler_path",
+              "fielddata": true
             }
           }
         }

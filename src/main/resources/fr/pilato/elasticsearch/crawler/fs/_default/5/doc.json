@@ -81,7 +81,8 @@
           "fields": {
             "tree": {
               "type" : "text",
-              "analyzer": "fscrawler_path"
+              "analyzer": "fscrawler_path",
+              "fielddata": true
             }
           }
         },
@@ -93,7 +94,8 @@
           "fields": {
             "tree": {
               "type" : "text",
-              "analyzer": "fscrawler_path"
+              "analyzer": "fscrawler_path",
+              "fielddata": true
             }
           }
         }
