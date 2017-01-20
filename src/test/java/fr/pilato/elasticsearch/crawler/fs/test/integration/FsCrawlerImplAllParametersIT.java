@@ -66,6 +66,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -580,14 +581,13 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 2);
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 2);
 
         // We check that the subdir document has his meta path data correctly set
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), "testcase", 1);
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Object virtual = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.PATH)
                     .get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.VIRTUAL);
-            assertThat(virtual, is("/subdir/"));
+            assertThat(virtual, isOneOf("/subdir", "/"));
         }
     }
 
@@ -616,8 +616,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat(response.getAggregations(), hasKey("folders"));
         List<Object> buckets = (List) extractFromPath(response.getAggregations(), "folders").get("buckets");
 
-        // TODO fix that when removing trailing /. See https://github.com/dadoonet/fscrawler/issues/274
-        assertThat(buckets, iterableWithSize(10));
+        assertThat(buckets, iterableWithSize(7));
     }
 
     @Test

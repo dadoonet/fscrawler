@@ -221,14 +221,14 @@ public class FsCrawlerUtil extends MetaParser {
 
     public static String computeVirtualPathName(ScanStatistic stats,
                                                 String realPath) {
-        if (realPath == null)
-            return null;
+        String result = "/";
+        if (realPath != null && realPath.length() > stats.getRootPath().length()) {
+            result = realPath.substring(stats.getRootPath().length())
+                    .replace("\\", "/");
+        }
 
-        if (realPath.length() < stats.getRootPath().length())
-            return "/";
-
-        return realPath.substring(stats.getRootPath().length())
-                .replace("\\", "/");
+        logger.debug("computeVirtualPathName({}, {}) = {}", stats.getRootPath(), realPath, result);
+        return result;
     }
 
     public static LocalDateTime getCreationTime(File file) {

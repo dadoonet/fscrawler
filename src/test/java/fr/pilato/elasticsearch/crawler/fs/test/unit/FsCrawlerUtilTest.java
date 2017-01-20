@@ -43,14 +43,16 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testComputePathLinux() {
-        testHelper("/tmp", "/tmp/myfile.txt", "/myfile.txt");
-        testHelper("/tmp", "/tmp/dir/myfile.txt", "/dir/myfile.txt");
+        testHelper("/tmp", "/tmp", "/");
+        testHelper("/tmp", "/tmp/dir", "/dir");
+        testHelper("/tmp", "/tmp/dir/subdir", "/dir/subdir");
     }
 
     @Test
     public void testComputePathWindows() {
-        testHelper("C:\\tmp", "C:\\tmp\\myfile.txt", "/myfile.txt");
-        testHelper("C:\\tmp", "C:\\tmp\\dir\\myfile.txt", "/dir/myfile.txt");
+        testHelper("C:\\tmp", "C:\\tmp", "/");
+        testHelper("C:\\tmp", "C:\\tmp\\dir", "/dir");
+        testHelper("C:\\tmp", "C:\\tmp\\dir\\subdir", "/dir/subdir");
     }
 
     private void testHelper(String rootPath, String realPath, String expectedPath) {
