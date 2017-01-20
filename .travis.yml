@@ -3,7 +3,7 @@ sudo: false
 jdk:
   - oraclejdk8
 before_script:
-  - echo "MAVEN_OPTS=-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -Xmx256m -XX:MaxPermSize=512m" > ~/.mavenrc
+  - echo "MAVEN_OPTS=-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -Xmx1024m -Xms1024m -XX:MaxPermSize=512m" > ~/.mavenrc
 install: true
 script:
 # Let's skip for now branch 1.x
