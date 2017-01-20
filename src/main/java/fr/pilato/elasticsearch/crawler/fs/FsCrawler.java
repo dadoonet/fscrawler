@@ -56,6 +56,8 @@ public class FsCrawler {
 
     private static final Logger logger = LogManager.getLogger(FsCrawler.class);
 
+    private static FsCrawlerImpl fsCrawler = null;
+
     @SuppressWarnings("CanBeFinal")
     public static class FsCrawlerCommand {
         @Parameter(description = "job_name")
@@ -120,7 +122,7 @@ public class FsCrawler {
 
         if (commands.help) {
             jCommander.usage();
-            System.exit(0);
+            return;
         }
 
         Path configDir;
@@ -163,7 +165,7 @@ public class FsCrawler {
                 logger.info("No job exists in [{}].", configDir);
                 logger.info("To create your first job, run 'fscrawler job_name' with 'job_name' you want");
                 jobName = null;
-                System.exit(1);
+                return;
             }
 
         } else {
@@ -220,11 +222,11 @@ public class FsCrawler {
                 logger.info("Settings have been created in [{}]. Please review and edit before relaunch", config);
             }
 
-            System.exit(1);
+            return;
         }
 
         logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toJson(fsSettings));
-        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.updateMapping, commands.rest);
+        fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.updateMapping, commands.rest);
         Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
         try {
             fsCrawler.start();
@@ -236,7 +238,9 @@ public class FsCrawler {
         } catch (Exception e) {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
             logger.debug("error caught", e);
-            System.exit(-1);
+            if (fsCrawler != null) {
+                fsCrawler.close();
+            }
         }
     }
 
