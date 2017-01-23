@@ -131,7 +131,7 @@ public class FsCrawlerImpl {
         this.updateMapping = updateMapping;
         this.esClientManager = new ElasticsearchClientManager(config, settings);
 
-        closed = validateSettings(logger, settings);
+        closed = validateSettings(logger, settings, rest);
         if (closed) {
             // We don't go further as we have critical errors
             return;

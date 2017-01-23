@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.util.OsValidator;
 import org.apache.logging.log4j.Logger;
 
@@ -37,9 +38,10 @@ public class FsCrawlerValidator {
      * Check if settings are valid. Note that settings can be updated by this method (fallback to defaults if not set)
      * @param logger    Needed to print warn/errors or info
      * @param settings  Settings we want to check
+     * @param rest      true If Rest server should be started, so we check Rest settings
      * @return true if we found fatal errors and should prevent from starting
      */
-    public static boolean validateSettings(Logger logger, FsSettings settings) {
+    public static boolean validateSettings(Logger logger, FsSettings settings, boolean rest) {
         if (settings.getFs() == null || settings.getFs().getUrl() == null) {
             logger.warn("`url` is not set. Please define it. Falling back to default: [{}].", Fs.DEFAULT_DIR);
             if (settings.getFs() == null) {
@@ -96,6 +98,12 @@ public class FsCrawlerValidator {
         // We just warn the user if he is running on windows but want to get attributes
         if (OsValidator.windows && settings.getFs().isAttributesSupport()) {
             logger.info("attributes_support is set to true but getting group is not available on [{}].", OsValidator.OS);
+        }
+
+        // Check that REST settings are available when we start with rest option
+        if (rest && settings.getRest() == null) {
+            logger.warn("`rest` settings are not defined. Falling back to default: [{}].", Rest.DEFAULT.url());
+            settings.setRest(Rest.DEFAULT);
         }
 
         return false;

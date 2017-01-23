@@ -52,7 +52,7 @@ public class AbstractRestITCase extends AbstractITCase {
                 .setRest(rest)
                 .setElasticsearch(elasticsearchWithSecurity)
                 .build();
-        FsCrawlerValidator.validateSettings(staticLogger, fsSettings);
+        FsCrawlerValidator.validateSettings(staticLogger, fsSettings, true);
         esClientManager = new ElasticsearchClientManager(metadataDir, fsSettings);
         esClientManager.start();
         RestServer.start(fsSettings, esClientManager);
@@ -82,7 +82,7 @@ public class AbstractRestITCase extends AbstractITCase {
     @Before
     public void createIndexAndMappings() throws Exception {
         FsSettings fsSettings = FsSettings.builder(getCrawlerName()).setRest(rest).build();
-        FsCrawlerValidator.validateSettings(logger, fsSettings);
+        FsCrawlerValidator.validateSettings(logger, fsSettings, true);
         esClientManager.createIndexAndMappings(fsSettings, false);
     }
 
