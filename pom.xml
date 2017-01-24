@@ -615,7 +615,7 @@
             <id>es-1x</id>
             <properties>
                 <elasticsearch.groupid>org.elasticsearch</elasticsearch.groupid>
-                <elasticsearch.version>1.7.5</elasticsearch.version>
+                <elasticsearch.version>1.7.6</elasticsearch.version>
                 <skipXPack>true</skipXPack>
             </properties>
         </profile>
@@ -623,7 +623,7 @@
             <id>es-2x</id>
             <properties>
                 <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-                <elasticsearch.version>2.3.3</elasticsearch.version>
+                <elasticsearch.version>2.4.4</elasticsearch.version>
                 <elasticsearch.security.artifact>shield</elasticsearch.security.artifact>
             </properties>
             <repositories>
@@ -677,7 +677,7 @@
             <id>es-2x-travis</id>
             <properties>
                 <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-                <elasticsearch.version>2.3.3</elasticsearch.version>
+                <elasticsearch.version>2.4.4</elasticsearch.version>
                 <skipXPack>true</skipXPack>
             </properties>
         </profile>
