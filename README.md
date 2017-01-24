@@ -438,8 +438,9 @@ Here is a list of Local FS settings (under `fs.` prefix)`:
 | `fs.add_filesize`                | `true`        | [Disabling file size field](#disabling-file-size-field)                           |
 | `fs.remove_deleted`              | `true`        | [Ignore deleted files](#ignore-deleted-files)                                     |
 | `fs.store_source`                | `false`       | [Storing binary source document](#storing-binary-source-document-base64-encoded)  |
+| `fs.index_content`               | `true`        | [Ignore content](#ignore-content)                                                 |
 | `fs.lang_detect`                 | `false`       | [Language detection](#language-detection) (from 2.2)                              |
-| `fs.indexed_chars`               | `0.0`         | [Extracted characters](#extracted-characters)                                     |
+| `fs.indexed_chars`               | `100000.0`    | [Extracted characters](#extracted-characters)                                     |
 | `fs.checksum`                    | `null`        | [File signature](#file-signature)                                                 |
 
 #### Root directory
