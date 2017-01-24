@@ -38,11 +38,11 @@ public class Server {
     }
 
     private String hostname;
-    private int port;
+    private int port = PROTOCOL.SSH_PORT;
     private String username;
     @JsonIgnore
     private String password;
-    private String protocol;
+    private String protocol = PROTOCOL.LOCAL;
     private String pemPath;
 
     public String getHostname() {

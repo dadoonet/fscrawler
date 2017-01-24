@@ -30,16 +30,16 @@ public class Fs {
     private List<String> excludes;
     private boolean jsonSupport;
     private boolean filenameAsId;
-    private boolean addFilesize;
-    private boolean removeDeleted;
+    private boolean addFilesize = true;
+    private boolean removeDeleted = true;
     private boolean storeSource;
-    private boolean indexContent;
+    private boolean indexContent = true;
     private Percentage indexedChars;
     private boolean attributesSupport;
     private boolean rawMetadata;
     private boolean xmlSupport;
     private String checksum;
-    private boolean indexFolders;
+    private boolean indexFolders = true;
     private boolean langDetect;
 
     public static Builder builder() {

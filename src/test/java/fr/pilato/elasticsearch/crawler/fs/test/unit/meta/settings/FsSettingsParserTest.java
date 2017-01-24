@@ -19,6 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
+import fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator;
+import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
+import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
@@ -33,7 +36,11 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.iterableWithSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
@@ -78,9 +85,58 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private void settingsTester(FsSettings source) throws IOException {
         String json = FsSettingsParser.toJson(source);
 
-        logger.info("-> generated settings: [{}]", json);
+        logger.info("-> testing settings: [{}]", json);
         FsSettings generated = FsSettingsParser.fromJson(json);
         assertThat(generated, is(source));
+    }
+
+    @Test
+    public void testWithSimplestJsonJobFile() throws IOException {
+        String json = "{ \"name\" : \"test\" }";
+        logger.info("-> testing settings: [{}]", json);
+        FsSettings settings = FsSettingsParser.fromJson(json);
+
+        // We enrich missing needed values
+        FsCrawlerValidator.validateSettings(logger, settings, false);
+
+        // We need to check the default expected settings
+        assertThat(settings, notNullValue());
+        assertThat(settings.getName(), is("test"));
+        assertThat(settings.getServer(), nullValue());
+        assertThat(settings.getRest(), nullValue());
+
+        assertThat(settings.getElasticsearch(), notNullValue());
+        assertThat(settings.getElasticsearch().getBulkSize(), is(100));
+        assertThat(settings.getElasticsearch().getFlushInterval(), is(TimeValue.timeValueSeconds(5)));
+        assertThat(settings.getElasticsearch().getIndex(), is("test"));
+        assertThat(settings.getElasticsearch().getType(), is("doc"));
+        assertThat(settings.getElasticsearch().getNodes(), iterableWithSize(1));
+        assertThat(settings.getElasticsearch().getNodes().get(0).getHost(), is("127.0.0.1"));
+        assertThat(settings.getElasticsearch().getNodes().get(0).getPort(), is(9200));
+        assertThat(settings.getElasticsearch().getNodes().get(0).getScheme(), is(Elasticsearch.Node.Scheme.HTTP));
+
+        assertThat(settings.getElasticsearch().getUsername(), is(nullValue()));
+        assertThat(settings.getElasticsearch().getPassword(), is(nullValue()));
+        assertThat(settings.getElasticsearch().getPipeline(), is(nullValue()));
+
+        assertThat(settings.getFs(), notNullValue());
+        assertThat(settings.getFs().getChecksum(), nullValue());
+        assertThat(settings.getFs().getIncludes(), nullValue());
+        assertThat(settings.getFs().getExcludes(), nullValue());
+        assertThat(settings.getFs().getIndexedChars(), nullValue());
+        assertThat(settings.getFs().getUpdateRate(), is(TimeValue.timeValueMinutes(15)));
+        assertThat(settings.getFs().getUrl(), is("/tmp/es"));
+        assertThat(settings.getFs().isAddFilesize(), is(true));
+        assertThat(settings.getFs().isAttributesSupport(), is(false));
+        assertThat(settings.getFs().isFilenameAsId(), is(false));
+        assertThat(settings.getFs().isIndexContent(), is(true));
+        assertThat(settings.getFs().isIndexFolders(), is(true));
+        assertThat(settings.getFs().isJsonSupport(), is(false));
+        assertThat(settings.getFs().isLangDetect(), is(false));
+        assertThat(settings.getFs().isRawMetadata(), is(true));
+        assertThat(settings.getFs().isRemoveDeleted(), is(true));
+        assertThat(settings.getFs().isStoreSource(), is(false));
+        assertThat(settings.getFs().isXmlSupport(), is(false));
     }
 
     @Test
