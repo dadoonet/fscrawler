@@ -222,6 +222,7 @@ public class BulkProcessor {
      * @return a bulk processor
      */
     public static BulkProcessor simpleBulkProcessor(ElasticsearchClient client, int bulkSize, TimeValue flushInterval, String pipeline) {
+        logger.debug("Creating a bulk processor with size [{}], flush [{}], pipeline [{}]", bulkSize, flushInterval, pipeline);
         return builder(client, new Listener() {
             @Override
             public void beforeBulk(long executionId, BulkRequest request) {
