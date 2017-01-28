@@ -56,7 +56,6 @@ public class ElasticsearchClient {
     private final Elasticsearch settings;
     private final RestClient client;
     private String FIELDS = null;
-    public static final Integer defaultSearchSize = 10;
     private boolean INGEST_SUPPORT = true;
     private String VERSION = null;
 

@@ -217,7 +217,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         if (content != null) {
             fullQuery += " +content:" + content;
         }
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, fullQuery, ElasticsearchClient.defaultSearchSize, null);
+        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, fullQuery, 10, null);
         assertThat(response.getHits().getTotal(), is(1L));
         return response;
     }
