@@ -33,7 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -58,6 +58,18 @@ public class ElasticsearchClientIT extends AbstractITCase {
     @Test
     public void testCreateIndex() throws IOException {
         elasticsearchClient.createIndex(getCrawlerName());
+        boolean exists = elasticsearchClient.isExistingIndex(getCrawlerName());
+        assertThat(exists, is(true));
+    }
+
+    @Test
+    public void testCreateIndexWithSettings() throws IOException {
+        elasticsearchClient.createIndex(getCrawlerName(), false, "{\n" +
+                "  \"settings\": {\n" +
+                "    \"number_of_shards\": 1,\n" +
+                "    \"number_of_replicas\": 1\n" +
+                "  }\n" +
+                "}");
         boolean exists = elasticsearchClient.isExistingIndex(getCrawlerName());
         assertThat(exists, is(true));
     }
@@ -246,7 +258,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        StringEntity entity = new StringEntity(pipeline, Charset.defaultCharset());
+        StringEntity entity = new StringEntity(pipeline, StandardCharsets.UTF_8);
 
         elasticsearchClient.getClient().performRequest("PUT", "_ingest/pipeline/" + getCrawlerName(),
                 Collections.emptyMap(), entity);

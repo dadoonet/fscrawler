@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 
+import com.google.common.base.Strings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch.Node;
 import org.apache.http.HttpHost;
@@ -37,7 +38,7 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -92,14 +93,19 @@ public class ElasticsearchClient {
     }
 
     public void createIndex(String index) throws IOException {
-        createIndex(index, false);
+        createIndex(index, false, null);
     }
 
-    public void createIndex(String index, boolean ignoreErrors) throws IOException {
+    public void createIndex(String index, boolean ignoreErrors, String indexSettings) throws IOException {
         logger.debug("create index [{}]", index);
+        logger.trace("index settings: [{}]", indexSettings);
         try {
-            Response response = client.performRequest("PUT", "/" + index, Collections.emptyMap());
-            logger.trace("create index response: {}", response.getEntity().getContent());
+            StringEntity entity = null;
+            if (!Strings.isNullOrEmpty(indexSettings)) {
+                entity = new StringEntity(indexSettings, StandardCharsets.UTF_8);
+            }
+            Response response = client.performRequest("PUT", "/" + index, Collections.emptyMap(), entity);
+            logger.trace("create index response: {}", JsonUtil.asMap(response));
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 400 &&
                     (e.getMessage().contains("index_already_exists_exception") || e.getMessage().contains("IndexAlreadyExistsException"))) {
@@ -140,7 +146,7 @@ public class ElasticsearchClient {
             params = Collections.emptyMap();
         }
 
-        StringEntity entity = new StringEntity(sbf.toString(), Charset.defaultCharset());
+        StringEntity entity = new StringEntity(sbf.toString(), StandardCharsets.UTF_8);
         Response restResponse = client.performRequest("POST", "/_bulk", params, entity);
         BulkResponse response = JsonUtil.deserialize(restResponse, BulkResponse.class);
         logger.debug("bulk response: {}", response);
@@ -150,10 +156,9 @@ public class ElasticsearchClient {
     public void putMapping(String index, String type, String mapping) throws IOException {
         logger.debug("put mapping [{}/{}]", index, type);
 
-        StringEntity entity = new StringEntity(mapping, Charset.defaultCharset());
+        StringEntity entity = new StringEntity(mapping, StandardCharsets.UTF_8);
         Response restResponse = client.performRequest("PUT", "/" + index + "/_mapping/" + type, Collections.emptyMap(), entity);
-        Map<String, Object> responseAsMap = JsonUtil.asMap(restResponse);
-        logger.trace("put mapping response: {}", responseAsMap);
+        logger.trace("put mapping response: {}", JsonUtil.asMap(restResponse));
     }
 
     public String findVersion() throws IOException {
@@ -180,8 +185,7 @@ public class ElasticsearchClient {
         path += "_refresh";
 
         Response restResponse = client.performRequest("POST", path);
-        Map<String, Object> responseAsMap = JsonUtil.asMap(restResponse);
-        logger.trace("refresh raw response: {}", responseAsMap);
+        logger.trace("refresh raw response: {}", JsonUtil.asMap(restResponse));
     }
 
     public void waitForHealthyIndex(String index) throws IOException {
@@ -189,19 +193,15 @@ public class ElasticsearchClient {
 
         Response restResponse = client.performRequest("GET", "/_cluster/health/" + index,
                 Collections.singletonMap("wait_for_status", "yellow"));
-        Map<String, Object> responseAsMap = JsonUtil.asMap(restResponse);
-
-        logger.trace("health response: {}", responseAsMap);
+        logger.trace("health response: {}", JsonUtil.asMap(restResponse));
     }
 
     public void index(String index, String type, String id, String json) throws IOException {
         logger.debug("put document [{}/{}/{}]", index, type, id);
 
-        StringEntity entity = new StringEntity(json, Charset.defaultCharset());
+        StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
         Response restResponse = client.performRequest("PUT", "/" + index + "/" + type + "/" + id, Collections.emptyMap(), entity);
-        Map<String, Object> responseAsMap = JsonUtil.asMap(restResponse);
-
-        logger.trace("put document response: {}", responseAsMap);
+        logger.trace("put document response: {}", JsonUtil.asMap(restResponse));
     }
 
     public boolean isExistingDocument(String index, String type, String id) throws IOException {
@@ -209,9 +209,7 @@ public class ElasticsearchClient {
 
         try {
             Response restResponse = client.performRequest("GET", "/" + index + "/" + type + "/" + id);
-            Map<String, Object> responseAsMap = JsonUtil.asMap(restResponse);
-
-            logger.trace("get document response: {}", responseAsMap);
+            logger.trace("get document response: {}", JsonUtil.asMap(restResponse));
             return true;
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 404) {
@@ -227,7 +225,7 @@ public class ElasticsearchClient {
 
         try {
             Response response = client.performRequest("DELETE", "/" + index);
-            logger.trace("delete index response: {}", response.getEntity().getContent());
+            logger.trace("delete index response: {}", JsonUtil.asMap(response));
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 404) {
                 logger.debug("index [{}] does not exist", index);
@@ -359,8 +357,7 @@ public class ElasticsearchClient {
 
         try {
             Response restResponse = client.performRequest("GET", "/" + index);
-            Map<String, Object> responseAsMap = JsonUtil.asMap(restResponse);
-            logger.trace("get index metadata response: {}", responseAsMap);
+            logger.trace("get index metadata response: {}", JsonUtil.asMap(restResponse));
             return true;
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 404) {
@@ -414,5 +411,16 @@ public class ElasticsearchClient {
 
     public boolean isIngestSupported() {
         return INGEST_SUPPORT;
+    }
+
+    public SearchResponse.Hit get(String index, String type, String id) throws IOException {
+        logger.debug("get [{}]/[{}]/[{}]", index, type, id);
+
+        String path = "/" + index + "/" + type + "/" + id;
+        Response restResponse = client.performRequest("GET", path);
+        SearchResponse.Hit hit = JsonUtil.deserialize(restResponse, SearchResponse.Hit.class);
+
+        logger.trace("Hit: {}", hit);
+        return hit;
     }
 }

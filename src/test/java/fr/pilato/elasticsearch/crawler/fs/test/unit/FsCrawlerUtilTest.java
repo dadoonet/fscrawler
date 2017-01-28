@@ -20,12 +20,20 @@
 package fr.pilato.elasticsearch.crawler.fs.test.unit;
 
 import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 /**
@@ -35,14 +43,16 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testComputePathLinux() {
-        testHelper("/tmp", "/tmp/myfile.txt", "/myfile.txt");
-        testHelper("/tmp", "/tmp/dir/myfile.txt", "/dir/myfile.txt");
+        testHelper("/tmp", "/tmp", "/");
+        testHelper("/tmp", "/tmp/dir", "/dir");
+        testHelper("/tmp", "/tmp/dir/subdir", "/dir/subdir");
     }
 
     @Test
     public void testComputePathWindows() {
-        testHelper("C:\\tmp", "C:\\tmp\\myfile.txt", "/myfile.txt");
-        testHelper("C:\\tmp", "C:\\tmp\\dir\\myfile.txt", "/dir/myfile.txt");
+        testHelper("C:\\tmp", "C:\\tmp", "/");
+        testHelper("C:\\tmp", "C:\\tmp\\dir", "/dir");
+        testHelper("C:\\tmp", "C:\\tmp\\dir\\subdir", "/dir/subdir");
     }
 
     private void testHelper(String rootPath, String realPath, String expectedPath) {
@@ -56,5 +66,25 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         assertThat(extractMajorVersionNumber("5.0.0-SNAPSHOT"), is("5"));
         assertThat(extractMajorVersionNumber("5.0.0.beta4-SNAPSHOT"), is("5"));
         assertThat(extractMajorVersionNumber("1"), is("1"));
+    }
+
+    @Test
+    public void testListExistingJobs() throws IOException {
+        String jobNamePrefix = "fscrawler_list_existing_jobs";
+        int numJobs = between(1, 30);
+
+        // We generate so fake jobs first in metadata dir
+        FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(metadataDir);
+
+        for (int i = 0; i < numJobs; i++) {
+            String jobName = jobNamePrefix + "-" + i;
+            Path jobDir = metadataDir.resolve(jobName);
+            Files.createDirectories(jobDir);
+            fsSettingsFileHandler.write(FsSettings.builder(jobName).build());
+        }
+
+        // We test that we can actually see the jobs
+        List<String> jobs = FsCrawlerUtil.listExistingJobs(metadataDir);
+        assertThat(jobs, hasSize(numJobs));
     }
 }

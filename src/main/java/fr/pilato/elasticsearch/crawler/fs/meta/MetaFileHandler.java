@@ -21,7 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.meta;
 
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -80,6 +80,20 @@ public class MetaFileHandler {
                 Files.createDirectory(dir);
             }
         }
-        Files.write(dir.resolve(filename), content.getBytes(Charset.forName("UTF-8")));
+        Files.write(dir.resolve(filename), content.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Remove a file from ~/.fscrawler/{subdir} dir
+     * @param subdir subdir where we can read the file (null if we read in the root dir)
+     * @param filename filename
+     * @throws IOException in case of error while reading
+     */
+    protected void removeFile(String subdir, String filename) throws IOException {
+        Path dir = root;
+        if (subdir != null) {
+            dir = dir.resolve(subdir);
+        }
+        Files.deleteIfExists(dir.resolve(filename));
     }
 }

@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsParser;
+import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +41,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -56,6 +56,8 @@ public class FsCrawler {
 
     private static final Logger logger = LogManager.getLogger(FsCrawler.class);
 
+    private static FsCrawlerImpl fsCrawler = null;
+
     @SuppressWarnings("CanBeFinal")
     public static class FsCrawlerCommand {
         @Parameter(description = "job_name")
@@ -69,6 +71,10 @@ public class FsCrawler {
 
         @Parameter(names = "--loop", description = "Number of scan loop before exiting.")
         private Integer loop = -1;
+
+        @Parameter(names = "--restart", description = "Restart fscrawler job like if it never ran before. " +
+                "This does not clean elasticsearch indices.")
+        private boolean restart = false;
 
         @Parameter(names = "--update_mapping", description = "Update elasticsearch mapping")
         private boolean updateMapping = false;
@@ -116,7 +122,7 @@ public class FsCrawler {
 
         if (commands.help) {
             jCommander.usage();
-            System.exit(0);
+            return;
         }
 
         Path configDir;
@@ -143,7 +149,7 @@ public class FsCrawler {
             // We can list available jobs for him
             logger.info("No job specified. Here is the list of existing jobs:");
 
-            List<String> files = listExistingJobs(configDir);
+            List<String> files = FsCrawlerUtil.listExistingJobs(configDir);
 
             if (files.size() > 0) {
                 for (int i = 0; i < files.size(); i++) {
@@ -159,11 +165,17 @@ public class FsCrawler {
                 logger.info("No job exists in [{}].", configDir);
                 logger.info("To create your first job, run 'fscrawler job_name' with 'job_name' you want");
                 jobName = null;
-                System.exit(1);
+                return;
             }
 
         } else {
             jobName = commands.jobName.get(0);
+        }
+
+        // If we ask to reinit, we need to clean the status for the job
+        if (commands.restart) {
+            logger.debug("Cleaning existing status for job [{}]...", jobName);
+            new FsJobFileHandler(configDir).clean(jobName);
         }
 
         try {
@@ -210,11 +222,11 @@ public class FsCrawler {
                 logger.info("Settings have been created in [{}]. Please review and edit before relaunch", config);
             }
 
-            System.exit(1);
+            return;
         }
 
         logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toJson(fsSettings));
-        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.updateMapping, commands.rest);
+        fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.updateMapping, commands.rest);
         Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
         try {
             fsCrawler.start();
@@ -222,32 +234,14 @@ public class FsCrawler {
             while (!fsCrawler.isClosed()) {
                 sleep();
             }
+            fsCrawler.close();
         } catch (Exception e) {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
             logger.debug("error caught", e);
-            System.exit(-1);
-        }
-    }
-
-    public static List<String> listExistingJobs(Path configDir) {
-        List<String> files = new ArrayList<>();
-        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(configDir)) {
-            for (Path path : directoryStream) {
-                // This is a directory. Let's see if we have the _settings.json file in it
-                if (Files.isDirectory(path)) {
-                    String jobName = path.getFileName().toString();
-                    Path jobSettingsFile = path.resolve(FsSettingsFileHandler.FILENAME);
-                    if (Files.exists(jobSettingsFile)) {
-                        files.add(jobName);
-                        logger.debug("Adding job [{}]", jobName, FsSettingsFileHandler.FILENAME);
-                    } else {
-                        logger.debug("Ignoring [{}] dir as no [{}] has been found", jobName, FsSettingsFileHandler.FILENAME);
-                    }
-                }
+            if (fsCrawler != null) {
+                fsCrawler.close();
             }
-        } catch (IOException ignored) {}
-
-        return files;
+        }
     }
 
     public static void moveLegacyResources(Path root) {

@@ -56,4 +56,13 @@ public class FsJobFileHandler extends MetaFileHandler {
     public void write(String jobname, FsJob job) throws IOException {
         writeFile(jobname, FILENAME, FsJobParser.toJson(job));
     }
+
+    /**
+     * We clean existing settings in ~/.fscrawler/{job_name}/_status.json
+     * @param jobname is the job_name
+     * @throws IOException in case of error while removing
+     */
+    public void clean(String jobname) throws IOException {
+        removeFile(jobname, FILENAME);
+    }
 }

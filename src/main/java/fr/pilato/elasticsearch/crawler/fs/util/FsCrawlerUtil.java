@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.util;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawler;
 import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.CopyOption;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -46,12 +48,14 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
 public class FsCrawlerUtil extends MetaParser {
     public static final String INDEX_TYPE_DOC = "doc";
     public static final String INDEX_TYPE_FOLDER = "folder";
+    public static final String INDEX_SETTINGS_FILE = "_settings";
 
     static public final class Dir {
         public static final String NAME = "name";
@@ -73,10 +77,10 @@ public class FsCrawlerUtil extends MetaParser {
      * @throws URISyntaxException If URI is malformed
      * @throws IOException If the mapping can not be read
      */
-    public static String readDefaultMapping(Path config, String version, String type) throws URISyntaxException, IOException {
+    public static String readDefaultJsonVersionedFile(Path config, String version, String type) throws URISyntaxException, IOException {
         Path defaultConfigDir = config.resolve("_default");
         try {
-            return readMapping(defaultConfigDir, version, type);
+            return readJsonVersionedFile(defaultConfigDir, version, type);
         } catch (NoSuchFileException e) {
             throw new IllegalArgumentException("Mapping file " + type + ".json does not exist for elasticsearch version " + version +
                     " in [" + defaultConfigDir + "] dir");
@@ -92,29 +96,29 @@ public class FsCrawlerUtil extends MetaParser {
      * @return the mapping
      * @throws IOException If the mapping can not be read
      */
-    private static String readMapping(Path dir, String version, String type) throws IOException {
+    private static String readJsonVersionedFile(Path dir, String version, String type) throws IOException {
         Path file = dir.resolve(version).resolve(type + ".json");
         return new String(Files.readAllBytes(file), "UTF-8");
     }
 
     /**
-     * Reads a mapping from dir/version/type.json file.
-     * If not found, read from ~/.fscrawler/_default/version/type.json
+     * Reads a Json file from dir/version/filename.json file.
+     * If not found, read from ~/.fscrawler/_default/version/filename.json
      *
-     * @param dir Directory which might contain mapping files per major version (job dir)
+     * @param dir Directory which might contain filename files per major version (job dir)
      * @param config Root dir where we can find the configuration (default to ~/.fscrawler)
      * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
-     * @param type The expected type (will be expanded to type.json)
+     * @param filename The expected filename (will be expanded to filename.json)
      * @return the mapping
      * @throws URISyntaxException If URI is malformed
      * @throws IOException If the mapping can not be read
      */
-    public static String readMapping(Path dir, Path config, String version, String type) throws URISyntaxException, IOException {
+    public static String readJsonFile(Path dir, Path config, String version, String filename) throws URISyntaxException, IOException {
         try {
-            return readMapping(dir, version, type);
+            return readJsonVersionedFile(dir, version, filename);
         } catch (NoSuchFileException e) {
             // We fall back to default mappings in config dir
-            return readDefaultMapping(config, version, type);
+            return readDefaultJsonVersionedFile(config, version, filename);
         }
     }
 
@@ -217,14 +221,14 @@ public class FsCrawlerUtil extends MetaParser {
 
     public static String computeVirtualPathName(ScanStatistic stats,
                                                 String realPath) {
-        if (realPath == null)
-            return null;
+        String result = "/";
+        if (realPath != null && realPath.length() > stats.getRootPath().length()) {
+            result = realPath.substring(stats.getRootPath().length())
+                    .replace("\\", "/");
+        }
 
-        if (realPath.length() < stats.getRootPath().length())
-            return "/";
-
-        return realPath.substring(stats.getRootPath().length())
-                .replace("\\", "/");
+        logger.debug("computeVirtualPathName({}, {}) = {}", stats.getRootPath(), realPath, result);
+        return result;
     }
 
     public static LocalDateTime getCreationTime(File file) {
@@ -287,9 +291,9 @@ public class FsCrawlerUtil extends MetaParser {
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
     public static final String[] MAPPING_RESOURCES = {
-            "1/doc.json", "1/folder.json",
-            "2/doc.json", "2/folder.json",
-            "5/doc.json", "5/folder.json"
+            "1/doc.json", "1/folder.json", "1/_settings.json",
+            "2/doc.json", "2/folder.json", "2/_settings.json",
+            "5/doc.json", "5/folder.json", "5/_settings.json"
     };
 
     /**
@@ -398,4 +402,24 @@ public class FsCrawlerUtil extends MetaParser {
         return scheme + "://" + host + ":" + port;
     }
 
+    public static List<String> listExistingJobs(Path configDir) {
+        List<String> files = new ArrayList<>();
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(configDir)) {
+            for (Path path : directoryStream) {
+                // This is a directory. Let's see if we have the _settings.json file in it
+                if (Files.isDirectory(path)) {
+                    String jobName = path.getFileName().toString();
+                    Path jobSettingsFile = path.resolve(FsSettingsFileHandler.FILENAME);
+                    if (Files.exists(jobSettingsFile)) {
+                        files.add(jobName);
+                        logger.debug("Adding job [{}]", jobName, FsSettingsFileHandler.FILENAME);
+                    } else {
+                        logger.debug("Ignoring [{}] dir as no [{}] has been found", jobName, FsSettingsFileHandler.FILENAME);
+                    }
+                }
+            }
+        } catch (IOException ignored) {}
+
+        return files;
+    }
 }

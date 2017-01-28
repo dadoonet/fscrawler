@@ -2,14 +2,15 @@ language: java
 sudo: false
 jdk:
   - oraclejdk8
-before_script:
-  - echo "MAVEN_OPTS=-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" > ~/.mavenrc
 install: true
 script:
+# We fetch as much as dependencies we can but we don't print the output so it's more digest
+# Sadly this is the only way to make maven download everything and not polute the logs...
+  - mvn --batch-mode clean dependency:resolve dependency:resolve-plugins install -DskipTests -Dsilent=true > /dev/null
 # Let's skip for now branch 1.x
-#  - mvn -B clean verify -Pes-1x
-  - mvn -B clean verify -Pes-2x-travis
-  - mvn -B clean verify
+#  - mvn --batch-mode clean verify -Pes-1x
+  - mvn --batch-mode clean verify -Pes-2x-travis
+  - mvn -batch-mode clean verify
   - "[[ ${TRAVIS_PULL_REQUEST} == 'false' ]] && [[ ${TRAVIS_TAG} == '' ]] && mvn deploy -DskipTests --settings deploy-settings.xml"
 #after_success:
 #  - "[[ ${TRAVIS_PULL_REQUEST} == 'false' ]] && [[ ${TRAVIS_TAG} == '' ]] && mvn deploy -DskipTests --settings deploy-settings.xml"

@@ -182,9 +182,9 @@ public class Elasticsearch {
 
     private List<Node> nodes;
     private String index;
-    private String type;
-    private int bulkSize;
-    private TimeValue flushInterval;
+    private String type = FsCrawlerUtil.INDEX_TYPE_DOC;
+    private int bulkSize = 100;
+    private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
     private String username;
     @JsonIgnore
     private String password;

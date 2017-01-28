@@ -80,13 +80,27 @@
           "type" : "keyword"
         },
         "real" : {
-          "type" : "keyword"
+          "type" : "keyword",
+          "fields": {
+            "tree": {
+              "type" : "text",
+              "analyzer": "fscrawler_path",
+              "fielddata": true
+            }
+          }
         },
         "root" : {
           "type" : "keyword"
         },
         "virtual" : {
-          "type" : "keyword"
+          "type" : "keyword",
+          "fields": {
+            "tree": {
+              "type" : "text",
+              "analyzer": "fscrawler_path",
+              "fielddata": true
+            }
+          }
         }
       }
     }

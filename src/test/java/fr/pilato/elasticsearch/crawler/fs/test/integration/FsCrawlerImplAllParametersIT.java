@@ -44,7 +44,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,6 +54,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -65,8 +66,12 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isOneOf;
+import static org.hamcrest.Matchers.iterableWithSize;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeThat;
 
@@ -409,15 +414,44 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We should have one doc first
-        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+        SearchResponse response = countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+        checkDocVersions(response, 1L);
 
-        logger.info(" ---> Adding a copy of roottxtfile.txt");
-        // We create a copy of a file
-        Files.copy(currentTestResourceDir.resolve("roottxtfile.txt"),
-                currentTestResourceDir.resolve("new_roottxtfile.txt"));
+        logger.info(" ---> Creating a new file new_roottxtfile.txt");
+        Files.write(currentTestResourceDir.resolve("new_roottxtfile.txt"), "This is a second file".getBytes());
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
+        response = countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
+
+        // It should be only version <= 2 for both docs
+        checkDocVersions(response, 2L);
+
+        logger.info(" ---> Creating a new file new_new_roottxtfile.txt");
+        Files.write(currentTestResourceDir.resolve("new_new_roottxtfile.txt"), "This is a third file".getBytes());
+
+        // We expect to have three files
+        response = countTestHelper(getCrawlerName(), null, 3, currentTestResourceDir);
+
+        // It should be only version <= 2 for all docs
+        checkDocVersions(response, 2L);
+    }
+
+    /**
+     * Iterate other response hits and check that _version is at most a given version
+     * @param response The search response object
+     * @param maxVersion Maximum version number we can have
+     */
+    private void checkDocVersions(SearchResponse response, long maxVersion) {
+        // It should be only version <= maxVersion for all docs
+        response.getHits().getHits().forEach(hit -> {
+            // Read the document. This is needed since 5.0 as search does not return the _version field
+            try {
+                SearchResponse.Hit getHit = elasticsearchClient.get(hit.getIndex(), hit.getType(), hit.getId());
+                assertThat(getHit.getVersion(), lessThanOrEqualTo(maxVersion));
+            } catch (IOException e) {
+                fail("We got an IOException: " + e.getMessage());
+            }
+        });
     }
 
     /**
@@ -547,7 +581,42 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 2);
+        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 2);
+
+        // We check that the subdir document has his meta path data correctly set
+        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+            Object virtual = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.PATH)
+                    .get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.VIRTUAL);
+            assertThat(virtual, isOneOf("/subdir", "/"));
+        }
+    }
+
+    @Test
+    public void test_subdirs_deep_tree() throws Exception {
+        startCrawler();
+
+        // We expect to have two files
+        countTestHelper(getCrawlerName(), null, 7);
+
+        // Run aggs
+        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
+                "{\n" +
+                        "  \"size\": 0, \n" +
+                        "  \"aggs\": {\n" +
+                        "    \"folders\": {\n" +
+                        "      \"terms\": {\n" +
+                        "        \"field\": \"path.virtual.tree\"\n" +
+                        "      }\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "}");
+        assertThat(response.getHits().getTotal(), is(7L));
+
+        // aggregations
+        assertThat(response.getAggregations(), hasKey("folders"));
+        List<Object> buckets = (List) extractFromPath(response.getAggregations(), "folders").get("buckets");
+
+        assertThat(buckets, iterableWithSize(7));
     }
 
     @Test
@@ -843,7 +912,22 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_update_mapping() throws Exception {
-        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.createIndex(getCrawlerName(), false, "{\n" +
+                "  \"settings\": {\n" +
+                "    \"analysis\": {\n" +
+                "      \"analyzer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"tokenizer\": \"fscrawler_path\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"tokenizer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"type\": \"path_hierarchy\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n");
         elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
                 "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : {   \"_source\" : {\n" +
                         "    \"excludes\" : [\n" +
@@ -867,7 +951,22 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_update_mapping_but_dont_launch() throws Exception {
-        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.createIndex(getCrawlerName(), false, "{\n" +
+                "  \"settings\": {\n" +
+                "    \"analysis\": {\n" +
+                "      \"analyzer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"tokenizer\": \"fscrawler_path\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"tokenizer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"type\": \"path_hierarchy\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n");
         elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
                 "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : {   \"_source\" : {\n" +
                         "    \"excludes\" : [\n" +
@@ -1038,7 +1137,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        StringEntity entity = new StringEntity(pipeline, Charset.defaultCharset());
+        StringEntity entity = new StringEntity(pipeline, StandardCharsets.UTF_8);
 
         elasticsearchClient.getClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
                 Collections.emptyMap(), entity);

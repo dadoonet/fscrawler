@@ -132,7 +132,7 @@ public class FsCrawlerImpl {
         this.updateMapping = updateMapping;
         this.esClientManager = new ElasticsearchClientManager(config, settings);
 
-        closed = validateSettings(logger, settings);
+        closed = validateSettings(logger, settings, rest);
         if (closed) {
             // We don't go further as we have critical errors
             return;
@@ -267,6 +267,10 @@ public class FsCrawlerImpl {
                         indexRootDirectory(fsSettings.getFs().getUrl());
                     }
 
+                    if (scanDate == null) {
+                        scanDate = LocalDateTime.MIN;
+                    }
+
                     addFilesRecursively(path, fsSettings.getFs().getUrl(), scanDate);
 
                     updateFsJob(fsSettings.getName(), scanDatenew);
@@ -378,9 +382,8 @@ public class FsCrawlerImpl {
                         if (child.file) {
                             logger.debug("  - file: {}", filename);
                             fsFiles.add(filename);
-                            if (lastScanDate == null
-                                    || child.lastModifiedDate.isAfter(lastScanDate)
-                                    || (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
+                            if (child.lastModifiedDate.isAfter(lastScanDate) ||
+                                    (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
                                 indexFile(child, stats, filepath, path.getInputStream(child), child.size);
                                 stats.addFile();
                             } else {
@@ -391,9 +394,9 @@ public class FsCrawlerImpl {
                             logger.debug("  - folder: {}", filename);
                             if (settings.getFs().isIndexFolders()) {
                                 fsFolders.add(filename);
-                                indexDirectory(stats, filename, child.fullpath.concat(File.separator));
+                                indexDirectory(stats, filename, child.fullpath);
                             }
-                            addFilesRecursively(path, child.fullpath.concat(File.separator), lastScanDate);
+                            addFilesRecursively(path, child.fullpath, lastScanDate);
                         } else {
                             logger.debug("  - other: {}", filename);
                             logger.debug("Not a file nor a dir. Skipping {}", child.fullpath);
@@ -532,13 +535,13 @@ public class FsCrawlerImpl {
         /**
          * Index a file
          */
-        private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String filepath, InputStream inputStream,
+        private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
                                long filesize) throws Exception {
             final String filename = fileAbstractModel.name;
             final LocalDateTime lastmodified = fileAbstractModel.lastModifiedDate;
             final long size = fileAbstractModel.size;
 
-            logger.debug("fetching content from [{}],[{}]", filepath, filename);
+            logger.debug("fetching content from [{}],[{}]", dirname, filename);
 
             try {
                 // Create the Doc object
@@ -569,17 +572,17 @@ public class FsCrawlerImpl {
                 doc.getFile().setFilename(filename);
                 doc.getFile().setLastModified(lastmodified);
                 doc.getFile().setIndexingDate(LocalDateTime.now());
-                doc.getFile().setUrl("file://" + (new File(filepath, filename)).toString());
+                doc.getFile().setUrl("file://" + (new File(dirname, filename)).toString());
                 if (fsSettings.getFs().isAddFilesize()) {
                     doc.getFile().setFilesize(size);
                 }
                 // File
 
                 // Path
-                doc.getPath().setEncoded(SignTool.sign(filepath));
+                doc.getPath().setEncoded(SignTool.sign(dirname));
                 doc.getPath().setRoot(stats.getRootPathId());
-                doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats, filepath));
-                doc.getPath().setReal((new File(filepath, filename)).toString());
+                doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats, dirname));
+                doc.getPath().setReal((new File(dirname, filename)).toString());
                 // Path
 
                 // Attributes

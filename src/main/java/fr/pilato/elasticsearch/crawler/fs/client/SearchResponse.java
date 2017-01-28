@@ -36,11 +36,17 @@ public class SearchResponse {
         return hits;
     }
 
+    private Map<String, Object> aggregations;
+
+    public Map<String, Object> getAggregations() {
+        return aggregations;
+    }
+
     @Override
     public String toString() {
-        String sb = "SearchResponse{" + "hits=" + hits +
+        return "SearchResponse{" + "hits=" + hits +
+                ", aggregations=" + aggregations +
                 '}';
-        return sb;
     }
 
     public static class Hits {
@@ -71,6 +77,18 @@ public class SearchResponse {
         @JsonProperty("_source")
         private Map<String, Object> source;
 
+        @JsonProperty("_index")
+        private String index;
+
+        @JsonProperty("_type")
+        private String type;
+
+        @JsonProperty("_id")
+        private String id;
+
+        @JsonProperty("_version")
+        private Long version;
+
         private Map<String, Object> fields;
 
         private Map<String, List<String>> highlight;
@@ -87,13 +105,33 @@ public class SearchResponse {
             return highlight;
         }
 
+        public String getIndex() {
+            return index;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public Long getVersion() {
+            return version;
+        }
+
         @Override
         public String toString() {
-            String sb = "Hit{" + "source=" + source +
+            return "Hit{" +
+                    "index=" + index +
+                    ", type=" + type +
+                    ", id=" + id +
+                    ", version=" + version +
+                    ", source=" + source +
                     ", fields=" + fields +
                     ", highlight=" + highlight +
                     '}';
-            return sb;
         }
     }
 }
