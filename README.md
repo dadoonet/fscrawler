@@ -431,6 +431,7 @@ Here is a list of Local FS settings (under `fs.` prefix)`:
 | `fs.excludes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
 | `fs.xml_support`                 | `false`       | [Indexing XML docs](#indexing-xml-docs) (from 2.2)                                |
+| `fs.use_deprecated_json_setup`   | `false`       | [Use Deprecated JSon setup](#use-deprecated-json-setup)                                 |
 | `fs.ignore_folders`              | `false`       | [Ignore folders](#iignore-folders) (from 2.2)                                     |
 | `fs.attributes_support`          | `false`       | [Adding file attributes](#adding-file-attributes)                                 |
 | `fs.raw_metadata`                | `true`        | [Disabling raw metadata](#disabling-raw-metadata)                                 |
@@ -517,7 +518,8 @@ Note that `includes` does not apply to directory names but only to filenames.
 #### Indexing JSon docs
 
 If you want to index JSon files directly without parsing with Tika, you can set `json_support` to `true`.
-
+The content of JSon files will be below the field `json_content`.
+Set option [Use Deprecated JSon setup](#use-deprecated-json-setup) to store JSon contents directly under the _source element.
 ```json
 {
   "name" : "test",
@@ -532,7 +534,8 @@ Of course, if you did not define a mapping before launching the crawler, Elastic
 #### Indexing XML docs
 
 If you want to index XML files and convert them to JSON, you can set `xml_support` to `true`.
-
+The content of XML files will be added below the field `json_content`. 
+Set option [Use Deprecated JSon setup](#use-deprecated-json-setup) to store XML contents directly under the _source element.
 ```json
 {
   "name" : "test",
@@ -543,6 +546,12 @@ If you want to index XML files and convert them to JSON, you can set `xml_suppor
 ```
 
 Of course, if you did not define a mapping before launching the crawler, Elasticsearch will auto guess the mapping.
+
+#### Use Deprecated JSon Setup
+The deprecated settings allows indexing the content of json or xml directly onto the _source element of elasticsearch documents, without adding any metadata about file and path settings.
+Without the path and file settings, FScrawler will not be able to check if files are deleted, or updated.
+New files will however be added to the index.
+This setting exists for backwards compatibily only, set to true if you need the deprecated behaviour. 
 
 #### Ignore folders
 
