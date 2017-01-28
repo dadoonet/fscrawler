@@ -518,7 +518,7 @@ Note that `includes` does not apply to directory names but only to filenames.
 #### Indexing JSon docs
 
 If you want to index JSon files directly without parsing with Tika, you can set `json_support` to `true`.
-The content of JSon files will be below the field `json_content`.
+The content of JSon files will be added below the field `json_content`.
 Set option [Use Deprecated JSon setup](#use-deprecated-json-setup) to store JSon contents directly under the _source element.
 ```json
 {
@@ -551,7 +551,15 @@ Of course, if you did not define a mapping before launching the crawler, Elastic
 The deprecated settings allows indexing the content of json or xml directly onto the _source element of elasticsearch documents, without adding any metadata about file and path settings.
 Without the path and file settings, FScrawler will not be able to check if files are deleted, or updated.
 New files will however be added to the index.
-This setting exists for backwards compatibily only, set to true if you need the deprecated behaviour. 
+This setting exists for backwards compatibility only, set to true if you need the deprecated behaviour. 
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "use_deprecated_json_setup" : true
+  }
+}
+```
 
 #### Ignore folders
 
