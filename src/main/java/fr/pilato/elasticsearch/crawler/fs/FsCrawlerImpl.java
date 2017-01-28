@@ -548,25 +548,9 @@ public class FsCrawlerImpl {
                 Doc doc = new Doc();
                 String docId;
                 if (fsSettings.getFs().isFilenameAsId()) {
-                    docId = generateIdFromFilename(filename, filepath);
+                    docId = generateIdFromFilename(filename, dirname);
                 } else {
-                    docId = SignTool.sign((new File(filepath, filename)).toString());
-                }
-
-                if (fsSettings.getFs().isIndexContent()) {
-                    String fileExtension = FilenameUtils.getExtension(filename);
-                    if (fsSettings.getFs().isJsonSupport()
-                            && (fileExtension.equals("json") || fileExtension.equals("js"))) {
-                        // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                        doc.setJsonContent(DocParser.fromJsonToMap(read(inputStream)));
-                    } else if (fsSettings.getFs().isXmlSupport()
-                            && (fileExtension.equals("xml"))) {
-                        // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                        doc.setJsonContent(XmlDocParser.generateMap(inputStream));
-                    } else {
-                        // Extracting content with Tika
-                        generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
-                    }
+                    docId = SignTool.sign((new File(dirname, filename)).toString());
                 }
                 // File
                 doc.getFile().setFilename(filename);
@@ -591,15 +575,43 @@ public class FsCrawlerImpl {
                     doc.getAttributes().setOwner(fileAbstractModel.owner);
                     doc.getAttributes().setGroup(fileAbstractModel.group);
                 }
-                // Attributes
-
-
                 // We index
-                esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
-                        fsSettings.getElasticsearch().getType(),
-                        docId,
-                        doc);
+                if (fsSettings.getFs().isIndexContent()) {
+                    String fileExtension = FilenameUtils.getExtension(filename);
+                    if (fsSettings.getFs().isJsonSupport() && (fileExtension.equals("json") || fileExtension.equals("js"))) {
+                        // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                        if (fsSettings.getFs().useDeprecatedJsonSetup) {
+                            esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+                                    fsSettings.getElasticsearch().getType(),
+                                    generateIdFromFilename(filename, dirname),
+                                    read(inputStream));
+                            return;
+                        } else {
+                                // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                                doc.setJsonContent(DocParser.fromJsonToMap(read(inputStream)));
+                        }
+                    } else if (fsSettings.getFs().isXmlSupport() && fileExtension.equals("xml")) {
+                        // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
+                        if (fsSettings.getFs().useDeprecatedJsonSetup) {
+                            esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+                                    fsSettings.getElasticsearch().getType(),
+                                    generateIdFromFilename(filename, dirname),
+                                    XmlDocParser.generate(inputStream));
+                            return;
+                        } else {
+                                // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
+                                doc.setJsonContent(XmlDocParser.generateMap(inputStream));
+                        }
+                    } else {
+                        generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
+                    }
 
+
+                    esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+                            fsSettings.getElasticsearch().getType(),
+                            docId,
+                            doc);
+                }
             } finally {
                 // Let's close the stream
                 inputStream.close();

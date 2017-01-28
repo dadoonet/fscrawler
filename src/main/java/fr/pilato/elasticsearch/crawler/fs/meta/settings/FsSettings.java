@@ -27,7 +27,7 @@ public class FsSettings {
     private Server server;
     private Elasticsearch elasticsearch;
     private Rest rest;
-    public boolean useDeprecated = false;
+
 
     public FsSettings() {
 

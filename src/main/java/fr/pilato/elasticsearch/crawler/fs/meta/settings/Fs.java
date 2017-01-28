@@ -32,6 +32,7 @@ public class Fs {
     private boolean filenameAsId;
     private boolean addFilesize = true;
     private boolean removeDeleted = true;
+    public boolean useDeprecatedJsonSetup = false;
     private boolean storeSource;
     private boolean indexContent = true;
     private Percentage indexedChars;
