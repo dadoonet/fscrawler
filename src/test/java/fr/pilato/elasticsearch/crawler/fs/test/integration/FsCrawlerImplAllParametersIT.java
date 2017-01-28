@@ -534,6 +534,24 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         }), equalTo(true));
     }
 
+    public void test_json_deprecated() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setUseDeprecatedJsonSetup(true)
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
+            try {
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "text:tweet");
+                return response.getHits().getTotal() == 2;
+            } catch (IOException e) {
+                logger.warn("Caught exception while running the test", e);
+                return false;
+            }
+        }), equalTo(true));
+    }
+
+
     @Test
     public void test_store_source() throws Exception {
         Fs fs = startCrawlerDefinition()

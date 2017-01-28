@@ -580,7 +580,7 @@ public class FsCrawlerImpl {
                     String fileExtension = FilenameUtils.getExtension(filename);
                     if (fsSettings.getFs().isJsonSupport() && (fileExtension.equals("json") || fileExtension.equals("js"))) {
                         // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                        if (fsSettings.getFs().useDeprecatedJsonSetup) {
+                        if (fsSettings.getFs().isUseDeprecatedJsonSetup()) {
                             esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                                     fsSettings.getElasticsearch().getType(),
                                     generateIdFromFilename(filename, dirname),
@@ -592,7 +592,7 @@ public class FsCrawlerImpl {
                         }
                     } else if (fsSettings.getFs().isXmlSupport() && fileExtension.equals("xml")) {
                         // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                        if (fsSettings.getFs().useDeprecatedJsonSetup) {
+                        if (fsSettings.getFs().isUseDeprecatedJsonSetup()) {
                             esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                                     fsSettings.getElasticsearch().getType(),
                                     generateIdFromFilename(filename, dirname),
@@ -605,13 +605,11 @@ public class FsCrawlerImpl {
                     } else {
                         generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
                     }
-
-
-                    esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
-                            fsSettings.getElasticsearch().getType(),
-                            docId,
-                            doc);
                 }
+                esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+                        fsSettings.getElasticsearch().getType(),
+                        docId,
+                        doc);
             } finally {
                 // Let's close the stream
                 inputStream.close();
