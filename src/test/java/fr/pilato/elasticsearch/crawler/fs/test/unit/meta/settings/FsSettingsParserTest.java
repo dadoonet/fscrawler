@@ -126,7 +126,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getFs().getUrl(), is("/tmp/es"));
         assertThat(settings.getFs().isAddFilesize(), is(true));
         assertThat(settings.getFs().isAttributesSupport(), is(false));
-        assertThat(settings.getFs().isUseDeprecatedJsonSetup(), is(false));
+        assertThat(settings.getFs().isAddAsInnerObject(), is(false));
         assertThat(settings.getFs().isFilenameAsId(), is(false));
         assertThat(settings.getFs().isIndexContent(), is(true));
         assertThat(settings.getFs().isIndexFolders(), is(true));

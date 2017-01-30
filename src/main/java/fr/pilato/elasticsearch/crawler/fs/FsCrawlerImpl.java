@@ -580,7 +580,7 @@ public class FsCrawlerImpl {
                     String fileExtension = FilenameUtils.getExtension(filename);
                     if (fsSettings.getFs().isJsonSupport() && (fileExtension.equals("json") || fileExtension.equals("js"))) {
                         // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                        if (fsSettings.getFs().isUseDeprecatedJsonSetup()) {
+                        if (fsSettings.getFs().isAddAsInnerObject()) {
                             esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                                     fsSettings.getElasticsearch().getType(),
                                     generateIdFromFilename(filename, dirname),
@@ -588,11 +588,11 @@ public class FsCrawlerImpl {
                             return;
                         } else {
                                 // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                                doc.setJsonContent(DocParser.fromJsonToMap(read(inputStream)));
+                                doc.setObject(DocParser.fromJsonToMap(read(inputStream)));
                         }
                     } else if (fsSettings.getFs().isXmlSupport() && fileExtension.equals("xml")) {
                         // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                        if (fsSettings.getFs().isUseDeprecatedJsonSetup()) {
+                        if (fsSettings.getFs().isAddAsInnerObject()) {
                             esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                                     fsSettings.getElasticsearch().getType(),
                                     generateIdFromFilename(filename, dirname),
@@ -600,7 +600,7 @@ public class FsCrawlerImpl {
                             return;
                         } else {
                                 // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                                doc.setJsonContent(XmlDocParser.generateMap(inputStream));
+                                doc.setObject(XmlDocParser.generateMap(inputStream));
                         }
                     } else {
                         generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);

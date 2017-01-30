@@ -464,9 +464,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
+        assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "json_content.text:tweet");
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "object.text:tweet");
                 return response.getHits().getTotal() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
@@ -525,13 +525,13 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         }), equalTo(true));
     }
 
-    public void test_json_deprecated() throws Exception {
+    public void test_add_as_inner_object() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .setUseDeprecatedJsonSetup(true)
+                .setAddAsInnerObject(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
+        assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
             try {
                 SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "text:tweet");
                 return response.getHits().getTotal() == 2;
@@ -848,8 +848,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         SearchResponse response = countTestHelper(getCrawlerName(), null, 3);
 
-        countTestHelper(getCrawlerName(), "json_content.title:maeve", 1);
-        countTestHelper(getCrawlerName(), "json_content.price:[5 TO 6]", 2);
+        countTestHelper(getCrawlerName(), "object.title:maeve", 1);
+        countTestHelper(getCrawlerName(), "object.price:[5 TO 6]", 2);
 
 
         logger.info("XML documents converted to:");

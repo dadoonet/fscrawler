@@ -100,7 +100,7 @@ public class ElasticsearchClientManager {
 
         try {
             // If needed, we create the new mapping for files
-            if (settings.getFs().isUseDeprecatedJsonSetup() == false ||  (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
+            if (settings.getFs().isAddAsInnerObject() == false ||  (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
                 // Read file mapping from resources
                 String mapping = FsCrawlerUtil.readJsonFile(jobMappingDir, config, elasticsearchVersion, FsCrawlerUtil.INDEX_TYPE_DOC);
                 ElasticsearchClient.pushMapping(client, settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(),

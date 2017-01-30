@@ -436,7 +436,7 @@ Here is a list of Local FS settings (under `fs.` prefix)`:
 | `fs.excludes`                    | `["~*"]`      | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
 | `fs.xml_support`                 | `false`       | [Indexing XML docs](#indexing-xml-docs) (from 2.2)                                |
-| `fs.use_deprecated_json_setup`   | `false`       | [Use Deprecated JSon setup](#use-deprecated-json-setup)                                 |
+| `fs.add_as_inner_object`         | `false`       | [Add as Inner Object](#add-as-inner-object)                                 |
 | `fs.ignore_folders`              | `false`       | [Ignore folders](#iignore-folders) (from 2.2)                                     |
 | `fs.attributes_support`          | `false`       | [Adding file attributes](#adding-file-attributes)                                 |
 | `fs.raw_metadata`                | `true`        | [Disabling raw metadata](#disabling-raw-metadata)                                 |
@@ -524,8 +524,7 @@ By default, FS crawler will exclude files starting with `~`.
 #### Indexing JSon docs
 
 If you want to index JSon files directly without parsing with Tika, you can set `json_support` to `true`.
-The content of JSon files will be added below the field `json_content`.
-Set option [Use Deprecated JSon setup](#use-deprecated-json-setup) to store JSon contents directly under the _source element.
+JSon contents will be stored directly under _source. If you need to keep JSon documents synchronized to the index, set option [Add as Inner Object](#add-as-inner-object) which stores additional metadata and the  JSon contents under field `object`.
 ```json
 {
   "name" : "test",
@@ -540,8 +539,8 @@ Of course, if you did not define a mapping before launching the crawler, Elastic
 #### Indexing XML docs
 
 If you want to index XML files and convert them to JSON, you can set `xml_support` to `true`.
-The content of XML files will be added below the field `json_content`. 
-Set option [Use Deprecated JSon setup](#use-deprecated-json-setup) to store XML contents directly under the _source element.
+The content of XML files will be added directly under _source. If you need to keep XML documents synchronized to the index, set option [Add as Inner Object](#add-as-inner-object) which stores additional metadata and the XML contents under field `object`.
+
 ```json
 {
   "name" : "test",
@@ -553,16 +552,16 @@ Set option [Use Deprecated JSon setup](#use-deprecated-json-setup) to store XML 
 
 Of course, if you did not define a mapping before launching the crawler, Elasticsearch will auto guess the mapping.
 
-#### Use Deprecated JSon Setup
-The deprecated settings allows indexing the content of json or xml directly onto the _source element of elasticsearch documents, without adding any metadata about file and path settings.
-Without the path and file settings, FScrawler will not be able to check if files are deleted, or updated.
-New files will however be added to the index.
-This setting exists for backwards compatibility only, set to true if you need the deprecated behaviour. 
+#### Add as Inner Object
+The default settings store the contents of json and xml documents directly onto the _source element of elasticsearch documents. Thereby, there is no metadata about file and path settings, which are necessary to determine if a document is deleted or updated.
+New files will however be added to the index, (determined by the file timestamp).
+
+If you need to keep json or xml documents synchronized to elasticsearch, you should set this option.
 ```json
 {
   "name" : "test",
   "fs" : {
-    "use_deprecated_json_setup" : true
+    "add_as_inner_object" : true
   }
 }
 ```

@@ -522,7 +522,7 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
-                "    \"json_content\" : {\n" +
+                "    \"object\" : {\n" +
                 "      \"type\" : \"object\"\n"+
                 "    },\n" +
                 "    \"meta\" : {\n" +
