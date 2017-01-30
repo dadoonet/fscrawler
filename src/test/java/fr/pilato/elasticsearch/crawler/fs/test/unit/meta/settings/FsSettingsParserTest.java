@@ -20,8 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator;
-import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
-import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
@@ -36,7 +34,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -122,7 +120,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getFs(), notNullValue());
         assertThat(settings.getFs().getChecksum(), nullValue());
         assertThat(settings.getFs().getIncludes(), nullValue());
-        assertThat(settings.getFs().getExcludes(), nullValue());
+        assertThat(settings.getFs().getExcludes(), contains("~*"));
         assertThat(settings.getFs().getIndexedChars(), nullValue());
         assertThat(settings.getFs().getUpdateRate(), is(TimeValue.timeValueMinutes(15)));
         assertThat(settings.getFs().getUrl(), is("/tmp/es"));

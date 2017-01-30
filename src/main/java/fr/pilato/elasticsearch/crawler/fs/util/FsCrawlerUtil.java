@@ -132,18 +132,6 @@ public class FsCrawlerUtil extends MetaParser {
     public static boolean isIndexable(String filename, List<String> includes, List<String> excludes) {
         logger.debug("filename = [{}], includes = [{}], excludes = [{}]", filename, includes, excludes);
 
-        // Ignore temporary files
-        if (filename.contains("~")) {
-            logger.trace("filename contains ~");
-            return false;
-        }
-
-        // No rules ? Fine, we index everything
-        if ((includes == null || includes.isEmpty()) && (excludes == null || excludes.isEmpty())) {
-            logger.trace("no rules");
-            return true;
-        }
-
         boolean excluded = isExcluded(filename, excludes);
         if (excluded) return false;
 
@@ -158,12 +146,6 @@ public class FsCrawlerUtil extends MetaParser {
      */
     public static boolean isExcluded(String filename, List<String> excludes) {
         logger.debug("filename = [{}], excludes = [{}]", filename, excludes);
-
-        // Ignore temporary files
-        if (filename.contains("~")) {
-            logger.trace("filename contains ~");
-            return true;
-        }
 
         // No rules ? Fine, we index everything
         if (excludes == null || excludes.isEmpty()) {
@@ -193,12 +175,6 @@ public class FsCrawlerUtil extends MetaParser {
      */
     public static boolean isIncluded(String filename, List<String> includes) {
         logger.debug("filename = [{}], includes = [{}]", filename, includes);
-
-        // Ignore temporary files
-        if (filename.contains("~")) {
-            logger.trace("filename contains ~");
-            return false;
-        }
 
         // No rules ? Fine, we index everything
         if (includes == null || includes.isEmpty()) {

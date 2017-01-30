@@ -96,8 +96,9 @@ and CPU at index time. You should remove existing files in `~/.fscrawler/_defaul
 version so default mappings will be updated. If you modified manually mapping files, apply the modification you made
 on sample files.
 
-
-
+* `excludes` is now set by default for new jobs to `["~*"]`. In previous versions, any file or directory containing a
+`~` was excluded. Which means that if in your jobs, you are defining any exclusion rule, you need to add `*~*` if
+you want to get back the exact previous behavior.
 
 
 # User Guide
@@ -428,7 +429,7 @@ Here is a list of Local FS settings (under `fs.` prefix)`:
 | `fs.url`                         | `"/tmp/es"`   | [Root directory](#root-directory)                                                 |
 | `fs.update_rate`                 | `"15m"`       | [Update Rate](#update-rate)                                                       |
 | `fs.includes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
-| `fs.excludes`                    | `null`        | [Includes and Excludes](#includes-and-excludes)                                   |
+| `fs.excludes`                    | `["~*"]`      | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
 | `fs.xml_support`                 | `false`       | [Indexing XML docs](#indexing-xml-docs) (from 2.2)                                |
 | `fs.ignore_folders`              | `false`       | [Ignore folders](#iignore-folders) (from 2.2)                                     |
@@ -513,6 +514,7 @@ Define `fs.includes` and `fs.excludes` properties in your `~/.fscrawler/test/_se
 It also applies to directory names. So if you want to ignore `.ignore` dir, just add `.ignore` as an excluded name.
 Note that `includes` does not apply to directory names but only to filenames.
 
+By default, FS crawler will exclude files starting with `~`.
 
 #### Indexing JSon docs
 

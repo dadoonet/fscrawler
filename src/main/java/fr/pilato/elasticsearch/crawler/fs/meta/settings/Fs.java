@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("SameParameterValue")
@@ -47,7 +48,8 @@ public class Fs {
     }
 
     public static final String DEFAULT_DIR = "/tmp/es";
-    public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).build();
+    public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("~*");
+    public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).setExcludes(DEFAULT_EXCLUDED).build();
 
     public static class Builder {
         private String url;
