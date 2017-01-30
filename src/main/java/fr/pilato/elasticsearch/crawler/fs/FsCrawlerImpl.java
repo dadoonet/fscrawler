@@ -594,7 +594,7 @@ public class FsCrawlerImpl {
                 // We index
                 esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                         fsSettings.getElasticsearch().getType(),
-                        SignTool.sign((new File(dirname, filename)).toString()),
+                        generateIdFromFilename(filename, dirname),
                         doc);
             } finally {
                 // Let's close the stream
@@ -603,17 +603,7 @@ public class FsCrawlerImpl {
         }
 
         private String generateIdFromFilename(String filename, String filepath) throws NoSuchAlgorithmException {
-            String id;
-            if (fsSettings.getFs().isFilenameAsId()) {
-                id = filename;
-                int pos = id.lastIndexOf(".");
-                if (pos > 0) {
-                    id = id.substring(0, pos);
-                }
-            } else {
-                id = SignTool.sign((new File(filepath, filename)).toString());
-            }
-            return id;
+            return fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign((new File(filepath, filename)).toString());
         }
 
         private String read(InputStream input) throws IOException {

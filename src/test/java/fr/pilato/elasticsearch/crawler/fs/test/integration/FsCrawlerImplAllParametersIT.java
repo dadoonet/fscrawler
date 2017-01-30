@@ -507,27 +507,18 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     /**
-     * Test case for issue #7: https://github.com/dadoonet/fscrawler/issues/7 : JSON support: use filename as ID
+     * Test case for issue #7: https://github.com/dadoonet/fscrawler/issues/7 : Use filename as ID
      */
     @Test
     public void test_filename_as_id() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .setJsonSupport(true)
                 .setFilenameAsId(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        assertThat("Document should exists with [tweet1] id...", awaitBusy(() -> {
+        assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.isExistingDocument(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "tweet1");
-            } catch (IOException e) {
-                return false;
-            }
-        }), equalTo(true));
-
-        assertThat("Document should exists with [tweet2] id...", awaitBusy(() -> {
-            try {
-                return elasticsearchClient.isExistingDocument(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "tweet2");
+                return elasticsearchClient.isExistingDocument(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "roottxtfile.txt");
             } catch (IOException e) {
                 return false;
             }

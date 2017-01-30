@@ -100,6 +100,10 @@ on sample files.
 `~` was excluded. Which means that if in your jobs, you are defining any exclusion rule, you need to add `*~*` if
 you want to get back the exact previous behavior.
 
+* If you were indexing `json` or `xml` documents with the `filename_as_id` option set, we were previously removing the
+suffix of the file name, like indexing `1.json` was indexed as `1`. With this new version, we don't remove anymore the
+suffix. So the `_id` for your document will be now `1.json`.
+
 
 # User Guide
 
@@ -671,9 +675,9 @@ You can also index many types from one single dir using two crawlers scanning th
 }
 ```
 
-##### Using filename as elasticsearch `_id`
+#### Using filename as elasticsearch `_id`
 
-Please note that the document `_id` is always generated (hash value) from the JSon filename to avoid issues with
+Please note that the document `_id` is always generated (hash value) from the filename to avoid issues with
 special characters in filename.
 You can force to use the `_id` to be the filename using `filename_as_id` attribute:
 
@@ -681,13 +685,10 @@ You can force to use the `_id` to be the filename using `filename_as_id` attribu
 {
   "name" : "test",
   "fs" : {
-    "json_support" : true,
     "filename_as_id" : true
   }
 }
 ```
-
-This option can also be used with XML files when you set `xml_support` to `true`.
 
 #### Adding file attributes
 
