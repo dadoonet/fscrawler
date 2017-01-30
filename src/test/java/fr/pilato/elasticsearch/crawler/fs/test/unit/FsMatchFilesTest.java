@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs.DEFAULT_EXCLUDED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -64,8 +65,9 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void default_ignored_file() {
-        assertThat(FsCrawlerUtil.isIndexable("~mydoc", new ArrayList<>(), new ArrayList<>()), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("~", new ArrayList<>(), new ArrayList<>()), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("adoc.doc", new ArrayList<>(), new ArrayList<>()), is(true));
+        assertThat(FsCrawlerUtil.isIndexable("~mydoc", new ArrayList<>(), DEFAULT_EXCLUDED), is(false));
+        assertThat(FsCrawlerUtil.isIndexable("~", new ArrayList<>(), DEFAULT_EXCLUDED), is(false));
+        assertThat(FsCrawlerUtil.isIndexable("adoc.doc", new ArrayList<>(), DEFAULT_EXCLUDED), is(true));
+        assertThat(FsCrawlerUtil.isIndexable("mydoc~", new ArrayList<>(), DEFAULT_EXCLUDED), is(true));
     }
 }
