@@ -546,12 +546,6 @@ public class FsCrawlerImpl {
             try {
                 // Create the Doc object
                 Doc doc = new Doc();
-                String docId;
-                if (fsSettings.getFs().isFilenameAsId()) {
-                    docId = generateIdFromFilename(filename, dirname);
-                } else {
-                    docId = SignTool.sign((new File(dirname, filename)).toString());
-                }
                 // File
                 doc.getFile().setFilename(filename);
                 doc.getFile().setLastModified(lastmodified);
@@ -581,34 +575,34 @@ public class FsCrawlerImpl {
                     if (fsSettings.getFs().isJsonSupport() && (fileExtension.equals("json") || fileExtension.equals("js"))) {
                         // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
                         if (fsSettings.getFs().isAddAsInnerObject()) {
+                            // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                            doc.setObject(DocParser.fromJsonToMap(read(inputStream)));
+                        } else {
                             esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                                     fsSettings.getElasticsearch().getType(),
                                     generateIdFromFilename(filename, dirname),
                                     read(inputStream));
                             return;
-                        } else {
-                                // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                                doc.setObject(DocParser.fromJsonToMap(read(inputStream)));
                         }
                     } else if (fsSettings.getFs().isXmlSupport() && fileExtension.equals("xml")) {
                         // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
                         if (fsSettings.getFs().isAddAsInnerObject()) {
+                            doc.setObject(XmlDocParser.generateMap(inputStream));
+                        } else {
                             esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                                     fsSettings.getElasticsearch().getType(),
                                     generateIdFromFilename(filename, dirname),
                                     XmlDocParser.generate(inputStream));
                             return;
-                        } else {
-                                // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                                doc.setObject(XmlDocParser.generateMap(inputStream));
                         }
                     } else {
+                        // Extracting content with Tika
                         generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
                     }
                 }
                 esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                         fsSettings.getElasticsearch().getType(),
-                        docId,
+                        generateIdFromFilename(filename, dirname),
                         doc);
             } finally {
                 // Let's close the stream
@@ -697,7 +691,7 @@ public class FsCrawlerImpl {
          * Add to bulk an IndexRequest
          */
         public void esIndex(BulkProcessor bulkProcessor, String index, String type, String id,
-                             Doc doc) throws Exception {
+                            Doc doc) throws Exception {
             esIndex(bulkProcessor, index, type, id, DocParser.toJson(doc));
         }
 

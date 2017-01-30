@@ -524,7 +524,7 @@ By default, FS crawler will exclude files starting with `~`.
 #### Indexing JSon docs
 
 If you want to index JSon files directly without parsing with Tika, you can set `json_support` to `true`.
-JSon contents will be stored directly under _source. If you need to keep JSon documents synchronized to the index, set option [Add as Inner Object](#add-as-inner-object) which stores additional metadata and the  JSon contents under field `object`.
+JSon contents will be stored directly under _source. If you need to keep JSon documents synchronized to the index, set option [Add as Inner Object](#add-as-inner-object) which stores additional metadata and the JSon contents under field `object`.
 ```json
 {
   "name" : "test",
@@ -553,10 +553,12 @@ The content of XML files will be added directly under _source. If you need to ke
 Of course, if you did not define a mapping before launching the crawler, Elasticsearch will auto guess the mapping.
 
 #### Add as Inner Object
+
 The default settings store the contents of json and xml documents directly onto the _source element of elasticsearch documents. Thereby, there is no metadata about file and path settings, which are necessary to determine if a document is deleted or updated.
 New files will however be added to the index, (determined by the file timestamp).
 
 If you need to keep json or xml documents synchronized to elasticsearch, you should set this option.
+
 ```json
 {
   "name" : "test",

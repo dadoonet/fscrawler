@@ -28,7 +28,6 @@ public class FsSettings {
     private Elasticsearch elasticsearch;
     private Rest rest;
 
-
     public FsSettings() {
 
     }

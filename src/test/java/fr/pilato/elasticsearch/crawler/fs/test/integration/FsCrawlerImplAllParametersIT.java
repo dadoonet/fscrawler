@@ -466,7 +466,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "object.text:tweet");
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "text:tweet");
                 return response.getHits().getTotal() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
@@ -524,16 +524,20 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             }
         }), equalTo(true));
     }
-
+    /**
+     * Test case for issue #237:  https://github.com/dadoonet/fscrawler/issues/237 Delete json documents
+     */
+    @Test
     public void test_add_as_inner_object() throws Exception {
         Fs fs = startCrawlerDefinition()
+                .setJsonSupport(true)
                 .setAddAsInnerObject(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
+        assertThat("We should have 2 doc for tweet in object.text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "text:tweet");
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "object.text:tweet");
                 return response.getHits().getTotal() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
@@ -826,7 +830,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        assertThat("We should have 2 docs only...", awaitBusy(() -> {
+        assertThat("We should have 3 docs only...", awaitBusy(() -> {
             try {
                 SearchResponse response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, (String) null);
                 return response.getHits().getTotal() == 3;
@@ -848,8 +852,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         SearchResponse response = countTestHelper(getCrawlerName(), null, 3);
 
-        countTestHelper(getCrawlerName(), "object.title:maeve", 1);
-        countTestHelper(getCrawlerName(), "object.price:[5 TO 6]", 2);
+        countTestHelper(getCrawlerName(), "title:maeve", 1);
+        countTestHelper(getCrawlerName(), "price:[5 TO 6]", 2);
 
 
         logger.info("XML documents converted to:");

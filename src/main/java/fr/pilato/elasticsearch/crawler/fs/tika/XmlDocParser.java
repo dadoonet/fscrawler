@@ -64,7 +64,6 @@ public class XmlDocParser {
         return json;
     }
 
-
     public static Map generateMap(InputStream inputStream) throws IOException {
         logger.trace("Converting XML document [{}]");
         // Extracting XML content
