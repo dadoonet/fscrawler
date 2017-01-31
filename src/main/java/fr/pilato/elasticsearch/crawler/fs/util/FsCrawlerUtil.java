@@ -285,7 +285,7 @@ public class FsCrawlerUtil extends MetaParser {
         for (String filename : MAPPING_RESOURCES) {
             Path target = targetResourceDir.resolve(filename);
             if (Files.exists(target)) {
-                logger.debug("Mapping [{}] already exsits", filename);
+                logger.debug("Mapping [{}] already exists", filename);
             } else {
                 logger.debug("Copying [{}]...", filename);
                 copyResourceFile(CLASSPATH_RESOURCES_ROOT + filename, target);
