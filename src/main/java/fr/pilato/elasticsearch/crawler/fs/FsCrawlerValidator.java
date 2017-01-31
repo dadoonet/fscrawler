@@ -95,6 +95,12 @@ public class FsCrawlerValidator {
             return true;
         }
 
+        // Checking That we don't try to have xml or json but we don't want to index their content
+        if ((settings.getFs().isJsonSupport() || settings.getFs().isXmlSupport()) && !settings.getFs().isIndexContent()) {
+            logger.error("Json or Xml indexation is activated but you disabled indexing content which does not make sense. Disabling crawler");
+            return true;
+        }
+
         // We just warn the user if he is running on windows but want to get attributes
         if (OsValidator.windows && settings.getFs().isAttributesSupport()) {
             logger.info("attributes_support is set to true but getting group is not available on [{}].", OsValidator.OS);

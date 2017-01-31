@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.doc;
 
+import java.util.Map;
+
 /**
  * Represents a document we indexed
  */
@@ -42,11 +44,20 @@ public class Doc {
     private File file;
     private Path path;
     private Attributes attributes;
+    private Map object;
 
     public Doc() {
         meta = new Meta();
         file = new File();
         path = new Path();
+    }
+
+    public Map getObject() {
+        return object;
+    }
+
+    public void setObject(Map newObject) {
+        this.object = newObject;
     }
 
     public String getContent() {

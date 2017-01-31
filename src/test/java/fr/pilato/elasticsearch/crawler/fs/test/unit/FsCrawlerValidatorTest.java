@@ -72,6 +72,14 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         settings = buildSettings(Fs.builder().setJsonSupport(true).setXmlSupport(true).build(), null, null, null);
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
 
+        // Checking That we don't try to do index xml with not indexing the content
+        settings = buildSettings(Fs.builder().setIndexContent(false).setXmlSupport(true).build(), null, null, null);
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
+
+        // Checking That we don't try to do index json with not indexing the content
+        settings = buildSettings(Fs.builder().setIndexContent(false).setJsonSupport(true).build(), null, null, null);
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
+
         // Checking with Rest but no Rest settings
         settings = buildSettings(null, null, null, null);
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, true), is(false));

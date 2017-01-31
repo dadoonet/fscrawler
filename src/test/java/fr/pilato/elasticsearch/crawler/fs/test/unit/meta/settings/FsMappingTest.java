@@ -522,6 +522,9 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "        }\n" +
                 "      }\n" +
                 "    },\n" +
+                "    \"object\" : {\n" +
+                "      \"type\" : \"object\"\n"+
+                "    },\n" +
                 "    \"meta\" : {\n" +
                 "      \"properties\" : {\n" +
                 "        \"author\" : {\n" +

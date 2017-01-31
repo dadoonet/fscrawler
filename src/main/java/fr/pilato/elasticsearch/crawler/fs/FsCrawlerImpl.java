@@ -542,60 +542,69 @@ public class FsCrawlerImpl {
             logger.debug("fetching content from [{}],[{}]", dirname, filename);
 
             try {
-                // Create the Doc object
-                Doc doc = new Doc();
+                // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't index json or xml)
+                if (fsSettings.getFs().isAddAsInnerObject() || (!fsSettings.getFs().isJsonSupport() && !fsSettings.getFs().isXmlSupport())) {
+                    Doc doc = new Doc();
 
-                // File
-                doc.getFile().setFilename(filename);
-                doc.getFile().setLastModified(lastmodified);
-                doc.getFile().setIndexingDate(LocalDateTime.now());
-                doc.getFile().setUrl("file://" + (new File(dirname, filename)).toString());
-                if (fsSettings.getFs().isAddFilesize()) {
-                    doc.getFile().setFilesize(size);
-                }
-                // File
+                    // File
+                    doc.getFile().setFilename(filename);
+                    doc.getFile().setLastModified(lastmodified);
+                    doc.getFile().setIndexingDate(LocalDateTime.now());
+                    doc.getFile().setUrl("file://" + (new File(dirname, filename)).toString());
+                    if (fsSettings.getFs().isAddFilesize()) {
+                        doc.getFile().setFilesize(size);
+                    }
+                    // File
 
-                // Path
-                doc.getPath().setEncoded(SignTool.sign(dirname));
-                doc.getPath().setRoot(stats.getRootPathId());
-                doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats, dirname));
-                doc.getPath().setReal((new File(dirname, filename)).toString());
-                // Path
+                    // Path
+                    doc.getPath().setEncoded(SignTool.sign(dirname));
+                    doc.getPath().setRoot(stats.getRootPathId());
+                    doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats, dirname));
+                    doc.getPath().setReal((new File(dirname, filename)).toString());
+                    // Path
 
-                // Attributes
-                if (fsSettings.getFs().isAttributesSupport()) {
-                    doc.setAttributes(new Attributes());
-                    doc.getAttributes().setOwner(fileAbstractModel.owner);
-                    doc.getAttributes().setGroup(fileAbstractModel.group);
-                }
-                // Attributes
+                    // Attributes
+                    if (fsSettings.getFs().isAttributesSupport()) {
+                        doc.setAttributes(new Attributes());
+                        doc.getAttributes().setOwner(fileAbstractModel.owner);
+                        doc.getAttributes().setGroup(fileAbstractModel.group);
+                    }
+                    // Attributes
 
-                if (fsSettings.getFs().isIndexContent()) {
+                    if (fsSettings.getFs().isIndexContent()) {
+                        // If needed, we generate the content in addition to metadata
+                        if (fsSettings.getFs().isJsonSupport()) {
+                            // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                            doc.setObject(DocParser.asMap(read(inputStream)));
+                        } else if (fsSettings.getFs().isXmlSupport()) {
+                            // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
+                            doc.setObject(XmlDocParser.generateMap(inputStream));
+                        } else {
+                            // Extracting content with Tika
+                            generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
+                        }
+                    }
+
+                    // We index the data structure
+                    esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+                            fsSettings.getElasticsearch().getType(),
+                            generateIdFromFilename(filename, dirname),
+                            doc);
+                } else if (fsSettings.getFs().isIndexContent()) {
                     if (fsSettings.getFs().isJsonSupport()) {
-                        // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                        // We index the json content directly
                         esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                                 fsSettings.getElasticsearch().getType(),
                                 generateIdFromFilename(filename, dirname),
                                 read(inputStream));
-                        return;
                     } else if (fsSettings.getFs().isXmlSupport()) {
-                        // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
+                        // We index the xml content directly
                         esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                                 fsSettings.getElasticsearch().getType(),
                                 generateIdFromFilename(filename, dirname),
                                 XmlDocParser.generate(inputStream));
-                        return;
-                    } else {
-                        // Extracting content with Tika
-                        generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
                     }
                 }
-
-                // We index
-                esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
-                        fsSettings.getElasticsearch().getType(),
-                        generateIdFromFilename(filename, dirname),
-                        doc);
             } finally {
                 // Let's close the stream
                 inputStream.close();
