@@ -63,4 +63,15 @@ public class XmlDocParser {
         logger.trace("Generated JSON: {}", json);
         return json;
     }
+
+    public static Map generateMap(InputStream inputStream) throws IOException {
+        logger.trace("Converting XML document [{}]");
+        // Extracting XML content
+        // See #185: https://github.com/dadoonet/fscrawler/issues/185
+
+        Map<String, Object> map = asMap(inputStream);
+
+        logger.trace("Generated JSON: {}", map);
+        return map;
+    }
 }

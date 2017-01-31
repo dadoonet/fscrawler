@@ -39,6 +39,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -190,7 +191,7 @@ public class FsCrawlerImpl {
         logger.debug("Closing FS crawler [{}]", settings.getName());
         closed = true;
 
-        synchronized(semaphore) {
+        synchronized (semaphore) {
             semaphore.notify();
         }
 
@@ -320,7 +321,8 @@ public class FsCrawlerImpl {
 
         /**
          * Update the job metadata
-         * @param jobName job name
+         *
+         * @param jobName  job name
          * @param scanDate last date we scan the dirs
          * @throws Exception In case of error
          */
@@ -494,7 +496,7 @@ public class FsCrawlerImpl {
 
         private String getName(Object nameObject) {
             if (nameObject instanceof List) {
-                return String.valueOf (((List) nameObject).get(0));
+                return String.valueOf(((List) nameObject).get(0));
             }
 
             throw new RuntimeException("search result, " + nameObject +
@@ -544,7 +546,6 @@ public class FsCrawlerImpl {
             try {
                 // Create the Doc object
                 Doc doc = new Doc();
-
                 // File
                 doc.getFile().setFilename(filename);
                 doc.getFile().setLastModified(lastmodified);
@@ -568,30 +569,37 @@ public class FsCrawlerImpl {
                     doc.getAttributes().setOwner(fileAbstractModel.owner);
                     doc.getAttributes().setGroup(fileAbstractModel.group);
                 }
-                // Attributes
-
+                // We index
                 if (fsSettings.getFs().isIndexContent()) {
+                    String fileExtension = FilenameUtils.getExtension(filename);
                     if (fsSettings.getFs().isJsonSupport()) {
                         // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                        esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
-                                fsSettings.getElasticsearch().getType(),
-                                generateIdFromFilename(filename, dirname),
-                                read(inputStream));
-                        return;
+                        if (fsSettings.getFs().isAddAsInnerObject()) {
+                            // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                            doc.setObject(DocParser.fromJsonToMap(read(inputStream)));
+                        } else {
+                            esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+                                    fsSettings.getElasticsearch().getType(),
+                                    generateIdFromFilename(filename, dirname),
+                                    read(inputStream));
+                            return;
+                        }
                     } else if (fsSettings.getFs().isXmlSupport()) {
                         // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                        esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
-                                fsSettings.getElasticsearch().getType(),
-                                generateIdFromFilename(filename, dirname),
-                                XmlDocParser.generate(inputStream));
-                        return;
+                        if (fsSettings.getFs().isAddAsInnerObject()) {
+                            doc.setObject(XmlDocParser.generateMap(inputStream));
+                        } else {
+                            esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+                                    fsSettings.getElasticsearch().getType(),
+                                    generateIdFromFilename(filename, dirname),
+                                    XmlDocParser.generate(inputStream));
+                            return;
+                        }
                     } else {
                         // Extracting content with Tika
                         generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
                     }
                 }
-
-                // We index
                 esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                         fsSettings.getElasticsearch().getType(),
                         generateIdFromFilename(filename, dirname),
@@ -683,7 +691,7 @@ public class FsCrawlerImpl {
          * Add to bulk an IndexRequest
          */
         public void esIndex(BulkProcessor bulkProcessor, String index, String type, String id,
-                             Doc doc) throws Exception {
+                            Doc doc) throws Exception {
             esIndex(bulkProcessor, index, type, id, DocParser.toJson(doc));
         }
 
@@ -733,7 +741,7 @@ public class FsCrawlerImpl {
      *
      * @param str the CharSequence to check (may be <code>null</code>)
      * @return <code>true</code> if the CharSequence is not <code>null</code>,
-     *         its length is greater than 0, and it does not contain whitespace only
+     * its length is greater than 0, and it does not contain whitespace only
      * @see java.lang.Character#isWhitespace
      */
     public static boolean hasText(CharSequence str) {

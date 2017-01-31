@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.File;
@@ -110,6 +111,11 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     @Test
     public void testXmlIssue163() throws IOException {
         runSearch("issue-163.xml");
+    }
+
+    @Test
+    public void testJson() throws IOException {
+        runSearch("test.json", "json");
     }
 
     @Test
@@ -212,7 +218,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         if (content != null) {
             fullQuery += " +content:" + content;
         }
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, fullQuery, null, (String[]) null);
+        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, fullQuery, 10, null);
         assertThat(response.getHits().getTotal(), is(1L));
         return response;
     }

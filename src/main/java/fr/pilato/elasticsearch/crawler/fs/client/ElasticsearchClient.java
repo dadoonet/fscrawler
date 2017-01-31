@@ -107,7 +107,7 @@ public class ElasticsearchClient {
             logger.trace("create index response: {}", JsonUtil.asMap(response));
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 400 &&
-                    (e.getMessage().contains("index_already_exists_exception") || e.getMessage().contains("IndexAlreadyExistsException") )) {
+                    (e.getMessage().contains("index_already_exists_exception") || e.getMessage().contains("IndexAlreadyExistsException"))) {
                 if (!ignoreErrors) {
                     throw new RuntimeException("index already exists");
                 }
@@ -199,7 +199,7 @@ public class ElasticsearchClient {
         logger.debug("put document [{}/{}/{}]", index, type, id);
 
         StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
-        Response restResponse = client.performRequest("PUT", "/" + index + "/" + type+ "/" + id, Collections.emptyMap(), entity);
+        Response restResponse = client.performRequest("PUT", "/" + index + "/" + type + "/" + id, Collections.emptyMap(), entity);
         logger.trace("put document response: {}", JsonUtil.asMap(restResponse));
     }
 
@@ -207,7 +207,7 @@ public class ElasticsearchClient {
         logger.debug("is existing doc [{}]/[{}]/[{}]", index, type, id);
 
         try {
-            Response restResponse = client.performRequest("GET", "/" + index + "/" + type+ "/" + id);
+            Response restResponse = client.performRequest("GET", "/" + index + "/" + type + "/" + id);
             logger.trace("get document response: {}", JsonUtil.asMap(restResponse));
             return true;
         } catch (ResponseException e) {
@@ -266,10 +266,10 @@ public class ElasticsearchClient {
         path += "_search";
 
         Map<String, String> params = new HashMap<>();
-        if (searchRequest.getQuery() !=  null) {
+        if (searchRequest.getQuery() != null) {
             params.put("q", searchRequest.getQuery());
         }
-        if (searchRequest.getFields() !=  null) {
+        if (searchRequest.getFields() != null) {
             params.put(FIELDS, String.join(",", (CharSequence[]) searchRequest.getFields()));
         }
         if (searchRequest.getSize() != null) {
@@ -284,6 +284,7 @@ public class ElasticsearchClient {
 
     /**
      * Search with a JSON Body
+     *
      * @param index Index. Might be null.
      * @param type  Type. Might be null.
      * @param json  Json Source
@@ -384,10 +385,11 @@ public class ElasticsearchClient {
 
     /**
      * Create a mapping if it does not exist already
-     * @param client elasticsearch client
-     * @param index index name
-     * @param type type name
-     * @param mapping Elasticsearch mapping
+     *
+     * @param client      elasticsearch client
+     * @param index       index name
+     * @param type        type name
+     * @param mapping     Elasticsearch mapping
      * @param forceUpdate If true, it will try to update the mapping
      * @throws Exception in case of error
      */

@@ -33,6 +33,7 @@ public class Fs {
     private boolean filenameAsId;
     private boolean addFilesize = true;
     private boolean removeDeleted = true;
+    private boolean addAsInnerObject = false;
     private boolean storeSource;
     private boolean indexContent = true;
     private Percentage indexedChars;
@@ -51,6 +52,7 @@ public class Fs {
     public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("~*");
     public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).setExcludes(DEFAULT_EXCLUDED).build();
 
+
     public static class Builder {
         private String url;
         private TimeValue updateRate = TimeValue.timeValueMinutes(15);
@@ -60,6 +62,7 @@ public class Fs {
         private boolean filenameAsId = false;
         private boolean addFilesize = true;
         private boolean removeDeleted = true;
+        private boolean addAsInnerObject = false;
         private boolean storeSource = false;
         private boolean indexContent = true;
         private Percentage indexedChars = null;
@@ -136,6 +139,11 @@ public class Fs {
             return this;
         }
 
+        public Builder setAddAsInnerObject(boolean addAsInnerObject) {
+            this.addAsInnerObject = addAsInnerObject;
+            return this;
+        }
+
         public Builder setStoreSource(boolean storeSource) {
             this.storeSource = storeSource;
             return this;
@@ -183,18 +191,18 @@ public class Fs {
 
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
-                    removeDeleted, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
+                    removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
                     checksum, xmlSupport, indexFolders, langDetect);
         }
     }
 
-    public Fs() {
+    public Fs( ) {
 
     }
 
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
-               boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean storeSource, Percentage indexedChars,
-               boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
+               boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
+               Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
                boolean indexFolders, boolean langDetect) {
         this.url = url;
         this.updateRate = updateRate;
@@ -204,6 +212,7 @@ public class Fs {
         this.filenameAsId = filenameAsId;
         this.addFilesize = addFilesize;
         this.removeDeleted = removeDeleted;
+        this.addAsInnerObject = addAsInnerObject;
         this.storeSource = storeSource;
         this.indexedChars = indexedChars;
         this.indexContent = indexContent;
@@ -277,6 +286,14 @@ public class Fs {
 
     public void setRemoveDeleted(boolean removeDeleted) {
         this.removeDeleted = removeDeleted;
+    }
+
+    public boolean isAddAsInnerObject() {
+        return addAsInnerObject;
+    }
+
+    public void setAddAsInnerObject(boolean addAsInnerObject) {
+        this.addAsInnerObject = addAsInnerObject;
     }
 
     public boolean isStoreSource() {
@@ -364,6 +381,7 @@ public class Fs {
         if (filenameAsId != fs.filenameAsId) return false;
         if (addFilesize != fs.addFilesize) return false;
         if (removeDeleted != fs.removeDeleted) return false;
+        if (addAsInnerObject != fs.addAsInnerObject) return false;
         if (storeSource != fs.storeSource) return false;
         if (indexContent != fs.indexContent) return false;
         if (attributesSupport != fs.attributesSupport) return false;
@@ -390,6 +408,7 @@ public class Fs {
         result = 31 * result + (filenameAsId ? 1 : 0);
         result = 31 * result + (addFilesize ? 1 : 0);
         result = 31 * result + (removeDeleted ? 1 : 0);
+        result = 31 * result + (addAsInnerObject ? 1 : 0);
         result = 31 * result + (storeSource ? 1 : 0);
         result = 31 * result + (indexContent ? 1 : 0);
         result = 31 * result + (indexedChars != null ? indexedChars.hashCode() : 0);
