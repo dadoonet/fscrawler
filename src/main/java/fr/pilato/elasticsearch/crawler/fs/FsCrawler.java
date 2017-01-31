@@ -39,6 +39,7 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -202,7 +203,7 @@ public class FsCrawler {
                 fsSettings.getElasticsearch().setPassword(password);
             }
 
-        } catch (IOException e) {
+        } catch (NoSuchFileException e) {
             logger.warn("job [{}] does not exist", jobName);
 
             String yesno = null;
