@@ -572,7 +572,7 @@ public class FsCrawlerImpl {
                 // We index
                 if (fsSettings.getFs().isIndexContent()) {
                     String fileExtension = FilenameUtils.getExtension(filename);
-                    if (fsSettings.getFs().isJsonSupport() && (fileExtension.equals("json") || fileExtension.equals("js"))) {
+                    if (fsSettings.getFs().isJsonSupport()) {
                         // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
                         if (fsSettings.getFs().isAddAsInnerObject()) {
                             // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
@@ -584,7 +584,7 @@ public class FsCrawlerImpl {
                                     read(inputStream));
                             return;
                         }
-                    } else if (fsSettings.getFs().isXmlSupport() && fileExtension.equals("xml")) {
+                    } else if (fsSettings.getFs().isXmlSupport()) {
                         // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
                         if (fsSettings.getFs().isAddAsInnerObject()) {
                             doc.setObject(XmlDocParser.generateMap(inputStream));

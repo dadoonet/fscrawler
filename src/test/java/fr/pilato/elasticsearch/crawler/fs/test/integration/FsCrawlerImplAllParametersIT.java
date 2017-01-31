@@ -855,7 +855,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         countTestHelper(getCrawlerName(), "title:maeve", 1);
         countTestHelper(getCrawlerName(), "price:[5 TO 6]", 2);
 
-
         logger.info("XML documents converted to:");
         for (SearchResponse.Hit hit : response.getHits().getHits()) {
             logger.info("{}", hit.toString());

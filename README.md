@@ -436,7 +436,7 @@ Here is a list of Local FS settings (under `fs.` prefix)`:
 | `fs.excludes`                    | `["~*"]`      | [Includes and Excludes](#includes-and-excludes)                                   |
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
 | `fs.xml_support`                 | `false`       | [Indexing XML docs](#indexing-xml-docs) (from 2.2)                                |
-| `fs.add_as_inner_object`         | `false`       | [Add as Inner Object](#add-as-inner-object)                                 |
+| `fs.add_as_inner_object`         | `false`       | [Add as Inner Object](#add-as-inner-object)                                       |
 | `fs.ignore_folders`              | `false`       | [Ignore folders](#iignore-folders) (from 2.2)                                     |
 | `fs.attributes_support`          | `false`       | [Adding file attributes](#adding-file-attributes)                                 |
 | `fs.raw_metadata`                | `true`        | [Disabling raw metadata](#disabling-raw-metadata)                                 |
