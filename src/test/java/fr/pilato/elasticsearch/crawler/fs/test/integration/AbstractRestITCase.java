@@ -44,7 +44,7 @@ public class AbstractRestITCase extends AbstractITCase {
 
     private static ElasticsearchClientManager esClientManager;
 
-    static final String REST_INDEX = "fscrawler-rest-tests";
+    static final String REST_INDEX = "fscrawler_rest_tests";
 
     @BeforeClass
     public static void startRestServer() throws Exception {
