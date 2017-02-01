@@ -22,7 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test;
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.annotations.Listeners;
 import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
-import com.carrotsearch.randomizedtesting.generators.RandomInts;
+import com.carrotsearch.randomizedtesting.generators.RandomNumbers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.TimeUnits;
@@ -121,7 +121,7 @@ public abstract class AbstractFSCrawlerTestCase {
     }
 
     public static int between(int min, int max) {
-        return RandomInts.randomIntBetween(random(), min, max);
+        return RandomNumbers.randomIntBetween(random(), min, max);
     }
 
     public static boolean awaitBusy(BooleanSupplier breakSupplier) throws InterruptedException {
