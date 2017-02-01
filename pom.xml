@@ -21,9 +21,9 @@
     <!--suppress CheckTagEmptyBody -->
     <properties>
         <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-        <elasticsearch.version>5.1.2</elasticsearch.version>
+        <elasticsearch.version>5.2.0</elasticsearch.version>
         <!-- Don't depend on elasticsearch.version here as it will fail with 1.x and 2.x series -->
-        <elasticsearch.client.version>5.1.2</elasticsearch.client.version>
+        <elasticsearch.client.version>5.2.0</elasticsearch.client.version>
 
         <tika.version>1.14</tika.version>
         <jackson.version>2.8.1</jackson.version>
