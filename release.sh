@@ -63,7 +63,7 @@ test_against_version () {
         mvn clean install -Prelease >> /tmp/fscrawler-${RELEASE_VERSION}.log
     else
         echo "Building and testing against elasticsearch $1.x..."
-        mvn clean verify -Pes-$1.x >> /tmp/fscrawler-${RELEASE_VERSION}.log
+        mvn clean verify -Pes-$1x >> /tmp/fscrawler-${RELEASE_VERSION}.log
     fi
 
     if [ $? -ne 0 ]
