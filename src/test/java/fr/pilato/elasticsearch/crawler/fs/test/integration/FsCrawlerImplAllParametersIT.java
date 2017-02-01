@@ -1027,7 +1027,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
     /**
      * Test case for #95: https://github.com/dadoonet/fscrawler/issues/95 : Folder index is not getting delete on delete of folder
-     * This test is marked as Ignored because it fails. Which proves that the issue reported is real!
      */
     @Test
     public void test_remove_folder_deleted_enabled() throws Exception {
