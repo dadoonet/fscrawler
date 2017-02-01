@@ -1216,13 +1216,13 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         // We should have 1 doc first
         countTestHelper(getCrawlerName(), null, 1);
 
-        logContentOfDir(currentTestResourceDir, Level.ERROR);
+        logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
         // We remove a directory
         logger.info("  ---> Moving file [{}] to [{}]", file, currentTestResourceDir);
         Files.move(file, currentTestResourceDir.resolve(filename));
 
-        logContentOfDir(currentTestResourceDir, Level.ERROR);
+        logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
         // We expect to have 4 docs now
         countTestHelper(getCrawlerName(), null, 2);
