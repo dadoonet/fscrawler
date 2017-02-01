@@ -514,15 +514,14 @@ public class FsCrawlerImpl {
             SearchResponse response = esClientManager.client().search(
                     fsSettings.getElasticsearch().getIndex(),
                     FsCrawlerUtil.INDEX_TYPE_FOLDER,
-                    PATH_ENCODED + ":" + SignTool.sign(path),
+                    fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ENCODED + ":" + SignTool.sign(path),
                     REQUEST_SIZE // TODO: WHAT? DID I REALLY WROTE THAT? :p
             );
 
             if (response.getHits() != null
                     && response.getHits().getHits() != null) {
                 for (SearchResponse.Hit hit : response.getHits().getHits()) {
-                    String name = hit.getSource()
-                            .get(FILE_FILENAME).toString();
+                    String name = hit.getSource().get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.REAL).toString();
                     files.add(name);
                 }
             }

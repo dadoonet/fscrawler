@@ -269,7 +269,7 @@ public class ElasticsearchClient {
         if (searchRequest.getQuery() !=  null) {
             params.put("q", searchRequest.getQuery());
         }
-        if (searchRequest.getFields() !=  null) {
+        if (searchRequest.getFields() !=  null && searchRequest.getFields().length > 0) {
             params.put(FIELDS, String.join(",", (CharSequence[]) searchRequest.getFields()));
         }
         if (searchRequest.getSize() != null) {

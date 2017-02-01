@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import org.apache.logging.log4j.Level;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
 import org.junit.AfterClass;
@@ -41,6 +42,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -230,7 +232,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         // We wait before considering a failing test
         staticLogger.info("  ---> Waiting up to {} seconds for {} documents in index {}", timeout.toString(),
                 expected == null ? "some" : expected, indexName);
-        assertThat("We waited for " + timeout.toString() + " but no document has been added", awaitBusy(() -> {
+        assertThat("We waited for " + timeout.toString() + " but no document has been added/removed", awaitBusy(() -> {
             long totalHits;
 
             // Let's search for entries
@@ -261,24 +263,36 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     return true;
                 } else {
                     staticLogger.debug("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
-                    if (path != null) {
-                        staticLogger.debug("     ---> content of [{}]:", path);
-                        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path)) {
-                            for (Path file : directoryStream) {
-                                staticLogger.debug("         - {} {}",
-                                        file.getFileName().toString(),
-                                        Files.getLastModifiedTime(file));
-                            }
-                        } catch (IOException ex) {
-                            staticLogger.error("can not read content of [{}]:", path);
-                        }
-                    }
+                    logContentOfDir(path, Level.DEBUG);
                     return false;
                 }
             }
         }, timeout.millis(), TimeUnit.MILLISECONDS), equalTo(true));
 
         return response[0];
+    }
+
+    protected static void logContentOfDir(Path path, Level level) {
+        if (path != null) {
+            try (Stream<Path> stream = Files.walk(path)) {
+                stream.forEach(file -> {
+                    try {
+                        if (Files.isDirectory(file)) {
+                            staticLogger.log(level, " * in dir [{}] [{}]",
+                                    path.relativize(file).toString(),
+                                    Files.getLastModifiedTime(file));
+                        } else {
+                            staticLogger.log(level, "   - [{}] [{}]",
+                                    file.getFileName().toString(),
+                                    Files.getLastModifiedTime(file));
+                        }
+                    } catch (IOException ignored) {
+                    }
+                });
+            } catch (IOException ex) {
+                staticLogger.error("can not read content of [{}]:", path);
+            }
+        }
     }
 
     protected String getCrawlerName() {

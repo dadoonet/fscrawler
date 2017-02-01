@@ -36,6 +36,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.http.entity.StringEntity;
+import org.apache.logging.log4j.Level;
 import org.elasticsearch.client.ResponseException;
 import org.junit.After;
 import org.junit.Before;
@@ -1028,7 +1029,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      * Test case for #95: https://github.com/dadoonet/fscrawler/issues/95 : Folder index is not getting delete on delete of folder
      * This test is marked as Ignored because it fails. Which proves that the issue reported is real!
      */
-    @Test @Ignore
+    @Test
     public void test_remove_folder_deleted_enabled() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setRemoveDeleted(true)
@@ -1037,6 +1038,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // We should have 7 docs first
         countTestHelper(getCrawlerName(), null, 7, currentTestResourceDir);
+
+        logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
         // We remove a directory
         logger.info("  ---> Removing dir subdir1");
@@ -1053,6 +1056,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 return FileVisitResult.CONTINUE;
             }
         });
+
+        logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
         // We expect to have 4 docs now
         countTestHelper(getCrawlerName(), null, 4, currentTestResourceDir);
