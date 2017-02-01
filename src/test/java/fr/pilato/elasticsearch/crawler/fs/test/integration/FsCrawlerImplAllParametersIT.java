@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import com.google.common.base.Charsets;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
@@ -1190,5 +1191,40 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // We expect to have one file
 //        countTestHelper(getCrawlerName(), null, 1);
+    }
+
+    /**
+     * Test case for #136: https://github.com/dadoonet/fscrawler/issues/136 : Moving existing files does not index new files
+     */
+    @Test
+    public void test_moving_files() throws Exception {
+        String filename = "oldfile.txt";
+
+        startCrawler();
+
+        // Let's first create some files
+        logger.info(" ---> Creating a file [{}]", filename);
+
+        Path tmpDir = rootTmpDir.resolve("resources").resolve(getCurrentTestName() + "-tmp");
+        if (Files.notExists(tmpDir)) {
+            Files.createDirectory(tmpDir);
+        }
+
+        Path file = Files.createFile(tmpDir.resolve(filename));
+        Files.write(file, "Hello world".getBytes(Charsets.UTF_8));
+
+        // We should have 1 doc first
+        countTestHelper(getCrawlerName(), null, 1);
+
+        logContentOfDir(currentTestResourceDir, Level.ERROR);
+
+        // We remove a directory
+        logger.info("  ---> Moving file [{}] to [{}]", file, currentTestResourceDir);
+        Files.move(file, currentTestResourceDir.resolve(filename));
+
+        logContentOfDir(currentTestResourceDir, Level.ERROR);
+
+        // We expect to have 4 docs now
+        countTestHelper(getCrawlerName(), null, 2);
     }
 }
