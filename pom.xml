@@ -139,7 +139,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.10</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>integ-setup-dependencies</id>
@@ -646,7 +646,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-dependency-plugin</artifactId>
-                        <version>2.10</version>
+                        <version>3.0.0</version>
                         <executions>
                             <execution>
                                 <id>integ-setup-dependencies-plugins-license</id>
