@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 
 import java.util.ArrayList;
@@ -186,7 +185,6 @@ public class Elasticsearch {
     private int bulkSize = 100;
     private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
     private String username;
-    @JsonIgnore
     private String password;
     private String pipeline;
 
