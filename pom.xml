@@ -5,7 +5,7 @@
     <groupId>fr.pilato.elasticsearch.crawler</groupId>
     <artifactId>fscrawler</artifactId>
     <packaging>jar</packaging>
-    <version>2.2-SNAPSHOT</version>
+    <version>2.2</version>
     <name>Elasticsearch File System Crawler</name>
     <url>https://github.com/dadoonet/fscrawler/</url>
     <description>FS Crawler offers a simple way to index local files into elasticsearch.</description>
