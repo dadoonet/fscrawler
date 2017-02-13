@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -220,6 +221,17 @@ public class FsCrawlerUtil extends MetaParser {
         }
         return time;
     }
+
+    public static String getFileExtension(File file) {
+	String extension;
+        try  {
+ 	    extension = FilenameUtils.getExtension(file.getAbsolutePath());
+        } catch (Exception e) {
+            extension = null;
+        }
+        return extension.toLowerCase();
+    }
+
 
     /**
      * Determines the 'owner' of the file.

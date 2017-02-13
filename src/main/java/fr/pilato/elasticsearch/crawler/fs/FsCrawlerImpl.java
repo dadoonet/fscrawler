@@ -536,6 +536,7 @@ public class FsCrawlerImpl {
                                long filesize) throws Exception {
             final String filename = fileAbstractModel.name;
             final LocalDateTime lastmodified = fileAbstractModel.lastModifiedDate;
+	    final String extension = fileAbstractModel.extension;
             final long size = fileAbstractModel.size;
 
             logger.debug("fetching content from [{}],[{}]", dirname, filename);
@@ -550,6 +551,7 @@ public class FsCrawlerImpl {
                     doc.getFile().setLastModified(lastmodified);
                     doc.getFile().setIndexingDate(LocalDateTime.now());
                     doc.getFile().setUrl("file://" + (new File(dirname, filename)).toString());
+                    doc.getFile().setExtension(extension);
                     if (fsSettings.getFs().isAddFilesize()) {
                         doc.getFile().setFilesize(size);
                     }
