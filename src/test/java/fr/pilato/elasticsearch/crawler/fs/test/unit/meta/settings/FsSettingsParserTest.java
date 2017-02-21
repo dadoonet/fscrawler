@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
@@ -35,8 +36,10 @@ import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -62,8 +65,8 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
                     .setHost("127.0.0.1")
                     .setPort(9200)
                     .build())
-            .setUsername("username")
-            .setPassword("password")
+            .setUsername("elastic")
+            .setPassword("changeme")
             .setBulkSize(1000)
             .setFlushInterval(TimeValue.timeValueSeconds(5))
             .setIndex("docs")
@@ -78,7 +81,12 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setProtocol("SSH")
             .setPemPath("/path/to/pemfile")
             .build();
-
+    private static final Rest REST_FULL = Rest.builder()
+            .setHost("localhost")
+            .setPort(8080)
+            .setScheme(Rest.Scheme.HTTP)
+            .setEndpoint("fscrawler")
+            .build();
 
     private void settingsTester(FsSettings source) throws IOException {
         String json = FsSettingsParser.toJson(source);
@@ -260,5 +268,33 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
                         .setFs(FS_FULL)
                         .build()
         );
+    }
+
+    @Test
+    public void testPasswordIsReadableFromSettings() throws IOException {
+        String json = "{\n" +
+                "  \"name\" : \"test_password_is_readable\",\n" +
+                "  \"fs\" : {\n" +
+                "    \"url\" : \"/path/to/docs\"\n" +
+                "  },\n" +
+                "  \"server\" : {\n" +
+                "    \"username\" : \"dadoonet\",\n" +
+                "    \"password\" : \"" + SERVER_FULL.getPassword() + "\"\n" +
+                "  },\n" +
+                "  \"elasticsearch\" : {\n" +
+                "    \"username\" : \"username\",\n" +
+                "    \"password\" : \"" + ELASTICSEARCH_FULL.getPassword() + "\"\n" +
+                "  }\n" +
+                "}";
+
+        logger.info("-> testing settings: [{}]", json);
+        FsSettings generated = FsSettingsParser.fromJson(json);
+        assertThat(generated.getElasticsearch().getPassword(), is(ELASTICSEARCH_FULL.getPassword()));
+        assertThat(generated.getServer().getPassword(), is(SERVER_FULL.getPassword()));
+
+        // Generate the JSON and check that we don't render the passwords
+        String filteredJson = FsSettingsParser.toJson(generated);
+        assertThat(filteredJson, not(containsString(ELASTICSEARCH_FULL.getPassword())));
+        assertThat(filteredJson, not(containsString(SERVER_FULL.getPassword())));
     }
 }

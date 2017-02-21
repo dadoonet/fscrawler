@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.PROTOCOL;
 
 public class Server {
@@ -69,10 +70,12 @@ public class Server {
         this.username = username;
     }
 
+    @JsonIgnore
     public String getPassword() {
         return password;
     }
 
+    @JsonProperty
     public void setPassword(String password) {
         this.password = password;
     }
