@@ -55,6 +55,12 @@ public class FsCrawler {
 
     private static final long CLOSE_POLLING_WAIT_MS = 100;
 
+    static {
+        // TODO Workaround before LOG4J 2.8.1 is released. See https://issues.apache.org/jira/browse/LOG4J2-1799
+        System.getProperties().remove("sun.stdout.encoding");
+        System.getProperties().remove("sun.stderr.encoding");
+    }
+
     private static final Logger logger = LogManager.getLogger(FsCrawler.class);
 
     private static FsCrawlerImpl fsCrawler = null;
