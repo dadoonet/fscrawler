@@ -536,7 +536,7 @@ public class FsCrawlerImpl {
                                long filesize) throws Exception {
             final String filename = fileAbstractModel.name;
             final LocalDateTime lastmodified = fileAbstractModel.lastModifiedDate;
-	    final String extension = fileAbstractModel.extension;
+            final String extension = fileAbstractModel.extension;
             final long size = fileAbstractModel.size;
 
             logger.debug("fetching content from [{}],[{}]", dirname, filename);

@@ -222,16 +222,9 @@ public class FsCrawlerUtil extends MetaParser {
         return time;
     }
 
-    public static String getFileExtension(File file) {
-	String extension;
-        try  {
- 	    extension = FilenameUtils.getExtension(file.getAbsolutePath());
-        } catch (Exception e) {
-            extension = null;
-        }
-        return extension.toLowerCase();
+    public static String getFileExtension(File file) throws Exception {
+ 	return FilenameUtils.getExtension(file.getAbsolutePath()).toLowerCase();
     }
-
 
     /**
      * Determines the 'owner' of the file.
