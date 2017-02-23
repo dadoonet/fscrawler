@@ -223,7 +223,7 @@ public class FsCrawlerUtil extends MetaParser {
     }
 
     public static String getFileExtension(File file) {
- 	return FilenameUtils.getExtension(file.getAbsolutePath()).toLowerCase();
+        return FilenameUtils.getExtension(file.getAbsolutePath()).toLowerCase();
     }
 
     /**
