@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -86,5 +87,12 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         // We test that we can actually see the jobs
         List<String> jobs = FsCrawlerUtil.listExistingJobs(metadataDir);
         assertThat(jobs, hasSize(numJobs));
+    }
+
+    @Test
+    public void testGetFileExtension() {
+        assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar")), is("bar"));
+        assertThat(FsCrawlerUtil.getFileExtension(new File("foo")), is(""));
+        assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar.baz")), is("baz"));
     }
 }
