@@ -222,7 +222,7 @@ public class FsCrawlerUtil extends MetaParser {
         return time;
     }
 
-    public static String getFileExtension(File file) throws Exception {
+    public static String getFileExtension(File file) {
  	return FilenameUtils.getExtension(file.getAbsolutePath()).toLowerCase();
     }
 
