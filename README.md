@@ -110,7 +110,14 @@ suffix. So the `_id` for your document will be now `1.json`.
 
 ## Getting Started
 
-**You need to have at least Java 1.8.**
+You need to have at least **Java 1.8.** and have properly configured `JAVA_HOME` to point to your Java installation
+directory. For example on MacOS you can define in your `~/.bash_profile` file:
+
+```sh
+export JAVA_HOME=`/usr/libexec/java_home -v 1.8`
+```
+
+Start FS crawler with:
 
 ```sh
 bin/fscrawler job_name
