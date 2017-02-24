@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,7 +96,6 @@ public class TikaDocParser {
 
         // File
         doc.getFile().setContentType(metadata.get(Metadata.CONTENT_TYPE));
-        doc.getFile().setExtension(FilenameUtils.getExtension(filename));
 
         // We only add `indexed_chars` if we have other value than default or -1
         if (fsSettings.getFs().getIndexedChars() != null && fsSettings.getFs().getIndexedChars().value() != -1) {

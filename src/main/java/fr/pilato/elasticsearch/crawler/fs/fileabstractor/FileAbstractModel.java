@@ -52,6 +52,7 @@ public class FileAbstractModel {
     public long size;
     public String owner;
     public String group;
+    public String extension;
 
     @Override
     public String toString() {
@@ -63,6 +64,7 @@ public class FileAbstractModel {
                 ", path='" + path + '\'' +
                 ", owner='" + owner + '\'' +
                 ", group='" + group + '\'' +
+                ", extension='" + extension + '\'' +
                 ", fullpath='" + fullpath + '\'' +
                 ", size=" + size +
                 '}';

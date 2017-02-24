@@ -762,6 +762,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         countTestHelper(getCrawlerName(), "content:file*", 0, null);
         countTestHelper(getCrawlerName(), "file.content_type:text*", 0, null);
+        countTestHelper(getCrawlerName(), "file.extension:txt", 1, null);
     }
 
     @Test

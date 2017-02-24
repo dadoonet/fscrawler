@@ -603,9 +603,7 @@ public class TikaDocParserTest extends DocParserTestCase {
 
     private Doc extractFromFileExtension(String extension) throws IOException {
         logger.info("Test extraction of [{}] file", extension);
-        Doc doc = extractFromFile("test." + extension);
-        assertThat(doc.getFile().getExtension(), is(extension));
-        return doc;
+        return extractFromFile("test." + extension);
     }
 
     private Doc extractFromFile(String filename) throws IOException {

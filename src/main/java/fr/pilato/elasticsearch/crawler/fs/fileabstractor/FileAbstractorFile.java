@@ -45,6 +45,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         model.directory = !model.file;
         model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault());
         model.creationDate = FsCrawlerUtil.getCreationTime(file);
+        model.extension = FsCrawlerUtil.getFileExtension(file);
         model.path = path;
         model.fullpath = file.getAbsolutePath();
         model.size = file.length();
