@@ -366,6 +366,7 @@ The job file must comply to the following `json` specifications:
     "remove_deleted" : true,
     "store_source" : false,
     "lang_detect" : false,
+    "continue_on_error" : false,
     "indexed_chars" : "10000"
   },
   "server" : {
@@ -447,6 +448,7 @@ Here is a list of Local FS settings (under `fs.` prefix)`:
 | `fs.store_source`                | `false`       | [Storing binary source document](#storing-binary-source-document-base64-encoded)  |
 | `fs.index_content`               | `true`        | [Ignore content](#ignore-content)                                                 |
 | `fs.lang_detect`                 | `false`       | [Language detection](#language-detection) (from 2.2)                              |
+| `fs.continue_on_error`           | `false`       | [Continue on File Permission Error](#continue-on-error) (from 2.3)                |
 | `fs.indexed_chars`               | `100000.0`    | [Extracted characters](#extracted-characters)                                     |
 | `fs.checksum`                    | `null`        | [File signature](#file-signature)                                                 |
 
@@ -855,6 +857,22 @@ you can set `index_content` to `false` (default to `true`):
   "name" : "test",
   "fs" : {
     "index_content" : false
+  }
+}
+```
+
+#### Continue on Error
+
+By default FS Crawler will immediately stop indexing if he hits a Permission denied exception.
+If you want to just skip this File and continue with the rest of the directory tree you can 
+set `continue_on_error` to `true` (default to `false`):
+
+
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "continue_on_error" : true
   }
 }
 ```

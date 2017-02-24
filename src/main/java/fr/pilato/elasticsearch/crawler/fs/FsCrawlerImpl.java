@@ -382,8 +382,16 @@ public class FsCrawlerImpl {
                             fsFiles.add(filename);
                             if (child.lastModifiedDate.isAfter(lastScanDate) ||
                                     (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
-                                indexFile(child, stats, filepath, path.getInputStream(child), child.size);
-                                stats.addFile();
+                                try {
+                                    indexFile(child, stats, filepath, path.getInputStream(child), child.size);
+                                    stats.addFile();
+                                } catch (java.io.FileNotFoundException e) {
+                                    if (fsSettings.getFs().isContinueOnError()) {
+                                        logger.warn("Unable to open Input Stream for {}, skipping...", e.getMessage());
+                                    } else {
+                                        throw e;
+                                    }
+                                }
                             } else {
                                 logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
                                         child.creationDate, child.lastModifiedDate, lastScanDate);

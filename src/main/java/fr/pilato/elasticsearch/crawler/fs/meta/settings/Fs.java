@@ -43,6 +43,7 @@ public class Fs {
     private String checksum = null;
     private boolean indexFolders = true;
     private boolean langDetect = false;
+    private boolean continueOnError = false;
 
     public static Builder builder() {
         return new Builder();
@@ -71,6 +72,7 @@ public class Fs {
         private boolean xmlSupport = false;
         private boolean indexFolders = true;
         private boolean langDetect = false;
+        private boolean continueOnError = false;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -188,10 +190,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setContinueOnError(boolean continueOnError) {
+            this.continueOnError = continueOnError;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError);
         }
     }
 
@@ -202,7 +209,7 @@ public class Fs {
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -221,6 +228,7 @@ public class Fs {
         this.xmlSupport = xmlSupport;
         this.indexFolders = indexFolders;
         this.langDetect = langDetect;
+        this.continueOnError = continueOnError;
     }
 
     public String getUrl() {
@@ -367,6 +375,15 @@ public class Fs {
         this.langDetect = langDetect;
     }
 
+    public boolean isContinueOnError() {
+        return continueOnError;
+    }
+
+    public void setContinueOnError(boolean continueOnError) {
+        this.continueOnError = continueOnError;
+    }
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -386,6 +403,7 @@ public class Fs {
         if (attributesSupport != fs.attributesSupport) return false;
         if (rawMetadata != fs.rawMetadata) return false;
         if (langDetect != fs.langDetect) return false;
+        if (continueOnError != fs.continueOnError) return false;
         if (url != null ? !url.equals(fs.url) : fs.url != null) return false;
         if (updateRate != null ? !updateRate.equals(fs.updateRate) : fs.updateRate != null) return false;
         if (includes != null ? !includes.equals(fs.includes) : fs.includes != null) return false;
@@ -415,6 +433,7 @@ public class Fs {
         result = 31 * result + (checksum != null ? checksum.hashCode() : 0);
         result = 31 * result + (indexFolders ? 1 : 0);
         result = 31 * result + (langDetect ? 1 : 0);
+        result = 31 * result + (continueOnError ? 1 : 0);
         return result;
     }
 }
