@@ -6,6 +6,16 @@ TITLE FSCrawler ${project.version}
 set SCRIPT_DIR=%~dp0
 for %%I in ("%SCRIPT_DIR%..") do set FS_HOME=%%~dpfI
 
+IF DEFINED JAVA_HOME (
+  set JAVA="%JAVA_HOME%\bin\java.exe"
+) ELSE (
+  FOR %%I IN (java.exe) DO set JAVA=%%~$PATH:I
+)
+IF NOT EXIST %JAVA% (
+  ECHO Could not find any executable java binary. Please install java in your PATH or set JAVA_HOME 1>&2
+  EXIT /B 1
+)
+
 REM set to headless, just in case
 set JAVA_OPTS=%JAVA_OPTS% -Djava.awt.headless=true
 
@@ -50,6 +60,6 @@ FOR /F "usebackq tokens=1* delims= " %%A IN (!params!) DO (
 	)
 )
 
-"%JAVA_HOME%\bin\java" %JAVA_OPTS% -cp "%FS_CLASSPATH%" -jar "%FS_HOME%/lib/${project.build.finalName}.jar" !newparams!
+%JAVA% %JAVA_OPTS% -cp "%FS_CLASSPATH%" -jar "%FS_HOME%/lib/${project.build.finalName}.jar" !newparams!
 
 ENDLOCAL
