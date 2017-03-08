@@ -427,11 +427,9 @@ public class FsCrawlerImpl {
 
                     if (FsCrawlerUtil.isIndexable(esfile, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
                             && !fsFiles.contains(esfile)) {
-                        File file = new File(filepath, esfile);
-
                         logger.trace("Removing file [{}] in elasticsearch", esfile);
                         esDelete(fsSettings.getElasticsearch().getIndex(), fsSettings.getElasticsearch().getType(),
-                                SignTool.sign(file.getAbsolutePath()));
+                                generateIdFromFilename(esfile, filepath));
                         stats.removeFile();
                     }
                 }

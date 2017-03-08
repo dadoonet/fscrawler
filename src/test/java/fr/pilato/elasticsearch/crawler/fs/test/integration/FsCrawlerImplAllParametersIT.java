@@ -1228,4 +1228,41 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         // We expect to have 4 docs now
         countTestHelper(getCrawlerName(), null, 2);
     }
+
+    /**
+     * Test case for #336: https://github.com/dadoonet/fscrawler/issues/336
+     */
+    @Test
+    public void test_remove_deleted_with_filename_as_id() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setRemoveDeleted(true)
+                .setFilenameAsId(true)
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        // We should have two docs first
+        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
+
+        assertThat("Document should exists with [id1.txt] id...", awaitBusy(() -> {
+            try {
+                return elasticsearchClient.isExistingDocument(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "id1.txt");
+            } catch (IOException e) {
+                return false;
+            }
+        }), equalTo(true));
+        assertThat("Document should exists with [id2.txt] id...", awaitBusy(() -> {
+            try {
+                return elasticsearchClient.isExistingDocument(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "id2.txt");
+            } catch (IOException e) {
+                return false;
+            }
+        }), equalTo(true));
+
+        // We remove a file
+        logger.info("  ---> Removing file id2.txt");
+        Files.delete(currentTestResourceDir.resolve("id2.txt"));
+
+        // We expect to have two files
+        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+    }
 }
