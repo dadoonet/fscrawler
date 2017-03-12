@@ -9,10 +9,10 @@ You need to install a version matching your Elasticsearch version:
 
 | Elasticsearch |  FS Crawler | Released |                                       Docs                                   |
 |---------------|-------------|----------|------------------------------------------------------------------------------|
-|    es-2.0     | 2.0.0       |2015-10-30|[2.0.0](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.0.0/README.md) |
-| 1.x, 2.x, 5.x | 2.1         |2016-07-26|[2.1](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.1/README.md)     |
-| 1.x, 2.x, 5.x | **2.2**     |2017-02-03|[2.2](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.2/README.md)     |
 | 1.x, 2.x, 5.x | 2.3-SNAPSHOT|          |See below                                                                     |
+| 1.x, 2.x, 5.x | **2.2**     |2017-02-03|[2.2](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.2/README.md)     |
+| 1.x, 2.x, 5.x | 2.1         |2016-07-26|[2.1](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.1/README.md)     |
+|    es-2.0     | 2.0.0       |2015-10-30|[2.0.0](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.0.0/README.md) |
 
 From FS Crawler 2.1, all elasticsearch versions since 1.0 are supported.
 
