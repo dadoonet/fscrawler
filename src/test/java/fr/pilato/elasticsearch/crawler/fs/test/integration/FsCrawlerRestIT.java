@@ -62,8 +62,6 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         // We wait until we have all docs
         countTestHelper(REST_INDEX, null, numFiles.intValue(), null, TimeValue.timeValueMinutes(1));
-
-
     }
 
     private static final Map<String, Object> debugOption = new HashMap<>();
@@ -73,7 +71,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         debugOption.put("simulate", true);
     }
 
-    public UploadResponse uploadFile(Path file) {
+    public static UploadResponse uploadFile(Path file) {
         assertThat(Files.exists(file), is(true));
 
         // MediaType of the body part will be derived from the file.
@@ -81,8 +79,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         FormDataMultiPart mp = new FormDataMultiPart();
         mp.bodyPart(filePart);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Rest response: {}", restCall("/_upload", mp, String.class, debugOption));
+        if (staticLogger.isDebugEnabled()) {
+            staticLogger.debug("Rest response: {}", restCall("/_upload", mp, String.class, debugOption));
         }
 
         return restCall("/_upload", mp, UploadResponse.class, Collections.emptyMap());

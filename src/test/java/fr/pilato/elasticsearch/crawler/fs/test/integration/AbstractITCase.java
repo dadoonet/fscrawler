@@ -26,17 +26,25 @@ import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.Level;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -109,6 +117,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             .setPassword(testClusterPass)
             .build();
 
+    private static WebTarget target;
+    private static Client client;
+
     @BeforeClass
     public static void startElasticsearchRestClient() throws IOException {
         elasticsearchClient = new ElasticsearchClient(elasticsearch);
@@ -127,6 +138,26 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         // We set what will be elasticsearch behavior as it depends on the cluster version
         elasticsearchClient.setElasticsearchBehavior();
+    }
+
+    @BeforeClass
+    public static void startRestClient() {
+        // create the client
+        client = ClientBuilder.newBuilder()
+                .register(MultiPartFeature.class)
+                .register(RestJsonProvider.class)
+                .register(JacksonFeature.class)
+                .build();
+
+        target = client.target(rest.url());
+    }
+
+    @AfterClass
+    public static void stopRestClient() {
+        if (client != null) {
+            client.close();
+            client = null;
+        }
     }
 
     private static boolean testClusterRunning(boolean withSecurity) throws IOException {
@@ -157,7 +188,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @AfterClass
-    public static void stopRestClient() throws IOException {
+    public static void stopElasticsearchClient() throws IOException {
         staticLogger.info("Stopping integration tests against an external cluster");
         if (elasticsearchClient != null) {
             elasticsearchClient.shutdown();
@@ -315,5 +346,22 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         String beforeDelimiter = toSplit.substring(0, offset);
         String afterDelimiter = toSplit.substring(offset + delimiter.length());
         return new String[]{beforeDelimiter, afterDelimiter};
+    }
+
+    public static <T> T restCall(String path, Class<T> clazz) {
+        if (staticLogger.isDebugEnabled()) {
+            String response = target.path(path).request().get(String.class);
+            staticLogger.debug("Rest response: {}", response);
+        }
+        return target.path(path).request().get(clazz);
+    }
+
+    public static <T> T restCall(String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
+        WebTarget targetPath = target.path(path);
+        params.forEach(targetPath::queryParam);
+
+        return targetPath.request(MediaType.MULTIPART_FORM_DATA)
+                .accept(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(mp, mp.getMediaType()), clazz);
     }
 }

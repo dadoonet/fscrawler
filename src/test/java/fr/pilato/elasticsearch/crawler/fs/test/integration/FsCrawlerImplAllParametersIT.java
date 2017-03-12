@@ -35,6 +35,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.http.entity.StringEntity;
 import org.apache.logging.log4j.Level;
@@ -62,6 +63,7 @@ import java.util.concurrent.TimeUnit;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.test.integration.FsCrawlerRestIT.uploadFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -1190,8 +1192,18 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 true);
         crawler.start();
 
-        // We expect to have one file
-//        countTestHelper(getCrawlerName(), null, 1);
+        String url = getUrl("documents");
+        Path from = Paths.get(url);
+        Files.walk(from)
+                .filter(path -> Files.isRegularFile(path))
+                .forEach(path -> {
+                    UploadResponse response = uploadFile(path);
+                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+                });
+        Long numFiles = Files.list(from).count();
+
+        // We wait until we have all docs
+        countTestHelper(getCrawlerName(), null, numFiles.intValue(), null, TimeValue.timeValueMinutes(1));
     }
 
     /**

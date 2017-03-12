@@ -22,25 +22,12 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import java.util.Map;
-
 public class AbstractRestITCase extends AbstractITCase {
-
-    private static WebTarget target;
 
     private static ElasticsearchClientManager esClientManager;
 
@@ -58,18 +45,6 @@ public class AbstractRestITCase extends AbstractITCase {
         RestServer.start(fsSettings, esClientManager);
     }
 
-    @BeforeClass
-    public static void startRestClient() {
-        // create the client
-        Client client = ClientBuilder.newBuilder()
-                .register(MultiPartFeature.class)
-                .register(RestJsonProvider.class)
-                .register(JacksonFeature.class)
-                .build();
-
-        target = client.target(rest.url());
-    }
-
     @AfterClass
     public static void stopRestServer() throws InterruptedException {
         RestServer.close();
@@ -84,22 +59,5 @@ public class AbstractRestITCase extends AbstractITCase {
         FsSettings fsSettings = FsSettings.builder(getCrawlerName()).setRest(rest).build();
         FsCrawlerValidator.validateSettings(logger, fsSettings, true);
         esClientManager.createIndexAndMappings(fsSettings, false);
-    }
-
-    public <T> T restCall(String path, Class<T> clazz) {
-        if (logger.isDebugEnabled()) {
-            String response = target.path(path).request().get(String.class);
-            logger.debug("Rest response: {}", response);
-        }
-        return target.path(path).request().get(clazz);
-    }
-
-    public <T> T restCall(String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
-        WebTarget target = AbstractRestITCase.target.path(path);
-        params.forEach(target::queryParam);
-
-        return target.request(MediaType.MULTIPART_FORM_DATA)
-                .accept(MediaType.APPLICATION_JSON)
-                .post(Entity.entity(mp, mp.getMediaType()), clazz);
     }
 }
