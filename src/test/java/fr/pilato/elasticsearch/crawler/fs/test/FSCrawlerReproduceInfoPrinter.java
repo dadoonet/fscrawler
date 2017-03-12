@@ -65,7 +65,7 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
 
         final StringBuilder b = new StringBuilder();
         b.append("REPRODUCE WITH:\n");
-        b.append("mvn test");
+        b.append("mvn integration-test");
 
         MavenMessageBuilder mavenMessageBuilder = new MavenMessageBuilder(b);
         mavenMessageBuilder.appendAllOpts(failure.getDescription());
