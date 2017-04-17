@@ -110,12 +110,12 @@ public class TikaDocParser {
         }
         if (messageDigest != null) {
             byte[] digest = messageDigest.digest();
-            String result = "";
+            StringBuilder result = new StringBuilder();
             // Convert to Hexa
             for (byte aDigest : digest) {
-                result += Integer.toString((aDigest & 0xff) + 0x100, 16).substring(1);
+                result.append(Integer.toString((aDigest & 0xff) + 0x100, 16).substring(1));
             }
-            doc.getFile().setChecksum(result);
+            doc.getFile().setChecksum(result.toString());
         }
         // File
 
