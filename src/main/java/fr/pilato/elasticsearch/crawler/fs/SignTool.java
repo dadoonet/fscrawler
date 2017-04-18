@@ -34,14 +34,14 @@ public class SignTool {
         MessageDigest md = MessageDigest.getInstance("MD5");
         md.update(toSign.getBytes());
 
-        String key = "";
+        StringBuilder key = new StringBuilder();
         byte b[] = md.digest();
         for (byte aB : b) {
             long t = aB < 0 ? 256 + aB : aB;
-            key += Long.toHexString(t);
+            key.append(Long.toHexString(t));
         }
 
-        return key;
+        return key.toString();
     }
 
 }
