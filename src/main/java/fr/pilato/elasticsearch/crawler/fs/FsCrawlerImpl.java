@@ -274,7 +274,7 @@ public class FsCrawlerImpl {
 
                     updateFsJob(fsSettings.getName(), scanDatenew);
                 } catch (Exception e) {
-                    logger.warn("Error while indexing content from {}: {}", fsSettings.getFs().getUrl(), e.getMessage());
+                    logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage());
                 } finally {
                     if (path != null) {
                         try {
