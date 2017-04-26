@@ -275,6 +275,9 @@ public class FsCrawlerImpl {
                     updateFsJob(fsSettings.getName(), scanDatenew);
                 } catch (Exception e) {
                     logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage());
+                    if (logger.isDebugEnabled()) {
+                        logger.warn("Full stacktrace", e);
+                    }
                 } finally {
                     if (path != null) {
                         try {
@@ -383,7 +386,8 @@ public class FsCrawlerImpl {
                             if (child.lastModifiedDate.isAfter(lastScanDate) ||
                                     (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
                                 try {
-                                    indexFile(child, stats, filepath, path.getInputStream(child), child.size);
+                                    indexFile(child, stats, filepath,
+                                            fsSettings.getFs().isIndexContent() ? path.getInputStream(child) : null, child.size);
                                     stats.addFile();
                                 } catch (java.io.FileNotFoundException e) {
                                     if (fsSettings.getFs().isContinueOnError()) {
@@ -614,7 +618,9 @@ public class FsCrawlerImpl {
                 }
             } finally {
                 // Let's close the stream
-                inputStream.close();
+                if (inputStream != null) {
+                    inputStream.close();
+                }
             }
         }
 

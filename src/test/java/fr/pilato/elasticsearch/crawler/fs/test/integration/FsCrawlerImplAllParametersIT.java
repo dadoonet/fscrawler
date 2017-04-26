@@ -48,15 +48,19 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -78,6 +82,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Test all crawler settings
@@ -1275,6 +1280,32 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         Files.delete(currentTestResourceDir.resolve("id2.txt"));
 
         // We expect to have two files
+        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+    }
+
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/362
+     * @throws Exception In case something is wrong
+     */
+    @Test
+    public void test_non_readable_file() throws Exception {
+        // We change the attributes of the file
+        logger.info(" ---> Changing attributes for file roottxtfile.txt");
+
+        boolean isPosix =
+                FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+
+        assumeTrue("This test can only run on Posix systems", isPosix);
+
+        Files.getFileAttributeView(currentTestResourceDir.resolve("roottxtfile.txt"), PosixFileAttributeView.class)
+                .setPermissions(EnumSet.noneOf(PosixFilePermission.class));
+
+        Fs fs = startCrawlerDefinition()
+                .setIndexContent(false)
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        // We should have one doc first
         countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
     }
 }
