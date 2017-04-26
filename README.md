@@ -105,6 +105,12 @@ you want to get back the exact previous behavior.
 suffix of the file name, like indexing `1.json` was indexed as `1`. With this new version, we don't remove anymore the
 suffix. So the `_id` for your document will be now `1.json`.
 
+### Upgrade to 2.3
+
+* fscrawler comes with new mapping for folders. The change is really tiny so you can skip this step if you wish.
+We basically removed `name` field in the folder mapping as it was unused.
+You should remove existing files in `~/.fscrawler/_default/_mappings` before starting the new version so default
+mappings will be updated. If you modified manually mapping files, apply the modification you made on sample files.
 
 # User Guide
 

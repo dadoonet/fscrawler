@@ -4,10 +4,6 @@
       "type" : "keyword",
       "store" : true
     },
-    "name" : {
-      "type" : "keyword",
-      "store" : true
-    },
     "real" : {
       "type" : "keyword",
       "store" : true

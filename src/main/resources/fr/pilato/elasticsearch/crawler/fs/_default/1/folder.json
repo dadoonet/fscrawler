@@ -1,10 +1,5 @@
 {
   "properties": {
-    "name": {
-      "type": "string",
-      "store": true,
-      "index": "not_analyzed"
-    },
     "real": {
       "type": "string",
       "store": true,
