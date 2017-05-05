@@ -1379,6 +1379,15 @@ every 5 seconds. You can change default settings using `bulk_size` and `flush_in
 }
 ```
 
+Note that elasticsearch has a [default limit of `100mb` per HTTP request](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-http.html).
+Which means that if you are indexing a massive bulk of documents, you might hit that limit and FSCrawler will throw
+an error like `entity content is too long [xxx] for the configured buffer limit [104857600]`.
+
+You can either change this limit on elasticsearch side by setting `http.max_content_length` to a higher value but please
+be aware that this will consume much more memory on elasticsearch side.
+
+Or you can decrease the `bulk_size` setting to a smaller value.
+
 #### Using Ingest Node Pipeline
 
 If you are using an elasticsearch cluster running a 5.0 or superior version, you
