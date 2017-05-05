@@ -29,26 +29,14 @@ public class Path {
      * Generated json field names
      */
     static public final class FIELD_NAMES {
-        // TODO Remove as unused
-        public static final String ENCODED = "encoded";
         public static final String ROOT = "root";
         public static final String VIRTUAL = "virtual";
         public static final String REAL = "real";
     }
 
-    // TODO Remove as unused
-    private String encoded;
     private String root;
     private String virtual;
     private String real;
-
-    public String getEncoded() {
-        return encoded;
-    }
-
-    public void setEncoded(String encoded) {
-        this.encoded = encoded;
-    }
 
     public String getRoot() {
         return root;
@@ -81,7 +69,6 @@ public class Path {
 
         Path path = (Path) o;
 
-        if (encoded != null ? !encoded.equals(path.encoded) : path.encoded != null) return false;
         if (root != null ? !root.equals(path.root) : path.root != null) return false;
         if (virtual != null ? !virtual.equals(path.virtual) : path.virtual != null) return false;
         return !(real != null ? !real.equals(path.real) : path.real != null);
@@ -90,8 +77,7 @@ public class Path {
 
     @Override
     public int hashCode() {
-        int result = encoded != null ? encoded.hashCode() : 0;
-        result = 31 * result + (root != null ? root.hashCode() : 0);
+        int result = root != null ? root.hashCode() : 0;
         result = 31 * result + (virtual != null ? virtual.hashCode() : 0);
         result = 31 * result + (real != null ? real.hashCode() : 0);
         return result;

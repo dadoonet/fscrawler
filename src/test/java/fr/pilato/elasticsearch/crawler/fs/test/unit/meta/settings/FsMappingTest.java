@@ -131,10 +131,6 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "    },\n" +
                 "    \"path\": {\n" +
                 "      \"properties\": {\n" +
-                "        \"encoded\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"index\": \"not_analyzed\"\n" +
-                "        },\n" +
                 "        \"virtual\": {\n" +
                 "          \"type\": \"string\",\n" +
                 "          \"index\": \"not_analyzed\",\n" +
@@ -184,11 +180,6 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
         assertThat(mapping, is("{\n" +
                 "  \"properties\": {\n" +
                 "    \"real\": {\n" +
-                "      \"type\": \"string\",\n" +
-                "      \"store\": true,\n" +
-                "      \"index\": \"not_analyzed\"\n" +
-                "    },\n" +
-                "    \"encoded\": {\n" +
                 "      \"type\": \"string\",\n" +
                 "      \"store\": true,\n" +
                 "      \"index\": \"not_analyzed\"\n" +
@@ -330,10 +321,6 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "    },\n" +
                 "    \"path\": {\n" +
                 "      \"properties\": {\n" +
-                "        \"encoded\": {\n" +
-                "          \"type\": \"string\",\n" +
-                "          \"index\": \"not_analyzed\"\n" +
-                "        },\n" +
                 "        \"virtual\": {\n" +
                 "          \"type\": \"string\",\n" +
                 "          \"index\": \"not_analyzed\",\n" +
@@ -383,11 +370,6 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
         assertThat(mapping, is("{\n" +
                 "  \"properties\": {\n" +
                 "    \"real\": {\n" +
-                "      \"type\": \"string\",\n" +
-                "      \"store\": true,\n" +
-                "      \"index\": \"not_analyzed\"\n" +
-                "    },\n" +
-                "    \"encoded\": {\n" +
                 "      \"type\": \"string\",\n" +
                 "      \"store\": true,\n" +
                 "      \"index\": \"not_analyzed\"\n" +
@@ -537,9 +519,6 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
                 "    },\n" +
                 "    \"path\" : {\n" +
                 "      \"properties\" : {\n" +
-                "        \"encoded\" : {\n" +
-                "          \"type\" : \"keyword\"\n" +
-                "        },\n" +
                 "        \"real\" : {\n" +
                 "          \"type\" : \"keyword\",\n" +
                 "          \"fields\": {\n" +
@@ -575,10 +554,6 @@ public class FsMappingTest extends AbstractFSCrawlerTestCase {
         logger.info("Mapping used for folders v5 : " + mapping);
         assertThat(mapping, is("{\n" +
                 "  \"properties\" : {\n" +
-                "    \"encoded\" : {\n" +
-                "      \"type\" : \"keyword\",\n" +
-                "      \"store\" : true\n" +
-                "    },\n" +
                 "    \"real\" : {\n" +
                 "      \"type\" : \"keyword\",\n" +
                 "      \"store\" : true\n" +

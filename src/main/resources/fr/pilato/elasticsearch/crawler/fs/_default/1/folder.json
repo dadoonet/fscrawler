@@ -5,11 +5,6 @@
       "store": true,
       "index": "not_analyzed"
     },
-    "encoded": {
-      "type": "string",
-      "store": true,
-      "index": "not_analyzed"
-    },
     "root": {
       "type": "string",
       "store": true,

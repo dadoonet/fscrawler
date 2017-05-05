@@ -569,9 +569,6 @@ public class FsCrawlerImpl {
                     // File
 
                     // Path
-                    // TODO: remove this as this is probably not needed.
-                    // Basically an encoded version of the filename (often equivalent to _id)
-                    doc.getPath().setEncoded(SignTool.sign(fullFilename));
                     // Encoded version of the dir this file belongs to
                     doc.getPath().setRoot(SignTool.sign(dirname));
                     // The virtual URL (not including the initial root dir)
@@ -666,9 +663,6 @@ public class FsCrawlerImpl {
             pathObject.setRoot(SignTool.sign(rootdir));
             // The virtual URL (not including the initial root dir)
             pathObject.setVirtual(FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), path));
-            // TODO: remove this as this is probably not needed.
-            // Basically an encoded version of the filename (often equivalent to _id)
-            pathObject.setEncoded(SignTool.sign(path));
 
             indexDirectory(SignTool.sign(path), pathObject);
         }

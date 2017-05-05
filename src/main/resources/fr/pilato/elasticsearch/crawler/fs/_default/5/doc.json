@@ -76,9 +76,6 @@
     },
     "path" : {
       "properties" : {
-        "encoded" : {
-          "type" : "keyword"
-        },
         "real" : {
           "type" : "keyword",
           "fields": {

@@ -1,9 +1,5 @@
 {
   "properties" : {
-    "encoded" : {
-      "type" : "keyword",
-      "store" : true
-    },
     "real" : {
       "type" : "keyword",
       "store" : true

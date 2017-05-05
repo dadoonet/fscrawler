@@ -68,10 +68,6 @@
     },
     "path": {
       "properties": {
-        "encoded": {
-          "type": "string",
-          "index": "not_analyzed"
-        },
         "virtual": {
           "type": "string",
           "index": "not_analyzed",
