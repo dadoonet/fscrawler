@@ -64,12 +64,14 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.test.integration.FsCrawlerRestIT.uploadFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
@@ -609,7 +611,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
             Object virtual = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.PATH)
                     .get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.VIRTUAL);
-            assertThat(virtual, isOneOf("/subdir", "/"));
+            assertThat(virtual, isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
         }
     }
 
@@ -617,7 +619,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_subdirs_deep_tree() throws Exception {
         startCrawler();
 
-        // We expect to have two files
+        // We expect to have 7 files
         countTestHelper(getCrawlerName(), null, 7);
 
         // Run aggs
@@ -638,7 +640,45 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat(response.getAggregations(), hasKey("folders"));
         List<Object> buckets = (List) extractFromPath(response.getAggregations(), "folders").get("buckets");
 
-        assertThat(buckets, iterableWithSize(7));
+        assertThat(buckets, iterableWithSize(10));
+
+        // Check files
+        response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "{ \"sort\": [ \"path.virtual\" ] }");
+        assertThat(response.getHits().getTotal(), is(7L));
+
+        int i = 0;
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/roottxtfile.txt", "/roottxtfile.txt");
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", "/subdir1/roottxtfile_multi_feed.txt");
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", "/subdir1/subdir11/roottxtfile.txt");
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", "/subdir1/subdir12/roottxtfile.txt");
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", "/subdir2/roottxtfile_multi_feed.txt");
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", "/subdir2/subdir21/roottxtfile.txt");
+        pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", "/subdir2/subdir22/roottxtfile.txt");
+
+
+        // Check folders
+        response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_FOLDER, "{ \"sort\": [ \"virtual\" ] }");
+        assertThat(response.getHits().getTotal(), is(7L));
+
+        i = 0;
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree", "/");
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1", "/subdir1");
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1/subdir11", "/subdir1/subdir11");
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1/subdir12", "/subdir1/subdir12");
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2", "/subdir2");
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2/subdir21", "/subdir2/subdir21");
+        pathHitTester(response, i, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2/subdir22", "/subdir2/subdir22");
+    }
+
+    private void pathHitTester(SearchResponse response, int position, Function<SearchResponse.Hit, Map<String, Object>> extractPath,
+                               String expectedReal, String expectedVirtual) {
+        SearchResponse.Hit hit = response.getHits().getHits().get(position);
+        Map<String, Object> path = extractPath.apply(hit);
+        String real = (String) path.get("real");
+        String virtual = (String) path.get("virtual");
+        logger.debug(" - {}, {}", real, virtual);
+        assertThat("path.real[" + position + "]", real, endsWith(expectedReal));
+        assertThat("path.virtual[" + position + "]", virtual, is(expectedVirtual));
     }
 
     @Test

@@ -78,7 +78,7 @@ public class FsCrawlerImpl {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerImpl.class);
 
-    private static final String PATH_ENCODED = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ENCODED;
+    private static final String PATH_ROOT = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ROOT;
     private static final String FILE_FILENAME = Doc.FIELD_NAMES.FILE + "." + fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME;
 
     private final AtomicInteger runNumber = new AtomicInteger(0);
@@ -263,7 +263,7 @@ public class FsCrawlerImpl {
                     // We only index the root directory once (first run)
                     // That means that we don't have a scanDate yet
                     if (scanDate == null && fsSettings.getFs().isIndexFolders()) {
-                        indexRootDirectory(fsSettings.getFs().getUrl());
+                        indexDirectory(fsSettings.getFs().getUrl());
                     }
 
                     if (scanDate == null) {
@@ -403,8 +403,8 @@ public class FsCrawlerImpl {
                         } else if (child.directory) {
                             logger.debug("  - folder: {}", filename);
                             if (settings.getFs().isIndexFolders()) {
-                                fsFolders.add(filename);
-                                indexDirectory(stats, filename, child.fullpath);
+                                fsFolders.add(child.fullpath);
+                                indexDirectory(child.fullpath);
                             }
                             addFilesRecursively(path, child.fullpath, lastScanDate);
                         } else {
@@ -448,7 +448,7 @@ public class FsCrawlerImpl {
                             logger.trace("Checking directory [{}]", esfolder);
                             if (!fsFolders.contains(esfolder)) {
                                 logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
-                                removeEsDirectoryRecursively(filepath, esfolder);
+                                removeEsDirectoryRecursively(esfolder);
                             }
                         }
                     }
@@ -467,11 +467,11 @@ public class FsCrawlerImpl {
                 return files;
             }
 
-            logger.trace("Querying elasticsearch for files in dir [{}:{}]", PATH_ENCODED, SignTool.sign(path));
+            logger.trace("Querying elasticsearch for files in dir [{}:{}]", PATH_ROOT, SignTool.sign(path));
             SearchResponse response = esClientManager.client().search(
                     fsSettings.getElasticsearch().getIndex(),
                     fsSettings.getElasticsearch().getType(),
-                    PATH_ENCODED + ":" + SignTool.sign(path),
+                    PATH_ROOT + ":" + SignTool.sign(path),
                     REQUEST_SIZE, // TODO: WHAT? DID I REALLY WROTE THAT? :p
                     "_source", FILE_FILENAME
             );
@@ -512,8 +512,7 @@ public class FsCrawlerImpl {
                     nameObject.getClass().getName() + " with value " + nameObject);
         }
 
-        private Collection<String> getFolderDirectory(String path)
-                throws Exception {
+        private Collection<String> getFolderDirectory(String path) throws Exception {
             Collection<String> files = new ArrayList<>();
 
             // If the crawler is being closed, we return
@@ -524,12 +523,11 @@ public class FsCrawlerImpl {
             SearchResponse response = esClientManager.client().search(
                     fsSettings.getElasticsearch().getIndex(),
                     FsCrawlerUtil.INDEX_TYPE_FOLDER,
-                    fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ENCODED + ":" + SignTool.sign(path),
+                    fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ROOT + ":" + SignTool.sign(path),
                     REQUEST_SIZE // TODO: WHAT? DID I REALLY WROTE THAT? :p
             );
 
-            if (response.getHits() != null
-                    && response.getHits().getHits() != null) {
+            if (response.getHits() != null && response.getHits().getHits() != null) {
                 for (SearchResponse.Hit hit : response.getHits().getHits()) {
                     String name = hit.getSource().get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.REAL).toString();
                     files.add(name);
@@ -554,13 +552,16 @@ public class FsCrawlerImpl {
             try {
                 // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't index json or xml)
                 if (fsSettings.getFs().isAddAsInnerObject() || (!fsSettings.getFs().isJsonSupport() && !fsSettings.getFs().isXmlSupport())) {
+
+                    String fullFilename = new File(dirname, filename).toString();
+
                     Doc doc = new Doc();
 
                     // File
                     doc.getFile().setFilename(filename);
                     doc.getFile().setLastModified(lastmodified);
                     doc.getFile().setIndexingDate(LocalDateTime.now());
-                    doc.getFile().setUrl("file://" + (new File(dirname, filename)).toString());
+                    doc.getFile().setUrl("file://" + fullFilename);
                     doc.getFile().setExtension(extension);
                     if (fsSettings.getFs().isAddFilesize()) {
                         doc.getFile().setFilesize(size);
@@ -568,10 +569,15 @@ public class FsCrawlerImpl {
                     // File
 
                     // Path
-                    doc.getPath().setEncoded(SignTool.sign(dirname));
-                    doc.getPath().setRoot(stats.getRootPathId());
-                    doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats, dirname));
-                    doc.getPath().setReal((new File(dirname, filename)).toString());
+                    // TODO: remove this as this is probably not needed.
+                    // Basically an encoded version of the filename (often equivalent to _id)
+                    doc.getPath().setEncoded(SignTool.sign(fullFilename));
+                    // Encoded version of the dir this file belongs to
+                    doc.getPath().setRoot(SignTool.sign(dirname));
+                    // The virtual URL (not including the initial root dir)
+                    doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename));
+                    // The real and complete filename
+                    doc.getPath().setReal(fullFilename);
                     // Path
 
                     // Attributes
@@ -634,14 +640,13 @@ public class FsCrawlerImpl {
             }
         }
 
-        private void indexDirectory(String id, String name, String root, String virtual, String encoded)
-                throws Exception {
-
-            fr.pilato.elasticsearch.crawler.fs.meta.doc.Path path = new fr.pilato.elasticsearch.crawler.fs.meta.doc.Path();
-            path.setReal(name);
-            path.setRoot(root);
-            path.setVirtual(virtual);
-            path.setEncoded(encoded);
+        /**
+         * Index a Path object (AKA a folder) in elasticsearch
+         * @param id    id of the path
+         * @param path  path object
+         * @throws Exception in case of error
+         */
+        private void indexDirectory(String id, fr.pilato.elasticsearch.crawler.fs.meta.doc.Path path) throws Exception {
             esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
                     FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     id,
@@ -650,55 +655,44 @@ public class FsCrawlerImpl {
 
         /**
          * Index a directory
+         * @param path complete path like /path/to/subdir
          */
-        private void indexDirectory(ScanStatistic stats, String filename, String filepath)
-                throws Exception {
-            indexDirectory(SignTool.sign(filepath),
-                    filename,
-                    stats.getRootPathId(),
-                    FsCrawlerUtil.computeVirtualPathName(stats,
-                            filepath.substring(0, filepath.lastIndexOf(File.separator))),
-                    SignTool.sign(filepath.substring(0, filepath.lastIndexOf(File.separator))));
-        }
+        private void indexDirectory(String path) throws Exception {
+            fr.pilato.elasticsearch.crawler.fs.meta.doc.Path pathObject = new fr.pilato.elasticsearch.crawler.fs.meta.doc.Path();
+            // The real and complete path
+            pathObject.setReal(path);
+            String rootdir = path.substring(0, path.lastIndexOf(File.separator));
+            // Encoded version of the parent dir
+            pathObject.setRoot(SignTool.sign(rootdir));
+            // The virtual URL (not including the initial root dir)
+            pathObject.setVirtual(FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), path));
+            // TODO: remove this as this is probably not needed.
+            // Basically an encoded version of the filename (often equivalent to _id)
+            pathObject.setEncoded(SignTool.sign(path));
 
-        /**
-         * Add the root directory as a folder
-         */
-        private void indexRootDirectory(String path) throws Exception {
-            indexDirectory(SignTool.sign(path),
-                    path,
-                    stats.getRootPathId(),
-                    null,
-                    SignTool.sign(path));
+            indexDirectory(SignTool.sign(path), pathObject);
         }
 
         /**
          * Remove a full directory and sub dirs recursively
          */
-        private void removeEsDirectoryRecursively(String path, String name)
-                throws Exception {
-
-            String fullPath = path.concat(File.separator).concat(name);
-
-            logger.debug("Delete folder " + fullPath);
-            Collection<String> listFile = getFileDirectory(fullPath);
+        private void removeEsDirectoryRecursively(final String path) throws Exception {
+            logger.debug("Delete folder [{}]", path);
+            Collection<String> listFile = getFileDirectory(path);
 
             for (String esfile : listFile) {
                 esDelete(
                         fsSettings.getElasticsearch().getIndex(),
                         fsSettings.getElasticsearch().getType(),
-                        SignTool.sign(fullPath.concat(File.separator).concat(esfile)));
+                        SignTool.sign(path.concat(File.separator).concat(esfile)));
             }
 
-            Collection<String> listFolder = getFolderDirectory(fullPath);
-
+            Collection<String> listFolder = getFolderDirectory(path);
             for (String esfolder : listFolder) {
-                removeEsDirectoryRecursively(fullPath, esfolder);
+                removeEsDirectoryRecursively(esfolder);
             }
 
-            esDelete(fsSettings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER,
-                    SignTool.sign(fullPath));
-
+            esDelete(fsSettings.getElasticsearch().getIndex(), FsCrawlerUtil.INDEX_TYPE_FOLDER, SignTool.sign(path));
         }
 
         /**

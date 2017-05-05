@@ -29,12 +29,14 @@ public class Path {
      * Generated json field names
      */
     static public final class FIELD_NAMES {
+        // TODO Remove as unused
         public static final String ENCODED = "encoded";
         public static final String ROOT = "root";
         public static final String VIRTUAL = "virtual";
         public static final String REAL = "real";
     }
 
+    // TODO Remove as unused
     private String encoded;
     private String root;
     private String virtual;

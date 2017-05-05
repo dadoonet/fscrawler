@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.unit;
 
-import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
@@ -47,6 +46,9 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testHelper("/tmp", "/tmp", "/");
         testHelper("/tmp", "/tmp/dir", "/dir");
         testHelper("/tmp", "/tmp/dir/subdir", "/dir/subdir");
+        testHelper("/tmp", "/tmp/file.txt", "/file.txt");
+        testHelper("/tmp", "/tmp/dir/file.txt", "/dir/file.txt");
+        testHelper("/tmp", "/tmp/dir/subdir/file.txt", "/dir/subdir/file.txt");
     }
 
     @Test
@@ -54,10 +56,13 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testHelper("C:\\tmp", "C:\\tmp", "/");
         testHelper("C:\\tmp", "C:\\tmp\\dir", "/dir");
         testHelper("C:\\tmp", "C:\\tmp\\dir\\subdir", "/dir/subdir");
+        testHelper("C:\\tmp", "C:\\tmp\\file.txt", "/file.txt");
+        testHelper("C:\\tmp", "C:\\tmp\\dir\\file.txt", "/dir/file.txt");
+        testHelper("C:\\tmp", "C:\\tmp\\dir\\subdir\\file.txt", "/dir/subdir/file.txt");
     }
 
     private void testHelper(String rootPath, String realPath, String expectedPath) {
-        assertThat(FsCrawlerUtil.computeVirtualPathName(new ScanStatistic(rootPath), realPath), is(expectedPath));
+        assertThat(FsCrawlerUtil.computeVirtualPathName(rootPath, realPath), is(expectedPath));
     }
 
     @Test

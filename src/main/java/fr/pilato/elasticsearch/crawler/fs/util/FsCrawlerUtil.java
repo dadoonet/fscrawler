@@ -20,13 +20,12 @@
 package fr.pilato.elasticsearch.crawler.fs.util;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawler;
-import fr.pilato.elasticsearch.crawler.fs.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -196,15 +195,14 @@ public class FsCrawlerUtil extends MetaParser {
         return false;
     }
 
-    public static String computeVirtualPathName(ScanStatistic stats,
-                                                String realPath) {
+    public static String computeVirtualPathName(String rootPath, String realPath) {
         String result = "/";
-        if (realPath != null && realPath.length() > stats.getRootPath().length()) {
-            result = realPath.substring(stats.getRootPath().length())
+        if (realPath != null && realPath.length() > rootPath.length()) {
+            result = realPath.substring(rootPath.length())
                     .replace("\\", "/");
         }
 
-        logger.debug("computeVirtualPathName({}, {}) = {}", stats.getRootPath(), realPath, result);
+        logger.debug("computeVirtualPathName({}, {}) = {}", rootPath, realPath, result);
         return result;
     }
 
