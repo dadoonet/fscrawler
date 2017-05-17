@@ -40,6 +40,7 @@ import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.http.entity.StringEntity;
 import org.apache.logging.log4j.Level;
 import org.elasticsearch.client.ResponseException;
+import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -49,12 +50,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
@@ -66,6 +64,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiOfLengthBetween;
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.test.integration.FsCrawlerRestIT.uploadFile;
@@ -647,13 +647,13 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat(response.getHits().getTotal(), is(7L));
 
         int i = 0;
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/roottxtfile.txt", "/roottxtfile.txt");
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", "/subdir1/roottxtfile_multi_feed.txt");
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", "/subdir1/subdir11/roottxtfile.txt");
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", "/subdir1/subdir12/roottxtfile.txt");
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", "/subdir2/roottxtfile_multi_feed.txt");
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", "/subdir2/subdir21/roottxtfile.txt");
-        pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", "/subdir2/subdir22/roottxtfile.txt");
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/roottxtfile.txt", is("/roottxtfile.txt"));
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", is("/subdir1/roottxtfile_multi_feed.txt"));
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", is("/subdir1/subdir11/roottxtfile.txt"));
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", is("/subdir1/subdir12/roottxtfile.txt"));
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", is("/subdir2/roottxtfile_multi_feed.txt"));
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", is("/subdir2/subdir21/roottxtfile.txt"));
+        pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", is("/subdir2/subdir22/roottxtfile.txt"));
 
 
         // Check folders
@@ -661,24 +661,88 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat(response.getHits().getTotal(), is(7L));
 
         i = 0;
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree", "/");
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1", "/subdir1");
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1/subdir11", "/subdir1/subdir11");
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1/subdir12", "/subdir1/subdir12");
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2", "/subdir2");
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2/subdir21", "/subdir2/subdir21");
-        pathHitTester(response, i, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2/subdir22", "/subdir2/subdir22");
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree", is("/"));
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1", is("/subdir1"));
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1/subdir11", is("/subdir1/subdir11"));
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1/subdir12", is("/subdir1/subdir12"));
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2", is("/subdir2"));
+        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2/subdir21", is("/subdir2/subdir21"));
+        pathHitTester(response, i, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2/subdir22", is("/subdir2/subdir22"));
+    }
+
+    @Test
+    public void test_subdirs_very_deep_tree() throws Exception {
+
+        int subdirs = randomIntBetween(30, 100);
+
+        staticLogger.debug("  --> Generating [{}] dirs [{}]", subdirs, currentTestResourceDir);
+
+        Path sourceFile = currentTestResourceDir.resolve("roottxtfile.txt");
+        Path mainDir = currentTestResourceDir.resolve("main_dir");
+        Files.createDirectory(mainDir);
+        Path newDir = mainDir;
+
+        for (int i = 0; i < subdirs; i++) {
+            newDir = newDir.resolve(i + "_" + randomAsciiOfLengthBetween(2, 5));
+            Files.createDirectory(newDir);
+            // Copy the original test file in the new dir
+            Files.copy(sourceFile, newDir.resolve("sample.txt"));
+        }
+
+        startCrawler();
+
+        // We expect to have x files (<- whoa that's funny Mulder!)
+        countTestHelper(getCrawlerName(), null, subdirs+1);
+
+        // Run aggs
+        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
+                "{\n" +
+                        "  \"size\": 0, \n" +
+                        "  \"aggs\": {\n" +
+                        "    \"folders\": {\n" +
+                        "      \"terms\": {\n" +
+                        "        \"field\": \"path.virtual.tree\"\n" +
+                        "      }\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "}");
+        assertThat(response.getHits().getTotal(), is((long) subdirs+1));
+
+        // aggregations
+        assertThat(response.getAggregations(), hasKey("folders"));
+        List<Object> buckets = (List) extractFromPath(response.getAggregations(), "folders").get("buckets");
+
+        assertThat(buckets, iterableWithSize(10));
+
+        // Check files
+        response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "{ \"size\": " + 1000 + ", \"sort\": [ \"path.virtual\" ] }");
+        assertThat(response.getHits().getTotal(), is((long) subdirs+1));
+
+        for (int i = 0; i < subdirs; i++) {
+            pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSource().get("path"), "sample.txt", endsWith("/" + "sample.txt"));
+        }
+
+        // Check folders
+        response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_FOLDER, "{ \"size\": " + 1000 + ", \"sort\": [ \"virtual\" ] }");
+        assertThat(response.getHits().getTotal(), is((long) subdirs+2));
+
+        // Let's remove the main subdir and wait...
+        staticLogger.debug("  --> Removing all dirs from [{}]", mainDir);
+        deleteRecursively(mainDir);
+
+        // We expect to have 1 doc now
+        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
     }
 
     private void pathHitTester(SearchResponse response, int position, Function<SearchResponse.Hit, Map<String, Object>> extractPath,
-                               String expectedReal, String expectedVirtual) {
+                               String expectedReal, Matcher<String> expectedVirtual) {
         SearchResponse.Hit hit = response.getHits().getHits().get(position);
         Map<String, Object> path = extractPath.apply(hit);
         String real = (String) path.get("real");
         String virtual = (String) path.get("virtual");
         logger.debug(" - {}, {}", real, virtual);
         assertThat("path.real[" + position + "]", real, endsWith(expectedReal));
-        assertThat("path.virtual[" + position + "]", virtual, is(expectedVirtual));
+        assertThat("path.virtual[" + position + "]", virtual, expectedVirtual);
     }
 
     @Test
@@ -1091,19 +1155,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // We remove a directory
         logger.info("  ---> Removing dir subdir1");
-        Files.walkFileTree(currentTestResourceDir.resolve("subdir1"), new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                Files.delete(dir);
-                return FileVisitResult.CONTINUE;
-            }
-        });
+        deleteRecursively(currentTestResourceDir.resolve("subdir1"));
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
