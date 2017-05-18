@@ -206,6 +206,11 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         }
     }
 
+    @Test
+    public void testChineseContent369() throws IOException {
+        runSearch("issue-369.txt", "今天天气晴好");
+    }
+
     private SearchResponse runSearch(String filename) throws IOException {
         return runSearch(filename, null);
     }
