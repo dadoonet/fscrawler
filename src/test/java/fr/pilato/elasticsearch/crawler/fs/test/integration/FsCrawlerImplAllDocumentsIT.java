@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import org.apache.tika.parser.external.ExternalParser;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,6 +42,7 @@ import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extr
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Test all type of documents we have
@@ -209,6 +211,13 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     @Test
     public void testChineseContent369() throws IOException {
         runSearch("issue-369.txt", "今天天气晴好");
+    }
+
+    @Test
+    public void testOcr() throws IOException {
+        assumeTrue("Tesseract is not installed so we are skipping this test", ExternalParser.check("tesseract"));
+        runSearch("test-ocr.png", "words");
+        runSearch("test-ocr.pdf", "words");
     }
 
     private SearchResponse runSearch(String filename) throws IOException {

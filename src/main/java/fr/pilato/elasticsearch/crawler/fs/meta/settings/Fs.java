@@ -44,6 +44,7 @@ public class Fs {
     private boolean indexFolders = true;
     private boolean langDetect = false;
     private boolean continueOnError = false;
+    private boolean pdfOcr = true;
 
     public static Builder builder() {
         return new Builder();
@@ -73,6 +74,7 @@ public class Fs {
         private boolean indexFolders = true;
         private boolean langDetect = false;
         private boolean continueOnError = false;
+        private boolean pdfOcr = true;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -195,10 +197,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setPdfOcr(boolean pdfOcr) {
+            this.pdfOcr = pdfOcr;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, pdfOcr);
         }
     }
 
@@ -209,7 +216,7 @@ public class Fs {
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError, boolean pdfOcr) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -229,6 +236,7 @@ public class Fs {
         this.indexFolders = indexFolders;
         this.langDetect = langDetect;
         this.continueOnError = continueOnError;
+        this.pdfOcr = pdfOcr;
     }
 
     public String getUrl() {
@@ -383,6 +391,13 @@ public class Fs {
         this.continueOnError = continueOnError;
     }
 
+    public boolean isPdfOcr() {
+        return pdfOcr;
+    }
+
+    public void setPdfOcr(boolean pdfOcr) {
+        this.pdfOcr = pdfOcr;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -404,6 +419,7 @@ public class Fs {
         if (rawMetadata != fs.rawMetadata) return false;
         if (langDetect != fs.langDetect) return false;
         if (continueOnError != fs.continueOnError) return false;
+        if (pdfOcr != fs.pdfOcr) return false;
         if (url != null ? !url.equals(fs.url) : fs.url != null) return false;
         if (updateRate != null ? !updateRate.equals(fs.updateRate) : fs.updateRate != null) return false;
         if (includes != null ? !includes.equals(fs.includes) : fs.includes != null) return false;
@@ -434,6 +450,7 @@ public class Fs {
         result = 31 * result + (indexFolders ? 1 : 0);
         result = 31 * result + (langDetect ? 1 : 0);
         result = 31 * result + (continueOnError ? 1 : 0);
+        result = 31 * result + (pdfOcr ? 1 : 0);
         return result;
     }
 }

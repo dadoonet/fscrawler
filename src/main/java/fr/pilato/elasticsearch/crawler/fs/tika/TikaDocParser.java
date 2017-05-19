@@ -86,7 +86,7 @@ public class TikaDocParser {
         try {
             // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
             logger.trace("Beginning Tika extraction");
-            parsedContent = tika().parseToString(inputStream, metadata, indexedChars);
+            parsedContent = tika(fsSettings.getFs().isPdfOcr()).parseToString(inputStream, metadata, indexedChars);
             logger.trace("End of Tika extraction");
         } catch (Throwable e) {
             logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "]", e);

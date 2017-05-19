@@ -23,6 +23,8 @@ import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
+import fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance;
+import org.apache.tika.parser.external.ExternalParser;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -43,6 +45,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeTrue;
 
 public class TikaDocParserTest extends DocParserTestCase {
 
@@ -442,7 +445,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("modified", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("cp:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
-        assertThat(raw, hasEntry("X-Parsed-By", "org.apache.tika.parser.DefaultParser"));
+        assertThat(raw, hasEntry("X-Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("creator", "David Pilato"));
         assertThat(raw, hasEntry("meta:author", "David Pilato"));
         assertThat(raw, hasEntry("dc:subject", "keyword1, keyword2"));
@@ -601,6 +604,27 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getFile().getChecksum(), notNullValue());
     }
 
+    @Test
+    public void testOcr() throws IOException {
+        assumeTrue("Tesseract is not installed so we are skipping this test", ExternalParser.check("tesseract"));
+
+        // Test with OCR On (default)
+        Doc doc = extractFromFile("test-ocr.png");
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        doc = extractFromFile("test-ocr.pdf");
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+
+        // Test with OCR Off
+        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setPdfOcr(false).build())
+                .build();
+        doc = extractFromFile("test-ocr.png", fsSettings);
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        doc = extractFromFile("test-ocr.pdf", fsSettings);
+        assertThat(doc.getContent(), is("\n\n"));
+    }
+
+
     private Doc extractFromFileExtension(String extension) throws IOException {
         logger.info("Test extraction of [{}] file", extension);
         return extractFromFile("test." + extension);
@@ -622,6 +646,8 @@ public class TikaDocParserTest extends DocParserTestCase {
             }
         }
 
+        // We make sure we reload a new Tika instance any time we test
+        TikaInstance.reloadTika();
         TikaDocParser.generate(
                 fsSettings,
                 data,

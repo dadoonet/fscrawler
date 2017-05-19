@@ -119,6 +119,9 @@ Instead of `/path/to` you will now get `/path/to/file.txt`.
 
 * `path.encoded` in documents and `encoded` in folders have been removed as not needed by FSCrawler after all.
 
+* [OCR](#ocr-integration) is now properly activated for PDF documents. This can be time, cpu and memory consuming though.
+You can disable explicitly it by setting `fs.pdf_ocr` to `false`.
+
 # User Guide
 
 ## Getting Started
@@ -387,6 +390,7 @@ The job file must comply to the following `json` specifications:
     "store_source" : false,
     "lang_detect" : false,
     "continue_on_error" : false,
+    "pdf_ocr" : true,
     "indexed_chars" : "10000"
   },
   "server" : {
@@ -469,6 +473,7 @@ Here is a list of Local FS settings (under `fs.` prefix)`:
 | `fs.index_content`               | `true`        | [Ignore content](#ignore-content)                                                 |
 | `fs.lang_detect`                 | `false`       | [Language detection](#language-detection) (from 2.2)                              |
 | `fs.continue_on_error`           | `false`       | [Continue on File Permission Error](#continue-on-error) (from 2.3)                |
+| `fs.pdf_ocr`                     | `true`        | [Run OCR on PDF documents](#ocr-integration) (from 2.3)                           |
 | `fs.indexed_chars`               | `100000.0`    | [Extracted characters](#extracted-characters)                                     |
 | `fs.checksum`                    | `null`        | [File signature](#file-signature)                                                 |
 
@@ -1831,10 +1836,23 @@ There is no specific support for HDFS in FS crawler. But you can [mount your HDF
 and run FS crawler on this mount point. You can also read details about
 [HDFS NFS Gateway](http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsNfsGateway.html).
 
-## OCR integration (using Tika and Tesseract)
+## OCR integration
 
 To deal with images containing text, just [install Tesseract](https://github.com/tesseract-ocr/tesseract/wiki). Tesseract will be auto-detected by Tika.
 Then add an image (png, jpg, ...) into your Fscrawler [root directory](#root-directory). After the next index update, the text will be indexed and placed in "_source.content".
+
+By default, FS crawler will try to extract also images from your PDF documents and run OCR on them.
+This can be a CPU intensive operation. If you don't mean to run OCR on PDF but only on images, you can set `fs.pdf_ocr`
+to `false`:
+
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "pdf_ocr" : false
+  }
+}
+```
 
 ## Using docker
 

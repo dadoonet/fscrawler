@@ -20,8 +20,14 @@
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.external.ExternalParser;
+import org.apache.tika.parser.pdf.PDFParser;
 
 import java.io.IOException;
 
@@ -30,12 +36,41 @@ import static org.apache.tika.langdetect.OptimaizeLangDetector.getDefaultLanguag
 /**
  *
  */
-class TikaInstance {
+public class TikaInstance {
 
-    private static final Tika tika = new Tika();
+    private static final Logger logger = LogManager.getLogger(TikaInstance.class);
+
+    private static Tika tika;
     private static LanguageDetector detector;
 
-    public static Tika tika() {
+    /* For tests only */
+    public static void reloadTika() {
+        tika = null;
+    }
+
+    public static Tika tika(boolean ocr) {
+        if (tika == null) {
+            PDFParser pdfParser = new PDFParser();
+
+            if (ocr) {
+                logger.debug("OCR is activated for PDF documents");
+                if (ExternalParser.check("tesseract")) {
+                    pdfParser.setOcrStrategy("ocr_and_text");
+                } else {
+                    logger.debug("But Tesseract is not installed so we won't run OCR.");
+                }
+            }
+
+            Parser PARSERS[] = new Parser[2];
+            PARSERS[0] = new org.apache.tika.parser.DefaultParser();
+            PARSERS[1] = pdfParser;
+
+            AutoDetectParser parser;
+            parser = new AutoDetectParser(PARSERS);
+
+            tika = new Tika(parser.getDetector(), parser);
+        }
+
         return tika;
     }
 
