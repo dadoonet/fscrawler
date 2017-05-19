@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator.validateSettings;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
 
 /**
  * @author dadoonet (David Pilato)
@@ -559,8 +560,8 @@ public class FsCrawlerImpl {
 
                     // File
                     doc.getFile().setFilename(filename);
-                    doc.getFile().setLastModified(lastmodified);
-                    doc.getFile().setIndexingDate(LocalDateTime.now());
+                    doc.getFile().setLastModified(localDateTimeToDate(lastmodified));
+                    doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
                     doc.getFile().setUrl("file://" + fullFilename);
                     doc.getFile().setExtension(extension);
                     if (fsSettings.getFs().isAddFilesize()) {

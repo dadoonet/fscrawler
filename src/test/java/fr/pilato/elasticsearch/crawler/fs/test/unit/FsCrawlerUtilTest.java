@@ -29,9 +29,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.TimeZone;
 
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -99,5 +102,11 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar")), is("bar"));
         assertThat(FsCrawlerUtil.getFileExtension(new File("foo")), is(""));
         assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar.baz")), is("baz"));
+    }
+
+    @Test
+    public void testLocalDateToDate() {
+        LocalDateTime now = LocalDateTime.now();
+        logger.info("Current Time [{}] in [{}] is actually [{}]", now, TimeZone.getDefault().getDisplayName(), localDateTimeToDate(now));
     }
 }

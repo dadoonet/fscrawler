@@ -45,6 +45,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.buildUrl;
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
 
 @Path("/_upload")
 public class UploadApi extends RestApi {
@@ -84,7 +85,7 @@ public class UploadApi extends RestApi {
 
         // File
         doc.getFile().setFilename(filename);
-        doc.getFile().setIndexingDate(LocalDateTime.now());
+        doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
         // File
 
         // Path

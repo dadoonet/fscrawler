@@ -42,6 +42,7 @@ import java.util.List;
 
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.tika;
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
 
 /**
  * Parse a binary document and generate a FSCrawler Doc
@@ -126,7 +127,8 @@ public class TikaDocParser {
         if (sDate != null) {
             try {
                 LocalDateTime date = LocalDateTime.parse(sDate, DateTimeFormatter.ISO_DATE_TIME);
-                doc.getMeta().setDate(date);
+                // We assume that local documents have the same date as the system date
+                doc.getMeta().setDate(localDateTimeToDate(date));
             } catch (DateTimeParseException e) {
                 logger.warn("Can not parse date [{}] for [{}]. Skipping date field...", sDate, filename);
             }

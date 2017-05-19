@@ -122,6 +122,10 @@ Instead of `/path/to` you will now get `/path/to/file.txt`.
 * [OCR](#ocr-integration) is now properly activated for PDF documents. This can be time, cpu and memory consuming though.
 You can disable explicitly it by setting `fs.pdf_ocr` to `false`.
 
+* All dates are now indexed in elasticsearch in UTC instead of without any time zone. For example, we were indexing
+previously a date like `2017-05-19T13:24:47.000`. Which was producing bad results when you were located in a time zone
+other than UTC. It's now indexed as `2017-05-19T13:24:47.000+0000`.
+
 # User Guide
 
 ## Getting Started

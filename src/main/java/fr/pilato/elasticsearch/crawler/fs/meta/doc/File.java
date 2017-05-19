@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.doc;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * Represents File attributes
@@ -43,8 +43,8 @@ public class File {
 
     private String extension;
     private String contentType;
-    private LocalDateTime lastModified;
-    private LocalDateTime indexingDate;
+    private Date lastModified;
+    private Date indexingDate;
     private Long filesize;
     private String filename;
     private String url;
@@ -67,19 +67,19 @@ public class File {
         this.contentType = contentType;
     }
 
-    public LocalDateTime getLastModified() {
+    public Date getLastModified() {
         return lastModified;
     }
 
-    public void setLastModified(LocalDateTime lastModified) {
+    public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
     }
 
-    public LocalDateTime getIndexingDate() {
+    public Date getIndexingDate() {
         return indexingDate;
     }
 
-    public void setIndexingDate(LocalDateTime indexingDate) {
+    public void setIndexingDate(Date indexingDate) {
         this.indexingDate = indexingDate;
     }
 

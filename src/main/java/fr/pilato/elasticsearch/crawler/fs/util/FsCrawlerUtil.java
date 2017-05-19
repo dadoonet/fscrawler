@@ -49,8 +49,10 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.TimeZone;
 
 public class FsCrawlerUtil extends MetaParser {
     public static final String INDEX_TYPE_DOC = "doc";
@@ -218,6 +220,10 @@ public class FsCrawlerUtil extends MetaParser {
             time = null;
         }
         return time;
+    }
+
+    public static Date localDateTimeToDate(LocalDateTime ldt) {
+        return Date.from(ldt.atZone(TimeZone.getDefault().toZoneId()).toInstant());
     }
 
     public static String getFileExtension(File file) {

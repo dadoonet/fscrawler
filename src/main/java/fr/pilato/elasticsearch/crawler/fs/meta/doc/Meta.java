@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.doc;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +42,7 @@ public class Meta {
 
     private String author;
     private String title;
-    private LocalDateTime date;
+    private Date date;
     private List<String> keywords;
     private String language;
 
@@ -64,11 +64,11 @@ public class Meta {
         this.title = title;
     }
 
-    public LocalDateTime getDate() {
+    public Date getDate() {
         return date;
     }
 
-    public void setDate(LocalDateTime date) {
+    public void setDate(Date date) {
         this.date = date;
     }
 
