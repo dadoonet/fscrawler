@@ -56,6 +56,7 @@
         <tests.seed></tests.seed>
         <!-- Running the tests with Tesseract OCR might take time -->
         <tests.timeoutSuite>600000</tests.timeoutSuite>
+        <tests.timeout>600000</tests.timeout>
 
         <java.compiler.version>1.8</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
