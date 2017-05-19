@@ -54,6 +54,8 @@
         <tests.leaveTemporary>false</tests.leaveTemporary>
         <tests.parallelism>auto</tests.parallelism>
         <tests.seed></tests.seed>
+        <!-- Running the tests with Tesseract OCR might take time -->
+        <tests.timeoutSuite>600000</tests.timeoutSuite>
 
         <java.compiler.version>1.8</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -202,6 +204,7 @@
                     <seed>${tests.seed}</seed>
                     <systemProperties combine.children="append">
                         <arg.common>arg.common</arg.common>
+                        <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
                         <tests.locale>${tests.locale}</tests.locale>
                         <tests.timezone>${tests.timezone}</tests.timezone>
                         <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
