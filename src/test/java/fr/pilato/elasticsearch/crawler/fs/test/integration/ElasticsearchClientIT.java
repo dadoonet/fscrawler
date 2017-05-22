@@ -299,6 +299,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                         bulkResponse.set(response);
                     }
                     @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) { }
+                    @Override public void setBulkProcessor(BulkProcessor bulkProcessor) { }
                 })
                 .setBulkActions(100)
                 .setFlushInterval(TimeValue.timeValueMillis(200))

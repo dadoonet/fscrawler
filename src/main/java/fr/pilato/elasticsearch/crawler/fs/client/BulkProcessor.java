@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -49,6 +50,7 @@ public class BulkProcessor {
         this.bulkRequest = new BulkRequest();
         this.client = client;
         this.listener = listener;
+        this.listener.setBulkProcessor(this);
 
         if (flushInterval != null) {
             executor = Executors.newScheduledThreadPool(1);
@@ -168,6 +170,10 @@ public class BulkProcessor {
         return (bulkActions != -1) && (bulkRequest.numberOfActions() >= bulkActions);
     }
 
+    public Listener getListener() {
+        return listener;
+    }
+
     public static class Builder {
 
         private int bulkActions;
@@ -212,7 +218,10 @@ public class BulkProcessor {
         void afterBulk(long executionId, BulkRequest request, BulkResponse response);
 
         void afterBulk(long executionId, BulkRequest request, Throwable failure);
+
+        void setBulkProcessor(BulkProcessor bulkProcessor);
     }
+
     /**
      * Build an simple elasticsearch bulk processor
      * @param client elasticsearch client
@@ -220,40 +229,151 @@ public class BulkProcessor {
      * @param flushInterval flush interval in milliseconds
      * @param pipeline Node Ingest Pipeline if any. Null otherwise.
      * @return a bulk processor
+     * @see SimpleBulkProcessorListener
      */
     public static BulkProcessor simpleBulkProcessor(ElasticsearchClient client, int bulkSize, TimeValue flushInterval, String pipeline) {
         logger.debug("Creating a bulk processor with size [{}], flush [{}], pipeline [{}]", bulkSize, flushInterval, pipeline);
-        return builder(client, new Listener() {
-            @Override
-            public void beforeBulk(long executionId, BulkRequest request) {
-                logger.debug("Going to execute new bulk composed of {} actions", request.numberOfActions());
-            }
-
-            @Override
-            public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
-                logger.debug("Executed bulk composed of {} actions", request.numberOfActions());
-                if (response.hasFailures()) {
-                    logger.warn("There was failures while executing bulk", response.buildFailureMessage());
-                    if (logger.isDebugEnabled()) {
-                        for (BulkResponse.BulkItemTopLevelResponse topLevelItem : response.getItems()) {
-                            BulkResponse.BulkItemResponse item = topLevelItem.getItemContent();
-                            if (item.isFailed()) {
-                                logger.debug("Error for {}/{}/{} for {} operation: {}", item.getIndex(),
-                                        item.getType(), item.getId(), item.getOpType(), item.getFailureMessage());
-                            }
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
-                logger.warn("Error executing bulk", failure);
-            }
-        })
+        return builder(client, new SimpleBulkProcessorListener())
                 .setBulkActions(bulkSize)
                 .setFlushInterval(flushInterval)
                 .setPipeline(pipeline)
                 .build();
+    }
+
+    /**
+     * Build an advanced elasticsearch bulk processor
+     * @param client elasticsearch client
+     * @param bulkSize bulk size
+     * @param flushInterval flush interval in milliseconds
+     * @param pipeline Node Ingest Pipeline if any. Null otherwise.
+     * @return a bulk processor
+     * @see AdvancedBulkProcessorListener
+     */
+    public static BulkProcessor advancedBulkProcessor(ElasticsearchClient client, int bulkSize, TimeValue flushInterval, String pipeline) {
+        logger.debug("Creating a bulk processor with size [{}], flush [{}], pipeline [{}]", bulkSize, flushInterval, pipeline);
+        return builder(client, new AdvancedBulkProcessorListener())
+                .setBulkActions(bulkSize)
+                .setFlushInterval(flushInterval)
+                .setPipeline(pipeline)
+                .build();
+    }
+
+    /**
+     * Build an advanced elasticsearch bulk processor with retry mechanism
+     * @param client elasticsearch client
+     * @param bulkSize bulk size
+     * @param flushInterval flush interval in milliseconds
+     * @param pipeline Node Ingest Pipeline if any. Null otherwise.
+     * @return a bulk processor
+     * @see RetryBulkProcessorListener
+     */
+    public static BulkProcessor retryBulkProcessor(ElasticsearchClient client, int bulkSize, TimeValue flushInterval, String pipeline) {
+        logger.debug("Creating a bulk processor with size [{}], flush [{}], pipeline [{}]", bulkSize, flushInterval, pipeline);
+        return builder(client, new RetryBulkProcessorListener())
+                .setBulkActions(bulkSize)
+                .setFlushInterval(flushInterval)
+                .setPipeline(pipeline)
+                .build();
+    }
+
+    protected static class SimpleBulkProcessorListener implements Listener {
+        protected BulkProcessor bulkProcessor;
+
+        @Override
+        public void beforeBulk(long executionId, BulkRequest request) {
+            logger.debug("Going to execute new bulk composed of {} actions", request.numberOfActions());
+        }
+
+        @Override
+        public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+            logger.debug("Executed bulk composed of {} actions", request.numberOfActions());
+            if (response.hasFailures()) {
+                logger.warn("There was failures while executing bulk", response.buildFailureMessage());
+                if (logger.isDebugEnabled()) {
+                    for (BulkResponse.BulkItemTopLevelResponse topLevelItem : response.getItems()) {
+                        BulkResponse.BulkItemResponse item = topLevelItem.getItemContent();
+                        if (item.isFailed()) {
+                            logger.debug("Error for {}/{}/{} for {} operation: {}", item.getIndex(),
+                                    item.getType(), item.getId(), item.getOpType(), item.getFailureMessage());
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+            logger.warn("Error executing bulk", failure);
+        }
+
+        @Override
+        public void setBulkProcessor(BulkProcessor bulkProcessor) {
+            this.bulkProcessor = bulkProcessor;
+        }
+    }
+
+    /**
+     * This Listener exposes the number of successive errors that might have seen previously. So the caller can if needed slow down
+     * a bit the injection.
+     * A retry mechanism is implemented in RetryBulkProcessorListener
+     * @see RetryBulkProcessorListener
+     */
+    public static class AdvancedBulkProcessorListener extends SimpleBulkProcessorListener {
+        private AtomicInteger successiveErrors = new AtomicInteger(0);
+
+        public int getErrors() {
+            return successiveErrors.get();
+        }
+
+        @Override
+        public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+            super.afterBulk(executionId, request, response);
+            if (response.hasFailures()) {
+                int previousErrors = successiveErrors.getAndIncrement();
+                logger.warn("Throttling is activated. Got [{}] successive errors so far.", previousErrors);
+            } else {
+                int previousErrors = successiveErrors.get();
+                if (previousErrors > 0) {
+                    successiveErrors.set(0);
+                    logger.debug("We are back to normal behavior after [{}] errors. \\o/", previousErrors);
+                }
+            }
+        }
+    }
+
+    /**
+     * This Listener implements a simple and naive retry mechanism. When a document is rejected because of a es_rejected_execution_exception
+     * the same document is sent again to the bulk processor.
+     */
+    public static class RetryBulkProcessorListener extends AdvancedBulkProcessorListener {
+        @Override
+        public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+            super.afterBulk(executionId, request, response);
+            if (response.hasFailures()) {
+                for (BulkResponse.BulkItemTopLevelResponse bulkResponse : response.getItems()) {
+                    BulkResponse.BulkItemResponse itemContent = bulkResponse.getItemContent();
+                    if (itemContent.isFailed() && itemContent.getFailureMessage().contains("es_rejected_execution_exception")) {
+                        logger.debug("We are going to retry document [{}]/[{}]/[{}] because of [{}]",
+                                itemContent.getIndex(), itemContent.getType(), itemContent.getId(), itemContent.getFailureMessage());
+                        // Find request
+                        boolean requestFound = false;
+                        for (SingleBulkRequest singleBulkRequest : request.getRequests()) {
+                            if (singleBulkRequest.getIndex().equals(itemContent.getIndex()) &&
+                                    singleBulkRequest.getType().equals(itemContent.getType()) &&
+                                    singleBulkRequest.getId().equals(itemContent.getId())) {
+                                this.bulkProcessor.add(singleBulkRequest);
+                                requestFound = true;
+                                logger.debug("Document [{}]/[{}]/[{}] found. Can be retried.", itemContent.getIndex(), itemContent.getType(), itemContent.getId());
+                                break;
+                            }
+                        }
+                        if (!requestFound) {
+                            logger.warn("Can not retry document [{}]/[{}]/[{}] because we can't find it anymore.",
+                                    itemContent.getIndex(), itemContent.getType(), itemContent.getId());
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -73,7 +73,7 @@ public class ElasticsearchClientManager {
                     ", but your elasticsearch cluster does not support this feature.");
         }
 
-        bulkProcessor = BulkProcessor.simpleBulkProcessor(client, settings.getElasticsearch().getBulkSize(),
+        bulkProcessor = BulkProcessor.retryBulkProcessor(client, settings.getElasticsearch().getBulkSize(),
                 settings.getElasticsearch().getFlushInterval(), settings.getElasticsearch().getPipeline());
     }
 

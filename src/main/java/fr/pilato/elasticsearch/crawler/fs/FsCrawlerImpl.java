@@ -36,6 +36,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
@@ -99,6 +100,7 @@ public class FsCrawlerImpl {
 
     private static final int REQUEST_SIZE = 10000;
     public static final int LOOP_INFINITE = -1;
+    public static final long MAX_SLEEP_RETRY_TIME = TimeValue.timeValueSeconds(30).millis();
 
     private volatile boolean closed = false;
     private final Object semaphore = new Object();
@@ -711,6 +713,19 @@ public class FsCrawlerImpl {
             logger.trace("JSon indexed : {}", json);
 
             if (!closed) {
+                // Let's throttle this is we had previous errors in the bulk execution
+                BulkProcessor.AdvancedBulkProcessorListener listener = (BulkProcessor.AdvancedBulkProcessorListener) bulkProcessor.getListener();
+
+                int errors = listener.getErrors();
+                if (errors > 0) {
+                    long sleepTime = Math.min(500 * errors, MAX_SLEEP_RETRY_TIME);
+                    logger.error("As we got so far [{}] errors, we are going to wait a bit here: [{}] ms", errors, sleepTime);
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        logger.warn("Thread interrupted", e);
+                    }
+                }
                 bulkProcessor.add(new IndexRequest(index, type, id).source(json));
             } else {
                 logger.warn("trying to add new file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, type, id);
