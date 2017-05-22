@@ -126,6 +126,8 @@ public class FsCrawler {
             return;
         }
 
+        BootstrapChecks.check();
+
         Path configDir;
 
         if (commands.configDir == null) {
