@@ -286,7 +286,7 @@ You will find more information about REST settings in the following section:
 
 ## Supported formats
 
-FS crawler supports all formats [Tika version 1.14 supports](http://tika.apache.org/1.14/formats.html#Supported_Document_Formats), like:
+FS crawler supports all formats [Tika version 1.15 supports](http://tika.apache.org/1.15/formats.html#Supported_Document_Formats), like:
 
 * HTML
 * Microsoft Office
