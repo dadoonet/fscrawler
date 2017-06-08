@@ -38,7 +38,6 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -101,13 +100,15 @@ public class ElasticsearchClient {
         try {
             StringEntity entity = null;
             if (!Strings.isNullOrEmpty(indexSettings)) {
-                entity = new StringEntity(indexSettings, StandardCharsets.UTF_8);
+                entity = new StringEntity(indexSettings, ContentType.APPLICATION_JSON);
             }
             Response response = client.performRequest("PUT", "/" + index, Collections.emptyMap(), entity);
             logger.trace("create index response: {}", JsonUtil.asMap(response));
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 400 &&
-                    (e.getMessage().contains("index_already_exists_exception") || e.getMessage().contains("IndexAlreadyExistsException") )) {
+                    (e.getMessage().contains("index_already_exists_exception") || // ES 5.x
+                            e.getMessage().contains("resource_already_exists_exception") || // ES 6.x
+                            e.getMessage().contains("IndexAlreadyExistsException") )) { // ES 1.x and 2.x
                 if (!ignoreErrors) {
                     throw new RuntimeException("index already exists");
                 }
@@ -145,7 +146,7 @@ public class ElasticsearchClient {
             params = Collections.emptyMap();
         }
 
-        StringEntity entity = new StringEntity(sbf.toString(), StandardCharsets.UTF_8);
+        StringEntity entity = new StringEntity(sbf.toString(), ContentType.APPLICATION_JSON);
         Response restResponse = client.performRequest("POST", "/_bulk", params, entity);
         BulkResponse response = JsonUtil.deserialize(restResponse, BulkResponse.class);
         logger.debug("bulk response: {}", response);
@@ -155,7 +156,7 @@ public class ElasticsearchClient {
     public void putMapping(String index, String type, String mapping) throws IOException {
         logger.debug("put mapping [{}/{}]", index, type);
 
-        StringEntity entity = new StringEntity(mapping, StandardCharsets.UTF_8);
+        StringEntity entity = new StringEntity(mapping, ContentType.APPLICATION_JSON);
         Response restResponse = client.performRequest("PUT", "/" + index + "/_mapping/" + type, Collections.emptyMap(), entity);
         logger.trace("put mapping response: {}", JsonUtil.asMap(restResponse));
     }
@@ -198,7 +199,7 @@ public class ElasticsearchClient {
     public void index(String index, String type, String id, String json) throws IOException {
         logger.debug("put document [{}/{}/{}]", index, type, id);
 
-        StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
+        StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
         Response restResponse = client.performRequest("PUT", "/" + index + "/" + type+ "/" + id, Collections.emptyMap(), entity);
         logger.trace("put document response: {}", JsonUtil.asMap(restResponse));
     }
