@@ -27,13 +27,13 @@ import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.VersionComparator;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.logging.log4j.LogManager;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -258,7 +258,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        StringEntity entity = new StringEntity(pipeline, StandardCharsets.UTF_8);
+        StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
 
         elasticsearchClient.getClient().performRequest("PUT", "_ingest/pipeline/" + getCrawlerName(),
                 Collections.emptyMap(), entity);
@@ -317,6 +317,19 @@ public class ElasticsearchClientIT extends AbstractITCase {
         if (LogManager.getLogger(BulkResponse.class).isTraceEnabled()) {
             assertThat(message.getMessage(), containsString("failed to parse"));
         }
+    }
+
+    @Test
+    public void testBulkUsesContentType() throws Exception {
+        // Create the index first
+        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
+
+        BulkRequest bulkRequest = new BulkRequest();
+        bulkRequest.add(new IndexRequest(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "id").source("{\"foo\":\"bar\"}"));
+
+        // This call was failing when we were not passing the ContentType.APPLICATION_JSON in the bulk method
+        elasticsearchClient.bulk(bulkRequest, null);
     }
 
     /**
