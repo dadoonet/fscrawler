@@ -26,7 +26,7 @@ import java.util.List;
 @SuppressWarnings("SameParameterValue")
 public class Fs {
     private String url;
-    private TimeValue updateRate;
+    private TimeValue updateRate = TimeValue.timeValueMinutes(15);
     private List<String> includes = null;
     private List<String> excludes = null;
     private boolean jsonSupport = false;
