@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +32,11 @@ public class Elasticsearch {
 
     }
 
-    private Elasticsearch(List<Node> nodes, String index, String type, int bulkSize, TimeValue flushInterval,
-                          String username, String password, String pipeline) {
+    private Elasticsearch(List<Node> nodes, String index, String indexFolder, int bulkSize,
+                          TimeValue flushInterval, String username, String password, String pipeline) {
         this.nodes = nodes;
         this.index = index;
-        this.type = type;
+        this.indexFolder = indexFolder;
         this.bulkSize = bulkSize;
         this.flushInterval = flushInterval;
         this.username = username;
@@ -183,7 +182,7 @@ public class Elasticsearch {
 
     private List<Node> nodes;
     private String index;
-    private String type = FsCrawlerUtil.INDEX_TYPE_DOC;
+    private String indexFolder;
     private int bulkSize = 100;
     private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
     private String username;
@@ -203,8 +202,12 @@ public class Elasticsearch {
         this.index = index;
     }
 
-    public String getType() {
-        return type;
+    public String getIndexFolder() {
+        return indexFolder;
+    }
+
+    public void setIndexFolder(String indexFolder) {
+        this.indexFolder = indexFolder;
     }
 
     public int getBulkSize() {
@@ -244,7 +247,7 @@ public class Elasticsearch {
     public static class Builder {
         private List<Node> nodes;
         private String index;
-        private String type = FsCrawlerUtil.INDEX_TYPE_DOC;
+        private String indexFolder;
         private int bulkSize = 100;
         private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
         private String username = null;
@@ -269,8 +272,8 @@ public class Elasticsearch {
             return this;
         }
 
-        public Builder setType(String type) {
-            this.type = type;
+        public Builder setIndexFolder(String indexFolder) {
+            this.indexFolder = indexFolder;
             return this;
         }
 
@@ -300,7 +303,7 @@ public class Elasticsearch {
         }
 
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, type, bulkSize, flushInterval, username, password, pipeline);
+            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, username, password, pipeline);
         }
     }
 
@@ -314,7 +317,7 @@ public class Elasticsearch {
         if (bulkSize != that.bulkSize) return false;
         if (nodes != null ? !nodes.equals(that.nodes) : that.nodes != null) return false;
         if (index != null ? !index.equals(that.index) : that.index != null) return false;
-        if (type != null ? !type.equals(that.type) : that.type != null) return false;
+        if (indexFolder != null ? !indexFolder.equals(that.indexFolder) : that.indexFolder != null) return false;
         if (username != null ? !username.equals(that.username) : that.username != null) return false;
         // We can't really test the password as it may be obfuscated
         if (pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null) return false;
@@ -326,7 +329,7 @@ public class Elasticsearch {
     public int hashCode() {
         int result = nodes != null ? nodes.hashCode() : 0;
         result = 31 * result + (index != null ? index.hashCode() : 0);
-        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (indexFolder != null ? indexFolder.hashCode() : 0);
         result = 31 * result + (username != null ? username.hashCode() : 0);
         result = 31 * result + (password != null ? password.hashCode() : 0);
         result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);

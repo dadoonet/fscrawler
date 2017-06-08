@@ -1,0 +1,37 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "fscrawler_path": {
+          "tokenizer": "fscrawler_path"
+        }
+      },
+      "tokenizer": {
+        "fscrawler_path": {
+          "type": "path_hierarchy"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "doc": {
+      "properties": {
+        "real": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        },
+        "root": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        },
+        "virtual": {
+          "type": "string",
+          "store": true,
+          "index": "not_analyzed"
+        }
+      }
+    }
+  }
+}

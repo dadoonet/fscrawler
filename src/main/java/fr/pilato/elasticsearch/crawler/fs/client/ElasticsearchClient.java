@@ -153,14 +153,6 @@ public class ElasticsearchClient {
         return response;
     }
 
-    public void putMapping(String index, String type, String mapping) throws IOException {
-        logger.debug("put mapping [{}/{}]", index, type);
-
-        StringEntity entity = new StringEntity(mapping, ContentType.APPLICATION_JSON);
-        Response restResponse = client.performRequest("PUT", "/" + index + "/_mapping/" + type, Collections.emptyMap(), entity);
-        logger.trace("put mapping response: {}", JsonUtil.asMap(restResponse));
-    }
-
     public String findVersion() throws IOException {
         logger.debug("findVersion()");
         String version;
@@ -196,24 +188,24 @@ public class ElasticsearchClient {
         logger.trace("health response: {}", JsonUtil.asMap(restResponse));
     }
 
-    public void index(String index, String type, String id, String json) throws IOException {
-        logger.debug("put document [{}/{}/{}]", index, type, id);
+    public void index(String index, String id, String json) throws IOException {
+        logger.debug("put document [{}/doc/{}]", index, id);
 
         StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
-        Response restResponse = client.performRequest("PUT", "/" + index + "/" + type+ "/" + id, Collections.emptyMap(), entity);
+        Response restResponse = client.performRequest("PUT", "/" + index + "/doc/" + id, Collections.emptyMap(), entity);
         logger.trace("put document response: {}", JsonUtil.asMap(restResponse));
     }
 
-    public boolean isExistingDocument(String index, String type, String id) throws IOException {
-        logger.debug("is existing doc [{}]/[{}]/[{}]", index, type, id);
+    public boolean isExistingDocument(String index, String id) throws IOException {
+        logger.debug("is existing doc [{}]/[doc]/[{}]", index, id);
 
         try {
-            Response restResponse = client.performRequest("GET", "/" + index + "/" + type+ "/" + id);
+            Response restResponse = client.performRequest("GET", "/" + index + "/doc/" + id);
             logger.trace("get document response: {}", JsonUtil.asMap(restResponse));
             return true;
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 404) {
-                logger.debug("doc [{}]/[{}]/[{}] does not exist", index, type, id);
+                logger.debug("doc [{}]/[doc]/[{}] does not exist", index, id);
                 return false;
             }
             throw e;
@@ -243,25 +235,22 @@ public class ElasticsearchClient {
         }
     }
 
-    public SearchResponse search(String index, String type, String query) throws IOException {
-        return search(index, type, query, null);
+    public SearchResponse search(String index, String query) throws IOException {
+        return search(index, query, null);
     }
 
-    public SearchResponse search(String index, String type, String query, Integer size, String... fields) throws IOException {
+    public SearchResponse search(String index, String query, Integer size, String... fields) throws IOException {
         SearchRequest request = SearchRequest.builder().setQuery(query).setSize(size).setFields(fields).build();
-        return search(index, type, request);
+        return search(index, request);
     }
 
-    public SearchResponse search(String index, String type, SearchRequest searchRequest) throws IOException {
-        logger.debug("search [{}]/[{}], request [{}]", index, type, searchRequest);
+    public SearchResponse search(String index, SearchRequest searchRequest) throws IOException {
+        logger.debug("search [{}], request [{}]", index, searchRequest);
 
         String path = "/";
 
         if (index != null) {
             path += index + "/";
-        }
-        if (type != null) {
-            path += type + "/";
         }
 
         path += "_search";
@@ -286,21 +275,17 @@ public class ElasticsearchClient {
     /**
      * Search with a JSON Body
      * @param index Index. Might be null.
-     * @param type  Type. Might be null.
      * @param json  Json Source
      * @return The Response object
      * @throws IOException if something goes wrong
      */
-    public SearchResponse searchJson(String index, String type, String json) throws IOException {
-        logger.debug("search [{}]/[{}], request [{}]", index, type, json);
+    public SearchResponse searchJson(String index, String json) throws IOException {
+        logger.debug("search [{}], request [{}]", index, json);
 
         String path = "/";
 
         if (index != null) {
             path += index + "/";
-        }
-        if (type != null) {
-            path += type + "/";
         }
 
         path += "_search";
@@ -329,25 +314,6 @@ public class ElasticsearchClient {
                 INGEST_SUPPORT = false;
                 logger.debug("Using elasticsearch < 5, so we can't use ingest node feature");
             }
-        }
-    }
-
-    public boolean isExistingType(String index, String type) throws IOException {
-        logger.debug("is existing type [{}]/[{}]", index, type);
-
-        try {
-            Response restResponse = client.performRequest("GET", "/" + index);
-            Map<String, Object> responseAsMap = JsonUtil.asMap(restResponse);
-            logger.trace("get index metadata response: {}", responseAsMap);
-
-            Map<String, Object> mappings = extractFromPath(responseAsMap, index, "mappings");
-            return mappings.containsKey(type);
-        } catch (ResponseException e) {
-            if (e.getResponse().getStatusLine().getStatusCode() == 404) {
-                logger.debug("type [{}]/[{}] does not exist", index, type);
-                return false;
-            }
-            throw e;
         }
     }
 
@@ -383,42 +349,65 @@ public class ElasticsearchClient {
         return currentObject;
     }
 
-    /**
-     * Create a mapping if it does not exist already
-     * @param client elasticsearch client
-     * @param index index name
-     * @param type type name
-     * @param mapping Elasticsearch mapping
-     * @param forceUpdate If true, it will try to update the mapping
-     * @throws Exception in case of error
-     */
-    public static void pushMapping(ElasticsearchClient client, String index, String type, String mapping, boolean forceUpdate) throws Exception {
-        boolean mappingExist = client.isExistingType(index, type);
-        if (!mappingExist || forceUpdate) {
-            if (forceUpdate) {
-                logger.debug("Mapping [{}]/[{}] will be updated if existing.", index, type);
-            } else {
-                logger.debug("Mapping [{}]/[{}] doesn't exist. Creating it.", index, type);
-            }
-            logger.trace("Mapping for [{}]/[{}]: [{}]", index, type, mapping);
-            client.putMapping(index, type, mapping);
-        } else {
-            logger.debug("Mapping [" + index + "]/[" + type + "] already exists.");
-        }
-    }
-
     public boolean isIngestSupported() {
         return INGEST_SUPPORT;
     }
 
-    public SearchResponse.Hit get(String index, String type, String id) throws IOException {
-        logger.debug("get [{}]/[{}]/[{}]", index, type, id);
+    public SearchResponse.Hit get(String index, String id) throws IOException {
+        logger.debug("get [{}]/[doc]/[{}]", index, id);
 
-        String path = "/" + index + "/" + type + "/" + id;
+        String path = "/" + index + "/doc/" + id;
         Response restResponse = client.performRequest("GET", path);
         SearchResponse.Hit hit = JsonUtil.deserialize(restResponse, SearchResponse.Hit.class);
 
         logger.trace("Hit: {}", hit);
         return hit;
+    }
+
+    public int reindex(String sourceIndex, String sourceType, String targetIndex) throws IOException {
+        logger.debug("reindex [{}]/[{}] -> [{}]/[doc]", sourceIndex, sourceType, targetIndex);
+
+        if (new VersionComparator().compare(VERSION, "2.3") < 0) {
+            logger.warn("Can not use reindex API with elasticsearch [{}]", VERSION);
+            return 0;
+        }
+
+        String reindexQuery = "{  \"source\": {\n" +
+                "    \"index\": \"" + sourceIndex + "\",\n" +
+                "    \"type\": \"" + sourceType + "\"\n" +
+                "  },\n" +
+                "  \"dest\": {\n" +
+                "    \"index\": \"" + targetIndex + "\",\n" +
+                "    \"type\": \"doc\"\n" +
+                "  }\n" +
+                "}\n";
+
+        StringEntity entity = new StringEntity(reindexQuery, ContentType.APPLICATION_JSON);
+        Response restResponse = client.performRequest("POST", "/_reindex", Collections.emptyMap(), entity);
+        Map<String, Object> response = JsonUtil.asMap(restResponse);
+        logger.debug("reindex response: {}", response);
+
+        return (int) response.get("total");
+    }
+
+    public void deleteByQuery(String index, String type) throws IOException {
+        logger.debug("deleteByQuery [{}]/[{}]", index, type);
+
+        if (new VersionComparator().compare(VERSION, "5") < 0) {
+            logger.warn("Can not use _delete_by_query API with elasticsearch [{}]. You have to reindex probably to get rid of [{}]/[{}].",
+                    VERSION, index, type);
+            return;
+        }
+
+        String deleteByQuery = "{\n" +
+                "  \"query\": {\n" +
+                "    \"match_all\": {}\n" +
+                "  }\n" +
+                "}";
+
+        StringEntity entity = new StringEntity(deleteByQuery, ContentType.APPLICATION_JSON);
+        Response restResponse = client.performRequest("POST", "/" + index + "/" + type + "/_delete_by_query", Collections.emptyMap(), entity);
+        Map<String, Object> response = JsonUtil.asMap(restResponse);
+        logger.debug("reindex response: {}", response);
     }
 }

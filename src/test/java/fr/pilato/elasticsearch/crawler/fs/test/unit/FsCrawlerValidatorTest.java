@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
@@ -46,6 +47,7 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getFs().getUrl(), is(Fs.DEFAULT_DIR));
         assertThat(settings.getElasticsearch().getNodes(), hasItem(Elasticsearch.Node.DEFAULT));
         assertThat(settings.getElasticsearch().getIndex(), is(getCurrentTestName()));
+        assertThat(settings.getElasticsearch().getIndexFolder(), is(getCurrentTestName() + INDEX_SUFFIX_FOLDER));
         assertThat(settings.getServer(), nullValue());
 
         // Checking default values
@@ -54,6 +56,7 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(false));
         assertThat(settings.getElasticsearch().getNodes(), hasItem(Elasticsearch.Node.DEFAULT));
         assertThat(settings.getElasticsearch().getIndex(), is(getCurrentTestName()));
+        assertThat(settings.getElasticsearch().getIndexFolder(), is(getCurrentTestName() + INDEX_SUFFIX_FOLDER));
         assertThat(settings.getServer(), nullValue());
 
         // Checking Checksum Algorithm

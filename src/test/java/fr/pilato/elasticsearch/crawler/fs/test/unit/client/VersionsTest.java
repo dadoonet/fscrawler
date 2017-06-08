@@ -32,6 +32,8 @@ public class VersionsTest extends AbstractFSCrawlerTestCase {
     public void testVersions() {
         versionTester("5.0.0-alpha5", "5.0.0", -1);
         versionTester("1.7.3", "5.0.0", -1);
+        versionTester("1.7.3", "2.3", -1);
+        versionTester("2.4.4", "2.3", 1);
         versionTester("5.1.0", "5.0.0", 1);
         versionTester("5.0.0-alpha5", "5.0.0-SNAPSHOT", 14);
         versionTester("5.0.0-alpha5-SNAPSHOT", "5.0.0-SNAPSHOT", 14);

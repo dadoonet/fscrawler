@@ -108,14 +108,13 @@ public class UploadApi extends RestApi {
             logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch.", filename);
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
-            bulkProcessor.add(new IndexRequest(settings.getElasticsearch().getIndex(), settings.getElasticsearch().getType(), id)
-                    .source(DocParser.toJson(doc)));
+            bulkProcessor.add(new IndexRequest(settings.getElasticsearch().getIndex(), "doc", id).source(DocParser.toJson(doc)));
             // Elasticsearch entity coordinates (we use the first node address)
             Elasticsearch.Node node = settings.getElasticsearch().getNodes().get(0);
             url = buildUrl(
                     node.getScheme().toLowerCase(), node.getHost(), node.getPort()) + "/" +
                     settings.getElasticsearch().getIndex() + "/" +
-                    settings.getElasticsearch().getType() + "/" +
+                    "doc" + "/" +
                     id;
         }
 

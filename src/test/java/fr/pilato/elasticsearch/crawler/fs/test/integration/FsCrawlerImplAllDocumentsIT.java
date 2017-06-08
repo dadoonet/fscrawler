@@ -78,13 +78,14 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
         staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents]");
         elasticsearchClient.deleteIndex("fscrawler_test_all_documents");
+        elasticsearchClient.deleteIndex("fscrawler_test_all_documents_folder");
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
         crawler = new FsCrawlerImpl(metadataDir,
                 FsSettings.builder("fscrawler_test_all_documents")
-                        .setElasticsearch(generateElasticsearchConfig("fscrawler_test_all_documents", securityInstalled, 5,
-                                TimeValue.timeValueSeconds(1)))
+                        .setElasticsearch(generateElasticsearchConfig("fscrawler_test_all_documents", "fscrawler_test_all_documents_folder",
+                                securityInstalled, 5, TimeValue.timeValueSeconds(1)))
                         .setFs(Fs.builder()
                                 .setUrl(testResourceTarget.toString())
                                 .setLangDetect(true)
@@ -231,7 +232,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         if (content != null) {
             fullQuery += " +content:" + content;
         }
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", null, fullQuery, null, (String[]) null);
+        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", fullQuery, null, (String[]) null);
         assertThat(response.getHits().getTotal(), is(1L));
         return response;
     }

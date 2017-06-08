@@ -29,7 +29,6 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -70,7 +69,6 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setBulkSize(1000)
             .setFlushInterval(TimeValue.timeValueSeconds(5))
             .setIndex("docs")
-            .setType(FsCrawlerUtil.INDEX_TYPE_DOC)
             .build();
     private static final Server SERVER_EMPTY = Server.builder().build();
     private static final Server SERVER_FULL = Server.builder()
@@ -115,7 +113,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getElasticsearch().getBulkSize(), is(100));
         assertThat(settings.getElasticsearch().getFlushInterval(), is(TimeValue.timeValueSeconds(5)));
         assertThat(settings.getElasticsearch().getIndex(), is("test"));
-        assertThat(settings.getElasticsearch().getType(), is("doc"));
+        assertThat(settings.getElasticsearch().getIndexFolder(), is("test_folder"));
         assertThat(settings.getElasticsearch().getNodes(), iterableWithSize(1));
         assertThat(settings.getElasticsearch().getNodes().get(0).getHost(), is("127.0.0.1"));
         assertThat(settings.getElasticsearch().getNodes().get(0).getPort(), is(9200));

@@ -46,12 +46,16 @@ import java.util.List;
 import java.util.Scanner;
 
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultResources;
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.moveLegacyResource;
 
 /**
  * Main entry point to launch FsCrawler
  */
 public class FsCrawler {
+
+    @Deprecated
+    public static final String INDEX_SETTINGS_FILE = "_settings";
 
     private static final long CLOSE_POLLING_WAIT_MS = 100;
 
@@ -77,11 +81,11 @@ public class FsCrawler {
                 "This does not clean elasticsearch indices.")
         private boolean restart = false;
 
-        @Parameter(names = "--update_mapping", description = "Update elasticsearch mapping")
-        private boolean updateMapping = false;
-
         @Parameter(names = "--rest", description = "Start REST Layer")
         private boolean rest = false;
+
+        @Parameter(names = "--upgrade", description = "Upgrade elasticsearch indices from one old version to the last version.")
+        private boolean upgrade = false;
 
         @Parameter(names = "--debug", description = "Debug mode")
         private boolean debug = false;
@@ -97,6 +101,7 @@ public class FsCrawler {
     }
 
 
+    @SuppressWarnings("deprecation")
     public static void main(String[] args) throws Exception {
         // create a scanner so we can read the command-line input
         Scanner scanner = new Scanner(System.in);
@@ -229,18 +234,40 @@ public class FsCrawler {
         }
 
         logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toJson(fsSettings));
-        fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.updateMapping, commands.rest);
+        fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest);
         Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
+
         try {
-            fsCrawler.start();
-            // We just have to wait until the process is stopped
-            while (!fsCrawler.isClosed()) {
-                sleep();
+            // Let see if we want to upgrade an existing cluster to latest version
+            if (commands.upgrade) {
+                logger.info("Upgrading job [{}]", jobName);
+                boolean success = fsCrawler.upgrade();
+                if (success) {
+                    // We can rewrite the fscrawler setting file (we now have a elasticsearch.index_folder property)
+                    logger.info("Updating fscrawler setting file");
+                    fsSettingsFileHandler.write(fsSettings);
+                }
+            } else {
+                Path jobMappingDir = configDir.resolve(fsSettings.getName()).resolve("_mappings");
+                fsCrawler.getEsClientManager().start();
+                String elasticsearchVersion = fsCrawler.getEsClientManager().client().findVersion();
+                try {
+                    // If we are able to read an old configuration file, we should tell the user to check the documentation
+                    FsCrawlerUtil.readJsonFile(jobMappingDir, configDir, extractMajorVersionNumber(elasticsearchVersion), INDEX_SETTINGS_FILE);
+                    logger.warn("We found old configuration index settings in [{}] or [{}]. You should look at the documentation" +
+                            " about upgrades: https://github.com/dadoonet/fscrawler#upgrade-to-23", configDir, jobMappingDir);
+                } catch (IllegalArgumentException ignored) { }
+
+                fsCrawler.start();
+                // We just have to wait until the process is stopped
+                while (!fsCrawler.isClosed()) {
+                    sleep();
+                }
             }
-            fsCrawler.close();
         } catch (Exception e) {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
             logger.debug("error caught", e);
+        } finally {
             if (fsCrawler != null) {
                 fsCrawler.close();
             }

@@ -58,6 +58,6 @@ public class AbstractRestITCase extends AbstractITCase {
     public void createIndexAndMappings() throws Exception {
         FsSettings fsSettings = FsSettings.builder(getCrawlerName()).setRest(rest).build();
         FsCrawlerValidator.validateSettings(logger, fsSettings, true);
-        esClientManager.createIndexAndMappings(fsSettings, false);
+        esClientManager.createIndices(fsSettings);
     }
 }

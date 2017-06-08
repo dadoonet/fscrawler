@@ -677,11 +677,10 @@
             </build>
         </profile>
         <profile>
-            <id>es-2x-travis</id>
+            <id>es-6x</id>
             <properties>
                 <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-                <elasticsearch.version>2.4.4</elasticsearch.version>
-                <skipXPack>true</skipXPack>
+                <elasticsearch.version>6.0.0-alpha2</elasticsearch.version>
             </properties>
         </profile>
         <profile>

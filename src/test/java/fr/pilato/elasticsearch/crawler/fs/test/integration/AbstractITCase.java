@@ -28,7 +28,6 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.Level;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
@@ -202,8 +201,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static final String testCrawlerPrefix = "fscrawler_";
 
-    protected static Elasticsearch generateElasticsearchConfig(String indexName, boolean securityInstalled, int bulkSize,
-                                                               TimeValue timeValue) {
+    static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, boolean securityInstalled, int bulkSize,
+                                                     TimeValue timeValue) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
                 .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
                 .setBulkSize(bulkSize)
@@ -211,6 +210,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         if (indexName != null) {
             builder.setIndex(indexName);
+        }
+        if (indexFolderName != null) {
+            builder.setIndexFolder(indexFolderName);
         }
 
         if (timeValue != null) {
@@ -281,7 +283,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
 
             try {
-                response[0] = elasticsearchClient.search(indexName, FsCrawlerUtil.INDEX_TYPE_DOC, sr.build());
+                response[0] = elasticsearchClient.search(indexName, sr.build());
             } catch (IOException e) {
                 staticLogger.warn("error caught", e);
                 return false;

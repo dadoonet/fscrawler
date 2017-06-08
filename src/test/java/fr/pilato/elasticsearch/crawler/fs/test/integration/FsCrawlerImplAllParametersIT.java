@@ -21,8 +21,11 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.google.common.base.Charsets;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
+import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.VersionComparator;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Attributes;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.File;
@@ -37,9 +40,9 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.logging.log4j.Level;
-import org.elasticsearch.client.ResponseException;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
@@ -48,7 +51,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,6 +71,7 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.test.integration.FsCrawlerRestIT.uploadFile;
+import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.endsWith;
@@ -82,6 +85,7 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
@@ -160,7 +164,11 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     private Elasticsearch endCrawlerDefinition(String indexName) {
-        return generateElasticsearchConfig(indexName, securityInstalled, 1, null);
+        return endCrawlerDefinition(indexName, indexName + INDEX_SUFFIX_FOLDER);
+    }
+
+    private Elasticsearch endCrawlerDefinition(String indexDocName, String indexFolderName) {
+        return generateElasticsearchConfig(indexDocName, indexFolderName, securityInstalled, 1, null);
     }
 
     private void startCrawler() throws Exception {
@@ -185,7 +193,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 metadataDir,
                 FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(),
                 LOOP_INFINITE,
-                false,
                 rest != null);
         crawler.start();
 
@@ -457,7 +464,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         response.getHits().getHits().forEach(hit -> {
             // Read the document. This is needed since 5.0 as search does not return the _version field
             try {
-                SearchResponse.Hit getHit = elasticsearchClient.get(hit.getIndex(), hit.getType(), hit.getId());
+                SearchResponse.Hit getHit = elasticsearchClient.get(hit.getIndex(), hit.getId());
                 assertThat(getHit.getVersion(), lessThanOrEqualTo(maxVersion));
             } catch (IOException e) {
                 fail("We got an IOException: " + e.getMessage());
@@ -477,7 +484,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "text:tweet");
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "text:tweet");
                 return response.getHits().getTotal() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
@@ -498,7 +505,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "text:tweet");
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "text:tweet");
                 return response.getHits().getTotal() == 0;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
@@ -508,7 +515,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 docs for tweet in _all...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "_all:tweet");
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "tweet");
                 return response.getHits().getTotal() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
@@ -529,7 +536,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.isExistingDocument(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "roottxtfile.txt");
+                return elasticsearchClient.isExistingDocument(getCrawlerName(), "roottxtfile.txt");
             } catch (IOException e) {
                 return false;
             }
@@ -549,7 +556,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 doc for tweet in object.text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), null, "object.text:tweet");
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "object.text:tweet");
                 return response.getHits().getTotal() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
@@ -623,7 +630,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         countTestHelper(getCrawlerName(), null, 7);
 
         // Run aggs
-        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
+        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
                 "{\n" +
                         "  \"size\": 0, \n" +
                         "  \"aggs\": {\n" +
@@ -643,7 +650,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat(buckets, iterableWithSize(10));
 
         // Check files
-        response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "{ \"sort\": [ \"path.virtual\" ] }");
+        response = elasticsearchClient.searchJson(getCrawlerName(), "{ \"sort\": [ \"path.virtual\" ] }");
         assertThat(response.getHits().getTotal(), is(7L));
 
         int i = 0;
@@ -657,7 +664,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
 
         // Check folders
-        response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_FOLDER, "{ \"sort\": [ \"virtual\" ] }");
+        response = elasticsearchClient.searchJson(getCrawlerName() + INDEX_SUFFIX_FOLDER, "{ \"sort\": [ \"virtual\" ] }");
         assertThat(response.getHits().getTotal(), is(7L));
 
         i = 0;
@@ -695,7 +702,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         countTestHelper(getCrawlerName(), null, subdirs+1);
 
         // Run aggs
-        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
+        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
                 "{\n" +
                         "  \"size\": 0, \n" +
                         "  \"aggs\": {\n" +
@@ -715,7 +722,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat(buckets, iterableWithSize(10));
 
         // Check files
-        response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "{ \"size\": " + 1000 + ", \"sort\": [ \"path.virtual\" ] }");
+        response = elasticsearchClient.searchJson(getCrawlerName(), "{ \"size\": " + 1000 + ", \"sort\": [ \"path.virtual\" ] }");
         assertThat(response.getHits().getTotal(), is((long) subdirs+1));
 
         for (int i = 0; i < subdirs; i++) {
@@ -723,7 +730,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         }
 
         // Check folders
-        response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_FOLDER, "{ \"size\": " + 1000 + ", \"sort\": [ \"virtual\" ] }");
+        response = elasticsearchClient.searchJson(getCrawlerName() + INDEX_SUFFIX_FOLDER, "{ \"size\": " + 1000 + ", \"sort\": [ \"virtual\" ] }");
         assertThat(response.getHits().getTotal(), is((long) subdirs+2));
 
         // Let's remove the main subdir and wait...
@@ -880,7 +887,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_bulk_flush() throws Exception {
         Fs fs = startCrawlerDefinition().build();
         startCrawler(getCrawlerName(), fs,
-                generateElasticsearchConfig(getCrawlerName(), securityInstalled, 100, TimeValue.timeValueSeconds(2)), null);
+                generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
+                        securityInstalled, 100, TimeValue.timeValueSeconds(2)), null);
 
         countTestHelper(getCrawlerName(), null, 1);
     }
@@ -946,7 +954,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 docs only...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, (String) null);
+                SearchResponse response = elasticsearchClient.search(getCrawlerName(), (String) null);
                 return response.getHits().getTotal() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
@@ -1005,7 +1013,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1, false, false);
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1, false);
         crawler.start();
 
         countTestHelper(getCrawlerName(), null, 1);
@@ -1024,118 +1032,13 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
         crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2, false, false);
+                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2, false);
         crawler.start();
 
         countTestHelper(getCrawlerName(), null, 1);
 
         assertThat("Job should stop after two runs", awaitBusy(() -> crawler.isClosed()), is(true));
         assertThat(crawler.getRunNumber(), is(2));
-    }
-
-    /**
-     * Test case for #205: https://github.com/dadoonet/fscrawler/issues/205 : Add support for update mapping
-     */
-    @Test
-    public void test_update_mapping() throws Exception {
-        elasticsearchClient.createIndex(getCrawlerName(), false, "{\n" +
-                "  \"settings\": {\n" +
-                "    \"analysis\": {\n" +
-                "      \"analyzer\": {\n" +
-                "        \"fscrawler_path\": {\n" +
-                "          \"tokenizer\": \"fscrawler_path\"\n" +
-                "        }\n" +
-                "      },\n" +
-                "      \"tokenizer\": {\n" +
-                "        \"fscrawler_path\": {\n" +
-                "          \"type\": \"path_hierarchy\"\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }\n" +
-                "}\n");
-        elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
-                "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : {   \"_source\" : {\n" +
-                        "    \"excludes\" : [\n" +
-                        "      \"attachment\"\n" +
-                        "    ]\n" +
-                        "  }\n} }");
-
-        Fs fs = startCrawlerDefinition().build();
-
-        logger.info("  --> starting crawler [{}]", getCrawlerName());
-
-        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), -1, true, false);
-        crawler.start();
-
-        countTestHelper(getCrawlerName(), null, 1);
-    }
-
-    /**
-     * Test case for #205: https://github.com/dadoonet/fscrawler/issues/205 : Add support for update mapping
-     */
-    @Test
-    public void test_update_mapping_but_dont_launch() throws Exception {
-        elasticsearchClient.createIndex(getCrawlerName(), false, "{\n" +
-                "  \"settings\": {\n" +
-                "    \"analysis\": {\n" +
-                "      \"analyzer\": {\n" +
-                "        \"fscrawler_path\": {\n" +
-                "          \"tokenizer\": \"fscrawler_path\"\n" +
-                "        }\n" +
-                "      },\n" +
-                "      \"tokenizer\": {\n" +
-                "        \"fscrawler_path\": {\n" +
-                "          \"type\": \"path_hierarchy\"\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }\n" +
-                "}\n");
-        elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
-                "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : {   \"_source\" : {\n" +
-                        "    \"excludes\" : [\n" +
-                        "      \"attachment\"\n" +
-                        "    ]\n" +
-                        "  }\n} }");
-
-        Fs fs = startCrawlerDefinition().build();
-
-        logger.info("  --> starting crawler [{}]", getCrawlerName());
-
-        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 0, true, false);
-        crawler.start();
-
-        assertThat(crawler.isClosed(), is(true));
-        assertThat(crawler.getRunNumber(), is(0));
-    }
-
-    /**
-     * Test case for #205: https://github.com/dadoonet/fscrawler/issues/205 : Add support for update mapping
-     */
-    @Test(expected = ResponseException.class)
-    public void test_fail_update_mapping() throws Exception {
-        elasticsearchClient.createIndex(getCrawlerName());
-        elasticsearchClient.putMapping(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
-                "{ \""+ FsCrawlerUtil.INDEX_TYPE_DOC + "\" : {\n" +
-                        "  \"properties\": {\n" +
-                        "    \"content\": {\n" +
-                        "      \"type\": \"date\"\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}" +
-                        " }");
-
-        Fs fs = startCrawlerDefinition().build();
-
-        logger.info("  --> starting crawler [{}]", getCrawlerName());
-
-        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), -1, true, false);
-
-        crawler.start();
     }
 
     /**
@@ -1178,7 +1081,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // We expect having no folders
         SearchRequest.Builder sr = SearchRequest.builder();
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_FOLDER, sr.build());
+        SearchResponse response = elasticsearchClient.search(getCrawlerName() + INDEX_SUFFIX_FOLDER, sr.build());
         staticLogger.trace("result {}", response.toString());
         assertThat(response.getHits().getTotal(), is(0L));
     }
@@ -1196,7 +1099,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         countTestHelper(getCrawlerName(), null, 1);
 
         // Let's test highlighting
-        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC,
+        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
                 "{\n" +
                         "  \"query\": {\n" +
                         "    \"match\": {\n" +
@@ -1254,7 +1157,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        StringEntity entity = new StringEntity(pipeline, StandardCharsets.UTF_8);
+        StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
 
         elasticsearchClient.getClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
                 Collections.emptyMap(), entity);
@@ -1268,7 +1171,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         countTestHelper(crawlerName, "my_content_field:perniciosoque", 1);
 
         // We expect to have one folder
-        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_FOLDER, "{ }");
+        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName() + INDEX_SUFFIX_FOLDER, "{}");
         assertThat(response.getHits().getTotal(), is(1L));
     }
 
@@ -1304,7 +1207,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        StringEntity entity = new StringEntity(pipeline, StandardCharsets.UTF_8);
+        StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
 
         elasticsearchClient.getClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
                 Collections.emptyMap(), entity);
@@ -1335,7 +1238,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                         .setServer(null)
                         .setRest(rest).build(),
                 0,
-                false,
                 true);
         crawler.start();
 
@@ -1404,14 +1306,14 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("Document should exists with [id1.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.isExistingDocument(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "id1.txt");
+                return elasticsearchClient.isExistingDocument(getCrawlerName(), "id1.txt");
             } catch (IOException e) {
                 return false;
             }
         }), equalTo(true));
         assertThat("Document should exists with [id2.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.isExistingDocument(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_DOC, "id2.txt");
+                return elasticsearchClient.isExistingDocument(getCrawlerName(), "id2.txt");
             } catch (IOException e) {
                 return false;
             }
@@ -1449,5 +1351,52 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // We should have one doc first
         countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void test_upgrade_version() throws Exception {
+        // We can only run this test if elasticsearch version is >= 2.3 and < 6.0
+        String version = elasticsearchClient.findVersion();
+        VersionComparator comparator = new VersionComparator();
+        assumeFalse("We can only run the upgrade process on version between >= 2.3 and < 6.0",
+                comparator.compare(version, "2.3") < 0 || comparator.compare(version, "6") > 0);
+
+        // Let's create some deprecated indices
+        int nbDocs = randomIntBetween(10, 100);
+        int nbFolders = randomIntBetween(1, 10);
+
+        elasticsearchClient.createIndex(getCrawlerName());
+
+        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 1000, TimeValue.timeValueSeconds(2), null);
+        // Create fake data
+        for (int i = 0; i < nbDocs; i++) {
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}"));
+        }
+        for (int i = 0; i < nbFolders; i++) {
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), "folder", "id" + i).source("{\"foo\":\"bar\"}"));
+        }
+        bulkProcessor.close();
+
+        elasticsearchClient.refresh(getCrawlerName());
+
+        // Let's create a crawler instance
+        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
+                .setElasticsearch(securityInstalled ? elasticsearchWithSecurity : elasticsearch).build();
+        fsSettings.getElasticsearch().setIndex(getCrawlerName());
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0, false);
+
+        // Call the upgrade process
+        crawler.upgrade();
+
+        // Test that we have all needed docs in old index and new indices
+        int expectedDocs = nbDocs;
+        if (comparator.compare(version, "5") < 0) {
+            // If we ran our tests against a 2.x cluster, _delete_by_query is skipped (as it does not exist).
+            // Which means that folders are still there
+            expectedDocs += nbFolders;
+        }
+        countTestHelper(getCrawlerName(), null, expectedDocs, currentTestResourceDir);
+        countTestHelper(getCrawlerName() + INDEX_SUFFIX_FOLDER, null, nbFolders, currentTestResourceDir);
     }
 }
