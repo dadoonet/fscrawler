@@ -934,7 +934,7 @@ PUT _ingest/pipeline/langdetect
   "processors" : [
     {
       "set": {
-        "field": "_index"
+        "field": "_index",
         "value": "myindex-{{meta.language}}"
       }
     }
