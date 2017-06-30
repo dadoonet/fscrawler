@@ -1269,6 +1269,52 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     /**
+     * Test case for #392: https://github.com/dadoonet/fscrawler/issues/392 : Support ingest pipeline processing
+     */
+    @Test
+    public void test_ingest_pipeline_392() throws Exception {
+        String crawlerName = getCrawlerName();
+
+        // We can only run this test against a 5.0 cluster or >
+        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
+                elasticsearchClient.isIngestSupported(), is(true));
+
+        // Create an empty ingest pipeline
+        String pipeline = "{\n" +
+                "  \"description\": \"Testing Grok on PDF upload\",\n" +
+                "  \"processors\": [\n" +
+                "    {\n" +
+                "      \"gsub\": {\n" +
+                "        \"field\": \"content\",\n" +
+                "        \"pattern\": \"\\n\",\n" +
+                "        \"replacement\": \"-\"\n" +
+                "      }\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"grok\": {\n" +
+                "        \"field\": \"content\",\n" +
+                "        \"patterns\": [\n" +
+                "          \"%{DATA}%{IP:ip_addr} %{GREEDYDATA}\"\n" +
+                "        ]\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+        StringEntity entity = new StringEntity(pipeline, StandardCharsets.UTF_8);
+
+        elasticsearchClient.getClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
+                Collections.emptyMap(), entity);
+
+        Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
+        elasticsearch.setPipeline(crawlerName);
+
+        startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+
+        // We expect to have one file
+        countTestHelper(crawlerName, "ip_addr:10.21.23.123", 1);
+    }
+
+    /**
      * Test case for #251: https://github.com/dadoonet/fscrawler/issues/251 : Add a REST Layer
      */
     @Test
