@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.ws.rs.core.MediaType;
@@ -40,6 +41,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class FsCrawlerRestIT extends AbstractRestITCase {
+
+    @BeforeClass
+    public static void removeOldIndex() throws Exception {
+        staticLogger.info(" -> Removing existing index [fscrawler_rest_tests]");
+        elasticsearchClient.deleteIndex("fscrawler_rest_tests");
+    }
 
     @Test
     public void testCallRoot() {
