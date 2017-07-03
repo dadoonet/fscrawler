@@ -479,7 +479,7 @@ Here is a list of Local FS settings (under `fs.` prefix)`:
 | `fs.continue_on_error`           | `false`       | [Continue on File Permission Error](#continue-on-error) (from 2.3)                |
 | `fs.pdf_ocr`                     | `true`        | [Run OCR on PDF documents](#ocr-integration) (from 2.3)                           |
 | `fs.indexed_chars`               | `100000.0`    | [Extracted characters](#extracted-characters)                                     |
-| `fs.checksum`                    | `null`        | [File signature](#file-signature)                                                 |
+| `fs.checksum`                    | `null`        | [File Checksum](#file-checksum)                                                 |
 
 #### Root directory
 
