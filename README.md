@@ -1401,6 +1401,7 @@ Or you can decrease the `bulk_size` setting to a smaller value.
 
 If you are using an elasticsearch cluster running a 5.0 or superior version, you
 can use an Ingest Node pipeline to transform documents sent by FS crawler before they are actually indexed.
+Please note that folder objects are not sent through the pipeline as they are more internal objects.
 
 For example, if you have the following pipeline:
 

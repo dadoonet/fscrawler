@@ -603,20 +603,20 @@ public class FsCrawlerImpl {
                     }
 
                     // We index the data structure
-                    esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+                    esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
                             fsSettings.getElasticsearch().getType(),
                             generateIdFromFilename(filename, dirname),
                             doc);
                 } else if (fsSettings.getFs().isIndexContent()) {
                     if (fsSettings.getFs().isJsonSupport()) {
                         // We index the json content directly
-                        esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+                        esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
                                 fsSettings.getElasticsearch().getType(),
                                 generateIdFromFilename(filename, dirname),
                                 read(inputStream));
                     } else if (fsSettings.getFs().isXmlSupport()) {
                         // We index the xml content directly
-                        esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+                        esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
                                 fsSettings.getElasticsearch().getType(),
                                 generateIdFromFilename(filename, dirname),
                                 XmlDocParser.generate(inputStream));
@@ -647,7 +647,7 @@ public class FsCrawlerImpl {
          * @throws Exception in case of error
          */
         private void indexDirectory(String id, fr.pilato.elasticsearch.crawler.fs.meta.doc.Path path) throws Exception {
-            esIndex(esClientManager.bulkProcessor(), fsSettings.getElasticsearch().getIndex(),
+            esIndex(esClientManager.bulkProcessorFolder(), fsSettings.getElasticsearch().getIndex(),
                     FsCrawlerUtil.INDEX_TYPE_FOLDER,
                     id,
                     path);
@@ -738,7 +738,7 @@ public class FsCrawlerImpl {
         public void esDelete(String index, String type, String id) {
             logger.debug("Deleting from ES " + index + ", " + type + ", " + id);
             if (!closed) {
-                esClientManager.bulkProcessor().add(new DeleteRequest(index, type, id));
+                esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, type, id));
             } else {
                 logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, type, id);
             }

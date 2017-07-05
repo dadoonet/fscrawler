@@ -1266,6 +1266,10 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // We expect to have one file
         countTestHelper(crawlerName, "my_content_field:perniciosoque", 1);
+
+        // We expect to have one folder
+        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(), FsCrawlerUtil.INDEX_TYPE_FOLDER, "{ }");
+        assertThat(response.getHits().getTotal(), is(1L));
     }
 
     /**

@@ -35,7 +35,8 @@ public class ElasticsearchClientManager {
     private final FsSettings settings;
 
     private ElasticsearchClient client = null;
-    private BulkProcessor bulkProcessor = null;
+    private BulkProcessor bulkProcessorDoc = null;
+    private BulkProcessor bulkProcessorFolder = null;
 
     public ElasticsearchClientManager(Path config, FsSettings settings) {
         this.config = config;
@@ -49,11 +50,18 @@ public class ElasticsearchClientManager {
         return client;
     }
 
-    public BulkProcessor bulkProcessor() {
-        if (bulkProcessor == null) {
-            throw new RuntimeException("You must call start() before bulkProcessor()");
+    public BulkProcessor bulkProcessorDoc() {
+        if (bulkProcessorDoc == null) {
+            throw new RuntimeException("You must call start() before bulkProcessorDoc()");
         }
-        return bulkProcessor;
+        return bulkProcessorDoc;
+    }
+
+    public BulkProcessor bulkProcessorFolder() {
+        if (bulkProcessorFolder == null) {
+            throw new RuntimeException("You must call start() before bulkProcessorFolder()");
+        }
+        return bulkProcessorFolder;
     }
 
     public void start() throws Exception {
@@ -73,8 +81,10 @@ public class ElasticsearchClientManager {
                     ", but your elasticsearch cluster does not support this feature.");
         }
 
-        bulkProcessor = BulkProcessor.retryBulkProcessor(client, settings.getElasticsearch().getBulkSize(),
+        bulkProcessorDoc = BulkProcessor.retryBulkProcessor(client, settings.getElasticsearch().getBulkSize(),
                 settings.getElasticsearch().getFlushInterval(), settings.getElasticsearch().getPipeline());
+        bulkProcessorFolder = BulkProcessor.retryBulkProcessor(client, settings.getElasticsearch().getBulkSize(),
+                settings.getElasticsearch().getFlushInterval(), null);
     }
 
     public void createIndexAndMappings(FsSettings settings, boolean updateMapping) throws Exception {
@@ -122,11 +132,18 @@ public class ElasticsearchClientManager {
 
     public void close() {
         logger.debug("Closing Elasticsearch client manager");
-        if (bulkProcessor != null) {
+        if (bulkProcessorDoc != null) {
             try {
-                bulkProcessor.close();
+                bulkProcessorDoc.close();
             } catch (InterruptedException e) {
-                logger.warn("Can not close bulk processor", e);
+                logger.warn("Can not close doc bulk processor", e);
+            }
+        }
+        if (bulkProcessorFolder != null) {
+            try {
+                bulkProcessorFolder.close();
+            } catch (InterruptedException e) {
+                logger.warn("Can not close folder bulk processor", e);
             }
         }
         if (client != null) {

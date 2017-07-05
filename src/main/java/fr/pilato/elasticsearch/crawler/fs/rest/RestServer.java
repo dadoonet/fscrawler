@@ -46,7 +46,7 @@ public class RestServer {
             final ResourceConfig rc = new ResourceConfig()
                     .registerInstances(
                             new ServerStatusApi(elasticsearchClientManager.client(), settings),
-                            new UploadApi(settings, elasticsearchClientManager.bulkProcessor()))
+                            new UploadApi(settings, elasticsearchClientManager.bulkProcessorDoc()))
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)
                     .register(JacksonFeature.class)
