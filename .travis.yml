@@ -13,7 +13,7 @@ script:
 # Sadly this is the only way to make maven download everything and not pollute the logs...
   - mvn --batch-mode clean dependency:resolve dependency:resolve-plugins install -DskipTests -Dsilent=true > /dev/null
   - mvn --batch-mode clean verify -Pes-2x-travis
-  - mvn -batch-mode clean verify
+  - mvn -batch-mode clean verify -PskipXPack
   - "[[ ${TRAVIS_PULL_REQUEST} == 'false' ]] && [[ ${TRAVIS_TAG} == '' ]] && mvn deploy -DskipTests --settings deploy-settings.xml"
 #after_success:
 #  - "[[ ${TRAVIS_PULL_REQUEST} == 'false' ]] && [[ ${TRAVIS_TAG} == '' ]] && mvn deploy -DskipTests --settings deploy-settings.xml"
