@@ -9,8 +9,9 @@ You need to install a version matching your Elasticsearch version:
 
 |    Elasticsearch   |  FS Crawler | Released |                                       Docs                                   |
 |--------------------|-------------|----------|------------------------------------------------------------------------------|
-| 2.x, 5.x, 6.x      | 2.3-SNAPSHOT|          |See below                                                                     |
-| 1.x, 2.x, 5.x      | **2.2**     |2017-02-03|[2.2](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.2/README.md)     |
+| 2.x, 5.x, 6.x      | 2.4-SNAPSHOT|          |See below                                                                     |
+| 2.x, 5.x, 6.x      | **2.3**     |2017-07-10|[2.3](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.3/README.md)     |
+| 1.x, 2.x, 5.x      | 2.2         |2017-02-03|[2.2](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.2/README.md)     |
 | 1.x, 2.x, 5.x      | 2.1         |2016-07-26|[2.1](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.1/README.md)     |
 |    es-2.0          | 2.0.0       |2015-10-30|[2.0.0](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.0.0/README.md) |
 
@@ -51,11 +52,11 @@ Just download the latest release (or any other specific version you want to try)
 
 The filename ends with `.zip`.
 
-For example, if you wish to download [fscrawler-2.2](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.2/fscrawler-2.2.zip):
+For example, if you wish to download [fscrawler-2.3](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.3/fscrawler-2.3.zip):
 
 ```sh
-wget https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.2/fscrawler-2.2.zip
-unzip fscrawler-2.2.zip
+wget https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.3/fscrawler-2.3.zip
+unzip fscrawler-2.3.zip
 ```
 
 The distribution contains:
