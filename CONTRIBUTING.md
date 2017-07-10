@@ -203,3 +203,5 @@ The release script will:
 
 You will be guided through all the steps.
 
+You can add some maven options while executing the release script such as `-DskipTests` if you want to skip
+the tests while building the release.
