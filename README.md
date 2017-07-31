@@ -435,6 +435,19 @@ a system property named `FS_JAVA_OPTS`:
 FS_JAVA_OPTS="-Xmx521m -Xms521m" bin/fscrawler
 ```
 
+## Configuring an external logger configuration file
+
+If you want to define an external log4j2.xml file, you can use the `log4j.configurationFile` JVM parameter which
+you can define in `FS_JAVA_OPTS` variable if you wish:
+
+```sh
+FS_JAVA_OPTS="-Dlog4j.configurationFile=path/to/log4j2.xml" bin/fscrawler
+```
+
+You can use [the default log4j2.xml file](https://github.com/dadoonet/fscrawler/blob/master/src/main/resources/log4j2.xml)
+as an example to start with.
+
+
 ## Job file specification
 
 The job file must comply to the following `json` specifications:
