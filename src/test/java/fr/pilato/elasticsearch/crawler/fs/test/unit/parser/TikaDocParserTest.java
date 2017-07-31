@@ -41,6 +41,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -536,7 +537,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), is(""));
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), is("audio/x-wav"));
+        assertThat(doc.getFile().getContentType(), is("audio/vnd.wave"));
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is(nullValue()));
@@ -551,7 +552,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("bits", "16"));
         assertThat(raw, hasEntry("encoding", "PCM_SIGNED"));
         assertThat(raw, hasEntry("xmpDM:audioSampleType", "16Int"));
-        assertThat(raw, hasEntry("Content-Type", "audio/x-wav"));
+        assertThat(raw, hasEntry("Content-Type", "audio/vnd.wave"));
         assertThat(raw, hasEntry("samplerate", "44100.0"));
     }
 
@@ -620,7 +621,7 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .setFs(Fs.builder().setPdfOcr(false).build())
                 .build();
         doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent(), isEmptyString());
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent(), is("\n\n"));
     }

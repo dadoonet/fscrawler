@@ -15,6 +15,9 @@
       <Logger name="org.glassfish" level="warn" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
+      <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
       <Root level="info">
          <AppenderRef ref="CONSOLE"/>
       </Root>
