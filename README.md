@@ -456,35 +456,36 @@ The job file must comply to the following `json` specifications:
 {
   "name" : "job_name",
   "fs" : {
-    "url" : "/path/to/data/dir",
-    "update_rate" : "15m",
-    "includes": [
-      "*.*"
-    ],
-    "excludes": [
-      "*.json"
-    ],
+    "url" : "/path/to/docs",
+    "update_rate" : "5m",
+    "includes" : [ "*.doc", "*.xls" ],
+    "excludes" : [ "resume.doc" ],
     "json_support" : false,
-    "xml_support" : false,
-    "ignore_folders" : false,
-    "attributes_support" : false,
-    "raw_metadata" : false,
-    "filename_as_id" : false,
+    "filename_as_id" : true,
     "add_filesize" : true,
     "remove_deleted" : true,
-    "store_source" : false,
+    "add_as_inner_object" : false,
+    "store_source" : true,
+    "index_content" : true,
+    "indexed_chars" : "10000.0",
+    "attributes_support" : false,
+    "raw_metadata" : true,
+    "xml_support" : false,
+    "index_folders" : true,
     "lang_detect" : false,
     "continue_on_error" : false,
     "pdf_ocr" : true,
-    "indexed_chars" : "10000"
+    "ocr" : {
+      "language" : "eng"
+    }
   },
   "server" : {
-    "hostname" : null,
+    "hostname" : "localhost",
     "port" : 22,
-    "username" : null,
-    "password" : null,
-    "protocol" : "local",
-    "pem_path" : null
+    "username" : "dadoonet",
+    "password" : "password",
+    "protocol" : "SSH",
+    "pem_path" : "/path/to/pemfile"
   },
   "elasticsearch" : {
     "nodes" : [ {
@@ -493,19 +494,16 @@ The job file must comply to the following `json` specifications:
       "scheme" : "HTTP"
     } ],
     "index" : "docs",
-    "index_folder" : "folders",
-    "bulk_size" : 100,
+    "bulk_size" : 1000,
     "flush_interval" : "5s",
-    "username" : "username",
-    "password" : "password",
-    "pipeline" : "pipeline-id-if-any"
+    "username" : "elastic",
+    "password" : "password"
   },
   "rest" : {
-    "enabled" : false,
     "scheme" : "HTTP",
     "host" : "127.0.0.1",
     "port" : 8080,
-    "port" : "fscrawler"
+    "endpoint" : "fscrawler"
   }
 }
 ```
@@ -560,7 +558,7 @@ Here is a list of Local FS settings (under `fs.` prefix)`:
 | `fs.continue_on_error`           | `false`       | [Continue on File Permission Error](#continue-on-error) (from 2.3)                |
 | `fs.pdf_ocr`                     | `true`        | [Run OCR on PDF documents](#ocr-integration) (from 2.3)                           |
 | `fs.indexed_chars`               | `100000.0`    | [Extracted characters](#extracted-characters)                                     |
-| `fs.checksum`                    | `null`        | [File Checksum](#file-checksum)                                                 |
+| `fs.checksum`                    | `null`        | [File Checksum](#file-checksum)                                                   |
 
 #### Root directory
 
@@ -1913,6 +1911,31 @@ to `false`:
   "name" : "test",
   "fs" : {
     "pdf_ocr" : false
+  }
+}
+```
+
+### OCR settings
+
+Here is a list of OCR settings (under `fs.ocr` prefix)`:
+
+|               Name               | Default value |                                 Documentation                                     |
+|----------------------------------|---------------|-----------------------------------------------------------------------------------|
+| `fs.ocr.language`                | `"eng"`       | [OCR Language](#ocr-language)                                                     |
+
+#### OCR Language
+
+If you have installed a [Tesseract Language pack](https://wiki.apache.org/tika/TikaOCR), you can use it when
+parsing your documents by setting `fs.ocr.language` property in your `~/.fscrawler/test/_settings.json` file:
+
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "url" : "/path/to/data/dir",
+    "ocr" : {
+      "language": "eng"
+    }
   }
 }
 ```

@@ -40,8 +40,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.extractText;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
-import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.tika;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
 
 /**
@@ -88,7 +88,7 @@ public class TikaDocParser {
         try {
             // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
             logger.trace("Beginning Tika extraction");
-            parsedContent = tika(fsSettings.getFs().isPdfOcr()).parseToString(inputStream, metadata, indexedChars);
+            parsedContent = extractText(fsSettings, indexedChars, inputStream, metadata);
             logger.trace("End of Tika extraction");
         } catch (Throwable e) {
             logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "]", e);

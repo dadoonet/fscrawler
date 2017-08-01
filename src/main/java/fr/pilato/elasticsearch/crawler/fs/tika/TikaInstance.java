@@ -20,20 +20,29 @@
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tika.Tika;
 import org.apache.tika.config.ServiceLoader;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.language.detect.LanguageDetector;
+import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaTypeRegistry;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.DefaultParser;
+import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.external.ExternalParser;
+import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.apache.tika.parser.pdf.PDFParser;
+import org.apache.tika.sax.BodyContentHandler;
+import org.apache.tika.sax.WriteOutContentHandler;
+import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 
 import static org.apache.tika.langdetect.OptimaizeLangDetector.getDefaultLanguageDetector;
@@ -45,20 +54,31 @@ public class TikaInstance {
 
     private static final Logger logger = LogManager.getLogger(TikaInstance.class);
 
-    private static Tika tika;
+    private static Parser parser;
+    private static ParseContext context;
     private static LanguageDetector detector;
 
     /* For tests only */
     public static void reloadTika() {
-        tika = null;
+        parser = null;
+        context = null;
     }
 
-    public static Tika tika(boolean ocr) {
-        if (tika == null) {
+    /**
+     * This initialize if needed a parser and a parse context for tika
+     * @param fs fs settings
+     */
+    private static void initTika(Fs fs) {
+        initParser(fs);
+        initContext(fs);
+    }
+
+    private static void initParser(Fs fs) {
+        if (parser == null) {
             PDFParser pdfParser = new PDFParser();
             DefaultParser defaultParser;
 
-            if (ocr) {
+            if (fs.isPdfOcr()) {
                 logger.debug("OCR is activated for PDF documents");
                 if (ExternalParser.check("tesseract")) {
                     pdfParser.setOcrStrategy("ocr_and_text");
@@ -78,16 +98,42 @@ public class TikaInstance {
             PARSERS[0] = defaultParser;
             PARSERS[1] = pdfParser;
 
-            AutoDetectParser parser;
             parser = new AutoDetectParser(PARSERS);
-
-            tika = new Tika(parser.getDetector(), parser);
         }
 
-        return tika;
     }
 
-    public static LanguageDetector langDetector() throws IOException {
+    private static void initContext(Fs fs) {
+        if (context == null) {
+            context = new ParseContext();
+            context.set(Parser.class, parser);
+            if (fs.isPdfOcr()) {
+                logger.debug("OCR is activated");
+                TesseractOCRConfig config = new TesseractOCRConfig();
+                config.setLanguage(fs.getOcr().getLanguage());
+                context.set(TesseractOCRConfig.class, config);
+            }
+        }
+    }
+
+    static String extractText(FsSettings fsSettings, int indexedChars, InputStream stream, Metadata metadata) throws IOException,
+            TikaException {
+        initTika(fsSettings.getFs());
+        WriteOutContentHandler handler = new WriteOutContentHandler(indexedChars);
+        try {
+            parser.parse(stream, new BodyContentHandler(handler), metadata, context);
+        } catch (SAXException e) {
+            if (!handler.isWriteLimitReached(e)) {
+                // This should never happen with BodyContentHandler...
+                throw new TikaException("Unexpected SAX processing failure", e);
+            }
+        } finally {
+            stream.close();
+        }
+        return handler.toString();
+    }
+
+    static LanguageDetector langDetector() throws IOException {
         if (detector == null) {
              detector = getDefaultLanguageDetector().loadModels();
         }

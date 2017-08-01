@@ -45,6 +45,7 @@ public class Fs {
     private boolean langDetect = false;
     private boolean continueOnError = false;
     private boolean pdfOcr = true;
+    private Ocr ocr = new Ocr();
 
     public static Builder builder() {
         return new Builder();
@@ -75,6 +76,7 @@ public class Fs {
         private boolean langDetect = false;
         private boolean continueOnError = false;
         private boolean pdfOcr = true;
+        private Ocr ocr = new Ocr();
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -202,10 +204,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setOcr(Ocr ocr) {
+            this.ocr = ocr;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, pdfOcr);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, pdfOcr, ocr);
         }
     }
 
@@ -216,7 +223,7 @@ public class Fs {
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError, boolean pdfOcr) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError, boolean pdfOcr, Ocr ocr) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -237,6 +244,7 @@ public class Fs {
         this.langDetect = langDetect;
         this.continueOnError = continueOnError;
         this.pdfOcr = pdfOcr;
+        this.ocr = ocr;
     }
 
     public String getUrl() {
@@ -397,6 +405,14 @@ public class Fs {
 
     public void setPdfOcr(boolean pdfOcr) {
         this.pdfOcr = pdfOcr;
+    }
+
+    public Ocr getOcr() {
+        return ocr;
+    }
+
+    public void setOcr(Ocr ocr) {
+        this.ocr = ocr;
     }
 
     @Override

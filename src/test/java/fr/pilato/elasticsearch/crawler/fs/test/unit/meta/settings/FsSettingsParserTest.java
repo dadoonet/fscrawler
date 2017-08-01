@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsParser;
+import fr.pilato.elasticsearch.crawler.fs.meta.settings.Ocr;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
@@ -44,6 +45,8 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
+    private static final Ocr OCR_FULL = Ocr.builder().setLanguage("eng").build();
+
     private static final Fs FS_EMPTY = Fs.builder().build();
     private static final Fs FS_FULL = Fs.builder()
             .setUrl("/path/to/docs")
@@ -57,6 +60,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setRemoveDeleted(true)
             .setUpdateRate(TimeValue.timeValueMinutes(5))
             .setIndexContent(true)
+            .setOcr(OCR_FULL)
             .build();
     private static final Elasticsearch ELASTICSEARCH_EMPTY = Elasticsearch.builder().build();
     private static final Elasticsearch ELASTICSEARCH_FULL = Elasticsearch.builder()
@@ -69,10 +73,11 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setBulkSize(1000)
             .setFlushInterval(TimeValue.timeValueSeconds(5))
             .setIndex("docs")
+            .setPipeline("pipeline-id-if-any")
             .build();
     private static final Server SERVER_EMPTY = Server.builder().build();
     private static final Server SERVER_FULL = Server.builder()
-            .setHostname("localhost")
+            .setHostname("127.0.0.1")
             .setUsername("dadoonet")
             .setPassword("WhATDidYOUexPECt?")
             .setPort(22)
@@ -80,7 +85,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setPemPath("/path/to/pemfile")
             .build();
     private static final Rest REST_FULL = Rest.builder()
-            .setHost("localhost")
+            .setHost("127.0.0.1")
             .setPort(8080)
             .setScheme(Rest.Scheme.HTTP)
             .setEndpoint("fscrawler")
@@ -264,6 +269,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
                         .setElasticsearch(ELASTICSEARCH_FULL)
                         .setServer(SERVER_FULL)
                         .setFs(FS_FULL)
+                        .setRest(REST_FULL)
                         .build()
         );
     }
