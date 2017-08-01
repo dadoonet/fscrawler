@@ -221,6 +221,11 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         runSearch("test-ocr.pdf", "words");
     }
 
+    @Test
+    public void testShiftJisEncoding() throws IOException {
+        runSearch("issue-400-shiftjis.txt", "elasticsearch");
+    }
+
     private SearchResponse runSearch(String filename) throws IOException {
         return runSearch(filename, null);
     }

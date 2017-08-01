@@ -69,6 +69,7 @@ public class TikaDocParser {
             }
         }
         Metadata metadata = new Metadata();
+        metadata.set(Metadata.RESOURCE_NAME_KEY, filename);
 
         String parsedContent = null;
 

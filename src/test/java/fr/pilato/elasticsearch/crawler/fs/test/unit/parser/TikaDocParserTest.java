@@ -41,6 +41,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -626,6 +627,11 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), is("\n\n"));
     }
 
+    @Test
+    public void testShiftJisEncoding() throws IOException {
+        Doc doc = extractFromFile("issue-400-shiftjis.txt");
+        assertThat(doc.getContent(), not(isEmptyOrNullString()));
+    }
 
     private Doc extractFromFileExtension(String extension) throws IOException {
         logger.info("Test extraction of [{}] file", extension);
