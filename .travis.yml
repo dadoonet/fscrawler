@@ -15,9 +15,8 @@ script:
   - mvn --batch-mode clean verify -PskipXPack -Pes-2x
   - mvn --batch-mode clean verify -PskipXPack -Pes-6x
   - mvn --batch-mode clean verify -PskipXPack
+after_success:
   - "[[ ${TRAVIS_PULL_REQUEST} == 'false' ]] && [[ ${TRAVIS_TAG} == '' ]] && mvn deploy -DskipTests --settings deploy-settings.xml"
-#after_success:
-#  - "[[ ${TRAVIS_PULL_REQUEST} == 'false' ]] && [[ ${TRAVIS_TAG} == '' ]] && mvn deploy -DskipTests --settings deploy-settings.xml"
 after_failure:
   - echo "As we got a failure, let's see what we have in elasticsearch cluster logs"
   - cat target/integration-tests/run/elasticsearch-*/logs/elasticsearch_integration.log
