@@ -19,11 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
-import fr.pilato.elasticsearch.crawler.fs.client.DeleteRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
-import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractorFile;
@@ -42,6 +38,15 @@ import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -57,13 +62,13 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator.validateSettings;
-import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.client.JsonUtil.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
 
@@ -186,8 +191,8 @@ public class FsCrawlerImpl {
             boolean indexExists = esClientManager.client().isExistingIndex(indexFolder);
             long numberOfDocs = 0;
             if (indexExists) {
-                SearchResponse responseFolder = esClientManager.client().search(indexFolder, null, 0);
-                numberOfDocs = responseFolder.getHits().getTotal();
+                SearchResponse responseFolder = esClientManager.client().search(new SearchRequest(indexFolder));
+                numberOfDocs = responseFolder.getHits().getTotalHits();
             }
             if (numberOfDocs > 0) {
                 logger.warn("[{}] already exists and is not empty. No upgrade needed.", indexFolder);
@@ -498,8 +503,7 @@ public class FsCrawlerImpl {
                     if (FsCrawlerUtil.isIndexable(esfile, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
                             && !fsFiles.contains(esfile)) {
                         logger.trace("Removing file [{}] in elasticsearch", esfile);
-                        esDelete(fsSettings.getElasticsearch().getIndex(), "doc",
-                                generateIdFromFilename(esfile, filepath));
+                        esDelete(fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, filepath));
                         stats.removeFile();
                     }
                 }
@@ -526,55 +530,60 @@ public class FsCrawlerImpl {
         // Searching fo 10000 files (which is somehow limited).
         private Collection<String> getFileDirectory(String path)
                 throws Exception {
-            Collection<String> files = new ArrayList<>();
 
             // If the crawler is being closed, we return
             if (closed) {
-                return files;
+                return Collections.emptyList();
             }
 
             logger.trace("Querying elasticsearch for files in dir [{}:{}]", PATH_ROOT, SignTool.sign(path));
-            SearchResponse response = esClientManager.client().search(
-                    fsSettings.getElasticsearch().getIndex(),
-                    PATH_ROOT + ":" + SignTool.sign(path),
-                    REQUEST_SIZE, // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                    "_source", FILE_FILENAME
-            );
+            Collection<String> files;
+            // Hack because the High Level Client is not compatible with versions < 5.0
+            if (esClientManager.client().isIngestSupported()) {
+                files = new ArrayList<>();
+                SearchResponse response = esClientManager.client().search(
+                        new SearchRequest(fsSettings.getElasticsearch().getIndex()).source(
+                                new SearchSourceBuilder()
+                                        .size(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                                        .storedField("_source")
+                                        .storedField(FILE_FILENAME)
+                                        .query(QueryBuilders.termQuery(PATH_ROOT, SignTool.sign(path)))));
 
-            logger.trace("Response [{}]", response.toString());
-            if (response.getHits() != null && response.getHits().getHits() != null) {
-                for (SearchResponse.Hit hit : response.getHits().getHits()) {
-                    String name;
-                    if (hit.getSource() != null
-                            && extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc
-                            .File.FIELD_NAMES.FILENAME) != null) {
-                        name = (String) extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME);
-                    } else if (hit.getFields() != null
-                            && hit.getFields().get(FILE_FILENAME) != null) {
-                        // In case someone disabled _source which is not recommended
-                        name = getName(hit.getFields().get(FILE_FILENAME));
-                    } else {
-                        // Houston, we have a problem ! We can't get the old files from ES
-                        logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
-                                "Please enable _source or store field [{}]", path, FILE_FILENAME);
-                        throw new RuntimeException("Mapping is incorrect: please enable _source or store field [" +
-                                FILE_FILENAME + "].");
+                logger.trace("Response [{}]", response.toString());
+                if (response.getHits() != null && response.getHits().getHits() != null) {
+                    for (SearchHit hit : response.getHits().getHits()) {
+                        String name;
+                        if (hit.getSource() != null
+                                && extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME) != null) {
+                            name = (String) extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME);
+                        } else if (hit.getFields() != null
+                                && hit.getFields().get(FILE_FILENAME) != null) {
+                            // In case someone disabled _source which is not recommended
+                            name = hit.getFields().get(FILE_FILENAME).getValue();
+                        } else {
+                            // Houston, we have a problem ! We can't get the old files from ES
+                            logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
+                                    "Please enable _source or store field [{}]", path, FILE_FILENAME);
+                            throw new RuntimeException("Mapping is incorrect: please enable _source or store field [" +
+                                    FILE_FILENAME + "].");
+                        }
+                        files.add(name);
                     }
-                    files.add(name);
                 }
+            } else {
+                files = esClientManager.client().getFromStoredFieldsV2(
+                        fsSettings.getElasticsearch().getIndex(),
+                        REQUEST_SIZE,    // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                        FILE_FILENAME,
+                        Doc.FIELD_NAMES.FILE,
+                        fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME,
+                        path,
+                        QueryBuilders.termQuery(PATH_ROOT, SignTool.sign(path)));
             }
+
+            logger.trace("We found: {}", files);
 
             return files;
-        }
-
-        private String getName(Object nameObject) {
-            if (nameObject instanceof List) {
-                return String.valueOf (((List) nameObject).get(0));
-            }
-
-            throw new RuntimeException("search result, " + nameObject +
-                    " not of type List<String> but " +
-                    nameObject.getClass().getName() + " with value " + nameObject);
         }
 
         private Collection<String> getFolderDirectory(String path) throws Exception {
@@ -586,13 +595,13 @@ public class FsCrawlerImpl {
             }
 
             SearchResponse response = esClientManager.client().search(
-                    fsSettings.getElasticsearch().getIndexFolder(),
-                    fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ROOT + ":" + SignTool.sign(path),
-                    REQUEST_SIZE // TODO: WHAT? DID I REALLY WROTE THAT? :p
-            );
+                    new SearchRequest(fsSettings.getElasticsearch().getIndexFolder()).source(
+                            new SearchSourceBuilder()
+                                    .size(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                                    .query(QueryBuilders.termQuery(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ROOT, SignTool.sign(path)))));
 
             if (response.getHits() != null && response.getHits().getHits() != null) {
-                for (SearchResponse.Hit hit : response.getHits().getHits()) {
+                for (SearchHit hit : response.getHits().getHits()) {
                     String name = hit.getSource().get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.REAL).toString();
                     files.add(name);
                 }
@@ -665,22 +674,22 @@ public class FsCrawlerImpl {
 
                     // We index the data structure
                     esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
-                            "doc",
                             generateIdFromFilename(filename, dirname),
-                            doc);
+                            DocParser.toJson(doc),
+                            fsSettings.getElasticsearch().getPipeline());
                 } else if (fsSettings.getFs().isIndexContent()) {
                     if (fsSettings.getFs().isJsonSupport()) {
                         // We index the json content directly
                         esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
-                                "doc",
                                 generateIdFromFilename(filename, dirname),
-                                read(inputStream));
+                                read(inputStream),
+                                fsSettings.getElasticsearch().getPipeline());
                     } else if (fsSettings.getFs().isXmlSupport()) {
                         // We index the xml content directly
                         esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
-                                "doc",
                                 generateIdFromFilename(filename, dirname),
-                                XmlDocParser.generate(inputStream));
+                                XmlDocParser.generate(inputStream),
+                                fsSettings.getElasticsearch().getPipeline());
                     }
                 }
             } finally {
@@ -709,9 +718,9 @@ public class FsCrawlerImpl {
          */
         private void indexDirectory(String id, fr.pilato.elasticsearch.crawler.fs.meta.doc.Path path) throws Exception {
             esIndex(esClientManager.bulkProcessorFolder(), fsSettings.getElasticsearch().getIndexFolder(),
-                    "doc",
                     id,
-                    path);
+                    PathParser.toJson(path),
+                    null);
         }
 
         /**
@@ -739,10 +748,7 @@ public class FsCrawlerImpl {
             Collection<String> listFile = getFileDirectory(path);
 
             for (String esfile : listFile) {
-                esDelete(
-                        fsSettings.getElasticsearch().getIndex(),
-                        "doc",
-                        SignTool.sign(path.concat(File.separator).concat(esfile)));
+                esDelete(fsSettings.getElasticsearch().getIndex(), SignTool.sign(path.concat(File.separator).concat(esfile)));
             }
 
             Collection<String> listFolder = getFolderDirectory(path);
@@ -750,58 +756,32 @@ public class FsCrawlerImpl {
                 removeEsDirectoryRecursively(esfolder);
             }
 
-            esDelete(fsSettings.getElasticsearch().getIndexFolder(), "doc", SignTool.sign(path));
-        }
-
-        /**
-         * Add to bulk an IndexRequest
-         */
-        public void esIndex(BulkProcessor bulkProcessor, String index, String type, String id,
-                             Doc doc) throws Exception {
-            esIndex(bulkProcessor, index, type, id, DocParser.toJson(doc));
-        }
-
-        public void esIndex(BulkProcessor bulkProcessor, String index, String type, String id, fr.pilato.elasticsearch.crawler.fs.meta.doc.Path path)
-                throws Exception {
-            esIndex(bulkProcessor, index, type, id, PathParser.toJson(path));
+            esDelete(fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path));
         }
 
         /**
          * Add to bulk an IndexRequest in JSon format
          */
-        public void esIndex(BulkProcessor bulkProcessor, String index, String type, String id, String json) {
-            logger.debug("Indexing in ES " + index + ", " + type + ", " + id);
+        void esIndex(BulkProcessor bulkProcessor, String index, String id, String json, String pipeline) {
+            logger.debug("Indexing {}/doc/{}?pipeline={}", index, id, pipeline);
             logger.trace("JSon indexed : {}", json);
 
             if (!closed) {
-                // Let's throttle this is we had previous errors in the bulk execution
-                BulkProcessor.AdvancedBulkProcessorListener listener = (BulkProcessor.AdvancedBulkProcessorListener) bulkProcessor.getListener();
-
-                int errors = listener.getErrors();
-                if (errors > 0) {
-                    long sleepTime = Math.min(500 * errors, MAX_SLEEP_RETRY_TIME);
-                    logger.error("As we got so far [{}] errors, we are going to wait a bit here: [{}] ms", errors, sleepTime);
-                    try {
-                        Thread.sleep(sleepTime);
-                    } catch (InterruptedException e) {
-                        logger.warn("Thread interrupted", e);
-                    }
-                }
-                bulkProcessor.add(new IndexRequest(index, type, id).source(json));
+                bulkProcessor.add(new IndexRequest(index, "doc", id).source(json, XContentType.JSON).setPipeline(pipeline));
             } else {
-                logger.warn("trying to add new file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, type, id);
+                logger.warn("trying to add new file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
             }
         }
 
         /**
          * Add to bulk a DeleteRequest
          */
-        public void esDelete(String index, String type, String id) {
-            logger.debug("Deleting from ES " + index + ", " + type + ", " + id);
+        void esDelete(String index, String id) {
+            logger.debug("Deleting {}/doc/{}", index, id);
             if (!closed) {
-                esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, type, id));
+                esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, "doc", id));
             } else {
-                logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, type, id);
+                logger.warn("trying to remove a file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
             }
         }
     }

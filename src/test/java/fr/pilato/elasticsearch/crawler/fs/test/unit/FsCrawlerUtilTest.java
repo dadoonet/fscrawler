@@ -33,7 +33,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.TimeZone;
 
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -66,15 +65,6 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
 
     private void testHelper(String rootPath, String realPath, String expectedPath) {
         assertThat(FsCrawlerUtil.computeVirtualPathName(rootPath, realPath), is(expectedPath));
-    }
-
-    @Test
-    public void testExtractingVersion() {
-        assertThat(extractMajorVersionNumber("1.2.3"), is("1"));
-        assertThat(extractMajorVersionNumber("2.3.1"), is("2"));
-        assertThat(extractMajorVersionNumber("5.0.0-SNAPSHOT"), is("5"));
-        assertThat(extractMajorVersionNumber("5.0.0.beta4-SNAPSHOT"), is("5"));
-        assertThat(extractMajorVersionNumber("1"), is("1"));
     }
 
     @Test

@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.File;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Meta;
@@ -29,6 +28,12 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.tika.parser.external.ExternalParser;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -38,7 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.client.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -95,7 +100,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         crawler.start();
 
         // We wait until we have all docs
-        countTestHelper("fscrawler_test_all_documents", null, numFiles.intValue(), null, TimeValue.timeValueMinutes(1));
+        countTestHelper(new SearchRequest("fscrawler_test_all_documents"), numFiles, null, TimeValue.timeValueMinutes(1));
     }
 
     @AfterClass
@@ -128,7 +133,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     @Test
     public void testExtractFromDocx() throws IOException {
         SearchResponse response = runSearch("test.docx", "sample");
-        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+        for (SearchHit hit : response.getHits().getHits()) {
             assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILENAME), notNullValue());
             assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CONTENT_TYPE), notNullValue());
             assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.URL), notNullValue());
@@ -196,15 +201,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     @Test
     public void testLanguageDetection() throws IOException {
         SearchResponse response = runSearch("test-fr.txt", "fichier");
-        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+        for (SearchHit hit : response.getHits().getHits()) {
             assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("fr"));
         }
         response = runSearch("test-de.txt", "Datei");
-        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+        for (SearchHit hit : response.getHits().getHits()) {
             assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("de"));
         }
         response = runSearch("test.txt", "contains");
-        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+        for (SearchHit hit : response.getHits().getHits()) {
             assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("en"));
         }
     }
@@ -238,12 +243,12 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     private SearchResponse runSearch(String filename, String content) throws IOException {
         logger.info(" -> Testing if file [{}] has been indexed correctly{}.", filename,
                 content == null ? "" : " and contains [" + content + "]");
-        String fullQuery = "+file.filename:\"" + filename + "\"";
+        BoolQueryBuilder query = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("file.filename", filename));
         if (content != null) {
-            fullQuery += " +content:" + content;
+            query.must(QueryBuilders.matchQuery("content", content));
         }
-        SearchResponse response = elasticsearchClient.search("fscrawler_test_all_documents", fullQuery, null, (String[]) null);
-        assertThat(response.getHits().getTotal(), is(1L));
+        SearchResponse response = elasticsearchClient.search(new SearchRequest("fscrawler_test_all_documents").source(new SearchSourceBuilder().query(query)));
+        assertThat(response.getHits().getTotalHits(), is(1L));
         return response;
     }
 }

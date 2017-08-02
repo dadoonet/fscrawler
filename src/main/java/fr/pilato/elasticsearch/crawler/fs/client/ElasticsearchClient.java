@@ -25,10 +25,12 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch.Node;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.Version;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.http.HttpHost;
 import org.elasticsearch.client.http.auth.AuthScope;
 import org.elasticsearch.client.http.auth.UsernamePasswordCredentials;
@@ -36,64 +38,54 @@ import org.elasticsearch.client.http.client.CredentialsProvider;
 import org.elasticsearch.client.http.entity.ContentType;
 import org.elasticsearch.client.http.entity.StringEntity;
 import org.elasticsearch.client.http.impl.client.BasicCredentialsProvider;
+import org.elasticsearch.index.query.TermQueryBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.JsonUtil.extractFromPath;
+
 /**
  * Simple Elasticsearch client over HTTP or HTTPS.
  * Only needed methods are exposed.
  */
-public class ElasticsearchClient {
+public class ElasticsearchClient extends RestHighLevelClient {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
 
-    private final Elasticsearch settings;
     private final RestClient client;
-    private String FIELDS = null;
     private boolean INGEST_SUPPORT = true;
-    private String VERSION = null;
+    private Version VERSION = null;
 
-    public ElasticsearchClient(Elasticsearch settings) {
-        this.settings = settings;
-        List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
-        settings.getNodes().forEach(node -> {
-            Node.Scheme scheme = node.getScheme();
-            if (scheme == null) {
-                // Default to HTTP. In case we are reading an old configuration
-                scheme = Node.Scheme.HTTP;
-            }
-            hosts.add(new HttpHost(node.getHost(), node.getPort(), scheme.toLowerCase()));
-        });
+    public ElasticsearchClient(RestClient client) throws IOException {
+        super(client);
+        this.client = client;
+    }
 
-        RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
-
-        if (settings.getUsername() != null) {
-            CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(settings.getUsername(), settings.getPassword()));
-            builder.setHttpClientConfigCallback(httpClientBuilder ->
-                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+    /**
+     * Shutdown the internal REST Low Level client
+     * @throws IOException In case of error
+     */
+    public void shutdown() throws IOException {
+        logger.debug("Closing REST client");
+        if (client != null) {
+            client.close();
+            logger.debug("REST client closed");
         }
-
-        client = builder.build();
     }
 
-    public RestClient getClient() {
-        return client;
-    }
-
-    public Elasticsearch getSettings() {
-        return settings;
-    }
-
-    public void createIndex(String index) throws IOException {
-        createIndex(index, false, null);
-    }
-
+    /**
+     * Create an index
+     * @param index index name
+     * @param ignoreErrors don't fail if the index already exists
+     * @param indexSettings index settings if any
+     * @throws IOException In case of error
+     */
     public void createIndex(String index, boolean ignoreErrors, String indexSettings) throws IOException {
         logger.debug("create index [{}]", index);
         logger.trace("index settings: [{}]", indexSettings);
@@ -119,99 +111,11 @@ public class ElasticsearchClient {
         }
     }
 
-    public BulkResponse bulk(BulkRequest bulkRequest, String pipeline) throws Exception {
-        StringBuffer sbf = new StringBuffer();
-        for (SingleBulkRequest request : bulkRequest.getRequests()) {
-            sbf.append("{");
-            String header = JsonUtil.serialize(request);
-            if (request instanceof DeleteRequest) {
-                sbf.append("\"delete\":").append(header).append("}\n");
-            }
-            if (request instanceof IndexRequest) {
-                sbf.append("\"index\":").append(header).append("}\n");
-                // Index Request: header line + body
-                sbf.append(((IndexRequest) request).content().replaceAll("\n", "")).append("\n");
-            }
-        }
-
-        logger.trace("going to send a bulk");
-        logger.trace("{}", sbf);
-
-        Map<String, String> params;
-
-        if (pipeline != null) {
-            params = new HashMap<>(1);
-            params.put("pipeline", pipeline);
-        } else {
-            params = Collections.emptyMap();
-        }
-
-        StringEntity entity = new StringEntity(sbf.toString(), ContentType.APPLICATION_JSON);
-        Response restResponse = client.performRequest("POST", "/_bulk", params, entity);
-        BulkResponse response = JsonUtil.deserialize(restResponse, BulkResponse.class);
-        logger.debug("bulk response: {}", response);
-        return response;
-    }
-
-    public String findVersion() throws IOException {
-        logger.debug("findVersion()");
-        String version;
-        Response restResponse = client.performRequest("GET", "/");
-        Map<String, Object> responseAsMap = JsonUtil.asMap(restResponse);
-        logger.trace("get server response: {}", responseAsMap);
-        Object oVersion = extractFromPath(responseAsMap, "version").get("number");
-        version = (String) oVersion;
-        logger.debug("findVersion() -> [{}]", version);
-        return version;
-    }
-
-    public void refresh(String index) throws IOException {
-        logger.debug("refresh index [{}]", index);
-
-        String path = "/";
-
-        if (index != null) {
-            path += index + "/";
-        }
-
-        path += "_refresh";
-
-        Response restResponse = client.performRequest("POST", path);
-        logger.trace("refresh raw response: {}", JsonUtil.asMap(restResponse));
-    }
-
-    public void waitForHealthyIndex(String index) throws IOException {
-        logger.debug("wait for yellow health on index [{}]", index);
-
-        Response restResponse = client.performRequest("GET", "/_cluster/health/" + index,
-                Collections.singletonMap("wait_for_status", "yellow"));
-        logger.trace("health response: {}", JsonUtil.asMap(restResponse));
-    }
-
-    public void index(String index, String id, String json) throws IOException {
-        logger.debug("put document [{}/doc/{}]", index, id);
-
-        StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
-        Response restResponse = client.performRequest("PUT", "/" + index + "/doc/" + id, Collections.emptyMap(), entity);
-        logger.trace("put document response: {}", JsonUtil.asMap(restResponse));
-    }
-
-    public boolean isExistingDocument(String index, String id) throws IOException {
-        logger.debug("is existing doc [{}]/[doc]/[{}]", index, id);
-
-        try {
-            Response restResponse = client.performRequest("GET", "/" + index + "/doc/" + id);
-            logger.trace("get document response: {}", JsonUtil.asMap(restResponse));
-            return true;
-        } catch (ResponseException e) {
-            if (e.getResponse().getStatusLine().getStatusCode() == 404) {
-                logger.debug("doc [{}]/[doc]/[{}] does not exist", index, id);
-                return false;
-            }
-            throw e;
-        }
-    }
-
+    /**
+     * Delete an index (removes all data)
+     * @param index index name
+     * @throws IOException In case of error
+     */
     public void deleteIndex(String index) throws IOException {
         logger.debug("delete index [{}]", index);
 
@@ -227,96 +131,12 @@ public class ElasticsearchClient {
         }
     }
 
-    public void shutdown() throws IOException {
-        logger.debug("Closing REST client");
-        if (client != null) {
-            client.close();
-            logger.debug("REST client closed");
-        }
-    }
-
-    public SearchResponse search(String index, String query) throws IOException {
-        return search(index, query, null);
-    }
-
-    public SearchResponse search(String index, String query, Integer size, String... fields) throws IOException {
-        SearchRequest request = SearchRequest.builder().setQuery(query).setSize(size).setFields(fields).build();
-        return search(index, request);
-    }
-
-    public SearchResponse search(String index, SearchRequest searchRequest) throws IOException {
-        logger.debug("search [{}], request [{}]", index, searchRequest);
-
-        String path = "/";
-
-        if (index != null) {
-            path += index + "/";
-        }
-
-        path += "_search";
-
-        Map<String, String> params = new HashMap<>();
-        if (searchRequest.getQuery() !=  null) {
-            params.put("q", searchRequest.getQuery());
-        }
-        if (searchRequest.getFields() !=  null && searchRequest.getFields().length > 0) {
-            params.put(FIELDS, String.join(",", (CharSequence[]) searchRequest.getFields()));
-        }
-        if (searchRequest.getSize() != null) {
-            params.put("size", searchRequest.getSize().toString());
-        }
-        Response restResponse = client.performRequest("GET", path, params);
-        SearchResponse searchResponse = JsonUtil.deserialize(restResponse, SearchResponse.class);
-
-        logger.trace("search response: {}", searchResponse);
-        return searchResponse;
-    }
-
     /**
-     * Search with a JSON Body
-     * @param index Index. Might be null.
-     * @param json  Json Source
-     * @return The Response object
-     * @throws IOException if something goes wrong
+     * Check if an index exists
+     * @param index index name
+     * @return true if the index exists, false otherwise
+     * @throws IOException In case of error
      */
-    public SearchResponse searchJson(String index, String json) throws IOException {
-        logger.debug("search [{}], request [{}]", index, json);
-
-        String path = "/";
-
-        if (index != null) {
-            path += index + "/";
-        }
-
-        path += "_search";
-
-        Response restResponse = client.performRequest("GET", path, Collections.emptyMap(),
-                new StringEntity(json, ContentType.APPLICATION_JSON));
-        SearchResponse searchResponse = JsonUtil.deserialize(restResponse, SearchResponse.class);
-
-        logger.trace("search response: {}", searchResponse);
-        return searchResponse;
-    }
-
-    public void setElasticsearchBehavior() throws IOException {
-        if (VERSION == null) {
-            VERSION = findVersion();
-
-            // With elasticsearch 5.0.0, we need to use `stored_fields` instead of `fields`
-            if (new VersionComparator().compare(VERSION, "5") >= 0) {
-                FIELDS = "stored_fields";
-                logger.debug("Using elasticsearch >= 5, so we use [{}] as fields option", FIELDS);
-                INGEST_SUPPORT = true;
-                logger.debug("Using elasticsearch >= 5, so we can use ingest node feature");
-            } else {
-                FIELDS = "fields";
-                logger.debug("Using elasticsearch < 5, so we use [{}] as fields option", FIELDS);
-                INGEST_SUPPORT = false;
-                logger.debug("Using elasticsearch < 5, so we can't use ingest node feature");
-            }
-        }
-    }
-
     public boolean isExistingIndex(String index) throws IOException {
         logger.debug("is existing index [{}]", index);
 
@@ -333,41 +153,51 @@ public class ElasticsearchClient {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public static Map<String, Object> extractFromPath(Map<String, Object> json, String... path) {
-        Map<String, Object> currentObject = json;
-        for (String fieldName : path) {
-            Object jObject = currentObject.get(fieldName);
-            if (jObject == null) {
-                throw new RuntimeException("incorrect Json. Was expecting field " + fieldName);
-            }
-            if (!(jObject instanceof Map)) {
-                throw new RuntimeException("incorrect datatype in json. Expected Map and got " + jObject.getClass().getName());
-            }
-            currentObject = (Map<String, Object>) jObject;
+    /**
+     * Refresh an index
+     * @param index index name
+     * @throws IOException In case of error
+     */
+    public void refresh(String index) throws IOException {
+        logger.debug("refresh index [{}]", index);
+
+        String path = "/";
+
+        if (index != null) {
+            path += index + "/";
         }
-        return currentObject;
+
+        path += "_refresh";
+
+        Response restResponse = client.performRequest("POST", path);
+        logger.trace("refresh raw response: {}", JsonUtil.asMap(restResponse));
     }
 
-    public boolean isIngestSupported() {
-        return INGEST_SUPPORT;
+    /**
+     * Wait for an index to become at least yellow (all primaries assigned)
+     * @param index index name
+     * @throws IOException In case of error
+     */
+    public void waitForHealthyIndex(String index) throws IOException {
+        logger.debug("wait for yellow health on index [{}]", index);
+
+        Response restResponse = client.performRequest("GET", "/_cluster/health/" + index,
+                Collections.singletonMap("wait_for_status", "yellow"));
+        logger.trace("health response: {}", JsonUtil.asMap(restResponse));
     }
 
-    public SearchResponse.Hit get(String index, String id) throws IOException {
-        logger.debug("get [{}]/[doc]/[{}]", index, id);
-
-        String path = "/" + index + "/doc/" + id;
-        Response restResponse = client.performRequest("GET", path);
-        SearchResponse.Hit hit = JsonUtil.deserialize(restResponse, SearchResponse.Hit.class);
-
-        logger.trace("Hit: {}", hit);
-        return hit;
-    }
-
+    /**
+     * Reindex data from one index/type to another index
+     * @param sourceIndex source index name
+     * @param sourceType source type name
+     * @param targetIndex target index name
+     * @return The number of documents that have been reindexed
+     * @throws IOException In case of error
+     */
     public int reindex(String sourceIndex, String sourceType, String targetIndex) throws IOException {
         logger.debug("reindex [{}]/[{}] -> [{}]/[doc]", sourceIndex, sourceType, targetIndex);
 
-        if (new VersionComparator().compare(VERSION, "2.3") < 0) {
+        if (VERSION.onOrBefore(Version.V_2_3_0)) {
             logger.warn("Can not use reindex API with elasticsearch [{}]", VERSION);
             return 0;
         }
@@ -382,6 +212,8 @@ public class ElasticsearchClient {
                 "  }\n" +
                 "}\n";
 
+        logger.trace("{}", reindexQuery);
+
         StringEntity entity = new StringEntity(reindexQuery, ContentType.APPLICATION_JSON);
         Response restResponse = client.performRequest("POST", "/_reindex", Collections.emptyMap(), entity);
         Map<String, Object> response = JsonUtil.asMap(restResponse);
@@ -390,10 +222,16 @@ public class ElasticsearchClient {
         return (int) response.get("total");
     }
 
+    /**
+     * Fully removes a type from an index (removes data)
+     * @param index index name
+     * @param type type
+     * @throws IOException In case of error
+     */
     public void deleteByQuery(String index, String type) throws IOException {
         logger.debug("deleteByQuery [{}]/[{}]", index, type);
 
-        if (new VersionComparator().compare(VERSION, "5") < 0) {
+        if (VERSION.onOrBefore(Version.V_5_0_0_alpha1)) {
             logger.warn("Can not use _delete_by_query API with elasticsearch [{}]. You have to reindex probably to get rid of [{}]/[{}].",
                     VERSION, index, type);
             return;
@@ -409,5 +247,148 @@ public class ElasticsearchClient {
         Response restResponse = client.performRequest("POST", "/" + index + "/" + type + "/_delete_by_query", Collections.emptyMap(), entity);
         Map<String, Object> response = JsonUtil.asMap(restResponse);
         logger.debug("reindex response: {}", response);
+    }
+
+    // Utility methods
+
+    public void setElasticsearchBehavior() throws IOException {
+        if (VERSION == null) {
+            VERSION = info().getVersion();
+
+            // With elasticsearch 5.0.0, we have ingest node
+            if (VERSION.onOrAfter(Version.V_5_0_0_alpha1)) {
+                INGEST_SUPPORT = true;
+                logger.debug("Using elasticsearch >= 5, so we can use ingest node feature");
+            } else {
+                INGEST_SUPPORT = false;
+                logger.debug("Using elasticsearch < 5, so we can't use ingest node feature");
+            }
+        }
+    }
+
+    public boolean isIngestSupported() {
+        return INGEST_SUPPORT;
+    }
+
+    public RestClient getClient() {
+        return client;
+    }
+
+    public static RestClient buildRestClient(Elasticsearch settings) {
+        List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
+        settings.getNodes().forEach(node -> {
+            Node.Scheme scheme = node.getScheme();
+            if (scheme == null) {
+                // Default to HTTP. In case we are reading an old configuration
+                scheme = Node.Scheme.HTTP;
+            }
+            hosts.add(new HttpHost(node.getHost(), node.getPort(), scheme.toLowerCase()));
+        });
+
+        RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
+
+        if (settings.getUsername() != null) {
+            CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(settings.getUsername(), settings.getPassword()));
+            builder.setHttpClientConfigCallback(httpClientBuilder ->
+                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+        }
+
+        return builder.build();
+    }
+
+    // Deprecated methods
+    /**
+     * Search for stored fields in elasticsearch: V2 implementation using fields vs source_fields.
+     * TODO: Remove when we won't support anymore 2.0
+     */
+    @Deprecated
+    public Collection<String> getFromStoredFieldsV2(String index, int size, String fieldFullPath, String objectName, String field,
+                                                     String path,
+                                                     TermQueryBuilder termQuery) throws IOException {
+        Collection<String> files = new ArrayList<>();
+        // We need to fallback on old implementation
+        logger.debug("using low level client search [{}], request [{}]", index, termQuery);
+
+        String url = "/";
+
+        if (index != null) {
+            url += index + "/";
+        }
+
+        url += "_search";
+
+        Map<String, String> params = new HashMap<>();
+        if (termQuery !=  null) {
+            params.put("q", termQuery.fieldName() + ":" + termQuery.value());
+        }
+        params.put("fields", "_source," + field);
+        params.put("size", Integer.toString(size));
+
+        Response restResponse = client.performRequest("GET", url, params);
+        fr.pilato.elasticsearch.crawler.fs.client.SearchResponse response = JsonUtil.deserialize(restResponse, fr.pilato.elasticsearch.crawler.fs.client.SearchResponse.class);
+
+        logger.trace("Response [{}]", response.toString());
+        if (response.getHits() != null && response.getHits().getHits() != null) {
+            for (fr.pilato.elasticsearch.crawler.fs.client.SearchResponse.Hit hit : response.getHits().getHits()) {
+                String name;
+                if (hit.getSource() != null
+                        && extractFromPath(hit.getSource(), objectName).get(field) != null) {
+                    name = (String) extractFromPath(hit.getSource(), objectName).get(field);
+                } else if (hit.getFields() != null
+                        && hit.getFields().get(fieldFullPath) != null) {
+                    // In case someone disabled _source which is not recommended
+                    name = getName(hit.getFields().get(fieldFullPath));
+                } else {
+                    // Houston, we have a problem ! We can't get the old files from ES
+                    logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
+                            "Please enable _source or store field [{}]", path, fieldFullPath);
+                    throw new RuntimeException("Mapping is incorrect: please enable _source or store field [" +
+                            fieldFullPath + "].");
+                }
+                files.add(name);
+            }
+        }
+
+        return files;
+    }
+
+    @Deprecated
+    private String getName(Object nameObject) {
+        if (nameObject instanceof List) {
+            return String.valueOf (((List) nameObject).get(0));
+        }
+
+        throw new RuntimeException("search result, " + nameObject +
+                " not of type List<String> but " +
+                nameObject.getClass().getName() + " with value " + nameObject);
+    }
+
+    /**
+     * Search with a JSON Body
+     * TODO: Remove when we won't support anymore 2.0
+     * @param index Index. Might be null.
+     * @param json  Json Source
+     * @return The Response object
+     * @throws IOException if something goes wrong
+     */
+    @Deprecated
+    public fr.pilato.elasticsearch.crawler.fs.client.SearchResponse searchJson(String index, String json) throws IOException {
+        logger.debug("search [{}], request [{}]", index, json);
+
+        String path = "/";
+
+        if (index != null) {
+            path += index + "/";
+        }
+
+        path += "_search";
+
+        Response restResponse = client.performRequest("GET", path, Collections.emptyMap(),
+                new StringEntity(json, ContentType.APPLICATION_JSON));
+        fr.pilato.elasticsearch.crawler.fs.client.SearchResponse searchResponse = JsonUtil.deserialize(restResponse, fr.pilato.elasticsearch.crawler.fs.client.SearchResponse.class);
+
+        logger.trace("search response: {}", searchResponse);
+        return searchResponse;
     }
 }

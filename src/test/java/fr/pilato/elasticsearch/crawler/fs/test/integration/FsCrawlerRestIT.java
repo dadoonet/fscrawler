@@ -23,9 +23,9 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
+import org.elasticsearch.action.search.SearchRequest;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.ws.rs.core.MediaType;
@@ -42,12 +42,6 @@ import static org.hamcrest.Matchers.is;
 
 public class FsCrawlerRestIT extends AbstractRestITCase {
 
-    @BeforeClass
-    public static void removeOldIndex() throws Exception {
-        staticLogger.info(" -> Removing existing index [fscrawler_rest_tests]");
-        elasticsearchClient.deleteIndex("fscrawler_rest_tests");
-    }
-
     @Test
     public void testCallRoot() {
         ServerStatusResponse status = restCall("/", ServerStatusResponse.class);
@@ -56,7 +50,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void testAllDocuments() throws Exception {
+    public void testAllDocumentsWithRest() throws Exception {
         String url = getUrl("documents");
         Path from = Paths.get(url);
         Files.walk(from)
@@ -65,10 +59,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                     UploadResponse response = uploadFile(path);
                     assertThat(response.getFilename(), is(path.getFileName().toString()));
                 });
-        Long numFiles = Files.list(from).count();
 
         // We wait until we have all docs
-        countTestHelper(REST_INDEX, null, numFiles.intValue(), null, TimeValue.timeValueMinutes(1));
+        countTestHelper(new SearchRequest(getCrawlerName()), Files.list(from).count(), null, TimeValue.timeValueMinutes(1));
     }
 
     private static final Map<String, Object> debugOption = new HashMap<>();

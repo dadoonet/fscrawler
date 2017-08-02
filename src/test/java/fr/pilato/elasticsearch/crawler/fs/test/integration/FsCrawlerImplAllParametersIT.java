@@ -21,11 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.google.common.base.Charsets;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
-import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.VersionComparator;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Attributes;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.File;
@@ -41,8 +36,28 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.Level;
+import org.elasticsearch.Version;
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.http.entity.ContentType;
 import org.elasticsearch.client.http.entity.StringEntity;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.node.Node;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.threadpool.ThreadPool;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
@@ -67,17 +82,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiOfLengthBetween;
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
-import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.client.JsonUtil.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.test.integration.FsCrawlerRestIT.uploadFile;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayWithSize;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.iterableWithSize;
@@ -206,7 +221,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             }
         }, duration.seconds(), TimeUnit.SECONDS), equalTo(true));
 
-        countTestHelper(jobName, null, null);
+        countTestHelper(new SearchRequest(jobName), null, null);
 
         // Make sure we refresh indexed docs before launching tests
         refresh();
@@ -222,19 +237,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         }
     }
 
-    /**
-     * Check that we have the expected number of docs or at least one if expected is null
-     *
-     * @param indexName Index we will search in.
-     * @param term      Term you search for. MatchAll if null.
-     * @param expected  expected number of docs. Null if at least 1.
-     * @return the search response if further tests are needed
-     * @throws Exception in case of error
-     */
-    public SearchResponse countTestHelper(final String indexName, String term, final Integer expected) throws Exception {
-        return countTestHelper(indexName, term, expected, null);
-    }
-
     @Test
     public void test_default_settings() throws Exception {
         startCrawler();
@@ -244,8 +246,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_filesize() throws Exception {
         startCrawler();
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1);
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             Map<String, Object> file = (Map<String, Object>) hit.getSource().get(Doc.FIELD_NAMES.FILE);
             assertThat(file, notNullValue());
             assertThat(file.get(File.FIELD_NAMES.FILESIZE), is(12230));
@@ -259,8 +261,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             Object content = hit.getSource().get(Doc.FIELD_NAMES.CONTENT);
             Object indexedChars = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
@@ -279,8 +281,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             Object content = hit.getSource().get(Doc.FIELD_NAMES.CONTENT);
             Object indexedChars = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
@@ -299,8 +301,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             Object content = hit.getSource().get(Doc.FIELD_NAMES.CONTENT);
             Object indexedChars = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
@@ -318,8 +320,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1);
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             Map<String, Object> file = (Map<String, Object>) hit.getSource().get(Doc.FIELD_NAMES.FILE);
             assertThat(file, notNullValue());
             assertThat(file.get(File.FIELD_NAMES.FILESIZE), nullValue());
@@ -332,15 +334,15 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .addInclude("*_include.txt")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }
 
     @Test
     public void test_default_metadata() throws Exception {
         startCrawler();
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
 
             assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILENAME), notNullValue());
@@ -361,8 +363,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setAttributesSupport(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.ATTRIBUTES).get(Attributes.FIELD_NAMES.OWNER), notNullValue());
         }
     }
@@ -375,14 +377,14 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
-        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
 
         // We remove a file
         logger.info("  ---> Removing file deleted_roottxtfile.txt");
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
-        // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+        // We expect to have one file
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
     @Test
@@ -393,14 +395,14 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
-        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
 
         // We remove a file
         logger.info(" ---> Removing file deleted_roottxtfile.txt");
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
     }
 
     /**
@@ -411,8 +413,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_rename_file() throws Exception {
         startCrawler();
 
-        // We should have two docs first
-        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+        // We should have one doc first
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
 
         // We rename the file
         logger.info(" ---> Renaming file roottxtfile.txt to renamed_roottxtfile.txt");
@@ -421,7 +423,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 currentTestResourceDir.resolve("renamed_roottxtfile.txt"));
 
         // We expect to have one file only with a new name
-        countTestHelper(getCrawlerName(), "file.filename:renamed_roottxtfile.txt", 1, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.termQuery("file.filename", "renamed_roottxtfile.txt"))), 1L, currentTestResourceDir);
     }
 
     /**
@@ -432,14 +435,14 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We should have one doc first
-        SearchResponse response = countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+        SearchResponse response = countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
         checkDocVersions(response, 1L);
 
         logger.info(" ---> Creating a new file new_roottxtfile.txt");
         Files.write(currentTestResourceDir.resolve("new_roottxtfile.txt"), "This is a second file".getBytes());
 
         // We expect to have two files
-        response = countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
+        response = countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
 
         // It should be only version <= 2 for both docs
         checkDocVersions(response, 2L);
@@ -448,7 +451,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         Files.write(currentTestResourceDir.resolve("new_new_roottxtfile.txt"), "This is a third file".getBytes());
 
         // We expect to have three files
-        response = countTestHelper(getCrawlerName(), null, 3, currentTestResourceDir);
+        response = countTestHelper(new SearchRequest(getCrawlerName()), 3L, currentTestResourceDir);
 
         // It should be only version <= 2 for all docs
         checkDocVersions(response, 2L);
@@ -461,15 +464,15 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     private void checkDocVersions(SearchResponse response, long maxVersion) {
         // It should be only version <= maxVersion for all docs
-        response.getHits().getHits().forEach(hit -> {
+        for (SearchHit hit : response.getHits().getHits()) {
             // Read the document. This is needed since 5.0 as search does not return the _version field
             try {
-                SearchResponse.Hit getHit = elasticsearchClient.get(hit.getIndex(), hit.getId());
+                GetResponse getHit = elasticsearchClient.get(new GetRequest(hit.getIndex(), "doc", hit.getId()));
                 assertThat(getHit.getVersion(), lessThanOrEqualTo(maxVersion));
             } catch (IOException e) {
                 fail("We got an IOException: " + e.getMessage());
             }
-        });
+        }
     }
 
     /**
@@ -484,8 +487,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "text:tweet");
-                return response.getHits().getTotal() == 2;
+                SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
+                        new SearchSourceBuilder().query(QueryBuilders.matchQuery("text", "tweet"))));
+                return response.getHits().getTotalHits() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
@@ -505,8 +509,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "text:tweet");
-                return response.getHits().getTotal() == 0;
+                SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
+                        new SearchSourceBuilder().query(QueryBuilders.matchQuery("text", "tweet"))));
+                return response.getHits().getTotalHits() == 0;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
@@ -515,8 +520,18 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 docs for tweet in _all...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "tweet");
-                return response.getHits().getTotal() == 2;
+                // Small hack for version < 5.0 as the client is not compatible
+                // TODO remove when we remove support for 2.x
+                QueryBuilder query;
+                if (elasticsearchClient.isIngestSupported()) {
+                    query = QueryBuilders.queryStringQuery("tweet");
+                } else {
+                    query = QueryBuilders.matchQuery("_all", "tweet");
+                }
+
+                SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
+                        new SearchSourceBuilder().query(query)));
+                return response.getHits().getTotalHits() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
@@ -536,7 +551,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.isExistingDocument(getCrawlerName(), "roottxtfile.txt");
+                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), "doc", "roottxtfile.txt"));
             } catch (IOException e) {
                 return false;
             }
@@ -556,8 +571,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 doc for tweet in object.text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), "object.text:tweet");
-                return response.getHits().getTotal() == 2;
+                SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
+                        new SearchSourceBuilder().query(QueryBuilders.matchQuery("object.text", "tweet"))));
+                return response.getHits().getTotalHits() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
@@ -572,8 +588,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             // We check that the field is in _source
             assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
         }
@@ -583,11 +599,10 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_do_not_store_source() throws Exception {
         startCrawler();
 
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null, "_source", "*");
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
-            // We check that the field has not been stored
-            assertThat(hit.getFields(), nullValue());
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
 
+        SearchResponse searchResponse = elasticsearchClient.search(new SearchRequest(getCrawlerName()));
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             // We check that the field is not part of _source
             assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
         }
@@ -598,10 +613,10 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We expect to have one file
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1);
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
 
         // The default configuration should not add file attributes
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTRIBUTES), nullValue());
         }
 
@@ -612,10 +627,10 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We expect to have two files
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 2);
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
 
         // We check that the subdir document has his meta path data correctly set
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             Object virtual = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.PATH)
                     .get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.VIRTUAL);
             assertThat(virtual, isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
@@ -627,60 +642,79 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We expect to have 7 files
-        countTestHelper(getCrawlerName(), null, 7);
+        countTestHelper(new SearchRequest(getCrawlerName()), 7L, null);
 
         // Run aggs
-        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
-                "{\n" +
-                        "  \"size\": 0, \n" +
-                        "  \"aggs\": {\n" +
-                        "    \"folders\": {\n" +
-                        "      \"terms\": {\n" +
-                        "        \"field\": \"path.virtual.tree\"\n" +
-                        "      }\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}");
-        assertThat(response.getHits().getTotal(), is(7L));
+        Version version = elasticsearchClient.info().getVersion();
+        if (version.onOrAfter(Version.V_5_0_0_alpha1)) {
+            // We can use the high level REST Client
+            SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
+                    new SearchSourceBuilder()
+                            .size(0)
+                            .aggregation(AggregationBuilders.terms("folders").field("path.virtual.tree"))));
+            assertThat(response.getHits().getTotalHits(), is(7L));
 
-        // aggregations
-        assertThat(response.getAggregations(), hasKey("folders"));
-        List<Object> buckets = (List) extractFromPath(response.getAggregations(), "folders").get("buckets");
+            // aggregations
+            assertThat(response.getAggregations().asMap(), hasKey("folders"));
+            Terms aggregation = response.getAggregations().get("folders");
+            List<? extends Terms.Bucket> buckets = aggregation.getBuckets();
 
-        assertThat(buckets, iterableWithSize(10));
+            assertThat(buckets, iterableWithSize(10));
 
-        // Check files
-        response = elasticsearchClient.searchJson(getCrawlerName(), "{ \"sort\": [ \"path.virtual\" ] }");
-        assertThat(response.getHits().getTotal(), is(7L));
+            // Check files
+            response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder().sort("path.virtual")));
+            assertThat(response.getHits().getTotalHits(), is(7L));
 
-        int i = 0;
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/roottxtfile.txt", is("/roottxtfile.txt"));
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", is("/subdir1/roottxtfile_multi_feed.txt"));
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", is("/subdir1/subdir11/roottxtfile.txt"));
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", is("/subdir1/subdir12/roottxtfile.txt"));
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", is("/subdir2/roottxtfile_multi_feed.txt"));
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", is("/subdir2/subdir21/roottxtfile.txt"));
-        pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", is("/subdir2/subdir22/roottxtfile.txt"));
+            int i = 0;
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/roottxtfile.txt", is("/roottxtfile.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", is("/subdir1/roottxtfile_multi_feed.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", is("/subdir1/subdir11/roottxtfile.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", is("/subdir1/subdir12/roottxtfile.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", is("/subdir2/roottxtfile_multi_feed.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", is("/subdir2/subdir21/roottxtfile.txt"));
+            pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", is("/subdir2/subdir22/roottxtfile.txt"));
 
 
-        // Check folders
-        response = elasticsearchClient.searchJson(getCrawlerName() + INDEX_SUFFIX_FOLDER, "{ \"sort\": [ \"virtual\" ] }");
-        assertThat(response.getHits().getTotal(), is(7L));
+            // Check folders
+            response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER).source(new SearchSourceBuilder().sort("virtual")));
+            assertThat(response.getHits().getTotalHits(), is(7L));
 
-        i = 0;
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree", is("/"));
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1", is("/subdir1"));
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1/subdir11", is("/subdir1/subdir11"));
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir1/subdir12", is("/subdir1/subdir12"));
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2", is("/subdir2"));
-        pathHitTester(response, i++, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2/subdir21", is("/subdir2/subdir21"));
-        pathHitTester(response, i, SearchResponse.Hit::getSource, "/test_subdirs_deep_tree/subdir2/subdir22", is("/subdir2/subdir22"));
+            i = 0;
+            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree", is("/"));
+            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree/subdir1", is("/subdir1"));
+            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree/subdir1/subdir11", is("/subdir1/subdir11"));
+            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree/subdir1/subdir12", is("/subdir1/subdir12"));
+            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree/subdir2", is("/subdir2"));
+            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree/subdir2/subdir21", is("/subdir2/subdir21"));
+            pathHitTester(response, i, SearchHit::getSource, "/test_subdirs_deep_tree/subdir2/subdir22", is("/subdir2/subdir22"));
+        } else {
+            // We need to use the old deprecated fashion for version < 5.0
+            // We do minimal tests
+            // Run aggs
+            fr.pilato.elasticsearch.crawler.fs.client.SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
+                    "{\n" +
+                            "  \"size\": 0, \n" +
+                            "  \"aggs\": {\n" +
+                            "    \"folders\": {\n" +
+                            "      \"terms\": {\n" +
+                            "        \"field\": \"path.virtual.tree\"\n" +
+                            "      }\n" +
+                            "    }\n" +
+                            "  }\n" +
+                            "}");
+            assertThat(response.getHits().getTotal(), is(7L));
+
+            // aggregations
+            assertThat(response.getAggregations(), hasKey("folders"));
+            List<Object> buckets = (List) extractFromPath(response.getAggregations(), "folders").get("buckets");
+            assertThat(buckets, iterableWithSize(10));
+        }
     }
 
     @Test
     public void test_subdirs_very_deep_tree() throws Exception {
 
-        int subdirs = randomIntBetween(30, 100);
+        long subdirs = randomLongBetween(30, 100);
 
         staticLogger.debug("  --> Generating [{}] dirs [{}]", subdirs, currentTestResourceDir);
 
@@ -699,51 +733,77 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We expect to have x files (<- whoa that's funny Mulder!)
-        countTestHelper(getCrawlerName(), null, subdirs+1);
+        countTestHelper(new SearchRequest(getCrawlerName()), subdirs+1, null);
 
-        // Run aggs
-        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
-                "{\n" +
-                        "  \"size\": 0, \n" +
-                        "  \"aggs\": {\n" +
-                        "    \"folders\": {\n" +
-                        "      \"terms\": {\n" +
-                        "        \"field\": \"path.virtual.tree\"\n" +
-                        "      }\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}");
-        assertThat(response.getHits().getTotal(), is((long) subdirs+1));
+        Version version = elasticsearchClient.info().getVersion();
+        if (version.onOrAfter(Version.V_5_0_0_alpha1)) {
+            // We can use the high level REST Client
+            // Run aggs
+            SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
+                    new SearchSourceBuilder()
+                            .size(0)
+                            .aggregation(AggregationBuilders.terms("folders").field("path.virtual.tree"))));
+            assertThat(response.getHits().getTotalHits(), is(subdirs+1));
 
-        // aggregations
-        assertThat(response.getAggregations(), hasKey("folders"));
-        List<Object> buckets = (List) extractFromPath(response.getAggregations(), "folders").get("buckets");
+            // aggregations
+            assertThat(response.getAggregations().asMap(), hasKey("folders"));
+            Terms aggregation = response.getAggregations().get("folders");
+            List<? extends Terms.Bucket> buckets = aggregation.getBuckets();
 
-        assertThat(buckets, iterableWithSize(10));
+            assertThat(buckets, iterableWithSize(10));
+        } else {
+            // We need to use the old deprecated fashion for version < 5.0
+            // We do minimal tests
+            // Run aggs
+            fr.pilato.elasticsearch.crawler.fs.client.SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
+                    "{\n" +
+                            "  \"size\": 0, \n" +
+                            "  \"aggs\": {\n" +
+                            "    \"folders\": {\n" +
+                            "      \"terms\": {\n" +
+                            "        \"field\": \"path.virtual.tree\"\n" +
+                            "      }\n" +
+                            "    }\n" +
+                            "  }\n" +
+                            "}");
+            assertThat(response.getHits().getTotal(), is((long) subdirs+1));
+
+            // aggregations
+            assertThat(response.getAggregations(), hasKey("folders"));
+            List<Object> buckets = (List) extractFromPath(response.getAggregations(), "folders").get("buckets");
+
+            assertThat(buckets, iterableWithSize(10));
+        }
 
         // Check files
-        response = elasticsearchClient.searchJson(getCrawlerName(), "{ \"size\": " + 1000 + ", \"sort\": [ \"path.virtual\" ] }");
-        assertThat(response.getHits().getTotal(), is((long) subdirs+1));
+        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
+                        new SearchSourceBuilder()
+                                .size(1000)
+                                .sort("path.virtual")));
+        assertThat(response.getHits().getTotalHits(), is(subdirs+1));
 
         for (int i = 0; i < subdirs; i++) {
             pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSource().get("path"), "sample.txt", endsWith("/" + "sample.txt"));
         }
 
         // Check folders
-        response = elasticsearchClient.searchJson(getCrawlerName() + INDEX_SUFFIX_FOLDER, "{ \"size\": " + 1000 + ", \"sort\": [ \"virtual\" ] }");
-        assertThat(response.getHits().getTotal(), is((long) subdirs+2));
+        response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER).source(
+                        new SearchSourceBuilder()
+                                .size(1000)
+                                .sort("virtual")));
+        assertThat(response.getHits().getTotalHits(), is(subdirs+2));
 
         // Let's remove the main subdir and wait...
         staticLogger.debug("  --> Removing all dirs from [{}]", mainDir);
         deleteRecursively(mainDir);
 
         // We expect to have 1 doc now
-        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
-    private void pathHitTester(SearchResponse response, int position, Function<SearchResponse.Hit, Map<String, Object>> extractPath,
+    private void pathHitTester(SearchResponse response, int position, Function<SearchHit, Map<String, Object>> extractPath,
                                String expectedReal, Matcher<String> expectedVirtual) {
-        SearchResponse.Hit hit = response.getHits().getHits().get(position);
+        SearchHit hit = response.getHits().getHits()[position];
         Map<String, Object> path = extractPath.apply(hit);
         String real = (String) path.get("real");
         String virtual = (String) path.get("virtual");
@@ -760,7 +820,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have seven files
-        countTestHelper(getCrawlerName(), null, 7);
+        countTestHelper(new SearchRequest(getCrawlerName()), 7L, null);
     }
 
     @Test
@@ -771,7 +831,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have one file
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }
 
     @Test
@@ -781,9 +841,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         FsCrawlerImpl crawler1 = startCrawler(getCrawlerName() + "_1", fs1, endCrawlerDefinition(getCrawlerName() + "_1"), null);
         FsCrawlerImpl crawler2 = startCrawler(getCrawlerName() + "_2", fs2, endCrawlerDefinition(getCrawlerName() + "_2"), null);
         // We should have one doc in index 1...
-        countTestHelper(getCrawlerName() + "_1", null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName() + "_1"), 1L, null);
         // We should have one doc in index 2...
-        countTestHelper(getCrawlerName() + "_2", null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName() + "_2"), 1L, null);
 
         crawler1.close();
         crawler2.close();
@@ -794,7 +854,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We should have one doc
-        countTestHelper(getCrawlerName(), "file.filename:roottxtfile.txt", 1, null);
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.termQuery("file.filename", "roottxtfile.txt"))), 1L, null);
     }
 
     /**
@@ -806,7 +867,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have one file
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }
 
 
@@ -829,7 +890,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
 
-        countTestHelper(getCrawlerName(), null, 2);
+        countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
     }
 
     /**
@@ -851,7 +912,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
 
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }
 
     /**
@@ -862,7 +923,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 2);
+        countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
     }
 
     /**
@@ -876,11 +937,14 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have one file
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
 
-        countTestHelper(getCrawlerName(), "content:file*", 0, null);
-        countTestHelper(getCrawlerName(), "file.content_type:text*", 0, null);
-        countTestHelper(getCrawlerName(), "file.extension:txt", 1, null);
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.prefixQuery("content", "file*"))), 0L, null);
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.prefixQuery("file.content_type", "text*"))), 0L, null);
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.termQuery("file.extension", "txt"))), 1L, null);
     }
 
     @Test
@@ -890,7 +954,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
                         securityInstalled, 100, TimeValue.timeValueSeconds(2)), null);
 
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }
 
     @Test
@@ -905,8 +969,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setChecksum("MD5")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             Object checksum = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
             assertThat(checksum, is("caa71e1914ecbcf5ae4f46cf85de8648"));
         }
@@ -924,8 +988,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setChecksum("SHA-1")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(getCrawlerName(), null, 1, null);
-        for (SearchResponse.Hit hit : searchResponse.getHits().getHits()) {
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             Object checksum = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
             assertThat(checksum, is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
         }
@@ -954,8 +1018,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 docs only...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(getCrawlerName(), (String) null);
-                return response.getHits().getTotal() == 2;
+                SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()));
+                return response.getHits().getTotalHits() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
@@ -972,13 +1036,15 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setXmlSupport(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse response = countTestHelper(getCrawlerName(), null, 3);
+        SearchResponse response = countTestHelper(new SearchRequest(getCrawlerName()), 3L, null);
 
-        countTestHelper(getCrawlerName(), "title:maeve", 1);
-        countTestHelper(getCrawlerName(), "price:[5 TO 6]", 2);
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.matchQuery("title", "maeve"))), 1L, null);
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.rangeQuery("price").from(5).to(6))), 2L, null);
 
         logger.info("XML documents converted to:");
-        for (SearchResponse.Hit hit : response.getHits().getHits()) {
+        for (SearchHit hit : response.getHits().getHits()) {
             logger.info("{}", hit.toString());
         }
     }
@@ -1016,7 +1082,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1, false);
         crawler.start();
 
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
 
         assertThat("Job should stop after one run", crawler.isClosed(), is(true));
         assertThat(crawler.getRunNumber(), is(1));
@@ -1035,7 +1101,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2, false);
         crawler.start();
 
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
 
         assertThat("Job should stop after two runs", awaitBusy(() -> crawler.isClosed()), is(true));
         assertThat(crawler.getRunNumber(), is(2));
@@ -1052,7 +1118,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have 7 docs first
-        countTestHelper(getCrawlerName(), null, 7, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()), 7L, currentTestResourceDir);
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
@@ -1063,7 +1129,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
         // We expect to have 4 docs now
-        countTestHelper(getCrawlerName(), null, 4, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()), 4L, currentTestResourceDir);
     }
 
     /**
@@ -1077,13 +1143,12 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 2);
+        countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
 
         // We expect having no folders
-        SearchRequest.Builder sr = SearchRequest.builder();
-        SearchResponse response = elasticsearchClient.search(getCrawlerName() + INDEX_SUFFIX_FOLDER, sr.build());
+        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER));
         staticLogger.trace("result {}", response.toString());
-        assertThat(response.getHits().getTotal(), is(0L));
+        assertThat(response.getHits().getTotalHits(), is(0L));
     }
 
 
@@ -1096,29 +1161,20 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler();
 
         // We expect to have one file
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
 
         // Let's test highlighting
-        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
-                "{\n" +
-                        "  \"query\": {\n" +
-                        "    \"match\": {\n" +
-                        "      \"content\": \"exemplo\"\n" +
-                        "    }\n" +
-                        "  },\n" +
-                        "  \"highlight\": {\n" +
-                        "    \"fields\": {\n" +
-                        "      \"content\": {}\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}");
+        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
+                new SearchSourceBuilder()
+                        .query(QueryBuilders.matchQuery("content", "exemplo"))
+                        .highlighter(new HighlightBuilder().field("content"))));
         staticLogger.trace("result {}", response.toString());
-        assertThat(response.getHits().getTotal(), is(1L));
+        assertThat(response.getHits().getTotalHits(), is(1L));
 
-        SearchResponse.Hit hit = response.getHits().getHits().get(0);
-        assertThat(hit.getHighlight(), hasKey("content"));
-        assertThat(hit.getHighlight().get("content"), hasSize(1));
-        assertThat(hit.getHighlight().get("content").get(0), containsString("<em>exemplo</em>"));
+        SearchHit hit = response.getHits().getHits()[0];
+        assertThat(hit.getHighlightFields(), hasKey("content"));
+        assertThat(hit.getHighlightFields().get("content").getFragments(), arrayWithSize(1));
+        assertThat(hit.getHighlightFields().get("content").getFragments()[0].string(), containsString("<em>exemplo</em>"));
     }
 
     /**
@@ -1131,7 +1187,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 TimeValue.timeValueMinutes(2));
 
         // We expect to have one file
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }
 
     /**
@@ -1168,11 +1224,12 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
 
         // We expect to have one file
-        countTestHelper(crawlerName, "my_content_field:perniciosoque", 1);
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.matchQuery("my_content_field", "perniciosoque"))), 1L, currentTestResourceDir);
 
         // We expect to have one folder
-        SearchResponse response = elasticsearchClient.searchJson(getCrawlerName() + INDEX_SUFFIX_FOLDER, "{}");
-        assertThat(response.getHits().getTotal(), is(1L));
+        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER));
+        assertThat(response.getHits().getTotalHits(), is(1L));
     }
 
     /**
@@ -1218,7 +1275,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
 
         // We expect to have one file
-        countTestHelper(crawlerName, "ip_addr:10.21.23.123", 1);
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.termQuery("ip_addr", "10.21.23.123"))), 1L, currentTestResourceDir);
     }
 
     /**
@@ -1249,10 +1307,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                     UploadResponse response = uploadFile(path);
                     assertThat(response.getFilename(), is(path.getFileName().toString()));
                 });
-        Long numFiles = Files.list(from).count();
 
         // We wait until we have all docs
-        countTestHelper(getCrawlerName(), null, numFiles.intValue(), null, TimeValue.timeValueMinutes(1));
+        countTestHelper(new SearchRequest(getCrawlerName()), Files.list(from).count(), null, TimeValue.timeValueMinutes(1));
     }
 
     /**
@@ -1276,7 +1333,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         Files.write(file, "Hello world".getBytes(Charsets.UTF_8));
 
         // We should have 1 doc first
-        countTestHelper(getCrawlerName(), null, 1);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
@@ -1286,8 +1343,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
-        // We expect to have 4 docs now
-        countTestHelper(getCrawlerName(), null, 2);
+        // We expect to have 2 docs now
+        countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
     }
 
     /**
@@ -1302,18 +1359,18 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
-        countTestHelper(getCrawlerName(), null, 2, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
 
         assertThat("Document should exists with [id1.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.isExistingDocument(getCrawlerName(), "id1.txt");
+                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), "doc", "id1.txt"));
             } catch (IOException e) {
                 return false;
             }
         }), equalTo(true));
         assertThat("Document should exists with [id2.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.isExistingDocument(getCrawlerName(), "id2.txt");
+                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), "doc", "id2.txt"));
             } catch (IOException e) {
                 return false;
             }
@@ -1324,7 +1381,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         Files.delete(currentTestResourceDir.resolve("id2.txt"));
 
         // We expect to have two files
-        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
     /**
@@ -1350,33 +1407,44 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have one doc first
-        countTestHelper(getCrawlerName(), null, 1, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
     @SuppressWarnings("deprecation")
     @Test
     public void test_upgrade_version() throws Exception {
         // We can only run this test if elasticsearch version is >= 2.3 and < 6.0
-        String version = elasticsearchClient.findVersion();
-        VersionComparator comparator = new VersionComparator();
+        Version version = elasticsearchClient.info().getVersion();
         assumeFalse("We can only run the upgrade process on version between >= 2.3 and < 6.0",
-                comparator.compare(version, "2.3") < 0 || comparator.compare(version, "6") > 0);
+                version.onOrBefore(Version.V_2_3_0) || version.major >= 6);
 
         // Let's create some deprecated indices
-        int nbDocs = randomIntBetween(10, 100);
-        int nbFolders = randomIntBetween(1, 10);
+        long nbDocs = randomLongBetween(10, 100);
+        long nbFolders = randomLongBetween(1, 10);
 
-        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.createIndex(getCrawlerName(), false, null);
 
-        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 1000, TimeValue.timeValueSeconds(2), null);
+        ThreadPool threadPool = new ThreadPool(Settings.builder().put(Node.NODE_NAME_SETTING.getKey(), "high-level-client").build());
+        BulkProcessor.Listener listener = new BulkProcessor.Listener() {
+            @Override public void beforeBulk(long executionId, BulkRequest request) { }
+            @Override public void afterBulk(long executionId, BulkRequest request, BulkResponse response) { }
+            @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) { }
+        };
+
+        BulkProcessor bulkProcessor = new BulkProcessor.Builder(elasticsearchClient::bulkAsync, listener, threadPool)
+                .setBulkActions(1000)
+                .setFlushInterval(org.elasticsearch.common.unit.TimeValue.timeValueSeconds(2))
+                .build();
+
         // Create fake data
         for (int i = 0; i < nbDocs; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}"));
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}", XContentType.JSON));
         }
         for (int i = 0; i < nbFolders; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "folder", "id" + i).source("{\"foo\":\"bar\"}"));
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), "folder", "id" + i).source("{\"foo\":\"bar\"}", XContentType.JSON));
         }
-        bulkProcessor.close();
+        bulkProcessor.awaitClose(1, TimeUnit.SECONDS);
+        threadPool.shutdownNow();
 
         elasticsearchClient.refresh(getCrawlerName());
 
@@ -1390,13 +1458,13 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         crawler.upgrade();
 
         // Test that we have all needed docs in old index and new indices
-        int expectedDocs = nbDocs;
-        if (comparator.compare(version, "5") < 0) {
+        long expectedDocs = nbDocs;
+        if (version.onOrBefore(Version.V_5_0_0_alpha1)) {
             // If we ran our tests against a 2.x cluster, _delete_by_query is skipped (as it does not exist).
             // Which means that folders are still there
             expectedDocs += nbFolders;
         }
-        countTestHelper(getCrawlerName(), null, expectedDocs, currentTestResourceDir);
-        countTestHelper(getCrawlerName() + INDEX_SUFFIX_FOLDER, null, nbFolders, currentTestResourceDir);
+        countTestHelper(new SearchRequest(getCrawlerName()), expectedDocs, null);
+        countTestHelper(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER), nbFolders, null);
     }
 }

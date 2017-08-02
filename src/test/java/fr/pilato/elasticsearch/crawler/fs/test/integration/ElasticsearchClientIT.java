@@ -19,27 +19,22 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.client.BulkProcessor;
-import fr.pilato.elasticsearch.crawler.fs.client.BulkRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.BulkResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.IndexRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.VersionComparator;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
-import org.apache.logging.log4j.LogManager;
-import org.elasticsearch.client.http.entity.ContentType;
-import org.elasticsearch.client.http.entity.StringEntity;
+import org.elasticsearch.Version;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Collection;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.iterableWithSize;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
@@ -56,7 +51,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
     @Test
     public void testCreateIndex() throws IOException {
-        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.createIndex(getCrawlerName(), false, null);
         boolean exists = elasticsearchClient.isExistingIndex(getCrawlerName());
         assertThat(exists, is(true));
     }
@@ -75,16 +70,16 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
     @Test
     public void testRefresh() throws IOException {
-        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.createIndex(getCrawlerName(), false, null);
         refresh();
     }
 
     @Test
     public void testCreateIndexAlreadyExists() throws IOException {
-        elasticsearchClient.createIndex(getCrawlerName());
+        elasticsearchClient.createIndex(getCrawlerName(), false, null);
         elasticsearchClient.waitForHealthyIndex(getCrawlerName());
         try {
-            elasticsearchClient.createIndex(getCrawlerName());
+            elasticsearchClient.createIndex(getCrawlerName(), false, null);
             fail("we should reject creation of an already existing index");
         } catch (RuntimeException e) {
             assertThat(e.getMessage(), is("index already exists"));
@@ -94,256 +89,52 @@ public class ElasticsearchClientIT extends AbstractITCase {
     @Test
     public void testSearch() throws IOException {
         // Depending on the version we are using, we need to adapt the test settings (mapping)
-        String version = elasticsearchClient.findVersion();
+        assumeThat("We only test our internal search stuff for version < 5.0", elasticsearchClient.info().getVersion().onOrAfter(Version.V_5_0_0_alpha1), is(false));
 
-        String settings;
-        // With elasticsearch 5.0.0, we need to use `type: text` instead of `type: string`
-        if (new VersionComparator().compare(version, "5") >= 0) {
-            settings = "{\n" +
-                    "  \"mappings\": {\n" +
-                    "    \"doc\": {\n" +
-                    "      \"properties\": {\n" +
-                    "        \"foo\": {\n" +
-                    "          \"type\": \"text\",\n" +
-                    "          \"store\": true\n" +
-                    "        }\n" +
-                    "      }\n" +
-                    "    }\n" +
-                    "  }\n" +
-                    "}\n";
-        } else {
-            settings = "{\n" +
-                    "  \"mappings\": {\n" +
-                    "    \"doc\": {\n" +
-                    "      \"properties\": {\n" +
-                    "        \"foo\": {\n" +
-                    "          \"type\": \"string\",\n" +
-                    "          \"store\": true\n" +
-                    "        }\n" +
-                    "      }\n" +
-                    "    }\n" +
-                    "  }\n" +
-                    "}\n";
-        }
+        String settings = "{\n" +
+                "  \"mappings\": {\n" +
+                "    \"doc\": {\n" +
+                "      \"properties\": {\n" +
+                "        \"foo\": {\n" +
+                "          \"properties\": {\n" +
+                "            \"bar\": {\n" +
+                "              \"type\": \"string\",\n" +
+                "              \"store\": true\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
 
         elasticsearchClient.createIndex(getCrawlerName(), false, settings);
         elasticsearchClient.waitForHealthyIndex(getCrawlerName());
 
-        elasticsearchClient.index(getCrawlerName(), "1", "{ \"foo\" : \"bar\" }");
-        elasticsearchClient.index(getCrawlerName(), "2", "{ \"foo\" : \"baz\" }");
+        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "doc", "1").source("{ \"foo\": { \"bar\": \"bar\" } }", XContentType.JSON));
+        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "doc", "2").source("{ \"foo\": { \"bar\": \"baz\" } }", XContentType.JSON));
 
         elasticsearchClient.refresh(getCrawlerName());
 
         // match_all
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), (String) null);
-        assertThat(response.getHits().getTotal(), is(2L));
+        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()));
+        assertThat(response.getHits().getTotalHits(), is(2L));
 
         // term
-        response = elasticsearchClient.search(getCrawlerName(), "foo:bar");
-        assertThat(response.getHits().getTotal(), is(1L));
+        response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.termQuery("foo.bar", "bar"))));
+        assertThat(response.getHits().getTotalHits(), is(1L));
 
         // using fields
-        response = elasticsearchClient.search(getCrawlerName(), "foo:bar", 10, "_source");
-        assertThat(response.getHits().getTotal(), is(1L));
-        response = elasticsearchClient.search(getCrawlerName(), "foo:bar", 10, "foo");
-        assertThat(response.getHits().getTotal(), is(1L));
-        assertThat(response.getHits().getHits().get(0).getFields(), hasEntry("foo", Collections.singletonList("bar")));
-
-        // match_all
-        response = elasticsearchClient.searchJson(getCrawlerName(), "{}");
-        assertThat(response.getHits().getTotal(), is(2L));
-
-        // match
-        response = elasticsearchClient.searchJson(getCrawlerName(), "{ \"query\" : { \"match\": { \"foo\" : \"bar\" } } }");
-        assertThat(response.getHits().getTotal(), is(1L));
-    }
-
-    @Test
-    public void testBulkWithTime() throws IOException, InterruptedException {
-        // Create the index first
-        elasticsearchClient.createIndex(getCrawlerName());
-        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
-
-        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 100, TimeValue.timeValueSeconds(2), null);
-        for (int i = 0; i < 10; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}"));
-        }
-
-        elasticsearchClient.refresh(getCrawlerName());
-
-        waitForAllShardsAssigned();
-
-        // We wait for 3 seconds (2 should be enough)
-        Thread.sleep(3000L);
-
-        elasticsearchClient.refresh(getCrawlerName());
-
-        // We should have now our docs
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), (String) null);
-        assertThat(response.getHits().getTotal(), is(10L));
-
-        bulkProcessor.close();
-    }
-
-    @Test
-    public void testBulkWithoutTime() throws IOException, InterruptedException {
-        // Create the index first
-        elasticsearchClient.createIndex(getCrawlerName());
-        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
-
-        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 10, null, null);
-        for (int i = 0; i < 9; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}"));
-        }
-
-        elasticsearchClient.refresh(getCrawlerName());
-
-        waitForAllShardsAssigned();
-
-        bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + 9).source("{\"foo\":\"bar\"}"));
-
-        elasticsearchClient.refresh(getCrawlerName());
-
-        // We should have now our docs
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), (String) null);
-        assertThat(response.getHits().getTotal(), is(10L));
-
-        bulkProcessor.close();
-    }
-
-    @Test
-    public void testBulkWithPipeline() throws IOException, InterruptedException {
-        // We can only run this test against a 5.0 cluster or >
-        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
-                elasticsearchClient.isIngestSupported(), is(true));
-
-        // Create the index first
-        elasticsearchClient.createIndex(getCrawlerName());
-        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
-
-        // Create an empty ingest pipeline
-        String pipeline = "{\n" +
-                "  \"description\" : \"describe pipeline\",\n" +
-                "  \"processors\" : [\n" +
-                "    {\n" +
-                "      \"set\" : {\n" +
-                "        \"field\": \"foo\",\n" +
-                "        \"value\": \"bar\"\n" +
-                "      }\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}";
-        StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
-
-        elasticsearchClient.getClient().performRequest("PUT", "_ingest/pipeline/" + getCrawlerName(),
-                Collections.emptyMap(), entity);
-
-        BulkProcessor bulkProcessor = BulkProcessor.simpleBulkProcessor(elasticsearchClient, 100, TimeValue.timeValueSeconds(2), getCrawlerName());
-        for (int i = 0; i < 10; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"field\": \"baz\"}"));
-        }
-
-        elasticsearchClient.refresh(getCrawlerName());
-
-        waitForAllShardsAssigned();
-
-        // We wait for 3 seconds (2 should be enough)
-        Thread.sleep(3000L);
-
-        elasticsearchClient.refresh(getCrawlerName());
-
-        // We should have now our docs
-        SearchResponse response = elasticsearchClient.search(getCrawlerName(), "foo:bar");
-        assertThat(response.getHits().getTotal(), is(10L));
-
-        bulkProcessor.close();
-    }
-
-    @Test
-    public void testBulkWithErrors() throws IOException, InterruptedException {
-        // Create the index first
-        elasticsearchClient.createIndex(getCrawlerName());
-        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
-
-        AtomicReference<BulkResponse> bulkResponse = new AtomicReference<>();
-
-        BulkProcessor bulkProcessor = new BulkProcessor.Builder(elasticsearchClient,
-                new BulkProcessor.Listener() {
-                    @Override public void beforeBulk(long executionId, BulkRequest request) { }
-                    @Override public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
-                        bulkResponse.set(response);
-                    }
-                    @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) { }
-                    @Override public void setBulkProcessor(BulkProcessor bulkProcessor) { }
-                })
-                .setBulkActions(100)
-                .setFlushInterval(TimeValue.timeValueMillis(200))
-                .build();
-        bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id").source("{\"foo\":\"bar\""));
-        bulkProcessor.close();
-
-
-        BulkResponse response = bulkResponse.get();
-        Throwable message = response.buildFailureMessage();
-
-        assertThat(message.getMessage(), containsString("1 failures"));
-
-        // If we run the test with a TRACE level, we can check more things
-        if (LogManager.getLogger(BulkResponse.class).isTraceEnabled()) {
-            assertThat(message.getMessage(), containsString("failed to parse"));
-        }
-    }
-
-    @Test
-    public void testBulkUsesContentType() throws Exception {
-        // Create the index first
-        elasticsearchClient.createIndex(getCrawlerName());
-        elasticsearchClient.waitForHealthyIndex(getCrawlerName());
-
-        BulkRequest bulkRequest = new BulkRequest();
-        bulkRequest.add(new IndexRequest(getCrawlerName(), "doc", "id").source("{\"foo\":\"bar\"}"));
-
-        // This call was failing when we were not passing the ContentType.APPLICATION_JSON in the bulk method
-        elasticsearchClient.bulk(bulkRequest, null);
-    }
-
-    /**
-     * If we search just a few ms after sending the requests, we won't have all data.
-     * But in elasticsearch 1.x series that might fail with:
-     *    [2016-07-06 19:35:58,613][DEBUG][action.search.type       ] [Mentus] All shards failed for phase: [query]
-     *    org.elasticsearch.index.IndexShardMissingException: [fscrawler_test_bulk_without_time][4] missing
-     *    at org.elasticsearch.index.IndexService.shardSafe(IndexService.java:210)
-     *    at org.elasticsearch.search.SearchService.createContext(SearchService.java:560)
-     *    at org.elasticsearch.search.SearchService.createAndPutContext(SearchService.java:544)
-     *    at org.elasticsearch.search.SearchService.executeQueryPhase(SearchService.java:306)
-     *    at org.elasticsearch.search.action.SearchServiceTransportAction$5.call(SearchServiceTransportAction.java:231)
-     *    at org.elasticsearch.search.action.SearchServiceTransportAction$5.call(SearchServiceTransportAction.java:228)
-     *    at org.elasticsearch.search.action.SearchServiceTransportAction$23.run(SearchServiceTransportAction.java:559)
-     *    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
-     *    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
-     *    at java.lang.Thread.run(Thread.java:745)
-     *
-     * @throws InterruptedException in case of error
-     */
-    private void waitForAllShardsAssigned() throws InterruptedException {
-        awaitBusy(() -> {
-            try {
-                elasticsearchClient.search(getCrawlerName(), (String) null);
-            } catch (IOException e) {
-                // For elasticsearch 1.x series
-                if (e.getMessage().contains("SearchPhaseExecutionException")) {
-                    logger.warn("Error while running against 1.x cluster. Trying again...");
-                    return false;
-                }
-                fail("We got an unexpected exception: " + e.getMessage());
-            }
-            return true;
-        });
+        Collection<String> fields = elasticsearchClient.getFromStoredFieldsV2(
+                getCrawlerName(), 10, "foo.bar", "foo", "bar", "/a/path", QueryBuilders.termQuery("foo.bar", "bar"));
+        assertThat(fields, iterableWithSize(1));
+        assertThat(fields.iterator().next(), is("bar"));
     }
 
     @Test
     public void testFindVersion() throws IOException {
-        String version = elasticsearchClient.findVersion();
+        Version version = elasticsearchClient.info().getVersion();
         logger.info("Current elasticsearch version: [{}]", version);
 
         // TODO if we store in a property file the elasticsearch version we are running tests against we can add some assertions

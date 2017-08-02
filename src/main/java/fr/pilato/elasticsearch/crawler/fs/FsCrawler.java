@@ -35,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.elasticsearch.Version;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -46,7 +47,6 @@ import java.util.List;
 import java.util.Scanner;
 
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultResources;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.moveLegacyResource;
 
 /**
@@ -250,10 +250,10 @@ public class FsCrawler {
             } else {
                 Path jobMappingDir = configDir.resolve(fsSettings.getName()).resolve("_mappings");
                 fsCrawler.getEsClientManager().start();
-                String elasticsearchVersion = fsCrawler.getEsClientManager().client().findVersion();
+                Version elasticsearchVersion = fsCrawler.getEsClientManager().client().info().getVersion();
                 try {
                     // If we are able to read an old configuration file, we should tell the user to check the documentation
-                    FsCrawlerUtil.readJsonFile(jobMappingDir, configDir, extractMajorVersionNumber(elasticsearchVersion), INDEX_SETTINGS_FILE);
+                    FsCrawlerUtil.readJsonFile(jobMappingDir, configDir, Byte.toString(elasticsearchVersion.major), INDEX_SETTINGS_FILE);
                     logger.warn("We found old configuration index settings in [{}] or [{}]. You should look at the documentation" +
                             " about upgrades: https://github.com/dadoonet/fscrawler#upgrade-to-23", configDir, jobMappingDir);
                 } catch (IllegalArgumentException ignored) { }

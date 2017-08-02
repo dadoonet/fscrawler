@@ -75,4 +75,20 @@ public class JsonUtil {
             throw new RuntimeException(e);
         }
     }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> extractFromPath(Map<String, Object> json, String... path) {
+        Map<String, Object> currentObject = json;
+        for (String fieldName : path) {
+            Object jObject = currentObject.get(fieldName);
+            if (jObject == null) {
+                throw new RuntimeException("incorrect Json. Was expecting field " + fieldName);
+            }
+            if (!(jObject instanceof Map)) {
+                throw new RuntimeException("incorrect datatype in json. Expected Map and got " + jObject.getClass().getName());
+            }
+            currentObject = (Map<String, Object>) jObject;
+        }
+        return currentObject;
+    }
 }

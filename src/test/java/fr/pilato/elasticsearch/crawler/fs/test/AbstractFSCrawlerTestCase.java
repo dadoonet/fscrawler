@@ -45,6 +45,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
+import java.util.function.LongSupplier;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
@@ -146,6 +147,30 @@ public abstract class AbstractFSCrawlerTestCase {
         timeInMillis = maxTimeInMillis - sum;
         Thread.sleep(Math.max(timeInMillis, 0));
         return breakSupplier.getAsBoolean();
+    }
+
+    public static long awaitBusy(LongSupplier breakSupplier, Long expected, long maxWaitTime, TimeUnit unit) throws InterruptedException {
+        long maxTimeInMillis = TimeUnit.MILLISECONDS.convert(maxWaitTime, unit);
+        long timeInMillis = 1;
+        long sum = 0;
+
+        while (sum + timeInMillis < maxTimeInMillis) {
+            long current = breakSupplier.getAsLong();
+            if (current < 0) {
+                return current;
+            }
+            if (expected == null && current >= 1) {
+                return current;
+            } else if (expected != null && current == expected) {
+                return expected;
+            }
+            Thread.sleep(timeInMillis);
+            sum += timeInMillis;
+            timeInMillis = Math.min(AWAIT_BUSY_THRESHOLD, timeInMillis * 2);
+        }
+        timeInMillis = maxTimeInMillis - sum;
+        Thread.sleep(Math.max(timeInMillis, 0));
+        return breakSupplier.getAsLong();
     }
 
     public static String toUnderscoreCase(String value) {

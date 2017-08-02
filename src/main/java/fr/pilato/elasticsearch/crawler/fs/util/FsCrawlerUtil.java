@@ -264,16 +264,6 @@ public class FsCrawlerUtil extends MetaParser {
         }
     }
 
-    /**
-     * Extracts the major digits from a version string
-     * @param version A version like x.y.z-WHATEVER
-     * @return x
-     */
-    public static String extractMajorVersionNumber(String version) {
-        String[] digits = version.split("\\.");
-        return digits[0];
-    }
-
     private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
     public static final String[] MAPPING_RESOURCES = {
             "2/_settings.json", "2/_settings_folder.json",

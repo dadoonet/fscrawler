@@ -20,20 +20,20 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.JsonUtil;
-import fr.pilato.elasticsearch.crawler.fs.client.SearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.test.AbstractFSCrawlerTestCase;
 import org.apache.logging.log4j.Level;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.ResponseException;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.main.MainResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.hamcrest.Matcher;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -49,7 +49,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -57,6 +56,7 @@ import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assume.assumeThat;
 
@@ -124,7 +124,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startElasticsearchRestClient() throws IOException {
-        elasticsearchClient = new ElasticsearchClient(elasticsearch);
+        elasticsearchClient = new ElasticsearchClient(ElasticsearchClient.buildRestClient(elasticsearch));
 
         securityInstalled = testClusterRunning(false);
         if (securityInstalled) {
@@ -134,7 +134,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 elasticsearchClient.shutdown();
             }
 
-            elasticsearchClient = new ElasticsearchClient(elasticsearchWithSecurity);
+            elasticsearchClient = new ElasticsearchClient(ElasticsearchClient.buildRestClient(elasticsearchWithSecurity));
             securityInstalled = testClusterRunning(true);
         }
 
@@ -164,19 +164,17 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static boolean testClusterRunning(boolean withSecurity) throws IOException {
         try {
-            Response response = elasticsearchClient.getClient().performRequest("GET", "/", Collections.emptyMap());
-            Map<String, Object> asMap = (Map<String, Object>) JsonUtil.asMap(response).get("version");
-
+            MainResponse info = elasticsearchClient.info();
             staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}] with {}",
-                    asMap.get("number"), withSecurity ? "security" : "no security" );
+                    info.getVersion(), withSecurity ? "security" : "no security" );
             return withSecurity;
         } catch (ConnectException e) {
             // If we have an exception here, let's ignore the test
             staticLogger.warn("Integration tests are skipped: [{}]", e.getMessage());
             assumeThat("Integration tests are skipped", e.getMessage(), not(containsString("Connection refused")));
             return withSecurity;
-        } catch (ResponseException e) {
-            if (e.getResponse().getStatusLine().getStatusCode() == 401) {
+        } catch (ElasticsearchStatusException e) {
+            if (e.status().getStatus() == 401) {
                 staticLogger.debug("The cluster is secured. So we need to build a client with security", e);
                 return true;
             } else {
@@ -205,8 +203,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                                                      TimeValue timeValue) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
                 .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
-                .setBulkSize(bulkSize)
-                .setFlushInterval(timeValue);
+                .setBulkSize(bulkSize);
 
         if (indexName != null) {
             builder.setIndex(indexName);
@@ -234,81 +231,69 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     /**
      * Check that we have the expected number of docs or at least one if expected is null
      *
-     * @param indexName Index we will search in.
-     * @param query     QueryString query, like foo:bar. MatchAll if null.
+     * @param request   Elasticsearch request to run.
      * @param expected  expected number of docs. Null if at least 1.
      * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
-     * @param fields    If we want to add some fields within the response
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    public static SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
-                                                 final String... fields) throws Exception {
-        return countTestHelper(indexName, query, expected, path, TimeValue.timeValueSeconds(20), fields);
+    public static SearchResponse countTestHelper(final SearchRequest request, final Long expected, final Path path) throws Exception {
+        return countTestHelper(request, expected, path, TimeValue.timeValueSeconds(20));
     }
 
     /**
      * Check that we have the expected number of docs or at least one if expected is null
      *
-     * @param indexName Index we will search in.
-     * @param query     QueryString query, like foo:bar. MatchAll if null.
+     * @param request   Elasticsearch request to run.
      * @param expected  expected number of docs. Null if at least 1.
      * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
      * @param timeout   Time before we declare a failure
-     * @param fields    If we want to add some fields within the response
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    public static SearchResponse countTestHelper(final String indexName, String query, final Integer expected, final Path path,
-                                                 final TimeValue timeout,
-                                                 final String... fields) throws Exception {
+    public static SearchResponse countTestHelper(final SearchRequest request, final Long expected, final Path path, final TimeValue timeout) throws Exception {
 
         final SearchResponse[] response = new SearchResponse[1];
 
         // We wait before considering a failing test
-        staticLogger.info("  ---> Waiting up to {} seconds for {} documents in index {}", timeout.toString(),
-                expected == null ? "some" : expected, indexName);
-        assertThat("We waited for " + timeout.toString() + " but no document has been added/removed", awaitBusy(() -> {
+        staticLogger.info("  ---> Waiting up to {} seconds for {} documents in {}", timeout.toString(),
+                expected == null ? "some" : expected, request.indices());
+        long hits = awaitBusy(() -> {
             long totalHits;
 
             // Let's search for entries
-            SearchRequest.Builder sr = SearchRequest.builder();
-
-            if (query != null) {
-                sr.setQuery(query);
-            }
-
-            if (fields.length > 0) {
-                sr.setFields(fields);
-            }
-
             try {
-                response[0] = elasticsearchClient.search(indexName, sr.build());
+                response[0] = elasticsearchClient.search(request);
             } catch (IOException e) {
                 staticLogger.warn("error caught", e);
-                return false;
+                return -1;
             }
             staticLogger.trace("result {}", response[0].toString());
-            totalHits = response[0].getHits().getTotal();
+            totalHits = response[0].getHits().getTotalHits();
 
-            if (expected == null) {
-                return (totalHits >= 1);
-            } else {
-                if (expected == totalHits) {
-                    staticLogger.debug("     ---> expected [{}] and got [{}] documents in [{}]", expected, totalHits, indexName);
-                    return true;
-                } else {
-                    staticLogger.debug("     ---> expecting [{}] but got [{}] documents in [{}]", expected, totalHits, indexName);
-                    logContentOfDir(path, Level.DEBUG);
-                    return false;
-                }
-            }
-        }, timeout.millis(), TimeUnit.MILLISECONDS), equalTo(true));
+            return totalHits;
+        }, expected, timeout.millis(), TimeUnit.MILLISECONDS);
+
+        Matcher<Long> matcher;
+        if (expected == null) {
+            matcher = greaterThan(0L);
+        } else {
+            matcher = equalTo(expected);
+        }
+
+        if (matcher.matches(hits)) {
+            staticLogger.debug("     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.indices());
+            logContentOfDir(path, Level.DEBUG);
+        } else {
+            staticLogger.debug("     ---> expecting [{}] but got [{}] documents in {}", expected, hits, request.indices());
+            logContentOfDir(path, Level.DEBUG);
+        }
+        assertThat(hits, matcher);
 
         return response[0];
     }
 
-    protected static void logContentOfDir(Path path, Level level) {
+    static void logContentOfDir(Path path, Level level) {
         if (path != null) {
             try (Stream<Path> stream = Files.walk(path)) {
                 stream.forEach(file -> {
@@ -331,7 +316,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
     }
 
-    protected String getCrawlerName() {
+    String getCrawlerName() {
         String testName = testCrawlerPrefix.concat(getCurrentTestName());
         return testName.contains(" ") ? split(testName, " ")[0] : testName;
     }

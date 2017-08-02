@@ -23,41 +23,38 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 
 public class AbstractRestITCase extends AbstractITCase {
 
-    private static ElasticsearchClientManager esClientManager;
+    private ElasticsearchClientManager esClientManager;
 
-    static final String REST_INDEX = "fscrawler_rest_tests";
-
-    @BeforeClass
-    public static void startRestServer() throws Exception {
-        FsSettings fsSettings = FsSettings.builder(REST_INDEX)
+    @Before
+    public void startRestServer() throws Exception {
+        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
                 .setRest(rest)
                 .setElasticsearch(elasticsearchWithSecurity)
                 .build();
-        FsCrawlerValidator.validateSettings(staticLogger, fsSettings, true);
+        fsSettings.getElasticsearch().setIndex(getCrawlerName());
+        FsCrawlerValidator.validateSettings(logger, fsSettings, true);
         esClientManager = new ElasticsearchClientManager(metadataDir, fsSettings);
         esClientManager.start();
         RestServer.start(fsSettings, esClientManager);
+
+        logger.info(" -> Removing existing index [{}]", getCrawlerName());
+        elasticsearchClient.deleteIndex(getCrawlerName());
+
+        logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
+        esClientManager.createIndices(fsSettings);
     }
 
-    @AfterClass
-    public static void stopRestServer() throws InterruptedException {
+    @After
+    public void stopRestServer() throws InterruptedException {
         RestServer.close();
         if (esClientManager != null) {
             esClientManager.close();
             esClientManager = null;
         }
-    }
-
-    @Before
-    public void createIndexAndMappings() throws Exception {
-        FsSettings fsSettings = FsSettings.builder(getCrawlerName()).setRest(rest).build();
-        FsCrawlerValidator.validateSettings(logger, fsSettings, true);
-        esClientManager.createIndices(fsSettings);
     }
 }

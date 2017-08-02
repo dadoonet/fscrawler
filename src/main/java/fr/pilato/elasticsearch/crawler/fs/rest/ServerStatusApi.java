@@ -49,7 +49,7 @@ public class ServerStatusApi extends RestApi {
     public ServerStatusResponse getStatus() throws IOException {
         ServerStatusResponse status = new ServerStatusResponse();
         status.setVersion(FsCrawlerImpl.properties.getProperty("fscrawler.version"));
-        status.setElasticsearch(elasticsearchClient.findVersion());
+        status.setElasticsearch(elasticsearchClient.info().getVersion().toString());
         status.setOk(true);
         status.setSettings(settings);
         return status;

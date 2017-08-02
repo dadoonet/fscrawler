@@ -23,13 +23,20 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.Version;
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.node.Node;
+import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.extractMajorVersionNumber;
 
 public class ElasticsearchClientManager {
     private final Logger logger = LogManager.getLogger(ElasticsearchClientManager.class);
@@ -39,6 +46,7 @@ public class ElasticsearchClientManager {
     private ElasticsearchClient client = null;
     private BulkProcessor bulkProcessorDoc = null;
     private BulkProcessor bulkProcessorFolder = null;
+    private ThreadPool threadPool;
 
     public ElasticsearchClientManager(Path config, FsSettings settings) {
         this.config = config;
@@ -59,6 +67,11 @@ public class ElasticsearchClientManager {
         return bulkProcessorDoc;
     }
 
+    /**
+     * We can probably remove that bulk processor as we now support ingest pipeline per request
+     * @return a BulkProcessor instance
+     */
+    @Deprecated
     public BulkProcessor bulkProcessorFolder() {
         if (bulkProcessorFolder == null) {
             throw new RuntimeException("You must call start() before bulkProcessorFolder()");
@@ -74,7 +87,7 @@ public class ElasticsearchClientManager {
 
         try {
             // Create an elasticsearch client
-            client = new ElasticsearchClient(settings.getElasticsearch());
+            client = new ElasticsearchClient(ElasticsearchClient.buildRestClient(settings.getElasticsearch()));
             // We set what will be elasticsearch behavior as it depends on the cluster version
             client.setElasticsearchBehavior();
         } catch (Exception e) {
@@ -88,10 +101,24 @@ public class ElasticsearchClientManager {
                     ", but your elasticsearch cluster does not support this feature.");
         }
 
-        bulkProcessorDoc = BulkProcessor.retryBulkProcessor(client, settings.getElasticsearch().getBulkSize(),
-                settings.getElasticsearch().getFlushInterval(), settings.getElasticsearch().getPipeline());
-        bulkProcessorFolder = BulkProcessor.retryBulkProcessor(client, settings.getElasticsearch().getBulkSize(),
-                settings.getElasticsearch().getFlushInterval(), null);
+        threadPool = new ThreadPool(Settings.builder().put(Node.NODE_NAME_SETTING.getKey(), "high-level-client").build());
+        BulkProcessor.Listener listener = new BulkProcessor.Listener() {
+            @Override public void beforeBulk(long executionId, BulkRequest request) { }
+            @Override public void afterBulk(long executionId, BulkRequest request, BulkResponse response) { }
+            @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) { }
+        };
+
+        bulkProcessorDoc = new BulkProcessor.Builder(client::bulkAsync, listener, threadPool)
+                .setBulkActions(settings.getElasticsearch().getBulkSize())
+                .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
+                // TODO fix when elasticsearch will support global pipelines
+//                .setPipeline(settings.getElasticsearch().getPipeline())
+                .build();
+
+        bulkProcessorFolder = new BulkProcessor.Builder(client::bulkAsync, listener, threadPool)
+                .setBulkActions(settings.getElasticsearch().getBulkSize())
+                .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
+                .build();
     }
 
     public void createIndices(FsSettings settings) throws Exception {
@@ -99,10 +126,10 @@ public class ElasticsearchClientManager {
         Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
 
         // Let's read the current version of elasticsearch cluster
-        String version = client.findVersion();
-        logger.debug("FS crawler connected to an elasticsearch [{}] node.", version);
+        Version version = client.info().getVersion();
+        logger.debug("FS crawler connected to an elasticsearch [{}] node.", version.toString());
 
-        elasticsearchVersion = extractMajorVersionNumber(version);
+        elasticsearchVersion = Byte.toString(version.major);
 
         // If needed, we create the new settings for this files index
         if (settings.getFs().isAddAsInnerObject() == false || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
@@ -134,19 +161,14 @@ public class ElasticsearchClientManager {
 
     public void close() {
         logger.debug("Closing Elasticsearch client manager");
+        if (threadPool != null) {
+            threadPool.shutdownNow();
+        }
         if (bulkProcessorDoc != null) {
-            try {
-                bulkProcessorDoc.close();
-            } catch (InterruptedException e) {
-                logger.warn("Can not close doc bulk processor", e);
-            }
+            bulkProcessorDoc.close();
         }
         if (bulkProcessorFolder != null) {
-            try {
-                bulkProcessorFolder.close();
-            } catch (InterruptedException e) {
-                logger.warn("Can not close folder bulk processor", e);
-            }
+            bulkProcessorFolder.close();
         }
         if (client != null) {
             try {
