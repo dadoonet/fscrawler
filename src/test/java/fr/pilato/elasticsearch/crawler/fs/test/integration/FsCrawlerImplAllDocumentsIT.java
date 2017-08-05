@@ -226,6 +226,11 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         runSearch("issue-400-shiftjis.txt", "elasticsearch");
     }
 
+    @Test
+    public void testNonUtf8Filename418() throws IOException {
+        runSearch("issue-418-中文名称.txt");
+    }
+
     private SearchResponse runSearch(String filename) throws IOException {
         return runSearch(filename, null);
     }

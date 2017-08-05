@@ -80,7 +80,7 @@ public class UploadApi extends RestApi {
         // Create the Doc object
         Doc doc = new Doc();
 
-        String filename = d.getFileName();
+        String filename = new String(d.getFileName().getBytes("ISO-8859-1"), "UTF-8");
         long filesize = d.getSize();
 
         // File
