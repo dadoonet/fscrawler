@@ -38,6 +38,26 @@ public class Meta {
         public static final String DATE = "date";
         public static final String KEYWORDS = "keywords";
         public static final String LANGUAGE = "language";
+        public static final String FORMAT = "format";
+        public static final String IDENTIFIER = "identifier";
+        public static final String CONTRIBUTOR = "contributor";
+        public static final String COVERAGE = "coverage";
+        public static final String MODIFIER = "modifier";
+        public static final String CREATOR_TOOL = "creator_tool";
+        public static final String PUBLISHER = "publisher";
+        public static final String RELATION = "relation";
+        public static final String RIGHTS = "rights";
+        public static final String SOURCE = "source";
+        public static final String TYPE = "type";
+        public static final String DESCRIPTION = "description";
+        public static final String CREATED = "created";
+        public static final String PRINT_DATE = "print_date";
+        public static final String METADATA_DATE = "metadata_date";
+        public static final String LATITUDE = "latitude";
+        public static final String LONGITUDE = "longitude";
+        public static final String ALTITUDE = "altitude";
+        public static final String RATING = "rating";
+        public static final String COMMENTS = "comments";
     }
 
     private String author;
@@ -45,6 +65,26 @@ public class Meta {
     private Date date;
     private List<String> keywords;
     private String language;
+    private String format;
+    private String identifier;
+    private String contributor;
+    private String coverage;
+    private String modifier;
+    private String creatorTool;
+    private String publisher;
+    private String relation;
+    private String rights;
+    private String source;
+    private String type;
+    private String description;
+    private Date created;
+    private Date printDate;
+    private Date metadataDate;
+    private String latitude;
+    private String longitude;
+    private String altitude;
+    private Integer rating;
+    private String comments;
 
     private Map<String, String> raw;
 
@@ -103,26 +143,162 @@ public class Meta {
         this.language = language;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Meta meta = (Meta) o;
-
-        if (author != null ? !author.equals(meta.author) : meta.author != null) return false;
-        if (title != null ? !title.equals(meta.title) : meta.title != null) return false;
-        if (date != null ? !date.equals(meta.date) : meta.date != null) return false;
-        return !(keywords != null ? !keywords.equals(meta.keywords) : meta.keywords != null);
-
+    public String getFormat() {
+        return format;
     }
 
-    @Override
-    public int hashCode() {
-        int result = author != null ? author.hashCode() : 0;
-        result = 31 * result + (title != null ? title.hashCode() : 0);
-        result = 31 * result + (date != null ? date.hashCode() : 0);
-        result = 31 * result + (keywords != null ? keywords.hashCode() : 0);
-        return result;
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
+    }
+
+    public String getContributor() {
+        return contributor;
+    }
+
+    public void setContributor(String contributor) {
+        this.contributor = contributor;
+    }
+
+    public String getCoverage() {
+        return coverage;
+    }
+
+    public void setCoverage(String coverage) {
+        this.coverage = coverage;
+    }
+
+    public String getModifier() {
+        return modifier;
+    }
+
+    public void setModifier(String modifier) {
+        this.modifier = modifier;
+    }
+
+    public String getCreatorTool() {
+        return creatorTool;
+    }
+
+    public void setCreatorTool(String creatorTool) {
+        this.creatorTool = creatorTool;
+    }
+
+    public String getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
+    }
+
+    public String getRelation() {
+        return relation;
+    }
+
+    public void setRelation(String relation) {
+        this.relation = relation;
+    }
+
+    public String getRights() {
+        return rights;
+    }
+
+    public void setRights(String rights) {
+        this.rights = rights;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
+    public Date getPrintDate() {
+        return printDate;
+    }
+
+    public void setPrintDate(Date printDate) {
+        this.printDate = printDate;
+    }
+
+    public Date getMetadataDate() {
+        return metadataDate;
+    }
+
+    public void setMetadataDate(Date metadataDate) {
+        this.metadataDate = metadataDate;
+    }
+
+    public String getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(String latitude) {
+        this.latitude = latitude;
+    }
+    public String getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(String longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getAltitude() {
+        return altitude;
+    }
+
+    public void setAltitude(String altitude) {
+        this.altitude = altitude;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
     }
 }

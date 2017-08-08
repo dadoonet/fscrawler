@@ -19,8 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.doc;
 
-import java.util.Objects;
-
 /**
  * Represents additional file attributes.
  */
@@ -51,28 +49,5 @@ public class Attributes {
 
     public void setGroup(String group) {
         this.group = group;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        final Attributes that = (Attributes) o;
-        return Objects.equals(owner, that.owner) &&
-                Objects.equals(group, that.group);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(owner, group);
-    }
-
-    @Override public String toString() {
-        String sb = "Attributes{" + "owner='" + owner + '\'' +
-                ", group='" + group + '\'' +
-                '}';
-        return sb;
     }
 }

@@ -61,25 +61,4 @@ public class Path {
     public void setReal(String real) {
         this.real = real;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Path path = (Path) o;
-
-        if (root != null ? !root.equals(path.root) : path.root != null) return false;
-        if (virtual != null ? !virtual.equals(path.virtual) : path.virtual != null) return false;
-        return !(real != null ? !real.equals(path.real) : path.real != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = root != null ? root.hashCode() : 0;
-        result = 31 * result + (virtual != null ? virtual.hashCode() : 0);
-        result = 31 * result + (real != null ? real.hashCode() : 0);
-        return result;
-    }
 }

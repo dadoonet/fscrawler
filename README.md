@@ -1268,6 +1268,7 @@ The following example uses a `french` analyzer to index the `content` field.
 ```json
 {
   "settings": {
+    "index.mapping.total_fields.limit": 2000,
     "analysis": {
       "analyzer": {
         "fscrawler_path": {
@@ -1286,7 +1287,7 @@ The following example uses a `french` analyzer to index the `content` field.
       "properties" : {
         "attachment" : {
           "type" : "binary",
-          "doc_values" : false
+          "doc_values": false
         },
         "attributes" : {
           "properties" : {
@@ -1336,6 +1337,9 @@ The following example uses a `french` analyzer to index the `content` field.
             }
           }
         },
+        "object" : {
+          "type" : "object"
+        },
         "meta" : {
           "properties" : {
             "author" : {
@@ -1353,6 +1357,69 @@ The following example uses a `french` analyzer to index the `content` field.
             },
             "language" : {
               "type" : "keyword"
+            },
+            "format" : {
+              "type" : "text"
+            },
+            "identifier" : {
+              "type" : "text"
+            },
+            "contributor" : {
+              "type" : "text"
+            },
+            "coverage" : {
+              "type" : "text"
+            },
+            "modifier" : {
+              "type" : "text"
+            },
+            "creator_tool" : {
+              "type" : "keyword"
+            },
+            "publisher" : {
+              "type" : "text"
+            },
+            "relation" : {
+              "type" : "text"
+            },
+            "rights" : {
+              "type" : "text"
+            },
+            "source" : {
+              "type" : "text"
+            },
+            "type" : {
+              "type" : "text"
+            },
+            "description" : {
+              "type" : "text"
+            },
+            "created" : {
+              "type" : "date",
+              "format" : "dateOptionalTime"
+            },
+            "print_date" : {
+              "type" : "date",
+              "format" : "dateOptionalTime"
+            },
+            "metadata_date" : {
+              "type" : "date",
+              "format" : "dateOptionalTime"
+            },
+            "latitude" : {
+              "type" : "text"
+            },
+            "longitude" : {
+              "type" : "text"
+            },
+            "altitude" : {
+              "type" : "text"
+            },
+            "rating" : {
+              "type" : "keyword"
+            },
+            "comments" : {
+              "type" : "text"
             }
           }
         },
@@ -1568,31 +1635,52 @@ If the password is not defined, you will be prompted when starting the job:
 
 FS crawler creates the following fields :
 
-|         Field        |                Description                  |                    Example                  |
-|----------------------|---------------------------------------------|---------------------------------------------|
-| `content`            | Extracted content                           | `"This is my text!"`                        |
-| `attachment`         | BASE64 encoded binary file                  | BASE64 Encoded document                     |
-| `meta.author`        | Author if any in document metadata          | `"David Pilato"`                            |
-| `meta.title`         | Title if any in document metadata           | `"My document title"`                       |
-| `meta.date`          | Document date if any in document metadata   | `"2013-04-04T15:21:35"`                     |
-| `meta.keywords`      | Keywords if any in document metadata        | `["river","fs","elasticsearch"]`            |
-| `meta.language`      | Detected Language if any                    | `"fr"`                                      |
-| `meta.raw`           | An object with all raw metadata             | `"meta.raw.channels" : "2"`                 |
-| `file.content_type`  | Content Type                                | `"application/vnd.oasis.opendocument.text"` |
-| `file.last_modified` | Last modification date                      | `1386855978000`                             |
-| `file.indexing_date` | Indexing date                               | `"2013-12-12T13:50:58.758Z"`                |
-| `file.filesize`      | File size in bytes                          | `1256362`                                   |
-| `file.indexed_chars` | Extracted chars if `fs.indexed_chars` > 0   | `100000`                                    |
-| `file.filename`      | Original file name                          | `"mydocument.pdf"`                          |
-| `file.extension`     | Original file name extension (from 2.2)     | `"pdf"`                                     |
-| `file.url`           | Original file url                           | `"file://tmp/mydir/otherdir/mydocument.pdf"`|
-| `file.checksum`      | Checksum if `fs.checksum` set               | `"c32eafae2587bef4b3b32f73743c3c61"`        |
-| `path.virtual`       | Relative path from root path                | `"/mydir/otherdir/mydocument.pdf"`          |
-| `path.root`          | MD5 encoded parent path (for internal use)  | `"112aed83738239dbfe4485f024cd4ce1"`        |
-| `path.real`          | Actual real path name                       | `"/tmp/mydir/otherdir/mydocument.pdf"`      |
-| `attributes.owner`   | Owner name                                  | `"david"`                                   |
-| `attributes.group`   | Group name                                  | `"staff"`                                   |
+|         Field        |                Description                  |                    Example                  |                                                          Javadoc                                               |
+|----------------------|---------------------------------------------|---------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| `content`            | Extracted content                           | `"This is my text!"`                        |                                                                                                                |
+| `attachment`         | BASE64 encoded binary file                  | BASE64 Encoded document                     |                                                                                                                |
+| `meta.author`        | Author if any in document metadata          | `"David Pilato"`                            |[CREATOR](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#CREATOR)            |
+| `meta.title`         | Title if any in document metadata           | `"My document title"`                       |[TITLE](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#TITLE)                |
+| `meta.date`          | Last modified date                          | `"2013-04-04T15:21:35"`                     |[MODIFIED](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#MODIFIED)          |
+| `meta.keywords`      | Keywords if any in document metadata        | `["river","fs","elasticsearch"]`            |[KEYWORDS](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#KEYWORDS)          |
+| `meta.language`      | Language (can be detected)                  | `"fr"`                                      |[LANGUAGE](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#LANGUAGE)          |
+| `meta.format`        | Format of the media                         | `"application/pdf; version=1.6"`            |[FORMAT](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#FORMAT)              |
+| `meta.identifier`    | URL/DOI/ISBN for example                    | `"FOOBAR"`                                  |[IDENTIFIER](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#IDENTIFIER)      |
+| `meta.contributor`   | Contributor                                 | `"foo bar"`                                 |[CONTRIBUTOR](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#CONTRIBUTOR)    |
+| `meta.coverage`      | Coverage                                    | `"FOOBAR"`                                  |[COVERAGE](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#COVERAGE)          |
+| `meta.modifier`      | Last author                                 | `"David Pilato"`                            |[MODIFIER](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#MODIFIER)          |
+| `meta.creator_tool`  | Tool used to create the resource            | `"HTML2PDF - TCPDF"`                        |[CREATOR_TOOL](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#CREATOR_TOOL)  |
+| `meta.publisher`     | Publisher: person, organisation, service    | `"elastic"`                                 |[PUBLISHER](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#PUBLISHER)        |
+| `meta.relation`      | Related resource                            | `"FOOBAR"`                                  |[RELATION](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#RELATION)          |
+| `meta.rights`        | Information about rights                    | `"CC-BY-ND"`                                |[RIGHTS](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#RIGHTS)              |
+| `meta.source`        | Source for the current document (derivated) | `"FOOBAR"`                                  |[SOURCE](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#SOURCE)              |
+| `meta.type`          | Nature or genre of the content              | `"Image"`                                   |[TYPE](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#TYPE)                  |
+| `meta.description`   | An account of the content                   | `"This is a description"`                   |[DESCRIPTION](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#DESCRIPTION)    |
+| `meta.created`       | Date of creation                            | `"2013-04-04T15:21:35"`                     |[CREATED](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#CREATED)            |
+| `meta.print_date`    | When was the document last printed?         | `"2013-04-04T15:21:35"`                     |[PRINT_DATE](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#PRINT_DATE)      |
+| `meta.metadata_date` | Last modification of metadata               | `"2013-04-04T15:21:35"`                     |[METADATA_DATE](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#METADATA_DATE)|
+| `meta.latitude`      | The WGS84 Latitude of the Point             | `"N 48° 51' 45.81''"`                       |[LATITUDE](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#LATITUDE)          |
+| `meta.longitude`     | The WGS84 Longitude of the Point            | `"E 2° 17' 15.331''"`                       |[LONGITUDE](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#LONGITUDE)        |
+| `meta.altitude`      | The WGS84 Altitude of the Point             | `""`                                        |[ALTITUDE](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#ALTITUDE)          |
+| `meta.rating`        | A user-assigned rating -1, [0..5]           | `0`                                         |[RATING](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#RATING)              |
+| `meta.comments`      | Comments                                    | `"Comments"`                                |[COMMENTS](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html#COMMENTS)          |
+| `meta.raw`           | An object with all raw metadata             | `"meta.raw.channels" : "2"`                 |                                                                                                                |
+| `file.content_type`  | Content Type                                | `"application/vnd.oasis.opendocument.text"` |                                                                                                                |
+| `file.last_modified` | Last modification date                      | `1386855978000`                             |                                                                                                                |
+| `file.indexing_date` | Indexing date                               | `"2013-12-12T13:50:58.758Z"`                |                                                                                                                |
+| `file.filesize`      | File size in bytes                          | `1256362`                                   |                                                                                                                |
+| `file.indexed_chars` | Extracted chars if `fs.indexed_chars` > 0   | `100000`                                    |                                                                                                                |
+| `file.filename`      | Original file name                          | `"mydocument.pdf"`                          |                                                                                                                |
+| `file.extension`     | Original file name extension (from 2.2)     | `"pdf"`                                     |                                                                                                                |
+| `file.url`           | Original file url                           | `"file://tmp/mydir/otherdir/mydocument.pdf"`|                                                                                                                |
+| `file.checksum`      | Checksum if `fs.checksum` set               | `"c32eafae2587bef4b3b32f73743c3c61"`        |                                                                                                                |
+| `path.virtual`       | Relative path from root path                | `"/mydir/otherdir/mydocument.pdf"`          |                                                                                                                |
+| `path.root`          | MD5 encoded parent path (for internal use)  | `"112aed83738239dbfe4485f024cd4ce1"`        |                                                                                                                |
+| `path.real`          | Actual real path name                       | `"/tmp/mydir/otherdir/mydocument.pdf"`      |                                                                                                                |
+| `attributes.owner`   | Owner name                                  | `"david"`                                   |                                                                                                                |
+| `attributes.group`   | Group name                                  | `"staff"`                                   |                                                                                                                |
 
+For more information about meta data, please read the [TikaCoreProperties javadoc](https://tika.apache.org/1.16/api/org/apache/tika/metadata/TikaCoreProperties.html).
 
 Here is a typical JSON document generated by the crawler:
 

@@ -21,11 +21,13 @@ package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.language.detect.LanguageResult;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 
 import java.io.ByteArrayOutputStream;
@@ -33,16 +35,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.extractText;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
 
 /**
  * Parse a binary document and generate a FSCrawler Doc
@@ -121,20 +121,47 @@ public class TikaDocParser {
         }
         // File
 
-        // Meta
-        doc.getMeta().setAuthor(metadata.get(TikaCoreProperties.CREATOR));
-        doc.getMeta().setTitle(metadata.get(TikaCoreProperties.TITLE));
-        String sDate = metadata.get(TikaCoreProperties.MODIFIED);
-        if (sDate != null) {
-            try {
-                LocalDateTime date = LocalDateTime.parse(sDate, DateTimeFormatter.ISO_DATE_TIME);
-                // We assume that local documents have the same date as the system date
-                doc.getMeta().setDate(localDateTimeToDate(date));
-            } catch (DateTimeParseException e) {
-                logger.warn("Can not parse date [{}] for [{}]. Skipping date field...", sDate, filename);
+        // Standard Meta
+        setMeta(filename, metadata, TikaCoreProperties.CREATOR, doc.getMeta()::setAuthor, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.TITLE, doc.getMeta()::setTitle, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.MODIFIED, doc.getMeta()::setDate, FsCrawlerUtil::localDateTimeToDate);
+        setMeta(filename, metadata, TikaCoreProperties.KEYWORDS, doc.getMeta()::setKeywords, TikaDocParser::commaDelimitedListToStringArray);
+        setMeta(filename, metadata, TikaCoreProperties.FORMAT, doc.getMeta()::setFormat, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.IDENTIFIER, doc.getMeta()::setIdentifier, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.CONTRIBUTOR, doc.getMeta()::setContributor, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.COVERAGE, doc.getMeta()::setCoverage, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.MODIFIER, doc.getMeta()::setModifier, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.CREATOR_TOOL, doc.getMeta()::setCreatorTool, Function.identity());
+        String finalParsedContent = parsedContent;
+        setMeta(filename, metadata, TikaCoreProperties.LANGUAGE, doc.getMeta()::setLanguage, (lang) -> {
+            if (lang != null) {
+                return lang;
+            } else if (fsSettings.getFs().isLangDetect() && finalParsedContent != null) {
+                List<LanguageResult> languages = langDetector().detectAll(finalParsedContent);
+                if (!languages.isEmpty()) {
+                    LanguageResult language = languages.get(0);
+                    logger.trace("Main detected language: [{}]", language);
+                    return language.getLanguage();
+                }
             }
-        }
-        doc.getMeta().setKeywords(commaDelimitedListToStringArray(metadata.get(TikaCoreProperties.KEYWORDS)));
+            return null;
+        });
+        setMeta(filename, metadata, TikaCoreProperties.PUBLISHER, doc.getMeta()::setPublisher, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.RELATION, doc.getMeta()::setRelation, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.RIGHTS, doc.getMeta()::setRights, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.SOURCE, doc.getMeta()::setSource, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.TYPE, doc.getMeta()::setType, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.DESCRIPTION, doc.getMeta()::setDescription, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.CREATED, doc.getMeta()::setCreated, FsCrawlerUtil::localDateTimeToDate);
+        setMeta(filename, metadata, TikaCoreProperties.PRINT_DATE, doc.getMeta()::setPrintDate, FsCrawlerUtil::localDateTimeToDate);
+        setMeta(filename, metadata, TikaCoreProperties.METADATA_DATE, doc.getMeta()::setMetadataDate, FsCrawlerUtil::localDateTimeToDate);
+        setMeta(filename, metadata, TikaCoreProperties.LATITUDE, doc.getMeta()::setLatitude, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.LONGITUDE, doc.getMeta()::setLongitude, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.ALTITUDE, doc.getMeta()::setAltitude, Function.identity());
+        setMeta(filename, metadata, TikaCoreProperties.RATING, doc.getMeta()::setRating, Integer::parseInt);
+        setMeta(filename, metadata, TikaCoreProperties.COMMENTS, doc.getMeta()::setComments, Function.identity());
+
+        // Add support for more OOTB standard metadata
 
         if (fsSettings.getFs().isRawMetadata()) {
             logger.trace("Listing all available metadata:");
@@ -146,15 +173,6 @@ public class TikaDocParser {
 
                 // We need to remove dots in field names if any. See https://github.com/dadoonet/fscrawler/issues/256
                 doc.getMeta().addRaw(metadataName.replaceAll("\\.", ":"), value);
-            }
-        }
-
-        if (fsSettings.getFs().isLangDetect() && parsedContent != null) {
-            List<LanguageResult> languages = langDetector().detectAll(parsedContent);
-            if (!languages.isEmpty()) {
-                LanguageResult language = languages.get(0);
-                logger.trace("Main detected language: [{}]", language);
-                doc.getMeta().setLanguage(language.getLanguage());
             }
         }
         // Meta
@@ -169,6 +187,15 @@ public class TikaDocParser {
         }
         logger.trace("End document generation");
         // End of our document
+    }
+
+    private static <T> void setMeta(String filename, Metadata metadata, Property property, Consumer<T> setter, Function<String,T> transformer) {
+        String sMeta = metadata.get(property);
+            try {
+                setter.accept(transformer.apply(sMeta));
+            } catch (Exception e) {
+                logger.warn("Can not parse meta [{}] for [{}]. Skipping [{}] field...", sMeta, filename, property.getName());
+            }
     }
 
     private static List<String> commaDelimitedListToStringArray(String str) {

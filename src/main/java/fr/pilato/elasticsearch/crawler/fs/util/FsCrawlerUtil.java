@@ -48,6 +48,7 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -216,6 +217,13 @@ public class FsCrawlerUtil extends MetaParser {
 
     public static Date localDateTimeToDate(LocalDateTime ldt) {
         return Date.from(ldt.atZone(TimeZone.getDefault().toZoneId()).toInstant());
+    }
+
+    public static Date localDateTimeToDate(String sDate) {
+        if (sDate == null) {
+            return null;
+        }
+        return localDateTimeToDate(LocalDateTime.parse(sDate, DateTimeFormatter.ISO_DATE_TIME));
     }
 
     public static String getFileExtension(File file) {

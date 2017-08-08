@@ -133,9 +133,14 @@ public class TikaInstance {
         return handler.toString();
     }
 
-    static LanguageDetector langDetector() throws IOException {
+    static LanguageDetector langDetector() {
         if (detector == null) {
-             detector = getDefaultLanguageDetector().loadModels();
+            try {
+                detector = getDefaultLanguageDetector();
+                detector.loadModels();
+            } catch (IOException e) {
+                logger.warn("Can not load lang detector models", e);
+            }
         }
         return detector;
     }

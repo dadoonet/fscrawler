@@ -68,9 +68,6 @@
             }
           }
         },
-        "object" : {
-          "type" : "object"
-        },
         "meta" : {
           "properties" : {
             "author" : {
@@ -88,6 +85,69 @@
             },
             "language" : {
               "type" : "keyword"
+            },
+            "format" : {
+              "type" : "text"
+            },
+            "identifier" : {
+              "type" : "text"
+            },
+            "contributor" : {
+              "type" : "text"
+            },
+            "coverage" : {
+              "type" : "text"
+            },
+            "modifier" : {
+              "type" : "text"
+            },
+            "creator_tool" : {
+              "type" : "keyword"
+            },
+            "publisher" : {
+              "type" : "text"
+            },
+            "relation" : {
+              "type" : "text"
+            },
+            "rights" : {
+              "type" : "text"
+            },
+            "source" : {
+              "type" : "text"
+            },
+            "type" : {
+              "type" : "text"
+            },
+            "description" : {
+              "type" : "text"
+            },
+            "created" : {
+              "type" : "date",
+              "format" : "dateOptionalTime"
+            },
+            "print_date" : {
+              "type" : "date",
+              "format" : "dateOptionalTime"
+            },
+            "metadata_date" : {
+              "type" : "date",
+              "format" : "dateOptionalTime"
+            },
+            "latitude" : {
+              "type" : "text"
+            },
+            "longitude" : {
+              "type" : "text"
+            },
+            "altitude" : {
+              "type" : "text"
+            },
+            "rating" : {
+              "type" : "byte"
+            },
+            "comments" : {
+              "type" : "text"
             }
           }
         },

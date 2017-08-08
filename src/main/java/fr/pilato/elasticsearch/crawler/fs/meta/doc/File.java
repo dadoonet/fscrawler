@@ -122,37 +122,4 @@ public class File {
     public String getChecksum() {
         return checksum;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        File file = (File) o;
-
-        if (extension != null ? !extension.equals(file.extension) : file.extension != null) return false;
-        if (contentType != null ? !contentType.equals(file.contentType) : file.contentType != null) return false;
-        if (lastModified != null ? !lastModified.equals(file.lastModified) : file.lastModified != null) return false;
-        if (indexingDate != null ? !indexingDate.equals(file.indexingDate) : file.indexingDate != null) return false;
-        if (filesize != null ? !filesize.equals(file.filesize) : file.filesize != null) return false;
-        if (filename != null ? !filename.equals(file.filename) : file.filename != null) return false;
-        if (url != null ? !url.equals(file.url) : file.url != null) return false;
-        if (indexedChars != null ? !indexedChars.equals(file.indexedChars) : file.indexedChars != null) return false;
-        return checksum != null ? checksum.equals(file.checksum) : file.checksum == null;
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = extension != null ? extension.hashCode() : 0;
-        result = 31 * result + (contentType != null ? contentType.hashCode() : 0);
-        result = 31 * result + (lastModified != null ? lastModified.hashCode() : 0);
-        result = 31 * result + (indexingDate != null ? indexingDate.hashCode() : 0);
-        result = 31 * result + (filesize != null ? filesize.hashCode() : 0);
-        result = 31 * result + (filename != null ? filename.hashCode() : 0);
-        result = 31 * result + (url != null ? url.hashCode() : 0);
-        result = 31 * result + (indexedChars != null ? indexedChars.hashCode() : 0);
-        result = 31 * result + (checksum != null ? checksum.hashCode() : 0);
-        return result;
-    }
 }

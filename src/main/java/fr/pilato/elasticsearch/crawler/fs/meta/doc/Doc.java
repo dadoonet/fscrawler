@@ -107,30 +107,4 @@ public class Doc {
     public void setAttributes(Attributes attributes) {
         this.attributes = attributes;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Doc doc = (Doc) o;
-
-        if (content != null ? !content.equals(doc.content) : doc.content != null) return false;
-        if (attachment != null ? !attachment.equals(doc.attachment) : doc.attachment != null) return false;
-        if (meta != null ? !meta.equals(doc.meta) : doc.meta != null) return false;
-        if (file != null ? !file.equals(doc.file) : doc.file != null) return false;
-        if (attributes != null ? !attributes.equals(doc.attributes) : doc.attributes != null) return false;
-        return !(path != null ? !path.equals(doc.path) : doc.path != null);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = content != null ? content.hashCode() : 0;
-        result = 31 * result + (attachment != null ? attachment.hashCode() : 0);
-        result = 31 * result + (meta != null ? meta.hashCode() : 0);
-        result = 31 * result + (file != null ? file.hashCode() : 0);
-        result = 31 * result + (path != null ? path.hashCode() : 0);
-        result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
-        return result;
-    }
 }
