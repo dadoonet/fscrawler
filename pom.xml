@@ -21,9 +21,9 @@
     <!--suppress CheckTagEmptyBody -->
     <properties>
         <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-        <elasticsearch.version>5.5.0</elasticsearch.version>
+        <elasticsearch.version>6.0.0-beta1</elasticsearch.version>
         <!-- Don't depend on elasticsearch.version here as it will fail with 1.x and 2.x series -->
-        <elasticsearch.client.version>5.6.0-SNAPSHOT</elasticsearch.client.version>
+        <elasticsearch.client.version>6.0.0-beta1</elasticsearch.client.version>
 
         <tika.version>1.16</tika.version>
         <jackson.version>2.8.6</jackson.version>
@@ -32,7 +32,7 @@
         <jersey.version>2.25.1</jersey.version>
 
         <!-- Only Lucene test framework is used here -->
-        <lucene.version>6.6.0</lucene.version>
+        <lucene.version>7.0.0-snapshot-00142c9</lucene.version>
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
@@ -636,12 +636,16 @@
             <id>elastic-download-service</id>
             <name>Elastic Download Service</name>
             <url>https://artifacts.elastic.co/maven/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+
+        <repository>
+            <id>elastic-lucene-snapshots</id>
+            <name>Elastic Lucene Snapshots</name>
+            <url>http://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/00142c9</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
         </repository>
 
         <repository>
@@ -713,10 +717,17 @@
             </build>
         </profile>
         <profile>
+            <id>es-5x</id>
+            <properties>
+                <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
+                <elasticsearch.version>5.5.1</elasticsearch.version>
+            </properties>
+        </profile>
+        <profile>
             <id>es-6x</id>
             <properties>
                 <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-                <elasticsearch.version>6.0.0-alpha2</elasticsearch.version>
+                <elasticsearch.version>6.0.0-beta1</elasticsearch.version>
             </properties>
         </profile>
         <profile>

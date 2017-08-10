@@ -131,7 +131,7 @@ git commit -q -a -m "prepare release fscrawler-$RELEASE_VERSION"
 
 # Testing against different elasticsearch versions
 test_against_version 2
-test_against_version 6
+test_against_version 5
 
 # The actual build is made against latest version
 test_against_version

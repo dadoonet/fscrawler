@@ -553,9 +553,9 @@ public class FsCrawlerImpl {
                 if (response.getHits() != null && response.getHits().getHits() != null) {
                     for (SearchHit hit : response.getHits().getHits()) {
                         String name;
-                        if (hit.getSource() != null
-                                && extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME) != null) {
-                            name = (String) extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME);
+                        if (hit.getSourceAsMap() != null
+                                && extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME) != null) {
+                            name = (String) extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME);
                         } else if (hit.getFields() != null
                                 && hit.getFields().get(FILE_FILENAME) != null) {
                             // In case someone disabled _source which is not recommended
@@ -602,7 +602,7 @@ public class FsCrawlerImpl {
 
             if (response.getHits() != null && response.getHits().getHits() != null) {
                 for (SearchHit hit : response.getHits().getHits()) {
-                    String name = hit.getSource().get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.REAL).toString();
+                    String name = hit.getSourceAsMap().get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.REAL).toString();
                     files.add(name);
                 }
             }

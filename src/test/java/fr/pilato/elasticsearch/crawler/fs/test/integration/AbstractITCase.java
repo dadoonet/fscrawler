@@ -271,6 +271,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             staticLogger.trace("result {}", response[0].toString());
             totalHits = response[0].getHits().getTotalHits();
 
+            staticLogger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+
             return totalHits;
         }, expected, timeout.millis(), TimeUnit.MILLISECONDS);
 

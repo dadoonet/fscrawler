@@ -63,18 +63,18 @@ You can also tell maven to run integration tests by deploying another version of
 ```sh
 # For elasticsearch 2.x series
 mvn install -Pes-2x
-# For elasticsearch 6.x series
-mvn install -Pes-6x
+# For elasticsearch 5.x series
+mvn install -Pes-5x
 ```
 
-By default, it will run integration tests against elasticsearch 5.x series cluster.
+By default, it will run integration tests against elasticsearch 6.x series cluster.
 
 If you wish to run tests without x-pack plugin, you can use the `skipXPack` profile:
 
 ```sh
 mvn install -PskipXPack
 # This can be combined with another profile
-mvn install -PskipXPack -Pes-6x
+mvn install -PskipXPack -Pes-5x
 ```
 
 ### Running tests against an external cluster

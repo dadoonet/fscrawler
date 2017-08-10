@@ -49,7 +49,6 @@ import org.elasticsearch.client.http.entity.ContentType;
 import org.elasticsearch.client.http.entity.StringEntity;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
@@ -248,7 +247,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            Map<String, Object> file = (Map<String, Object>) hit.getSource().get(Doc.FIELD_NAMES.FILE);
+            Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
             assertThat(file, notNullValue());
             assertThat(file.get(File.FIELD_NAMES.FILESIZE), is(12230));
         }
@@ -263,8 +262,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            Object content = hit.getSource().get(Doc.FIELD_NAMES.CONTENT);
-            Object indexedChars = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
+            Object content = hit.getSourceAsMap().get(Doc.FIELD_NAMES.CONTENT);
+            Object indexedChars = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
             assertThat(indexedChars, notNullValue());
 
@@ -283,8 +282,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            Object content = hit.getSource().get(Doc.FIELD_NAMES.CONTENT);
-            Object indexedChars = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
+            Object content = hit.getSourceAsMap().get(Doc.FIELD_NAMES.CONTENT);
+            Object indexedChars = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
             assertThat(indexedChars, notNullValue());
 
@@ -303,8 +302,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            Object content = hit.getSource().get(Doc.FIELD_NAMES.CONTENT);
-            Object indexedChars = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
+            Object content = hit.getSourceAsMap().get(Doc.FIELD_NAMES.CONTENT);
+            Object indexedChars = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
             assertThat(indexedChars, nullValue());
 
@@ -322,7 +321,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            Map<String, Object> file = (Map<String, Object>) hit.getSource().get(Doc.FIELD_NAMES.FILE);
+            Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
             assertThat(file, notNullValue());
             assertThat(file.get(File.FIELD_NAMES.FILESIZE), nullValue());
         }
@@ -343,17 +342,17 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
+            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
 
-            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILENAME), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CONTENT_TYPE), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.URL), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILESIZE), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE), notNullValue());
-            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS), nullValue());
-            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED), notNullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILENAME), notNullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CONTENT_TYPE), notNullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.URL), notNullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILESIZE), notNullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE), notNullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS), nullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED), notNullValue());
 
-            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.TITLE), notNullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.TITLE), notNullValue());
         }
     }
 
@@ -365,7 +364,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            assertThat(extractFromPath(hit.getSource(), Doc.FIELD_NAMES.ATTRIBUTES).get(Attributes.FIELD_NAMES.OWNER), notNullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.ATTRIBUTES).get(Attributes.FIELD_NAMES.OWNER), notNullValue());
         }
     }
 
@@ -518,19 +517,10 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             }
         }), equalTo(true));
 
-        assertThat("We should have 2 docs for tweet in _all...", awaitBusy(() -> {
+        assertThat("We should have 2 docs for tweet in content field...", awaitBusy(() -> {
             try {
-                // Small hack for version < 5.0 as the client is not compatible
-                // TODO remove when we remove support for 2.x
-                QueryBuilder query;
-                if (elasticsearchClient.isIngestSupported()) {
-                    query = QueryBuilders.queryStringQuery("tweet");
-                } else {
-                    query = QueryBuilders.matchQuery("_all", "tweet");
-                }
-
                 SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
-                        new SearchSourceBuilder().query(query)));
+                        new SearchSourceBuilder().query(QueryBuilders.matchQuery("content", "tweet"))));
                 return response.getHits().getTotalHits() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
@@ -591,7 +581,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             // We check that the field is in _source
-            assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
+            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
         }
     }
 
@@ -604,7 +594,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         SearchResponse searchResponse = elasticsearchClient.search(new SearchRequest(getCrawlerName()));
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             // We check that the field is not part of _source
-            assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
+            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
         }
     }
 
@@ -617,7 +607,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // The default configuration should not add file attributes
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            assertThat(hit.getSource().get(Doc.FIELD_NAMES.ATTRIBUTES), nullValue());
+            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTRIBUTES), nullValue());
         }
 
     }
@@ -631,7 +621,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // We check that the subdir document has his meta path data correctly set
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            Object virtual = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.PATH)
+            Object virtual = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.PATH)
                     .get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.VIRTUAL);
             assertThat(virtual, isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
         }
@@ -645,8 +635,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         countTestHelper(new SearchRequest(getCrawlerName()), 7L, null);
 
         // Run aggs
-        Version version = elasticsearchClient.info().getVersion();
-        if (version.onOrAfter(Version.V_5_0_0_alpha1)) {
+        if (elasticsearchClient.getVersion().major >= 6) {
             // We can use the high level REST Client
             SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
                     new SearchSourceBuilder()
@@ -666,13 +655,13 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             assertThat(response.getHits().getTotalHits(), is(7L));
 
             int i = 0;
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/roottxtfile.txt", is("/roottxtfile.txt"));
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", is("/subdir1/roottxtfile_multi_feed.txt"));
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", is("/subdir1/subdir11/roottxtfile.txt"));
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", is("/subdir1/subdir12/roottxtfile.txt"));
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", is("/subdir2/roottxtfile_multi_feed.txt"));
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", is("/subdir2/subdir21/roottxtfile.txt"));
-            pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSource().get("path"), "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", is("/subdir2/subdir22/roottxtfile.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/roottxtfile.txt", is("/roottxtfile.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", is("/subdir1/roottxtfile_multi_feed.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", is("/subdir1/subdir11/roottxtfile.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", is("/subdir1/subdir12/roottxtfile.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", is("/subdir2/roottxtfile_multi_feed.txt"));
+            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", is("/subdir2/subdir21/roottxtfile.txt"));
+            pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", is("/subdir2/subdir22/roottxtfile.txt"));
 
 
             // Check folders
@@ -680,13 +669,13 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             assertThat(response.getHits().getTotalHits(), is(7L));
 
             i = 0;
-            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree", is("/"));
-            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree/subdir1", is("/subdir1"));
-            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree/subdir1/subdir11", is("/subdir1/subdir11"));
-            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree/subdir1/subdir12", is("/subdir1/subdir12"));
-            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree/subdir2", is("/subdir2"));
-            pathHitTester(response, i++, SearchHit::getSource, "/test_subdirs_deep_tree/subdir2/subdir21", is("/subdir2/subdir21"));
-            pathHitTester(response, i, SearchHit::getSource, "/test_subdirs_deep_tree/subdir2/subdir22", is("/subdir2/subdir22"));
+            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree", is("/"));
+            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1", is("/subdir1"));
+            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1/subdir11", is("/subdir1/subdir11"));
+            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1/subdir12", is("/subdir1/subdir12"));
+            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2", is("/subdir2"));
+            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2/subdir21", is("/subdir2/subdir21"));
+            pathHitTester(response, i, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2/subdir22", is("/subdir2/subdir22"));
         } else {
             // We need to use the old deprecated fashion for version < 5.0
             // We do minimal tests
@@ -735,8 +724,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         // We expect to have x files (<- whoa that's funny Mulder!)
         countTestHelper(new SearchRequest(getCrawlerName()), subdirs+1, null);
 
-        Version version = elasticsearchClient.info().getVersion();
-        if (version.onOrAfter(Version.V_5_0_0_alpha1)) {
+        if (elasticsearchClient.getVersion().major >= 6) {
             // We can use the high level REST Client
             // Run aggs
             SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
@@ -783,7 +771,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         assertThat(response.getHits().getTotalHits(), is(subdirs+1));
 
         for (int i = 0; i < subdirs; i++) {
-            pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSource().get("path"), "sample.txt", endsWith("/" + "sample.txt"));
+            pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "sample.txt", endsWith("/" + "sample.txt"));
         }
 
         // Check folders
@@ -971,7 +959,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            Object checksum = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
+            Object checksum = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
             assertThat(checksum, is("caa71e1914ecbcf5ae4f46cf85de8648"));
         }
     }
@@ -990,7 +978,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            Object checksum = extractFromPath(hit.getSource(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
+            Object checksum = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
             assertThat(checksum, is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
         }
     }
@@ -1414,9 +1402,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     @Test
     public void test_upgrade_version() throws Exception {
         // We can only run this test if elasticsearch version is >= 2.3 and < 6.0
-        Version version = elasticsearchClient.info().getVersion();
+        Version version = elasticsearchClient.getVersion();
         assumeFalse("We can only run the upgrade process on version between >= 2.3 and < 6.0",
-                version.onOrBefore(Version.V_2_3_0) || version.major >= 6);
+                version.major < 2 || (version.major == 2 && version.minor < 4) || version.major >= 6);
 
         // Let's create some deprecated indices
         long nbDocs = randomLongBetween(10, 100);
@@ -1459,7 +1447,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // Test that we have all needed docs in old index and new indices
         long expectedDocs = nbDocs;
-        if (version.onOrBefore(Version.V_5_0_0_alpha1)) {
+        if (elasticsearchClient.getVersion().major < 5) {
             // If we ran our tests against a 2.x cluster, _delete_by_query is skipped (as it does not exist).
             // Which means that folders are still there
             expectedDocs += nbFolders;

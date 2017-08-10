@@ -197,7 +197,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
     public int reindex(String sourceIndex, String sourceType, String targetIndex) throws IOException {
         logger.debug("reindex [{}]/[{}] -> [{}]/[doc]", sourceIndex, sourceType, targetIndex);
 
-        if (VERSION.onOrBefore(Version.V_2_3_0)) {
+        if (VERSION.major < 2 || (VERSION.major == 2 && VERSION.minor < 4)) {
             logger.warn("Can not use reindex API with elasticsearch [{}]", VERSION);
             return 0;
         }
@@ -272,6 +272,10 @@ public class ElasticsearchClient extends RestHighLevelClient {
 
     public RestClient getClient() {
         return client;
+    }
+
+    public Version getVersion() {
+        return VERSION;
     }
 
     public static RestClient buildRestClient(Elasticsearch settings) {

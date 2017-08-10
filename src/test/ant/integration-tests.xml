@@ -19,6 +19,7 @@
     <macrodef name="run-script">
         <attribute name="script"/>
         <attribute name="spawn" default="false"/>
+        <attribute name="input" default=""/>
         <element name="nested" optional="true"/>
         <sequential>
             <local name="failonerror"/>
@@ -36,19 +37,41 @@
             <basename file="@{script}" property="script.base"/>
             <!-- crappy way to output, but we need it. make it nice later -->
             <echoxml><exec script="${script.base}"><nested/></exec></echoxml>
-            <exec executable="cmd" osfamily="winnt" dir="${temp.cwd}" failonerror="${failonerror}" spawn="@{spawn}" taskname="${script.base}">
-                <arg value="/c"/>
-                <arg value="&quot;"/>
-                <arg value="@{script}.bat"/>
-                <nested/>
-                <arg value="&quot;"/>
-            </exec>
 
-            <exec executable="bash" osfamily="unix" dir="${temp.cwd}" failonerror="${failonerror}" spawn="@{spawn}" taskname="${script.base}">
-                <env key="ES_JAVA_OPTS" value="-Xmx2048m -Xms2048m" />
-                <arg value="@{script}"/>
-                <nested/>
-            </exec>
+            <ac:if>
+                <ac:equals arg1="@{input}" arg2=""/>
+                <ac:then>
+                    <exec executable="cmd" osfamily="winnt" dir="${temp.cwd}" failonerror="${failonerror}" spawn="@{spawn}" taskname="${script.base}">
+                        <arg value="/c"/>
+                        <arg value="&quot;"/>
+                        <arg value="@{script}.bat"/>
+                        <nested/>
+                        <arg value="&quot;"/>
+                    </exec>
+
+                    <exec executable="bash" osfamily="unix" dir="${temp.cwd}" failonerror="${failonerror}" spawn="@{spawn}" taskname="${script.base}">
+                        <env key="ES_JAVA_OPTS" value="-Xmx2048m -Xms2048m" />
+                        <arg value="@{script}"/>
+                        <nested/>
+                    </exec>
+                </ac:then>
+                <ac:else>
+                    <exec executable="cmd" osfamily="winnt" dir="${temp.cwd}" failonerror="${failonerror}" spawn="@{spawn}" taskname="${script.base}" inputstring="@{input}">
+                        <arg value="/c"/>
+                        <arg value="&quot;"/>
+                        <arg value="@{script}.bat"/>
+                        <nested/>
+                        <arg value="&quot;"/>
+                    </exec>
+
+                    <exec executable="bash" osfamily="unix" dir="${temp.cwd}" failonerror="${failonerror}" spawn="@{spawn}" taskname="${script.base}" inputstring="@{input}">
+                        <env key="ES_JAVA_OPTS" value="-Xmx2048m -Xms2048m" />
+                        <arg value="@{script}"/>
+                        <nested/>
+                    </exec>
+                </ac:else>
+            </ac:if>
+
         </sequential>
     </macrodef>
 
@@ -288,6 +311,13 @@
         <condition property="plugins.exists">
             <available file="${project.build.directory}/integration-tests/plugins" type="dir"/>
         </condition>
+        <isGreater v1="${elasticsearch.version}" v2="6.0.0" />
+        <condition property="keystore.exists">
+            <istrue value="${compare-result}"/>
+        </condition>
+        <condition property="xpack.exists">
+            <available file="${project.build.directory}/integration-tests/run/elasticsearch-${elasticsearch.version}/plugins/x-pack" type="dir"/>
+        </condition>
     </target>
 
     <target name="install-plugins" depends="setup-workspace" if="plugins.exists">
@@ -306,6 +336,28 @@
         </condition>
     </target>
 
+    <target name="install-keystore" depends="setup-workspace" if="keystore.exists">
+        <echo>installing keystore for Elasticsearch 6.0.0 or superior</echo>
+        <run-script script="${project.build.directory}/integration-tests/run/elasticsearch-${elasticsearch.version}/bin/elasticsearch-keystore">
+            <nested>
+                <arg value="create"/>
+            </nested>
+        </run-script>
+    </target>
+
+    <target name="configure-xpack" depends="install-keystore" if="xpack.exists">
+        <echo>configuring bootstrap.password for Elasticsearch 6.0.0 or superior</echo>
+        <!-- if x-pack is installed -->
+        <run-script script="${project.build.directory}/integration-tests/run/elasticsearch-${elasticsearch.version}/bin/elasticsearch-keystore"
+                    input="${integ.security.password}">
+            <nested>
+                <arg value="add"/>
+                <arg value="bootstrap.password"/>
+                <arg value="--stdin"/>
+            </nested>
+        </run-script>
+    </target>
+
     <target name="create-shield-users" depends="setup-workspace" if="license.exists">
         <local name="home"/>
         <property name="home" location="${project.build.directory}/integration-tests/run/elasticsearch-${elasticsearch.version}"/>
@@ -316,14 +368,14 @@
                 <arg value="useradd"/>
                 <arg value="elastic"/>
                 <arg value="-p"/>
-                <arg value="changeme"/>
+                <arg value="${integ.security.password}"/>
                 <arg value="-r"/>
                 <arg value="admin"/>
             </nested>
         </run-script>
     </target>
 
-    <target name="start-external-cluster" depends="setup-workspace,install-plugins,create-shield-users">
+    <target name="start-external-cluster" depends="setup-workspace,install-plugins,create-shield-users,install-keystore,configure-xpack">
         <startup-elasticsearch/>
     </target>
 
