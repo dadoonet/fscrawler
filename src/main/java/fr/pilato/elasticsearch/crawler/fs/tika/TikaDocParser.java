@@ -158,7 +158,7 @@ public class TikaDocParser {
         setMeta(filename, metadata, TikaCoreProperties.LATITUDE, doc.getMeta()::setLatitude, Function.identity());
         setMeta(filename, metadata, TikaCoreProperties.LONGITUDE, doc.getMeta()::setLongitude, Function.identity());
         setMeta(filename, metadata, TikaCoreProperties.ALTITUDE, doc.getMeta()::setAltitude, Function.identity());
-        setMeta(filename, metadata, TikaCoreProperties.RATING, doc.getMeta()::setRating, Integer::parseInt);
+        setMeta(filename, metadata, TikaCoreProperties.RATING, doc.getMeta()::setRating, (value) -> value == null ? null : Integer.parseInt(value));
         setMeta(filename, metadata, TikaCoreProperties.COMMENTS, doc.getMeta()::setComments, Function.identity());
 
         // Add support for more OOTB standard metadata
@@ -191,16 +191,16 @@ public class TikaDocParser {
 
     private static <T> void setMeta(String filename, Metadata metadata, Property property, Consumer<T> setter, Function<String,T> transformer) {
         String sMeta = metadata.get(property);
-            try {
-                setter.accept(transformer.apply(sMeta));
-            } catch (Exception e) {
-                logger.warn("Can not parse meta [{}] for [{}]. Skipping [{}] field...", sMeta, filename, property.getName());
-            }
+        try {
+            setter.accept(transformer.apply(sMeta));
+        } catch (Exception e) {
+            logger.warn("Can not parse meta [{}] for [{}]. Skipping [{}] field...", sMeta, filename, property.getName());
+        }
     }
 
     private static List<String> commaDelimitedListToStringArray(String str) {
         if (str == null) {
-            return new ArrayList<>();
+            return null;
         }
         List<String> result = new ArrayList<>();
         int pos = 0;
@@ -215,6 +215,4 @@ public class TikaDocParser {
         }
         return result;
     }
-
-
 }
