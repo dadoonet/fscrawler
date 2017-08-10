@@ -102,7 +102,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is(nullValue()));
         assertThat(doc.getMeta().getDate(), is(localDateTimeToDate(LocalDateTime.of(2016, 9, 19, 14, 29, 37))));
-        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getKeywords(), nullValue());
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
     }
 
@@ -122,7 +122,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is(nullValue()));
         assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getKeywords(), nullValue());
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
@@ -288,7 +288,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is(nullValue()));
         assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getKeywords(), nullValue());
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
@@ -322,7 +322,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
         assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getKeywords(), nullValue());
         assertThat(doc.getMeta().getTitle(), is("Test Tika"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
@@ -518,7 +518,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is(nullValue()));
         assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getKeywords(), nullValue());
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
@@ -543,7 +543,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         assertThat(doc.getMeta().getAuthor(), is(nullValue()));
         assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), emptyIterable());
+        assertThat(doc.getMeta().getKeywords(), nullValue());
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
