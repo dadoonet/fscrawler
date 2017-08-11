@@ -9,8 +9,9 @@ You need to install a version matching your Elasticsearch version:
 
 |    Elasticsearch   |  FS Crawler | Released |                                       Docs                                   |
 |--------------------|-------------|----------|------------------------------------------------------------------------------|
-| 2.x, 5.x, 6.x      | 2.4-SNAPSHOT|          |See below                                                                     |
-| 2.x, 5.x, 6.x      | **2.3**     |2017-07-10|[2.3](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.3/README.md)     |
+| 2.x, 5.x, 6.x      | 2.5-SNAPSHOT|          |See below                                                                     |
+| 2.x, 5.x, 6.x      | **2.4**     |2017-08-11|[2.4](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.4/README.md)     |
+| 2.x, 5.x, 6.x      | 2.3         |2017-07-10|[2.3](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.3/README.md)     |
 | 1.x, 2.x, 5.x      | 2.2         |2017-02-03|[2.2](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.2/README.md)     |
 | 1.x, 2.x, 5.x      | 2.1         |2016-07-26|[2.1](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.1/README.md)     |
 |    es-2.0          | 2.0.0       |2015-10-30|[2.0.0](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.0.0/README.md) |
@@ -52,11 +53,11 @@ Just download the latest release (or any other specific version you want to try)
 
 The filename ends with `.zip`.
 
-For example, if you wish to download [fscrawler-2.3](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.3/fscrawler-2.3.zip):
+For example, if you wish to download [fscrawler-2.4](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.4/fscrawler-2.4.zip):
 
 ```sh
-wget https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.3/fscrawler-2.3.zip
-unzip fscrawler-2.3.zip
+wget https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.4/fscrawler-2.4.zip
+unzip fscrawler-2.4.zip
 ```
 
 The distribution contains:
@@ -75,7 +76,7 @@ $ tree
 ```
 
 Note that you can also download a SNAPSHOT version
-[from sonatype](https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/2.3-SNAPSHOT/)
+[from sonatype](https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/2.5-SNAPSHOT/)
 without needing to build it by yourself.
 
 ## Upgrade fscrawler
@@ -194,6 +195,11 @@ crawler name and the crawler name plus `_folder`. Note that the `upgrade` featur
 file and folder mapping is now part of `_settings_folder.json`. Which means you can remove old files to avoid confusion.
 You can simply remove existing files in `~/.fscrawler/_default` before starting the new version so default
 files will be created again.
+
+### Upgrade to 2.4
+
+* No specific step needed. Just note that mapping changed as we support more metadata. Might be useful to run
+similar steps as for 2.2 upgrade.
 
 # User Guide
 
