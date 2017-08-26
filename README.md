@@ -18,9 +18,10 @@ You need to install a version matching your Elasticsearch version:
 
 ## Build Status
 
-Thanks to Travis for the [build status](https://travis-ci.org/dadoonet/fscrawler): 
-[![Build Status](https://travis-ci.org/dadoonet/fscrawler.svg)](https://travis-ci.org/dadoonet/fscrawler)
-
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler/badge.svg?style=flat-square)](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler/)
+[![Travis](https://secure.travis-ci.org/dadoonet/fscrawler.png)](http://travis-ci.org/dadoonet/fscrawler)
+[![Technical Debt](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=sqale_debt_ratio)](https://sonarqube.com/dashboard?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
+[![Dependency Status](https://www.versioneye.com/user/projects/59a174f8368b080052a6aa40/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/59a174f8368b080052a6aa40)
 
 # Table of content
 
