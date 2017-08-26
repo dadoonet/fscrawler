@@ -287,7 +287,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>1.4.2</version>
+                <version>1.4.2.jenkins-1</version>
                 <configuration>
                     <rules>
                         <requireJavaVersion>
