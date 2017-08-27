@@ -303,6 +303,8 @@ public class FsCrawler {
         try {
             Thread.sleep(CLOSE_POLLING_WAIT_MS);
         }
-        catch(InterruptedException ignored) { }
+        catch(InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
