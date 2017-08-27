@@ -35,6 +35,7 @@ class FSCrawlerShutdownHook extends Thread implements Runnable {
         try {
             fsCrawler.close();
         } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
         }
     }
 }
