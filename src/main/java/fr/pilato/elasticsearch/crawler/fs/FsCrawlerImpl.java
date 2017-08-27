@@ -262,7 +262,7 @@ public class FsCrawlerImpl {
         closed = true;
 
         synchronized(semaphore) {
-            semaphore.notify();
+            semaphore.notifyAll();
         }
 
         if (this.fsCrawlerThread != null) {
