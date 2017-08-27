@@ -377,6 +377,7 @@ public class FsCrawlerImpl {
                     }
                 } catch (InterruptedException e) {
                     logger.debug("Fs crawler thread has been interrupted: [{}]", e.getMessage());
+                    Thread.currentThread().interrupt();
                 }
             }
         }
