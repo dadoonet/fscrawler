@@ -46,8 +46,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Scanner;
 
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyDefaultResources;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.moveLegacyResource;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.moveLegacyResource;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
 
 /**
  * Main entry point to launch FsCrawler
@@ -253,7 +254,7 @@ public class FsCrawler {
                 Version elasticsearchVersion = fsCrawler.getEsClientManager().client().info().getVersion();
                 try {
                     // If we are able to read an old configuration file, we should tell the user to check the documentation
-                    FsCrawlerUtil.readJsonFile(jobMappingDir, configDir, Byte.toString(elasticsearchVersion.major), INDEX_SETTINGS_FILE);
+                    readJsonFile(jobMappingDir, configDir, Byte.toString(elasticsearchVersion.major), INDEX_SETTINGS_FILE);
                     logger.warn("We found old configuration index settings in [{}] or [{}]. You should look at the documentation" +
                             " about upgrades: https://github.com/dadoonet/fscrawler#upgrade-to-23", configDir, jobMappingDir);
                 } catch (IllegalArgumentException ignored) { }

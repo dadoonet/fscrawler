@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.fileabstractor;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,6 +30,11 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getCreationTime;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFileExtension;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
 
 public class FileAbstractorFile extends FileAbstractor<File> {
     public FileAbstractorFile(FsSettings fsSettings) {
@@ -44,13 +48,13 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         model.file = file.isFile();
         model.directory = !model.file;
         model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault());
-        model.creationDate = FsCrawlerUtil.getCreationTime(file);
-        model.extension = FsCrawlerUtil.getFileExtension(file);
+        model.creationDate = getCreationTime(file);
+        model.extension = getFileExtension(file);
         model.path = path;
         model.fullpath = file.getAbsolutePath();
         model.size = file.length();
-        model.owner = FsCrawlerUtil.getOwnerName(file);
-        model.group = FsCrawlerUtil.getGroupName(file);
+        model.owner = getOwnerName(file);
+        model.group = getGroupName(file);
 
         return model;
     }

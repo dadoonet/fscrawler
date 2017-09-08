@@ -31,7 +31,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.copyResourceFile;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyResourceFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 

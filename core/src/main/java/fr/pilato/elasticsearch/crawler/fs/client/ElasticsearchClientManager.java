@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
@@ -35,8 +34,9 @@ import org.elasticsearch.threadpool.ThreadPool;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.INDEX_SETTINGS_FILE;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
 
 public class ElasticsearchClientManager {
     private final Logger logger = LogManager.getLogger(ElasticsearchClientManager.class);
@@ -149,8 +149,7 @@ public class ElasticsearchClientManager {
     private void createIndex(Path jobMappingDir, String elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
         try {
             // If needed, we create the new settings for this files index
-            String indexSettings =
-                    FsCrawlerUtil.readJsonFile(jobMappingDir, config, elasticsearchVersion, indexSettingsFile);
+            String indexSettings = readJsonFile(jobMappingDir, config, elasticsearchVersion, indexSettingsFile);
 
             client.createIndex(indexName, true, indexSettings);
         } catch (Exception e) {

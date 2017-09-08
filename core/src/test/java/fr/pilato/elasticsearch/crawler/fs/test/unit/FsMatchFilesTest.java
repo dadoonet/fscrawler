@@ -20,13 +20,13 @@
 package fr.pilato.elasticsearch.crawler.fs.test.unit;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 import static fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs.DEFAULT_EXCLUDED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -35,38 +35,38 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void exclude_only() {
-        assertThat(FsCrawlerUtil.isIndexable("test.doc", new ArrayList<>(), Collections.singletonList("*.doc")), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("test.xls", new ArrayList<>(), Collections.singletonList("*.doc")), is(true));
-        assertThat(FsCrawlerUtil.isIndexable("my.doc.xls", new ArrayList<>(), Collections.singletonList("*.doc")), is(true));
-        assertThat(FsCrawlerUtil.isIndexable("my.doc.xls", new ArrayList<>(), Arrays.asList("*.doc", "*.xls")), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("my.doc.xls", new ArrayList<>(), Collections.singletonList("my.d?c*.xls")), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("my.douc.xls", new ArrayList<>(), Collections.singletonList("my.d?c*.xls")), is(true));
-        assertThat(FsCrawlerUtil.isIndexable(".snapshots", new ArrayList<>(), Collections.singletonList(".snapshots")), is(false));
+        assertThat(isIndexable("test.doc", new ArrayList<>(), Collections.singletonList("*.doc")), is(false));
+        assertThat(isIndexable("test.xls", new ArrayList<>(), Collections.singletonList("*.doc")), is(true));
+        assertThat(isIndexable("my.doc.xls", new ArrayList<>(), Collections.singletonList("*.doc")), is(true));
+        assertThat(isIndexable("my.doc.xls", new ArrayList<>(), Arrays.asList("*.doc", "*.xls")), is(false));
+        assertThat(isIndexable("my.doc.xls", new ArrayList<>(), Collections.singletonList("my.d?c*.xls")), is(false));
+        assertThat(isIndexable("my.douc.xls", new ArrayList<>(), Collections.singletonList("my.d?c*.xls")), is(true));
+        assertThat(isIndexable(".snapshots", new ArrayList<>(), Collections.singletonList(".snapshots")), is(false));
     }
 
     @Test
     public void include_only() {
-        assertThat(FsCrawlerUtil.isIndexable("test.doc", Collections.singletonList("*.doc"), new ArrayList<>()), is(true));
-        assertThat(FsCrawlerUtil.isIndexable("test.xls", Collections.singletonList("*.doc"), new ArrayList<>()), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("my.doc.xls", Collections.singletonList("*.doc"), new ArrayList<>()), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("my.doc.xls", Collections.singletonList("my.d?c*.xls"), new ArrayList<>()), is(true));
-        assertThat(FsCrawlerUtil.isIndexable("my.douc.xls", Collections.singletonList("my.d?c*.xls"), new ArrayList<>()), is(false));
+        assertThat(isIndexable("test.doc", Collections.singletonList("*.doc"), new ArrayList<>()), is(true));
+        assertThat(isIndexable("test.xls", Collections.singletonList("*.doc"), new ArrayList<>()), is(false));
+        assertThat(isIndexable("my.doc.xls", Collections.singletonList("*.doc"), new ArrayList<>()), is(false));
+        assertThat(isIndexable("my.doc.xls", Collections.singletonList("my.d?c*.xls"), new ArrayList<>()), is(true));
+        assertThat(isIndexable("my.douc.xls", Collections.singletonList("my.d?c*.xls"), new ArrayList<>()), is(false));
     }
 
     @Test
     public void include_exclude() {
-        assertThat(FsCrawlerUtil.isIndexable("test.doc", Collections.singletonList("*.xls"), Collections.singletonList("*.doc")), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("test.xls", Collections.singletonList("*.xls"), Collections.singletonList("*.doc")), is(true));
-        assertThat(FsCrawlerUtil.isIndexable("my.doc.xls", Collections.singletonList("*.xls"), Collections.singletonList("*.doc")), is(true));
-        assertThat(FsCrawlerUtil.isIndexable("my.doc.xls", Collections.singletonList("*.xls"), Collections.singletonList("my.d?c*.xls")), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("my.douc.xls", Collections.singletonList("*.xls"), Collections.singletonList("my.d?c*.xls")), is(true));
+        assertThat(isIndexable("test.doc", Collections.singletonList("*.xls"), Collections.singletonList("*.doc")), is(false));
+        assertThat(isIndexable("test.xls", Collections.singletonList("*.xls"), Collections.singletonList("*.doc")), is(true));
+        assertThat(isIndexable("my.doc.xls", Collections.singletonList("*.xls"), Collections.singletonList("*.doc")), is(true));
+        assertThat(isIndexable("my.doc.xls", Collections.singletonList("*.xls"), Collections.singletonList("my.d?c*.xls")), is(false));
+        assertThat(isIndexable("my.douc.xls", Collections.singletonList("*.xls"), Collections.singletonList("my.d?c*.xls")), is(true));
     }
 
     @Test
     public void default_ignored_file() {
-        assertThat(FsCrawlerUtil.isIndexable("~mydoc", new ArrayList<>(), DEFAULT_EXCLUDED), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("~", new ArrayList<>(), DEFAULT_EXCLUDED), is(false));
-        assertThat(FsCrawlerUtil.isIndexable("adoc.doc", new ArrayList<>(), DEFAULT_EXCLUDED), is(true));
-        assertThat(FsCrawlerUtil.isIndexable("mydoc~", new ArrayList<>(), DEFAULT_EXCLUDED), is(true));
+        assertThat(isIndexable("~mydoc", new ArrayList<>(), DEFAULT_EXCLUDED), is(false));
+        assertThat(isIndexable("~", new ArrayList<>(), DEFAULT_EXCLUDED), is(false));
+        assertThat(isIndexable("adoc.doc", new ArrayList<>(), DEFAULT_EXCLUDED), is(true));
+        assertThat(isIndexable("mydoc~", new ArrayList<>(), DEFAULT_EXCLUDED), is(true));
     }
 }

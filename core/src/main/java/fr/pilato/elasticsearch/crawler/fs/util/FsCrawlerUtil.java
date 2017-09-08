@@ -30,7 +30,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FsCrawlerUtil extends fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil {
+public class FsCrawlerUtil {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerUtil.class);
 

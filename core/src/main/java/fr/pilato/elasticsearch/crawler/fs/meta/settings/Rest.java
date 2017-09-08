@@ -21,7 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
 import java.util.Locale;
 
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.buildUrl;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.buildUrl;
 
 public class Rest {
 

@@ -19,9 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

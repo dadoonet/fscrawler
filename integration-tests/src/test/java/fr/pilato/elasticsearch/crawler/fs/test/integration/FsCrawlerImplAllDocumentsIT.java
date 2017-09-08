@@ -26,7 +26,6 @@ import fr.pilato.elasticsearch.crawler.fs.meta.doc.Meta;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.tika.parser.external.ExternalParser;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -44,6 +43,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static fr.pilato.elasticsearch.crawler.fs.client.JsonUtil.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -73,7 +73,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        FsCrawlerUtil.copyDirs(from, testResourceTarget);
+        copyDirs(from, testResourceTarget);
 
         staticLogger.debug("  --> Test resources ready in [{}]:", testResourceTarget);
         Files.walk(testResourceTarget)

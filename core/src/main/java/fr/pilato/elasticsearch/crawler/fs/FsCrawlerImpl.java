@@ -35,7 +35,6 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -68,8 +67,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator.validateSettings;
+import static fr.pilato.elasticsearch.crawler.fs.client.JsonUtil.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isExcluded;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
 
 /**
  * @author dadoonet (David Pilato)
@@ -441,11 +444,11 @@ public class FsCrawlerImpl {
                     String filename = child.name;
 
                     // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
-                    boolean isIndexable = FsCrawlerUtil.isIndexable(filename, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
+                    boolean isIndexable = isIndexable(filename, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
 
                     // It can happen that we a dir "foo" which does not match the include name like "*.txt"
                     // We need to go in it unless it has been explicitly excluded by the user
-                    if (child.directory && !FsCrawlerUtil.isExcluded(filename, fsSettings.getFs().getExcludes())) {
+                    if (child.directory && !isExcluded(filename, fsSettings.getFs().getExcludes())) {
                         isIndexable = true;
                     }
 
@@ -500,7 +503,7 @@ public class FsCrawlerImpl {
                 for (String esfile : esFiles) {
                     logger.trace("Checking file [{}]", esfile);
 
-                    if (FsCrawlerUtil.isIndexable(esfile, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
+                    if (isIndexable(esfile, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
                             && !fsFiles.contains(esfile)) {
                         logger.trace("Removing file [{}] in elasticsearch", esfile);
                         esDelete(fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, filepath));
@@ -514,7 +517,7 @@ public class FsCrawlerImpl {
 
                     // for the delete folder
                     for (String esfolder : esFolders) {
-                        if (FsCrawlerUtil.isIndexable(esfolder, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
+                        if (isIndexable(esfolder, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
                             logger.trace("Checking directory [{}]", esfolder);
                             if (!fsFolders.contains(esfolder)) {
                                 logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
@@ -545,6 +548,7 @@ public class FsCrawlerImpl {
                         new SearchRequest(fsSettings.getElasticsearch().getIndex()).source(
                                 new SearchSourceBuilder()
                                         .size(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                                        .storedField("_source")
                                         .storedField(FILE_FILENAME)
                                         .query(QueryBuilders.termQuery(PATH_ROOT, SignTool.sign(path)))));
 
@@ -552,15 +556,18 @@ public class FsCrawlerImpl {
                 if (response.getHits() != null && response.getHits().getHits() != null) {
                     for (SearchHit hit : response.getHits().getHits()) {
                         String name;
-                        if (hit.getFields() != null
+                        if (hit.getSourceAsMap() != null
+                                && extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME) != null) {
+                            name = (String) extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME);
+                        } else if (hit.getFields() != null
                                 && hit.getFields().get(FILE_FILENAME) != null) {
                             // In case someone disabled _source which is not recommended
                             name = hit.getFields().get(FILE_FILENAME).getValue();
                         } else {
                             // Houston, we have a problem ! We can't get the old files from ES
-                            logger.warn("Can't find stored field name to check existing filenames in path [{}]. " +
-                                    "Please set store: true on field [{}]", path, FILE_FILENAME);
-                            throw new RuntimeException("Mapping is incorrect: please set stored: true on field [" +
+                            logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
+                                    "Please enable _source or store field [{}]", path, FILE_FILENAME);
+                            throw new RuntimeException("Mapping is incorrect: please enable _source or store field [" +
                                     FILE_FILENAME + "].");
                         }
                         files.add(name);
@@ -571,6 +578,8 @@ public class FsCrawlerImpl {
                         fsSettings.getElasticsearch().getIndex(),
                         REQUEST_SIZE,    // TODO: WHAT? DID I REALLY WROTE THAT? :p
                         FILE_FILENAME,
+                        Doc.FIELD_NAMES.FILE,
+                        fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME,
                         path,
                         QueryBuilders.termQuery(PATH_ROOT, SignTool.sign(path)));
             }
@@ -639,7 +648,7 @@ public class FsCrawlerImpl {
                     // Encoded version of the dir this file belongs to
                     doc.getPath().setRoot(SignTool.sign(dirname));
                     // The virtual URL (not including the initial root dir)
-                    doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename));
+                    doc.getPath().setVirtual(computeVirtualPathName(stats.getRootPath(), fullFilename));
                     // The real and complete filename
                     doc.getPath().setReal(fullFilename);
                     // Path
@@ -729,7 +738,7 @@ public class FsCrawlerImpl {
             // Encoded version of the parent dir
             pathObject.setRoot(SignTool.sign(rootdir));
             // The virtual URL (not including the initial root dir)
-            pathObject.setVirtual(FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), path));
+            pathObject.setVirtual(computeVirtualPathName(stats.getRootPath(), path));
 
             indexDirectory(SignTool.sign(path), pathObject);
         }

@@ -33,7 +33,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.TimeZone;
 
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFileExtension;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -64,7 +66,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     private void testHelper(String rootPath, String realPath, String expectedPath) {
-        assertThat(FsCrawlerUtil.computeVirtualPathName(rootPath, realPath), is(expectedPath));
+        assertThat(computeVirtualPathName(rootPath, realPath), is(expectedPath));
     }
 
     @Test
@@ -89,9 +91,9 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testGetFileExtension() {
-        assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar")), is("bar"));
-        assertThat(FsCrawlerUtil.getFileExtension(new File("foo")), is(""));
-        assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar.baz")), is("baz"));
+        assertThat(getFileExtension(new File("foo.bar")), is("bar"));
+        assertThat(getFileExtension(new File("foo")), is(""));
+        assertThat(getFileExtension(new File("foo.bar.baz")), is("baz"));
     }
 
     @Test

@@ -34,7 +34,6 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.logging.log4j.Level;
@@ -84,8 +83,9 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiOfLen
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.client.JsonUtil.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static fr.pilato.elasticsearch.crawler.fs.test.integration.FsCrawlerRestIT.uploadFile;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayWithSize;
 import static org.hamcrest.Matchers.containsString;
@@ -141,7 +141,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
             from = DEFAULT_RESOURCES;
         }
 
-        FsCrawlerUtil.copyDirs(from, currentTestResourceDir);
+        copyDirs(from, currentTestResourceDir);
 
         staticLogger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
     }

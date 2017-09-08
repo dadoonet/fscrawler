@@ -44,8 +44,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.buildUrl;
-import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.buildUrl;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 
 @Path("/_upload")
 public class UploadApi extends RestApi {
