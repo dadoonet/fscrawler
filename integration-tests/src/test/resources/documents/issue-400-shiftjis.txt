@@ -1,0 +1,15 @@
+全文検索の技術調査について2
+
+
+　■Apache Solr
+  　ライセンス：Apache Lisence 2.0
+　　開発環境：Java　(サードパーティー提供の環境は Javascript、Ruby　等多数)
+
+    http://lucene.apache.org/solr/
+
+　■Elasticsearch
+  　ライセンス：Apache Lisence 2.0
+　　開発環境：Java、Javascript、.Net Framework、Ruby　等多数
+
+    https://www.elastic.co/jp/products/elasticsearch
+

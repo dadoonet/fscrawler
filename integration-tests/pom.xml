@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>fscrawler-parent</artifactId>
+        <groupId>fr.pilato.elasticsearch.crawler</groupId>
+        <version>2.5-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>fscrawler-it</artifactId>
+    <name>FSCrawler Integration Tests</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-core</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-test-framework</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.carrotsearch.randomizedtesting</groupId>
+                <artifactId>junit4-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>integ-setup-dependencies</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipIntegTests}</skip>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${elasticsearch.groupid}</groupId>
+                                    <artifactId>elasticsearch</artifactId>
+                                    <version>${elasticsearch.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                            </artifactItems>
+                            <useBaseVersion>true</useBaseVersion>
+                            <outputDirectory>${project.build.directory}/integration-tests/binaries</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>integ-setup-dependencies-plugins</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipXPack}</skip>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.elasticsearch.plugin</groupId>
+                                    <artifactId>${elasticsearch.security.artifact}</artifactId>
+                                    <version>${elasticsearch.security.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                            </artifactItems>
+                            <useBaseVersion>true</useBaseVersion>
+                            <outputDirectory>${project.build.directory}/integration-tests/plugins</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <!-- start up external cluster -->
+                    <execution>
+                        <id>integ-setup</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipIntegTests}</skip>
+                            <target>
+                                <ant antfile="src/test/ant/integration-tests.xml" target="start-external-cluster"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <!-- shut down external cluster -->
+                    <execution>
+                        <id>integ-teardown</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipIntegTests}</skip>
+                            <target>
+                                <ant antfile="src/test/ant/integration-tests.xml" target="stop-external-cluster"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
