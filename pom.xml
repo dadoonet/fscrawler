@@ -32,7 +32,7 @@
         <jersey.version>2.25.1</jersey.version>
 
         <!-- Only Lucene test framework is used here -->
-        <lucene.version>7.0.0-snapshot-00142c9</lucene.version>
+        <lucene.version>7.0.0-snapshot-a128fcb</lucene.version>
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
@@ -643,7 +643,7 @@
         <repository>
             <id>elastic-lucene-snapshots</id>
             <name>Elastic Lucene Snapshots</name>
-            <url>http://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/00142c9</url>
+            <url>http://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/a128fcb</url>
             <releases><enabled>true</enabled></releases>
             <snapshots><enabled>false</enabled></snapshots>
         </repository>
