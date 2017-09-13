@@ -23,6 +23,13 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import com.google.common.base.Strings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch.Node;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
@@ -31,13 +38,6 @@ import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.http.HttpHost;
-import org.elasticsearch.client.http.auth.AuthScope;
-import org.elasticsearch.client.http.auth.UsernamePasswordCredentials;
-import org.elasticsearch.client.http.client.CredentialsProvider;
-import org.elasticsearch.client.http.entity.ContentType;
-import org.elasticsearch.client.http.entity.StringEntity;
-import org.elasticsearch.client.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.index.query.TermQueryBuilder;
 
 import java.io.IOException;
@@ -58,13 +58,11 @@ public class ElasticsearchClient extends RestHighLevelClient {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
 
-    private final RestClient client;
     private boolean INGEST_SUPPORT = true;
     private Version VERSION = null;
 
-    public ElasticsearchClient(RestClient client) throws IOException {
+    public ElasticsearchClient(RestClientBuilder client) throws IOException {
         super(client);
-        this.client = client;
     }
 
     /**
@@ -73,10 +71,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
      */
     public void shutdown() throws IOException {
         logger.debug("Closing REST client");
-        if (client != null) {
-            client.close();
-            logger.debug("REST client closed");
-        }
+        close();
     }
 
     /**
@@ -94,7 +89,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
             if (!Strings.isNullOrEmpty(indexSettings)) {
                 entity = new StringEntity(indexSettings, ContentType.APPLICATION_JSON);
             }
-            Response response = client.performRequest("PUT", "/" + index, Collections.emptyMap(), entity);
+            Response response = getLowLevelClient().performRequest("PUT", "/" + index, Collections.emptyMap(), entity);
             logger.trace("create index response: {}", JsonUtil.asMap(response));
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 400 &&
@@ -120,7 +115,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
         logger.debug("delete index [{}]", index);
 
         try {
-            Response response = client.performRequest("DELETE", "/" + index);
+            Response response = getLowLevelClient().performRequest("DELETE", "/" + index);
             logger.trace("delete index response: {}", JsonUtil.asMap(response));
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 404) {
@@ -141,7 +136,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
         logger.debug("is existing index [{}]", index);
 
         try {
-            Response restResponse = client.performRequest("GET", "/" + index);
+            Response restResponse = getLowLevelClient().performRequest("GET", "/" + index);
             logger.trace("get index metadata response: {}", JsonUtil.asMap(restResponse));
             return true;
         } catch (ResponseException e) {
@@ -169,7 +164,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
 
         path += "_refresh";
 
-        Response restResponse = client.performRequest("POST", path);
+        Response restResponse = getLowLevelClient().performRequest("POST", path);
         logger.trace("refresh raw response: {}", JsonUtil.asMap(restResponse));
     }
 
@@ -181,7 +176,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
     public void waitForHealthyIndex(String index) throws IOException {
         logger.debug("wait for yellow health on index [{}]", index);
 
-        Response restResponse = client.performRequest("GET", "/_cluster/health/" + index,
+        Response restResponse = getLowLevelClient().performRequest("GET", "/_cluster/health/" + index,
                 Collections.singletonMap("wait_for_status", "yellow"));
         logger.trace("health response: {}", JsonUtil.asMap(restResponse));
     }
@@ -215,7 +210,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
         logger.trace("{}", reindexQuery);
 
         StringEntity entity = new StringEntity(reindexQuery, ContentType.APPLICATION_JSON);
-        Response restResponse = client.performRequest("POST", "/_reindex", Collections.emptyMap(), entity);
+        Response restResponse = getLowLevelClient().performRequest("POST", "/_reindex", Collections.emptyMap(), entity);
         Map<String, Object> response = JsonUtil.asMap(restResponse);
         logger.debug("reindex response: {}", response);
 
@@ -244,7 +239,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
                 "}";
 
         StringEntity entity = new StringEntity(deleteByQuery, ContentType.APPLICATION_JSON);
-        Response restResponse = client.performRequest("POST", "/" + index + "/" + type + "/_delete_by_query", Collections.emptyMap(), entity);
+        Response restResponse = getLowLevelClient().performRequest("POST", "/" + index + "/" + type + "/_delete_by_query", Collections.emptyMap(), entity);
         Map<String, Object> response = JsonUtil.asMap(restResponse);
         logger.debug("reindex response: {}", response);
     }
@@ -270,15 +265,11 @@ public class ElasticsearchClient extends RestHighLevelClient {
         return INGEST_SUPPORT;
     }
 
-    public RestClient getClient() {
-        return client;
-    }
-
     public Version getVersion() {
         return VERSION;
     }
 
-    public static RestClient buildRestClient(Elasticsearch settings) {
+    public static RestClientBuilder buildRestClient(Elasticsearch settings) {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
         settings.getNodes().forEach(node -> {
             Node.Scheme scheme = node.getScheme();
@@ -298,7 +289,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
                     httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
         }
 
-        return builder.build();
+        return builder;
     }
 
     // Deprecated methods
@@ -329,7 +320,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
         params.put("fields", "_source," + field);
         params.put("size", Integer.toString(size));
 
-        Response restResponse = client.performRequest("GET", url, params);
+        Response restResponse = getLowLevelClient().performRequest("GET", url, params);
         fr.pilato.elasticsearch.crawler.fs.client.SearchResponse response = JsonUtil.deserialize(restResponse, fr.pilato.elasticsearch.crawler.fs.client.SearchResponse.class);
 
         logger.trace("Response [{}]", response.toString());
@@ -388,7 +379,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
 
         path += "_search";
 
-        Response restResponse = client.performRequest("GET", path, Collections.emptyMap(),
+        Response restResponse = getLowLevelClient().performRequest("GET", path, Collections.emptyMap(),
                 new StringEntity(json, ContentType.APPLICATION_JSON));
         fr.pilato.elasticsearch.crawler.fs.client.SearchResponse searchResponse = JsonUtil.deserialize(restResponse, fr.pilato.elasticsearch.crawler.fs.client.SearchResponse.class);
 
