@@ -127,7 +127,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
         // using fields
         Collection<String> fields = elasticsearchClient.getFromStoredFieldsV2(
-                getCrawlerName(), 10, "foo.bar", "foo", "bar", "/a/path", QueryBuilders.termQuery("foo.bar", "bar"));
+                getCrawlerName(), 10, "foo.bar", "/a/path", QueryBuilders.termQuery("foo.bar", "bar"));
         assertThat(fields, iterableWithSize(1));
         assertThat(fields.iterator().next(), is("bar"));
     }

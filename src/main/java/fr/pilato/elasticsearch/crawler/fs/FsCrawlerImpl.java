@@ -68,7 +68,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator.validateSettings;
-import static fr.pilato.elasticsearch.crawler.fs.client.JsonUtil.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 import static fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil.localDateTimeToDate;
 
@@ -546,7 +545,6 @@ public class FsCrawlerImpl {
                         new SearchRequest(fsSettings.getElasticsearch().getIndex()).source(
                                 new SearchSourceBuilder()
                                         .size(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                                        .storedField("_source")
                                         .storedField(FILE_FILENAME)
                                         .query(QueryBuilders.termQuery(PATH_ROOT, SignTool.sign(path)))));
 
@@ -554,18 +552,15 @@ public class FsCrawlerImpl {
                 if (response.getHits() != null && response.getHits().getHits() != null) {
                     for (SearchHit hit : response.getHits().getHits()) {
                         String name;
-                        if (hit.getSourceAsMap() != null
-                                && extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME) != null) {
-                            name = (String) extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME);
-                        } else if (hit.getFields() != null
+                        if (hit.getFields() != null
                                 && hit.getFields().get(FILE_FILENAME) != null) {
                             // In case someone disabled _source which is not recommended
                             name = hit.getFields().get(FILE_FILENAME).getValue();
                         } else {
                             // Houston, we have a problem ! We can't get the old files from ES
-                            logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
-                                    "Please enable _source or store field [{}]", path, FILE_FILENAME);
-                            throw new RuntimeException("Mapping is incorrect: please enable _source or store field [" +
+                            logger.warn("Can't find stored field name to check existing filenames in path [{}]. " +
+                                    "Please set store: true on field [{}]", path, FILE_FILENAME);
+                            throw new RuntimeException("Mapping is incorrect: please set stored: true on field [" +
                                     FILE_FILENAME + "].");
                         }
                         files.add(name);
@@ -576,8 +571,6 @@ public class FsCrawlerImpl {
                         fsSettings.getElasticsearch().getIndex(),
                         REQUEST_SIZE,    // TODO: WHAT? DID I REALLY WROTE THAT? :p
                         FILE_FILENAME,
-                        Doc.FIELD_NAMES.FILE,
-                        fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME,
                         path,
                         QueryBuilders.termQuery(PATH_ROOT, SignTool.sign(path)));
             }
