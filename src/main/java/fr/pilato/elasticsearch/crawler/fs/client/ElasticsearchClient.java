@@ -48,8 +48,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static fr.pilato.elasticsearch.crawler.fs.client.JsonUtil.extractFromPath;
-
 /**
  * Simple Elasticsearch client over HTTP or HTTPS.
  * Only needed methods are exposed.
@@ -298,9 +296,8 @@ public class ElasticsearchClient extends RestHighLevelClient {
      * TODO: Remove when we won't support anymore 2.0
      */
     @Deprecated
-    public Collection<String> getFromStoredFieldsV2(String index, int size, String fieldFullPath, String objectName, String field,
-                                                     String path,
-                                                     TermQueryBuilder termQuery) throws IOException {
+    public Collection<String> getFromStoredFieldsV2(String index, int size, String fieldFullPath, String path, TermQueryBuilder termQuery)
+            throws IOException {
         Collection<String> files = new ArrayList<>();
         // We need to fallback on old implementation
         logger.debug("using low level client search [{}], request [{}]", index, termQuery);
@@ -317,7 +314,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
         if (termQuery !=  null) {
             params.put("q", termQuery.fieldName() + ":" + termQuery.value());
         }
-        params.put("fields", "_source," + field);
+        params.put("fields", fieldFullPath);
         params.put("size", Integer.toString(size));
 
         Response restResponse = getLowLevelClient().performRequest("GET", url, params);
@@ -327,18 +324,14 @@ public class ElasticsearchClient extends RestHighLevelClient {
         if (response.getHits() != null && response.getHits().getHits() != null) {
             for (fr.pilato.elasticsearch.crawler.fs.client.SearchResponse.Hit hit : response.getHits().getHits()) {
                 String name;
-                if (hit.getSource() != null
-                        && extractFromPath(hit.getSource(), objectName).get(field) != null) {
-                    name = (String) extractFromPath(hit.getSource(), objectName).get(field);
-                } else if (hit.getFields() != null
+                if (hit.getFields() != null
                         && hit.getFields().get(fieldFullPath) != null) {
-                    // In case someone disabled _source which is not recommended
                     name = getName(hit.getFields().get(fieldFullPath));
                 } else {
                     // Houston, we have a problem ! We can't get the old files from ES
-                    logger.warn("Can't find in _source nor fields the existing filenames in path [{}]. " +
-                            "Please enable _source or store field [{}]", path, fieldFullPath);
-                    throw new RuntimeException("Mapping is incorrect: please enable _source or store field [" +
+                    logger.warn("Can't find stored field name to check existing filenames in path [{}]. " +
+                            "Please set store: true on field [{}]", path, fieldFullPath);
+                    throw new RuntimeException("Mapping is incorrect: please set stored: true on field [" +
                             fieldFullPath + "].");
                 }
                 files.add(name);

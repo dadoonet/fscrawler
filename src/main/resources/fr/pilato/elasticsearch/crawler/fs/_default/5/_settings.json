@@ -40,7 +40,8 @@
               "type" : "keyword"
             },
             "filename" : {
-              "type" : "keyword"
+              "type" : "keyword",
+              "store" : true
             },
             "extension" : {
               "type" : "keyword"

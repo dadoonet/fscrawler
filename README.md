@@ -209,6 +209,52 @@ files will be created again.
 * No specific step needed. Just note that mapping changed as we support more metadata. Might be useful to run
 similar steps as for 2.2 upgrade.
 
+### Upgrade to 2.5
+
+* A bug was causing a lot of data going over the wire each time FSCrawler was running. To fix this issue, we changed the
+default mapping and we set `store: true` on field `file.filename`. If this field is not stored and `remove_deleted` is
+`true` (default), FSCrawler will fail while crawling your documents. You need to create the new mapping accordingly
+and reindex your existing data either by deleting the old index and running again FSCrawler or by using the
+[reindex API](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html) as follows:
+
+```
+# Backup old index data
+POST _reindex
+{
+  "source": {
+    "index": "job_name"
+  },
+  "dest": {
+    "index": "job_name_backup"
+  }
+}
+# Remove job_name index
+DELETE job_name
+```
+
+Restart FSCrawler with the following command. It will just create the right mapping again.
+
+```sh
+$ bin/fscrawler job_name --loop 0
+```
+
+Then restore old data:
+
+
+```
+POST _reindex
+{
+  "source": {
+    "index": "job_name_backup"
+  },
+  "dest": {
+    "index": "job_name"
+  }
+}
+# Remove backup index
+DELETE job_name_backup
+```
+
 # User Guide
 
 ## Getting Started
