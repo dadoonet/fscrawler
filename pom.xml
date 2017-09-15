@@ -7,11 +7,11 @@
     <packaging>pom</packaging>
     <version>2.5-SNAPSHOT</version>
     <modules>
-        <module>core</module>
-        <module>distribution</module>
-        <module>integration-tests</module>
-        <module>test-framework</module>
         <module>framework</module>
+        <module>test-framework</module>
+        <module>core</module>
+        <module>integration-tests</module>
+        <module>distribution</module>
     </modules>
     <name>Elasticsearch File System Crawler</name>
     <url>https://github.com/dadoonet/fscrawler/</url>
@@ -341,6 +341,11 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jsr310</artifactId>
                 <version>${jackson.version}</version>
@@ -475,11 +480,11 @@
                 <artifactId>jersey-media-multipart</artifactId>
                 <version>${jersey.version}</version>
             </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.inject</groupId>
-            <artifactId>jersey-hk2</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
+            <dependency>
+                <groupId>org.glassfish.jersey.inject</groupId>
+                <artifactId>jersey-hk2</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
 
             <!-- Logging dependencies -->
             <dependency>

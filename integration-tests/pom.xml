@@ -24,6 +24,27 @@
             <artifactId>fscrawler-test-framework</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!--
+        For legal reasons (incompatible license), these dependencies are to marked as optional so users who might want
+        to use them have to provided them manually in the lib dir.
+        -->
+        <dependency>
+            <groupId>com.levigo.jbig2</groupId>
+            <artifactId>levigo-jbig2-imageio</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jai-imageio</groupId>
+            <artifactId>jai-imageio-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jai-imageio</groupId>
+            <artifactId>jai-imageio-jpeg2000</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
