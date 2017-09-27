@@ -130,7 +130,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void copyResourcesToTargetDir() throws IOException {
-        copyTestDocumentsToTargetDir("documents", "/fscrawler_marker.txt");
+        copyTestDocumentsToTargetDir("documents", "/fscrawler-test-documents-marker.txt");
     }
 
     /**
@@ -367,7 +367,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     public static String getUrl(String... subdirs) {
-        URL resource = AbstractFSCrawlerTestCase.class.getResource("/job-sample.json");
+        URL resource = AbstractITCase.class.getResource("/fscrawler-integration-tests-marker.txt");
         File dir = URLtoFile(resource).getParentFile();
 
         for (String subdir : subdirs) {
