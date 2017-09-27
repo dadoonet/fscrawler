@@ -45,23 +45,19 @@ import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URI;
 import java.net.URL;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.unzip;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -134,16 +130,26 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void copyResourcesToTargetDir() throws IOException {
-        String targetDir = AbstractITCase.getUrl("documents");
+        copyTestDocumentsToTargetDir("documents", "/fscrawler_marker.txt");
+    }
 
-        URL resource = AbstractFSCrawlerTestCase.class.getResource("/documents/test.json");
-
+    /**
+     * Copy test documents to the target dir so we will be able to run tests against them
+     * @param target    target subdir. Files will be copied or extracted to target/test-classes/XXXX where
+     *                  XXXX is the target name here.
+     * @param marker    one of the filename which is available in the classpath which contains
+     *                  the test documents or within a jar
+     * @throws IOException In case of IO problem
+     */
+    private static void copyTestDocumentsToTargetDir(String target, String marker) throws IOException {
+        String targetDir = AbstractITCase.getUrl(target);
+        URL resource = AbstractFSCrawlerTestCase.class.getResource(marker);
         switch (resource.getProtocol()) {
             case "file": {
                 // We are running our tests from the IDE most likely and documents are directly available in the classpath
-                Path source = Paths.get(resource.getPath()).getParent();
+                Path source = Paths.get(resource.getPath());
                 Path destination = Paths.get(targetDir);
-                staticLogger.fatal("*** Copying from [{}] to [{}]", source, destination);
+                staticLogger.info("-> Copying test documents from [{}] to [{}]", source, destination);
                 copyDirs(source, Paths.get(targetDir));
                 break;
             }
@@ -154,43 +160,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 String jarFile = fileInJar.substring(0, i);
 
                 Path destination = Paths.get(targetDir);
+                staticLogger.info("-> Unzipping test documents from [{}] to [{}]", jarFile, destination);
                 unzip(jarFile, destination.getParent());
                 break;
             }
             default:
                 fail("Unknown protocol for IT document sources: " + resource.getProtocol());
                 break;
-        }
-    }
-
-    public static void unzip(String jarFile, Path destination) throws IOException {
-        Map<String, String> zipProperties = new HashMap<>();
-        /* We want to read an existing ZIP File, so we set this to false */
-        zipProperties.put("create", "false");
-        zipProperties.put("encoding", "UTF-8");
-        URI zipFile = URI.create("jar:" + jarFile);
-
-        try (FileSystem zipfs = FileSystems.newFileSystem(zipFile, zipProperties)) {
-            Path rootPath = zipfs.getPath("/");
-            Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
-
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-
-                    Path targetPath = destination.resolve(rootPath.relativize(dir).toString());
-                    if (!Files.exists(targetPath)) {
-                        Files.createDirectory(targetPath);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-
-                    Files.copy(file, destination.resolve(rootPath.relativize(file).toString()), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
         }
     }
 

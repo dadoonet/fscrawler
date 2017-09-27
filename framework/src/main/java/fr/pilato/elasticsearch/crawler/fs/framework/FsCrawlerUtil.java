@@ -26,9 +26,12 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.CopyOption;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -36,6 +39,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileOwnerAttributeView;
@@ -46,7 +50,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 public class FsCrawlerUtil extends MetaParser {
@@ -364,6 +370,40 @@ public class FsCrawlerUtil extends MetaParser {
                 // The file already exists we just ignore it
             }
             return FileVisitResult.CONTINUE;
+        }
+    }
+
+    /**
+     * Unzip a jar file
+     * @param jarFile Jar file url like file:/path/to/foo.jar
+     * @param destination Directory where we want to extract the content to
+     * @throws IOException In case of any IO problem
+     */
+    public static void unzip(String jarFile, Path destination) throws IOException {
+        Map<String, String> zipProperties = new HashMap<>();
+        /* We want to read an existing ZIP File, so we set this to false */
+        zipProperties.put("create", "false");
+        zipProperties.put("encoding", "UTF-8");
+        URI zipFile = URI.create("jar:" + jarFile);
+
+        try (FileSystem zipfs = FileSystems.newFileSystem(zipFile, zipProperties)) {
+            Path rootPath = zipfs.getPath("/");
+            Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    Path targetPath = destination.resolve(rootPath.relativize(dir).toString());
+                    if (!Files.exists(targetPath)) {
+                        Files.createDirectory(targetPath);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.copy(file, destination.resolve(rootPath.relativize(file).toString()), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
         }
     }
 

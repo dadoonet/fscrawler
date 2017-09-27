@@ -1,0 +1,2 @@
+This file is just here to help to find where the documents dir is.
+Don't remove it please!
