@@ -42,22 +42,32 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 /**
@@ -121,6 +131,68 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static WebTarget target;
     private static Client client;
+
+    @BeforeClass
+    public static void copyResourcesToTargetDir() throws IOException {
+        String targetDir = AbstractITCase.getUrl("documents");
+
+        URL resource = AbstractFSCrawlerTestCase.class.getResource("/documents/test.json");
+
+        switch (resource.getProtocol()) {
+            case "file": {
+                // We are running our tests from the IDE most likely and documents are directly available in the classpath
+                Path source = Paths.get(resource.getPath()).getParent();
+                Path destination = Paths.get(targetDir);
+                staticLogger.fatal("*** Copying from [{}] to [{}]", source, destination);
+                copyDirs(source, Paths.get(targetDir));
+                break;
+            }
+            case "jar": {
+                // We are running our tests from the CLI most likely and documents are provided within a JAR as a dependency
+                String fileInJar = resource.getPath();
+                int i = fileInJar.indexOf("!/");
+                String jarFile = fileInJar.substring(0, i);
+
+                Path destination = Paths.get(targetDir);
+                unzip(jarFile, destination.getParent());
+                break;
+            }
+            default:
+                fail("Unknown protocol for IT document sources: " + resource.getProtocol());
+                break;
+        }
+    }
+
+    public static void unzip(String jarFile, Path destination) throws IOException {
+        Map<String, String> zipProperties = new HashMap<>();
+        /* We want to read an existing ZIP File, so we set this to false */
+        zipProperties.put("create", "false");
+        zipProperties.put("encoding", "UTF-8");
+        URI zipFile = URI.create("jar:" + jarFile);
+
+        try (FileSystem zipfs = FileSystems.newFileSystem(zipFile, zipProperties)) {
+            Path rootPath = zipfs.getPath("/");
+            Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+
+                    Path targetPath = destination.resolve(rootPath.relativize(dir).toString());
+                    if (!Files.exists(targetPath)) {
+                        Files.createDirectory(targetPath);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+
+                    Files.copy(file, destination.resolve(rootPath.relativize(file).toString()), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+    }
 
     @BeforeClass
     public static void startElasticsearchRestClient() throws IOException {
@@ -316,6 +388,17 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 staticLogger.error("can not read content of [{}]:", path);
             }
         }
+    }
+
+    public static String getUrl(String... subdirs) {
+        URL resource = AbstractFSCrawlerTestCase.class.getResource("/job-sample.json");
+        File dir = URLtoFile(resource).getParentFile();
+
+        for (String subdir : subdirs) {
+            dir = new File(dir, subdir);
+        }
+
+        return dir.getAbsoluteFile().getAbsolutePath();
     }
 
     String getCrawlerName() {

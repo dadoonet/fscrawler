@@ -24,6 +24,11 @@
             <artifactId>fscrawler-test-framework</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-test-documents</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <!--
         For legal reasons (incompatible license), these dependencies are to marked as optional so users who might want

@@ -9,6 +9,7 @@
     <modules>
         <module>framework</module>
         <module>test-framework</module>
+        <module>test-documents</module>
         <module>core</module>
         <module>integration-tests</module>
         <module>distribution</module>
@@ -43,7 +44,7 @@
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
-        <skipXPack>false</skipXPack>
+        <skipXPack>true</skipXPack>
 
         <!-- For integration tests using ANT -->
         <integ.http.port>9400</integ.http.port>
@@ -312,6 +313,11 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-test-framework</artifactId>
+                <version>2.5-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-test-documents</artifactId>
                 <version>2.5-SNAPSHOT</version>
             </dependency>
             <dependency>

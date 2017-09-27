@@ -23,11 +23,9 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class DocParserTestCase extends AbstractFSCrawlerTestCase {
     InputStream getBinaryContent(String filename) throws IOException {
-        return Files.newInputStream(Paths.get(getUrl("documents", filename)));
+        return getClass().getResourceAsStream("/documents/" + filename);
     }
 }

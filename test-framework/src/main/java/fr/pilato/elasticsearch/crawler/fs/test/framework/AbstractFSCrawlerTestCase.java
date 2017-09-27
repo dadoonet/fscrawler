@@ -215,15 +215,4 @@ public abstract class AbstractFSCrawlerTestCase {
         }
     }
 
-    public static String getUrl(String... subdirs) {
-        URL resource = AbstractFSCrawlerTestCase.class.getResource("/job-sample.json");
-        File dir = URLtoFile(resource).getParentFile();
-
-        for (String subdir : subdirs) {
-            dir = new File(dir, subdir);
-        }
-
-        return dir.getAbsoluteFile().getAbsolutePath();
-    }
-
 }
