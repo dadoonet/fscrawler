@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 
 import java.util.ArrayList;
 import java.util.List;

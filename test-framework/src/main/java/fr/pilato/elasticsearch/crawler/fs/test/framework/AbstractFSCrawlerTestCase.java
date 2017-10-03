@@ -37,7 +37,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
@@ -48,7 +47,6 @@ import java.util.function.LongSupplier;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static org.apache.lucene.util.LuceneTestCase.random;
 
 @RunWith(RandomizedRunner.class)
@@ -64,19 +62,11 @@ public abstract class AbstractFSCrawlerTestCase {
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder();
     protected static Path rootTmpDir;
-    protected static Path metadataDir;
 
     @BeforeClass
     public static void createTmpDir() throws IOException, URISyntaxException {
         folder.create();
         rootTmpDir = Paths.get(folder.getRoot().toURI());
-        // We also need to create default mapping files
-        metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
-            Files.createDirectory(metadataDir);
-        }
-        copyDefaultResources(metadataDir);
-        staticLogger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
     private static final Locale savedLocale = Locale.getDefault();
@@ -106,12 +96,6 @@ public abstract class AbstractFSCrawlerTestCase {
     @AfterClass
     public static void resetTimeZone() {
         TimeZone.setDefault(savedTimeZone);
-    }
-
-    @AfterClass
-    public static void printMetadataDirContent() throws IOException {
-        staticLogger.debug("ls -l {}", metadataDir);
-        Files.list(metadataDir).forEach(path -> staticLogger.debug("{}", path));
     }
 
     protected final Logger logger = LogManager.getLogger(this.getClass());

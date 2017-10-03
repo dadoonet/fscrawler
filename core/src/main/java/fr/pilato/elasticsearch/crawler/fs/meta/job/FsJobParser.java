@@ -20,11 +20,12 @@
 package fr.pilato.elasticsearch.crawler.fs.meta.job;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 
 import java.io.IOException;
 
-public class FsJobParser extends MetaParser {
+import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;
+
+public class FsJobParser {
 
     public static String toJson(FsJob job) throws JsonProcessingException {
         return prettyMapper.writeValueAsString(job);

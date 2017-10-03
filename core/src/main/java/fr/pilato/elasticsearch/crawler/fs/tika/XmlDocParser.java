@@ -22,13 +22,14 @@ package fr.pilato.elasticsearch.crawler.fs.tika;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
 
 /**
  * Parse a XML document and generate a FSCrawler Doc
@@ -58,7 +59,7 @@ public class XmlDocParser {
         Map<String, Object> map = asMap(inputStream);
 
         // Serialize to JSON
-        String json = MetaParser.mapper.writeValueAsString(map);
+        String json = mapper.writeValueAsString(map);
 
         logger.trace("Generated JSON: {}", json);
         return json;

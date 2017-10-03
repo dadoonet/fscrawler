@@ -9,7 +9,9 @@
     <modules>
         <module>framework</module>
         <module>test-framework</module>
+        <module>settings</module>
         <module>test-documents</module>
+        <module>elasticsearch-client</module>
         <module>core</module>
         <module>integration-tests</module>
         <module>distribution</module>
@@ -323,6 +325,16 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-core</artifactId>
+                <version>2.5-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-settings</artifactId>
+                <version>2.5-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-elasticsearch-client</artifactId>
                 <version>2.5-SNAPSHOT</version>
             </dependency>
 

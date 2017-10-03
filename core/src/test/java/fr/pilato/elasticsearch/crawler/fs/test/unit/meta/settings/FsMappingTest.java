@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.unit.AbstractFSCrawlerCoreTestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.BeforeClass;
@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 
-public class FsMappingTest extends AbstractFSCrawlerTestCase {
+public class FsMappingTest extends AbstractFSCrawlerCoreTestCase {
 
     private final Logger logger = LogManager.getLogger(FsMappingTest.class);
 

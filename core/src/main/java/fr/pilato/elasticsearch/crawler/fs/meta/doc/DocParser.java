@@ -20,12 +20,13 @@
 package fr.pilato.elasticsearch.crawler.fs.meta.doc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 
 import java.io.IOException;
 import java.util.Map;
 
-public class DocParser extends MetaParser {
+import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;
+
+public class DocParser {
 
     public static String toJson(Doc doc) throws JsonProcessingException {
         return prettyMapper.writeValueAsString(doc);

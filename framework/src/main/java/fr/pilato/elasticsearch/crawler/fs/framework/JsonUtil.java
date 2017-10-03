@@ -17,52 +17,30 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.client;
+package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
-import org.elasticsearch.client.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
+
 public class JsonUtil {
 
     public static String serialize(Object object) {
         try {
-            return MetaParser.mapper.writeValueAsString(object);
+            return mapper.writeValueAsString(object);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static <T> T deserialize(Response response, Class<T> clazz) {
-        try {
-            if (response.getEntity() == null) {
-                return null;
-            }
-            return deserialize(response.getEntity().getContent(), clazz);
-        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public static <T> T deserialize(InputStream stream, Class<T> clazz) {
         try {
-            return MetaParser.mapper.readValue(stream, clazz);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static Map<String, Object> asMap(Response response) {
-        try {
-            if (response.getEntity() == null) {
-                return null;
-            }
-            return asMap(response.getEntity().getContent());
+            return mapper.readValue(stream, clazz);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -70,7 +48,7 @@ public class JsonUtil {
 
     public static Map<String, Object> asMap(InputStream stream) {
         try {
-            return MetaParser.mapper.readValue(stream, new TypeReference<Map<String, Object>>(){});
+            return mapper.readValue(stream, new TypeReference<Map<String, Object>>(){});
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

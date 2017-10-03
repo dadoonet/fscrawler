@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-public class FsCrawlerUtil extends MetaParser {
+public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
     public static final String INDEX_SETTINGS_FILE = "_settings";
     public static final String INDEX_SETTINGS_FOLDER_FILE = "_settings_folder";
@@ -409,5 +409,9 @@ public class FsCrawlerUtil extends MetaParser {
 
     public static String buildUrl(String scheme, String host, int port) {
         return scheme + "://" + host + ":" + port;
+    }
+
+    public static boolean isNullOrEmpty(String string) {
+        return string == null || string.isEmpty();
     }
 }

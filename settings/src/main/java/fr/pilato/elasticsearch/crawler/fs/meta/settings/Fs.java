@@ -19,6 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

@@ -71,11 +71,16 @@
             <artifactId>fscrawler-framework</artifactId>
         </dependency>
 
-        <!-- Test dependencies -->
+        <!-- Our Settings -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-test-documents</artifactId>
-            <scope>test</scope>
+            <artifactId>fscrawler-settings</artifactId>
+        </dependency>
+
+        <!-- Our Elasticsearch Client -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-elasticsearch-client</artifactId>
         </dependency>
 
         <dependency>
@@ -156,6 +161,11 @@
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-test-framework</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-test-documents</artifactId>
             <scope>test</scope>
         </dependency>
 

@@ -20,11 +20,12 @@
 package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import fr.pilato.elasticsearch.crawler.fs.meta.MetaParser;
 
 import java.io.IOException;
 
-public class FsSettingsParser extends MetaParser {
+import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;
+
+public class FsSettingsParser {
 
     public static String toJson(FsSettings settings) throws JsonProcessingException {
         return prettyMapper.writeValueAsString(settings);

@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.meta.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.PROTOCOL;
 
 public class Server {
 
@@ -39,11 +38,11 @@ public class Server {
     }
 
     private String hostname;
-    private int port = PROTOCOL.SSH_PORT;
+    private int port = 22;
     private String username;
     @JsonIgnore
     private String password;
-    private String protocol = PROTOCOL.LOCAL;
+    private String protocol = "local";
     private String pemPath;
 
     public String getHostname() {
@@ -102,10 +101,10 @@ public class Server {
 
     public static class Builder {
         private String hostname = null;
-        private int port = PROTOCOL.SSH_PORT;
+        private int port = 22;
         private String username = null;
         private String password = null;
-        private String protocol = PROTOCOL.LOCAL;
+        private String protocol = "local";
         private String pemPath = null;
 
         public Builder setHostname(String hostname) {

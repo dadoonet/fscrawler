@@ -20,15 +20,15 @@
 package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator;
+import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Ocr;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 

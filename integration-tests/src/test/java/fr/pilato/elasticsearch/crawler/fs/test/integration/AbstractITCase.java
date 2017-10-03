@@ -20,9 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.apache.logging.log4j.Level;
@@ -45,6 +45,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -56,6 +57,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.unzip;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -97,6 +99,25 @@ import static org.junit.Assume.assumeThat;
  * All integration tests might be skipped if the cluster is not running
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
+
+    protected static Path metadataDir;
+
+    @BeforeClass
+    public static void createFsCrawlerJobDir() throws IOException, URISyntaxException {
+        // We also need to create default mapping files
+        metadataDir = rootTmpDir.resolve(".fscrawler");
+        if (Files.notExists(metadataDir)) {
+            Files.createDirectory(metadataDir);
+        }
+        copyDefaultResources(metadataDir);
+        staticLogger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
+    }
+
+    @AfterClass
+    public static void printMetadataDirContent() throws IOException {
+        staticLogger.debug("ls -l {}", metadataDir);
+        Files.list(metadataDir).forEach(path -> staticLogger.debug("{}", path));
+    }
 
     private final static Integer DEFAULT_TEST_CLUSTER_PORT = 9400;
     private final static String DEFAULT_TEST_CLUSTER_HOST = "127.0.0.1";

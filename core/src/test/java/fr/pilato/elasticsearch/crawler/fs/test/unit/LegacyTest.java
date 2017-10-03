@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.unit;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawler;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -38,7 +37,7 @@ import static org.hamcrest.Matchers.is;
 /**
  * Tests to check that Legacy files are correctly renamed
  */
-public class LegacyTest extends AbstractFSCrawlerTestCase {
+public class LegacyTest extends AbstractFSCrawlerCoreTestCase {
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/legacy/2_0/";
     public static final String[] LEGACY_RESOURCES = {

@@ -17,10 +17,9 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.unit.client;
+package fr.pilato.elasticsearch.crawler.fs.client;
 
-import fr.pilato.elasticsearch.crawler.fs.client.JsonUtil;
-import fr.pilato.elasticsearch.crawler.fs.client.SearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
