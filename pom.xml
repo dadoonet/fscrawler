@@ -21,9 +21,9 @@
     <!--suppress CheckTagEmptyBody -->
     <properties>
         <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-        <elasticsearch.version>6.0.0-beta2</elasticsearch.version>
+        <elasticsearch.version>6.0.0-rc1</elasticsearch.version>
         <!-- Don't depend on elasticsearch.version here as it will fail with 1.x and 2.x series -->
-        <elasticsearch.client.version>6.0.0-beta2</elasticsearch.client.version>
+        <elasticsearch.client.version>6.0.0-rc1</elasticsearch.client.version>
 
         <tika.version>1.16</tika.version>
         <jackson.version>2.9.1</jackson.version>
@@ -32,7 +32,7 @@
         <jersey.version>2.26</jersey.version>
 
         <!-- Only Lucene test framework is used here -->
-        <lucene.version>7.0.0-snapshot-a128fcb</lucene.version>
+        <lucene.version>7.0.0</lucene.version>
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
@@ -641,14 +641,6 @@
             <id>elastic-download-service</id>
             <name>Elastic Download Service</name>
             <url>https://artifacts.elastic.co/maven/</url>
-            <releases><enabled>true</enabled></releases>
-            <snapshots><enabled>false</enabled></snapshots>
-        </repository>
-
-        <repository>
-            <id>elastic-lucene-snapshots</id>
-            <name>Elastic Lucene Snapshots</name>
-            <url>http://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/a128fcb</url>
             <releases><enabled>true</enabled></releases>
             <snapshots><enabled>false</enabled></snapshots>
         </repository>
