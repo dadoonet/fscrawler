@@ -206,11 +206,13 @@
                     <arg value="-Des.http.port=@{es.http.port}" unless:true="${compare-result}"/>
                     <arg value="-Des.transport.tcp.port=@{es.transport.tcp.port}" unless:true="${compare-result}"/>
                     <arg value="-Des.network.host=127.0.0.1" unless:true="${compare-result}"/>
+                    <arg value="-Des.cluster.routing.allocation.disk.threshold_enabled=false" unless:true="${compare-result}"/>
                     <arg value="-Epidfile=@{es.pidfile}" if:true="${compare-result}"/>
                     <arg value="-Ecluster.name=@{es.cluster.name}" if:true="${compare-result}"/>
                     <arg value="-Ehttp.port=@{es.http.port}" if:true="${compare-result}"/>
                     <arg value="-Etransport.tcp.port=@{es.transport.tcp.port}" if:true="${compare-result}"/>
                     <arg value="-Enetwork.host=127.0.0.1" if:true="${compare-result}"/>
+                    <arg value="-Ecluster.routing.allocation.disk.threshold_enabled=false" if:true="${compare-result}"/>
                     <additional-args/>
                 </nested>
             </run-script>
