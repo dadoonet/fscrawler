@@ -102,23 +102,47 @@ public class ElasticsearchClientManager {
         }
 
         threadPool = new ThreadPool(Settings.builder().put(Node.NODE_NAME_SETTING.getKey(), "high-level-client").build());
-        BulkProcessor.Listener listener = new BulkProcessor.Listener() {
-            @Override public void beforeBulk(long executionId, BulkRequest request) { }
-            @Override public void afterBulk(long executionId, BulkRequest request, BulkResponse response) { }
-            @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) { }
-        };
-
-        bulkProcessorDoc = new BulkProcessor.Builder(client::bulkAsync, listener, threadPool)
+        bulkProcessorDoc = new BulkProcessor.Builder(client::bulkAsync, new DebugListener(logger), threadPool)
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 // TODO fix when elasticsearch will support global pipelines
 //                .setPipeline(settings.getElasticsearch().getPipeline())
                 .build();
-
-        bulkProcessorFolder = new BulkProcessor.Builder(client::bulkAsync, listener, threadPool)
+        bulkProcessorFolder = new BulkProcessor.Builder(client::bulkAsync, new DebugListener(logger), threadPool)
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 .build();
+    }
+
+    class DebugListener implements BulkProcessor.Listener {
+        private final Logger logger;
+
+        DebugListener(Logger logger) {
+            this.logger = logger;
+        }
+
+        @Override public void beforeBulk(long executionId, BulkRequest request) {
+            logger.trace("Sending a bulk request of [{}] requests", request.numberOfActions());
+        }
+
+        @Override public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+            logger.trace("Executed bulk request with [{}] requests", request.numberOfActions());
+            if (response.hasFailures()) {
+                final int[] failures = {0};
+                response.iterator().forEachRemaining(bir -> {
+                    if (bir.isFailed()) {
+                        failures[0]++;
+                        logger.debug("Error caught for [{}]/[{}]/[{}]: {}", bir.getIndex(),
+                                bir.getType(), bir.getId(), bir.getFailureMessage());
+                    };
+                });
+                logger.warn("Got [{}] failures of [{}] requests", failures[0], request.numberOfActions());
+            }
+        }
+
+        @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+            logger.warn("Got a hard failure when executing the bulk request", failure);
+        }
     }
 
     public void createIndices(FsSettings settings) throws Exception {
