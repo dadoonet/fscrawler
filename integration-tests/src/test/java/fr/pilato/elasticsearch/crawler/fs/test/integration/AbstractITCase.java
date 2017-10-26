@@ -346,7 +346,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         final SearchResponse[] response = new SearchResponse[1];
 
         // We wait before considering a failing test
-        staticLogger.info("  ---> Waiting up to {} seconds for {} documents in {}", timeout.toString(),
+        staticLogger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
                 expected == null ? "some" : expected, request.indices());
         long hits = awaitBusy(() -> {
             long totalHits;
