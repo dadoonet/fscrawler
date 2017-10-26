@@ -27,6 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.util.TimeBasedUUIDGenerator;
+import org.apache.commons.io.FilenameUtils;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -85,6 +86,7 @@ public class UploadApi extends RestApi {
 
         // File
         doc.getFile().setFilename(filename);
+        doc.getFile().setExtension(FilenameUtils.getExtension(filename).toLowerCase());
         doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
         // File
 

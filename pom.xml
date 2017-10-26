@@ -36,13 +36,13 @@
         <elasticsearch.client.version>6.0.0-rc1</elasticsearch.client.version>
 
         <tika.version>1.16</tika.version>
-        <jackson.version>2.9.1</jackson.version>
-        <log4j.version>2.9.0</log4j.version>
+        <jackson.version>2.9.2</jackson.version>
+        <log4j.version>2.9.1</log4j.version>
         <jansi.version>1.16</jansi.version>
         <jersey.version>2.26</jersey.version>
 
         <!-- Only Lucene test framework is used here -->
-        <lucene.version>7.0.0</lucene.version>
+        <lucene.version>7.0.1</lucene.version>
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
@@ -124,7 +124,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.4</version>
+                    <version>2.5</version>
                     <configuration>
                         <generateBackupPoms>false</generateBackupPoms>
                     </configuration>
@@ -429,7 +429,7 @@
             <dependency>
                 <groupId>org.xerial</groupId>
                 <artifactId>sqlite-jdbc</artifactId>
-                <version>3.20.0</version>
+                <version>3.20.1</version>
             </dependency>
 
             <!--
