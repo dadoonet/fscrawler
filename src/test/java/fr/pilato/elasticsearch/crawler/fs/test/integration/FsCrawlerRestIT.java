@@ -24,6 +24,8 @@ import fr.pilato.elasticsearch.crawler.fs.meta.settings.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.search.SearchHit;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.Test;
@@ -38,6 +40,7 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 
 public class FsCrawlerRestIT extends AbstractRestITCase {
@@ -61,7 +64,12 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all docs
-        countTestHelper(new SearchRequest(getCrawlerName()), Files.list(from).count(), null, TimeValue.timeValueMinutes(2));
+        SearchResponse response = countTestHelper(new SearchRequest(getCrawlerName()), Files.list(from).count(), null, TimeValue
+                .timeValueMinutes(2));
+        for (SearchHit hit : response.getHits()) {
+            assertThat(hit.getSourceAsMap(), hasKey("file"));
+            assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
+        }
     }
 
     private static final Map<String, Object> debugOption = new HashMap<>();
