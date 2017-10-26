@@ -103,13 +103,13 @@ public class ElasticsearchClientManager {
 
         threadPool = new ThreadPool(Settings.builder().put(Node.NODE_NAME_SETTING.getKey(), "high-level-client").build());
 
+
         bulkProcessorDoc = new BulkProcessor.Builder(client::bulkAsync, new DebugListener(logger), threadPool)
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 // TODO fix when elasticsearch will support global pipelines
 //                .setPipeline(settings.getElasticsearch().getPipeline())
                 .build();
-
         bulkProcessorFolder = new BulkProcessor.Builder(client::bulkAsync, new DebugListener(logger), threadPool)
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
