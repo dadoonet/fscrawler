@@ -21,14 +21,14 @@ You need to install a version matching your Elasticsearch version:
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler/badge.svg?style=flat-square)](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler/)
 [![Dependency Status](https://www.versioneye.com/user/projects/59a174f8368b080052a6aa40/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/59a174f8368b080052a6aa40)
 [![Travis](https://secure.travis-ci.org/dadoonet/fscrawler.png)](http://travis-ci.org/dadoonet/fscrawler)
-[![Lines](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=lines)](https://sonarqube.com/dashboard?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
-[![Technical Debt](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=sqale_debt_ratio)](https://sonarqube.com/dashboard?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
-[![Vulnerabilities](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=vulnerabilities)](https://sonarqube.com/dashboard?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
-[![Bugs](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=bugs)](https://sonarqube.com/dashboard?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
-[![Blocker Violations](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=blocker_violations)](https://sonarqube.com/dashboard?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
-[![Critical Violations](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=critical_violations)](https://sonarqube.com/dashboard?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
-[![Code Smells](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=code_smells)](https://sonarqube.com/dashboard?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
-[![Coverage](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=overall_coverage)](https://sonarqube.com/dashboard?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
+[![Lines](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=lines)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
+[![Technical Debt](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=sqale_debt_ratio)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
+[![Vulnerabilities](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=vulnerabilities)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler&resolved=false&types=VULNERABILITY)
+[![Bugs](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=bugs)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
+[![Blocker Violations](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=blocker_violations)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
+[![Critical Violations](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=critical_violations)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
+[![Code Smells](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=code_smells)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler&resolved=false&types=CODE_SMELL)
+[![Coverage](https://sonarqube.com/api/badges/measure?key=fr.pilato.elasticsearch.crawler:fscrawler&metric=overall_coverage)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
 
 # Table of content
 
