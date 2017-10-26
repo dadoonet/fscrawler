@@ -100,7 +100,7 @@ import static org.junit.Assume.assumeThat;
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
-    protected static Path metadataDir;
+    static Path metadataDir;
 
     @BeforeClass
     public static void createFsCrawlerJobDir() throws IOException, URISyntaxException {
@@ -150,39 +150,60 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static Client client;
 
     @BeforeClass
-    public static void copyResourcesToTargetDir() throws IOException {
-        copyTestDocumentsToTargetDir("documents", "/fscrawler-test-documents-marker.txt");
+    public static void copyResourcesToTestDir() throws IOException {
+        Path testResourceTarget = rootTmpDir.resolve("resources");
+        if (Files.notExists(testResourceTarget)) {
+            staticLogger.debug("  --> Creating test resources dir in [{}]", testResourceTarget);
+            Files.createDirectory(testResourceTarget);
+        }
+
+        // We copy files from the src dir to the temp dir
+        copyTestDocumentsToTargetDir(testResourceTarget, "documents", "/fscrawler-test-documents-marker.txt");
+
+        staticLogger.debug("  --> Test resources ready in [{}]:", testResourceTarget);
     }
 
     /**
-     * Copy test documents to the target dir so we will be able to run tests against them
-     * @param target    target subdir. Files will be copied or extracted to target/test-classes/XXXX where
-     *                  XXXX is the target name here.
-     * @param marker    one of the filename which is available in the classpath which contains
-     *                  the test documents or within a jar
+     * Copy test documents to the test dir so we will be able to run tests against them
+     * @param target            target directory.
+     * @param sourceDirName     source subdir name where files will be copied or extracted to.
+     * @param marker            one of the filename which is available in the classpath which contains
+     *                          the test documents or within a jar
      * @throws IOException In case of IO problem
      */
-    private static void copyTestDocumentsToTargetDir(String target, String marker) throws IOException {
-        String targetDir = AbstractITCase.getUrl(target);
+    private static void copyTestDocumentsToTargetDir(Path target, String sourceDirName, String marker) throws IOException {
         URL resource = AbstractFSCrawlerTestCase.class.getResource(marker);
+
         switch (resource.getProtocol()) {
             case "file": {
+                Path finalTarget = target.resolve(sourceDirName);
+                if (Files.notExists(finalTarget)) {
+                    staticLogger.debug("  --> Creating test dir named [{}]", finalTarget);
+                    Files.createDirectory(finalTarget);
+                }
                 // We are running our tests from the IDE most likely and documents are directly available in the classpath
-                Path source = Paths.get(resource.getPath());
-                Path destination = Paths.get(targetDir);
-                staticLogger.info("-> Copying test documents from [{}] to [{}]", source, destination);
-                copyDirs(source, Paths.get(targetDir));
+                Path source = Paths.get(resource.getPath()).getParent().resolve(sourceDirName);
+                if (Files.notExists(source)) {
+                    staticLogger.error("directory [{}] should be copied to [{}]", source, target);
+                    throw new RuntimeException(source + " doesn't seem to exist. Check your JUnit tests.");
+                }
+
+                staticLogger.info("-> Copying test documents from [{}] to [{}]", source, finalTarget);
+                copyDirs(source, finalTarget);
                 break;
             }
             case "jar": {
+                if (Files.notExists(target)) {
+                    staticLogger.debug("  --> Creating test dir named [{}]", target);
+                    Files.createDirectory(target);
+                }
                 // We are running our tests from the CLI most likely and documents are provided within a JAR as a dependency
                 String fileInJar = resource.getPath();
                 int i = fileInJar.indexOf("!/");
                 String jarFile = fileInJar.substring(0, i);
 
-                Path destination = Paths.get(targetDir);
-                staticLogger.info("-> Unzipping test documents from [{}] to [{}]", jarFile, destination);
-                unzip(jarFile, destination.getParent());
+                staticLogger.info("-> Unzipping test documents from [{}] to [{}]", jarFile, target);
+                unzip(jarFile, target);
                 break;
             }
             default:
@@ -224,7 +245,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @AfterClass
-    public static void stopRestClient() {
+    public static void stopRestClient() throws IOException {
         if (client != null) {
             client.close();
             client = null;
@@ -356,8 +377,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             staticLogger.debug("     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.indices());
             logContentOfDir(path, Level.DEBUG);
         } else {
-            staticLogger.debug("     ---> expecting [{}] but got [{}] documents in {}", expected, hits, request.indices());
-            logContentOfDir(path, Level.DEBUG);
+            staticLogger.warn("     ---> expecting [{}] but got [{}] documents in {}", expected, hits, request.indices());
+            logContentOfDir(path, Level.WARN);
         }
         assertThat(hits, matcher);
 

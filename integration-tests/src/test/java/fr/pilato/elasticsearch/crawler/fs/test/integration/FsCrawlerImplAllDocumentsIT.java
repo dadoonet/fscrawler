@@ -39,10 +39,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -58,28 +57,22 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
     @BeforeClass
     public static void startCrawling() throws Exception {
-        Path testResourceTarget = rootTmpDir.resolve("resources");
+        Path testResourceTarget = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(testResourceTarget)) {
-            Files.createDirectory(testResourceTarget);
+            copyResourcesToTestDir();
         }
 
-        // We copy files from the src dir to the temp dir
-        String url = getUrl("documents");
-        Path from = Paths.get(url);
+        Long numFiles = 0L;
 
-        staticLogger.debug("  --> Copying test resources from [{}]", from);
-        if (Files.notExists(from)) {
-            staticLogger.error("directory [{}] should be copied to [{}]", from, testResourceTarget);
-            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+        try {
+            Files.walk(testResourceTarget)
+                    .filter(path -> Files.isRegularFile(path))
+                    .forEach(path -> staticLogger.fatal("    - [{}]", path));
+            numFiles = Files.list(testResourceTarget).count();
+        } catch (NoSuchFileException e) {
+            staticLogger.error("directory [{}] should exist before we can start tests.", testResourceTarget);
+            throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
-
-        copyDirs(from, testResourceTarget);
-
-        staticLogger.debug("  --> Test resources ready in [{}]:", testResourceTarget);
-        Files.walk(testResourceTarget)
-                .filter(path -> Files.isRegularFile(path))
-                .forEach(path -> staticLogger.debug("    - [{}]", path));
-        Long numFiles = Files.list(testResourceTarget).count();
 
         staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents]");
         elasticsearchClient.deleteIndex("fscrawler_test_all_documents");

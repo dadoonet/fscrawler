@@ -1287,8 +1287,12 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 true);
         crawler.start();
 
-        String url = getUrl("documents");
-        Path from = Paths.get(url);
+        Path from = rootTmpDir.resolve("resources").resolve("documents");
+        if (Files.notExists(from)) {
+            staticLogger.error("directory [{}] should exist before wa start tests", from);
+            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+        }
+
         Files.walk(from)
                 .filter(path -> Files.isRegularFile(path))
                 .forEach(path -> {
