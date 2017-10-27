@@ -1033,7 +1033,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         logger.info("XML documents converted to:");
         for (SearchHit hit : response.getHits().getHits()) {
-            logger.info("{}", hit.toString());
+            logger.info("{}", hit.getSourceAsString());
         }
     }
 
