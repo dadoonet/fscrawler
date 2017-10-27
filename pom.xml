@@ -16,7 +16,7 @@
         <module>integration-tests</module>
         <module>distribution</module>
     </modules>
-    <name>Elasticsearch File System Crawler</name>
+    <name>FSCrawler Parent</name>
     <url>https://github.com/dadoonet/fscrawler/</url>
     <description>FS Crawler offers a simple way to index local files into elasticsearch.</description>
 
@@ -42,7 +42,7 @@
         <jersey.version>2.26</jersey.version>
 
         <!-- Only Lucene test framework is used here -->
-        <lucene.version>7.0.1</lucene.version>
+        <lucene.version>7.0.0</lucene.version>
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
