@@ -36,7 +36,7 @@
         <elasticsearch.client.version>6.1.1</elasticsearch.client.version>
 
         <tika.version>1.16</tika.version>
-        <jackson.version>2.9.2</jackson.version>
+        <jackson.version>2.9.3</jackson.version>
         <log4j.version>2.9.1</log4j.version>
         <jansi.version>1.16</jansi.version>
         <jersey.version>2.26</jersey.version>
