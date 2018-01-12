@@ -111,6 +111,7 @@ public class UploadApi extends RestApi {
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
             bulkProcessor.add(new org.elasticsearch.action.index.IndexRequest(settings.getElasticsearch().getIndex(), "doc", id)
+                    .setPipeline(settings.getElasticsearch().getPipeline())
                     .source(DocParser.toJson(doc), XContentType.JSON));
             // Elasticsearch entity coordinates (we use the first node address)
             Elasticsearch.Node node = settings.getElasticsearch().getNodes().get(0);
