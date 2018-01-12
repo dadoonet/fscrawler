@@ -67,7 +67,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         try {
             Files.walk(testResourceTarget)
                     .filter(path -> Files.isRegularFile(path))
-                    .forEach(path -> staticLogger.fatal("    - [{}]", path));
+                    .forEach(path -> staticLogger.debug("    - [{}]", path));
             numFiles = Files.list(testResourceTarget).count();
         } catch (NoSuchFileException e) {
             staticLogger.error("directory [{}] should exist before we can start tests.", testResourceTarget);
@@ -238,6 +238,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
                 content == null ? "" : " and contains [" + content + "]");
         BoolQueryBuilder query = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("file.filename", filename));
         if (content != null) {
+            assumeVersion6AtLeast();
             query.must(QueryBuilders.matchQuery("content", content));
         }
         SearchResponse response = elasticsearchClient.search(new SearchRequest("fscrawler_test_all_documents").source(new SearchSourceBuilder().query(query)));

@@ -46,16 +46,13 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.elasticsearch.threadpool.ThreadPool;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
@@ -479,6 +476,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_json_support() throws Exception {
+        assumeVersion6AtLeast();
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(true)
                 .build();
@@ -501,6 +499,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_json_disabled() throws Exception {
+        assumeVersion6AtLeast();
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(false)
                 .build();
@@ -553,6 +552,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_add_as_inner_object() throws Exception {
+        assumeVersion6AtLeast();
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(true)
                 .setAddAsInnerObject(true)
@@ -561,9 +561,9 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         assertThat("We should have 2 doc for tweet in object.text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
-                        new SearchSourceBuilder().query(QueryBuilders.matchQuery("object.text", "tweet"))));
-                return response.getHits().getTotalHits() == 2;
+                fr.pilato.elasticsearch.crawler.fs.client.SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
+                        "{\"query\":{\"match\":{\"object.text\":\"tweet\"}}}");
+                return response.getHits().getTotal() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
@@ -1020,6 +1020,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_xml_enabled() throws Exception {
+        assumeVersion6AtLeast();
         Fs fs = startCrawlerDefinition()
                 .setXmlSupport(true)
                 .build();
@@ -1146,6 +1147,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_highlight_documents() throws Exception {
+        assumeVersion6AtLeast();
         startCrawler();
 
         // We expect to have one file
@@ -1183,6 +1185,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
      */
     @Test
     public void test_ingest_pipeline() throws Exception {
+        assumeVersion6AtLeast();
         String crawlerName = getCrawlerName();
 
         // We can only run this test against a 5.0 cluster or >
@@ -1416,14 +1419,13 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         elasticsearchClient.createIndex(getCrawlerName(), false, null);
 
-        ThreadPool threadPool = new ThreadPool(Settings.builder().put(Node.NODE_NAME_SETTING.getKey(), "high-level-client").build());
         BulkProcessor.Listener listener = new BulkProcessor.Listener() {
             @Override public void beforeBulk(long executionId, BulkRequest request) { }
             @Override public void afterBulk(long executionId, BulkRequest request, BulkResponse response) { }
             @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) { }
         };
 
-        BulkProcessor bulkProcessor = new BulkProcessor.Builder(elasticsearchClient::bulkAsync, listener, threadPool)
+        BulkProcessor bulkProcessor = BulkProcessor.builder(elasticsearchClient::bulkAsync, listener)
                 .setBulkActions(1000)
                 .setFlushInterval(org.elasticsearch.common.unit.TimeValue.timeValueSeconds(2))
                 .build();
@@ -1435,10 +1437,10 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         for (int i = 0; i < nbFolders; i++) {
             bulkProcessor.add(new IndexRequest(getCrawlerName(), "folder", "id" + i).source("{\"foo\":\"bar\"}", XContentType.JSON));
         }
-        bulkProcessor.awaitClose(1, TimeUnit.SECONDS);
-        threadPool.shutdownNow();
+        bulkProcessor.close();
 
-        elasticsearchClient.refresh(getCrawlerName());
+        // Let's wait that everything has been indexed
+        countTestHelper(new SearchRequest(getCrawlerName()), nbDocs+nbFolders, null);
 
         // Let's create a crawler instance
         FsSettings fsSettings = FsSettings.builder(getCrawlerName())

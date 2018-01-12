@@ -31,9 +31,9 @@
     <!--suppress CheckTagEmptyBody -->
     <properties>
         <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-        <elasticsearch.version>6.0.0-rc1</elasticsearch.version>
+        <elasticsearch.version>6.1.1</elasticsearch.version>
         <!-- Don't depend on elasticsearch.version here as it will fail with 1.x and 2.x series -->
-        <elasticsearch.client.version>6.0.0-rc1</elasticsearch.client.version>
+        <elasticsearch.client.version>6.1.1</elasticsearch.client.version>
 
         <tika.version>1.16</tika.version>
         <jackson.version>2.9.2</jackson.version>
@@ -42,7 +42,7 @@
         <jersey.version>2.26</jersey.version>
 
         <!-- Only Lucene test framework is used here -->
-        <lucene.version>7.0.0</lucene.version>
+        <lucene.version>7.1.0</lucene.version>
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
@@ -666,14 +666,14 @@
             <id>es-5x</id>
             <properties>
                 <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-                <elasticsearch.version>5.5.1</elasticsearch.version>
+                <elasticsearch.version>5.6.5</elasticsearch.version>
             </properties>
         </profile>
         <profile>
             <id>es-6x</id>
             <properties>
                 <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-                <elasticsearch.version>6.0.0-beta1</elasticsearch.version>
+                <elasticsearch.version>6.1.1</elasticsearch.version>
             </properties>
         </profile>
         <profile>

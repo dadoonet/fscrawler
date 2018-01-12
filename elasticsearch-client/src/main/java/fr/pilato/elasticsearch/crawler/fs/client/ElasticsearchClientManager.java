@@ -26,10 +26,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -46,7 +43,6 @@ public class ElasticsearchClientManager {
     private ElasticsearchClient client = null;
     private BulkProcessor bulkProcessorDoc = null;
     private BulkProcessor bulkProcessorFolder = null;
-    private ThreadPool threadPool;
 
     public ElasticsearchClientManager(Path config, FsSettings settings) {
         this.config = config;
@@ -101,16 +97,13 @@ public class ElasticsearchClientManager {
                     ", but your elasticsearch cluster does not support this feature.");
         }
 
-        threadPool = new ThreadPool(Settings.builder().put(Node.NODE_NAME_SETTING.getKey(), "high-level-client").build());
-
-
-        bulkProcessorDoc = new BulkProcessor.Builder(client::bulkAsync, new DebugListener(logger), threadPool)
+        bulkProcessorDoc = BulkProcessor.builder(client::bulkAsync, new DebugListener(logger))
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 // TODO fix when elasticsearch will support global pipelines
 //                .setPipeline(settings.getElasticsearch().getPipeline())
                 .build();
-        bulkProcessorFolder = new BulkProcessor.Builder(client::bulkAsync, new DebugListener(logger), threadPool)
+        bulkProcessorFolder = BulkProcessor.builder(client::bulkAsync, new DebugListener(logger))
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 .build();
@@ -186,9 +179,6 @@ public class ElasticsearchClientManager {
 
     public void close() {
         logger.debug("Closing Elasticsearch client manager");
-        if (threadPool != null) {
-            threadPool.shutdownNow();
-        }
         if (bulkProcessorDoc != null) {
             bulkProcessorDoc.close();
         }
