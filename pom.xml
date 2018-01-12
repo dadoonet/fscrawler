@@ -37,7 +37,7 @@
 
         <tika.version>1.17</tika.version>
         <jackson.version>2.9.3</jackson.version>
-        <log4j.version>2.9.1</log4j.version>
+        <log4j.version>2.10.0</log4j.version>
         <jansi.version>1.16</jansi.version>
         <jersey.version>2.26</jersey.version>
 
