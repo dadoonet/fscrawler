@@ -7,7 +7,7 @@
     <dependencySets>
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
-            <outputDirectory>lib</outputDirectory>
+            <outputDirectory>/lib</outputDirectory>
             <unpack>false</unpack>
         </dependencySet>
     </dependencySets>
@@ -22,10 +22,12 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
+            <directory>${project.parent.basedir}</directory>
+            <outputDirectory/>
             <includes>
-                <include>../LICENSE</include>
-                <include>../NOTICE</include>
-                <include>../README.md</include>
+                <include>LICENSE</include>
+                <include>NOTICE</include>
+                <include>README.md</include>
             </includes>
         </fileSet>
     </fileSets>
