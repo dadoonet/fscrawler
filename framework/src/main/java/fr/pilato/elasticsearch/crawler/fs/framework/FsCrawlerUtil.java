@@ -150,9 +150,9 @@ public class FsCrawlerUtil {
 
         // Exclude rules : we know that whatever includes rules are, we should exclude matching files
         for (String exclude : excludes) {
-            String regex = exclude.replace("?", ".?").replace("*", ".*?");
+            String regex = exclude.toLowerCase().replace("?", ".?").replace("*", ".*?");
             logger.trace("regex is [{}]", regex);
-            if (filename.matches(regex)) {
+            if (filename.toLowerCase().matches(regex)) {
                 logger.trace("does match exclude regex");
                 return true;
             }
@@ -178,9 +178,9 @@ public class FsCrawlerUtil {
         }
 
         for (String include : includes) {
-            String regex = include.replace("?", ".?").replace("*", ".*?");
+            String regex = include.toLowerCase().replace("?", ".?").replace("*", ".*?");
             logger.trace("regex is [{}]", regex);
-            if (filename.matches(regex)) {
+            if (filename.toLowerCase().matches(regex)) {
                 logger.trace("does match include regex");
                 return true;
             }
