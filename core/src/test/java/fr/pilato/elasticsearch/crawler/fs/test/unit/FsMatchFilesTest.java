@@ -69,4 +69,23 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
         assertThat(isIndexable("adoc.doc", new ArrayList<>(), DEFAULT_EXCLUDED), is(true));
         assertThat(isIndexable("mydoc~", new ArrayList<>(), DEFAULT_EXCLUDED), is(true));
     }
+
+    @Test
+    public void case_sensitive() {
+        // Excludes
+        assertThat(isIndexable("test.doc", new ArrayList<>(), Collections.singletonList("*.DOC")), is(false));
+        assertThat(isIndexable("test.xls", new ArrayList<>(), Collections.singletonList("*.DOC")), is(true));
+        assertThat(isIndexable("my.doc.xls", new ArrayList<>(), Collections.singletonList("*.DOC")), is(true));
+        assertThat(isIndexable("my.doc.xls", new ArrayList<>(), Arrays.asList("*.DOC", "*.XLS")), is(false));
+        assertThat(isIndexable("my.doc.xls", new ArrayList<>(), Collections.singletonList("MY.D?C*.XLS")), is(false));
+        assertThat(isIndexable("my.douc.xls", new ArrayList<>(), Collections.singletonList("MY.d?C*.XLS")), is(true));
+        assertThat(isIndexable(".snapshots", new ArrayList<>(), Collections.singletonList(".SNAPSHOTS")), is(false));
+
+        // Includes
+        assertThat(isIndexable("test.doc", Collections.singletonList("*.DOC"), new ArrayList<>()), is(true));
+        assertThat(isIndexable("test.xls", Collections.singletonList("*.DOC"), new ArrayList<>()), is(false));
+        assertThat(isIndexable("my.doc.xls", Collections.singletonList("*.DOC"), new ArrayList<>()), is(false));
+        assertThat(isIndexable("my.doc.xls", Collections.singletonList("MY.D?C*.XLS"), new ArrayList<>()), is(true));
+        assertThat(isIndexable("my.douc.xls", Collections.singletonList("MY.D?C*.XLS"), new ArrayList<>()), is(false));
+    }
 }
