@@ -65,10 +65,13 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -421,6 +424,37 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         // We expect to have one file only with a new name
         countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
                 .query(QueryBuilders.termQuery("file.filename", "renamed_roottxtfile.txt"))), 1L, currentTestResourceDir);
+    }
+
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/379
+     * @throws Exception In case something is wrong
+     */
+    @Test
+    public void test_move_file() throws Exception {
+        startCrawler();
+
+        // We should have one doc first
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
+
+        // We move the file
+        logger.info(" ---> Moving file roottxtfile.txt to a tmp dir");
+        Files.move(currentTestResourceDir.resolve("roottxtfile.txt"),
+                rootTmpDir.resolve("roottxtfile.txt"), StandardCopyOption.ATOMIC_MOVE);
+
+        // We expect to have 0 file
+        countTestHelper(new SearchRequest(getCrawlerName()), 0L, currentTestResourceDir);
+
+        // We move the file back
+        logger.info(" ---> Moving file roottxtfile.txt from the tmp dir");
+        Files.move(rootTmpDir.resolve("roottxtfile.txt"),
+                currentTestResourceDir.resolve("roottxtfile.txt"), StandardCopyOption.ATOMIC_MOVE);
+
+        // We need to "touch" the file we just moved
+        Files.setLastModifiedTime(currentTestResourceDir.resolve("roottxtfile.txt"), FileTime.from(Instant.now()));
+
+        // We expect to have 1 file
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
     /**
