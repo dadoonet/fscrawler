@@ -752,7 +752,7 @@ By default FS Crawler will index folder names in the index using a specific `fol
 If you don't want to index those folders, you can set `ignore_folders` to `true`.
 
 Note that in that case, FS Crawler won't be able to detect removed folders so any document has been indexed
-in elasticsearch, it won't be removed when you remove or move the folder.
+in elasticsearch, it won't be removed when you remove or move the folder away.
 
 ```json
 {
@@ -2038,6 +2038,25 @@ It also means that if you are running more than one instance of FS crawler local
 the `port`.
 
 # Tips and tricks
+
+## Moving files to a "watched" directory
+
+When moving an existing file to the directory FSCrawler is watching, you need to explicitly `touch` all the files
+as when moved, the files are keeping their original date intact:
+
+```sh
+# single file
+touch file_you_moved
+
+# all files
+find  -type f  -exec touch {} +
+
+# all .txt files
+find  -type f  -name "*.txt" -exec touch {} +
+```
+
+Or you need to [restart FSCrawler](#crawler-options) from the beginning with the `--restart` option which will
+reindex everything.
 
 ## Indexing on HDFS
 
