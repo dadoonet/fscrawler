@@ -259,12 +259,13 @@
                             <issueManagementSystem>GitHub</issueManagementSystem>
                         </issueManagementSystems>
                         <issueTypes>
-                            <add>new,doc</add>
+                            <add>new,doc,test</add>
                             <fix>bug</fix>
                             <update>update</update>
                         </issueTypes>
                         <onlyCurrentVersion>true</onlyCurrentVersion>
                         <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/${project.version}/</urlDownload>
+                        <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
                     </configuration>
                 </plugin>
 
