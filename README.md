@@ -606,7 +606,7 @@ Here is a list of Local FS settings (under `fs.` prefix)`:
 | `fs.json_support`                | `false`       | [Indexing JSon docs](#indexing-json-docs)                                         |
 | `fs.xml_support`                 | `false`       | [Indexing XML docs](#indexing-xml-docs) (from 2.2)                                |
 | `fs.add_as_inner_object`         | `false`       | [Add as Inner Object](#add-as-inner-object)                                       |
-| `fs.ignore_folders`              | `false`       | [Ignore folders](#ignore-folders) (from 2.2)                                      |
+| `fs.index_folders`               | `true`        | [Index folders](#index-folders) (from 2.2)                                        |
 | `fs.attributes_support`          | `false`       | [Adding file attributes](#adding-file-attributes)                                 |
 | `fs.raw_metadata`                | `true`        | [Disabling raw metadata](#disabling-raw-metadata)                                 |
 | `fs.filename_as_id`              | `false`       | [Using Filename as `_id`](#using-filename-as-elasticsearch-_id)                   |
@@ -746,10 +746,10 @@ If you need to keep json or xml documents synchronized to elasticsearch, you sho
 }
 ```
 
-#### Ignore folders
+#### Index folders
 
-By default FS Crawler will index folder names in the index using a specific `folder` type.
-If you don't want to index those folders, you can set `ignore_folders` to `true`.
+By default FS Crawler will index folder names in the folder index.
+If you don't want to index those folders, you can set `index_folders` to `false`.
 
 Note that in that case, FS Crawler won't be able to detect removed folders so any document has been indexed
 in elasticsearch, it won't be removed when you remove or move the folder away.
@@ -758,7 +758,7 @@ in elasticsearch, it won't be removed when you remove or move the folder away.
 {
   "name" : "test",
   "fs" : {
-    "ignore_folders" : true
+    "index_folders" : false
   }
 }
 ```
