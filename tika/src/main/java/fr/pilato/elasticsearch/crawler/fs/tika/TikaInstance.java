@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.config.ServiceLoader;
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.metadata.Metadata;
@@ -75,9 +76,26 @@ public class TikaInstance {
 
     private static void initParser(Fs fs) {
         if (parser == null) {
-            PDFParser pdfParser = new PDFParser();
-            DefaultParser defaultParser;
+//            PDFParser pdfParser = new PDFParser();
+//            DefaultParser defaultParser;
+            TikaConfig tika_config = null;
+            if (!fs.getTikaConfigPath().equals("")) {
+                try {
+                    tika_config = new TikaConfig(fs.getTikaConfigPath());
 
+                } catch (IOException e) {
+                    logger.error("Caught IOException:" + e.getMessage());
+                } catch (TikaException te) {
+                    logger.error("Caught TikaException:" + te.getMessage());
+                } catch (SAXException se) {
+                    logger.error("Caught SAXException:" + se.getMessage());
+                }
+            }
+            parser = new AutoDetectParser(tika_config);
+/*            MediaTypeRegistry mymedreg =  tika_config.getMediaTypeRegistry();
+            Parser myparser = tika_config.getParser();
+            Detector mydetector = tika_config.getDetector();
+            Parser PARSERS[] = new Parser[2];
             if (fs.isPdfOcr()) {
                 logger.debug("OCR is activated for PDF documents");
                 if (ExternalParser.check("tesseract")) {
@@ -85,20 +103,27 @@ public class TikaInstance {
                 } else {
                     logger.debug("But Tesseract is not installed so we won't run OCR.");
                 }
-                defaultParser = new DefaultParser();
+                if (tika_config.equals(null)) {
+                    PARSERS[0] = new DefaultParser();
+                } else {
+                    PARSERS[0] = tika_config.getParser();
+                }
             } else {
                 logger.debug("OCR is disabled. Even though it's detected, it must be disabled explicitly");
                 defaultParser = new DefaultParser(
                         MediaTypeRegistry.getDefaultRegistry(),
                         new ServiceLoader(),
                         Collections.singletonList(TesseractOCRParser.class));
+                PARSERS[0] = defaultParser;
             }
 
-            Parser PARSERS[] = new Parser[2];
-            PARSERS[0] = defaultParser;
+
+
             PARSERS[1] = pdfParser;
+            PARSERS[2] = fontParser;
 
             parser = new AutoDetectParser(PARSERS);
+            */
         }
 
     }
