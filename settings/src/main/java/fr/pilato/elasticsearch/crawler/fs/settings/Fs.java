@@ -49,6 +49,7 @@ public class Fs {
     private boolean continueOnError = false;
     private boolean pdfOcr = true;
     private Ocr ocr = new Ocr();
+    private String tikaConfigPath = "";
 
     public static Builder builder() {
         return new Builder();
@@ -80,6 +81,7 @@ public class Fs {
         private boolean continueOnError = false;
         private boolean pdfOcr = true;
         private Ocr ocr = new Ocr();
+        private String tikaConfigPath = "";
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -212,10 +214,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setTikaConfigPath(String tikaConfigPath) {
+            this.tikaConfigPath = tikaConfigPath;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, pdfOcr, ocr);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, pdfOcr, ocr, tikaConfigPath);
         }
     }
 
@@ -226,7 +233,7 @@ public class Fs {
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError, boolean pdfOcr, Ocr ocr) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError, boolean pdfOcr, Ocr ocr, String tikaConfigPath) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -248,6 +255,7 @@ public class Fs {
         this.continueOnError = continueOnError;
         this.pdfOcr = pdfOcr;
         this.ocr = ocr;
+        this.tikaConfigPath = tikaConfigPath;
     }
 
     public String getUrl() {
@@ -418,6 +426,14 @@ public class Fs {
         this.ocr = ocr;
     }
 
+    public String getTikaConfigPath() {
+        return tikaConfigPath;
+    }
+
+    public void setTikaConfigPath(String tikaConfigPath) {
+        this.tikaConfigPath = tikaConfigPath;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -444,6 +460,7 @@ public class Fs {
         if (includes != null ? !includes.equals(fs.includes) : fs.includes != null) return false;
         if (excludes != null ? !excludes.equals(fs.excludes) : fs.excludes != null) return false;
         if (indexedChars != null ? !indexedChars.equals(fs.indexedChars) : fs.indexedChars != null) return false;
+        if (tikaConfigPath != null ? !tikaConfigPath.equals(fs.tikaConfigPath) : fs.tikaConfigPath != null) return false;
         return checksum != null ? checksum.equals(fs.checksum) : fs.checksum == null;
 
     }
@@ -470,6 +487,7 @@ public class Fs {
         result = 31 * result + (langDetect ? 1 : 0);
         result = 31 * result + (continueOnError ? 1 : 0);
         result = 31 * result + (pdfOcr ? 1 : 0);
+        result = 31 * result + (tikaConfigPath != null ? tikaConfigPath.hashCode() : 0);
         return result;
     }
 }
