@@ -29,6 +29,7 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.DefaultParser;
@@ -42,9 +43,14 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.WriteOutContentHandler;
 import org.xml.sax.SAXException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import static org.apache.tika.langdetect.OptimaizeLangDetector.getDefaultLanguageDetector;
 
@@ -76,26 +82,11 @@ public class TikaInstance {
 
     private static void initParser(Fs fs) {
         if (parser == null) {
-//            PDFParser pdfParser = new PDFParser();
-//            DefaultParser defaultParser;
-            TikaConfig tika_config = null;
-            if (!fs.getTikaConfigPath().equals("")) {
-                try {
-                    tika_config = new TikaConfig(fs.getTikaConfigPath());
+            PDFParser pdfParser = new PDFParser();
+            DefaultParser defaultParser;
 
-                } catch (IOException e) {
-                    logger.error("Caught IOException:" + e.getMessage());
-                } catch (TikaException te) {
-                    logger.error("Caught TikaException:" + te.getMessage());
-                } catch (SAXException se) {
-                    logger.error("Caught SAXException:" + se.getMessage());
-                }
-            }
-            parser = new AutoDetectParser(tika_config);
-/*            MediaTypeRegistry mymedreg =  tika_config.getMediaTypeRegistry();
-            Parser myparser = tika_config.getParser();
-            Detector mydetector = tika_config.getDetector();
-            Parser PARSERS[] = new Parser[2];
+
+
             if (fs.isPdfOcr()) {
                 logger.debug("OCR is activated for PDF documents");
                 if (ExternalParser.check("tesseract")) {
@@ -103,27 +94,71 @@ public class TikaInstance {
                 } else {
                     logger.debug("But Tesseract is not installed so we won't run OCR.");
                 }
-                if (tika_config.equals(null)) {
-                    PARSERS[0] = new DefaultParser();
-                } else {
-                    PARSERS[0] = tika_config.getParser();
-                }
+                defaultParser = new DefaultParser();
             } else {
                 logger.debug("OCR is disabled. Even though it's detected, it must be disabled explicitly");
                 defaultParser = new DefaultParser(
                         MediaTypeRegistry.getDefaultRegistry(),
                         new ServiceLoader(),
                         Collections.singletonList(TesseractOCRParser.class));
-                PARSERS[0] = defaultParser;
             }
 
 
+            // load custom parsers if defined in config
+            if (fs.getCustomTikaParsers().size() > 0) {
+                Integer counter = 0;
+                Parser PARSERS[] = new Parser[fs.getCustomTikaParsers().size()+2];
 
-            PARSERS[1] = pdfParser;
-            PARSERS[2] = fontParser;
 
-            parser = new AutoDetectParser(PARSERS);
-            */
+
+                // to collect all Mediatypes handled by custom parser to exclude them form the DefaultParser
+                List<MediaType> excludeMediaTypes = new ArrayList<MediaType>();
+
+
+                for (CustomTikaParser customTikaParser : fs.getCustomTikaParsers()) {
+                    counter += 1;
+                    try {
+                        URL[] jarUrl = { new URL("jar:file:" + customTikaParser.getPathToJar()+"!/") };
+                        URLClassLoader urlClassLoader = URLClassLoader.newInstance(jarUrl);
+                        Class customParserClass = urlClassLoader.loadClass(customTikaParser.getClassName());
+                        Parser customParser = (Parser) customParserClass.newInstance();
+                        String[] customMimeStrings = new String[customTikaParser.getMimeTypes().size()];
+                        Set<MediaType> customMediaTypes = MediaType.set(customTikaParser.getMimeTypes().toArray(customMimeStrings));
+                        excludeMediaTypes.addAll(customMediaTypes);
+                        Parser customParserDecorated = ParserDecorator.withTypes(customParser, customMediaTypes);
+                        PARSERS[counter] = customParserDecorated;
+
+
+
+                    } catch (IOException e) {
+                        logger.error("Caught IOException:" + e.getMessage());
+                    } catch (ClassNotFoundException e) {
+                        logger.error("Caught ClassNotFoundException:" + e.getMessage());
+                    } catch (InstantiationException e) {
+                        logger.error("Caught InstantiationException:" + e.getMessage());
+                    } catch (IllegalAccessException e) {
+                        logger.error("Caught IllegalAccessException:" + e.getMessage());
+                    }/*catch (TikaException te) {
+                        logger.error("Caught TikaException:" + te.getMessage());
+                    } catch (SAXException se) {
+                        logger.error("Caught SAXException:" + se.getMessage());
+                    }*/
+                }
+                if (excludeMediaTypes.size() > 0) {
+                    MediaType[] excludedMediaTypeSet = new MediaType[excludeMediaTypes.size()];
+                    PARSERS[0] = ParserDecorator.withoutTypes(defaultParser, new HashSet<MediaType>(excludeMediaTypes));
+                } else {
+                    PARSERS[0] = defaultParser;
+                }
+                PARSERS[counter+1] = pdfParser;
+                parser = new AutoDetectParser(PARSERS);
+            } else {
+                Parser PARSERS[] = new Parser[2];
+                PARSERS[0] = defaultParser;
+                PARSERS[1] = pdfParser;
+                parser = new AutoDetectParser(PARSERS);
+            }
+
         }
 
     }

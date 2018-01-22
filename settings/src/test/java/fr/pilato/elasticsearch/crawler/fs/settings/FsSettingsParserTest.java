@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -53,6 +54,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setUpdateRate(TimeValue.timeValueMinutes(5))
             .setIndexContent(true)
             .setOcr(OCR_FULL)
+            .setTikaCustomParsers(new ArrayList<>())
             .build();
     private static final Elasticsearch ELASTICSEARCH_EMPTY = Elasticsearch.builder().build();
     private static final Elasticsearch ELASTICSEARCH_FULL = Elasticsearch.builder()
