@@ -16,9 +16,9 @@
         <module>integration-tests</module>
         <module>distribution</module>
     </modules>
-    <name>FSCrawler Parent</name>
+    <name>FSCrawler</name>
     <url>https://github.com/dadoonet/fscrawler/</url>
-    <description>FS Crawler offers a simple way to index local files into elasticsearch.</description>
+    <description>FS Crawler offers a simple way to index binary files into elasticsearch.</description>
 
     <licenses>
         <license>
@@ -249,8 +249,9 @@
                     <artifactId>maven-changes-plugin</artifactId>
                     <version>2.12.1</version>
                     <configuration>
-                        <smtpHost>smtp.free.fr</smtpHost>
-                        <smtpPort implementation="java.lang.Integer">25</smtpPort>
+                        <smtpHost>auth.smtp.1and1.fr</smtpHost>
+                        <smtpPort implementation="java.lang.Integer">465</smtpPort>
+                        <sslMode>true</sslMode>
                         <fromDeveloperId>dadoonet</fromDeveloperId>
                         <toAddresses>
                             <toAddress implementation="java.lang.String">discuss+community-plugins@elastic.co</toAddress>
@@ -259,12 +260,13 @@
                             <issueManagementSystem>GitHub</issueManagementSystem>
                         </issueManagementSystems>
                         <issueTypes>
-                            <add>new,doc,test</add>
+                            <add>new,doc</add>
                             <fix>bug</fix>
                             <update>update</update>
+                            <remove>remove</remove>
                         </issueTypes>
                         <onlyCurrentVersion>true</onlyCurrentVersion>
-                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/${project.version}/</urlDownload>
+                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/${project.version}</urlDownload>
                         <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
                     </configuration>
                 </plugin>

@@ -1,0 +1,154 @@
+## Licensed to the Apache Software Foundation (ASF) under one
+## or more contributor license agreements.  See the NOTICE file
+## distributed with this work for additional information
+## regarding copyright ownership.  The ASF licenses this file
+## to you under the Apache License, Version 2.0 (the
+## "License"); you may not use this file except in compliance
+## with the License.  You may obtain a copy of the License at
+##
+##  http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing,
+## software distributed under the License is distributed on an
+## "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+## KIND, either express or implied.  See the License for the
+## specific language governing permissions and limitations
+## under the License.
+The ${developmentTeam} is pleased to announce the **${project.name} ${project.version}** release!
+
+# ${project.name}
+
+${introduction}
+
+<h2>Usage</h2>
+
+Download [FSCrawler ${project.version}]($urlDownload/fscrawler-${project.version}.zip):
+
+```sh
+wget $urlDownload/fscrawler-${project.version}.zip
+```
+
+Start FS crawler with:
+
+```sh
+bin/fscrawler job_name
+```
+
+FS crawler will read a local file (default to `~/.fscrawler/{job_name}/_settings.json`).
+If the file does not exist, FS crawler will propose to create your first job.
+
+```sh
+$ bin/fscrawler job_name
+18:28:58,174 WARN  [f.p.e.c.f.FsCrawler] job [job_name] does not exist
+18:28:58,177 INFO  [f.p.e.c.f.FsCrawler] Do you want to create it (Y/N)?
+y
+18:29:05,711 INFO  [f.p.e.c.f.FsCrawler] Settings have been created in [~/.fscrawler/job_name/_settings.json]. Please review and edit before relaunch
+```
+
+Create a directory named `/tmp/es` or `c:\tmp\es`, add some files you want to index in it and start again:
+
+```sh
+$ bin/fscrawler --config_dir ./test job_name
+18:30:34,330 INFO  [f.p.e.c.f.FsCrawlerImpl] Starting FS crawler
+18:30:34,332 INFO  [f.p.e.c.f.FsCrawlerImpl] FS crawler started in watch mode. It will run unless you stop it with CTRL+C.
+18:30:34,682 INFO  [f.p.e.c.f.FsCrawlerImpl] FS crawler started for [job_name] for [/tmp/es] every [15m]
+```
+
+More details in the [documentation](${project.url}).
+
+#if ($release.getActions().size() == 0)
+No changes defined in this version.
+#else
+
+#if ($release.getActions('add').size() !=0)
+<h2>New features</h2>
+
+#foreach($actionItem in $release.getActions('add'))
+#set($action=$actionItem.getAction())
+#if ($actionItem.getIssue())
+#set($issue=$actionItem.getIssue())
+#else
+#set($issue="")
+#end
+#if ($actionItem.getDueTo())
+#set($dueto=$actionItem.getDueTo())
+#else
+#set($dueto="")
+#end
+* [#$issue](${project.url}/issues/$issue): ${action} #if($!issue != ""). #end#if($!dueto != "")Thanks to $dueto. #end
+
+#set($issue="")
+#set($dueto="")
+#end
+#end
+
+#if ($release.getActions('fix').size() !=0)
+<h2>Fixed Bugs</h2>
+
+#foreach($actionItem in $release.getActions('fix'))
+#set($action=$actionItem.getAction())
+#if ($actionItem.getIssue())
+#set($issue=$actionItem.getIssue())
+#else
+#set($issue="")
+#end
+#if ($actionItem.getDueTo())
+#set($dueto=$actionItem.getDueTo())
+#else
+#set($dueto="")
+#end
+* [#$issue](${project.url}/issues/$issue): ${action} #if($!issue != ""). #end#if($!dueto != "")Thanks to $dueto. #end
+
+#set($issue="")
+#set($dueto="")
+#end
+#end
+
+#if ($release.getActions('update').size() !=0)
+<h2>Changes</h2>
+
+#foreach($actionItem in $release.getActions('update'))
+#set($action=$actionItem.getAction())
+#if ($actionItem.getIssue())
+#set($issue=$actionItem.getIssue())
+#else
+#set($issue="")
+#end
+#if ($actionItem.getDueTo())
+#set($dueto=$actionItem.getDueTo())
+#else
+#set($dueto="")
+#end
+* [#$issue](${project.url}/issues/$issue): ${action} #if($!issue != ""). #end#if($!dueto != "")Thanks to $dueto. #end
+
+#set($issue="")
+#set($dueto="")
+#end
+#end
+
+#if ($release.getActions('remove').size() !=0)
+<h2>Removed</h2>
+
+#foreach($actionItem in $release.getActions('remove'))
+#set($action=$actionItem.getAction())
+#if ($actionItem.getIssue())
+#set($issue=$actionItem.getIssue())
+#else
+#set($issue="")
+#end
+#if ($actionItem.getDueTo())
+#set($dueto=$actionItem.getDueTo())
+#else
+#set($dueto="")
+#end
+* [#$issue](${project.url}/issues/$issue): ${action} #if($!issue != ""). #end#if($!dueto != "")Thanks to $dueto. #end
+
+#set($issue="")
+#set($dueto="")
+#end
+#end
+## End of main loop
+#end
+
+Have fun!
+-${developmentTeam}
