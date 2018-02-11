@@ -3,6 +3,8 @@ sudo: true
 jdk:
   - oraclejdk8
 install: true
+services:
+  - docker
 addons:
   sonarcloud:
     organization: "dadoonet-github"
