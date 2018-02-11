@@ -33,30 +33,8 @@ package.
 
 ### Integration tests
 
-Integration tests only run when an elasticsearch cluster is running at [127.0.0.1:9400](http://127.0.0.1:9400).
-When running with maven, an elasticsearch instance is automatically downloaded from maven central, installed
-and launched before integration tests start and stopped after integration tests.
-
-This local test instance is installed under `target/integration-tests/run`.
-If you have any trouble, you can stop any running instance, then run `mvn clean` to clean all left data.
-
-Note that a PID file is generated in `target/integration-tests/run/es.pid`.
-
-For debugging purpose, you can still run integration tests from your IDE.
-Just download any version of elasticsearch you wish, and launch it with:
-
-```sh
-# elasticsearch 1.x
-bin/elasticsearch -Des.http.port=9400 -Des.network.host=127.0.0.1
-# elasticsearch 2.x
-bin/elasticsearch -Des.http.port=9400
-# elasticsearch 5.x
-bin/elasticsearch -Ehttp.port=9400
-# elasticsearch 6.x
-bin/elasticsearch -Ehttp.port=9400
-```
-
-Integration tests will detect the running instance and will not ignore anymore those tests.
+Integration tests use by default a Docker configuration to run a local node running at [127.0.0.1:9200](http://127.0.0.1:9200).
+The elasticsearch version used is defined in the `pom.xml` file.
 
 You can also tell maven to run integration tests by deploying another version of elasticsearch:
 
@@ -69,25 +47,15 @@ mvn install -Pes-5x
 
 By default, it will run integration tests against elasticsearch 6.x series cluster.
 
-If you wish to run tests without x-pack plugin, you can use the `skipXPack` profile:
-
-```sh
-mvn install -PskipXPack
-# This can be combined with another profile
-mvn install -PskipXPack -Pes-5x
-```
-
 ### Running tests against an external cluster
 
-By default, FS Crawler will run tests against a cluster running at `127.0.0.1` on port `9400`.
-It will detect if this cluster is secured with [X-Pack](https://www.elastic.co/downloads/x-pack) and if so, it
-will try to authenticate with user `elastic` and password `changeme`.
+By default, FS Crawler will run tests against a cluster running at `127.0.0.1` on port `9200` started with Docker.
 
 But, if you want to run the test suite against another cluster, using other credentials, you can use the following
 system parameters:
 
-* `tests.cluster.host`: hostname or IP (defaults to `127.0.0.1`)
-* `tests.cluster.port`: port (defaults to `9400`)
+* `tests.cluster.host`: hostname or IP (if set, local Docker instance won't be started)
+* `tests.cluster.port`: port (defaults to `9200`)
 * `tests.cluster.scheme`: `HTTP` or `HTTPS` (defaults to `HTTP`)
 * `tests.cluster.user`: username (defaults to `elastic`)
 * `tests.cluster.pass`: password (defaults to `changeme`)
@@ -187,7 +155,6 @@ The release script will:
 * Create a release branch
 * Replace SNAPSHOT version by the final version number
 * Commit the change
-* Run tests against elasticsearch 2.x series
 * Run tests against elasticsearch 5.x series
 * Run tests against elasticsearch 6.x series
 * Build the final artifacts using release profile (signing artifacts and generating all needed files)

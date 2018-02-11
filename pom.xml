@@ -32,8 +32,6 @@
     <properties>
         <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
         <elasticsearch.version>6.1.1</elasticsearch.version>
-        <!-- Don't depend on elasticsearch.version here as it will fail with 1.x and 2.x series -->
-        <elasticsearch.client.version>6.1.1</elasticsearch.client.version>
 
         <tika.version>1.17</tika.version>
         <jackson.version>2.9.3</jackson.version>
@@ -48,11 +46,8 @@
         <skipIntegTests>${skipTests}</skipIntegTests>
         <skipXPack>true</skipXPack>
 
-        <!-- For integration tests using ANT -->
-        <integ.http.port>9400</integ.http.port>
-        <integ.transport.port>9500</integ.transport.port>
-        <elasticsearch.security.artifact>x-pack</elasticsearch.security.artifact>
-        <elasticsearch.security.version>${elasticsearch.version}</elasticsearch.security.version>
+        <!-- For integration tests using Docker or external cluster -->
+        <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.security.username>elastic</integ.security.username>
         <integ.security.password>changeme</integ.security.password>
 
@@ -270,40 +265,6 @@
                         <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
                     </configuration>
                 </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-antrun-plugin</artifactId>
-                    <version>1.8</version>
-                    <executions>
-                        <execution>
-                            <id>echo-setting</id>
-                            <phase>validate</phase>
-                            <goals>
-                                <goal>run</goal>
-                            </goals>
-                            <configuration>
-                                <target>
-                                    <echo>Java version seems to be ${java.version}</echo>
-                                    <echo>skipTests is set to ${skipTests}</echo>
-                                </target>
-                            </configuration>
-                        </execution>
-                    </executions>
-                    <dependencies>
-                        <dependency>
-                            <groupId>ant-contrib</groupId>
-                            <artifactId>ant-contrib</artifactId>
-                            <version>1.0b3</version>
-                            <exclusions>
-                                <exclusion>
-                                    <groupId>ant</groupId>
-                                    <artifactId>ant</artifactId>
-                                </exclusion>
-                            </exclusions>
-                        </dependency>
-                    </dependencies>
-                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -344,12 +305,12 @@
             <dependency>
                 <groupId>org.elasticsearch.client</groupId>
                 <artifactId>elasticsearch-rest-client</artifactId>
-                <version>${elasticsearch.client.version}</version>
+                <version>${elasticsearch.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.elasticsearch.client</groupId>
                 <artifactId>elasticsearch-rest-high-level-client</artifactId>
-                <version>${elasticsearch.client.version}</version>
+                <version>${elasticsearch.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
@@ -572,6 +533,11 @@
                 <artifactId>randomizedtesting-runner</artifactId>
                 <version>2.5.3</version>
             </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.testcontainers</groupId>
+                <artifactId>testcontainers-elasticsearch</artifactId>
+                <version>0.1</version>
+            </dependency>
 
         </dependencies>
     </dependencyManagement>
@@ -601,94 +567,16 @@
             <id>oss-snapshots</id>
             <name>Sonatype OSS Snapshots</name>
             <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+            <releases><enabled>false</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
         </repository>
     </repositories>
 
     <profiles>
         <profile>
-            <id>es-2x</id>
-            <properties>
-                <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-                <elasticsearch.version>2.4.4</elasticsearch.version>
-                <elasticsearch.security.artifact>shield</elasticsearch.security.artifact>
-            </properties>
-            <repositories>
-                <!-- This repository is used to test with license and shield (2.x) -->
-                <repository>
-                    <id>elastic-download-service</id>
-                    <name>Elastic Download Service</name>
-                    <url>https://download.elastic.co/elasticsearch/release/</url>
-                    <releases>
-                        <enabled>true</enabled>
-                    </releases>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                </repository>
-            </repositories>
-            <build>
-                <plugins>
-                    <!-- For elasticsearch < 5.0.0 we need also to install the license plugin -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <version>3.0.2</version>
-                        <executions>
-                            <execution>
-                                <id>integ-setup-dependencies-plugins-license</id>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>copy</goal>
-                                </goals>
-                                <configuration>
-                                    <skip>${skipXPack}</skip>
-                                    <artifactItems>
-                                        <artifactItem>
-                                            <groupId>org.elasticsearch.plugin</groupId>
-                                            <artifactId>license</artifactId>
-                                            <version>${elasticsearch.security.version}</version>
-                                            <type>zip</type>
-                                        </artifactItem>
-                                    </artifactItems>
-                                    <useBaseVersion>true</useBaseVersion>
-                                    <outputDirectory>${project.build.directory}/integration-tests/plugins</outputDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
             <id>es-5x</id>
             <properties>
-                <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-                <elasticsearch.version>5.6.5</elasticsearch.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>es-6x</id>
-            <properties>
-                <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-                <elasticsearch.version>6.1.1</elasticsearch.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>skipXPack</id>
-            <activation>
-                <property>
-                    <name>skipIntegTests</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <properties>
-                <skipXPack>true</skipXPack>
+                <integ.elasticsearch.version>5.6.5</integ.elasticsearch.version>
             </properties>
         </profile>
         <profile>

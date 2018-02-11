@@ -182,7 +182,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     private Elasticsearch endCrawlerDefinition(String indexDocName, String indexFolderName) {
-        return generateElasticsearchConfig(indexDocName, indexFolderName, securityInstalled, 1, null);
+        return generateElasticsearchConfig(indexDocName, indexFolderName, 1, null);
     }
 
     private void startCrawler() throws Exception {
@@ -974,7 +974,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         Fs fs = startCrawlerDefinition().build();
         startCrawler(getCrawlerName(), fs,
                 generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
-                        securityInstalled, 100, TimeValue.timeValueSeconds(2)), null);
+                        100, TimeValue.timeValueSeconds(2)), null);
 
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }
@@ -1319,7 +1319,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                         .setElasticsearch(endCrawlerDefinition(getCrawlerName()))
                         .setFs(startCrawlerDefinition().build())
                         .setServer(null)
-                        .setRest(rest).build(),
+                        .setRest(Rest.builder().setPort(testRestPort).build()).build(),
                 0,
                 true);
         crawler.start();
@@ -1478,7 +1478,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         // Let's create a crawler instance
         FsSettings fsSettings = FsSettings.builder(getCrawlerName())
-                .setElasticsearch(securityInstalled ? elasticsearchWithSecurity : elasticsearch).build();
+                .setElasticsearch(elasticsearchWithSecurity).build();
         fsSettings.getElasticsearch().setIndex(getCrawlerName());
         crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0, false);
 

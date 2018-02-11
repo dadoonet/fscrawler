@@ -29,6 +29,11 @@
             <artifactId>fscrawler-test-documents</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.testcontainers</groupId>
+            <artifactId>testcontainers-elasticsearch</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <!--
         For legal reasons (incompatible license), these dependencies are to marked as optional so users who might want
@@ -52,7 +57,21 @@
 
     </dependencies>
 
+    <properties>
+        <tests.parallelism>1</tests.parallelism>
+    </properties>
+
     <build>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources-binary</directory>
+                <filtering>false</filtering>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
@@ -65,86 +84,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>integ-setup-dependencies</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipIntegTests}</skip>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>${elasticsearch.groupid}</groupId>
-                                    <artifactId>elasticsearch</artifactId>
-                                    <version>${elasticsearch.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-                            </artifactItems>
-                            <useBaseVersion>true</useBaseVersion>
-                            <outputDirectory>${project.build.directory}/integration-tests/binaries</outputDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>integ-setup-dependencies-plugins</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipXPack}</skip>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.elasticsearch.plugin</groupId>
-                                    <artifactId>${elasticsearch.security.artifact}</artifactId>
-                                    <version>${elasticsearch.security.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-                            </artifactItems>
-                            <useBaseVersion>true</useBaseVersion>
-                            <outputDirectory>${project.build.directory}/integration-tests/plugins</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <!-- start up external cluster -->
-                    <execution>
-                        <id>integ-setup</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipIntegTests}</skip>
-                            <target>
-                                <ant antfile="src/test/ant/integration-tests.xml" target="start-external-cluster"/>
-                            </target>
-                        </configuration>
-                    </execution>
-                    <!-- shut down external cluster -->
-                    <execution>
-                        <id>integ-teardown</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipIntegTests}</skip>
-                            <target>
-                                <ant antfile="src/test/ant/integration-tests.xml" target="stop-external-cluster"/>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

@@ -19,24 +19,35 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
+import fr.pilato.elasticsearch.containers.ElasticsearchContainer;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.logging.log4j.Level;
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.main.MainResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.testcontainers.containers.wait.HttpWaitStrategy;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -54,7 +65,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -71,15 +84,8 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 /**
- * All integration tests assume that an elasticsearch cluster is already running on
- * the machine and one of the nodes is available at 127.0.0.1:9400.
- *
- * You can run one by launching:
- * bin/elasticsearch -Des.http.port=9400
- * bin/elasticsearch -Ehttp.port=9400
- *
- * The node can be run manually or when using maven, it's automatically started as
- * during the pre-integration phase and stopped after the tests.
+ * Integration tests are using Docker behind the scene to start an elasticsearch instance
+ * running by default locally on 127.0.0.1:9200
  *
  * Note that all existing data in this cluster might be removed
  *
@@ -87,6 +93,8 @@ import static org.junit.Assume.assumeThat;
  * tests.cluster.host and tests.cluster.port properties:
  *
  * mvn clean install -Dtests.cluster.host=127.0.0.1 -Dtests.cluster.port=9400
+ *
+ * When tests.cluster.host is set, the internal Docker container is not ran anymore.
  *
  * You can choose running against http or https with tests.cluster.scheme (defaults to HTTP):
  *
@@ -100,9 +108,15 @@ import static org.junit.Assume.assumeThat;
  *
  * All integration tests might be skipped if the cluster is not running
  */
+@ThreadLeakFilters(filters = {TestContainerThreadFilter.class})
+@ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
+@ThreadLeakLingering(linger = 5000) // 5 sec lingering
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
-    static Path metadataDir;
+    static Path metadataDir = null;
+
+    private static ElasticsearchContainer container;
+    private static RestClient esRestClient;
 
     @BeforeClass
     public static void createFsCrawlerJobDir() throws IOException, URISyntaxException {
@@ -117,36 +131,27 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @AfterClass
     public static void printMetadataDirContent() throws IOException {
-        staticLogger.debug("ls -l {}", metadataDir);
-        Files.list(metadataDir).forEach(path -> staticLogger.debug("{}", path));
+        // If something goes wrong while initializing, we might have no metadataDir at all.
+        if (metadataDir != null) {
+            staticLogger.debug("ls -l {}", metadataDir);
+            Files.list(metadataDir).forEach(path -> staticLogger.debug("{}", path));
+        }
     }
 
-    private final static Integer DEFAULT_TEST_CLUSTER_PORT = 9400;
-    private final static String DEFAULT_TEST_CLUSTER_HOST = "127.0.0.1";
+    private final static Integer DEFAULT_TEST_CLUSTER_PORT = 9200;
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
     static ElasticsearchClient elasticsearchClient;
 
-    static boolean securityInstalled;
-
-    private final static String testClusterHost = System.getProperty("tests.cluster.host", DEFAULT_TEST_CLUSTER_HOST);
-    private final static int testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
+    private static String testClusterHost;
+    private static int testClusterPort;
     private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
     private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     private final static Elasticsearch.Node.Scheme testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
-    private final static int testRestPort =
-            Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
-    static Rest rest = Rest.builder().setPort(testRestPort).build();
-    protected final static Elasticsearch elasticsearch = Elasticsearch.builder()
-            .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
-            .build();
-    final static Elasticsearch elasticsearchWithSecurity = Elasticsearch.builder()
-            .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
-            .setUsername(testClusterUser)
-            .setPassword(testClusterPass)
-            .build();
+    final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
+    static Elasticsearch elasticsearchWithSecurity;
 
     private static WebTarget target;
     private static Client client;
@@ -216,19 +221,44 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startElasticsearchRestClient() throws IOException {
-        elasticsearchClient = new ElasticsearchClient(ElasticsearchClient.buildRestClient(elasticsearch));
+        testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
+        testClusterHost = System.getProperty("tests.cluster.host");
 
-        securityInstalled = testClusterRunning(false);
-        if (securityInstalled) {
-            // We have a secured cluster. So we need to create a secured client
-            // But first we need to close the previous client we built
-            if (elasticsearchClient != null) {
-                elasticsearchClient.shutdown();
-            }
+        if (testClusterHost == null) {
+            // We start an elasticsearch Docker instance
+            Properties props = new Properties();
+            props.load(AbstractITCase.class.getResourceAsStream("/elasticsearch.version.properties"));
+            container = new ElasticsearchContainer().withVersion(props.getProperty("version"));
+            container.withEnv("ELASTIC_PASSWORD", testClusterPass);
+            container.setWaitStrategy(
+                    new HttpWaitStrategy()
+                            .forStatusCode(200)
+                            .withBasicCredentials(testClusterUser, testClusterPass)
+                            .withStartupTimeout(Duration.ofSeconds(90)));
+            container.start();
 
-            elasticsearchClient = new ElasticsearchClient(ElasticsearchClient.buildRestClient(elasticsearchWithSecurity));
-            securityInstalled = testClusterRunning(true);
+            testClusterHost = container.getHost().getHostName();
+            testClusterPort = container.getFirstMappedPort();
+        } else {
+            testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
         }
+
+        if (testClusterHost == null) {
+            Thread.dumpStack();
+        }
+
+        // We build the elasticsearch High Level Client based on the parameters
+        elasticsearchClient = new ElasticsearchClient(getClientBuilder(
+                new HttpHost(testClusterHost, testClusterPort), testClusterUser, testClusterPass));
+        elasticsearchWithSecurity = Elasticsearch.builder()
+                .addNode(Elasticsearch.Node.builder()
+                        .setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
+                .setUsername(testClusterUser)
+                .setPassword(testClusterPass)
+                .build();
+
+        // We make sure the cluster is running
+        testClusterRunning();
 
         // We set what will be elasticsearch behavior as it depends on the cluster version
         elasticsearchClient.setElasticsearchBehavior();
@@ -243,7 +273,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 .register(JacksonFeature.class)
                 .build();
 
-        target = client.target(rest.url());
+        target = client.target(Rest.builder().setPort(testRestPort).build().url());
     }
 
     @AfterClass
@@ -252,30 +282,35 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             client.close();
             client = null;
         }
+
+        if (esRestClient != null) {
+            esRestClient.close();
+            esRestClient = null;
+        }
+
+        if (container != null) {
+            container.close();
+            container = null;
+        }
     }
 
-    private static boolean testClusterRunning(boolean withSecurity) throws IOException {
+    private static RestClientBuilder getClientBuilder(HttpHost host, String username, String password) {
+        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(AuthScope.ANY,
+                new UsernamePasswordCredentials(username, password));
+
+        return RestClient.builder(host)
+                .setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+    }
+
+    private static void testClusterRunning() throws IOException {
         try {
             MainResponse info = elasticsearchClient.info();
-            staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}] with {}",
-                    info.getVersion(), withSecurity ? "security" : "no security" );
-            return withSecurity;
+            staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", info.getVersion());
         } catch (ConnectException e) {
             // If we have an exception here, let's ignore the test
             staticLogger.warn("Integration tests are skipped: [{}]", e.getMessage());
             assumeThat("Integration tests are skipped", e.getMessage(), not(containsString("Connection refused")));
-            return withSecurity;
-        } catch (ElasticsearchStatusException e) {
-            if (e.status().getStatus() == 401) {
-                staticLogger.debug("The cluster is secured. So we need to build a client with security", e);
-                return true;
-            } else {
-                staticLogger.error("Full error is", e);
-                throw e;
-            }
-        } catch (IOException e) {
-            staticLogger.error("Full error is", e);
-            throw e;
         }
     }
 
@@ -291,7 +326,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static final String testCrawlerPrefix = "fscrawler_";
 
-    static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, boolean securityInstalled, int bulkSize,
+    static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
                                                      TimeValue timeValue) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
                 .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
@@ -308,10 +343,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             builder.setFlushInterval(timeValue);
         }
 
-        if (securityInstalled) {
-            builder.setUsername(testClusterUser);
-            builder.setPassword(testClusterPass);
-        }
+        builder.setUsername(testClusterUser);
+        builder.setPassword(testClusterPass);
 
         return builder.build();
     }
