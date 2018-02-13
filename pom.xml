@@ -15,6 +15,7 @@
         <module>core</module>
         <module>integration-tests</module>
         <module>distribution</module>
+        <module>cli</module>
     </modules>
     <name>FSCrawler</name>
     <url>https://github.com/dadoonet/fscrawler/</url>

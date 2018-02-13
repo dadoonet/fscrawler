@@ -102,7 +102,7 @@ public class FsCrawlerImpl {
     static {
         properties = new Properties();
         try {
-            properties.load(FsCrawler.class.getClassLoader().getResourceAsStream(FSCRAWLER_PROPERTIES));
+            properties.load(FsCrawlerImpl.class.getClassLoader().getResourceAsStream(FSCRAWLER_PROPERTIES));
         } catch (IOException e) {
             logger.error("Can not find [{}] resource in the class loader", FSCRAWLER_PROPERTIES);
             throw new RuntimeException(e);

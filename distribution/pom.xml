@@ -16,7 +16,7 @@
     <dependencies>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-core</artifactId>
+            <artifactId>fscrawler-cli</artifactId>
             <version>2.5-SNAPSHOT</version>
         </dependency>
     </dependencies>

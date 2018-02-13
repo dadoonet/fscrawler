@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs;
+package fr.pilato.elasticsearch.crawler.fs.cli;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
