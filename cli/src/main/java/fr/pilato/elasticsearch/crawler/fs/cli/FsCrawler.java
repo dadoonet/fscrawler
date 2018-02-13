@@ -1,4 +1,4 @@
-/*
+package fr.pilato.elasticsearch.crawler.fs.cli;/*
  * Licensed to David Pilato (the "Author") under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,10 +17,9 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.meta.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;

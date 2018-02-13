@@ -45,4 +45,4 @@ JAVA_OPTS="$JAVA_OPTS -Djava.util.logging.manager=org.apache.logging.log4j.jul.L
 # If the user defined FS_JAVA_OPTS, we will use it to start the crawler
 JAVA_OPTS="$JAVA_OPTS $FS_JAVA_OPTS"
 
-exec "$JAVA" ${JAVA_OPTS} -cp "$FS_CLASSPATH" -jar "$FS_HOME/lib/fscrawler-core-${project.version}.jar" "$@"
+exec "$JAVA" ${JAVA_OPTS} -cp "$FS_CLASSPATH" -jar "$FS_HOME/lib/fscrawler-cli-${project.version}.jar" "$@"
