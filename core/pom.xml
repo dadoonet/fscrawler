@@ -120,12 +120,6 @@
             <artifactId>jsch</artifactId>
         </dependency>
 
-        <!-- For CLI -->
-        <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>jcommander</artifactId>
-        </dependency>
-
         <!-- For REST Server -->
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
