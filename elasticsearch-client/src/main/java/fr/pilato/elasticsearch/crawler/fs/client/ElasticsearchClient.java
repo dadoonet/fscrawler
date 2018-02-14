@@ -20,8 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch.Node;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -271,10 +270,10 @@ public class ElasticsearchClient extends RestHighLevelClient {
     public static RestClientBuilder buildRestClient(Elasticsearch settings) {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
         settings.getNodes().forEach(node -> {
-            Node.Scheme scheme = node.getScheme();
+            Elasticsearch.Node.Scheme scheme = node.getScheme();
             if (scheme == null) {
                 // Default to HTTP. In case we are reading an old configuration
-                scheme = Node.Scheme.HTTP;
+                scheme = Elasticsearch.Node.Scheme.HTTP;
             }
             hosts.add(new HttpHost(node.getHost(), node.getPort(), scheme.toLowerCase()));
         });

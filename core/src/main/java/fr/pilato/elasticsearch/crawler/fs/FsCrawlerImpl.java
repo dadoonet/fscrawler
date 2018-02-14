@@ -19,21 +19,21 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.beans.PathParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractorFile;
 import fr.pilato.elasticsearch.crawler.fs.fileabstractor.FileAbstractorSSH;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.Attributes;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.DocParser;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.PathParser;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -91,8 +91,8 @@ public class FsCrawlerImpl {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerImpl.class);
 
-    private static final String PATH_ROOT = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ROOT;
-    private static final String FILE_FILENAME = Doc.FIELD_NAMES.FILE + "." + fr.pilato.elasticsearch.crawler.fs.meta.doc.File.FIELD_NAMES.FILENAME;
+    private static final String PATH_ROOT = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT;
+    private static final String FILE_FILENAME = Doc.FIELD_NAMES.FILE + "." + fr.pilato.elasticsearch.crawler.fs.beans.File.FIELD_NAMES.FILENAME;
 
     private final AtomicInteger runNumber = new AtomicInteger(0);
 
@@ -594,11 +594,11 @@ public class FsCrawlerImpl {
                     new SearchRequest(fsSettings.getElasticsearch().getIndexFolder()).source(
                             new SearchSourceBuilder()
                                     .size(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                                    .query(QueryBuilders.termQuery(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.ROOT, SignTool.sign(path)))));
+                                    .query(QueryBuilders.termQuery(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT, SignTool.sign(path)))));
 
             if (response.getHits() != null && response.getHits().getHits() != null) {
                 for (SearchHit hit : response.getHits().getHits()) {
-                    String name = hit.getSourceAsMap().get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.REAL).toString();
+                    String name = hit.getSourceAsMap().get(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.REAL).toString();
                     files.add(name);
                 }
             }
@@ -712,7 +712,7 @@ public class FsCrawlerImpl {
          * @param path  path object
          * @throws Exception in case of error
          */
-        private void indexDirectory(String id, fr.pilato.elasticsearch.crawler.fs.meta.doc.Path path) throws Exception {
+        private void indexDirectory(String id, fr.pilato.elasticsearch.crawler.fs.beans.Path path) throws Exception {
             esIndex(esClientManager.bulkProcessorFolder(), fsSettings.getElasticsearch().getIndexFolder(),
                     id,
                     PathParser.toJson(path),
@@ -724,7 +724,7 @@ public class FsCrawlerImpl {
          * @param path complete path like /path/to/subdir
          */
         private void indexDirectory(String path) throws Exception {
-            fr.pilato.elasticsearch.crawler.fs.meta.doc.Path pathObject = new fr.pilato.elasticsearch.crawler.fs.meta.doc.Path();
+            fr.pilato.elasticsearch.crawler.fs.beans.Path pathObject = new fr.pilato.elasticsearch.crawler.fs.beans.Path();
             // The real and complete path
             pathObject.setReal(path);
             String rootdir = path.substring(0, path.lastIndexOf(File.separator));

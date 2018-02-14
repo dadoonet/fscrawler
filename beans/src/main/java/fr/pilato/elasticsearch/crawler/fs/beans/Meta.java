@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.meta.doc;
+package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import java.util.Date;
 import java.util.HashMap;

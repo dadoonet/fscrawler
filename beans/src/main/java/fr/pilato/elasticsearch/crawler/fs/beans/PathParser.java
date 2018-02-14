@@ -17,26 +17,21 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.meta.doc;
+package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.io.IOException;
-import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;
 
-public class DocParser {
+public class PathParser {
 
-    public static String toJson(Doc doc) throws JsonProcessingException {
-        return prettyMapper.writeValueAsString(doc);
+    public static String toJson(Path path) throws JsonProcessingException {
+        return prettyMapper.writeValueAsString(path);
     }
 
-    public static Doc fromJson(String json) throws IOException {
-        return prettyMapper.readValue(json, Doc.class);
-    }
-
-    public static Map asMap(String json) throws IOException {
-        return prettyMapper.readValue(json, Map.class);
+    public static Path fromJson(String json) throws IOException {
+        return prettyMapper.readValue(json, Path.class);
     }
 }

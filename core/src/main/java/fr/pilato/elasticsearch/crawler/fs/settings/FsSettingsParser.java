@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.meta.doc;
+package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -25,13 +25,13 @@ import java.io.IOException;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;
 
-public class PathParser {
+public class FsSettingsParser {
 
-    public static String toJson(Path path) throws JsonProcessingException {
-        return prettyMapper.writeValueAsString(path);
+    public static String toJson(FsSettings settings) throws JsonProcessingException {
+        return prettyMapper.writeValueAsString(settings);
     }
 
-    public static Path fromJson(String json) throws IOException {
-        return prettyMapper.readValue(json, Path.class);
+    public static FsSettings fromJson(String json) throws IOException {
+        return prettyMapper.readValue(json, FsSettings.class);
     }
 }

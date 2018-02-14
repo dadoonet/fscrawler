@@ -17,48 +17,37 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.meta.doc;
-
+package fr.pilato.elasticsearch.crawler.fs.beans;
 
 /**
- * Represents a Path
+ * Represents additional file attributes.
  */
-public class Path {
+public class Attributes {
 
     /**
      * Generated json field names
      */
     static public final class FIELD_NAMES {
-        public static final String ROOT = "root";
-        public static final String VIRTUAL = "virtual";
-        public static final String REAL = "real";
+        public static final String OWNER = "owner";
+        public static final String GROUP = "group";
     }
 
-    private String root;
-    private String virtual;
-    private String real;
+    private String owner;
+    private String group;
 
-    public String getRoot() {
-        return root;
+    public String getOwner() {
+        return owner;
     }
 
-    public void setRoot(String root) {
-        this.root = root;
+    public void setOwner(String owner) {
+        this.owner = owner;
     }
 
-    public String getVirtual() {
-        return virtual;
+    public String getGroup() {
+        return group;
     }
 
-    public void setVirtual(String virtual) {
-        this.virtual = virtual;
-    }
-
-    public String getReal() {
-        return real;
-    }
-
-    public void setReal(String real) {
-        this.real = real;
+    public void setGroup(String group) {
+        this.group = group;
     }
 }

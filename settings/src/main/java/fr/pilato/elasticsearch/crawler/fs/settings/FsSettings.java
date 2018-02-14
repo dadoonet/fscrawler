@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.meta.settings;
+package fr.pilato.elasticsearch.crawler.fs.settings;
 
 @SuppressWarnings("SameParameterValue")
 public class FsSettings {
