@@ -16,6 +16,8 @@
         <module>integration-tests</module>
         <module>distribution</module>
         <module>cli</module>
+        <module>tika</module>
+        <module>beans</module>
     </modules>
     <name>FSCrawler</name>
     <url>https://github.com/dadoonet/fscrawler/</url>
@@ -300,6 +302,21 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-elasticsearch-client</artifactId>
+                <version>2.5-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-cli</artifactId>
+                <version>2.5-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-beans</artifactId>
+                <version>2.5-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-tika</artifactId>
                 <version>2.5-SNAPSHOT</version>
             </dependency>
 

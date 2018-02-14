@@ -17,24 +17,15 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.unit.parser;
+package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
-import org.junit.Test;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-public class XmlDocParserTest extends DocParserTestCase {
-
-    @Test
-    public void testXml() throws IOException {
-        String doc = extractFromFile("issue-163.xml");
-        logger.info("-> {}", doc);
-    }
-
-    private String extractFromFile(String filename) throws IOException {
-        InputStream data = getBinaryContent(filename);
-        return XmlDocParser.generate(data);
+public class DocParserTestCase extends AbstractFSCrawlerTestCase {
+    InputStream getBinaryContent(String filename) throws IOException {
+        return getClass().getResourceAsStream("/documents/" + filename);
     }
 }

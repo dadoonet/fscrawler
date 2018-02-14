@@ -17,13 +17,11 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.unit.parser;
+package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
-import fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance;
 import org.apache.tika.parser.external.ExternalParser;
 import org.junit.Test;
 
