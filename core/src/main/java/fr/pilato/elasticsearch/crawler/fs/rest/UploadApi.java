@@ -21,10 +21,10 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 
 
 import fr.pilato.elasticsearch.crawler.fs.SignTool;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.DocParser;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.util.TimeBasedUUIDGenerator;
 import org.apache.commons.io.FilenameUtils;

@@ -20,7 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.unit;
 
 
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 

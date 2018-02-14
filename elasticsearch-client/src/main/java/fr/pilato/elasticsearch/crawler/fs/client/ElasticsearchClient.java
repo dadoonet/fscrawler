@@ -20,8 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch.Node;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -48,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
+import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.Node;
 
 /**
  * Simple Elasticsearch client over HTTP or HTTPS.

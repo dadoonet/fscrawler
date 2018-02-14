@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.fileabstractor;
 
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 import java.io.File;
 import java.io.FileInputStream;

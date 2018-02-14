@@ -21,19 +21,19 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.google.common.base.Charsets;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.File;
+import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.Attributes;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.File;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.Meta;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.logging.log4j.Level;
@@ -656,7 +656,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         // We check that the subdir document has his meta path data correctly set
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             Object virtual = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.PATH)
-                    .get(fr.pilato.elasticsearch.crawler.fs.meta.doc.Path.FIELD_NAMES.VIRTUAL);
+                    .get(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.VIRTUAL);
             assertThat(virtual, isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
         }
     }

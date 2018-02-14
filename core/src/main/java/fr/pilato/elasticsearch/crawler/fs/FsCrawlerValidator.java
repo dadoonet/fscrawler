@@ -21,10 +21,10 @@ package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Rest;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import org.apache.logging.log4j.Logger;
 
 import java.security.MessageDigest;

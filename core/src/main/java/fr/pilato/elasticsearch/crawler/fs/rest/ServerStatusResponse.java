@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 public class ServerStatusResponse extends RestResponse {
 

@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
-import static fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs.DEFAULT_EXCLUDED;
+import static fr.pilato.elasticsearch.crawler.fs.settings.Fs.DEFAULT_EXCLUDED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 

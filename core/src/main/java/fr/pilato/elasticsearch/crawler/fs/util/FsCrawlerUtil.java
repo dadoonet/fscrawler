@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.util;
 
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettingsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

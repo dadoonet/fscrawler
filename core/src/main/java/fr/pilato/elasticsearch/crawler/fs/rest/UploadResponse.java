@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
 public class UploadResponse extends RestResponse {
 

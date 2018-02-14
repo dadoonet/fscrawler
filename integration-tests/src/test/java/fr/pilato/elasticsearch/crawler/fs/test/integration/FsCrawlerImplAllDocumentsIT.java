@@ -20,12 +20,12 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.File;
+import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.Doc;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.File;
-import fr.pilato.elasticsearch.crawler.fs.meta.doc.Meta;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.meta.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.tika.parser.external.ExternalParser;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
