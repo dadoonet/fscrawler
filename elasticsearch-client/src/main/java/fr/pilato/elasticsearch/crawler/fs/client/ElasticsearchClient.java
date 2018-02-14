@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
+import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.Node;
 
 /**
  * Simple Elasticsearch client over HTTP or HTTPS.
@@ -270,10 +271,10 @@ public class ElasticsearchClient extends RestHighLevelClient {
     public static RestClientBuilder buildRestClient(Elasticsearch settings) {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
         settings.getNodes().forEach(node -> {
-            Elasticsearch.Node.Scheme scheme = node.getScheme();
+            Node.Scheme scheme = node.getScheme();
             if (scheme == null) {
                 // Default to HTTP. In case we are reading an old configuration
-                scheme = Elasticsearch.Node.Scheme.HTTP;
+                scheme = Node.Scheme.HTTP;
             }
             hosts.add(new HttpHost(node.getHost(), node.getPort(), scheme.toLowerCase()));
         });
