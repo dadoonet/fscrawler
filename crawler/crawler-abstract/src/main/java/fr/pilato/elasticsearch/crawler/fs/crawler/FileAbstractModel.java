@@ -36,7 +36,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.fileabstractor;
+package fr.pilato.elasticsearch.crawler.fs.crawler;
 
 
 import java.time.LocalDateTime;

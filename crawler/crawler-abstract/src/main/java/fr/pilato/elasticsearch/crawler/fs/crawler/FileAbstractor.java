@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.fileabstractor;
+package fr.pilato.elasticsearch.crawler.fs.crawler;
 
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
@@ -27,9 +27,9 @@ import java.io.InputStream;
 import java.util.Collection;
 
 public abstract class FileAbstractor<T> {
-    static final Logger logger = LogManager.getLogger(FileAbstractor.class);
+    protected static final Logger logger = LogManager.getLogger(FileAbstractor.class);
 
-    final FsSettings fsSettings;
+    protected final FsSettings fsSettings;
 
     public abstract FileAbstractModel toFileAbstractModel(String path, T file);
 
@@ -43,7 +43,7 @@ public abstract class FileAbstractor<T> {
 
     public abstract void close() throws Exception;
 
-    FileAbstractor(FsSettings fsSettings) {
+    protected FileAbstractor(FsSettings fsSettings) {
         this.fsSettings = fsSettings;
     }
 }
