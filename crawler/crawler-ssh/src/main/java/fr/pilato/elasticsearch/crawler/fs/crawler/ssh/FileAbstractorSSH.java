@@ -17,12 +17,14 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.fileabstractor;
+package fr.pilato.elasticsearch.crawler.fs.crawler.ssh;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 

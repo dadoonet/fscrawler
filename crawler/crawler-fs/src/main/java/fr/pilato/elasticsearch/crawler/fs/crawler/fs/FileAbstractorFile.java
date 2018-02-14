@@ -17,8 +17,10 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.fileabstractor;
+package fr.pilato.elasticsearch.crawler.fs.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 import java.io.File;
