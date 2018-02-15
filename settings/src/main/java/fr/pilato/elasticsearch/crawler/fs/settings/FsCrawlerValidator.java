@@ -17,20 +17,15 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs;
+package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.PROTOCOL;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import org.apache.logging.log4j.Logger;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.hasText;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 
 public class FsCrawlerValidator {
@@ -66,17 +61,17 @@ public class FsCrawlerValidator {
 
         // Checking protocol
         if (settings.getServer() != null) {
-            if (!PROTOCOL.LOCAL.equals(settings.getServer().getProtocol()) &&
-                    !PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
+            if (!Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol()) &&
+                    !Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
                 // Non supported protocol
                 logger.error(settings.getServer().getProtocol() + " is not supported yet. Please use " +
-                        PROTOCOL.LOCAL + " or " + PROTOCOL.SSH + ". Disabling crawler");
+                        Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH + ". Disabling crawler");
                 return true;
             }
 
             // Checking username/password
-            if (PROTOCOL.SSH.equals(settings.getServer().getProtocol()) &&
-                    !hasText(settings.getServer().getUsername())) {
+            if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol()) &&
+                    FsCrawlerUtil.isNullOrEmpty(settings.getServer().getUsername())) {
                 // Non supported protocol
                 logger.error("When using SSH, you need to set a username and probably a password or a pem file. Disabling crawler");
                 return true;
@@ -119,5 +114,4 @@ public class FsCrawlerValidator {
 
         return false;
     }
-
 }

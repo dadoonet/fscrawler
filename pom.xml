@@ -19,6 +19,7 @@
         <module>tika</module>
         <module>beans</module>
         <module>crawler</module>
+        <module>rest</module>
     </modules>
     <name>FSCrawler</name>
     <url>https://github.com/dadoonet/fscrawler/</url>
@@ -338,6 +339,11 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-tika</artifactId>
+                <version>2.5-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-rest</artifactId>
                 <version>2.5-SNAPSHOT</version>
             </dependency>
 

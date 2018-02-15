@@ -17,15 +17,8 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.unit;
+package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
@@ -68,7 +61,7 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
 
         // Checking username / password when SSH
-        settings = buildSettings(null, null, Server.builder().setProtocol(FsCrawlerImpl.PROTOCOL.SSH).build(), null);
+        settings = buildSettings(null, null, Server.builder().setProtocol(Server.PROTOCOL.SSH).build(), null);
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
 
         // Checking That we don't try to do both xml and json

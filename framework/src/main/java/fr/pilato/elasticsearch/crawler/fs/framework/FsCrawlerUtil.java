@@ -278,7 +278,7 @@ public class FsCrawlerUtil {
      * @param configPath The config path which is by default .fscrawler
      * @throws IOException If copying does not work
      */
-    public static void copyDefaultResources(Path configPath) throws IOException, URISyntaxException {
+    public static void copyDefaultResources(Path configPath) throws IOException {
         Path targetResourceDir = configPath.resolve("_default");
 
         for (String filename : MAPPING_RESOURCES) {
@@ -413,5 +413,9 @@ public class FsCrawlerUtil {
 
     public static boolean isNullOrEmpty(String string) {
         return string == null || string.isEmpty();
+    }
+
+    public static boolean hasText(String string) {
+        return !isNullOrEmpty(string);
     }
 }

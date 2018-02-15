@@ -9,16 +9,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>fscrawler-cli</artifactId>
-    <name>FSCrawler Cli</name>
+    <artifactId>fscrawler-rest</artifactId>
+    <name>FSCrawler Rest Server</name>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -35,19 +29,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-            </plugin>
-            <!-- Add/Edit items in META-INF/MANIFEST.MF -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <mainClass>fr.pilato.elasticsearch.crawler.fs.cli.FsCrawler</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
@@ -68,19 +49,49 @@
         <!-- Our framework -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-core</artifactId>
+            <artifactId>fscrawler-framework</artifactId>
         </dependency>
 
-        <!-- Our framework -->
+        <!-- Our Settings -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-rest</artifactId>
+            <artifactId>fscrawler-settings</artifactId>
         </dependency>
 
-        <!-- For CLI -->
+        <!-- Our Beans -->
         <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>jcommander</artifactId>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-beans</artifactId>
+        </dependency>
+
+        <!-- Tika Implementation -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-tika</artifactId>
+        </dependency>
+
+        <!-- Our Elasticsearch Client -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-elasticsearch-client</artifactId>
+        </dependency>
+
+        <!-- For REST Server -->
+        <dependency>
+            <groupId>org.glassfish.jersey.containers</groupId>
+            <artifactId>jersey-container-grizzly2-http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-multipart</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
         </dependency>
 
         <!-- Test dependencies -->
@@ -89,8 +100,16 @@
             <artifactId>fscrawler-test-framework</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-test-documents</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.testcontainers</groupId>
+            <artifactId>testcontainers-elasticsearch</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-
 
 </project>

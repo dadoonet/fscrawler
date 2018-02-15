@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
@@ -908,7 +909,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setHostname(hostname)
                 .setUsername(username)
                 .setPassword(password)
-                .setProtocol(FsCrawlerImpl.PROTOCOL.SSH)
+                .setProtocol(Server.PROTOCOL.SSH)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
 
@@ -930,7 +931,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                 .setHostname(hostname)
                 .setUsername(username)
                 .setPemPath(path_to_pem_file)
-                .setProtocol(FsCrawlerImpl.PROTOCOL.SSH)
+                .setProtocol(Server.PROTOCOL.SSH)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
 
@@ -1311,34 +1312,39 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     public void test_with_rest_only() throws Exception {
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
-        // TODO do this rarely() createIndex(jobName);
+        try {
+            // TODO do this rarely() createIndex(jobName);
+            FsSettings fsSettings = FsSettings.builder(getCrawlerName())
+                    .setElasticsearch(endCrawlerDefinition(getCrawlerName()))
+                    .setFs(startCrawlerDefinition().build())
+                    .setServer(null)
+                    .setRest(Rest.builder().setPort(testRestPort).build()).build();
+            crawler = new FsCrawlerImpl(
+                    metadataDir,
+                    fsSettings,
+                    0,
+                    true);
+            crawler.start();
+            RestServer.start(fsSettings, crawler.getEsClientManager());
 
-        crawler = new FsCrawlerImpl(
-                metadataDir,
-                FsSettings.builder(getCrawlerName())
-                        .setElasticsearch(endCrawlerDefinition(getCrawlerName()))
-                        .setFs(startCrawlerDefinition().build())
-                        .setServer(null)
-                        .setRest(Rest.builder().setPort(testRestPort).build()).build(),
-                0,
-                true);
-        crawler.start();
+            Path from = rootTmpDir.resolve("resources").resolve("documents");
+            if (Files.notExists(from)) {
+                staticLogger.error("directory [{}] should exist before wa start tests", from);
+                throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+            }
 
-        Path from = rootTmpDir.resolve("resources").resolve("documents");
-        if (Files.notExists(from)) {
-            staticLogger.error("directory [{}] should exist before wa start tests", from);
-            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+            Files.walk(from)
+                    .filter(path -> Files.isRegularFile(path))
+                    .forEach(path -> {
+                        UploadResponse response = uploadFile(path);
+                        assertThat(response.getFilename(), is(path.getFileName().toString()));
+                    });
+
+            // We wait until we have all docs
+            countTestHelper(new SearchRequest(getCrawlerName()), Files.list(from).count(), null, TimeValue.timeValueMinutes(1));
+        } finally {
+            RestServer.close();
         }
-
-        Files.walk(from)
-                .filter(path -> Files.isRegularFile(path))
-                .forEach(path -> {
-                    UploadResponse response = uploadFile(path);
-                    assertThat(response.getFilename(), is(path.getFileName().toString()));
-                });
-
-        // We wait until we have all docs
-        countTestHelper(new SearchRequest(getCrawlerName()), Files.list(from).count(), null, TimeValue.timeValueMinutes(1));
     }
 
     /**

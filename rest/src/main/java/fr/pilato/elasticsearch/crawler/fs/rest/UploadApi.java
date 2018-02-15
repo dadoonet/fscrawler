@@ -20,13 +20,12 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 
-import fr.pilato.elasticsearch.crawler.fs.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
-import fr.pilato.elasticsearch.crawler.fs.util.TimeBasedUUIDGenerator;
 import org.apache.commons.io.FilenameUtils;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -56,7 +55,7 @@ public class UploadApi extends RestApi {
     private final MessageDigest messageDigest;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
 
-    public UploadApi(FsSettings settings, BulkProcessor bulkProcessor) {
+    UploadApi(FsSettings settings, BulkProcessor bulkProcessor) {
         this.settings = settings;
         this.bulkProcessor = bulkProcessor;
         // Create MessageDigest instance

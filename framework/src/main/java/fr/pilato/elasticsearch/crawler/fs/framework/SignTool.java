@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs;
+package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

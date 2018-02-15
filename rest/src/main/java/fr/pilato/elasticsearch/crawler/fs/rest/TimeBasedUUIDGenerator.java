@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.util;
+package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import java.net.NetworkInterface;
 import java.net.SocketException;

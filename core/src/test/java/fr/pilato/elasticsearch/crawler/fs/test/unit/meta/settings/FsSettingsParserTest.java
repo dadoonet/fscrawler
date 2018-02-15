@@ -19,11 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.unit.meta.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
 import fr.pilato.elasticsearch.crawler.fs.settings.Ocr;
