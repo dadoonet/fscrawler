@@ -22,18 +22,19 @@ package fr.pilato.elasticsearch.crawler.fs;
 import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.PathParser;
+import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FileAbstractorFile;
 import fr.pilato.elasticsearch.crawler.fs.crawler.ssh.FileAbstractorSSH;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
-import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
@@ -112,12 +113,8 @@ public class FsCrawlerImpl {
     }
 
     public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
-        /*
-         * We store config files here...
-         * Default to ~/.fscrawler
-         * The dir will be created if needed by calling the following CTOR
-         */
-        new FsSettingsFileHandler(config);
+        FsCrawlerUtil.createDirIfMissing(config);
+
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.settings = settings;
         this.loop = loop;

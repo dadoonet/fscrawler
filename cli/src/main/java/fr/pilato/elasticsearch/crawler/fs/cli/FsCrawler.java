@@ -20,15 +20,15 @@ package fr.pilato.elasticsearch.crawler.fs.cli;/*
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.meta.MetaFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
-import fr.pilato.elasticsearch.crawler.fs.util.FsCrawlerUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -142,6 +142,9 @@ public class FsCrawler {
             configDir = Paths.get(commands.configDir);
         }
 
+        // Create the config dir if needed
+        FsCrawlerUtil.createDirIfMissing(configDir);
+
         // We copy default mapping and settings to the default settings dir .fscrawler/_default/
         copyDefaultResources(configDir);
 
@@ -158,7 +161,7 @@ public class FsCrawler {
             // We can list available jobs for him
             logger.info("No job specified. Here is the list of existing jobs:");
 
-            List<String> files = FsCrawlerUtil.listExistingJobs(configDir);
+            List<String> files = FsCrawlerJobsUtil.listExistingJobs(configDir);
 
             if (files.size() > 0) {
                 for (int i = 0; i < files.size(); i++) {

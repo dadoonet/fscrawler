@@ -24,10 +24,10 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
@@ -789,7 +789,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
                             "    }\n" +
                             "  }\n" +
                             "}");
-            assertThat(response.getHits().getTotal(), is((long) subdirs+1));
+            assertThat(response.getHits().getTotal(), is(subdirs +1));
 
             // aggregations
             assertThat(response.getAggregations(), hasKey("folders"));
