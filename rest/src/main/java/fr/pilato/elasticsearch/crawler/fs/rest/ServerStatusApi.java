@@ -20,8 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 
-import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 import javax.ws.rs.GET;
@@ -39,7 +39,7 @@ public class ServerStatusApi extends RestApi {
     private final ElasticsearchClient elasticsearchClient;
     private final FsSettings settings;
 
-    public ServerStatusApi(ElasticsearchClient elasticsearchClient, FsSettings settings) {
+    ServerStatusApi(ElasticsearchClient elasticsearchClient, FsSettings settings) {
         this.elasticsearchClient = elasticsearchClient;
         this.settings = settings;
     }
@@ -48,7 +48,7 @@ public class ServerStatusApi extends RestApi {
     @Produces(MediaType.APPLICATION_JSON)
     public ServerStatusResponse getStatus() throws IOException {
         ServerStatusResponse status = new ServerStatusResponse();
-        status.setVersion(FsCrawlerImpl.properties.getProperty("fscrawler.version"));
+        status.setVersion(Version.getVersion());
         status.setElasticsearch(elasticsearchClient.info().getVersion().toString());
         status.setOk(true);
         status.setSettings(settings);

@@ -22,6 +22,7 @@ import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.meta.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -259,6 +260,12 @@ public class FsCrawler {
                 } catch (IllegalArgumentException ignored) { }
 
                 fsCrawler.start();
+
+                // Start the REST Server if needed
+                if (commands.rest) {
+                    RestServer.start(fsSettings, fsCrawler.getEsClientManager());
+                }
+
                 // We just have to wait until the process is stopped
                 while (!fsCrawler.isClosed()) {
                     sleep();

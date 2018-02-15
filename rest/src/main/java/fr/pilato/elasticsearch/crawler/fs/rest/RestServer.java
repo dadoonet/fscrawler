@@ -21,6 +21,8 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -32,6 +34,7 @@ import java.net.URI;
 public class RestServer {
 
     private static HttpServer httpServer = null;
+    private static final Logger logger = LogManager.getLogger();
 
     /**
      * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
@@ -55,6 +58,7 @@ public class RestServer {
             // create and start a new instance of grizzly http server
             // exposing the Jersey application at BASE_URI
             httpServer = GrizzlyHttpServerFactory.createHttpServer(URI.create(settings.getRest().url()), rc);
+            logger.info("FS crawler Rest service started on [{}]", settings.getRest().url());
         }
     }
 
@@ -62,6 +66,7 @@ public class RestServer {
         if (httpServer != null) {
             httpServer.shutdownNow();
             httpServer = null;
+            logger.debug("FS crawler Rest service stopped");
         }
     }
 }

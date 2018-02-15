@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.integration;
+package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
 import com.carrotsearch.randomizedtesting.ThreadFilter;
 

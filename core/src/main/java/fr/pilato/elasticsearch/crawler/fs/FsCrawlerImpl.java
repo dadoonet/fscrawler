@@ -28,12 +28,13 @@ import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FileAbstractorFile;
 import fr.pilato.elasticsearch.crawler.fs.crawler.ssh.FileAbstractorSSH;
+import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,15 +63,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerValidator.validateSettings;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isExcluded;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
+import static fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator.validateSettings;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 
 /**
@@ -83,31 +83,12 @@ public class FsCrawlerImpl {
     @Deprecated
     public static final String INDEX_TYPE_DOC = "doc";
 
-    public static final class PROTOCOL {
-        public static final String LOCAL = "local";
-        public static final String SSH = "ssh";
-        public static final int SSH_PORT = 22;
-    }
-
     private static final Logger logger = LogManager.getLogger(FsCrawlerImpl.class);
 
     private static final String PATH_ROOT = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT;
     private static final String FILE_FILENAME = Doc.FIELD_NAMES.FILE + "." + fr.pilato.elasticsearch.crawler.fs.beans.File.FIELD_NAMES.FILENAME;
 
     private final AtomicInteger runNumber = new AtomicInteger(0);
-
-    private final static String FSCRAWLER_PROPERTIES = "fscrawler.properties";
-    public static final Properties properties;
-
-    static {
-        properties = new Properties();
-        try {
-            properties.load(FsCrawlerImpl.class.getClassLoader().getResourceAsStream(FSCRAWLER_PROPERTIES));
-        } catch (IOException e) {
-            logger.error("Can not find [{}] resource in the class loader", FSCRAWLER_PROPERTIES);
-            throw new RuntimeException(e);
-        }
-    }
 
     private static final int REQUEST_SIZE = 10000;
     public static final int LOOP_INFINITE = -1;
@@ -244,12 +225,6 @@ public class FsCrawlerImpl {
         esClientManager.start();
         esClientManager.createIndices(settings);
 
-        // Start the REST Server if needed
-        if (rest) {
-            RestServer.start(settings, esClientManager);
-            logger.info("FS crawler Rest service started on [{}]", settings.getRest().url());
-        }
-
         // Start the crawler thread - but not if only in rest mode
         if (loop != 0) {
             fsCrawlerThread = new Thread(new FSParser(settings), "fs-crawler");
@@ -274,10 +249,6 @@ public class FsCrawlerImpl {
             }
             logger.debug("FS crawler thread is now stopped");
         }
-
-        // Stop the REST Server if needed
-        RestServer.close();
-        logger.debug("FS crawler Rest service stopped");
 
         esClientManager.close();
         logger.debug("ES Client Manager stopped");
@@ -416,17 +387,17 @@ public class FsCrawlerImpl {
 
         private FileAbstractor buildFileAbstractor() {
             // What is the protocol used?
-            if (fsSettings.getServer() == null || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
+            if (fsSettings.getServer() == null || Server.PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
                 // Local FS
                 return new FileAbstractorFile(fsSettings);
-            } else if (PROTOCOL.SSH.equals(fsSettings.getServer().getProtocol())) {
+            } else if (Server.PROTOCOL.SSH.equals(fsSettings.getServer().getProtocol())) {
                 // Remote SSH FS
                 return new FileAbstractorSSH(fsSettings);
             }
 
             // Non supported protocol
             throw new RuntimeException(fsSettings.getServer().getProtocol() + " is not supported yet. Please use " +
-                    PROTOCOL.LOCAL + " or " + PROTOCOL.SSH);
+                    Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH);
         }
 
         private void addFilesRecursively(FileAbstractor<?> path, String filepath, LocalDateTime lastScanDate)
@@ -780,40 +751,6 @@ public class FsCrawlerImpl {
                 logger.warn("trying to remove a file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
             }
         }
-    }
-
-    /**
-     * Check whether the given CharSequence has actual text.
-     * More specifically, returns <code>true</code> if the string not <code>null</code>,
-     * its length is greater than 0, and it contains at least one non-whitespace character.
-     * <p><pre>
-     * StringUtils.hasText(null) = false
-     * StringUtils.hasText("") = false
-     * StringUtils.hasText(" ") = false
-     * StringUtils.hasText("12345") = true
-     * StringUtils.hasText(" 12345 ") = true
-     * </pre>
-     *
-     * @param str the CharSequence to check (may be <code>null</code>)
-     * @return <code>true</code> if the CharSequence is not <code>null</code>,
-     *         its length is greater than 0, and it does not contain whitespace only
-     * @see java.lang.Character#isWhitespace
-     */
-    public static boolean hasText(CharSequence str) {
-        if (!hasLength(str)) {
-            return false;
-        }
-        int strLen = str.length();
-        for (int i = 0; i < strLen; i++) {
-            if (!Character.isWhitespace(str.charAt(i))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean hasLength(CharSequence str) {
-        return str != null && str.length() > 0;
     }
 
     public int getRunNumber() {

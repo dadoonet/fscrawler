@@ -19,8 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -47,7 +47,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     @Test
     public void testCallRoot() {
         ServerStatusResponse status = restCall("/", ServerStatusResponse.class);
-        assertThat(status.getVersion(), is(FsCrawlerImpl.properties.getProperty("fscrawler.version")));
+        assertThat(status.getVersion(), is(Version.getVersion()));
         assertThat(status.getElasticsearch(), notNullValue());
     }
 

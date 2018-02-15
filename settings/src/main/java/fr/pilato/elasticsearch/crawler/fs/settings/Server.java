@@ -24,6 +24,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Server {
 
+    public static final class PROTOCOL {
+        public static final String LOCAL = "local";
+        public static final String SSH = "ssh";
+        public static final int SSH_PORT = 22;
+    }
+
     public Server() {
 
     }
@@ -38,11 +44,11 @@ public class Server {
     }
 
     private String hostname;
-    private int port = 22;
+    private int port = PROTOCOL.SSH_PORT;
     private String username;
     @JsonIgnore
     private String password;
-    private String protocol = "local";
+    private String protocol = PROTOCOL.LOCAL;
     private String pemPath;
 
     public String getHostname() {
@@ -101,10 +107,10 @@ public class Server {
 
     public static class Builder {
         private String hostname = null;
-        private int port = 22;
+        private int port = PROTOCOL.SSH_PORT;
         private String username = null;
         private String password = null;
-        private String protocol = "local";
+        private String protocol = PROTOCOL.LOCAL;
         private String pemPath = null;
 
         public Builder setHostname(String hostname) {
