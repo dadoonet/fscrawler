@@ -19,8 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
-import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJob;
-import fr.pilato.elasticsearch.crawler.fs.meta.job.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;

@@ -415,7 +415,11 @@ public class FsCrawlerUtil {
         return string == null || string.isEmpty();
     }
 
-    public static boolean hasText(String string) {
-        return !isNullOrEmpty(string);
+    public static void createDirIfMissing(Path root) {
+        try {
+            if (Files.notExists(root)) {
+                Files.createDirectory(root);
+            }
+        } catch (IOException ignored) { }
     }
 }

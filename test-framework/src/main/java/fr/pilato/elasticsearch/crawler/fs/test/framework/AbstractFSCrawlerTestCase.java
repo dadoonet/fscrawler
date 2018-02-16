@@ -64,7 +64,7 @@ public abstract class AbstractFSCrawlerTestCase {
     protected static Path rootTmpDir;
 
     @BeforeClass
-    public static void createTmpDir() throws IOException, URISyntaxException {
+    public static void createTmpDir() throws IOException {
         folder.create();
         rootTmpDir = Paths.get(folder.getRoot().toURI());
     }
