@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.search.SearchRequest;
@@ -161,7 +162,19 @@ public class FsCrawlerImpl {
 
         // Start the crawler thread - but not if only in rest mode
         if (loop != 0) {
-            fsParser = new FsParser(settings, config, esClientManager, loop);
+            // What is the protocol used?
+            if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
+                // Local FS
+                fsParser = new FsParserLocal(settings, config, esClientManager, loop);
+            } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
+                // Remote SSH FS
+                fsParser = new FsParserSsh(settings, config, esClientManager, loop);
+            } else {
+                // Non supported protocol
+                throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +
+                        Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH);
+            }
+
             fsCrawlerThread = new Thread(fsParser, "fs-crawler");
             fsCrawlerThread.start();
         }

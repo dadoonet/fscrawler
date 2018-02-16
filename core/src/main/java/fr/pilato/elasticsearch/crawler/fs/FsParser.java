@@ -29,11 +29,8 @@ import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
-import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FileAbstractorFile;
-import fr.pilato.elasticsearch.crawler.fs.crawler.ssh.FileAbstractorSSH;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -70,7 +67,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndex
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 
-public class FsParser implements Runnable {
+public abstract class FsParser implements Runnable {
     private static final Logger logger = LogManager.getLogger(FsParser.class);
 
     private static final String PATH_ROOT = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT;
@@ -78,7 +75,7 @@ public class FsParser implements Runnable {
 
     private static final int REQUEST_SIZE = 10000;
 
-    private final FsSettings fsSettings;
+    final FsSettings fsSettings;
     private final FsJobFileHandler fsJobFileHandler;
     private final ElasticsearchClientManager esClientManager;
     private final Integer loop;
@@ -109,6 +106,8 @@ public class FsParser implements Runnable {
             messageDigest = null;
         }
     }
+
+    protected abstract FileAbstractor buildFileAbstractor();
 
     public Object getSemaphore() {
         return semaphore;
@@ -226,21 +225,6 @@ public class FsParser implements Runnable {
                 .setDeleted(stats.getNbDocDeleted())
                 .build();
         fsJobFileHandler.write(jobName, fsJob);
-    }
-
-    private FileAbstractor buildFileAbstractor() {
-        // What is the protocol used?
-        if (fsSettings.getServer() == null || Server.PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
-            // Local FS
-            return new FileAbstractorFile(fsSettings);
-        } else if (Server.PROTOCOL.SSH.equals(fsSettings.getServer().getProtocol())) {
-            // Remote SSH FS
-            return new FileAbstractorSSH(fsSettings);
-        }
-
-        // Non supported protocol
-        throw new RuntimeException(fsSettings.getServer().getProtocol() + " is not supported yet. Please use " +
-                Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH);
     }
 
     private void addFilesRecursively(FileAbstractor<?> path, String filepath, LocalDateTime lastScanDate)
