@@ -33,14 +33,13 @@ package.
 
 ### Integration tests
 
-Integration tests use by default a Docker configuration to run a local node running at [127.0.0.1:9200](http://127.0.0.1:9200).
+Unless a node is already running at this address, integration tests use by default a Docker configuration
+which starts a local node running at [127.0.0.1:9200](http://127.0.0.1:9200).
 The elasticsearch version used is defined in the `pom.xml` file.
 
 You can also tell maven to run integration tests by deploying another version of elasticsearch:
 
 ```sh
-# For elasticsearch 2.x series
-mvn install -Pes-2x
 # For elasticsearch 5.x series
 mvn install -Pes-5x
 ```
@@ -49,7 +48,12 @@ By default, it will run integration tests against elasticsearch 6.x series clust
 
 ### Running tests against an external cluster
 
-By default, FS Crawler will run tests against a cluster running at `127.0.0.1` on port `9200` started with Docker.
+By default, FS Crawler will run tests against a cluster running at `127.0.0.1` on port `9200`.
+If nothing is yet running, FS Crawler will start an instance using Docker behind the scene
+with the help of [testcontainers-java-module-elasticsearch project](https://github.com/dadoonet/testcontainers-java-module-elasticsearch).
+
+If you started manually an elasticsearch cluster locally, integration tests will first try to use it.
+This could speed up dramatically running the integration while developing on FSCrawler.
 
 But, if you want to run the test suite against another cluster, using other credentials, you can use the following
 system parameters:

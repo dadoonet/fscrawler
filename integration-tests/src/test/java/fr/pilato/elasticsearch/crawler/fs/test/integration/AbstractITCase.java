@@ -226,26 +226,38 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         testClusterHost = System.getProperty("tests.cluster.host");
 
         if (testClusterHost == null) {
-            // We start an elasticsearch Docker instance
-            Properties props = new Properties();
-            props.load(AbstractITCase.class.getResourceAsStream("/elasticsearch.version.properties"));
-            container = new ElasticsearchContainer().withVersion(props.getProperty("version"));
-            container.withEnv("ELASTIC_PASSWORD", testClusterPass);
-            container.setWaitStrategy(
-                    new HttpWaitStrategy()
-                            .forStatusCode(200)
-                            .withBasicCredentials(testClusterUser, testClusterPass)
-                            .withStartupTimeout(Duration.ofSeconds(90)));
-            container.start();
+            ElasticsearchClient elasticsearchClientTemporary = null;
+            try {
+                testClusterHost = "localhost";
+                // We test if we have already something running at the testClusterHost address
+                elasticsearchClientTemporary = new ElasticsearchClient(getClientBuilder(
+                        new HttpHost(testClusterHost, testClusterPort), testClusterUser, testClusterPass));
+                elasticsearchClientTemporary.info();
+                staticLogger.debug("A node is already running locally. No need to start a Docker instance.");
+            } catch (ConnectException e) {
+                staticLogger.debug("No local node running. We need to start a Docker instance.");
+                // We start an elasticsearch Docker instance
+                Properties props = new Properties();
+                props.load(AbstractITCase.class.getResourceAsStream("/elasticsearch.version.properties"));
+                container = new ElasticsearchContainer().withVersion(props.getProperty("version"));
+                container.withEnv("ELASTIC_PASSWORD", testClusterPass);
+                container.setWaitStrategy(
+                        new HttpWaitStrategy()
+                                .forStatusCode(200)
+                                .withBasicCredentials(testClusterUser, testClusterPass)
+                                .withStartupTimeout(Duration.ofSeconds(90)));
+                container.start();
 
-            testClusterHost = container.getHost().getHostName();
-            testClusterPort = container.getFirstMappedPort();
+                testClusterHost = container.getHost().getHostName();
+                testClusterPort = container.getFirstMappedPort();
+            } finally {
+                // We need to close the temporary client
+                if (elasticsearchClientTemporary != null) {
+                    elasticsearchClientTemporary.shutdown();
+                }
+            }
         } else {
             testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
-        }
-
-        if (testClusterHost == null) {
-            Thread.dumpStack();
         }
 
         // We build the elasticsearch High Level Client based on the parameters
