@@ -25,7 +25,7 @@ public class TestContainerThreadFilter implements ThreadFilter {
     @Override
     public boolean reject(Thread t) {
         return t.getName().contains("dockerjava-netty") ||
-                t.getName().contains("pool-2-thread-") ||
+                t.getName().startsWith("pool-") ||
                 t.getName().contains("testcontainers") ||
                 t.getName().contains("threadDeathWatcher");
     }
