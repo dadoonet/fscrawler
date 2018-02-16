@@ -80,7 +80,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiOfLengthBetween;
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiLettersOfLengthBetween;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
@@ -748,7 +748,7 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         Path newDir = mainDir;
 
         for (int i = 0; i < subdirs; i++) {
-            newDir = newDir.resolve(i + "_" + randomAsciiOfLengthBetween(2, 5));
+            newDir = newDir.resolve(i + "_" + randomAsciiLettersOfLengthBetween(2, 5));
             Files.createDirectory(newDir);
             // Copy the original test file in the new dir
             Files.copy(sourceFile, newDir.resolve("sample.txt"));
@@ -1018,17 +1018,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
         }
     }
 
-    @Test
-    public void test_checksum_non_existing_algorithm() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setChecksum("FSCRAWLER")
-                .build();
-        crawler = new FsCrawlerImpl(metadataDir,
-                FsSettings.builder(getCrawlerName()).setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build());
-        crawler.start();
-        assertThat(crawler.isClosed(), is(true));
-    }
-
     /**
      * Test case for issue #204: https://github.com/dadoonet/fscrawler/issues/204 : JSON files are indexed twice
      */
@@ -1074,26 +1063,6 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
     }
 
     /**
-     * Test case for issue #185: https://github.com/dadoonet/fscrawler/issues/185 : Add xml_support setting
-     */
-    @Test
-    public void test_xml_and_json_enabled() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setXmlSupport(true)
-                .setJsonSupport(true)
-                .build();
-
-        logger.info("  --> starting crawler [{}]", getCrawlerName());
-
-        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build());
-        crawler.start();
-
-        // We wait up to 10 seconds before considering a failing test
-        assertThat("Job should not start", awaitBusy(() -> crawler.isClosed()), equalTo(true));
-    }
-
-    /**
      * Test case for #227: https://github.com/dadoonet/fscrawler/issues/227 : Add support for run only once
      */
     @Test
@@ -1108,8 +1077,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
 
-        assertThat("Job should stop after one run", crawler.isClosed(), is(true));
-        assertThat(crawler.getRunNumber(), is(1));
+        assertThat("Job should stop after one run", crawler.getFsParser().isClosed(), is(true));
+        assertThat(crawler.getFsParser().getRunNumber(), is(1));
     }
 
     /**
@@ -1127,8 +1096,8 @@ public class FsCrawlerImplAllParametersIT extends AbstractITCase {
 
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
 
-        assertThat("Job should stop after two runs", awaitBusy(() -> crawler.isClosed()), is(true));
-        assertThat(crawler.getRunNumber(), is(2));
+        assertThat("Job should stop after two runs", awaitBusy(() -> crawler.getFsParser().isClosed()), is(true));
+        assertThat(crawler.getFsParser().getRunNumber(), is(2));
     }
 
     /**

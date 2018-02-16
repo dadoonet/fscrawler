@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
@@ -62,7 +63,7 @@ public class FsCrawler {
 
     private static final Logger logger = LogManager.getLogger(FsCrawler.class);
 
-    private static FsCrawlerImpl fsCrawler = null;
+    private static FsCrawlerImpl fsCrawler;
 
     @SuppressWarnings("CanBeFinal")
     public static class FsCrawlerCommand {
@@ -238,6 +239,11 @@ public class FsCrawler {
         }
 
         logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toJson(fsSettings));
+        if (FsCrawlerValidator.validateSettings(logger, fsSettings, commands.rest)) {
+            // We don't go further as we have critical errors
+            return;
+        }
+
         fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest);
         Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
 
@@ -270,7 +276,7 @@ public class FsCrawler {
                 }
 
                 // We just have to wait until the process is stopped
-                while (!fsCrawler.isClosed()) {
+                while (!fsCrawler.getFsParser().isClosed()) {
                     sleep();
                 }
             }
@@ -278,9 +284,7 @@ public class FsCrawler {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
             logger.debug("error caught", e);
         } finally {
-            if (fsCrawler != null) {
-                fsCrawler.close();
-            }
+            fsCrawler.close();
         }
     }
 
