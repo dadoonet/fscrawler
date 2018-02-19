@@ -55,6 +55,7 @@
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.security.username>elastic</integ.security.username>
         <integ.security.password>changeme</integ.security.password>
+        <integ.elasticsearch.port>9200</integ.elasticsearch.port>
 
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
