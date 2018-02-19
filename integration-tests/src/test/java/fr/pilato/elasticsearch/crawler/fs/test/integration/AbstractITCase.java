@@ -468,7 +468,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     String getCrawlerName() {
-        String testName = testCrawlerPrefix.concat(getCurrentTestName());
+        String testName = testCrawlerPrefix.concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
         return testName.contains(" ") ? split(testName, " ")[0] : testName;
     }
 
