@@ -536,7 +536,9 @@ The job file must comply to the following `json` specifications:
     "continue_on_error" : false,
     "pdf_ocr" : true,
     "ocr" : {
-      "language" : "eng"
+      "language" : "eng",
+      "path": "/path/to/tesseract/if/not/available/in/PATH",
+      "data_path": "/path/to/tesseract/tessdata/if/needed"
     }
   },
   "server" : {
@@ -2071,7 +2073,8 @@ and run FS crawler on this mount point. You can also read details about
 
 ## OCR integration
 
-To deal with images containing text, just [install Tesseract](https://github.com/tesseract-ocr/tesseract/wiki). Tesseract will be auto-detected by Tika.
+To deal with images containing text, just [install Tesseract](https://github.com/tesseract-ocr/tesseract/wiki). Tesseract will be auto-detected by Tika
+or you can explicitly [set the path to tesseract binary](#ocr-path).
 Then add an image (png, jpg, ...) into your Fscrawler [root directory](#root-directory). After the next index update, the text will be indexed and placed in "_source.content".
 
 By default, FS crawler will try to extract also images from your PDF documents and run OCR on them.
@@ -2094,6 +2097,8 @@ Here is a list of OCR settings (under `fs.ocr` prefix)`:
 |               Name               | Default value |                                 Documentation                                     |
 |----------------------------------|---------------|-----------------------------------------------------------------------------------|
 | `fs.ocr.language`                | `"eng"`       | [OCR Language](#ocr-language)                                                     |
+| `fs.ocr.path`                    | `null`        | [OCR Path](#ocr-path)                                                             |
+| `fs.ocr.data_path`               | `null`        | [OCR Data Path](#ocr-data-path)                                                             |
 
 #### OCR Language
 
@@ -2107,6 +2112,44 @@ parsing your documents by setting `fs.ocr.language` property in your `~/.fscrawl
     "url" : "/path/to/data/dir",
     "ocr" : {
       "language": "eng"
+    }
+  }
+}
+```
+
+#### OCR Path
+
+If your Tesseract application is not available in default system PATH, you can define the path to use
+by setting `fs.ocr.path` property in your `~/.fscrawler/test/_settings.json` file:
+
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "url" : "/path/to/data/dir",
+    "ocr" : {
+      "path": "/path/to/tesseract/executable"
+    }
+  }
+}
+```
+
+When you set it, it's highly recommended to [set the data path for Tesseract](#ocr-data-path).
+
+#### OCR Data Path
+
+Set the path to the 'tessdata' folder, which contains language files and config files if Tesseract
+can not be automatically detected. You can define the path to use
+by setting `fs.ocr.data_path` property in your `~/.fscrawler/test/_settings.json` file:
+
+```json
+{
+  "name" : "test",
+  "fs" : {
+    "url" : "/path/to/data/dir",
+    "ocr" : {
+      "path": "/path/to/tesseract/executable",
+      "data_path": "/path/to/tesseract/tessdata"
     }
   }
 }

@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.tika;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Ocr;
 import org.apache.tika.parser.external.ExternalParser;
 import org.junit.Test;
 
@@ -623,6 +624,18 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), isEmptyString());
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent(), is("\n\n"));
+
+        // Test with OCR On (default) but a wrong path to tesseract
+        fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setOcr(Ocr.builder()
+                        .setPath("/path/to/doesnotexist")
+                        .setDataPath("/path/to/doesnotexist")
+                        .build()).build())
+                .build();
+        doc = extractFromFile("test-ocr.png", fsSettings);
+        assertThat(doc.getContent(), isEmptyString());
+        doc = extractFromFile("test-ocr.pdf", fsSettings);
+        assertThat(doc.getContent(), nullValue());
     }
 
     @Test
