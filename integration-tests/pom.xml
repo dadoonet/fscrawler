@@ -107,7 +107,7 @@
                 <configuration>
                     <images>
                         <image>
-                            <alias>elasticsearch</alias>
+                            <alias>elasticsearch-it</alias>
                             <name>dadoonet/docker-elasticsearch:${project.version}</name>
                             <build>
                                 <from>docker.elastic.co/elasticsearch/elasticsearch:${elasticsearch.version}</from>
@@ -128,15 +128,16 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>start</id>
+                        <id>start-elasticsearch</id>
                         <phase>pre-integration-test</phase>
                         <goals>
                             <goal>build</goal>
+                            <goal>stop</goal>
                             <goal>start</goal>
                         </goals>
                     </execution>
                     <execution>
-                        <id>stop</id>
+                        <id>stop-elasticsearch</id>
                         <phase>post-integration-test</phase>
                         <goals>
                             <goal>stop</goal>
