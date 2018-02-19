@@ -104,6 +104,10 @@ public abstract class AbstractFSCrawlerTestCase {
         return toUnderscoreCase(name.getMethodName());
     }
 
+    protected String getCurrentClassName() {
+        return toUnderscoreCase(this.getClass().getSimpleName());
+    }
+
     public static int between(int min, int max) {
         return RandomNumbers.randomIntBetween(random(), min, max);
     }

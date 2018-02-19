@@ -110,7 +110,7 @@
                             <alias>elasticsearch-it</alias>
                             <name>dadoonet/docker-elasticsearch:${project.version}</name>
                             <build>
-                                <from>docker.elastic.co/elasticsearch/elasticsearch:${elasticsearch.version}</from>
+                                <from>docker.elastic.co/elasticsearch/elasticsearch:${integ.elasticsearch.version}</from>
                             </build>
                             <run>
                                 <ports>
@@ -119,6 +119,7 @@
                                 <wait>
                                     <http>
                                         <url>http://localhost:${integ.elasticsearch.port}/</url>
+                                        <status>200..499</status>
                                     </http>
                                     <time>60000</time>
                                 </wait>
