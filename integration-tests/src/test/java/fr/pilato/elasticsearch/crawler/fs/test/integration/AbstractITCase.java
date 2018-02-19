@@ -48,7 +48,6 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.testcontainers.containers.wait.HttpWaitStrategy;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -66,7 +65,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -239,14 +237,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 // We start an elasticsearch Docker instance
                 Properties props = new Properties();
                 props.load(AbstractITCase.class.getResourceAsStream("/elasticsearch.version.properties"));
-                container = new ElasticsearchContainer().withVersion(props.getProperty("version"));
-                container.withEnv("ELASTIC_PASSWORD", testClusterPass);
-                container.setWaitStrategy(
-                        new HttpWaitStrategy()
-                                .forStatusCode(200)
-                                .withBasicCredentials(testClusterUser, testClusterPass)
-                                .withStartupTimeout(Duration.ofSeconds(90)));
-                container.start();
+                container = ElasticsearchContainerSingleton.getInstance(props.getProperty("version"),
+                        testClusterUser, testClusterPass);
 
                 testClusterHost = container.getHost().getHostName();
                 testClusterPort = container.getFirstMappedPort();
@@ -301,10 +293,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             esRestClient = null;
         }
 
+        /*
         if (container != null) {
             container.close();
             container = null;
         }
+        */
     }
 
     private static RestClientBuilder getClientBuilder(HttpHost host, String username, String password) {
