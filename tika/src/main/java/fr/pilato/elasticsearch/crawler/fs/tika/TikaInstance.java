@@ -110,6 +110,12 @@ public class TikaInstance {
             if (fs.isPdfOcr()) {
                 logger.debug("OCR is activated");
                 TesseractOCRConfig config = new TesseractOCRConfig();
+                if (fs.getOcr().getPath() != null) {
+                    config.setTesseractPath(fs.getOcr().getPath());
+                }
+                if (fs.getOcr().getDataPath() != null) {
+                    config.setTessdataPath(fs.getOcr().getDataPath());
+                }
                 config.setLanguage(fs.getOcr().getLanguage());
                 context.set(TesseractOCRConfig.class, config);
             }

@@ -22,6 +22,10 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 public class Ocr {
     // Language dictionary to be used.
     private String language = "eng";
+    // Path to tesseract program
+    private String path = null;
+    // Path to tesseract data
+    private String dataPath = null;
 
     public static Builder builder() {
         return new Builder();
@@ -30,23 +34,38 @@ public class Ocr {
     public static class Builder {
 
         private String language = "eng";
+        private String path = null;
+        private String dataPath = null;
 
         public Builder setLanguage(String language) {
             this.language = language;
             return this;
         }
 
-        public Ocr build() {
-            return new Ocr();
+        public Builder setPath(String path) {
+            this.path = path;
+            return this;
         }
+
+        public Builder setDataPath(String dataPath) {
+            this.dataPath = dataPath;
+            return this;
+        }
+
+        public Ocr build() {
+            return new Ocr(language, path, dataPath);
+        }
+
     }
 
     public Ocr( ) {
 
     }
 
-    private Ocr(String language) {
+    private Ocr(String language, String path, String dataPath) {
         this.language = language;
+        this.path = path;
+        this.dataPath = dataPath;
     }
 
     public String getLanguage() {
@@ -55,5 +74,21 @@ public class Ocr {
 
     public void setLanguage(String language) {
         this.language = language;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getDataPath() {
+        return dataPath;
+    }
+
+    public void setDataPath(String dataPath) {
+        this.dataPath = dataPath;
     }
 }
