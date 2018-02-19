@@ -35,8 +35,7 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch.groupid>org.elasticsearch.distribution.zip</elasticsearch.groupid>
-        <elasticsearch.version>6.1.1</elasticsearch.version>
+        <elasticsearch.version>6.2.1</elasticsearch.version>
 
         <tika.version>1.17</tika.version>
         <jackson.version>2.9.3</jackson.version>
@@ -45,7 +44,7 @@
         <jersey.version>2.26</jersey.version>
 
         <!-- Only Lucene test framework is used here -->
-        <lucene.version>7.1.0</lucene.version>
+        <lucene.version>7.2.1</lucene.version>
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
