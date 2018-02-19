@@ -42,6 +42,8 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
         assertThat(isIndexable("my.doc.xls", new ArrayList<>(), Collections.singletonList("my.d?c*.xls")), is(false));
         assertThat(isIndexable("my.douc.xls", new ArrayList<>(), Collections.singletonList("my.d?c*.xls")), is(true));
         assertThat(isIndexable(".snapshots", new ArrayList<>(), Collections.singletonList(".snapshots")), is(false));
+        assertThat(isIndexable("doc.doc", new ArrayList<>(), Arrays.asList("*.pdf", "*.xls", "*.doc")), is(false));
+        assertThat(isIndexable("doc.ppt", new ArrayList<>(), Arrays.asList("*.pdf", "*.xls", "*.doc")), is(true));
     }
 
     @Test
@@ -51,6 +53,8 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
         assertThat(isIndexable("my.doc.xls", Collections.singletonList("*.doc"), new ArrayList<>()), is(false));
         assertThat(isIndexable("my.doc.xls", Collections.singletonList("my.d?c*.xls"), new ArrayList<>()), is(true));
         assertThat(isIndexable("my.douc.xls", Collections.singletonList("my.d?c*.xls"), new ArrayList<>()), is(false));
+        assertThat(isIndexable("doc.doc", Arrays.asList("*.pdf", "*.xls", "*.doc"), new ArrayList<>()), is(true));
+        assertThat(isIndexable("doc.ppt", Arrays.asList("*.pdf", "*.xls", "*.doc"), new ArrayList<>()), is(false));
     }
 
     @Test
