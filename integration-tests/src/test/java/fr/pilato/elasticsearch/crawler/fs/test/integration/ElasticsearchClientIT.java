@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -31,6 +33,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -138,5 +141,44 @@ public class ElasticsearchClientIT extends AbstractITCase {
         logger.info("Current elasticsearch version: [{}]", version);
 
         // TODO if we store in a property file the elasticsearch version we are running tests against we can add some assertions
+    }
+
+    @Test
+    public void testPipeline() throws IOException {
+        String crawlerName = getCrawlerName();
+
+        // We can only run this test against a 5.0 cluster or >
+        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
+                elasticsearchClient.isIngestSupported(), is(true));
+
+        // Create an empty ingest pipeline
+        String pipeline = "{\n" +
+                "  \"description\": \"Testing Grok on PDF upload\",\n" +
+                "  \"processors\": [\n" +
+                "    {\n" +
+                "      \"gsub\": {\n" +
+                "        \"field\": \"content\",\n" +
+                "        \"pattern\": \"\\n\",\n" +
+                "        \"replacement\": \"-\"\n" +
+                "      }\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"grok\": {\n" +
+                "        \"field\": \"content\",\n" +
+                "        \"patterns\": [\n" +
+                "          \"%{DATA}%{IP:ip_addr} %{GREEDYDATA}\"\n" +
+                "        ]\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+        StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
+
+        elasticsearchClient.getLowLevelClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
+                Collections.emptyMap(), entity);
+
+
+        assertThat(elasticsearchClient.isExistingPipeline(crawlerName), is(true));
+        assertThat(elasticsearchClient.isExistingPipeline(crawlerName + "_foo"), is(false));
     }
 }

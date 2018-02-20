@@ -148,6 +148,28 @@ public class ElasticsearchClient extends RestHighLevelClient {
     }
 
     /**
+     * Check if a pipeline exists
+     * @param pipeline pipeline name
+     * @return true if the pipeline exists, false otherwise
+     * @throws IOException In case of error
+     */
+    public boolean isExistingPipeline(String pipeline) throws IOException {
+        logger.debug("is existing pipeline [{}]", pipeline);
+
+        try {
+            Response restResponse = getLowLevelClient().performRequest("GET", "/_ingest/pipeline/" + pipeline);
+            logger.trace("get pipeline metadata response: {}", LowLevelClientJsonUtil.asMap(restResponse));
+            return true;
+        } catch (ResponseException e) {
+            if (e.getResponse().getStatusLine().getStatusCode() == 404) {
+                logger.debug("pipeline [{}] does not exist", pipeline);
+                return false;
+            }
+            throw e;
+        }
+    }
+
+    /**
      * Refresh an index
      * @param index index name
      * @throws IOException In case of error
