@@ -32,7 +32,9 @@ import java.util.Collections;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 /**
@@ -128,5 +130,27 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         // We expect to have one file
         countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
                 .query(QueryBuilders.termQuery("ip_addr", "10.21.23.123"))), 1L, currentTestResourceDir);
+    }
+
+    /**
+     * Test case for #490: https://github.com/dadoonet/fscrawler/issues/490 : Missing ES pipeline
+     */
+    @Test
+    public void test_ingest_missing_pipeline_490() throws Exception {
+        String crawlerName = getCrawlerName();
+
+        // We can only run this test against a 5.0 cluster or >
+        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
+                elasticsearchClient.isIngestSupported(), is(true));
+
+        Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
+        elasticsearch.setPipeline(crawlerName);
+
+        try {
+            startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+            fail("We should have caught a RuntimeException");
+        } catch (RuntimeException e) {
+            assertThat(e.getMessage(), containsString("You defined pipeline:" + crawlerName + ", but it does not exist."));
+        }
     }
 }

@@ -91,10 +91,18 @@ public class ElasticsearchClientManager {
             throw e;
         }
 
-        // Check that we don't try using an ingest pipeline with a non compatible version
-        if (settings.getElasticsearch().getPipeline() != null && !client.isIngestSupported()) {
-            throw new RuntimeException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
-                    ", but your elasticsearch cluster does not support this feature.");
+        if (settings.getElasticsearch().getPipeline() != null) {
+            // Check that we don't try using an ingest pipeline with a non compatible version
+            if (!client.isIngestSupported()) {
+                throw new RuntimeException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
+                        ", but your elasticsearch cluster does not support this feature.");
+            }
+
+            // Check that the pipeline exists
+            if (!client.isExistingPipeline(settings.getElasticsearch().getPipeline())) {
+                throw new RuntimeException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
+                        ", but it does not exist.");
+            }
         }
 
         bulkProcessorDoc = BulkProcessor.builder(client::bulkAsync, new DebugListener(logger))
