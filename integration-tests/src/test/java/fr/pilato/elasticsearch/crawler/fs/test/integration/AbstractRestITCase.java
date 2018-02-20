@@ -27,7 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import org.junit.After;
 import org.junit.Before;
 
-public class AbstractRestITCase extends AbstractITCase {
+public abstract class AbstractRestITCase extends AbstractITCase {
 
     private ElasticsearchClientManager esClientManager;
 
@@ -51,7 +51,7 @@ public class AbstractRestITCase extends AbstractITCase {
     }
 
     @After
-    public void stopRestServer() throws InterruptedException {
+    public void stopRestServer() {
         RestServer.close();
         if (esClientManager != null) {
             esClientManager.close();
