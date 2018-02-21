@@ -1,4 +1,4 @@
-package fr.pilato.elasticsearch.crawler.fs.meta.settings;
+package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,21 +19,21 @@ public class CustomTikaParser {
 
         private String className = "";
 
-        public CustomTikaParser.Builder setClassName(String className) {
+        public fr.pilato.elasticsearch.crawler.fs.settings.CustomTikaParser.Builder setClassName(String className) {
             this.className = className;
             return this;
         }
 
         private String pathToJar = "";
 
-        public CustomTikaParser.Builder setPathToJar(String pathToJar) {
+        public fr.pilato.elasticsearch.crawler.fs.settings.CustomTikaParser.Builder setPathToJar(String pathToJar) {
             this.pathToJar = pathToJar;
             return this;
         }
 
         private List<String> mimeTypes = new ArrayList<String>();
 
-        public CustomTikaParser.Builder setMimeTypes(ArrayList<String> mimeTypes) {
+        public fr.pilato.elasticsearch.crawler.fs.settings.CustomTikaParser.Builder setMimeTypes(ArrayList<String> mimeTypes) {
             this.mimeTypes = mimeTypes;
             return this;
         }
