@@ -255,6 +255,8 @@ POST _reindex
 DELETE job_name_backup
 ```
 
+The default mapping changed for FSCrawler for `meta.raw.*` fields. Might be better to reindex your data.
+
 # User Guide
 
 ## Getting Started
@@ -980,9 +982,22 @@ Where a MP3 file would generate:
 * `"Content-Type" : "audio/mpeg"`
 * `"samplerate" : "44100"`
 
-As elasticsearch will by default to automatically guess the type, you could end up having conflicts between
-metadata raw fields: a field which is first detected as a date but is getting for another document a value like
-"in the seventies". In such a case, you could imagine forcing the mapping or defining an index mapping template.
+The `meta.raw.*` fields have a default mapping applied:
+
+```json
+{
+  "type": "text",
+  "fields": {
+    "keyword": {
+      "type": "keyword",
+      "ignore_above": 256
+    }
+  }
+}
+```
+
+If you want specifically tell elasticsearch to use a date type or a numeric type for some fields, you need
+to modify the default template provided by FSCrawler.
 
 Note that dots in metadata names will be replaced by a `:`. For example `PTEX.Fullbanner` will be indexed as
 `PTEX:Fullbanner`.
