@@ -48,9 +48,9 @@
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
-        <skipXPack>true</skipXPack>
 
         <!-- For integration tests using Docker or external cluster -->
+        <integ.elasticsearch.image>docker.elastic.co/elasticsearch/elasticsearch</integ.elasticsearch.image>
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.security.username>elastic</integ.security.username>
         <integ.security.password>changeme</integ.security.password>
@@ -219,6 +219,55 @@
                         <execution>
                             <id>default-test</id>
                             <phase>none</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- For IT using Docker -->
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>0.24.0</version>
+                    <configuration>
+                        <images>
+                            <image>
+                                <alias>elasticsearch-it</alias>
+                                <name>dadoonet/docker-elasticsearch:${project.version}</name>
+                                <build>
+                                    <from>${integ.elasticsearch.image}:${integ.elasticsearch.version}</from>
+                                </build>
+                                <run>
+                                    <ports>
+                                        <port>integ.elasticsearch.port:9200</port>
+                                    </ports>
+                                    <wait>
+                                        <http>
+                                            <url>http://localhost:${integ.elasticsearch.port}/</url>
+                                            <status>200..499</status>
+                                        </http>
+                                        <time>60000</time>
+                                    </wait>
+                                </run>
+                            </image>
+                        </images>
+                        <skip>${skipIntegTests}</skip>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>start-elasticsearch</id>
+                            <phase>pre-integration-test</phase>
+                            <goals>
+                                <goal>build</goal>
+                                <goal>stop</goal>
+                                <goal>start</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>stop-elasticsearch</id>
+                            <phase>post-integration-test</phase>
+                            <goals>
+                                <goal>stop</goal>
+                            </goals>
                         </execution>
                     </executions>
                 </plugin>
@@ -626,6 +675,12 @@
     </repositories>
 
     <profiles>
+        <profile>
+            <id>oss</id>
+            <properties>
+                <integ.elasticsearch.image>docker.elastic.co/elasticsearch/elasticsearch-oss</integ.elasticsearch.image>
+            </properties>
+        </profile>
         <profile>
             <id>es-5x</id>
             <properties>

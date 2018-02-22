@@ -14,7 +14,9 @@ addons:
 before_script:
   - sudo sysctl -w vm.max_map_count=262144
 script:
-  - mvn --batch-mode clean verify -Pes-5x && mvn --batch-mode clean verify
+  - mvn --batch-mode clean verify -Pes-5x
+  - mvn --batch-mode clean verify -Poss
+  - mvn --batch-mode clean verify
   - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar
 after_success:
   - "[[ ${TRAVIS_PULL_REQUEST} == 'false' ]] && [[ ${TRAVIS_TAG} == '' ]] && mvn deploy -DskipTests --settings deploy-settings.xml"

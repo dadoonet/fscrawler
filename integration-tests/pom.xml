@@ -100,51 +100,10 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
             </plugin>
 
+            <!-- To start Docker when running IT -->
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
-                <version>0.24.0</version>
-                <configuration>
-                    <images>
-                        <image>
-                            <alias>elasticsearch-it</alias>
-                            <name>dadoonet/docker-elasticsearch:${project.version}</name>
-                            <build>
-                                <from>docker.elastic.co/elasticsearch/elasticsearch:${integ.elasticsearch.version}</from>
-                            </build>
-                            <run>
-                                <ports>
-                                    <port>integ.elasticsearch.port:9200</port>
-                                </ports>
-                                <wait>
-                                    <http>
-                                        <url>http://localhost:${integ.elasticsearch.port}/</url>
-                                        <status>200..499</status>
-                                    </http>
-                                    <time>60000</time>
-                                </wait>
-                            </run>
-                        </image>
-                    </images>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>start-elasticsearch</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>build</goal>
-                            <goal>stop</goal>
-                            <goal>start</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>stop-elasticsearch</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>stop</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
