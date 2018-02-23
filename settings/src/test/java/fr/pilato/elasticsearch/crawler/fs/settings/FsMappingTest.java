@@ -338,6 +338,22 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "  },\n" +
                 "  \"mappings\": {\n" +
                 "    \"doc\": {\n" +
+                "      \"dynamic_templates\": [\n" +
+                "        {\n" +
+                "          \"raw_as_text\": {\n" +
+                "            \"path_match\": \"meta.raw.*\",\n" +
+                "            \"mapping\": {\n" +
+                "              \"type\": \"text\",\n" +
+                "              \"fields\": {\n" +
+                "                \"keyword\": {\n" +
+                "                  \"type\": \"keyword\",\n" +
+                "                  \"ignore_above\": 256\n" +
+                "                }\n" +
+                "              }\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
+                "      ],\n" +
                 "      \"properties\" : {\n" +
                 "        \"attachment\" : {\n" +
                 "          \"type\" : \"binary\",\n" +
@@ -585,6 +601,22 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "  },\n" +
                 "  \"mappings\": {\n" +
                 "    \"doc\": {\n" +
+                "      \"dynamic_templates\": [\n" +
+                "        {\n" +
+                "          \"raw_as_text\": {\n" +
+                "            \"path_match\": \"meta.raw.*\",\n" +
+                "            \"mapping\": {\n" +
+                "              \"type\": \"text\",\n" +
+                "              \"fields\": {\n" +
+                "                \"keyword\": {\n" +
+                "                  \"type\": \"keyword\",\n" +
+                "                  \"ignore_above\": 256\n" +
+                "                }\n" +
+                "              }\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
+                "      ],\n" +
                 "      \"properties\" : {\n" +
                 "        \"attachment\" : {\n" +
                 "          \"type\" : \"binary\",\n" +

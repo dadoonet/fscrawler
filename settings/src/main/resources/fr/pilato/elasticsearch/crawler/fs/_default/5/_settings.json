@@ -16,6 +16,22 @@
   },
   "mappings": {
     "doc": {
+      "dynamic_templates": [
+        {
+          "raw_as_text": {
+            "path_match": "meta.raw.*",
+            "mapping": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        }
+      ],
       "properties" : {
         "attachment" : {
           "type" : "binary",
