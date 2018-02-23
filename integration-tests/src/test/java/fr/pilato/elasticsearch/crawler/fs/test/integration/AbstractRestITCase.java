@@ -47,7 +47,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         elasticsearchClient.deleteIndex(getCrawlerName());
 
         logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
-        esClientManager.createIndices(fsSettings);
+        esClientManager.createIndices();
     }
 
     @After

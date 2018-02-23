@@ -148,7 +148,7 @@ public class ElasticsearchClientManager {
         }
     }
 
-    public void createIndices(FsSettings settings) throws Exception {
+    public void createIndices() throws Exception {
         String elasticsearchVersion;
         Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
 

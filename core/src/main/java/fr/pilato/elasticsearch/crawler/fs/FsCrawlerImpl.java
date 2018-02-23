@@ -122,7 +122,7 @@ public class FsCrawlerImpl {
 
                 // Create the new indices with the right mappings (well, we don't read existing user configuration)
                 if (!indexExists) {
-                    esClientManager.createIndices(settings);
+                    esClientManager.createIndices();
                     logger.info("[{}] has been created.", indexFolder);
                 }
 
@@ -158,7 +158,7 @@ public class FsCrawlerImpl {
         }
 
         esClientManager.start();
-        esClientManager.createIndices(settings);
+        esClientManager.createIndices();
 
         // Start the crawler thread - but not if only in rest mode
         if (loop != 0) {
