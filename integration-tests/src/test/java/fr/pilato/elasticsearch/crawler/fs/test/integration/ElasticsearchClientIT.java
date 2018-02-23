@@ -34,7 +34,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Properties;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
@@ -140,7 +142,11 @@ public class ElasticsearchClientIT extends AbstractITCase {
         Version version = elasticsearchClient.info().getVersion();
         logger.info("Current elasticsearch version: [{}]", version);
 
-        // TODO if we store in a property file the elasticsearch version we are running tests against we can add some assertions
+        // If we did not use an external URL but the docker instance we can test for sure that the version is the expected one
+        if (System.getProperty("tests.cluster.host") == null) {
+            Properties properties = readPropertiesFromClassLoader("elasticsearch.version.properties");
+            assertThat(version.toString(), is(properties.getProperty("version")));
+        }
     }
 
     @Test

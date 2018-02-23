@@ -137,8 +137,6 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
             throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
-        // TODO do this rarely() createIndex(jobName);
-
         crawler = new FsCrawlerImpl(
                 metadataDir,
                 FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(),

@@ -53,6 +53,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TimeZone;
 
 public class FsCrawlerUtil {
@@ -314,6 +315,21 @@ public class FsCrawlerUtil {
     public static void copyResourceFile(String source, Path target) throws IOException {
         InputStream resource = FsCrawlerUtil.class.getResourceAsStream(source);
         FileUtils.copyInputStreamToFile(resource, target.toFile());
+    }
+
+    /**
+     * Read a property file from the class loader
+     * @param resource Resource name
+     * @return The properties loaded
+     */
+    public static Properties readPropertiesFromClassLoader(String resource) {
+        Properties properties = new Properties();
+        try {
+            properties.load(FsCrawlerUtil.class.getClassLoader().getResourceAsStream(resource));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return properties;
     }
 
     /**

@@ -72,6 +72,7 @@ import java.util.stream.Stream;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.unzip;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -235,8 +236,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             } catch (ConnectException e) {
                 staticLogger.debug("No local node running. We need to start a Docker instance.");
                 // We start an elasticsearch Docker instance
-                Properties props = new Properties();
-                props.load(AbstractITCase.class.getResourceAsStream("/elasticsearch.version.properties"));
+                Properties props = readPropertiesFromClassLoader("elasticsearch.version.properties");
                 container = ElasticsearchContainerSingleton.getInstance(props.getProperty("version"),
                         testClusterUser, testClusterPass);
 

@@ -19,20 +19,16 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import java.io.IOException;
 import java.util.Properties;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 
 public class Version {
     private final static String FSCRAWLER_PROPERTIES = "fscrawler.properties";
     public static final Properties properties;
 
     static {
-        properties = new Properties();
-        try {
-            properties.load(Version.class.getClassLoader().getResourceAsStream(FSCRAWLER_PROPERTIES));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        properties = readPropertiesFromClassLoader(FSCRAWLER_PROPERTIES);
     }
 
     public static String getVersion() {
