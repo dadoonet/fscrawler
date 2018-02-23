@@ -21,11 +21,10 @@ package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 public class DocParserTestCase extends AbstractFSCrawlerTestCase {
-    InputStream getBinaryContent(String filename) throws IOException {
+    InputStream getBinaryContent(String filename) {
         return getClass().getResourceAsStream("/documents/" + filename);
     }
 }
