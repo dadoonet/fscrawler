@@ -36,12 +36,12 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.crawler;
+package fr.pilato.elasticsearch.crawler.fs.beans;
 
 
 import java.time.LocalDateTime;
 
-public class FileAbstractModel {
+public class FileModel {
     public String name;
     public boolean file;
     public boolean directory;

@@ -49,10 +49,10 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_remove_deleted_enabled() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setRemoveDeleted(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         // We should have two docs first
         countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
@@ -67,10 +67,10 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_remove_deleted_disabled() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setRemoveDeleted(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         // We should have two docs first
         countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
@@ -88,10 +88,10 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_remove_folder_deleted_enabled() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setRemoveDeleted(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         // We should have 7 docs first
         countTestHelper(new SearchRequest(getCrawlerName()), 7L, currentTestResourceDir);

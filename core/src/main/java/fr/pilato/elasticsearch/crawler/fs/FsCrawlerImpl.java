@@ -20,11 +20,10 @@
 package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.search.SearchRequest;
@@ -51,26 +50,25 @@ public class FsCrawlerImpl {
 
     private final FsSettings settings;
     private final boolean rest;
-    private final Path config;
-    private final Integer loop;
 
     private Thread fsCrawlerThread;
 
     private final ElasticsearchClientManager esClientManager;
-    private FsParser fsParser;
+    private final FsParserAbstract fsParser;
 
-    public FsCrawlerImpl(Path config, FsSettings settings) {
-        this(config, settings, LOOP_INFINITE, false);
-    }
-
-    public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
-        FsCrawlerUtil.createDirIfMissing(config);
-
-        this.config = config;
+    /**
+     * Create a FsCrawler instance
+     * @param config            Path to config dir
+     * @param settings          FSCrawler settings
+     * @param rest              Start with a rest server
+     * @param esClientManager   Elasticsearch Client Manager instance
+     */
+    public FsCrawlerImpl(Path config, FsSettings settings, boolean rest, ElasticsearchClientManager esClientManager,
+                         FsParserAbstract fsParser) {
         this.settings = settings;
-        this.loop = loop;
         this.rest = rest;
-        this.esClientManager = new ElasticsearchClientManager(config, settings);
+        this.esClientManager = esClientManager;
+        this.fsParser = fsParser;
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
@@ -148,11 +146,11 @@ public class FsCrawlerImpl {
 
     public void start() throws Exception {
         logger.info("Starting FS crawler");
-        if (loop < 0) {
+        if (fsParser.getLoop() < 0) {
             logger.info("FS crawler started in watch mode. It will run unless you stop it with CTRL+C.");
         }
 
-        if (loop == 0 && !rest) {
+        if (fsParser.getLoop() == 0 && !rest) {
             logger.warn("Number of runs is set to 0 and rest layer has not been started. Exiting");
             return;
         }
@@ -161,20 +159,7 @@ public class FsCrawlerImpl {
         esClientManager.createIndices();
 
         // Start the crawler thread - but not if only in rest mode
-        if (loop != 0) {
-            // What is the protocol used?
-            if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
-                // Local FS
-                fsParser = new FsParserLocal(settings, config, esClientManager, loop);
-            } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
-                // Remote SSH FS
-                fsParser = new FsParserSsh(settings, config, esClientManager, loop);
-            } else {
-                // Non supported protocol
-                throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +
-                        Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH);
-            }
-
+        if (fsParser.getLoop() != 0) {
             fsCrawlerThread = new Thread(fsParser, "fs-crawler");
             fsCrawlerThread.start();
         }
@@ -206,7 +191,7 @@ public class FsCrawlerImpl {
         logger.info("FS crawler [{}] stopped", settings.getName());
     }
 
-    public FsParser getFsParser() {
+    public FsParserAbstract getFsParser() {
         return fsParser;
     }
 }

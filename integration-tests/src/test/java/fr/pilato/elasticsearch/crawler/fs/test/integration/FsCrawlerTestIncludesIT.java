@@ -29,19 +29,19 @@ import org.junit.Test;
 public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_includes() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .addInclude("*_include.txt")
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }
 
     @Test
     public void test_subdirs_with_patterns() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .addInclude("*.txt")
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         // We expect to have seven files
         countTestHelper(new SearchRequest(getCrawlerName()), 7L, null);
@@ -49,10 +49,10 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_ignore_dir() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .addExclude(".ignore")
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         // We expect to have one file
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);

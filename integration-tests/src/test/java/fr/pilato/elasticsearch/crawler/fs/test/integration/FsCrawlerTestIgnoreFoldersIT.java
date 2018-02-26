@@ -38,10 +38,10 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_ignore_folders() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setIndexFolders(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         // We expect to have two files
         countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);

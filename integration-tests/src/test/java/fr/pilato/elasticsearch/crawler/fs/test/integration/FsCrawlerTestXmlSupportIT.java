@@ -38,10 +38,10 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_xml_enabled() throws Exception {
         assumeVersion6AtLeast();
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setXmlSupport(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
         SearchResponse response = countTestHelper(new SearchRequest(getCrawlerName()), 3L, null);
 
         countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()

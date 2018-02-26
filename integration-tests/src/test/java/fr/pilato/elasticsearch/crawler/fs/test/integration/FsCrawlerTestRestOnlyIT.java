@@ -20,6 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
+import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FsParserLocal;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
@@ -50,15 +53,16 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
         try {
             // TODO do this rarely() createIndex(jobName);
             FsSettings fsSettings = FsSettings.builder(getCrawlerName())
-                    .setElasticsearch(endCrawlerDefinition(getCrawlerName()))
-                    .setFs(startCrawlerDefinition().build())
+                    .setElasticsearch(elasticsearchBuilder())
+                    .setFs(fsBuilder().build())
                     .setServer(null)
                     .setRest(Rest.builder().setPort(testRestPort).build()).build();
+            ElasticsearchClientManager esClientManager = new ElasticsearchClientManager(metadataDir, fsSettings);
+            FsParserAbstract parser = new FsParserLocal(fsSettings, metadataDir, esClientManager, 0);
             crawler = new FsCrawlerImpl(
                     metadataDir,
                     fsSettings,
-                    0,
-                    true);
+                    true, esClientManager, parser);
             crawler.start();
             RestServer.start(fsSettings, crawler.getEsClientManager());
 

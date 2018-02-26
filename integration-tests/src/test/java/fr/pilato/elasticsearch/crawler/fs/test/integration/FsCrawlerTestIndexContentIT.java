@@ -35,10 +35,10 @@ public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_index_content() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setIndexContent(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         // We expect to have one file
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);

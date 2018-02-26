@@ -24,6 +24,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import fr.pilato.elasticsearch.containers.ElasticsearchContainer;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.crawler.Plugins;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
@@ -57,7 +58,6 @@ import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -119,7 +119,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static RestClient esRestClient;
 
     @BeforeClass
-    public static void createFsCrawlerJobDir() throws IOException, URISyntaxException {
+    public static void createFsCrawlerJobDir() throws IOException {
         // We also need to create default mapping files
         metadataDir = rootTmpDir.resolve(".fscrawler");
         if (Files.notExists(metadataDir)) {
@@ -127,6 +127,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
         copyDefaultResources(metadataDir);
         staticLogger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
+    }
+
+    @BeforeClass
+    public static void registerAllPlugins() {
+        Plugins.registerPlugins();
     }
 
     @AfterClass
@@ -333,8 +338,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static final String testCrawlerPrefix = "fscrawler_";
 
-    static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
-                                                     TimeValue timeValue) {
+    static Elasticsearch elasticsearchBuilder(String indexName, String indexFolderName, int bulkSize,
+                                              TimeValue timeValue) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
                 .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
                 .setBulkSize(bulkSize);

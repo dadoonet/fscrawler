@@ -21,6 +21,9 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
+import fr.pilato.elasticsearch.crawler.fs.crawler.Plugins;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
@@ -48,7 +51,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     FsCrawlerImpl crawler = null;
     Path currentTestResourceDir;
 
-    private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
+    private static final Path DEFAULT_RESOURCES = Paths.get(getUrl("samples", "common"));
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -93,19 +96,11 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         stopCrawler();
     }
 
-    Fs.Builder startCrawlerDefinition() {
-        return startCrawlerDefinition(currentTestResourceDir.toString(), TimeValue.timeValueSeconds(5));
+    Fs.Builder fsBuilder() {
+        return fsBuilder(currentTestResourceDir.toString(), TimeValue.timeValueSeconds(5));
     }
 
-    Fs.Builder startCrawlerDefinition(TimeValue updateRate) {
-        return startCrawlerDefinition(currentTestResourceDir.toString(), updateRate);
-    }
-
-    Fs.Builder startCrawlerDefinition(String dir) {
-        return startCrawlerDefinition(dir, TimeValue.timeValueSeconds(5));
-    }
-
-    private Fs.Builder startCrawlerDefinition(String dir, TimeValue updateRate) {
+    Fs.Builder fsBuilder(String dir, TimeValue updateRate) {
         logger.info("  --> creating crawler for dir [{}]", dir);
         return Fs
                 .builder()
@@ -113,35 +108,57 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
                 .setUpdateRate(updateRate);
     }
 
-    Elasticsearch endCrawlerDefinition(String indexName) {
-        return endCrawlerDefinition(indexName, indexName + INDEX_SUFFIX_FOLDER);
+    Elasticsearch elasticsearchBuilder() {
+        return elasticsearchBuilder(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER, 1, null);
     }
 
-    private Elasticsearch endCrawlerDefinition(String indexDocName, String indexFolderName) {
-        return generateElasticsearchConfig(indexDocName, indexFolderName, 1, null);
+    Elasticsearch elasticsearchBuilder(String indexName) {
+        return elasticsearchBuilder(indexName, indexName + INDEX_SUFFIX_FOLDER, 1, null);
     }
 
     void startCrawler() throws Exception {
-        startCrawler(getCrawlerName());
+        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
+                .setElasticsearch(elasticsearchBuilder())
+                .setFs(fsBuilder().build())
+                .build();
+        ElasticsearchClientManager elasticsearchClientManager = createElasticsearchClientManager(fsSettings);
+        startCrawler(getCrawlerName(), fsSettings, createParser(fsSettings, elasticsearchClientManager), elasticsearchClientManager, false, TimeValue.timeValueSeconds(10));
     }
 
-    private void startCrawler(final String jobName) throws Exception {
-        startCrawler(jobName, startCrawlerDefinition().build(), endCrawlerDefinition(jobName), null);
+    FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch) throws Exception {
+        FsSettings fsSettings = FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).build();
+        ElasticsearchClientManager elasticsearchClientManager = createElasticsearchClientManager(fsSettings);
+        return startCrawler(jobName, fsSettings, createParser(fsSettings, elasticsearchClientManager), elasticsearchClientManager, false, TimeValue.timeValueSeconds(10));
     }
 
-    FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
-        return startCrawler(jobName, fs, elasticsearch, server, null, TimeValue.timeValueSeconds(10));
+    ElasticsearchClientManager createElasticsearchClientManager(FsSettings fsSettings) {
+        return new ElasticsearchClientManager(metadataDir, fsSettings);
+    }
+
+    FsParserAbstract createParser(FsSettings fsSettings, ElasticsearchClientManager elasticsearchClientManager) {
+        return Plugins.createParser(fsSettings, metadataDir, elasticsearchClientManager, LOOP_INFINITE);
     }
 
     FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest, TimeValue duration)
+            throws Exception {
+        FsSettings fsSettings = FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build();
+        ElasticsearchClientManager elasticsearchClientManager = createElasticsearchClientManager(fsSettings);
+        return startCrawler(jobName, fsSettings, createParser(fsSettings, elasticsearchClientManager), elasticsearchClientManager, rest != null, duration);
+    }
+
+    FsCrawlerImpl startCrawler(final String jobName, FsSettings fsSettings,
+                               FsParserAbstract parser,
+                               ElasticsearchClientManager elasticsearchClientManager,
+                               boolean rest, TimeValue duration)
             throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
         crawler = new FsCrawlerImpl(
                 metadataDir,
-                FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(),
-                LOOP_INFINITE,
-                rest != null);
+                fsSettings,
+                rest,
+                elasticsearchClientManager,
+                parser);
         crawler.start();
 
         // We wait up to X seconds before considering a failing test

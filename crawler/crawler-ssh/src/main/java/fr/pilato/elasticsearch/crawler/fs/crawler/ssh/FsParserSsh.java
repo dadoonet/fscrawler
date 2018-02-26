@@ -22,13 +22,19 @@ package fr.pilato.elasticsearch.crawler.fs.crawler.ssh;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
+import fr.pilato.elasticsearch.crawler.fs.beans.FileModel;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
+import fr.pilato.elasticsearch.crawler.fs.crawler.Plugin;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -37,50 +43,69 @@ import java.util.Collection;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
+@Plugin(name = FsParserSsh.NAME)
+public class FsParserSsh extends FsParserAbstract {
 
+    public static final String NAME = "ssh";
+    private static final Logger logger = LogManager.getLogger(FsParserSsh.class);
     private ChannelSftp sftp;
 
-    public FileAbstractorSSH(FsSettings fsSettings) {
-        super(fsSettings);
+    public FsParserSsh(FsSettings fsSettings, Path config, ElasticsearchClientManager esClientManager, Integer loop) {
+        super(fsSettings, config, esClientManager, loop);
     }
 
     @Override
-    public FileAbstractModel toFileAbstractModel(String path, ChannelSftp.LsEntry file) {
-        FileAbstractModel model = new FileAbstractModel();
-        model.name = file.getFilename();
-        model.directory = file.getAttrs().isDir();
-        model.file = !model.directory;
-        // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
-        model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()*1000L), ZoneId.systemDefault());
-        model.path = path;
-        model.fullpath = model.path.concat("/").concat(model.name);
-        model.size = file.getAttrs().getSize();
-        model.owner = Integer.toString(file.getAttrs().getUId());
-        model.group = Integer.toString(file.getAttrs().getGId());
-        return model;
+    public void openConnection() throws Exception {
+        sftp = openSSHConnection(fsSettings.getServer());
     }
 
     @Override
-    public InputStream getInputStream(FileAbstractModel file) throws Exception {
-        return sftp.get(file.fullpath);
+    public void validate() {
+        // Check that the SSH directory we want to crawl exists
+        try {
+            sftp.ls(fsSettings.getFs().getUrl());
+        } catch (Exception e) {
+            throw new RuntimeException(fsSettings.getFs().getUrl() + " doesn't exists.", e);
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            sftp.getSession().disconnect();
+        } catch (JSchException ignored) {
+            // If we have no existing session, no need to close it
+        }
+        sftp.disconnect();
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public Collection<FileAbstractModel> getFiles(String dir) throws Exception {
+    public Collection<FileModel> getFiles(String dir) throws Exception {
         logger.debug("Listing local files from {}", dir);
         Vector<ChannelSftp.LsEntry> ls;
 
         ls = sftp.ls(dir);
         if (ls == null) return null;
 
-        Collection<FileAbstractModel> result = new ArrayList<>(ls.size());
+        Collection<FileModel> result = new ArrayList<>(ls.size());
         // Iterate other files
         // We ignore here all files like . and ..
         result.addAll(ls.stream().filter(file -> !".".equals(file.getFilename()) &&
                 !"..".equals(file.getFilename()))
-                .map(file -> toFileAbstractModel(dir, file))
+                .map(file -> {
+                    FileModel model = new FileModel();
+                    model.name = file.getFilename();
+                    model.directory = file.getAttrs().isDir();
+                    model.file = !model.directory;
+                    // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
+                    model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()*1000L), ZoneId.systemDefault());
+                    model.path = dir;
+                    model.fullpath = model.path.concat("/").concat(model.name);
+                    model.size = file.getAttrs().getSize();
+                    model.owner = Integer.toString(file.getAttrs().getUId());
+                    model.group = Integer.toString(file.getAttrs().getGId());
+                    return model;
+                })
                 .collect(Collectors.toList()));
 
         logger.debug("{} local files found", result.size());
@@ -88,25 +113,10 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
     }
 
     @Override
-    public boolean exists(String dir) {
-        try {
-            sftp.ls(dir);
-        } catch (Exception e) {
-            return false;
-        }
-        return true;
+    public InputStream getInputStream(FileModel file) throws Exception {
+        return sftp.get(file.fullpath);
     }
 
-    @Override
-    public void open() throws Exception {
-        sftp = openSSHConnection(fsSettings.getServer());
-    }
-
-    @Override
-    public void close() throws Exception {
-        sftp.getSession().disconnect();
-        sftp.disconnect();
-    }
 
     private ChannelSftp openSSHConnection(Server server) throws Exception {
         logger.debug("Opening SSH connection to {}@{}", server.getUsername(), server.getHostname());

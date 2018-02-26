@@ -37,10 +37,10 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_store_source() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setStoreSource(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {

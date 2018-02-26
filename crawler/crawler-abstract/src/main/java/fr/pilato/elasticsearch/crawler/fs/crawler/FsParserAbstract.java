@@ -17,47 +17,34 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs;
+package fr.pilato.elasticsearch.crawler.fs.crawler;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
+import fr.pilato.elasticsearch.crawler.fs.beans.FileModel;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.PathParser;
 import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
-import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -65,31 +52,25 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.compute
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isExcluded;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 
-public abstract class FsParser implements Runnable {
-    private static final Logger logger = LogManager.getLogger(FsParser.class);
+public abstract class FsParserAbstract implements Runnable, FsParser {
+    private static final Logger logger = LogManager.getLogger(FsParserAbstract.class);
 
-    private static final String PATH_ROOT = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT;
-    private static final String FILE_FILENAME = Doc.FIELD_NAMES.FILE + "." + fr.pilato.elasticsearch.crawler.fs.beans.File.FIELD_NAMES.FILENAME;
-
-    private static final int REQUEST_SIZE = 10000;
-
-    final FsSettings fsSettings;
-    private final FsJobFileHandler fsJobFileHandler;
-    private final ElasticsearchClientManager esClientManager;
+    protected final FsSettings fsSettings;
+    final FsJobFileHandler fsJobFileHandler;
+    private final ElasticsearchWrapper elasticsearchWrapper;
     private final Integer loop;
     private final MessageDigest messageDigest;
 
-    private ScanStatistic stats;
     private final AtomicInteger runNumber = new AtomicInteger(0);
     private static final Object semaphore = new Object();
+    ScanStatistic stats;
     private boolean closed;
 
-    public FsParser(FsSettings fsSettings, Path config, ElasticsearchClientManager esClientManager, Integer loop) {
+    protected FsParserAbstract(FsSettings fsSettings, Path config, ElasticsearchClientManager esClientManager, Integer loop) {
         this.fsSettings = fsSettings;
         this.fsJobFileHandler = new FsJobFileHandler(config);
-        this.esClientManager = esClientManager;
+        this.elasticsearchWrapper = new ElasticsearchWrapper(esClientManager, fsSettings);
         this.loop = loop;
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
@@ -106,8 +87,6 @@ public abstract class FsParser implements Runnable {
             messageDigest = null;
         }
     }
-
-    protected abstract FileAbstractor buildFileAbstractor();
 
     public Object getSemaphore() {
         return semaphore;
@@ -126,52 +105,8 @@ public abstract class FsParser implements Runnable {
             }
 
             int run = runNumber.incrementAndGet();
-            FileAbstractor path = null;
 
-            try {
-                logger.debug("Fs crawler thread [{}] is now running. Run #{}...", fsSettings.getName(), run);
-                stats = new ScanStatistic(fsSettings.getFs().getUrl());
-
-                path = buildFileAbstractor();
-                path.open();
-
-                if (!path.exists(fsSettings.getFs().getUrl())) {
-                    throw new RuntimeException(fsSettings.getFs().getUrl() + " doesn't exists.");
-                }
-
-                String rootPathId = SignTool.sign(fsSettings.getFs().getUrl());
-                stats.setRootPathId(rootPathId);
-
-                LocalDateTime scanDatenew = LocalDateTime.now();
-                LocalDateTime scanDate = getLastDateFromMeta(fsSettings.getName());
-
-                // We only index the root directory once (first run)
-                // That means that we don't have a scanDate yet
-                if (scanDate == null && fsSettings.getFs().isIndexFolders()) {
-                    indexDirectory(fsSettings.getFs().getUrl());
-                }
-
-                if (scanDate == null) {
-                    scanDate = LocalDateTime.MIN;
-                }
-
-                addFilesRecursively(path, fsSettings.getFs().getUrl(), scanDate);
-
-                updateFsJob(fsSettings.getName(), scanDatenew);
-            } catch (Exception e) {
-                logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage());
-                if (logger.isDebugEnabled()) {
-                    logger.warn("Full stacktrace", e);
-                }
-            } finally {
-                if (path != null) {
-                    try {
-                        path.close();
-                    } catch (Exception e) {
-                        logger.warn("Error while closing the connection: {}", e, e.getMessage());
-                    }
-                }
-            }
+            crawl(run);
 
             if (loop > 0 && run >= loop) {
                 logger.info("FS crawler is stopping after {} run{}", run, run > 1 ? "s" : "");
@@ -196,48 +131,58 @@ public abstract class FsParser implements Runnable {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private LocalDateTime getLastDateFromMeta(String jobName) throws IOException {
+    @Override
+    public void crawl(int run) {
         try {
-            FsJob fsJob = fsJobFileHandler.read(jobName);
-            return fsJob.getLastrun();
-        } catch (NoSuchFileException e) {
-            // The file does not exist yet
+            logger.debug("Fs crawler thread [{}] is now running. Run #{}...", fsSettings.getName(), run);
+            stats = new ScanStatistic(fsSettings.getFs().getUrl());
+
+            openConnection();
+            validate();
+
+            String rootPathId = SignTool.sign(fsSettings.getFs().getUrl());
+            stats.setRootPathId(rootPathId);
+
+            LocalDateTime scanDatenew = LocalDateTime.now();
+            LocalDateTime scanDate = fsJobFileHandler.getLastDateFromMeta(fsSettings.getName());
+
+            // We only index the root directory once (first run)
+            // That means that we don't have a scanDate yet
+            if (scanDate == null && fsSettings.getFs().isIndexFolders()) {
+                indexDirectory(stats.getRootPath(), fsSettings.getFs().getUrl());
+            }
+
+            if (scanDate == null) {
+                scanDate = LocalDateTime.MIN;
+            }
+
+            addFilesRecursively(fsSettings.getFs().getUrl(), scanDate);
+
+            fsJobFileHandler.updateFsJob(fsSettings.getName(), scanDatenew, stats);
+        } catch (Exception e) {
+            logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage());
+            if (logger.isDebugEnabled()) {
+                logger.warn("Full stacktrace", e);
+            }
+        } finally {
+            try {
+                close();
+            } catch (Exception e) {
+                logger.warn("Error while closing the connection: {}", e, e.getMessage());
+            }
         }
-        return null;
     }
 
-    /**
-     * Update the job metadata
-     * @param jobName job name
-     * @param scanDate last date we scan the dirs
-     * @throws Exception In case of error
-     */
-    private void updateFsJob(String jobName, LocalDateTime scanDate) throws Exception {
-        // We need to round that latest date to the lower second and
-        // remove 2 seconds.
-        // See #82: https://github.com/dadoonet/fscrawler/issues/82
-        scanDate = scanDate.minus(2, ChronoUnit.SECONDS);
-        FsJob fsJob = FsJob.builder()
-                .setName(jobName)
-                .setLastrun(scanDate)
-                .setIndexed(stats.getNbDocScan())
-                .setDeleted(stats.getNbDocDeleted())
-                .build();
-        fsJobFileHandler.write(jobName, fsJob);
-    }
-
-    private void addFilesRecursively(FileAbstractor<?> path, String filepath, LocalDateTime lastScanDate)
-            throws Exception {
+    private void addFilesRecursively(String filepath, LocalDateTime lastScanDate) throws Exception {
 
         logger.debug("indexing [{}] content", filepath);
 
-        final Collection<FileAbstractModel> children = path.getFiles(filepath);
+        final Collection<FileModel> children = getFiles(filepath);
         Collection<String> fsFiles = new ArrayList<>();
         Collection<String> fsFolders = new ArrayList<>();
 
         if (children != null) {
-            for (FileAbstractModel child : children) {
+            for (FileModel child : children) {
                 String filename = child.name;
 
                 // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
@@ -258,7 +203,7 @@ public abstract class FsParser implements Runnable {
                                 (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
                             try {
                                 indexFile(child, stats, filepath,
-                                        fsSettings.getFs().isIndexContent() ? path.getInputStream(child) : null, child.size);
+                                        fsSettings.getFs().isIndexContent() ? getInputStream(child) : null, child.size);
                                 stats.addFile();
                             } catch (java.io.FileNotFoundException e) {
                                 if (fsSettings.getFs().isContinueOnError()) {
@@ -275,9 +220,9 @@ public abstract class FsParser implements Runnable {
                         logger.debug("  - folder: {}", filename);
                         if (fsSettings.getFs().isIndexFolders()) {
                             fsFolders.add(child.fullpath);
-                            indexDirectory(child.fullpath);
+                            indexDirectory(stats.getRootPath(), child.fullpath);
                         }
-                        addFilesRecursively(path, child.fullpath, lastScanDate);
+                        addFilesRecursively(child.fullpath, lastScanDate);
                     } else {
                         logger.debug("  - other: {}", filename);
                         logger.debug("Not a file nor a dir. Skipping {}", child.fullpath);
@@ -294,7 +239,7 @@ public abstract class FsParser implements Runnable {
 
         if (fsSettings.getFs().isRemoveDeleted()) {
             logger.debug("Looking for removed files in [{}]...", filepath);
-            Collection<String> esFiles = getFileDirectory(filepath);
+            Collection<String> esFiles = elasticsearchWrapper.getFileDirectory(closed, filepath);
 
             // for the delete files
             for (String esfile : esFiles) {
@@ -303,14 +248,14 @@ public abstract class FsParser implements Runnable {
                 if (isIndexable(esfile, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
                         && !fsFiles.contains(esfile)) {
                     logger.trace("Removing file [{}] in elasticsearch", esfile);
-                    esDelete(fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, filepath));
+                    elasticsearchWrapper.bulk(closed, ElasticsearchWrapper.deleteRequest(fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, filepath)));
                     stats.removeFile();
                 }
             }
 
             if (fsSettings.getFs().isIndexFolders()) {
                 logger.debug("Looking for removed directories in [{}]...", filepath);
-                Collection<String> esFolders = getFolderDirectory(filepath);
+                Collection<String> esFolders = elasticsearchWrapper.getFolderDirectory(closed, filepath);
 
                 // for the delete folder
                 for (String esfolder : esFolders) {
@@ -326,89 +271,11 @@ public abstract class FsParser implements Runnable {
         }
     }
 
-    // TODO Optimize it. We can probably use a search for a big array of filenames instead of
-    // Searching fo 10000 files (which is somehow limited).
-    private Collection<String> getFileDirectory(String path)
-            throws Exception {
-
-        // If the crawler is being closed, we return
-        if (closed) {
-            return Collections.emptyList();
-        }
-
-        logger.trace("Querying elasticsearch for files in dir [{}:{}]", PATH_ROOT, SignTool.sign(path));
-        Collection<String> files;
-        // Hack because the High Level Client is not compatible with versions < 5.0
-        if (esClientManager.client().isIngestSupported()) {
-            files = new ArrayList<>();
-            SearchResponse response = esClientManager.client().search(
-                    new SearchRequest(fsSettings.getElasticsearch().getIndex()).source(
-                            new SearchSourceBuilder()
-                                    .size(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                                    .storedField(FILE_FILENAME)
-                                    .query(QueryBuilders.termQuery(PATH_ROOT, SignTool.sign(path)))));
-
-            logger.trace("Response [{}]", response.toString());
-            if (response.getHits() != null && response.getHits().getHits() != null) {
-                for (SearchHit hit : response.getHits().getHits()) {
-                    String name;
-                    if (hit.getFields() != null
-                            && hit.getFields().get(FILE_FILENAME) != null) {
-                        // In case someone disabled _source which is not recommended
-                        name = hit.getFields().get(FILE_FILENAME).getValue();
-                    } else {
-                        // Houston, we have a problem ! We can't get the old files from ES
-                        logger.warn("Can't find stored field name to check existing filenames in path [{}]. " +
-                                "Please set store: true on field [{}]", path, FILE_FILENAME);
-                        throw new RuntimeException("Mapping is incorrect: please set stored: true on field [" +
-                                FILE_FILENAME + "].");
-                    }
-                    files.add(name);
-                }
-            }
-        } else {
-            files = esClientManager.client().getFromStoredFieldsV2(
-                    fsSettings.getElasticsearch().getIndex(),
-                    REQUEST_SIZE,    // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                    FILE_FILENAME,
-                    path,
-                    QueryBuilders.termQuery(PATH_ROOT, SignTool.sign(path)));
-        }
-
-        logger.trace("We found: {}", files);
-
-        return files;
-    }
-
-    private Collection<String> getFolderDirectory(String path) throws Exception {
-        Collection<String> files = new ArrayList<>();
-
-        // If the crawler is being closed, we return
-        if (closed) {
-            return files;
-        }
-
-        SearchResponse response = esClientManager.client().search(
-                new SearchRequest(fsSettings.getElasticsearch().getIndexFolder()).source(
-                        new SearchSourceBuilder()
-                                .size(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                                .query(QueryBuilders.termQuery(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT, SignTool.sign(path)))));
-
-        if (response.getHits() != null && response.getHits().getHits() != null) {
-            for (SearchHit hit : response.getHits().getHits()) {
-                String name = hit.getSourceAsMap().get(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.REAL).toString();
-                files.add(name);
-            }
-        }
-
-        return files;
-    }
-
     /**
      * Index a file
      */
-    private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
-                           long filesize) throws Exception {
+    void indexFile(FileModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
+                   long filesize) throws Exception {
         final String filename = fileAbstractModel.name;
         final LocalDateTime lastmodified = fileAbstractModel.lastModifiedDate;
         final String extension = fileAbstractModel.extension;
@@ -462,28 +329,28 @@ public abstract class FsParser implements Runnable {
                         doc.setObject(XmlDocParser.generateMap(inputStream));
                     } else {
                         // Extracting content with Tika
-                        generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
+                        TikaDocParser.generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
                     }
                 }
 
                 // We index the data structure
-                esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
+                elasticsearchWrapper.bulk(closed, ElasticsearchWrapper.indexRequest(fsSettings.getElasticsearch().getIndex(),
                         generateIdFromFilename(filename, dirname),
                         DocParser.toJson(doc),
-                        fsSettings.getElasticsearch().getPipeline());
+                        fsSettings.getElasticsearch().getPipeline()));
             } else if (fsSettings.getFs().isIndexContent()) {
                 if (fsSettings.getFs().isJsonSupport()) {
                     // We index the json content directly
-                    esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
+                    elasticsearchWrapper.bulk(closed, ElasticsearchWrapper.indexRequest(fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
                             read(inputStream),
-                            fsSettings.getElasticsearch().getPipeline());
+                            fsSettings.getElasticsearch().getPipeline()));
                 } else if (fsSettings.getFs().isXmlSupport()) {
                     // We index the xml content directly
-                    esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
+                    elasticsearchWrapper.bulk(closed, ElasticsearchWrapper.indexRequest(fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
                             XmlDocParser.generate(inputStream),
-                            fsSettings.getElasticsearch().getPipeline());
+                            fsSettings.getElasticsearch().getPipeline()));
                 }
             }
         } finally {
@@ -494,10 +361,12 @@ public abstract class FsParser implements Runnable {
         }
     }
 
-    private String generateIdFromFilename(String filename, String filepath) throws NoSuchAlgorithmException {
+    String generateIdFromFilename(String filename, String filepath) throws NoSuchAlgorithmException {
         return fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign((new File(filepath, filename)).toString());
     }
 
+    // TODO Check this as it will consume more likely a lot of memory
+    // May be add an option which ask the user if JSON are one line only?
     private String read(InputStream input) throws IOException {
         try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input, "UTF-8"))) {
             return buffer.lines().collect(Collectors.joining("\n"));
@@ -505,23 +374,11 @@ public abstract class FsParser implements Runnable {
     }
 
     /**
-     * Index a Path object (AKA a folder) in elasticsearch
-     * @param id    id of the path
-     * @param path  path object
-     * @throws Exception in case of error
-     */
-    private void indexDirectory(String id, fr.pilato.elasticsearch.crawler.fs.beans.Path path) throws Exception {
-        esIndex(esClientManager.bulkProcessorFolder(), fsSettings.getElasticsearch().getIndexFolder(),
-                id,
-                PathParser.toJson(path),
-                null);
-    }
-
-    /**
      * Index a directory
+     * @param rootPath the root path like /path/to
      * @param path complete path like /path/to/subdir
      */
-    private void indexDirectory(String path) throws Exception {
+    void indexDirectory(String rootPath, String path) throws Exception {
         fr.pilato.elasticsearch.crawler.fs.beans.Path pathObject = new fr.pilato.elasticsearch.crawler.fs.beans.Path();
         // The real and complete path
         pathObject.setReal(path);
@@ -529,54 +386,32 @@ public abstract class FsParser implements Runnable {
         // Encoded version of the parent dir
         pathObject.setRoot(SignTool.sign(rootdir));
         // The virtual URL (not including the initial root dir)
-        pathObject.setVirtual(computeVirtualPathName(stats.getRootPath(), path));
+        pathObject.setVirtual(computeVirtualPathName(rootPath, path));
 
-        indexDirectory(SignTool.sign(path), pathObject);
+        elasticsearchWrapper.bulk(closed, ElasticsearchWrapper.indexRequest(fsSettings.getElasticsearch().getIndexFolder(),
+                SignTool.sign(path),
+                PathParser.toJson(pathObject),
+                null));
     }
 
     /**
      * Remove a full directory and sub dirs recursively
      */
-    private void removeEsDirectoryRecursively(final String path) throws Exception {
+    void removeEsDirectoryRecursively(final String path) throws Exception {
         logger.debug("Delete folder [{}]", path);
-        Collection<String> listFile = getFileDirectory(path);
+        Collection<String> listFile = elasticsearchWrapper.getFileDirectory(closed, path);
 
         for (String esfile : listFile) {
-            esDelete(fsSettings.getElasticsearch().getIndex(), SignTool.sign(path.concat(File.separator).concat(esfile)));
+            elasticsearchWrapper.bulk(closed,
+                    ElasticsearchWrapper.deleteRequest(fsSettings.getElasticsearch().getIndex(), SignTool.sign(path.concat(File.separator).concat(esfile))));
         }
 
-        Collection<String> listFolder = getFolderDirectory(path);
+        Collection<String> listFolder = elasticsearchWrapper.getFolderDirectory(closed, path);
         for (String esfolder : listFolder) {
             removeEsDirectoryRecursively(esfolder);
         }
 
-        esDelete(fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path));
-    }
-
-    /**
-     * Add to bulk an IndexRequest in JSon format
-     */
-    void esIndex(BulkProcessor bulkProcessor, String index, String id, String json, String pipeline) {
-        logger.debug("Indexing {}/doc/{}?pipeline={}", index, id, pipeline);
-        logger.trace("JSon indexed : {}", json);
-
-        if (!closed) {
-            bulkProcessor.add(new IndexRequest(index, "doc", id).source(json, XContentType.JSON).setPipeline(pipeline));
-        } else {
-            logger.warn("trying to add new file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
-        }
-    }
-
-    /**
-     * Add to bulk a DeleteRequest
-     */
-    void esDelete(String index, String id) {
-        logger.debug("Deleting {}/doc/{}", index, id);
-        if (!closed) {
-            esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, "doc", id));
-        } else {
-            logger.warn("trying to remove a file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
-        }
+        elasticsearchWrapper.bulk(closed, ElasticsearchWrapper.deleteRequest(fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path)));
     }
 
     public int getRunNumber() {
@@ -589,5 +424,9 @@ public abstract class FsParser implements Runnable {
 
     public boolean isClosed() {
         return closed;
+    }
+
+    public Integer getLoop() {
+        return loop;
     }
 }

@@ -20,6 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
+import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FsParserLocal;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.elasticsearch.action.search.SearchRequest;
@@ -38,12 +41,15 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_single_loop() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
+        Fs fs = fsBuilder().build();
 
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
-        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1, false);
+        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
+                .setElasticsearch(elasticsearchBuilder()).setFs(fs).build();
+        ElasticsearchClientManager esClientManager = new ElasticsearchClientManager(metadataDir, fsSettings);
+        FsParserAbstract parser = new FsParserLocal(fsSettings, metadataDir, esClientManager, 1);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, false, esClientManager, parser);
         crawler.start();
 
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
@@ -57,12 +63,15 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_two_loops() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
+        Fs fs = fsBuilder().build();
 
         logger.info("  --> starting crawler [{}]", getCrawlerName());
 
-        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2, false);
+        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
+                .setElasticsearch(elasticsearchBuilder()).setFs(fs).build();
+        ElasticsearchClientManager esClientManager = new ElasticsearchClientManager(metadataDir, fsSettings);
+        FsParserAbstract parser = new FsParserLocal(fsSettings, metadataDir, esClientManager, 2);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, false, esClientManager, parser);
         crawler.start();
 
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);

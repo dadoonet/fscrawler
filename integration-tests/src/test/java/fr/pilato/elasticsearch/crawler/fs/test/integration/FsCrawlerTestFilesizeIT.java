@@ -56,10 +56,10 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_filesize_limit() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setIndexedChars(new Percentage(7))
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
@@ -76,10 +76,10 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_filesize_limit_percentage() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setIndexedChars(Percentage.parse("0.1%"))
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
@@ -96,10 +96,10 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_filesize_nolimit() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setIndexedChars(new Percentage(-1))
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
@@ -115,10 +115,10 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_filesize_disabled() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setAddFilesize(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {

@@ -37,10 +37,10 @@ import static org.hamcrest.Matchers.notNullValue;
 public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_attributes() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setAttributesSupport(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.ATTRIBUTES).get(Attributes.FIELD_NAMES.OWNER), notNullValue());

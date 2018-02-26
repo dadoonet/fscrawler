@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import org.elasticsearch.action.search.SearchRequest;
 import org.junit.Test;
@@ -31,10 +32,10 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_multiple_crawlers() throws Exception {
-        Fs fs1 = startCrawlerDefinition(currentTestResourceDir.resolve("crawler1").toString()).build();
-        Fs fs2 = startCrawlerDefinition(currentTestResourceDir.resolve("crawler2").toString()).build();
-        FsCrawlerImpl crawler1 = startCrawler(getCrawlerName() + "_1", fs1, endCrawlerDefinition(getCrawlerName() + "_1"), null);
-        FsCrawlerImpl crawler2 = startCrawler(getCrawlerName() + "_2", fs2, endCrawlerDefinition(getCrawlerName() + "_2"), null);
+        Fs fs1 = fsBuilder(currentTestResourceDir.resolve("crawler1").toString(), TimeValue.timeValueSeconds(5)).build();
+        Fs fs2 = fsBuilder(currentTestResourceDir.resolve("crawler2").toString(), TimeValue.timeValueSeconds(5)).build();
+        FsCrawlerImpl crawler1 = startCrawler(getCrawlerName() + "_1", fs1, elasticsearchBuilder(getCrawlerName() + "_1"));
+        FsCrawlerImpl crawler2 = startCrawler(getCrawlerName() + "_2", fs2, elasticsearchBuilder(getCrawlerName() + "_2"));
         // We should have one doc in index 1...
         countTestHelper(new SearchRequest(getCrawlerName() + "_1"), 1L, null);
         // We should have one doc in index 2...

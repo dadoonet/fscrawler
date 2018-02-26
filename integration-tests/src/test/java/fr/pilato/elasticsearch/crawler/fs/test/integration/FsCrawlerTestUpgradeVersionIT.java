@@ -20,6 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
+import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FsParserLocal;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -80,7 +83,9 @@ public class FsCrawlerTestUpgradeVersionIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = FsSettings.builder(getCrawlerName())
                 .setElasticsearch(elasticsearchWithSecurity).build();
         fsSettings.getElasticsearch().setIndex(getCrawlerName());
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0, false);
+        ElasticsearchClientManager esClientManager = new ElasticsearchClientManager(metadataDir, fsSettings);
+        FsParserAbstract parser = new FsParserLocal(fsSettings, metadataDir, esClientManager, 0);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, false, esClientManager, parser);
 
         // Call the upgrade process
         crawler.upgrade();

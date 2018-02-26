@@ -22,6 +22,10 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * We want to replace all that by specific implementation settings per plugin instead
+ */
+@Deprecated
 public class Server {
 
     public static final class PROTOCOL {

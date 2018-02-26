@@ -42,10 +42,10 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_json_support() throws Exception {
         assumeVersion6AtLeast();
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setJsonSupport(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
             try {
@@ -65,10 +65,10 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_json_disabled() throws Exception {
         assumeVersion6AtLeast();
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setJsonSupport(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
             try {
@@ -99,11 +99,11 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_add_as_inner_object() throws Exception {
         assumeVersion6AtLeast();
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setJsonSupport(true)
                 .setAddAsInnerObject(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         assertThat("We should have 2 doc for tweet in object.text field...", awaitBusy(() -> {
             try {
@@ -122,10 +122,10 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_json_support_and_other_files() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setJsonSupport(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         assertThat("We should have 2 docs only...", awaitBusy(() -> {
             try {

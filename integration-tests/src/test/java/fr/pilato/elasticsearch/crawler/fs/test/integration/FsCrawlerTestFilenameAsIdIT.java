@@ -40,10 +40,10 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_filename_as_id() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setFilenameAsId(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
@@ -59,11 +59,11 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_remove_deleted_with_filename_as_id() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setRemoveDeleted(true)
                 .setFilenameAsId(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         // We should have two docs first
         countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);

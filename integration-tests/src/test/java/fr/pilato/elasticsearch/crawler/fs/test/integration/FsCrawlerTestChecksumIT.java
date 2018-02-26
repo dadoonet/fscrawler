@@ -48,10 +48,10 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
             assumeNoException(e);
         }
 
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setChecksum("MD5")
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             Object checksum = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
@@ -67,10 +67,10 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
             assumeNoException(e);
         }
 
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setChecksum("SHA-1")
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             Object checksum = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);

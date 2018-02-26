@@ -19,13 +19,18 @@
 
 package fr.pilato.elasticsearch.crawler.fs.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
+import fr.pilato.elasticsearch.crawler.fs.beans.FileModel;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
+import fr.pilato.elasticsearch.crawler.fs.crawler.Plugin;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -38,46 +43,56 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFile
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
 
-public class FileAbstractorFile extends FileAbstractor<File> {
-    public FileAbstractorFile(FsSettings fsSettings) {
-        super(fsSettings);
+@Plugin(name = FsParserLocal.NAME)
+public class FsParserLocal extends FsParserAbstract {
+
+    public static final String NAME = "local";
+    private static final Logger logger = LogManager.getLogger(FsParserLocal.class);
+
+    public FsParserLocal(FsSettings fsSettings,
+                         Path config,
+                         ElasticsearchClientManager esClientManager,
+                         Integer loop) {
+        super(fsSettings, config, esClientManager, loop);
     }
 
     @Override
-    public FileAbstractModel toFileAbstractModel(String path, File file) {
-        FileAbstractModel model = new FileAbstractModel();
-        model.name = file.getName();
-        model.file = file.isFile();
-        model.directory = !model.file;
-        model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault());
-        model.creationDate = getCreationTime(file);
-        model.extension = getFileExtension(file);
-        model.path = path;
-        model.fullpath = file.getAbsolutePath();
-        model.size = file.length();
-        model.owner = getOwnerName(file);
-        model.group = getGroupName(file);
-
-        return model;
+    public void validate() {
+        // Check that the Local directory we want to crawl exists
+        if (!new File(fsSettings.getFs().getUrl()).exists()) {
+            throw new RuntimeException(fsSettings.getFs().getUrl() + " doesn't exists.");
+        }
     }
 
     @Override
-    public InputStream getInputStream(FileAbstractModel file) throws Exception {
+    public InputStream getInputStream(FileModel file) throws Exception {
         return new FileInputStream(new File(file.fullpath));
     }
 
     @Override
-    public Collection<FileAbstractModel> getFiles(String dir) {
+    public Collection<FileModel> getFiles(String dir) {
         logger.debug("Listing local files from {}", dir);
         File[] files = new File(dir).listFiles();
-        Collection<FileAbstractModel> result;
+        Collection<FileModel> result;
 
         if (files != null) {
             result = new ArrayList<>(files.length);
 
             // Iterate other files
             for (File file : files) {
-                result.add(toFileAbstractModel(dir, file));
+                FileModel model = new FileModel();
+                model.name = file.getName();
+                model.file = file.isFile();
+                model.directory = !model.file;
+                model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault());
+                model.creationDate = getCreationTime(file);
+                model.extension = getFileExtension(file);
+                model.path = dir;
+                model.fullpath = file.getAbsolutePath();
+                model.size = file.length();
+                model.owner = getOwnerName(file);
+                model.group = getGroupName(file);
+                result.add(model);
             }
         } else {
             logger.debug("Symlink on windows gives null for listFiles(). Skipping [{}]", dir);
@@ -87,20 +102,5 @@ public class FileAbstractorFile extends FileAbstractor<File> {
 
         logger.debug("{} local files found", result.size());
         return result;
-    }
-
-    @Override
-    public boolean exists(String dir) {
-        return new File(dir).exists();
-    }
-
-    @Override
-    public void open() throws Exception {
-
-    }
-
-    @Override
-    public void close() throws Exception {
-
     }
 }

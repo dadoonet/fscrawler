@@ -19,14 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import org.elasticsearch.action.search.SearchRequest;
 import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * Test crawler with SSH
+ * Test crawler with SSH implementation
  */
 public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
 
@@ -40,15 +40,14 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         String password = "PASSWORD";
         String hostname = "localhost";
 
-        Fs fs = startCrawlerDefinition().build();
         Server server = Server.builder()
                 .setHostname(hostname)
                 .setUsername(username)
                 .setPassword(password)
                 .setProtocol(Server.PROTOCOL.SSH)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
 
+        startCrawler(getCrawlerName(), fsBuilder().build(), elasticsearchBuilder(), server, null, TimeValue.timeValueSeconds(10));
         countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
     }
 
@@ -62,14 +61,13 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         String path_to_pem_file = "/path/to/private_key.pem";
         String hostname = "localhost";
 
-        Fs fs = startCrawlerDefinition().build();
         Server server = Server.builder()
                 .setHostname(hostname)
                 .setUsername(username)
                 .setPemPath(path_to_pem_file)
                 .setProtocol(Server.PROTOCOL.SSH)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
+        startCrawler(getCrawlerName(), fsBuilder().build(), elasticsearchBuilder(), server, null, TimeValue.timeValueSeconds(10));
 
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }

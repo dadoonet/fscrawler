@@ -64,10 +64,10 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
         Files.getFileAttributeView(currentTestResourceDir.resolve("roottxtfile.txt"), PosixFileAttributeView.class)
                 .setPermissions(EnumSet.noneOf(PosixFilePermission.class));
 
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setIndexContent(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         // We should have one doc first
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);

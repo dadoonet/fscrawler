@@ -30,7 +30,7 @@ public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
         FsSettings fsSettings = FsSettings.builder("test_checksum_non_existing_algorithm")
                 .setFs(Fs.builder().setChecksum("FSCRAWLER").build())
                 .build();
-        new FsCrawlerImpl(rootTmpDir, fsSettings);
+        new FsCrawlerImpl(rootTmpDir, fsSettings, false, null, null);
     }
 
     /**
@@ -41,6 +41,6 @@ public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
         FsSettings fsSettings = FsSettings.builder("test_xml_and_json_enabled")
                 .setFs(Fs.builder().setXmlSupport(true).setJsonSupport(true).build())
                 .build();
-        new FsCrawlerImpl(rootTmpDir, fsSettings);
+        new FsCrawlerImpl(rootTmpDir, fsSettings, false, null, null);
     }
 }

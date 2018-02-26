@@ -58,6 +58,16 @@
             <artifactId>jai-imageio-jpeg2000</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-crawler-fs</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-crawler-ssh</artifactId>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 

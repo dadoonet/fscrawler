@@ -79,10 +79,10 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_disable_raw() throws Exception {
-        Fs fs = startCrawlerDefinition()
+        Fs fs = fsBuilder()
                 .setRawMetadata(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get("raw"), nullValue());
@@ -91,12 +91,12 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_enable_raw() throws Exception {
-        Fs.Builder builder = startCrawlerDefinition();
+        Fs.Builder builder = fsBuilder();
         if (rarely()) {
             // Sometimes we explicitly set it but this is also the default value
             builder.setRawMetadata(true);
         }
-        startCrawler(getCrawlerName(), builder.build(), endCrawlerDefinition(getCrawlerName()), null);
+        startCrawler(getCrawlerName(), builder.build(), elasticsearchBuilder());
         SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get("raw"), notNullValue());

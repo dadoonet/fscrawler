@@ -21,6 +21,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
@@ -47,6 +49,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Scanner;
 
+import static fr.pilato.elasticsearch.crawler.fs.crawler.Plugins.createParser;
+import static fr.pilato.elasticsearch.crawler.fs.crawler.Plugins.registerPlugins;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.moveLegacyResource;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
@@ -157,6 +161,9 @@ public class FsCrawler {
 
         String jobName;
 
+        logger.trace("registering our plugins");
+        registerPlugins();
+
         if (commands.jobName == null) {
             // The user did not enter a job name.
             // We can list available jobs for him
@@ -244,7 +251,12 @@ public class FsCrawler {
             return;
         }
 
-        fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest);
+        FsCrawlerUtil.createDirIfMissing(configDir);
+        ElasticsearchClientManager esClientManager = new ElasticsearchClientManager(configDir, fsSettings);
+
+        // What is the protocol used?
+        FsParserAbstract fsParser = createParser(fsSettings, configDir, esClientManager, commands.loop);
+        fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.rest, esClientManager, fsParser);
         Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
 
         try {

@@ -41,8 +41,7 @@ public class ElasticsearchClientManager {
     private final FsSettings settings;
 
     private ElasticsearchClient client = null;
-    private BulkProcessor bulkProcessorDoc = null;
-    private BulkProcessor bulkProcessorFolder = null;
+    private BulkProcessor bulkProcessor = null;
 
     public ElasticsearchClientManager(Path config, FsSettings settings) {
         this.config = config;
@@ -56,23 +55,11 @@ public class ElasticsearchClientManager {
         return client;
     }
 
-    public BulkProcessor bulkProcessorDoc() {
-        if (bulkProcessorDoc == null) {
-            throw new RuntimeException("You must call start() before bulkProcessorDoc()");
+    public BulkProcessor bulkProcessor() {
+        if (bulkProcessor == null) {
+            throw new RuntimeException("You must call start() before bulkProcessor()");
         }
-        return bulkProcessorDoc;
-    }
-
-    /**
-     * We can probably remove that bulk processor as we now support ingest pipeline per request
-     * @return a BulkProcessor instance
-     */
-    @Deprecated
-    public BulkProcessor bulkProcessorFolder() {
-        if (bulkProcessorFolder == null) {
-            throw new RuntimeException("You must call start() before bulkProcessorFolder()");
-        }
-        return bulkProcessorFolder;
+        return bulkProcessor;
     }
 
     public void start() throws Exception {
@@ -105,13 +92,7 @@ public class ElasticsearchClientManager {
             }
         }
 
-        bulkProcessorDoc = BulkProcessor.builder(client::bulkAsync, new DebugListener(logger))
-                .setBulkActions(settings.getElasticsearch().getBulkSize())
-                .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
-                // TODO fix when elasticsearch will support global pipelines
-//                .setPipeline(settings.getElasticsearch().getPipeline())
-                .build();
-        bulkProcessorFolder = BulkProcessor.builder(client::bulkAsync, new DebugListener(logger))
+        bulkProcessor = BulkProcessor.builder(client::bulkAsync, new DebugListener(logger))
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 .build();
@@ -187,11 +168,8 @@ public class ElasticsearchClientManager {
 
     public void close() {
         logger.debug("Closing Elasticsearch client manager");
-        if (bulkProcessorDoc != null) {
-            bulkProcessorDoc.close();
-        }
-        if (bulkProcessorFolder != null) {
-            bulkProcessorFolder.close();
+        if (bulkProcessor != null) {
+            bulkProcessor.close();
         }
         if (client != null) {
             try {

@@ -71,10 +71,10 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         elasticsearchClient.getLowLevelClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
                 Collections.emptyMap(), entity);
 
-        Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
+        Elasticsearch elasticsearch = elasticsearchBuilder();
         elasticsearch.setPipeline(crawlerName);
 
-        startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+        startCrawler(crawlerName, fsBuilder().build(), elasticsearch);
 
         // We expect to have one file
         countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
@@ -122,10 +122,10 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         elasticsearchClient.getLowLevelClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
                 Collections.emptyMap(), entity);
 
-        Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
+        Elasticsearch elasticsearch = elasticsearchBuilder();
         elasticsearch.setPipeline(crawlerName);
 
-        startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+        startCrawler(crawlerName, fsBuilder().build(), elasticsearch);
 
         // We expect to have one file
         countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
@@ -143,11 +143,11 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
                 elasticsearchClient.isIngestSupported(), is(true));
 
-        Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
+        Elasticsearch elasticsearch = elasticsearchBuilder();
         elasticsearch.setPipeline(crawlerName);
 
         try {
-            startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+            startCrawler(crawlerName, fsBuilder().build(), elasticsearch);
             fail("We should have caught a RuntimeException");
         } catch (RuntimeException e) {
             assertThat(e.getMessage(), containsString("You defined pipeline:" + crawlerName + ", but it does not exist."));

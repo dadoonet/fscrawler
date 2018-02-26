@@ -36,8 +36,8 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_time_value() throws Exception {
-        Fs fs = startCrawlerDefinition(TimeValue.timeValueHours(1)).build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        Fs fs = fsBuilder(currentTestResourceDir.toString(), TimeValue.timeValueHours(1)).build();
+        startCrawler(getCrawlerName(), fs, elasticsearchBuilder());
 
         // We expect to have one file
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
@@ -45,10 +45,10 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_bulk_flush() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
+        Fs fs = fsBuilder().build();
         startCrawler(getCrawlerName(), fs,
-                generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
-                        100, TimeValue.timeValueSeconds(2)), null);
+                elasticsearchBuilder(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
+                        100, TimeValue.timeValueSeconds(2)));
 
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }

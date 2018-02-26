@@ -23,6 +23,9 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
 import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
+import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FsParserLocal;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -42,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
+import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -80,16 +84,17 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
-        crawler = new FsCrawlerImpl(metadataDir,
-                FsSettings.builder("fscrawler_test_all_documents")
-                        .setElasticsearch(generateElasticsearchConfig("fscrawler_test_all_documents", "fscrawler_test_all_documents_folder",
-                                5, TimeValue.timeValueSeconds(1)))
-                        .setFs(Fs.builder()
-                                .setUrl(testResourceTarget.toString())
-                                .setLangDetect(true)
-                                .build())
-                        .build());
-
+        FsSettings fsSettings = FsSettings.builder("fscrawler_test_all_documents")
+                .setElasticsearch(elasticsearchBuilder("fscrawler_test_all_documents", "fscrawler_test_all_documents_folder",
+                        5, TimeValue.timeValueSeconds(1)))
+                .setFs(Fs.builder()
+                        .setUrl(testResourceTarget.toString())
+                        .setLangDetect(true)
+                        .build())
+                .build();
+        ElasticsearchClientManager esClientManager = new ElasticsearchClientManager(metadataDir, fsSettings);
+        FsParserAbstract parser = new FsParserLocal(fsSettings, metadataDir, esClientManager, LOOP_INFINITE);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, false, esClientManager, parser);
         crawler.start();
 
         // We wait until we have all docs

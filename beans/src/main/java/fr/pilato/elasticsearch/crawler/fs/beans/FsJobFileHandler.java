@@ -22,7 +22,10 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Provides utility methods to read and write job status files (_status.json)
@@ -64,5 +67,36 @@ public class FsJobFileHandler extends MetaFileHandler {
      */
     public void clean(String jobname) throws IOException {
         removeFile(jobname, FILENAME);
+    }
+
+    @SuppressWarnings("unchecked")
+    public LocalDateTime getLastDateFromMeta(String jobName) throws IOException {
+        try {
+            FsJob fsJob = read(jobName);
+            return fsJob.getLastrun();
+        } catch (NoSuchFileException e) {
+            // The file does not exist yet
+        }
+        return null;
+    }
+
+    /**
+     * Update the job metadata
+     * @param jobName job name
+     * @param scanDate last date we scan the dirs
+     * @throws Exception In case of error
+     */
+    public void updateFsJob(String jobName, LocalDateTime scanDate, ScanStatistic stats) throws Exception {
+        // We need to round that latest date to the lower second and
+        // remove 2 seconds.
+        // See #82: https://github.com/dadoonet/fscrawler/issues/82
+        scanDate = scanDate.minus(2, ChronoUnit.SECONDS);
+        FsJob fsJob = FsJob.builder()
+                .setName(jobName)
+                .setLastrun(scanDate)
+                .setIndexed(stats.getNbDocScan())
+                .setDeleted(stats.getNbDocDeleted())
+                .build();
+        write(jobName, fsJob);
     }
 }

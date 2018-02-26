@@ -89,6 +89,14 @@
             <artifactId>fscrawler-test-framework</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-crawler-fs</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-crawler-ssh</artifactId>
+        </dependency>
 
     </dependencies>
 
