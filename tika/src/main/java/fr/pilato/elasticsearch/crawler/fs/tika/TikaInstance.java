@@ -26,7 +26,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.CustomTikaParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.config.ServiceLoader;
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.metadata.Metadata;
@@ -45,14 +44,12 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.WriteOutContentHandler;
 import org.xml.sax.SAXException;
 
-import java.io.File;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 import static org.apache.tika.langdetect.OptimaizeLangDetector.getDefaultLanguageDetector;
 
@@ -87,8 +84,6 @@ public class TikaInstance {
             PDFParser pdfParser = new PDFParser();
             DefaultParser defaultParser;
 
-
-
             if (fs.isPdfOcr()) {
                 logger.debug("OCR is activated for PDF documents");
                 if (ExternalParser.check("tesseract")) {
@@ -105,13 +100,10 @@ public class TikaInstance {
                         Collections.singletonList(TesseractOCRParser.class));
             }
 
-
             // load custom parsers if defined in config
             if (fs.getCustomTikaParsers().size() > 0) {
                 Integer counter = 0;
                 Parser PARSERS[] = new Parser[fs.getCustomTikaParsers().size()+2];
-
-
 
                 // to collect all Mediatypes handled by custom parser to exclude them form the DefaultParser
                 List<MediaType> excludeMediaTypes = new ArrayList<MediaType>();
@@ -130,21 +122,9 @@ public class TikaInstance {
                         Parser customParserDecorated = ParserDecorator.withTypes(customParser, customMediaTypes);
                         PARSERS[counter] = customParserDecorated;
 
-
-
-                    } catch (IOException e) {
-                        logger.error("Caught IOException:" + e.getMessage());
-                    } catch (ClassNotFoundException e) {
-                        logger.error("Caught ClassNotFoundException:" + e.getMessage());
-                    } catch (InstantiationException e) {
-                        logger.error("Caught InstantiationException:" + e.getMessage());
-                    } catch (IllegalAccessException e) {
-                        logger.error("Caught IllegalAccessException:" + e.getMessage());
-                    }/*catch (TikaException te) {
-                        logger.error("Caught TikaException:" + te.getMessage());
-                    } catch (SAXException se) {
-                        logger.error("Caught SAXException:" + se.getMessage());
-                    }*/
+                    } catch (IOException|ClassNotFoundException|InstantiationException|IllegalAccessException e) {
+                        logger.error("Caught {}: {}", e.getClass().getSimpleName(), e.getMessage());
+                    }
                 }
                 if (excludeMediaTypes.size() > 0) {
                     MediaType[] excludedMediaTypeSet = new MediaType[excludeMediaTypes.size()];

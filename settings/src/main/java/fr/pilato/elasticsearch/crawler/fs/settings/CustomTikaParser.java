@@ -6,10 +6,8 @@ import java.util.List;
 public class CustomTikaParser {
 
     private String className = "";
-
     private String pathToJar = "";
-
-    private List<String> mimeTypes = new ArrayList<String>();
+    private ArrayList<String> mimeTypes = new ArrayList<String>();
 
     public static Builder builder() {
         return new Builder();
@@ -18,24 +16,26 @@ public class CustomTikaParser {
     public static class Builder {
 
         private String className = "";
+        private String pathToJar = "";
+        private ArrayList<String> mimeTypes = new ArrayList<String>();
 
-        public fr.pilato.elasticsearch.crawler.fs.settings.CustomTikaParser.Builder setClassName(String className) {
+        public Builder setClassName(String className) {
             this.className = className;
             return this;
         }
 
-        private String pathToJar = "";
-
-        public fr.pilato.elasticsearch.crawler.fs.settings.CustomTikaParser.Builder setPathToJar(String pathToJar) {
+        public Builder setPathToJar(String pathToJar) {
             this.pathToJar = pathToJar;
             return this;
         }
 
-        private List<String> mimeTypes = new ArrayList<String>();
-
-        public fr.pilato.elasticsearch.crawler.fs.settings.CustomTikaParser.Builder setMimeTypes(ArrayList<String> mimeTypes) {
+        public Builder setMimeTypes(ArrayList<String> mimeTypes) {
             this.mimeTypes = mimeTypes;
             return this;
+        }
+
+        public CustomTikaParser build() {
+            return new CustomTikaParser(className, pathToJar, mimeTypes);
         }
     }
 
@@ -72,6 +72,19 @@ public class CustomTikaParser {
 
     public void setMimeTypes(ArrayList<String> mimeTypes) {
         this.mimeTypes = mimeTypes;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CustomTikaParser ctp = (CustomTikaParser) o;
+
+        if (className != null ? !className.equals(ctp.className) : ctp.className != null) return false;
+        if (pathToJar != null ? !pathToJar.equals(ctp.pathToJar) : ctp.pathToJar != null) return false;
+        return mimeTypes != null ? mimeTypes.equals(ctp.mimeTypes) : ctp.mimeTypes == null;
+
     }
 
 }

@@ -1204,7 +1204,7 @@ to compute the checksum, such as `MD5` or `SHA-1`.
 It might occur that one or more existing Tika parsers do not provide the intended information, or just do not exist.
 This setting allows to use a custom parser instead.
 The parsers must be provided as a .jar, but does not need to be on any classpath.
-Note that this is an array. Here an example for just one
+Note that this is an array. Here an example for just one:
 
 ```json
 {
@@ -1223,11 +1223,12 @@ Note that this is an array. Here an example for just one
 
 Some info about creating a custom parser is available [here](https://tika.apache.org/1.17/parser_guide.html)
 Or use a existing parser as a blueprint. Make sure to choose the correct branch.
-At the time of this writing fscrawler uses Tika 1.17, while on github the main branch is 2.x.
+At the time of this writing fscrawler uses Tika 1.17, while on github the main Tika branch is 2.x.
 The parsers from ["branch_1x"](https://github.com/apache/tika/tree/branch_1x/tika-parsers/src/main/java/org/apache/tika/parser) should work fine.
 
 To build the custom parser separately, a pom file can be derived from the tika-parsers [pom.xml](https://github.com/apache/tika/blob/branch_1x/tika-parsers/pom.xml).
-Probably a lot can be left out. Here is an example which required fontbox (guess still to long, but worked).
+Probably a lot can be left out. Here is an example which requires fontbox.
+(The exclusions are copied 1:1 from fscrawler's pom.xml, to be on the safe side)
 
 <details><summary>Example pom.xml</summary>
 <p>
@@ -1242,8 +1243,8 @@ Probably a lot can be left out. Here is an example which required fontbox (guess
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <tika.version>1.17</tika.version>
         <fontbox.version>2.0.8</fontbox.version>

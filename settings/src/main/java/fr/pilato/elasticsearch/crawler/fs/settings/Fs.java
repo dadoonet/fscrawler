@@ -219,19 +219,6 @@ public class Fs {
             return this;
         }
 
-        public Builder addTikaCustomParsers(CustomTikaParser customTikaParser) {
-            if (this.customTikaParsers == null) {
-                this.customTikaParsers = new ArrayList<>();
-            }
-
-            // We refuse to add duplicates
-            if (!this.customTikaParsers.contains(customTikaParser)) {
-                this.customTikaParsers.add(customTikaParser);
-            }
-
-            return this;
-        }
-
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
