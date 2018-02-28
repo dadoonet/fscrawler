@@ -44,7 +44,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.WriteOutContentHandler;
 import org.xml.sax.SAXException;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
