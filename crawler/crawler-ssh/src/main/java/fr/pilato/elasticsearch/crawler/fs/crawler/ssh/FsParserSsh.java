@@ -27,7 +27,7 @@ import com.jcraft.jsch.Session;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileModel;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
-import fr.pilato.elasticsearch.crawler.fs.crawler.Plugin;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserPlugin;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +43,7 @@ import java.util.Collection;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-@Plugin(name = FsParserSsh.NAME)
+@FsParserPlugin(name = FsParserSsh.NAME)
 public class FsParserSsh extends FsParserAbstract {
 
     public static final String NAME = "ssh";

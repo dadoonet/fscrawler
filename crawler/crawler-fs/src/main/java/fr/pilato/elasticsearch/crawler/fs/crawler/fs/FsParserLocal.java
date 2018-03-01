@@ -22,7 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.crawler.fs;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileModel;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserAbstract;
-import fr.pilato.elasticsearch.crawler.fs.crawler.Plugin;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FsParserPlugin;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +43,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFile
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
 
-@Plugin(name = FsParserLocal.NAME)
+@FsParserPlugin(name = FsParserLocal.NAME)
 public class FsParserLocal extends FsParserAbstract {
 
     public static final String NAME = "local";

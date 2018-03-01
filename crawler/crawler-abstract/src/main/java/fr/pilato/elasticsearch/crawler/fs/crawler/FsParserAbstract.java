@@ -57,14 +57,14 @@ public abstract class FsParserAbstract implements Runnable, FsParser {
     private static final Logger logger = LogManager.getLogger(FsParserAbstract.class);
 
     protected final FsSettings fsSettings;
-    final FsJobFileHandler fsJobFileHandler;
+    private final FsJobFileHandler fsJobFileHandler;
     private final ElasticsearchWrapper elasticsearchWrapper;
     private final Integer loop;
     private final MessageDigest messageDigest;
 
     private final AtomicInteger runNumber = new AtomicInteger(0);
     private static final Object semaphore = new Object();
-    ScanStatistic stats;
+    private ScanStatistic stats;
     private boolean closed;
 
     protected FsParserAbstract(FsSettings fsSettings, Path config, ElasticsearchClientManager esClientManager, Integer loop) {
@@ -274,8 +274,8 @@ public abstract class FsParserAbstract implements Runnable, FsParser {
     /**
      * Index a file
      */
-    void indexFile(FileModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
-                   long filesize) throws Exception {
+    private void indexFile(FileModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
+                           long filesize) throws Exception {
         final String filename = fileAbstractModel.name;
         final LocalDateTime lastmodified = fileAbstractModel.lastModifiedDate;
         final String extension = fileAbstractModel.extension;
@@ -361,7 +361,7 @@ public abstract class FsParserAbstract implements Runnable, FsParser {
         }
     }
 
-    String generateIdFromFilename(String filename, String filepath) throws NoSuchAlgorithmException {
+    private String generateIdFromFilename(String filename, String filepath) throws NoSuchAlgorithmException {
         return fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign((new File(filepath, filename)).toString());
     }
 
@@ -378,7 +378,7 @@ public abstract class FsParserAbstract implements Runnable, FsParser {
      * @param rootPath the root path like /path/to
      * @param path complete path like /path/to/subdir
      */
-    void indexDirectory(String rootPath, String path) throws Exception {
+    private void indexDirectory(String rootPath, String path) throws Exception {
         fr.pilato.elasticsearch.crawler.fs.beans.Path pathObject = new fr.pilato.elasticsearch.crawler.fs.beans.Path();
         // The real and complete path
         pathObject.setReal(path);
@@ -397,7 +397,7 @@ public abstract class FsParserAbstract implements Runnable, FsParser {
     /**
      * Remove a full directory and sub dirs recursively
      */
-    void removeEsDirectoryRecursively(final String path) throws Exception {
+    private void removeEsDirectoryRecursively(final String path) throws Exception {
         logger.debug("Delete folder [{}]", path);
         Collection<String> listFile = elasticsearchWrapper.getFileDirectory(closed, path);
 

@@ -94,9 +94,9 @@ public class Plugins {
         Set<Class<? extends FsParserAbstract>> plugins =
                 reflections.getSubTypesOf(FsParserAbstract.class);
         for (Class<? extends FsParserAbstract> aClass : plugins) {
-            Plugin annotation = aClass.getAnnotation(Plugin.class);
+            FsParserPlugin annotation = aClass.getAnnotation(FsParserPlugin.class);
             if (annotation == null) {
-                throw new RuntimeException("Class " + aClass.getName() + " is missing @Plugin annotation.");
+                throw new RuntimeException("Class " + aClass.getName() + " is missing @FsParserPlugin annotation.");
             }
             addPlugin(annotation.name(), aClass);
         }
