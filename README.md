@@ -20,6 +20,7 @@ You need to install a version matching your Elasticsearch version:
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler/badge.svg?style=flat-square)](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler/)
 [![Travis](https://secure.travis-ci.org/dadoonet/fscrawler.png)](http://travis-ci.org/dadoonet/fscrawler)
+[![Documentation Status](https://readthedocs.org/projects/fscrawler/badge/?version=latest)](https://fscrawler.readthedocs.io/en/latest/?badge=latest)
 
 [![Lines](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler&metric=ncloc)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
 [![Duplicated Lines](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler&metric=duplicated_lines_density)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler)
