@@ -464,7 +464,7 @@ Read [Mapping](#mapping) for more information.
 * `--config_dir` defines directory where jobs are stored instead of default `~/.fscrawler`.
 * `--username` defines the username to use when using an secured version of elasticsearch cluster. Read
 [Using Credentials](#using-credentials). (From 2.2)
-* `--upgrade_mapping` tries to upgrade existing mappings for documents and folders. Read
+* `--upgrade` tries to upgrade existing mappings for documents and folders. Read
 [Upgrading an existing mapping](#upgrading-an-existing-mapping). (From 2.2)
 * `--loop x` defines the number of runs we want before exiting  (From 2.2):
 
