@@ -37,7 +37,7 @@
     <properties>
         <elasticsearch.version>6.3.0</elasticsearch.version>
 
-        <tika.version>1.17</tika.version>
+        <tika.version>1.18</tika.version>
         <jackson.version>2.9.3</jackson.version>
         <log4j.version>2.10.0</log4j.version>
         <jansi.version>1.16</jansi.version>
