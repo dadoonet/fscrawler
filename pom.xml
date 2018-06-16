@@ -35,7 +35,7 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch.version>6.2.2</elasticsearch.version>
+        <elasticsearch.version>6.3.0</elasticsearch.version>
 
         <tika.version>1.17</tika.version>
         <jackson.version>2.9.3</jackson.version>
@@ -44,7 +44,7 @@
         <jersey.version>2.26</jersey.version>
 
         <!-- Only Lucene test framework is used here -->
-        <lucene.version>7.2.1</lucene.version>
+        <lucene.version>7.3.1</lucene.version>
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
@@ -475,7 +475,6 @@
                         <groupId>com.uwyn</groupId>
                         <artifactId>jhighlight</artifactId>
                     </exclusion>
-                    <!-- ES core already has these -->
                     <exclusion>
                         <groupId>org.ow2.asm</groupId>
                         <artifactId>asm-debug-all</artifactId>
