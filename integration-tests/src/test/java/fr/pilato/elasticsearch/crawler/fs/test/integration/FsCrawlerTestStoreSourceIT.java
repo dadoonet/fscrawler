@@ -61,4 +61,19 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
             assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
         }
     }
+
+    @Test
+    public void test_store_source_no_index_content() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setStoreSource(true)
+                .setIndexContent(false)
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
+            // We check that the field is in _source
+            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
+        }
+    }
 }

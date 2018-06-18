@@ -258,11 +258,11 @@ public abstract class FsParser implements Runnable {
                                 (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
                             try {
                                 indexFile(child, stats, filepath,
-                                        fsSettings.getFs().isIndexContent() ? path.getInputStream(child) : null, child.size);
+                                        fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.size);
                                 stats.addFile();
                             } catch (java.io.FileNotFoundException e) {
                                 if (fsSettings.getFs().isContinueOnError()) {
-                                    logger.warn("Unable to open Input Stream for {}, skipping...", e.getMessage());
+                                    logger.warn("Unable to open Input Stream for {}, skipping...: {}", filename, e.getMessage());
                                 } else {
                                     throw e;
                                 }
@@ -452,18 +452,16 @@ public abstract class FsParser implements Runnable {
                 }
                 // Attributes
 
-                if (fsSettings.getFs().isIndexContent()) {
-                    // If needed, we generate the content in addition to metadata
-                    if (fsSettings.getFs().isJsonSupport()) {
-                        // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                        doc.setObject(DocParser.asMap(read(inputStream)));
-                    } else if (fsSettings.getFs().isXmlSupport()) {
-                        // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                        doc.setObject(XmlDocParser.generateMap(inputStream));
-                    } else {
-                        // Extracting content with Tika
-                        generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
-                    }
+                // If needed, we generate the content in addition to metadata
+                if (fsSettings.getFs().isJsonSupport()) {
+                    // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                    doc.setObject(DocParser.asMap(read(inputStream)));
+                } else if (fsSettings.getFs().isXmlSupport()) {
+                    // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
+                    doc.setObject(XmlDocParser.generateMap(inputStream));
+                } else {
+                    // Extracting content with Tika
+                    generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
                 }
 
                 // We index the data structure
@@ -471,7 +469,7 @@ public abstract class FsParser implements Runnable {
                         generateIdFromFilename(filename, dirname),
                         DocParser.toJson(doc),
                         fsSettings.getElasticsearch().getPipeline());
-            } else if (fsSettings.getFs().isIndexContent()) {
+            } else {
                 if (fsSettings.getFs().isJsonSupport()) {
                     // We index the json content directly
                     esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
