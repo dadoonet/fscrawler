@@ -569,6 +569,18 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
+    public void testExtractFromTxtStoreSourceAndNoIndexContent() throws IOException {
+        Doc doc = extractFromFile("test.txt",
+                FsSettings.builder(getCurrentTestName())
+                        .setFs(Fs.builder().setStoreSource(true).setIndexContent(false).build())
+                        .build());
+
+        // Extracted content
+        assertThat(doc.getContent(), nullValue());
+        assertThat(doc.getAttachment(), notNullValue());
+    }
+
+    @Test
     public void testExtractFromTxtAndStoreSourceWithDigest() throws IOException {
         try {
             MessageDigest.getInstance("MD5");
