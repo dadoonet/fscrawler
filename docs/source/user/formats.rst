@@ -1,8 +1,7 @@
 Supported formats
 -----------------
 
-FSCrawler supports all formats `Tika version 1.18
-supports <http://tika.apache.org/1.18/formats.html#Supported_Document_Formats>`__,
+FSCrawler supports all formats |Tika_format|_ supports,
 like:
 
 -  HTML

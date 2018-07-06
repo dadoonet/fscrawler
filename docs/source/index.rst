@@ -8,7 +8,7 @@ Welcome to FSCrawler's documentation!
         This documentation is for the version of FSCrawler currently under development.
         Were you looking for the `documentation of the latest stable version <//fscrawler.readthedocs.io/en/stable/>`_?
 
-Welcome to the FS Crawler for `Elasticsearch <https://elastic.co/>`__.
+Welcome to the FS Crawler for |ES|_.
 
 This crawler helps to index binary documents such as PDF, Open Office, MS Office.
 
@@ -17,6 +17,10 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 * Local file system (or a mounted drive) crawling and index new files, update existing ones and removes old ones.
 * Remote file system over SSH crawling.
 * REST interface to let you "upload" your binary documents to elasticsearch.
+
+.. note::
+
+    FS Crawler |release| is using |Tika_version|_ and |ESHL_version|_.
 
 .. toctree::
    :caption: Installation Guide
@@ -60,7 +64,7 @@ License
 
    This software is licensed under the Apache 2 license, quoted below.
 
-   Copyright 2011-2018 David Pilato
+   Copyright 2011-|year| David Pilato
 
    Licensed under the Apache License, Version 2.0 (the "License"); you may not
    use this file except in compliance with the License. You may obtain a copy of
@@ -81,14 +85,11 @@ Some libraries are not Apache2 compatible. Therefore they are not
 packaged with FSCrawler so you need to download and add manually them to
 the ``lib`` directory:
 
--  ``jbig2``:
-   `com.levigo.jbig2:levigo-jbig2-imageio:2.0 <http://repo1.maven.org/maven2/com/levigo/jbig2/levigo-jbig2-imageio/>`__
--  ``tiff``:
-   `com.github.jai-imageio:jai-imageio-core:1.3.1 <http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/>`__
--  ``JPEG2000``:
-   `com.github.jai-imageio:jai-imageio-jpeg2000:1.3.0 <http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/>`__
+-  for JBIG2 images, you need to add |Levigo_version|_ library
+-  for TIFF images, you need to add |Tiff_version|_ library
+-  for JPEG 2000 (JPX) images, you need to add |JPEG2000_version|_ library
 
 See
-`pdfbox <https://pdfbox.apache.org/2.0/dependencies.html#jai-image-io>`__
+`pdfbox documentation <https://pdfbox.apache.org/2.0/dependencies.html#jai-image-io>`__
 for more details.
 

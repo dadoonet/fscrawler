@@ -16,8 +16,11 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
+                <includes>
+                    <include>fscrawler.ini</include>
+                </includes>
                 <filtering>true</filtering>
-                <targetPath>${project.basedir}/..</targetPath>
+                <targetPath>${project.basedir}/../docs/source</targetPath>
             </resource>
             <resource>
                 <directory>src/main/resources</directory>

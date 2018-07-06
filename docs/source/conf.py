@@ -16,6 +16,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import os
+import ConfigParser
 from datetime import date
 from os.path import join, dirname
 
@@ -37,15 +38,22 @@ author = u'David Pilato'
 # built documents.
 #
 
+config = ConfigParser.RawConfigParser()
+config.read(join(dirname(__file__), "fscrawler.ini"))
+
 # development versions always have the suffix '-SNAPSHOT'
 def read_version(full_version=True):
-    with open(join(dirname(__file__), os.pardir, "../fscrawler.properties")) as f:
-        raw_version = f.read().strip().replace("fscrawler.version=", "")
-        return raw_version if full_version else raw_version.replace("-SNAPSHOT", "")
+    raw_version = config.get('FsCrawler', 'Version');
+    return raw_version if full_version else raw_version.replace("-SNAPSHOT", "")
 
 version = read_version(full_version=False)
 # The full version, including alpha/beta/rc tags.
 release = read_version()
+
+downloadUrl = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/%s/fscrawler-%s.zip" % (version, version)
+
+if release.endswith('-SNAPSHOT'):
+    downloadUrl = "https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/%s/" % release
 
 # -- General configuration ---------------------------------------------------
 
@@ -213,3 +221,38 @@ source_suffix = ['.rst', '.md']
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+rst_prolog = rst_prolog + """
+.. |Tika| replace:: Tika
+.. |ES| replace:: Elasticsearch
+.. |Tika_format| replace:: Tika
+.. |Tika_version| replace:: Tika [tika.version]
+.. |ES_version| replace:: Elasticsearch [es.version]
+.. |ESHL_version| replace:: Elasticsearch Rest Client [es.version]
+.. |Levigo_version| replace:: levigo-jbig2-imageio:[levigo.version]
+.. |Tiff_version| replace:: jai-imageio-core:[tiff.version]
+.. |JPEG2000_version| replace:: jai-imageio-jpeg2000:[jpeg.version]
+.. |Download_URL| replace:: fscrawler-[release]
+.. |Maven_Central| replace:: Maven Central
+.. |Sonatype| replace:: Sonatype
+
+.. _Tika: http://tika.apache.org/[tika.version]/
+.. _ES: https://elastic.co/elasticsearch/
+.. _Tika_format: http://tika.apache.org/[tika.version]/formats.html#Supported_Document_Formats
+.. _Tika_version: http://tika.apache.org/[tika.version]/
+.. _ES_version: https://elastic.co/elasticsearch/
+.. _ESHL_version: https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/index.html
+.. _Levigo_version: http://repo1.maven.org/maven2/com/levigo/jbig2/levigo-jbig2-imageio/[levigo.version]/
+.. _Tiff_version: http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/[tiff.version]/
+.. _JPEG2000_version: http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/[jpeg.version]/
+.. _Download_URL: [downloadUrl]
+.. _Maven_Central: https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/
+.. _Sonatype: https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/
+""".replace("[tika.version]", config.get('3rdParty', 'TikaVersion')
+).replace("[es.version]", config.get('3rdParty', 'ElasticsearchVersion')
+).replace("[levigo.version]", config.get('3rdParty', 'LevigoVersion')
+).replace("[tiff.version]", config.get('3rdParty', 'TiffVersion')
+).replace("[jpeg.version]", config.get('3rdParty', 'JpegVersion')
+).replace("[downloadUrl]", downloadUrl
+).replace("[release]", release
+)

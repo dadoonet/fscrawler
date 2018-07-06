@@ -1,20 +1,26 @@
 Download FSCrawler
 ------------------
 
-FSCrawler binary is available on `Maven
-Central <https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/>`__.
-Just download the latest release (or any other specific version you want
-to try).
+.. ifconfig:: release.endswith('-SNAPSHOT')
 
-The filename ends with ``.zip``.
+    You can download FSCrawler |version| from this link: |Download_URL|_.
+    The filename ends with ``.zip``.
 
-For example, if you wish to download
-`fscrawler-2.4 <https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.4/fscrawler-2.4.zip>`__:
+    .. warning::
 
-.. code:: sh
+        This is a **SNAPSHOT** version.
+        You can also download a **stable** version from |Maven_Central|_.
 
-   wget https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/2.4/fscrawler-2.4.zip
-   unzip fscrawler-2.4.zip
+.. ifconfig:: release == version
+
+    You can download FSCrawler |version| from this link: |Download_URL|_.
+
+    .. note::
+
+        This is a **stable** version.
+        You can choose another version than |version| in |Maven_Central|_.
+
+        You can also download a **SNAPSHOT** version from |Sonatype|_.
 
 The distribution contains:
 
@@ -31,11 +37,6 @@ The distribution contains:
    └── lib
        ├── ... All needed jars
 
-.. note::
-
-    Note that you can also download a SNAPSHOT version `from
-    sonatype <https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/2.5-SNAPSHOT/>`__
-    without needing to build it by yourself.
 
 Upgrade FSCrawler
 -----------------
