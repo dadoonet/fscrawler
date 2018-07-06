@@ -1719,27 +1719,27 @@ steps:
 Prerequisite: you need to have root CA chain certificate or Elasticsearch server certificate
 in DER format. DER format files have a `.cer` extension.
 
-	1. Logon to server (or client machine) where FSCrawler is running
-	2. Run:
+1. Logon to server (or client machine) where FSCrawler is running
+2. Run:
 
-	```sh
-	keytool -import -alias <alias name> -keystore " <JAVA_HOME>\lib\security\cacerts" -file <Path of Elasticsearch Server certificate or Root certificate>
-    ```
+```sh
+keytool -import -alias <alias name> -keystore " <JAVA_HOME>\lib\security\cacerts" -file <Path of Elasticsearch Server certificate or Root certificate>
+```
 
-	It will prompt you for the password. Enter the certificate password like `changeit`.
+It will prompt you for the password. Enter the certificate password like `changeit`.
 
-	3. Make changes to FSCrawler `_settings.json` file to connect to your Elasticsearch server over HTTPS:
+3. Make changes to FSCrawler `_settings.json` file to connect to your Elasticsearch server over HTTPS:
 
-    ```json
-    {
-      "name" : "test",
-      "elasticsearch" : {
-        "nodes" : [
-          {"host" : "localhost", "port" : 9243, "scheme" : "HTTPS" }
-        ]
-      }
-    }
-    ```
+```json
+{
+  "name" : "test",
+  "elasticsearch" : {
+    "nodes" : [
+      {"host" : "localhost", "port" : 9243, "scheme" : "HTTPS" }
+    ]
+  }
+}
+```
 
 Note: if you can not find `keytool`, it probably means that you did not add your `JAVA_HOME/bin` directory to your path.
 
