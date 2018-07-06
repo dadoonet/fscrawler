@@ -46,7 +46,7 @@ The guide has been moved to [ReadTheDocs](https://fscrawler.readthedocs.io/en/la
 ```
 This software is licensed under the Apache 2 license, quoted below.
 
-Copyright 2011-2017 David Pilato
+Copyright 2011-2018 David Pilato
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
 use this file except in compliance with the License. You may obtain a copy of
