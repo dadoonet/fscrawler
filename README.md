@@ -14,7 +14,7 @@ You need to install a version matching your Elasticsearch version:
 
 |    Elasticsearch   |  FS Crawler | Released |                                       Docs                                   |
 |--------------------|-------------|----------|------------------------------------------------------------------------------|
-| 2.x, 5.x, 6.x      | 2.5-SNAPSHOT|          |See below                                                                     |
+| 2.x, 5.x, 6.x      | 2.5-SNAPSHOT|          |[2.5-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)                   |
 | 2.x, 5.x, 6.x      | **2.4**     |2017-08-11|[2.4](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.4/README.md)     |
 | 2.x, 5.x, 6.x      | 2.3         |2017-07-10|[2.3](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.3/README.md)     |
 | 1.x, 2.x, 5.x      | 2.2         |2017-02-03|[2.2](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.2/README.md)     |
