@@ -43,32 +43,4 @@ The guide has been moved to [ReadTheDocs](https://fscrawler.readthedocs.io/en/la
 
 # License
 
-```
-This software is licensed under the Apache 2 license, quoted below.
-
-Copyright 2011-2018 David Pilato
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not
-use this file except in compliance with the License. You may obtain a copy of
-the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-License for the specific language governing permissions and limitations under
-the License.
-```
-
-# Incompatible 3rd party library licenses
-
-Some libraries are not Apache2 compatible. Therefore they are not packaged with FSCrawler so you need
-to download and add manually them to the `lib` directory:
-
-* `jbig2`: [com.levigo.jbig2:levigo-jbig2-imageio:2.0](http://repo1.maven.org/maven2/com/levigo/jbig2/levigo-jbig2-imageio/)
-* `tiff`: [com.github.jai-imageio:jai-imageio-core:1.3.1](http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/)
-* `JPEG2000`: [com.github.jai-imageio:jai-imageio-jpeg2000:1.3.0](http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/)
-
-See [pdfbox](https://pdfbox.apache.org/2.0/dependencies.html#jai-image-io) for more details.
-
+Read more about the [License](https://fscrawler.readthedocs.io/en/latest/index.html#license).
