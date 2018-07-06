@@ -1711,6 +1711,38 @@ If the password is not defined, you will be prompted when starting the job:
 22:46:42,528 INFO  [f.p.e.c.f.FsCrawler] Password for elastic:
 ```
 
+### SSL Configuration
+
+In order to ingest documents to Elasticsearch over HTTPS based connection, you need to perform additional configuration
+steps:
+
+Prerequisite: you need to have root CA chain certificate or Elasticsearch server certificate
+in DER format. DER format files have a `.cer` extension.
+
+	1. Logon to server (or client machine) where FSCrawler is running
+	2. Run:
+
+	```sh
+	keytool -import -alias <alias name> -keystore " <JAVA_HOME>\lib\security\cacerts" -file <Path of Elasticsearch Server certificate or Root certificate>
+    ```
+
+	It will prompt you for the password. Enter the certificate password like `changeit`.
+
+	3. Make changes to FSCrawler `_settings.json` file to connect to your Elasticsearch server over HTTPS:
+
+    ```json
+    {
+      "name" : "test",
+      "elasticsearch" : {
+        "nodes" : [
+          {"host" : "localhost", "port" : 9243, "scheme" : "HTTPS" }
+        ]
+      }
+    }
+    ```
+
+Note: if you can not find `keytool`, it probably means that you did not add your `JAVA_HOME/bin` directory to your path.
+
 #### Generated fields
 
 FS crawler creates the following fields :
