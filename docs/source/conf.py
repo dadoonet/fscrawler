@@ -237,7 +237,7 @@ rst_prolog = rst_prolog + """
 .. |Sonatype| replace:: Sonatype
 
 .. _Tika: http://tika.apache.org/[tika.version]/
-.. _ES: https://elastic.co/elasticsearch/
+.. _ES: https://www.elastic.co/products/elasticsearch
 .. _Tika_format: http://tika.apache.org/[tika.version]/formats.html#Supported_Document_Formats
 .. _Tika_version: http://tika.apache.org/[tika.version]/
 .. _ES_version: https://elastic.co/elasticsearch/
