@@ -211,11 +211,11 @@ Here is a list of REST service settings (under ``rest.`` prefix)`:
 | ``rest.endpoint``     | ``fscrawler``         | Endpoint              |
 +-----------------------+-----------------------+-----------------------+
 
-.. note::
+.. tip::
 
     Most :ref:`local-fs-settings` (under ``fs.*`` in the
     settings file) also affect the REST service, e.g. ``fs.indexed_chars``.
-    Local FS settings that do *not* affect the REST service are those such
+    Local FS settings that do **not** affect the REST service are those such
     as ``url``, ``update_rate``, ``includes``, ``excludes``.
 
 REST service is running at http://127.0.0.1:8080/fscrawler by default.

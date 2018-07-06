@@ -92,6 +92,19 @@ Or fall back to the command line:
    curl 'http://localhost:9200/docs/_mapping?pretty'
    curl 'http://localhost:9200/docs_folder/_mapping?pretty'
 
+.. note::
+
+    FSCrawler is actually applying default index settings depending on the
+    elasticsearch version it is connected to.
+    The default settings definitions are stored in ``~/.fscrawler/_default/_mappings``:
+
+    -  ``2/_settings.json``: for elasticsearch 2.x series document index settings
+    -  ``2/_settings_folder.json``: for elasticsearch 2.x series folder index settings
+    -  ``5/_settings.json``: for elasticsearch 5.x series document index settings
+    -  ``5/_settings_folder.json``: for elasticsearch 5.x series folder index settings
+    -  ``6/_settings.json``: for elasticsearch 6.x series document index settings
+    -  ``6/_settings_folder.json``: for elasticsearch 6.x series folder index settings
+
 Creating your own mapping (analyzers)
 """""""""""""""""""""""""""""""""""""
 
@@ -318,7 +331,7 @@ time instead of the :ref:`default ones <mappings>`:
 -  ``~/.fscrawler/{job_name}/_mappings/6/_settings.json``
 -  ``~/.fscrawler/{job_name}/_mappings/6/_settings_folder.json``
 
-.. note::
+.. tip::
     You can do the same for other elasticsearch versions with:
 
     -  ``~/.fscrawler/{job_name}/_mappings/2/_settings.json`` for 2.x series (deprecated)
@@ -355,7 +368,7 @@ default settings using ``bulk_size`` and ``flush_interval``:
      }
    }
 
-.. note::
+.. tip::
 
     Elasticsearch has a default limit of ``100mb`` per HTTP request as per
     `elasticsearch HTTP Module <https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-http.html>`__
@@ -509,8 +522,10 @@ SSL Configuration
 In order to ingest documents to Elasticsearch over HTTPS based connection, you need to perform additional configuration
 steps:
 
-Prerequisite: you need to have root CA chain certificate or Elasticsearch server certificate
-in DER format. DER format files have a ``.cer`` extension.
+.. important::
+
+    Prerequisite: you need to have root CA chain certificate or Elasticsearch server certificate
+    in DER format. DER format files have a ``.cer`` extension.
 
 1. Logon to server (or client machine) where FSCrawler is running
 2. Run:
@@ -534,7 +549,7 @@ It will prompt you for the password. Enter the certificate password like ``chang
       }
     }
 
-.. note::
+.. tip::
 
     If you can not find ``keytool``, it probably means that you did not add your ``JAVA_HOME/bin`` directory to your path.
 

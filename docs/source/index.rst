@@ -60,7 +60,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 License
 =======
 
-.. note::
+.. important::
 
    This software is licensed under the Apache 2 license, quoted below.
 

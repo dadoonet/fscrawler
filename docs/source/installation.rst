@@ -15,7 +15,7 @@ Download FSCrawler
 
     You can download FSCrawler |version| from this link: |Download_URL|_.
 
-    .. note::
+    .. tip::
 
         This is a **stable** version.
         You can choose another version than |version| in |Maven_Central|_.
