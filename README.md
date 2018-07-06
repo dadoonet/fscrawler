@@ -1710,6 +1710,35 @@ If the password is not defined, you will be prompted when starting the job:
 ```
 22:46:42,528 INFO  [f.p.e.c.f.FsCrawler] Password for elastic:
 ```
+### SSL Configuration
+
+In order to ingest documents to ElasticSearch, which accepts only HTTPS based connection, you need to perform additional configuration steps for the same. Below are the steps:
+
+Pre-Requisite: You will need to have root CA chain certificate or ElasticSearch server certificate with you in DER format (DER format files will have extension .CER) 
+
+	1. Logon to server (or client machine) where FSCrawler utility is running
+	2. Navigate to JAVA_HOME directory. If you are not sure, where JAVA_HOME is located, issue following command (for Windows)
+	
+	SET JAVA_HOME
+	
+	Above command output will show you the path where JAVA_HOME is located
+	
+	3. Within Java home directory, further navigate to "/bin" directory and issue following command (if you are running this command on Windows OS, you will need to ensure to open Command prompt as "administrator")
+	
+	keytool.exe -import -alias <alias name> -keystore " <JAVA_HOME>\lib\security\cacerts" -file <Path of ElasticSearch Server certificate or Root certificate> 
+	
+	It will prompt you for the password, punch in the default password "changeit"
+
+	4. Make changes to FSCrawler  _settings.JSON file to connect to your ElasticSearch server over HTTPS - see below example:
+	
+	"elasticsearch" : 
+	 {
+	    "nodes" : 
+		[ 
+			{"host" : "<hostname>", "port" : ####, "scheme" : "HTTPS" } 
+		],
+	 }
+	5. Re-launch FSCrawler and now you should be able to ingest documents to ElasticSearch securely over HTTPS protocol. 
 
 #### Generated fields
 
