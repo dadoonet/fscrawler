@@ -31,9 +31,11 @@ The distribution contains:
    └── lib
        ├── ... All needed jars
 
-Note that you can also download a SNAPSHOT version `from
-sonatype <https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/2.5-SNAPSHOT/>`__
-without needing to build it by yourself.
+.. note::
+
+    Note that you can also download a SNAPSHOT version `from
+    sonatype <https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/2.5-SNAPSHOT/>`__
+    without needing to build it by yourself.
 
 Upgrade FSCrawler
 -----------------

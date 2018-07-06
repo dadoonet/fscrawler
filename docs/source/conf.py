@@ -15,19 +15,37 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import os
+from datetime import date
+from os.path import join, dirname
 
 
 # -- Project information -----------------------------------------------------
 
+year = date.today().year
+
+rst_prolog = '''
+.. |year| replace:: {0}
+'''.format(year)
+
 project = u'FSCrawler'
-copyright = u'2018, David Pilato'
+copyright = "%i, David Pilato" % year
 author = u'David Pilato'
 
-# The short X.Y version
-version = u''
-# The full version, including alpha/beta/rc tags
-release = u'2.4'
+# The version info for the project you're documenting, acts as replacement for
+# |version| and |release|, also used in various other places throughout the
+# built documents.
+#
 
+# development versions always have the suffix '-SNAPSHOT'
+def read_version(full_version=True):
+    with open(join(dirname(__file__), os.pardir, "../fscrawler.properties")) as f:
+        raw_version = f.read().strip().replace("fscrawler.version=", "")
+        return raw_version if full_version else raw_version.replace("-SNAPSHOT", "")
+
+version = read_version(full_version=False)
+# The full version, including alpha/beta/rc tags.
+release = read_version()
 
 # -- General configuration ---------------------------------------------------
 
@@ -155,7 +173,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'FSCrawler', u'FSCrawler Documentation',
-     author, 'FSCrawler', 'One line description of project.',
+     author, 'FSCrawler', 'Index your binary documents in elasticsearch',
      'Miscellaneous'),
 ]
 
