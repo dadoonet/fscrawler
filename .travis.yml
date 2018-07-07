@@ -5,6 +5,9 @@ jdk:
 install: true
 services:
   - docker
+git:
+  depth: 9999
+  quiet: true
 addons:
   sonarcloud:
     organization: "dadoonet-github"
@@ -23,3 +26,6 @@ cache:
   directories:
     - '$HOME/.m2/repository'
     - '$HOME/.sonar/cache'
+branches:
+  only:
+    - "master"

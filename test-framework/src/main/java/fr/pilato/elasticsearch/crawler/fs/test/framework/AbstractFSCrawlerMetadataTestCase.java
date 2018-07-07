@@ -25,6 +25,7 @@ import org.junit.BeforeClass;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 
@@ -36,7 +37,7 @@ public class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawlerTestCase
     public static void createFsCrawlerJobDir() throws IOException {
         // We also need to create default mapping files
         metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
+        if (!metadataDir.toFile().exists()) {
             Files.createDirectory(metadataDir);
         }
         copyDefaultResources(metadataDir);
@@ -46,6 +47,8 @@ public class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawlerTestCase
     @AfterClass
     public static void printMetadataDirContent() throws IOException {
         staticLogger.debug("ls -l {}", metadataDir);
-        Files.list(metadataDir).forEach(path -> staticLogger.debug("{}", path));
+        try (Stream<Path> files = Files.list(metadataDir)) {
+            files.forEach(path -> staticLogger.debug("{}", path));
+        }
     }
 }

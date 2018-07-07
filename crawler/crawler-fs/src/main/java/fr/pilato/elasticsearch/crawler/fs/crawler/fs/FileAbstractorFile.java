@@ -96,11 +96,11 @@ public class FileAbstractorFile extends FileAbstractor<File> {
 
     @Override
     public void open() throws Exception {
-
+        // Do nothing because we don't open resources in the File implementation.
     }
 
     @Override
     public void close() throws Exception {
-
+        // Do nothing because we don't open resources in the File implementation.
     }
 }

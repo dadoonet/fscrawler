@@ -55,6 +55,7 @@ import static org.apache.lucene.util.LuceneTestCase.random;
 public abstract class AbstractFSCrawlerTestCase {
 
     protected static final Logger staticLogger = LogManager.getLogger(AbstractFSCrawlerTestCase.class);
+    private static final String RANDOM = "random";
 
     @Rule
     public TestName name = new TestName();
@@ -74,8 +75,8 @@ public abstract class AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void setLocale() {
-        String testLocale = System.getProperty("tests.locale", "random");
-        Locale locale = testLocale.equals("random") ? randomLocale() : new Locale.Builder().setLanguageTag(testLocale).build();
+        String testLocale = System.getProperty("tests.locale", RANDOM);
+        Locale locale = testLocale.equals(RANDOM) ? randomLocale() : new Locale.Builder().setLanguageTag(testLocale).build();
         staticLogger.debug("Running test suite with Locale [{}]", locale);
         Locale.setDefault(locale);
     }
@@ -87,8 +88,8 @@ public abstract class AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void setTimeZone() {
-        String testTimeZone = System.getProperty("tests.timezone", "random");
-        TimeZone timeZone = testTimeZone.equals("random") ? randomTimeZone() : TimeZone.getTimeZone(testTimeZone);
+        String testTimeZone = System.getProperty("tests.timezone", RANDOM);
+        TimeZone timeZone = testTimeZone.equals(RANDOM) ? randomTimeZone() : TimeZone.getTimeZone(testTimeZone);
         staticLogger.debug("Running test suite with TimeZone [{}]/[{}]", timeZone.getID(), timeZone.getDisplayName());
         TimeZone.setDefault(timeZone);
     }
