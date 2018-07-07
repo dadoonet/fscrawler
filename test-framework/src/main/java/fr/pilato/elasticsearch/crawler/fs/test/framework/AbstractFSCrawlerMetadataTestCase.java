@@ -37,7 +37,7 @@ public class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawlerTestCase
     public static void createFsCrawlerJobDir() throws IOException {
         // We also need to create default mapping files
         metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
+        if (!metadataDir.toFile().exists()) {
             Files.createDirectory(metadataDir);
         }
         copyDefaultResources(metadataDir);
