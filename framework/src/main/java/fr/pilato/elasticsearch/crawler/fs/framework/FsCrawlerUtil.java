@@ -251,7 +251,7 @@ public class FsCrawlerUtil {
      * available of Windows OS.
      */
     public static String getGroupName(final File file) {
-        if (OsValidator.windows) {
+        if (OsValidator.WINDOWS) {
             logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
             return null;
         }

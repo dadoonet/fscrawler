@@ -102,7 +102,7 @@ public class FsCrawlerValidator {
         }
 
         // We just warn the user if he is running on windows but want to get attributes
-        if (OsValidator.windows && settings.getFs().isAttributesSupport()) {
+        if (OsValidator.WINDOWS && settings.getFs().isAttributesSupport()) {
             logger.info("attributes_support is set to true but getting group is not available on [{}].", OsValidator.OS);
         }
 
