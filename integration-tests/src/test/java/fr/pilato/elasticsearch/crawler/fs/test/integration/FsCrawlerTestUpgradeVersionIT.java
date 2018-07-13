@@ -66,7 +66,7 @@ public class FsCrawlerTestUpgradeVersionIT extends AbstractFsCrawlerITCase {
 
         // Create fake data
         for (int i = 0; i < nbDocs; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}", XContentType.JSON));
+            bulkProcessor.add(new IndexRequest(getCrawlerName(), "_doc", "id" + i).source("{\"foo\":\"bar\"}", XContentType.JSON));
         }
         for (int i = 0; i < nbFolders; i++) {
             bulkProcessor.add(new IndexRequest(getCrawlerName(), "folder", "id" + i).source("{\"foo\":\"bar\"}", XContentType.JSON));

@@ -69,10 +69,10 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
         // This will cause an Elasticsearch Exception as the String is not a Date
         // If the mapping is incorrect
-        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "doc", "1")
+        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "_doc", "1")
             .source(json1, XContentType.JSON)
         );
-        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "doc", "2")
+        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "_doc", "2")
             .source(json2, XContentType.JSON)
         );
     }
