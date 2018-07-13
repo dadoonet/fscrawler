@@ -233,7 +233,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                         new HttpHost(testClusterHost, testClusterPort), testClusterUser, testClusterPass));
                 elasticsearchClientTemporary.info();
                 staticLogger.debug("A node is already running locally. No need to start a Docker instance.");
-            } catch (ConnectException e) {
+            } catch (IOException e) {
                 staticLogger.debug("No local node running. We need to start a Docker instance.");
                 // We start an elasticsearch Docker instance
                 Properties props = readPropertiesFromClassLoader("elasticsearch.version.properties");
