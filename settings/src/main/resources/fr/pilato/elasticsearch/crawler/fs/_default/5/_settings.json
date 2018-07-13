@@ -15,7 +15,7 @@
     }
   },
   "mappings": {
-    "_doc": {
+    "doc": {
       "dynamic_templates": [
         {
           "raw_as_text": {

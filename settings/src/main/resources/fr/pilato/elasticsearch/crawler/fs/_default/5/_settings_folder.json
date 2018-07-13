@@ -14,7 +14,7 @@
     }
   },
   "mappings": {
-    "_doc": {
+    "doc": {
       "properties" : {
         "real" : {
           "type" : "keyword",

@@ -97,7 +97,7 @@ You will get back your document as it has been stored by elasticsearch:
 
    {
      "_index" : "fscrawler-rest-tests_doc",
-     "_type" : "_doc",
+     "_type" : "doc",
      "_id" : "dd18bf3a8ea2a3e53e2661c7fb53534",
      "_version" : 1,
      "found" : true,
