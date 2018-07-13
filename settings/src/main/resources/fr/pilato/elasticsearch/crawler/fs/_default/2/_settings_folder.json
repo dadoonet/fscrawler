@@ -14,7 +14,7 @@
     }
   },
   "mappings": {
-    "doc": {
+    "_doc": {
       "properties": {
         "real": {
           "type": "string",

@@ -559,7 +559,7 @@ public abstract class FsParser implements Runnable {
         logger.trace("JSon indexed : {}", json);
 
         if (!closed) {
-            bulkProcessor.add(new IndexRequest(index, "doc", id).source(json, XContentType.JSON).setPipeline(pipeline));
+            bulkProcessor.add(new IndexRequest(index, "_doc", id).source(json, XContentType.JSON).setPipeline(pipeline));
         } else {
             logger.warn("trying to add new file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
         }
@@ -571,7 +571,7 @@ public abstract class FsParser implements Runnable {
     void esDelete(String index, String id) {
         logger.debug("Deleting {}/doc/{}", index, id);
         if (!closed) {
-            esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, "doc", id));
+            esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, "_doc", id));
         } else {
             logger.warn("trying to remove a file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
         }

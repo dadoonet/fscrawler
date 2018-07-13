@@ -116,8 +116,8 @@ public class ElasticsearchClientIT extends AbstractITCase {
         elasticsearchClient.createIndex(getCrawlerName(), false, settings);
         elasticsearchClient.waitForHealthyIndex(getCrawlerName());
 
-        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "doc", "1").source("{ \"foo\": { \"bar\": \"bar\" } }", XContentType.JSON));
-        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "doc", "2").source("{ \"foo\": { \"bar\": \"baz\" } }", XContentType.JSON));
+        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "_doc", "1").source("{ \"foo\": { \"bar\": \"bar\" } }", XContentType.JSON));
+        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "_doc", "2").source("{ \"foo\": { \"bar\": \"baz\" } }", XContentType.JSON));
 
         elasticsearchClient.refresh(getCrawlerName());
 
