@@ -321,4 +321,8 @@ public class FsCrawler {
             Thread.currentThread().interrupt();
         }
     }
+
+    public static FsCrawlerImpl getFsCrawler() {
+        return fsCrawler;
+    }
 }

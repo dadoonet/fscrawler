@@ -145,11 +145,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     static ElasticsearchClient elasticsearchClient;
 
-    private static String testClusterHost;
-    private static int testClusterPort;
-    private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
-    private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
-    private final static Elasticsearch.Node.Scheme testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
+    static String testClusterHost;
+    static int testClusterPort;
+    final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
+    final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    final static Elasticsearch.Node.Scheme testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
     final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
     static Elasticsearch elasticsearchWithSecurity;
 

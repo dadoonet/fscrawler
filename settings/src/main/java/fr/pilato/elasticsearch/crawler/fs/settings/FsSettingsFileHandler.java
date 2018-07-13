@@ -53,6 +53,15 @@ public class FsSettingsFileHandler extends MetaFileHandler {
      * @throws IOException in case of error while reading
      */
     public void write(FsSettings settings) throws IOException {
-        writeFile(settings.getName(), FILENAME, FsSettingsParser.toJson(settings));
+        write(settings.getName(), FsSettingsParser.toJson(settings));
+    }
+
+    /**
+     * We write settings to ~/.fscrawler/{job_name}/_settings.json
+     * @param settings Json settings to write
+     * @throws IOException in case of error while reading
+     */
+    public void write(String jobName, String settings) throws IOException {
+        writeFile(jobName, FILENAME, settings);
     }
 }
