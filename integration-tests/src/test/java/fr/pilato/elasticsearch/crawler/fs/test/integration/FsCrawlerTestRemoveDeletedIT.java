@@ -236,7 +236,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         for (SearchHit hit : response.getHits().getHits()) {
             // Read the document. This is needed since 5.0 as search does not return the _version field
             try {
-                GetResponse getHit = elasticsearchClient.get(new GetRequest(hit.getIndex(), "_doc", hit.getId()));
+                GetResponse getHit = elasticsearchClient.get(new GetRequest(hit.getIndex(), "doc", hit.getId()));
                 assertThat(getHit.getVersion(), lessThanOrEqualTo(maxVersion));
             } catch (IOException e) {
                 fail("We got an IOException: " + e.getMessage());

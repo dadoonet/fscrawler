@@ -136,7 +136,7 @@ The following example uses a ``french`` analyzer to index the
        }
      },
      "mappings": {
-       "_doc": {
+       "doc": {
          "properties" : {
            "attachment" : {
              "type" : "binary",

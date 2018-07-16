@@ -14,7 +14,7 @@
     }
   },
   "mappings": {
-    "_doc": {
+    "doc": {
       "properties": {
         "content": {
           "type": "string"

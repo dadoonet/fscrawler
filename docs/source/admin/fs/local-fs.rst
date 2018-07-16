@@ -642,7 +642,7 @@ JSon document. This field is not indexed. Default mapping for
 .. code:: json
 
    {
-     "_doc" : {
+     "doc" : {
        "properties" : {
          "attachment" : {
            "type" : "binary",

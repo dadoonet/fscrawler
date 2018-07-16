@@ -21,7 +21,7 @@
       "port" : 9200
     } ],
     "index" : "david",
-    "type" : "_doc",
+    "type" : "doc",
     "bulk_size" : 100,
     "flush_interval" : "5s"
   }
