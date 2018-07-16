@@ -35,7 +35,7 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch.version>6.3.0</elasticsearch.version>
+        <elasticsearch.version>6.3.1</elasticsearch.version>
 
         <tika.version>1.18</tika.version>
         <jackson.version>2.9.3</jackson.version>
