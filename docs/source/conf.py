@@ -245,7 +245,7 @@ rst_prolog = rst_prolog + """
 .. _Levigo_version: http://repo1.maven.org/maven2/com/levigo/jbig2/levigo-jbig2-imageio/{fmt_levigo_version}/
 .. _Tiff_version: http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/{fmt_tiff_version}/
 .. _JPEG2000_version: http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{fmt_jpeg_version}/
-.. _Download_URL: |fmt_downloadUrl|
+.. _Download_URL: {fmt_downloadUrl}
 .. _Maven_Central: https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/
 .. _Sonatype: https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/
 """.format(
