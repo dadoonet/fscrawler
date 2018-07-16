@@ -6,7 +6,9 @@ Welcome to FSCrawler's documentation!
     .. warning::
 
         This documentation is for the version of FSCrawler currently under development.
-        Were you looking for the `documentation of the latest stable version <//fscrawler.readthedocs.io/en/stable/>`_?
+        Were you looking for the `documentation of the latest stable version <https://github.com/dadoonet/fscrawler/tree/f18ac860877bfa94b90b63a61a5d73c735894b09>`_?
+
+.. TODO After release, change the link to //fscrawler.readthedocs.io/en/stable/
 
 Welcome to the FS Crawler for |ES|_.
 
