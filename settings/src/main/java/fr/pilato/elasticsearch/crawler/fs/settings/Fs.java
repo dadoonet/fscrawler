@@ -55,7 +55,7 @@ public class Fs {
     }
 
     public static final String DEFAULT_DIR = "/tmp/es";
-    public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("~*");
+    public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("*/~*");
     public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).setExcludes(DEFAULT_EXCLUDED).build();
 
     public static class Builder {
