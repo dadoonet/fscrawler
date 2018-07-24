@@ -24,14 +24,13 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class FsCrawlerUtilForTests {
     private static final Logger logger = LogManager.getLogger(FsCrawlerUtilForTests.class);
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
-    public static final String[] MAPPING_RESOURCES = {
+    private static final String[] MAPPING_RESOURCES = {
             "2/_settings.json", "2/_settings_folder.json",
             "5/_settings.json", "5/_settings_folder.json",
             "6/_settings.json", "6/_settings_folder.json"
@@ -49,7 +48,7 @@ public class FsCrawlerUtilForTests {
 
         for (String filename : MAPPING_RESOURCES) {
             Path target = targetResourceDir.resolve(filename);
-            if (Files.exists(target)) {
+            if (target.toFile().exists()) {
                 logger.debug("Mapping [{}] already exists", filename);
             } else {
                 logger.debug("Copying [{}]...", filename);

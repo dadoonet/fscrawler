@@ -130,32 +130,31 @@ public class ByteSizeValue implements Comparable<ByteSizeValue> {
         return parseBytesSizeValue(sValue, null);
     }
 
-    public static ByteSizeValue parseBytesSizeValue(String sValue, ByteSizeValue defaultValue)
-            throws NumberFormatException {
+    public static ByteSizeValue parseBytesSizeValue(String sValue, ByteSizeValue defaultValue) {
         if (sValue == null) {
             return defaultValue;
         }
         String lowerSValue = sValue.toLowerCase(Locale.ROOT).trim();
         if (lowerSValue.endsWith("k")) {
-            return parse(sValue, lowerSValue, "k", ByteSizeUnit.KB);
+            return parse(lowerSValue, "k", ByteSizeUnit.KB);
         } else if (lowerSValue.endsWith("kb")) {
-            return parse(sValue, lowerSValue, "kb", ByteSizeUnit.KB);
+            return parse(lowerSValue, "kb", ByteSizeUnit.KB);
         } else if (lowerSValue.endsWith("m")) {
-            return parse(sValue, lowerSValue, "m", ByteSizeUnit.MB);
+            return parse(lowerSValue, "m", ByteSizeUnit.MB);
         } else if (lowerSValue.endsWith("mb")) {
-            return parse(sValue, lowerSValue, "mb", ByteSizeUnit.MB);
+            return parse(lowerSValue, "mb", ByteSizeUnit.MB);
         } else if (lowerSValue.endsWith("g")) {
-            return parse(sValue, lowerSValue, "g", ByteSizeUnit.GB);
+            return parse(lowerSValue, "g", ByteSizeUnit.GB);
         } else if (lowerSValue.endsWith("gb")) {
-            return parse(sValue, lowerSValue, "gb", ByteSizeUnit.GB);
+            return parse(lowerSValue, "gb", ByteSizeUnit.GB);
         } else if (lowerSValue.endsWith("t")) {
-            return parse(sValue, lowerSValue, "t", ByteSizeUnit.TB);
+            return parse(lowerSValue, "t", ByteSizeUnit.TB);
         } else if (lowerSValue.endsWith("tb")) {
-            return parse(sValue, lowerSValue, "tb", ByteSizeUnit.TB);
+            return parse(lowerSValue, "tb", ByteSizeUnit.TB);
         } else if (lowerSValue.endsWith("p")) {
-            return parse(sValue, lowerSValue, "p", ByteSizeUnit.PB);
+            return parse(lowerSValue, "p", ByteSizeUnit.PB);
         } else if (lowerSValue.endsWith("pb")) {
-            return parse(sValue, lowerSValue, "pb", ByteSizeUnit.PB);
+            return parse(lowerSValue, "pb", ByteSizeUnit.PB);
         } else if (lowerSValue.endsWith("b")) {
             return new ByteSizeValue(Long.parseLong(lowerSValue.substring(0, lowerSValue.length() - 1).trim()), ByteSizeUnit.BYTES);
         } else if (lowerSValue.equals("-1")) {
@@ -172,19 +171,13 @@ public class ByteSizeValue implements Comparable<ByteSizeValue> {
         }
     }
 
-    private static ByteSizeValue parse(final String initialInput, final String normalized, final String suffix, ByteSizeUnit unit) {
+    private static ByteSizeValue parse(final String normalized, final String suffix, ByteSizeUnit unit) {
         final String s = normalized.substring(0, normalized.length() - suffix.length()).trim();
         try {
-            try {
-                return new ByteSizeValue(Long.parseLong(s), unit);
-            } catch (final NumberFormatException e) {
-                final double doubleValue = Double.parseDouble(s);
-                return new ByteSizeValue((long) (doubleValue * unit.toBytes(1)));
-            }
-        } catch (IllegalArgumentException e) {
-            throw new NumberFormatException(
-                    String.format("failed to parse value [%s] as a size in bytes: unit is missing or unrecognized",
-                            initialInput));
+            return new ByteSizeValue(Long.parseLong(s), unit);
+        } catch (final NumberFormatException e) {
+            final double doubleValue = Double.parseDouble(s);
+            return new ByteSizeValue((long) (doubleValue * unit.toBytes(1)));
         }
     }
 
