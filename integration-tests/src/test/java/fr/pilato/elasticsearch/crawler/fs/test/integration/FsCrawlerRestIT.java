@@ -76,13 +76,13 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     public void testDocumentWithCustomTagsAndWithRest() throws Exception {
-        Path from = rootTmpDir.resolve("resources").resolve("documents");
+        Path from = rootTmpDir.resolve("resources").resolve("tags");
         if (Files.notExists(from)) {
-            staticLogger.error("directory [{}] should exist before wa start tests", from);
+            staticLogger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        Path tagsFilePath = from.getParent().resolve("fscrawler-test-upload-with-tags.txt").toAbsolutePath();
+        Path tagsFilePath = from.resolve("fscrawler-test-upload-with-tags.txt").toAbsolutePath();
 
         Files.walk(from)
                 .filter(path -> Files.isRegularFile(path))
@@ -101,12 +101,13 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), hasKey("raw"));
 
             Map<String, Object> meta = (Map<String, Object>) hit.getSourceAsMap().get("meta");
-            assertThat((Map<String, Object>) meta.get("raw"), hasKey("project"));
-            assertThat((Map<String, Object>) meta.get("raw"), hasKey("tenant"));
-
             Map<String, Object> raw = (Map<String, Object>) meta.get("raw");
-            assertThat("projectId not 34", raw.get("project").equals("34"));
-            assertThat("tenantId not 23", raw.get("tenant").equals("23"));
+            assertThat(raw, hasKey("project"));
+            assertThat(raw, hasKey("tenant"));
+            String project = (String) raw.get("project");
+            String tenant = (String) raw.get("tenant");
+            assertThat(project, is("34"));
+            assertThat(tenant, is("23"));
         }
     }
 

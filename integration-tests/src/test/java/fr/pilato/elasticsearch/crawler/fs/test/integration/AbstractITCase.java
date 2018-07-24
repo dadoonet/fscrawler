@@ -166,7 +166,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         // We copy files from the src dir to the temp dir
         copyTestDocumentsToTargetDir(testResourceTarget, "documents", "/fscrawler-test-documents-marker.txt");
-        copyTestDocumentsToTargetDir(testResourceTarget,".", "/fscrawler-test-documents-marker.txt");
+        copyTestDocumentsToTargetDir(testResourceTarget, "tags", "/fscrawler-test-documents-marker.txt");
 
         staticLogger.debug("  --> Test resources ready in [{}]:", testResourceTarget);
     }
