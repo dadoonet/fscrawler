@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import org.elasticsearch.action.search.SearchRequest;
@@ -48,7 +49,7 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition().build();
         startCrawler(getCrawlerName(), fs,
                 generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
-                        100, TimeValue.timeValueSeconds(2)), null);
+                        100, TimeValue.timeValueSeconds(2), ByteSizeValue.parseBytesSizeValue("100b")), null);
 
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }

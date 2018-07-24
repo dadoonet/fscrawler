@@ -50,6 +50,7 @@ The job file must comply to the following ``json`` specifications:
        "index" : "docs",
        "bulk_size" : 1000,
        "flush_interval" : "5s",
+       "byte_size" : "10mb",
        "username" : "elastic",
        "password" : "password"
      },

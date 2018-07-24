@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -109,6 +111,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getElasticsearch(), notNullValue());
         assertThat(settings.getElasticsearch().getBulkSize(), is(100));
         assertThat(settings.getElasticsearch().getFlushInterval(), is(TimeValue.timeValueSeconds(5)));
+        assertThat(settings.getElasticsearch().getByteSize(), is(new ByteSizeValue(10, ByteSizeUnit.MB)));
         assertThat(settings.getElasticsearch().getIndex(), is("test"));
         assertThat(settings.getElasticsearch().getIndexFolder(), is("test_folder"));
         assertThat(settings.getElasticsearch().getNodes(), iterableWithSize(1));

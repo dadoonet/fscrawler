@@ -26,6 +26,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.IOException;
@@ -108,11 +109,13 @@ public class ElasticsearchClientManager {
         bulkProcessorDoc = BulkProcessor.builder(client::bulkAsync, new DebugListener(logger))
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
+                .setBulkSize(new ByteSizeValue(settings.getElasticsearch().getByteSize().getBytes()))
                 // TODO fix when elasticsearch will support global pipelines
 //                .setPipeline(settings.getElasticsearch().getPipeline())
                 .build();
         bulkProcessorFolder = BulkProcessor.builder(client::bulkAsync, new DebugListener(logger))
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
+                .setBulkSize(new ByteSizeValue(settings.getElasticsearch().getByteSize().getBytes()))
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 .build();
     }
