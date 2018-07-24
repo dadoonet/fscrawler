@@ -57,6 +57,12 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
    admin/fs/rest
 
 
+.. toctree::
+      :caption: Developer Guide
+      :maxdepth: 3
+
+      dev/doc
+      dev/release
 
 
 License
