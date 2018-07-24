@@ -18,6 +18,8 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
@@ -51,6 +53,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -116,6 +119,39 @@ public class FsCrawlerUtil {
             // We fall back to default mappings in config dir
             return readDefaultJsonVersionedFile(config, version, filename);
         }
+    }
+
+    /**
+     * Merges two json nodes into one. Main node overwrites the update node's values in the case if both nodes have the same key.
+     * @param mainNode Json node that rules over update node
+     * @param updateNode Json node that is subordinate to main node
+     * @return the merged nodes
+     */
+    public static JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
+        Iterator<String> fieldNames = updateNode.fieldNames();
+
+        while (fieldNames.hasNext()) {
+            String fieldName = fieldNames.next();
+            JsonNode jsonNode = mainNode.get(fieldName);
+
+            if (jsonNode != null) {
+                if (jsonNode.isObject()) {
+                    merge(jsonNode, updateNode.get(fieldName));
+                } else if (jsonNode.isArray()) {
+                    for (int i = 0; i < jsonNode.size(); i++) {
+                        merge(jsonNode.get(i), updateNode.get(fieldName).get(i));
+                    }
+                }
+            } else {
+                if (mainNode instanceof ObjectNode) {
+                    // Overwrite field
+                    JsonNode value = updateNode.get(fieldName);
+                    ((ObjectNode) mainNode).set(fieldName, value);
+                }
+            }
+        }
+
+        return mainNode;
     }
 
     /**
