@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 
-public class FsCrawlerUtilForTests {
+class FsCrawlerUtilForTests {
     private static final Logger logger = LogManager.getLogger(FsCrawlerUtilForTests.class);
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
@@ -36,6 +36,10 @@ public class FsCrawlerUtilForTests {
             "6/_settings.json", "6/_settings_folder.json"
     };
 
+    private FsCrawlerUtilForTests() {
+
+    }
+
     /**
      * Copy default resources files which are available as project resources under
      * fr.pilato.elasticsearch.crawler.fs._default package to a given configuration path
@@ -43,7 +47,7 @@ public class FsCrawlerUtilForTests {
      * @param configPath The config path which is by default .fscrawler
      * @throws IOException If copying does not work
      */
-    public static void copyDefaultResources(Path configPath) throws IOException {
+    static void copyDefaultResources(Path configPath) throws IOException {
         Path targetResourceDir = configPath.resolve("_default");
 
         for (String filename : MAPPING_RESOURCES) {
@@ -62,7 +66,7 @@ public class FsCrawlerUtilForTests {
      * @param target The target
      * @throws IOException If copying does not work
      */
-    public static void copyResourceFile(String source, Path target) throws IOException {
+    private static void copyResourceFile(String source, Path target) throws IOException {
         InputStream resource = FsCrawlerUtilForTests.class.getResourceAsStream(source);
         FileUtils.copyInputStreamToFile(resource, target.toFile());
     }
