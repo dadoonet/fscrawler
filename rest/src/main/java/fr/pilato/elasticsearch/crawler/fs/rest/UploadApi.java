@@ -20,8 +20,10 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.framework.MetaParser;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -43,6 +45,8 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.buildUrl;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
@@ -74,6 +78,7 @@ public class UploadApi extends RestApi {
             @QueryParam("debug") String debug,
             @QueryParam("simulate") String simulate,
             @FormDataParam("id") String id,
+            @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
 
@@ -100,6 +105,15 @@ public class UploadApi extends RestApi {
         doc.getPath().setVirtual(filename);
         doc.getPath().setReal(filename);
         // Path
+
+        // Add additional tags to meta
+        if (tags != null) {
+            TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {};
+            HashMap<String, Object> o = MetaParser.mapper.readValue(tags, typeRef);
+            for (Map.Entry<String, Object> e: o.entrySet()) {
+                doc.getMeta().addRaw(e.getKey(), String.valueOf(e.getValue()));
+            }
+        }
 
         // Read the file content
         TikaDocParser.generate(settings, filecontent, filename, doc, messageDigest, filesize);

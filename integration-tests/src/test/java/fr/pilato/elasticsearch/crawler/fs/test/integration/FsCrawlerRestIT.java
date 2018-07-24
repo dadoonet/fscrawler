@@ -74,6 +74,42 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
     }
 
+    @Test
+    public void testDocumentWithCustomTagsAndWithRest() throws Exception {
+        Path from = rootTmpDir.resolve("resources").resolve("documents");
+        if (Files.notExists(from)) {
+            staticLogger.error("directory [{}] should exist before wa start tests", from);
+            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+        }
+
+        Path tagsFilePath = from.getParent().resolve("fscrawler-test-upload-with-tags.txt").toAbsolutePath();
+
+        Files.walk(from)
+                .filter(path -> Files.isRegularFile(path))
+                .limit(1)
+                .forEach(path -> {
+                    UploadResponse response = uploadFile(path, tagsFilePath);
+                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+                });
+
+        // We wait until we have one docs
+        SearchResponse response = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null, TimeValue
+                .timeValueMinutes(2));
+        for (SearchHit hit : response.getHits()) {
+            assertThat(hit.getSourceAsMap(), hasKey("file"));
+            assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
+            assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), hasKey("raw"));
+
+            Map<String, Object> meta = (Map<String, Object>) hit.getSourceAsMap().get("meta");
+            assertThat((Map<String, Object>) meta.get("raw"), hasKey("project"));
+            assertThat((Map<String, Object>) meta.get("raw"), hasKey("tenant"));
+
+            Map<String, Object> raw = (Map<String, Object>) meta.get("raw");
+            assertThat("projectId not 34", raw.get("project").equals("34"));
+            assertThat("tenantId not 23", raw.get("tenant").equals("23"));
+        }
+    }
+
     private static final Map<String, Object> debugOption = new HashMap<>();
 
     static {
@@ -82,12 +118,21 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     public static UploadResponse uploadFile(Path file) {
+        return uploadFile(file, null);
+    }
+
+    public static UploadResponse uploadFile(Path file, Path tagsFile) {
         assertThat(Files.exists(file), is(true));
 
         // MediaType of the body part will be derived from the file.
         FileDataBodyPart filePart = new FileDataBodyPart("file", file.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         FormDataMultiPart mp = new FormDataMultiPart();
         mp.bodyPart(filePart);
+
+        if (tagsFile != null) {
+            FileDataBodyPart tagsFilePart = new FileDataBodyPart("tags", tagsFile.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+            mp.bodyPart(tagsFilePart);
+        }
 
         if (staticLogger.isDebugEnabled()) {
             staticLogger.debug("Rest response: {}", restCall("/_upload", mp, String.class, debugOption));
