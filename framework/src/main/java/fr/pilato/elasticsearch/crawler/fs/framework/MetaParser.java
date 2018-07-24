@@ -42,6 +42,8 @@ public class MetaParser {
         fscrawler.addDeserializer(TimeValue.class, new TimeValueDeserializer());
         fscrawler.addSerializer(new PercentageSerializer());
         fscrawler.addDeserializer(Percentage.class, new PercentageDeserializer());
+        fscrawler.addSerializer(new ByteSizeValueSerializer());
+        fscrawler.addDeserializer(ByteSizeValue.class, new ByteSizeValueDeserializer());
 
         mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());

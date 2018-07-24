@@ -16,6 +16,8 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.flush_interval`` | ``"5s"``                  | `Bulk settings`_                |
 +----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.byte_size``      | ``"10mb"``                | `Bulk settings`_                |
++----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.pipeline``       | ``null``                  | :ref:`ingest_node`              |
 +----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.nodes``          | ``http://127.0.0.1:9200`` | `Node settings`_                |
@@ -355,8 +357,8 @@ Bulk settings
 ^^^^^^^^^^^^^
 
 FSCrawler is using bulks to send data to elasticsearch. By default the
-bulk is executed every 100 operations or every 5 seconds. You can change
-default settings using ``bulk_size`` and ``flush_interval``:
+bulk is executed every 100 operations or every 5 seconds or every 10 megabytes. You can change
+default settings using ``bulk_size``, ``byte_size`` and ``flush_interval``:
 
 .. code:: json
 
@@ -364,6 +366,7 @@ default settings using ``bulk_size`` and ``flush_interval``:
      "name" : "test",
      "elasticsearch" : {
        "bulk_size" : 1000,
+       "byte_size" : "500kb",
        "flush_interval" : "2s"
      }
    }
@@ -382,7 +385,7 @@ default settings using ``bulk_size`` and ``flush_interval``:
     ``http.max_content_length`` to a higher value but please be aware that
     this will consume much more memory on elasticsearch side.
 
-    Or you can decrease the ``bulk_size`` setting to a smaller value.
+    Or you can decrease the ``bulk_size`` or ``byte_size`` setting to a smaller value.
 
 .. _ingest_node:
 

@@ -53,6 +53,7 @@ It will give you a response similar to:
          "index_folder" : "fscrawler-rest-tests_folder",
          "bulk_size" : 100,
          "flush_interval" : "5s",
+         "byte_size" : "10mb",
          "username" : "elastic"
        },
        "rest" : {

@@ -24,6 +24,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import fr.pilato.elasticsearch.containers.ElasticsearchContainer;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
@@ -334,7 +335,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final String testCrawlerPrefix = "fscrawler_";
 
     static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
-                                                     TimeValue timeValue) {
+                                                     TimeValue timeValue, ByteSizeValue byteSize) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
                 .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
                 .setBulkSize(bulkSize);
@@ -348,6 +349,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         if (timeValue != null) {
             builder.setFlushInterval(timeValue);
+        }
+        if (byteSize != null) {
+            builder.setByteSize(byteSize);
         }
 
         builder.setUsername(testClusterUser);

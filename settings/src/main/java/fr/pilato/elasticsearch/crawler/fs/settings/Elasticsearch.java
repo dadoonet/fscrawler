@@ -21,6 +21,8 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 
 import java.util.ArrayList;
@@ -34,12 +36,13 @@ public class Elasticsearch {
     }
 
     private Elasticsearch(List<Node> nodes, String index, String indexFolder, int bulkSize,
-                          TimeValue flushInterval, String username, String password, String pipeline) {
+                          TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline) {
         this.nodes = nodes;
         this.index = index;
         this.indexFolder = indexFolder;
         this.bulkSize = bulkSize;
         this.flushInterval = flushInterval;
+        this.byteSize = byteSize;
         this.username = username;
         this.password = password;
         this.pipeline = pipeline;
@@ -186,6 +189,7 @@ public class Elasticsearch {
     private String indexFolder;
     private int bulkSize = 100;
     private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
+    private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
     private String username;
     @JsonIgnore
     private String password;
@@ -217,6 +221,10 @@ public class Elasticsearch {
 
     public TimeValue getFlushInterval() {
         return flushInterval;
+    }
+
+    public ByteSizeValue getByteSize() {
+        return byteSize;
     }
 
     public String getUsername() {
@@ -251,6 +259,7 @@ public class Elasticsearch {
         private String indexFolder;
         private int bulkSize = 100;
         private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
+        private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
         private String username = null;
         private String password = null;
         private String pipeline = null;
@@ -288,6 +297,11 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setByteSize(ByteSizeValue byteSize) {
+            this.byteSize = byteSize;
+            return this;
+        }
+
         public Builder setUsername(String username) {
             this.username = username;
             return this;
@@ -304,7 +318,7 @@ public class Elasticsearch {
         }
 
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, username, password, pipeline);
+            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password, pipeline);
         }
     }
 

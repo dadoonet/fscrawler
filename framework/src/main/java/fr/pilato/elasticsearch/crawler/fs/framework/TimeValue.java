@@ -20,6 +20,8 @@ package fr.pilato.elasticsearch.crawler.fs.framework;/*
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.format1Decimals;
+
 @SuppressWarnings("WeakerAccess")
 public class TimeValue {
     /** How many nano-seconds in one milli-second */
@@ -161,26 +163,6 @@ public class TimeValue {
             suffix = "micros";
         }
         return format1Decimals(value, suffix);
-    }
-
-    public static String format1Decimals(double value, String suffix) {
-        String p = String.valueOf(value);
-        int ix = p.indexOf('.') + 1;
-        int ex = p.indexOf('E');
-        char fraction = p.charAt(ix);
-        if (fraction == '0') {
-            if (ex != -1) {
-                return p.substring(0, ix - 1) + p.substring(ex) + suffix;
-            } else {
-                return p.substring(0, ix - 1) + suffix;
-            }
-        } else {
-            if (ex != -1) {
-                return p.substring(0, ix) + fraction + p.substring(ex) + suffix;
-            } else {
-                return p.substring(0, ix) + fraction + suffix;
-            }
-        }
     }
 
     public static TimeValue parseTimeValue(String sValue) {
