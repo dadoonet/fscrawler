@@ -45,6 +45,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -54,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TimeZone;
 
 public class FsCrawlerUtil {
@@ -263,6 +265,43 @@ public class FsCrawlerUtil {
             logger.warn("Failed to determine 'group' of {}: {}", file, e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Determines file permissions.
+     */
+    public static int getFilePermissions(final File file) {
+        if (OsValidator.WINDOWS) {
+            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            return -1;
+        }
+        try {
+            final Path path = Paths.get(file.getAbsolutePath());
+            PosixFileAttributes attrs = Files.getFileAttributeView(path, PosixFileAttributeView.class).readAttributes();
+            Set<PosixFilePermission> permissions = attrs.permissions();
+            int user = toOctalPermission(
+                    permissions.contains(PosixFilePermission.OWNER_READ),
+                    permissions.contains(PosixFilePermission.OWNER_WRITE),
+                    permissions.contains(PosixFilePermission.OWNER_EXECUTE));
+            int group = toOctalPermission(
+                    permissions.contains(PosixFilePermission.GROUP_READ),
+                    permissions.contains(PosixFilePermission.GROUP_WRITE),
+                    permissions.contains(PosixFilePermission.GROUP_EXECUTE));
+            int others = toOctalPermission(
+                    permissions.contains(PosixFilePermission.OTHERS_READ),
+                    permissions.contains(PosixFilePermission.OTHERS_WRITE),
+                    permissions.contains(PosixFilePermission.OTHERS_EXECUTE));
+
+            return user * 100 + group * 10 + others;
+        }
+        catch(Exception e) {
+            logger.warn("Failed to determine 'owner' of {}: {}", file, e.getMessage());
+            return -1;
+        }
+    }
+
+    private static int toOctalPermission(boolean read, boolean write, boolean execute) {
+        return (read ? 4 : 0) + (write ? 2 : 0) + (execute ? 1 : 0);
     }
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";

@@ -35,6 +35,7 @@ import java.util.Collections;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getCreationTime;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFileExtension;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFilePermissions;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
 
@@ -57,6 +58,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         model.size = file.length();
         model.owner = getOwnerName(file);
         model.group = getGroupName(file);
+        model.permissions = getFilePermissions(file);
 
         return model;
     }

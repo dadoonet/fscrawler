@@ -52,6 +52,7 @@ public class FileAbstractModel {
     public long size;
     public String owner;
     public String group;
+    public int permissions;
     public String extension;
 
     @Override
@@ -64,6 +65,7 @@ public class FileAbstractModel {
                 ", path='" + path + '\'' +
                 ", owner='" + owner + '\'' +
                 ", group='" + group + '\'' +
+                ", permissions=" + permissions +
                 ", extension='" + extension + '\'' +
                 ", fullpath='" + fullpath + '\'' +
                 ", size=" + size +

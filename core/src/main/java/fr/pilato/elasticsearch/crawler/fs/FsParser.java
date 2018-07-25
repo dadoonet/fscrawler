@@ -449,6 +449,9 @@ public abstract class FsParser implements Runnable {
                     doc.setAttributes(new Attributes());
                     doc.getAttributes().setOwner(fileAbstractModel.owner);
                     doc.getAttributes().setGroup(fileAbstractModel.group);
+                    if (fileAbstractModel.permissions >= 0) {
+                        doc.getAttributes().setPermissions(fileAbstractModel.permissions);
+                    }
                 }
                 // Attributes
 
