@@ -238,27 +238,27 @@ public abstract class FsParser implements Runnable {
 
         if (children != null) {
             for (FileAbstractModel child : children) {
-                String filename = child.name;
+                String filename = child.getName();
 
                 // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
                 boolean isIndexable = isIndexable(filename, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
 
                 // It can happen that we a dir "foo" which does not match the include name like "*.txt"
                 // We need to go in it unless it has been explicitly excluded by the user
-                if (child.directory && !isExcluded(filename, fsSettings.getFs().getExcludes())) {
+                if (child.isDirectory() && !isExcluded(filename, fsSettings.getFs().getExcludes())) {
                     isIndexable = true;
                 }
 
                 logger.debug("[{}] can be indexed: [{}]", filename, isIndexable);
                 if (isIndexable) {
-                    if (child.file) {
+                    if (child.isFile()) {
                         logger.debug("  - file: {}", filename);
                         fsFiles.add(filename);
-                        if (child.lastModifiedDate.isAfter(lastScanDate) ||
-                                (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
+                        if (child.getLastModifiedDate().isAfter(lastScanDate) ||
+                                (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
                             try {
                                 indexFile(child, stats, filepath,
-                                        fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.size);
+                                        fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
                                 stats.addFile();
                             } catch (java.io.FileNotFoundException e) {
                                 if (fsSettings.getFs().isContinueOnError()) {
@@ -269,18 +269,18 @@ public abstract class FsParser implements Runnable {
                             }
                         } else {
                             logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
-                                    child.creationDate, child.lastModifiedDate, lastScanDate);
+                                    child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
                         }
-                    } else if (child.directory) {
+                    } else if (child.isDirectory()) {
                         logger.debug("  - folder: {}", filename);
                         if (fsSettings.getFs().isIndexFolders()) {
-                            fsFolders.add(child.fullpath);
-                            indexDirectory(child.fullpath);
+                            fsFolders.add(child.getFullpath());
+                            indexDirectory(child.getFullpath());
                         }
-                        addFilesRecursively(path, child.fullpath, lastScanDate);
+                        addFilesRecursively(path, child.getFullpath(), lastScanDate);
                     } else {
                         logger.debug("  - other: {}", filename);
-                        logger.debug("Not a file nor a dir. Skipping {}", child.fullpath);
+                        logger.debug("Not a file nor a dir. Skipping {}", child.getFullpath());
                     }
                 } else {
                     logger.debug("  - ignored file/dir: {}", filename);
@@ -409,10 +409,10 @@ public abstract class FsParser implements Runnable {
      */
     private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
                            long filesize) throws Exception {
-        final String filename = fileAbstractModel.name;
-        final LocalDateTime lastmodified = fileAbstractModel.lastModifiedDate;
-        final String extension = fileAbstractModel.extension;
-        final long size = fileAbstractModel.size;
+        final String filename = fileAbstractModel.getName();
+        final LocalDateTime lastmodified = fileAbstractModel.getLastModifiedDate();
+        final String extension = fileAbstractModel.getExtension();
+        final long size = fileAbstractModel.getSize();
 
         logger.debug("fetching content from [{}],[{}]", dirname, filename);
 
@@ -447,10 +447,10 @@ public abstract class FsParser implements Runnable {
                 // Attributes
                 if (fsSettings.getFs().isAttributesSupport()) {
                     doc.setAttributes(new Attributes());
-                    doc.getAttributes().setOwner(fileAbstractModel.owner);
-                    doc.getAttributes().setGroup(fileAbstractModel.group);
-                    if (fileAbstractModel.permissions >= 0) {
-                        doc.getAttributes().setPermissions(fileAbstractModel.permissions);
+                    doc.getAttributes().setOwner(fileAbstractModel.getOwner());
+                    doc.getAttributes().setGroup(fileAbstractModel.getGroup());
+                    if (fileAbstractModel.getPermissions() >= 0) {
+                        doc.getAttributes().setPermissions(fileAbstractModel.getPermissions());
                     }
                 }
                 // Attributes
