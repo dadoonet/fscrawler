@@ -354,8 +354,8 @@ You can force to use the ``_id`` to be the filename using
 Adding file attributes
 ^^^^^^^^^^^^^^^^^^^^^^
 
-If you want to add file attributes such as ``attributes.owner`` and
-``attributes.group``, you can set ``attributes_support`` to ``true``.
+If you want to add file attributes such as ``attributes.owner``, ``attributes.group``
+and ``attributes.permissions``, you can set ``attributes_support`` to ``true``.
 
 .. code:: json
 
@@ -365,6 +365,11 @@ If you want to add file attributes such as ``attributes.owner`` and
        "attributes_support" : true
      }
    }
+
+.. note::
+
+    On Windows systems, ``attributes.group`` and ``attributes.permissions`` are
+    not generated.
 
 Disabling raw metadata
 ^^^^^^^^^^^^^^^^^^^^^^

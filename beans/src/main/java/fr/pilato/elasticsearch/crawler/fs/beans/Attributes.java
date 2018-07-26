@@ -30,10 +30,12 @@ public class Attributes {
     static public final class FIELD_NAMES {
         public static final String OWNER = "owner";
         public static final String GROUP = "group";
+        public static final String PERMISSIONS = "permissions";
     }
 
     private String owner;
     private String group;
+    private int permissions;
 
     public String getOwner() {
         return owner;
@@ -49,5 +51,13 @@ public class Attributes {
 
     public void setGroup(String group) {
         this.group = group;
+    }
+
+    public int getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(int permissions) {
+        this.permissions = permissions;
     }
 }

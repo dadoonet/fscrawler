@@ -27,6 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.InputStream;
 import java.time.Instant;
@@ -47,23 +48,25 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
 
     @Override
     public FileAbstractModel toFileAbstractModel(String path, ChannelSftp.LsEntry file) {
-        FileAbstractModel model = new FileAbstractModel();
-        model.name = file.getFilename();
-        model.directory = file.getAttrs().isDir();
-        model.file = !model.directory;
-        // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
-        model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()*1000L), ZoneId.systemDefault());
-        model.path = path;
-        model.fullpath = model.path.concat("/").concat(model.name);
-        model.size = file.getAttrs().getSize();
-        model.owner = Integer.toString(file.getAttrs().getUId());
-        model.group = Integer.toString(file.getAttrs().getGId());
-        return model;
+        return new FileAbstractModel(
+                file.getFilename(),
+                file.getAttrs().isDir(),
+                // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
+                LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()*1000L), ZoneId.systemDefault()),
+                // We don't have the creation date
+                null,
+                FilenameUtils.getExtension(file.getFilename()),
+                path,
+                path.concat("/").concat(file.getFilename()),
+                file.getAttrs().getSize(),
+                Integer.toString(file.getAttrs().getUId()),
+                Integer.toString(file.getAttrs().getGId()),
+                file.getAttrs().getPermissions());
     }
 
     @Override
     public InputStream getInputStream(FileAbstractModel file) throws Exception {
-        return sftp.get(file.fullpath);
+        return sftp.get(file.getFullpath());
     }
 
     @SuppressWarnings("unchecked")
