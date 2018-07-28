@@ -189,13 +189,14 @@ public class ElasticsearchClientManager {
         }
     }
 
-    public void close() {
+    public void close() throws InterruptedException {
         logger.debug("Closing Elasticsearch client manager");
         if (bulkProcessorDoc != null) {
             try {
                 bulkProcessorDoc.awaitClose(30, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.warn("Did not succeed in closing the bulk processor for documents", e);
+                throw e;
             }
         }
         if (bulkProcessorFolder != null) {
@@ -203,6 +204,7 @@ public class ElasticsearchClientManager {
                 bulkProcessorFolder.awaitClose(30, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.warn("Did not succeed in closing the bulk processor for folders", e);
+                throw e;
             }
         }
         if (client != null) {
