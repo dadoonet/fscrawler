@@ -23,13 +23,13 @@ Run tests with an external cluster
 
 To run the test suite against an elasticsearch instance running locally, just run::
 
-    mvn check
+    mvn verify
 
 .. tip::
 
     If you don't want to rebuild everything (ie. you just touch test classes), run::
 
-        mvn -pl fr.pilato.elasticsearch.crawler:fscrawler-it check
+        mvn -pl fr.pilato.elasticsearch.crawler:fscrawler-it verify
 
 If elasticsearch is not running yet on ``http://localhost:9200``, FSCrawler project will run a Docker instance before
 the tests start.
@@ -38,7 +38,7 @@ the tests start.
 
     If you are using a secured instance, use ``tests.cluster.user``, ``tests.cluster.pass`` and ``tests.cluster.scheme``::
 
-        mvn check \
+        mvn verify \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
             -Dtests.cluster.scheme=HTTPS \
@@ -50,7 +50,7 @@ the tests start.
     you can also use ``tests.cluster.host`` and ``tests.cluster.port`` to set where elasticsearch
     is running::
 
-        mvn check \
+        mvn verify \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
             -Dtests.cluster.scheme=HTTPS \
@@ -61,7 +61,7 @@ Check for vulnerabilities (CVE)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The project is using `OSS Sonatype service <https://ossindex.sonatype.org/>`_ to check for known
-vulnerabilities. This is ran during the `check` phase.
+vulnerabilities. This is ran during the ``verify`` phase.
 
 Sonatype provides this service but with a anonymous account, you might be limited
 by the number of tests you can run during a given period.
@@ -69,7 +69,7 @@ by the number of tests you can run during a given period.
 If you have an existing account, you can use it to bypass this limit for anonymous users by
 setting ``sonatype.username`` and ``sonatype.password``::
 
-        mvn check -DskipTests \
+        mvn verify -DskipTests \
             -Dsonatype.username=youremail@domain.com \
             -Dsonatype.password=yourverysecuredpassword
 

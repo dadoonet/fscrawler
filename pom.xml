@@ -314,14 +314,6 @@
                             </goals>
                         </execution>
                     </executions>
-                    <configuration>
-                        <clientConfiguration>
-                            <authConfiguration>
-                                <username>${env.SONATYPE_USER}</username>
-                                <password>${env.SONATYPE_PASS}</password>
-                            </authConfiguration>
-                        </clientConfiguration>
-                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.sonatype.plugins</groupId>
@@ -362,13 +354,6 @@
                 </plugin>
             </plugins>
         </pluginManagement>
-        <plugins>
-            <!-- For each module, we automatically check for vulnerabilities -->
-            <plugin>
-                <groupId>org.sonatype.ossindex.maven</groupId>
-                <artifactId>ossindex-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
     </build>
 
     <dependencyManagement>
@@ -731,6 +716,48 @@
             <properties>
                 <integ.elasticsearch.version>5.6.5</integ.elasticsearch.version>
             </properties>
+        </profile>
+        <profile>
+            <id>check_cve_anonymous</id>
+            <activation>
+                <property>
+                    <name>!sonatype.username</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- For each module, we automatically check for vulnerabilities -->
+                    <plugin>
+                        <groupId>org.sonatype.ossindex.maven</groupId>
+                        <artifactId>ossindex-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>check_cve_auth</id>
+            <activation>
+                <property>
+                    <name>sonatype.username</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- For each module, we automatically check for vulnerabilities -->
+                    <plugin>
+                        <groupId>org.sonatype.ossindex.maven</groupId>
+                        <artifactId>ossindex-maven-plugin</artifactId>
+                        <configuration>
+                            <clientConfiguration>
+                                <authConfiguration>
+                                    <username>${sonatype.username}</username>
+                                    <password>${sonatype.password}</password>
+                                </authConfiguration>
+                            </clientConfiguration>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
         <profile>
             <id>release</id>
