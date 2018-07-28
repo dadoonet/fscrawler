@@ -51,7 +51,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     }
 
     @After
-    public void stopRestServer() {
+    public void stopRestServer() throws InterruptedException {
         RestServer.close();
         if (esClientManager != null) {
             esClientManager.close();
