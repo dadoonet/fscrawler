@@ -680,6 +680,12 @@
                 <version>0.1</version>
             </dependency>
 
+            <!-- CVE Temporary Fix -->
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>1.60</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
