@@ -73,6 +73,12 @@
         <tests.timeoutSuite>600000</tests.timeoutSuite>
         <tests.timeout>600000</tests.timeout>
 
+        <!-- For CVE Audit with Sonatype -->
+        <env.SONATYPE_USER></env.SONATYPE_USER>
+        <env.SONATYPE_PASS></env.SONATYPE_PASS>
+        <sonatype.username>${env.SONATYPE_USER}</sonatype.username>
+        <sonatype.password>${env.SONATYPE_PASS}</sonatype.password>
+
         <java.compiler.version>1.8</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -296,6 +302,28 @@
                     </configuration>
                 </plugin>
                 <plugin>
+                    <groupId>org.sonatype.ossindex.maven</groupId>
+                    <artifactId>ossindex-maven-plugin</artifactId>
+                    <version>1.0.0</version>
+                    <executions>
+                        <execution>
+                            <id>audit-dependencies</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>audit</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <clientConfiguration>
+                            <authConfiguration>
+                                <username>${env.SONATYPE_USER}</username>
+                                <password>${env.SONATYPE_PASS}</password>
+                            </authConfiguration>
+                        </clientConfiguration>
+                    </configuration>
+                </plugin>
+                <plugin>
                     <groupId>org.sonatype.plugins</groupId>
                     <artifactId>nexus-staging-maven-plugin</artifactId>
                     <version>1.6.8</version>
@@ -334,6 +362,13 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <!-- For each module, we automatically check for vulnerabilities -->
+            <plugin>
+                <groupId>org.sonatype.ossindex.maven</groupId>
+                <artifactId>ossindex-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
     </build>
 
     <dependencyManagement>

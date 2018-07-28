@@ -61,6 +61,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
       :caption: Developer Guide
       :maxdepth: 3
 
+      dev/build
       dev/doc
       dev/release
 
