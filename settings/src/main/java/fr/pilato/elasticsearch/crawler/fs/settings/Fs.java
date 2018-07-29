@@ -472,4 +472,30 @@ public class Fs {
         result = 31 * result + (pdfOcr ? 1 : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Fs{" + "url='" + url + '\'' +
+                ", updateRate=" + updateRate +
+                ", includes=" + includes +
+                ", excludes=" + excludes +
+                ", jsonSupport=" + jsonSupport +
+                ", filenameAsId=" + filenameAsId +
+                ", addFilesize=" + addFilesize +
+                ", removeDeleted=" + removeDeleted +
+                ", addAsInnerObject=" + addAsInnerObject +
+                ", storeSource=" + storeSource +
+                ", indexContent=" + indexContent +
+                ", indexedChars=" + indexedChars +
+                ", attributesSupport=" + attributesSupport +
+                ", rawMetadata=" + rawMetadata +
+                ", xmlSupport=" + xmlSupport +
+                ", checksum='" + checksum + '\'' +
+                ", indexFolders=" + indexFolders +
+                ", langDetect=" + langDetect +
+                ", continueOnError=" + continueOnError +
+                ", pdfOcr=" + pdfOcr +
+                ", ocr=" + ocr +
+                '}';
+    }
 }

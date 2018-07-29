@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class Elasticsearch {
 
@@ -186,29 +187,27 @@ public class Elasticsearch {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
             Node node = (Node) o;
-
-            if (port != node.port) return false;
-            return !(host != null ? !host.equals(node.host) : node.host != null);
-
+            return active == node.active &&
+                    Objects.equals(cloudId, node.cloudId) &&
+                    Objects.equals(host, node.host) &&
+                    Objects.equals(port, node.port) &&
+                    scheme == node.scheme;
         }
 
         @Override
         public int hashCode() {
-            int result = host != null ? host.hashCode() : 0;
-            result = 31 * result + port;
-            return result;
+            return Objects.hash(cloudId, host, port, active, scheme);
         }
 
         @Override
         public String toString() {
-            String sb = "Node{" + "active=" + active +
+            return "Node{" + "cloudId='" + cloudId + '\'' +
                     ", host='" + host + '\'' +
                     ", port=" + port +
+                    ", active=" + active +
                     ", scheme=" + scheme +
                     '}';
-            return sb;
         }
     }
 
@@ -374,10 +373,22 @@ public class Elasticsearch {
         result = 31 * result + (index != null ? index.hashCode() : 0);
         result = 31 * result + (indexFolder != null ? indexFolder.hashCode() : 0);
         result = 31 * result + (username != null ? username.hashCode() : 0);
-        result = 31 * result + (password != null ? password.hashCode() : 0);
         result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
         result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Elasticsearch{" + "nodes=" + nodes +
+                ", index='" + index + '\'' +
+                ", indexFolder='" + indexFolder + '\'' +
+                ", bulkSize=" + bulkSize +
+                ", flushInterval=" + flushInterval +
+                ", byteSize=" + byteSize +
+                ", username='" + username + '\'' +
+                ", pipeline='" + pipeline + '\'' +
+                '}';
     }
 }

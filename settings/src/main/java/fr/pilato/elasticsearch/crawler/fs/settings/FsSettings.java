@@ -145,4 +145,16 @@ public class FsSettings {
         result = 31 * result + (elasticsearch != null ? elasticsearch.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("FsSettings{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", fs=").append(fs);
+        sb.append(", server=").append(server);
+        sb.append(", elasticsearch=").append(elasticsearch);
+        sb.append(", rest=").append(rest);
+        sb.append('}');
+        return sb.toString();
+    }
 }
