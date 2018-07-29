@@ -43,6 +43,10 @@ The job file must comply to the following ``json`` specifications:
      },
      "elasticsearch" : {
        "nodes" : [ {
+         // With Cloud ID
+         "cloud_id" : "CLOUD_ID"
+       }, {
+         // With scheme, host and port
          "host" : "127.0.0.1",
          "port" : 9200,
          "scheme" : "HTTP"

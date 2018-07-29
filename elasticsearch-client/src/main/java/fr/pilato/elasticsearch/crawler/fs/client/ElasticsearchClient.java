@@ -40,6 +40,7 @@ import org.elasticsearch.index.query.TermQueryBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -290,9 +291,28 @@ public class ElasticsearchClient extends RestHighLevelClient {
         return VERSION;
     }
 
+    public static Node decodeCloudId(String cloudId) {
+     	// 1. Ignore anything before `:`.
+        String id = cloudId.substring(cloudId.indexOf(":")+1);
+
+     	// 2. base64 decode
+        String decoded = new String(Base64.getDecoder().decode(id));
+
+        // 3. separate based on `$`
+        String[] words = decoded.split("\\$");
+
+ 	    // 4. form the URLs
+        return Node.builder().setHost(words[1] + "." + words[0]).setPort(443).setScheme(Node.Scheme.HTTPS).build();
+    }
+
     public static RestClientBuilder buildRestClient(Elasticsearch settings) {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
         settings.getNodes().forEach(node -> {
+            if (node.getCloudId() != null) {
+                // We have a cloud id which simplifies all
+                node = decodeCloudId(node.getCloudId());
+            }
+
             Node.Scheme scheme = node.getScheme();
             if (scheme == null) {
                 // Default to HTTP. In case we are reading an old configuration

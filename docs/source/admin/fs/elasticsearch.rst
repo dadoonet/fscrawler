@@ -452,6 +452,27 @@ a production cluster:
      }
    }
 
+If you are using `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
+you can just use the ``Cloud ID`` which is available in the Cloud Console and paste it:
+
+.. code:: json
+
+   {
+     "name" : "test",
+     "elasticsearch" : {
+       "nodes" : [
+         { "cloud_id" : "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==" }
+       ]
+     }
+   }
+
+This ID will be used to automatically generate the right host, port and scheme.
+
+.. hint::
+
+    In the context of `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
+    you will most likely need to provide as well the username and the password. See :ref:`credentials`.
+
 You can define multiple nodes:
 
 .. code:: json

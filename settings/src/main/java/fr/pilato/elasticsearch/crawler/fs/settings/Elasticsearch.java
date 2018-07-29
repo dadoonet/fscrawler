@@ -88,8 +88,13 @@ public class Elasticsearch {
             this.scheme = scheme;
         }
 
+        private Node(String cloudId) {
+            this.cloudId = cloudId;
+        }
+
+        private String cloudId;
         private String host;
-        private int port;
+        private Integer port;
         private boolean active;
         private Scheme scheme;
 
@@ -101,11 +106,11 @@ public class Elasticsearch {
             this.host = host;
         }
 
-        public int getPort() {
+        public Integer getPort() {
             return port;
         }
 
-        public void setPort(int port) {
+        public void setPort(Integer port) {
             this.port = port;
         }
 
@@ -125,6 +130,14 @@ public class Elasticsearch {
             this.scheme = scheme;
         }
 
+        public String getCloudId() {
+            return cloudId;
+        }
+
+        public void setCloudId(String cloudId) {
+            this.cloudId = cloudId;
+        }
+
         public static Builder builder() {
             return new Builder();
         }
@@ -133,6 +146,17 @@ public class Elasticsearch {
             private String host;
             private int port;
             private Scheme scheme = Scheme.HTTP;
+            private String cloudId = null;
+
+            /**
+             * This can be used in the context of Elasticsearch service by elastic
+             * @param cloudId The cloud id as given on cloud console
+             * @return self
+             */
+            public Builder setCloudId(String cloudId) {
+                this.cloudId = cloudId;
+                return this;
+            }
 
             public Builder setHost(String host) {
                 this.host = host;
@@ -150,7 +174,11 @@ public class Elasticsearch {
             }
 
             public Node build() {
-                return new Node(host, port, scheme);
+                if (cloudId != null) {
+                    return new Node(cloudId);
+                } else {
+                    return new Node(host, port, scheme);
+                }
             }
         }
 
