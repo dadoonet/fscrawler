@@ -58,7 +58,6 @@ import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -120,7 +119,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static RestClient esRestClient;
 
     @BeforeClass
-    public static void createFsCrawlerJobDir() throws IOException, URISyntaxException {
+    public static void createFsCrawlerJobDir() throws IOException {
         // We also need to create default mapping files
         metadataDir = rootTmpDir.resolve(".fscrawler");
         if (Files.notExists(metadataDir)) {
@@ -231,10 +230,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 testClusterHost = "localhost";
                 // We test if we have already something running at the testClusterHost address
                 elasticsearchClientTemporary = new ElasticsearchClient(getClientBuilder(
-                        new HttpHost(testClusterHost, testClusterPort), testClusterUser, testClusterPass));
+                        new HttpHost(testClusterHost, testClusterPort, testClusterScheme.toLowerCase()), testClusterUser, testClusterPass));
                 elasticsearchClientTemporary.info();
                 staticLogger.debug("A node is already running locally. No need to start a Docker instance.");
-            } catch (IOException e) {
+            } catch (ConnectException e) {
                 staticLogger.debug("No local node running. We need to start a Docker instance.");
                 // We start an elasticsearch Docker instance
                 Properties props = readPropertiesFromClassLoader("elasticsearch.version.properties");
@@ -253,9 +252,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
         }
 
+        staticLogger.info("Starting a client against [{}@{}:{}]", testClusterUser, testClusterHost, testClusterPort);
         // We build the elasticsearch High Level Client based on the parameters
         elasticsearchClient = new ElasticsearchClient(getClientBuilder(
-                new HttpHost(testClusterHost, testClusterPort), testClusterUser, testClusterPass));
+                new HttpHost(testClusterHost, testClusterPort, testClusterScheme.toLowerCase()), testClusterUser, testClusterPass));
+        elasticsearchClient.info();
         elasticsearchWithSecurity = Elasticsearch.builder()
                 .addNode(Elasticsearch.Node.builder()
                         .setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
