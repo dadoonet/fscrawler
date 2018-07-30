@@ -31,6 +31,7 @@ import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
@@ -188,13 +189,23 @@ public class ElasticsearchClientManager {
         }
     }
 
-    public void close() {
+    public void close() throws InterruptedException {
         logger.debug("Closing Elasticsearch client manager");
         if (bulkProcessorDoc != null) {
-            bulkProcessorDoc.close();
+            try {
+                bulkProcessorDoc.awaitClose(30, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warn("Did not succeed in closing the bulk processor for documents", e);
+                throw e;
+            }
         }
         if (bulkProcessorFolder != null) {
-            bulkProcessorFolder.close();
+            try {
+                bulkProcessorFolder.awaitClose(30, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warn("Did not succeed in closing the bulk processor for folders", e);
+                throw e;
+            }
         }
         if (client != null) {
             try {

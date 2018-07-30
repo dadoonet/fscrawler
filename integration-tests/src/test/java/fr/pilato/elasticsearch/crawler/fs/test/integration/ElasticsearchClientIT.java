@@ -180,7 +180,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 "}";
         StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
 
-        elasticsearchClient.getLowLevelClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
+        elasticsearchClient.getLowLevelClient().performRequest("PUT", "/_ingest/pipeline/" + crawlerName,
                 Collections.emptyMap(), entity);
 
 

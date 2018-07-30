@@ -58,7 +58,6 @@ import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -71,6 +70,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
@@ -118,9 +118,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static ElasticsearchContainer container;
     private static RestClient esRestClient;
+    static String typeName;
 
     @BeforeClass
-    public static void createFsCrawlerJobDir() throws IOException, URISyntaxException {
+    public static void createFsCrawlerJobDir() throws IOException {
         // We also need to create default mapping files
         metadataDir = rootTmpDir.resolve(".fscrawler");
         if (Files.notExists(metadataDir)) {
@@ -146,11 +147,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     static ElasticsearchClient elasticsearchClient;
 
+    private static String testClusterCloudId;
     private static String testClusterHost;
     private static int testClusterPort;
+    private static Elasticsearch.Node.Scheme testClusterScheme;
     private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
     private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
-    private final static Elasticsearch.Node.Scheme testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
     final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
     static Elasticsearch elasticsearchWithSecurity;
 
@@ -222,8 +224,18 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startElasticsearchRestClient() throws IOException {
-        testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
-        testClusterHost = System.getProperty("tests.cluster.host");
+        testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
+        if (testClusterCloudId != null) {
+            Elasticsearch.Node node = decodeCloudId(testClusterCloudId);
+            testClusterHost = node.getHost();
+            testClusterPort = node.getPort();
+            testClusterScheme = node.getScheme();
+            staticLogger.debug("Using cloud id [{}]", testClusterCloudId);
+        } else {
+            testClusterHost = System.getProperty("tests.cluster.host");
+            testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
+            testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
+        }
 
         if (testClusterHost == null) {
             ElasticsearchClient elasticsearchClientTemporary = null;
@@ -231,10 +243,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 testClusterHost = "localhost";
                 // We test if we have already something running at the testClusterHost address
                 elasticsearchClientTemporary = new ElasticsearchClient(getClientBuilder(
-                        new HttpHost(testClusterHost, testClusterPort), testClusterUser, testClusterPass));
+                        new HttpHost(testClusterHost, testClusterPort, testClusterScheme.toLowerCase()), testClusterUser, testClusterPass));
                 elasticsearchClientTemporary.info();
                 staticLogger.debug("A node is already running locally. No need to start a Docker instance.");
-            } catch (IOException e) {
+            } catch (ConnectException e) {
                 staticLogger.debug("No local node running. We need to start a Docker instance.");
                 // We start an elasticsearch Docker instance
                 Properties props = readPropertiesFromClassLoader("elasticsearch.version.properties");
@@ -249,13 +261,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     elasticsearchClientTemporary.shutdown();
                 }
             }
-        } else {
-            testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
         }
 
+        staticLogger.info("Starting a client against [{}://{}@{}:{}]", testClusterScheme.toLowerCase(), testClusterUser, testClusterHost, testClusterPort);
         // We build the elasticsearch High Level Client based on the parameters
         elasticsearchClient = new ElasticsearchClient(getClientBuilder(
-                new HttpHost(testClusterHost, testClusterPort), testClusterUser, testClusterPass));
+                new HttpHost(testClusterHost, testClusterPort, testClusterScheme.toLowerCase()), testClusterUser, testClusterPass));
+        elasticsearchClient.info();
         elasticsearchWithSecurity = Elasticsearch.builder()
                 .addNode(Elasticsearch.Node.builder()
                         .setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
@@ -268,6 +280,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         // We set what will be elasticsearch behavior as it depends on the cluster version
         elasticsearchClient.setElasticsearchBehavior();
+
+        typeName = elasticsearchClient.getDefaultTypeName();
     }
 
     @BeforeClass

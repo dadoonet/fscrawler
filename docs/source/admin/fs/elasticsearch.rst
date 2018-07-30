@@ -107,6 +107,11 @@ Or fall back to the command line:
     -  ``6/_settings.json``: for elasticsearch 6.x series document index settings
     -  ``6/_settings_folder.json``: for elasticsearch 6.x series folder index settings
 
+.. note::
+
+    For versions before 6.x series, the type of the document is ``doc``.
+    From 6.x, the type of the document is ``_doc``.
+
 Creating your own mapping (analyzers)
 """""""""""""""""""""""""""""""""""""
 
@@ -121,194 +126,222 @@ The following example uses a ``french`` analyzer to index the
 
 .. code:: json
 
-   {
-     "settings": {
-       "index.mapping.total_fields.limit": 2000,
-       "analysis": {
-         "analyzer": {
-           "fscrawler_path": {
-             "tokenizer": "fscrawler_path"
-           }
-         },
-         "tokenizer": {
-           "fscrawler_path": {
-             "type": "path_hierarchy"
-           }
-         }
-       }
-     },
-     "mappings": {
-       "doc": {
-         "properties" : {
-           "attachment" : {
-             "type" : "binary",
-             "doc_values": false
-           },
-           "attributes" : {
-             "properties" : {
-               "group" : {
-                 "type" : "keyword"
-               },
-               "owner" : {
-                 "type" : "keyword"
-               }
-             }
-           },
-           "content" : {
-             "type" : "text",
-             "analyzer" : "french"
-           },
-           "file" : {
-             "properties" : {
-               "content_type" : {
-                 "type" : "keyword"
-               },
-               "filename" : {
-                 "type" : "keyword"
-               },
-               "extension" : {
-                 "type" : "keyword"
-               },
-               "filesize" : {
-                 "type" : "long"
-               },
-               "indexed_chars" : {
-                 "type" : "long"
-               },
-               "indexing_date" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "last_modified" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "checksum": {
-                 "type": "keyword"
-               },
-               "url" : {
-                 "type" : "keyword",
-                 "index" : false
-               }
-             }
-           },
-           "object" : {
-             "type" : "object"
-           },
-           "meta" : {
-             "properties" : {
-               "author" : {
-                 "type" : "text"
-               },
-               "date" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "keywords" : {
-                 "type" : "text"
-               },
-               "title" : {
-                 "type" : "text"
-               },
-               "language" : {
-                 "type" : "keyword"
-               },
-               "format" : {
-                 "type" : "text"
-               },
-               "identifier" : {
-                 "type" : "text"
-               },
-               "contributor" : {
-                 "type" : "text"
-               },
-               "coverage" : {
-                 "type" : "text"
-               },
-               "modifier" : {
-                 "type" : "text"
-               },
-               "creator_tool" : {
-                 "type" : "keyword"
-               },
-               "publisher" : {
-                 "type" : "text"
-               },
-               "relation" : {
-                 "type" : "text"
-               },
-               "rights" : {
-                 "type" : "text"
-               },
-               "source" : {
-                 "type" : "text"
-               },
-               "type" : {
-                 "type" : "text"
-               },
-               "description" : {
-                 "type" : "text"
-               },
-               "created" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "print_date" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "metadata_date" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "latitude" : {
-                 "type" : "text"
-               },
-               "longitude" : {
-                 "type" : "text"
-               },
-               "altitude" : {
-                 "type" : "text"
-               },
-               "rating" : {
-                 "type" : "keyword"
-               },
-               "comments" : {
-                 "type" : "text"
-               }
-             }
-           },
-           "path" : {
-             "properties" : {
-               "real" : {
-                 "type" : "keyword",
-                 "fields": {
-                   "tree": {
-                     "type" : "text",
-                     "analyzer": "fscrawler_path",
-                     "fielddata": true
-                   }
-                 }
-               },
-               "root" : {
-                 "type" : "keyword"
-               },
-               "virtual" : {
-                 "type" : "keyword",
-                 "fields": {
-                   "tree": {
-                     "type" : "text",
-                     "analyzer": "fscrawler_path",
-                     "fielddata": true
-                   }
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-   }
+    {
+      "settings": {
+        "index.mapping.total_fields.limit": 2000,
+        "analysis": {
+          "analyzer": {
+            "fscrawler_path": {
+              "tokenizer": "fscrawler_path"
+            }
+          },
+          "tokenizer": {
+            "fscrawler_path": {
+              "type": "path_hierarchy"
+            }
+          }
+        }
+      },
+      "mappings": {
+        "_doc": {
+          "dynamic_templates": [
+            {
+              "raw_as_text": {
+                "path_match": "meta.raw.*",
+                "mapping": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "attachment": {
+              "type": "binary",
+              "doc_values": false
+            },
+            "attributes": {
+              "properties": {
+                "group": {
+                  "type": "keyword"
+                },
+                "owner": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "content": {
+              "type": "text",
+              "analyzer": "french"
+            },
+            "file": {
+              "properties": {
+                "content_type": {
+                  "type": "keyword"
+                },
+                "filename": {
+                  "type": "keyword",
+                  "store": true
+                },
+                "extension": {
+                  "type": "keyword"
+                },
+                "filesize": {
+                  "type": "long"
+                },
+                "indexed_chars": {
+                  "type": "long"
+                },
+                "indexing_date": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "created": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "last_modified": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "last_accessed": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "checksum": {
+                  "type": "keyword"
+                },
+                "url": {
+                  "type": "keyword",
+                  "index": false
+                }
+              }
+            },
+            "meta": {
+              "properties": {
+                "author": {
+                  "type": "text"
+                },
+                "date": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "keywords": {
+                  "type": "text"
+                },
+                "title": {
+                  "type": "text"
+                },
+                "language": {
+                  "type": "keyword"
+                },
+                "format": {
+                  "type": "text"
+                },
+                "identifier": {
+                  "type": "text"
+                },
+                "contributor": {
+                  "type": "text"
+                },
+                "coverage": {
+                  "type": "text"
+                },
+                "modifier": {
+                  "type": "text"
+                },
+                "creator_tool": {
+                  "type": "keyword"
+                },
+                "publisher": {
+                  "type": "text"
+                },
+                "relation": {
+                  "type": "text"
+                },
+                "rights": {
+                  "type": "text"
+                },
+                "source": {
+                  "type": "text"
+                },
+                "type": {
+                  "type": "text"
+                },
+                "description": {
+                  "type": "text"
+                },
+                "created": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "print_date": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "metadata_date": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "latitude": {
+                  "type": "text"
+                },
+                "longitude": {
+                  "type": "text"
+                },
+                "altitude": {
+                  "type": "text"
+                },
+                "rating": {
+                  "type": "byte"
+                },
+                "comments": {
+                  "type": "text"
+                }
+              }
+            },
+            "path": {
+              "properties": {
+                "real": {
+                  "type": "keyword",
+                  "fields": {
+                    "tree": {
+                      "type": "text",
+                      "analyzer": "fscrawler_path",
+                      "fielddata": true
+                    },
+                    "fulltext": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "root": {
+                  "type": "keyword"
+                },
+                "virtual": {
+                  "type": "keyword",
+                  "fields": {
+                    "tree": {
+                      "type": "text",
+                      "analyzer": "fscrawler_path",
+                      "fielddata": true
+                    },
+                    "fulltext": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
 
 Note that if you want to push manually the mapping to elasticsearch you
 can use the classic REST calls:
@@ -451,6 +484,27 @@ a production cluster:
        ]
      }
    }
+
+If you are using `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
+you can just use the ``Cloud ID`` which is available in the Cloud Console and paste it:
+
+.. code:: json
+
+   {
+     "name" : "test",
+     "elasticsearch" : {
+       "nodes" : [
+         { "cloud_id" : "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==" }
+       ]
+     }
+   }
+
+This ID will be used to automatically generate the right host, port and scheme.
+
+.. hint::
+
+    In the context of `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
+    you will most likely need to provide as well the username and the password. See :ref:`credentials`.
 
 You can define multiple nodes:
 
@@ -649,9 +703,13 @@ FSCrawler may create the following fields depending on configuration and availab
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
 | ``file.content_type``      | Content Type                           | ``"application/vnd.oasis.opendocument.text"``|                                                                     |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.last_modified``     | Last modification date                 | ``1386855978000``                            |                                                                     |
+| ``file.created``           | Creation date                          | ``"2018-07-30T11:19:23.000+0000"``           |                                                                     |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.indexing_date``     | Indexing date                          | ``"2013-12-12T13:50:58.758Z"``               |                                                                     |
+| ``file.last_modified``     | Last modification date                 | ``"2018-07-30T11:19:23.000+0000"``           |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.last_accessed``     | Last accessed date                     | ``"2018-07-30T11:19:23.000+0000"``           |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.indexing_date``     | Indexing date                          | ``"2018-07-30T11:19:30.703+0000"``           |                                                                     |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
 | ``file.filesize``          | File size in bytes                     | ``1256362``                                  |                                                                     |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
@@ -685,39 +743,35 @@ Here is a typical JSON document generated by the crawler:
 .. code:: json
 
     {
-      "file":{
-         "filename":"test.odt",
-         "extension":"odt",
-         "last_modified":1386855978000,
-         "indexing_date":"2013-12-12T13:50:58.758Z",
-         "content_type":"application/vnd.oasis.opendocument.text",
-         "url":"file:///tmp/testfs_metadata/test.odt",
-         "indexed_chars":100000,
-         "filesize":8355,
-         "checksum":"c32eafae2587bef4b3b32f73743c3c61"
-      },
-      "path":{
-         "root":"bceb3913f6d793e915beb70a4735592",
-         "virtual":"/test.odt",
-         "real":"/tmp/testfs_metadata/test.odt"
-      },
-      "attributes": {
-         "owner": "david",
-         "group": "staff",
-         "permissions": 764
-      },
-      "meta":{
-         "author":"David Pilato",
-         "title":"Mon titre",
-         "date":"2013-04-04T15:21:35",
-         "keywords":[
-            "fs",
-            "elasticsearch",
-            "crawler"
-         ],
-         "language":"fr"
-      },
-      "content":"Bonjour David\n\n\n"
+       "content":"This is a sample text available in page 1\n\nThis second part of the text is in Page 2\n\n",
+       "meta":{
+          "author":"David Pilato",
+          "title":"Test Tika title",
+          "date":"2016-07-07T16:37:00.000+0000",
+          "keywords":[
+             "keyword1",
+             "  keyword2"
+          ],
+          "language":"en",
+          "description":"Comments",
+          "created":"2016-07-07T16:37:00.000+0000"
+       },
+       "file":{
+          "extension":"odt",
+          "content_type":"application/vnd.oasis.opendocument.text",
+          "created":"2018-07-30T11:35:08.000+0000",
+          "last_modified":"2018-07-30T11:35:08.000+0000",
+          "last_accessed":"2018-07-30T11:35:08.000+0000",
+          "indexing_date":"2018-07-30T11:35:19.781+0000",
+          "filesize":6236,
+          "filename":"test.odt",
+          "url":"file:///tmp/test.odt"
+       },
+       "path":{
+          "root":"7537e4fb47e553f110a1ec312c2537c0",
+          "virtual":"/test.odt",
+          "real":"/tmp/test.odt"
+       }
     }
 
 .. _search-examples:

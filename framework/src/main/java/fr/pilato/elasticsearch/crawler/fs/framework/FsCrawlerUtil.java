@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.CopyOption;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
@@ -72,10 +71,9 @@ public class FsCrawlerUtil {
      * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param type The expected type (will be expanded to type.json)
      * @return the mapping
-     * @throws URISyntaxException If URI is malformed
      * @throws IOException If the mapping can not be read
      */
-    public static String readDefaultJsonVersionedFile(Path config, String version, String type) throws URISyntaxException, IOException {
+    public static String readDefaultJsonVersionedFile(Path config, String version, String type) throws IOException {
         Path defaultConfigDir = config.resolve("_default");
         try {
             return readJsonVersionedFile(defaultConfigDir, version, type);
@@ -108,10 +106,9 @@ public class FsCrawlerUtil {
      * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param filename The expected filename (will be expanded to filename.json)
      * @return the mapping
-     * @throws URISyntaxException If URI is malformed
      * @throws IOException If the mapping can not be read
      */
-    public static String readJsonFile(Path dir, Path config, String version, String filename) throws URISyntaxException, IOException {
+    public static String readJsonFile(Path dir, Path config, String version, String filename) throws IOException {
         try {
             return readJsonVersionedFile(dir, version, filename);
         } catch (NoSuchFileException e) {
@@ -232,6 +229,34 @@ public class FsCrawlerUtil {
                     .getFileAttributeView(path, BasicFileAttributeView.class)
                     .readAttributes();
             time = LocalDateTime.ofInstant(fileattr.creationTime().toInstant(), ZoneId.systemDefault());
+        } catch (Exception e) {
+            time = null;
+        }
+        return time;
+    }
+
+    public static LocalDateTime getModificationTime(File file) {
+        LocalDateTime time;
+        try  {
+            Path path = Paths.get(file.getAbsolutePath());
+            BasicFileAttributes fileattr = Files
+                    .getFileAttributeView(path, BasicFileAttributeView.class)
+                    .readAttributes();
+            time = LocalDateTime.ofInstant(fileattr.lastModifiedTime().toInstant(), ZoneId.systemDefault());
+        } catch (Exception e) {
+            time = null;
+        }
+        return time;
+    }
+
+    public static LocalDateTime getLastAccessTime(File file) {
+        LocalDateTime time;
+        try  {
+            Path path = Paths.get(file.getAbsolutePath());
+            BasicFileAttributes fileattr = Files
+                    .getFileAttributeView(path, BasicFileAttributeView.class)
+                    .readAttributes();
+            time = LocalDateTime.ofInstant(fileattr.lastAccessTime().toInstant(), ZoneId.systemDefault());
         } catch (Exception e) {
             time = null;
         }
@@ -519,5 +544,25 @@ public class FsCrawlerUtil {
                 return p.substring(0, ix) + fraction + suffix;
             }
         }
+    }
+
+    /**
+     * Compare if a file size is strictly under a given limit
+     * @param limit Limit. If null, we consider that there is no limit and we return true.
+     * @param fileSizeAsBytes File size
+     * @return true if under the limit. false otherwise.
+     */
+    public static boolean isFileSizeUnderLimit(ByteSizeValue limit, long fileSizeAsBytes) {
+        boolean result = true;
+        if (limit != null) {
+            // We check the file size to avoid indexing too big files
+            ByteSizeValue fileSize = new ByteSizeValue(fileSizeAsBytes);
+            int compare = fileSize.compareTo(limit);
+            result = compare <= 0;
+            logger.debug("Comparing file size [{}] with current limit [{}] -> {}", fileSize, limit,
+                    result ? "under limit" : "above limit");
+        }
+
+        return result;
     }
 }

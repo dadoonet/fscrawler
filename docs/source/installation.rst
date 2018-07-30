@@ -148,7 +148,7 @@ to upgrade elasticsearch.
 This procedure only applies if you did not set previously
 ``elasticsearch.type`` setting (default value was ``doc``). If you did,
 then you also need to reindex the existing documents to the default
-``doc`` type as per elasticsearch 6.0:
+``_doc`` type as per elasticsearch 6.x (or ``doc`` for 5.x series):
 
 ::
 
@@ -161,7 +161,7 @@ then you also need to reindex the existing documents to the default
      },
      "dest": {
        "index": "job_name",
-       "type": "doc"
+       "type": "_doc"
      }
    }
    # Remove old type data from job_name index
@@ -282,4 +282,7 @@ Upgrade to 2.5
        }
 
     For more information, read :ref:`includes_excludes`.
+
+- For new indices, FSCrawler now uses ``_doc`` as the default type name for clusters
+  running elasticsearch 6.x or superior.
 

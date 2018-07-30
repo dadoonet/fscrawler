@@ -47,6 +47,7 @@ public class FileAbstractModel {
     private boolean directory;
     private LocalDateTime lastModifiedDate;
     private LocalDateTime creationDate;
+    private LocalDateTime accessDate;
     private String path;
     private String fullpath;
     private long size;
@@ -55,13 +56,14 @@ public class FileAbstractModel {
     private int permissions;
     private String extension;
 
-    public FileAbstractModel(String name, boolean file, LocalDateTime lastModifiedDate, LocalDateTime creationDate,
+    public FileAbstractModel(String name, boolean file, LocalDateTime lastModifiedDate, LocalDateTime creationDate, LocalDateTime accessDate,
                              String extension, String path, String fullpath, long size, String owner, String group, int permissions) {
         this.name = name;
         this.file = file;
         this.directory = !file;
         this.lastModifiedDate = lastModifiedDate;
         this.creationDate = creationDate;
+        this.accessDate = accessDate;
         this.path = path;
         this.fullpath = fullpath;
         this.size = size;
@@ -89,6 +91,10 @@ public class FileAbstractModel {
 
     public LocalDateTime getCreationDate() {
         return creationDate;
+    }
+
+    public LocalDateTime getAccessDate() {
+        return accessDate;
     }
 
     public String getPath() {
@@ -121,11 +127,12 @@ public class FileAbstractModel {
 
     @Override
     public String toString() {
-        String sb = "FileAbstractModel{" + "name='" + name + '\'' +
+        return "FileAbstractModel{" + "name='" + name + '\'' +
                 ", file=" + file +
                 ", directory=" + directory +
                 ", lastModifiedDate=" + lastModifiedDate +
                 ", creationDate=" + creationDate +
+                ", accessDate=" + accessDate +
                 ", path='" + path + '\'' +
                 ", owner='" + owner + '\'' +
                 ", group='" + group + '\'' +
@@ -134,6 +141,5 @@ public class FileAbstractModel {
                 ", fullpath='" + fullpath + '\'' +
                 ", size=" + size +
                 '}';
-        return sb;
     }
 }

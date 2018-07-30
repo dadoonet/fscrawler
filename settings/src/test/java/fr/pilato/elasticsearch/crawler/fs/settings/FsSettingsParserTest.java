@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
-    private static final Ocr OCR_FULL = Ocr.builder().setLanguage("eng").build();
+    private static final Ocr OCR_FULL = Ocr.builder().setLanguage("eng").setOutputType("txt").build();
 
     private static final Fs FS_EMPTY = Fs.builder().build();
     private static final Fs FS_FULL = Fs.builder()
@@ -224,6 +224,20 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
                                         .setHost("localhost")
                                         .setPort(9243)
                                         .setScheme(Elasticsearch.Node.Scheme.HTTPS)
+                                        .build())
+                                .build())
+                        .build()
+        );
+    }
+
+    @Test
+    public void testParseSettingsElasticsearchCloudId() throws IOException {
+        String cloudId = "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==";
+        settingsTester(
+                FsSettings.builder(getCurrentTestName())
+                        .setElasticsearch(Elasticsearch.builder()
+                                .addNode(Elasticsearch.Node.builder()
+                                        .setCloudId(cloudId)
                                         .build())
                                 .build())
                         .build()

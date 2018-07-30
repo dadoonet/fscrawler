@@ -32,7 +32,9 @@ public class File {
     static public final class FIELD_NAMES {
         public static final String EXTENSION = "extension";
         public static final String CONTENT_TYPE = "content_type";
+        public static final String CREATED = "created";
         public static final String LAST_MODIFIED = "last_modified";
+        public static final String LAST_ACCESSED = "last_accessed";
         public static final String INDEXING_DATE = "indexing_date";
         public static final String FILESIZE = "filesize";
         public static final String FILENAME = "filename";
@@ -43,7 +45,9 @@ public class File {
 
     private String extension;
     private String contentType;
+    private Date created;
     private Date lastModified;
+    private Date lastAccessed;
     private Date indexingDate;
     private Long filesize;
     private String filename;
@@ -67,12 +71,28 @@ public class File {
         this.contentType = contentType;
     }
 
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
     public Date getLastModified() {
         return lastModified;
     }
 
     public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
+    }
+
+    public Date getLastAccessed() {
+        return lastAccessed;
+    }
+
+    public void setLastAccessed(Date lastAccessed) {
+        this.lastAccessed = lastAccessed;
     }
 
     public Date getIndexingDate() {

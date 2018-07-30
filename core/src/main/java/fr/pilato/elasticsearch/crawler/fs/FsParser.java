@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
@@ -62,6 +63,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isExcluded;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
@@ -79,6 +82,12 @@ public abstract class FsParser implements Runnable {
     private final ElasticsearchClientManager esClientManager;
     private final Integer loop;
     private final MessageDigest messageDigest;
+
+    /**
+     * This is a temporary value we need to support both v5 and newer versions.
+     * V5 does not allow a type named _doc but V6 recommends using it.
+     */
+    private final String typeName;
 
     private ScanStatistic stats;
     private final AtomicInteger runNumber = new AtomicInteger(0);
@@ -104,6 +113,8 @@ public abstract class FsParser implements Runnable {
         } else {
             messageDigest = null;
         }
+
+        typeName = esClientManager.client().getDefaultTypeName();
     }
 
     protected abstract FileAbstractor buildFileAbstractor();
@@ -251,16 +262,21 @@ public abstract class FsParser implements Runnable {
                         fsFiles.add(filename);
                         if (child.getLastModifiedDate().isAfter(lastScanDate) ||
                                 (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
-                            try {
-                                indexFile(child, stats, filepath,
-                                        fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
-                                stats.addFile();
-                            } catch (java.io.FileNotFoundException e) {
-                                if (fsSettings.getFs().isContinueOnError()) {
-                                    logger.warn("Unable to open Input Stream for {}, skipping...: {}", filename, e.getMessage());
-                                } else {
-                                    throw e;
+                            if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
+                                try {
+                                    indexFile(child, stats, filepath,
+                                            fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
+                                    stats.addFile();
+                                } catch (java.io.FileNotFoundException e) {
+                                    if (fsSettings.getFs().isContinueOnError()) {
+                                        logger.warn("Unable to open Input Stream for {}, skipping...: {}", filename, e.getMessage());
+                                    } else {
+                                        throw e;
+                                    }
                                 }
+                            } else {
+                                logger.debug("file [{}] has a size [{}] above the limit [{}]. We skip it.", filename,
+                                        new ByteSizeValue(child.getSize()), fsSettings.getFs().getIgnoreAbove());
                             }
                         } else {
                             logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
@@ -407,7 +423,9 @@ public abstract class FsParser implements Runnable {
     private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
                            long filesize) throws Exception {
         final String filename = fileAbstractModel.getName();
-        final LocalDateTime lastmodified = fileAbstractModel.getLastModifiedDate();
+        final LocalDateTime created = fileAbstractModel.getCreationDate();
+        final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();
+        final LocalDateTime lastAccessed = fileAbstractModel.getAccessDate();
         final String extension = fileAbstractModel.getExtension();
         final long size = fileAbstractModel.getSize();
 
@@ -423,7 +441,9 @@ public abstract class FsParser implements Runnable {
 
                 // File
                 doc.getFile().setFilename(filename);
-                doc.getFile().setLastModified(localDateTimeToDate(lastmodified));
+                doc.getFile().setCreated(localDateTimeToDate(created));
+                doc.getFile().setLastModified(localDateTimeToDate(lastModified));
+                doc.getFile().setLastAccessed(localDateTimeToDate(lastAccessed));
                 doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
                 doc.getFile().setUrl("file://" + fullFilename);
                 doc.getFile().setExtension(extension);
@@ -555,13 +575,13 @@ public abstract class FsParser implements Runnable {
      * Add to bulk an IndexRequest in JSon format
      */
     void esIndex(BulkProcessor bulkProcessor, String index, String id, String json, String pipeline) {
-        logger.debug("Indexing {}/doc/{}?pipeline={}", index, id, pipeline);
+        logger.debug("Indexing {}/{}/{}?pipeline={}", index, typeName, id, pipeline);
         logger.trace("JSon indexed : {}", json);
 
         if (!closed) {
-            bulkProcessor.add(new IndexRequest(index, "doc", id).source(json, XContentType.JSON).setPipeline(pipeline));
+            bulkProcessor.add(new IndexRequest(index, typeName, id).source(json, XContentType.JSON).setPipeline(pipeline));
         } else {
-            logger.warn("trying to add new file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
+            logger.warn("trying to add new file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, typeName, id);
         }
     }
 
@@ -569,11 +589,11 @@ public abstract class FsParser implements Runnable {
      * Add to bulk a DeleteRequest
      */
     void esDelete(String index, String id) {
-        logger.debug("Deleting {}/doc/{}", index, id);
+        logger.debug("Deleting {}/{}/{}", index, typeName, id);
         if (!closed) {
-            esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, "doc", id));
+            esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, typeName, id));
         } else {
-            logger.warn("trying to remove a file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
+            logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, typeName, id);
         }
     }
 

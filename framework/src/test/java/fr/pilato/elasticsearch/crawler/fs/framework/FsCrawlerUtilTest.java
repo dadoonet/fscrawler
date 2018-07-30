@@ -32,9 +32,11 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFilePermissions;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
@@ -72,5 +74,13 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
         int permissions = getFilePermissions(file);
         assertThat(permissions, is(700));
+    }
+
+    @Test
+    public void testIsFileSizeUnderLimit() {
+        assertThat(isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1), is(true));
+        assertThat(isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576), is(true));
+        assertThat(isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"),
+                new ByteSizeValue(randomIntBetween(2, 100), ByteSizeUnit.MB).getBytes()), is(false));
     }
 }

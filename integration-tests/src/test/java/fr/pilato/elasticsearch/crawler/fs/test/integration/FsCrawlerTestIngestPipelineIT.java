@@ -68,7 +68,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "}";
         StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
 
-        elasticsearchClient.getLowLevelClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
+        elasticsearchClient.getLowLevelClient().performRequest("PUT", "/_ingest/pipeline/" + crawlerName,
                 Collections.emptyMap(), entity);
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
@@ -119,7 +119,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "}";
         StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
 
-        elasticsearchClient.getLowLevelClient().performRequest("PUT", "_ingest/pipeline/" + crawlerName,
+        elasticsearchClient.getLowLevelClient().performRequest("PUT", "/_ingest/pipeline/" + crawlerName,
                 Collections.emptyMap(), entity);
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);

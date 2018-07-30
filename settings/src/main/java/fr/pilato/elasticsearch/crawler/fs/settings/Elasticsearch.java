@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class Elasticsearch {
 
@@ -88,8 +89,13 @@ public class Elasticsearch {
             this.scheme = scheme;
         }
 
+        private Node(String cloudId) {
+            this.cloudId = cloudId;
+        }
+
+        private String cloudId;
         private String host;
-        private int port;
+        private Integer port;
         private boolean active;
         private Scheme scheme;
 
@@ -101,11 +107,11 @@ public class Elasticsearch {
             this.host = host;
         }
 
-        public int getPort() {
+        public Integer getPort() {
             return port;
         }
 
-        public void setPort(int port) {
+        public void setPort(Integer port) {
             this.port = port;
         }
 
@@ -125,6 +131,14 @@ public class Elasticsearch {
             this.scheme = scheme;
         }
 
+        public String getCloudId() {
+            return cloudId;
+        }
+
+        public void setCloudId(String cloudId) {
+            this.cloudId = cloudId;
+        }
+
         public static Builder builder() {
             return new Builder();
         }
@@ -133,6 +147,17 @@ public class Elasticsearch {
             private String host;
             private int port;
             private Scheme scheme = Scheme.HTTP;
+            private String cloudId = null;
+
+            /**
+             * This can be used in the context of Elasticsearch service by elastic
+             * @param cloudId The cloud id as given on cloud console
+             * @return self
+             */
+            public Builder setCloudId(String cloudId) {
+                this.cloudId = cloudId;
+                return this;
+            }
 
             public Builder setHost(String host) {
                 this.host = host;
@@ -150,7 +175,11 @@ public class Elasticsearch {
             }
 
             public Node build() {
-                return new Node(host, port, scheme);
+                if (cloudId != null) {
+                    return new Node(cloudId);
+                } else {
+                    return new Node(host, port, scheme);
+                }
             }
         }
 
@@ -158,29 +187,27 @@ public class Elasticsearch {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
             Node node = (Node) o;
-
-            if (port != node.port) return false;
-            return !(host != null ? !host.equals(node.host) : node.host != null);
-
+            return active == node.active &&
+                    Objects.equals(cloudId, node.cloudId) &&
+                    Objects.equals(host, node.host) &&
+                    Objects.equals(port, node.port) &&
+                    scheme == node.scheme;
         }
 
         @Override
         public int hashCode() {
-            int result = host != null ? host.hashCode() : 0;
-            result = 31 * result + port;
-            return result;
+            return Objects.hash(cloudId, host, port, active, scheme);
         }
 
         @Override
         public String toString() {
-            String sb = "Node{" + "active=" + active +
+            return "Node{" + "cloudId='" + cloudId + '\'' +
                     ", host='" + host + '\'' +
                     ", port=" + port +
+                    ", active=" + active +
                     ", scheme=" + scheme +
                     '}';
-            return sb;
         }
     }
 
@@ -346,10 +373,22 @@ public class Elasticsearch {
         result = 31 * result + (index != null ? index.hashCode() : 0);
         result = 31 * result + (indexFolder != null ? indexFolder.hashCode() : 0);
         result = 31 * result + (username != null ? username.hashCode() : 0);
-        result = 31 * result + (password != null ? password.hashCode() : 0);
         result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
         result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Elasticsearch{" + "nodes=" + nodes +
+                ", index='" + index + '\'' +
+                ", indexFolder='" + indexFolder + '\'' +
+                ", bulkSize=" + bulkSize +
+                ", flushInterval=" + flushInterval +
+                ", byteSize=" + byteSize +
+                ", username='" + username + '\'' +
+                ", pipeline='" + pipeline + '\'' +
+                '}';
     }
 }

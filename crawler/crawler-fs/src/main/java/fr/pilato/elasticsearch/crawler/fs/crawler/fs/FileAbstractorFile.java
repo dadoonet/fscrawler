@@ -26,9 +26,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +34,8 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getCrea
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFileExtension;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFilePermissions;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getLastAccessTime;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getModificationTime;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
 
 public class FileAbstractorFile extends FileAbstractor<File> {
@@ -49,8 +48,9 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         return new FileAbstractModel(
                 file.getName(),
                 file.isFile(),
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()),
+                getModificationTime(file),
                 getCreationTime(file),
+                getLastAccessTime(file),
                 getFileExtension(file),
                 path,
                 file.getAbsolutePath(),

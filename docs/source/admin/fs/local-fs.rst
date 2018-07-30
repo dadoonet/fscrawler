@@ -46,6 +46,8 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.indexed_chars``       | ``100000.0``          | `Extracted characters`_         |
 +----------------------------+-----------------------+---------------------------------+
+| ``fs.ignore_above``        | ``null``              | `Ignore above`_                 |
++----------------------------+-----------------------+---------------------------------+
 | ``fs.checksum``            | ``null``              | `File Checksum`_                |
 +----------------------------+-----------------------+---------------------------------+
 
@@ -687,7 +689,7 @@ JSon document. This field is not indexed. Default mapping for
 .. code:: json
 
    {
-     "doc" : {
+     "_doc" : {
        "properties" : {
          "attachment" : {
            "type" : "binary",
@@ -731,9 +733,30 @@ increase ``indexed_chars`` to more than ``"100%"``. For example,
 If you want to extract the full content, define ``indexed_chars`` to
 ``"-1"``.
 
-**Note**: Tika requires to allocate in memory a data structure to
-extract text. Setting ``indexed_chars`` to a high number will require
-more memory!
+.. note::
+
+    Tika requires to allocate in memory a data structure to
+    extract text. Setting ``indexed_chars`` to a high number will require
+    more memory!
+
+Ignore Above
+^^^^^^^^^^^^
+
+.. versionadded:: 2.5
+
+By default FSCrawler will send to Tika every single file, whatever its size.
+But some files on your file system might be a way too big to be parsed.
+
+Set ``ignore_above`` to the desired value of the limit.
+
+.. code:: json
+
+   {
+     "name": "test",
+     "fs": {
+       "ignore_above": "5mb"
+     }
+   }
 
 File checksum
 ^^^^^^^^^^^^^
