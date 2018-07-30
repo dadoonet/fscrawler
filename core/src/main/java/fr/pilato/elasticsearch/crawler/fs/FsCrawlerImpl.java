@@ -41,8 +41,6 @@ public class FsCrawlerImpl {
 
     @Deprecated
     public static final String INDEX_TYPE_FOLDER = "folder";
-    @Deprecated
-    public static final String INDEX_TYPE_DOC = "doc";
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerImpl.class);
 

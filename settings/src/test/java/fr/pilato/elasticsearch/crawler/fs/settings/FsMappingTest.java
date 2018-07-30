@@ -616,7 +616,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "    }\n" +
                 "  },\n" +
                 "  \"mappings\": {\n" +
-                "    \"doc\": {\n" +
+                "    \"_doc\": {\n" +
                 "      \"dynamic_templates\": [\n" +
                 "        {\n" +
                 "          \"raw_as_text\": {\n" +
@@ -830,7 +830,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "    }\n" +
                 "  },\n" +
                 "  \"mappings\": {\n" +
-                "    \"doc\": {\n" +
+                "    \"_doc\": {\n" +
                 "      \"properties\" : {\n" +
                 "        \"real\" : {\n" +
                 "          \"type\" : \"keyword\",\n" +

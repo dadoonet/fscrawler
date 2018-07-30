@@ -81,6 +81,12 @@ public abstract class FsParser implements Runnable {
     private final Integer loop;
     private final MessageDigest messageDigest;
 
+    /**
+     * This is a temporary value we need to support both v5 and newer versions.
+     * V5 does not allow a type named _doc but V6 recommends using it.
+     */
+    private final String typeName;
+
     private ScanStatistic stats;
     private final AtomicInteger runNumber = new AtomicInteger(0);
     private static final Object semaphore = new Object();
@@ -105,6 +111,8 @@ public abstract class FsParser implements Runnable {
         } else {
             messageDigest = null;
         }
+
+        typeName = esClientManager.client().getDefaultTypeName();
     }
 
     protected abstract FileAbstractor buildFileAbstractor();
@@ -562,13 +570,13 @@ public abstract class FsParser implements Runnable {
      * Add to bulk an IndexRequest in JSon format
      */
     void esIndex(BulkProcessor bulkProcessor, String index, String id, String json, String pipeline) {
-        logger.debug("Indexing {}/doc/{}?pipeline={}", index, id, pipeline);
+        logger.debug("Indexing {}/{}/{}?pipeline={}", index, typeName, id, pipeline);
         logger.trace("JSon indexed : {}", json);
 
         if (!closed) {
-            bulkProcessor.add(new IndexRequest(index, "doc", id).source(json, XContentType.JSON).setPipeline(pipeline));
+            bulkProcessor.add(new IndexRequest(index, typeName, id).source(json, XContentType.JSON).setPipeline(pipeline));
         } else {
-            logger.warn("trying to add new file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
+            logger.warn("trying to add new file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, typeName, id);
         }
     }
 
@@ -576,11 +584,11 @@ public abstract class FsParser implements Runnable {
      * Add to bulk a DeleteRequest
      */
     void esDelete(String index, String id) {
-        logger.debug("Deleting {}/doc/{}", index, id);
+        logger.debug("Deleting {}/{}/{}", index, typeName, id);
         if (!closed) {
-            esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, "doc", id));
+            esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, typeName, id));
         } else {
-            logger.warn("trying to remove a file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
+            logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, typeName, id);
         }
     }
 
