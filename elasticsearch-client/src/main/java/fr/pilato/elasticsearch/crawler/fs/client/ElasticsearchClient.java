@@ -59,12 +59,24 @@ public class ElasticsearchClient extends RestHighLevelClient {
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
 
     private boolean INGEST_SUPPORT = true;
+    /**
+     * Type name for Elasticsearch versions < 6.0
+     * @deprecated Will be removed with Elasticsearch V8
+     */
     @Deprecated
     private static final String INDEX_TYPE_DOC_V5 = "doc";
+    /**
+     * Type name for Elasticsearch versions >= 6.0
+     * @deprecated Will be removed with Elasticsearch V8
+     */
     @Deprecated
     private static final String INDEX_TYPE_DOC = "_doc";
+    /**
+     * Type name to use. It depends on elasticsearch version.
+     * @deprecated Will be removed with Elasticsearch V8
+     */
     @Deprecated
-    private String DEFAULT_TYPE = INDEX_TYPE_DOC;
+    private String defaultTypeName = INDEX_TYPE_DOC;
     private Version VERSION = null;
 
     public ElasticsearchClient(RestClientBuilder client) {
@@ -289,10 +301,10 @@ public class ElasticsearchClient extends RestHighLevelClient {
 
             // With elasticsearch 6.x, we can use _doc as the default type name
             if (VERSION.onOrAfter(Version.V_6_0_0)) {
-                logger.debug("Using elasticsearch >= 6, so we can use {} as the default type name", DEFAULT_TYPE);
+                logger.debug("Using elasticsearch >= 6, so we can use {} as the default type name", defaultTypeName);
             } else {
-                DEFAULT_TYPE = INDEX_TYPE_DOC_V5;
-                logger.debug("Using elasticsearch < 6, so we use {} as the default type name", DEFAULT_TYPE);
+                defaultTypeName = INDEX_TYPE_DOC_V5;
+                logger.debug("Using elasticsearch < 6, so we use {} as the default type name", defaultTypeName);
             }
         }
     }
@@ -306,7 +318,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
     }
 
     public String getDefaultTypeName() {
-        return DEFAULT_TYPE;
+        return defaultTypeName;
     }
 
     public static Node decodeCloudId(String cloudId) {
