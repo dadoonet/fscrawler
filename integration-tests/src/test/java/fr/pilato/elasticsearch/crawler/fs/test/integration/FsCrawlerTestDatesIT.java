@@ -64,7 +64,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         Instant mockAccessDate = Instant.now(); //can be LocalDateTime
         FileTime fileTime = FileTime.from(mockAccessDate);
 
-        logger.info(" ---> Reading file second.txt");
+        logger.info(" ---> Changing date for file second.txt to [{}]", mockAccessDate);
         Files.setAttribute(currentTestResourceDir.resolve("second.txt"), "lastAccessTime", fileTime);
         Files.setAttribute(currentTestResourceDir.resolve("second.txt"), "lastModifiedTime", fileTime);
         logger.info(" ---> Creating a new file third.txt");
