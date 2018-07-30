@@ -44,6 +44,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.buildUrl;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 
@@ -114,6 +115,9 @@ public class UploadApi extends RestApi {
                     .source(DocParser.toJson(doc), XContentType.JSON));
             // Elasticsearch entity coordinates (we use the first node address)
             Elasticsearch.Node node = settings.getElasticsearch().getNodes().get(0);
+            if (node.getCloudId() != null) {
+                node = decodeCloudId(node.getCloudId());
+            }
             url = buildUrl(
                     node.getScheme().toLowerCase(), node.getHost(), node.getPort()) + "/" +
                     settings.getElasticsearch().getIndex() + "/" +

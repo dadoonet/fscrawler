@@ -57,6 +57,14 @@ the tests start.
             -Dtests.cluster.host=XYZ.es.io:9243 \
             -Dtests.cluster.port=9243
 
+    Or even easier, you can use the ``Cloud ID`` available on you Cloud Console::
+
+        mvn verify \
+            -Dtests.cluster.user=elastic \
+            -Dtests.cluster.pass=changeme \
+            -Dtests.cluster.cloud_id=fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==
+
+
 Check for vulnerabilities (CVE)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

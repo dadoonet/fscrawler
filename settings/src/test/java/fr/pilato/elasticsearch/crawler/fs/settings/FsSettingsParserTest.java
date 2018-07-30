@@ -231,6 +231,20 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    public void testParseSettingsElasticsearchCloudId() throws IOException {
+        String cloudId = "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==";
+        settingsTester(
+                FsSettings.builder(getCurrentTestName())
+                        .setElasticsearch(Elasticsearch.builder()
+                                .addNode(Elasticsearch.Node.builder()
+                                        .setCloudId(cloudId)
+                                        .build())
+                                .build())
+                        .build()
+        );
+    }
+
+    @Test
     public void testParseSettingsElasticsearchIndexSettings() throws IOException {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())

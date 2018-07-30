@@ -70,6 +70,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
@@ -145,11 +146,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     static ElasticsearchClient elasticsearchClient;
 
+    private static String testClusterCloudId;
     private static String testClusterHost;
     private static int testClusterPort;
+    private static Elasticsearch.Node.Scheme testClusterScheme;
     private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
     private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
-    private final static Elasticsearch.Node.Scheme testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
     final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
     static Elasticsearch elasticsearchWithSecurity;
 
@@ -221,8 +223,18 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startElasticsearchRestClient() throws IOException {
-        testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
-        testClusterHost = System.getProperty("tests.cluster.host");
+        testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
+        if (testClusterCloudId != null) {
+            Elasticsearch.Node node = decodeCloudId(testClusterCloudId);
+            testClusterHost = node.getHost();
+            testClusterPort = node.getPort();
+            testClusterScheme = node.getScheme();
+            staticLogger.debug("Using cloud id [{}]", testClusterCloudId);
+        } else {
+            testClusterHost = System.getProperty("tests.cluster.host");
+            testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
+            testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
+        }
 
         if (testClusterHost == null) {
             ElasticsearchClient elasticsearchClientTemporary = null;
@@ -248,11 +260,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     elasticsearchClientTemporary.shutdown();
                 }
             }
-        } else {
-            testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
         }
 
-        staticLogger.info("Starting a client against [{}@{}:{}]", testClusterUser, testClusterHost, testClusterPort);
+        staticLogger.info("Starting a client against [{}://{}@{}:{}]", testClusterScheme.toLowerCase(), testClusterUser, testClusterHost, testClusterPort);
         // We build the elasticsearch High Level Client based on the parameters
         elasticsearchClient = new ElasticsearchClient(getClientBuilder(
                 new HttpHost(testClusterHost, testClusterPort, testClusterScheme.toLowerCase()), testClusterUser, testClusterPass));
