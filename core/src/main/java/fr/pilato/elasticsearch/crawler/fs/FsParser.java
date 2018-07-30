@@ -418,7 +418,9 @@ public abstract class FsParser implements Runnable {
     private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
                            long filesize) throws Exception {
         final String filename = fileAbstractModel.getName();
-        final LocalDateTime lastmodified = fileAbstractModel.getLastModifiedDate();
+        final LocalDateTime created = fileAbstractModel.getCreationDate();
+        final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();
+        final LocalDateTime lastAccessed = fileAbstractModel.getAccessDate();
         final String extension = fileAbstractModel.getExtension();
         final long size = fileAbstractModel.getSize();
 
@@ -434,7 +436,9 @@ public abstract class FsParser implements Runnable {
 
                 // File
                 doc.getFile().setFilename(filename);
-                doc.getFile().setLastModified(localDateTimeToDate(lastmodified));
+                doc.getFile().setCreated(localDateTimeToDate(created));
+                doc.getFile().setLastModified(localDateTimeToDate(lastModified));
+                doc.getFile().setLastAccessed(localDateTimeToDate(lastAccessed));
                 doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
                 doc.getFile().setUrl("file://" + fullFilename);
                 doc.getFile().setExtension(extension);

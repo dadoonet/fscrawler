@@ -55,6 +55,8 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()*1000L), ZoneId.systemDefault()),
                 // We don't have the creation date
                 null,
+                // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
+                LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getATime()*1000L), ZoneId.systemDefault()),
                 FilenameUtils.getExtension(file.getFilename()),
                 path,
                 path.concat("/").concat(file.getFilename()),
