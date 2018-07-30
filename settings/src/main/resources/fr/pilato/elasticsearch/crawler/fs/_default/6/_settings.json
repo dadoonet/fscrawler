@@ -185,6 +185,9 @@
                   "type": "text",
                   "analyzer": "fscrawler_path",
                   "fielddata": true
+                },
+                "fulltext": {
+                  "type": "text"
                 }
               }
             },
@@ -198,6 +201,9 @@
                   "type": "text",
                   "analyzer": "fscrawler_path",
                   "fielddata": true
+                },
+                "fulltext": {
+                  "type": "text"
                 }
               }
             }

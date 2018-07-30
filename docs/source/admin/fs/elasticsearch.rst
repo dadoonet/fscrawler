@@ -314,6 +314,9 @@ The following example uses a ``french`` analyzer to index the
                       "type": "text",
                       "analyzer": "fscrawler_path",
                       "fielddata": true
+                    },
+                    "fulltext": {
+                      "type": "text"
                     }
                   }
                 },
@@ -327,6 +330,9 @@ The following example uses a ``french`` analyzer to index the
                       "type": "text",
                       "analyzer": "fscrawler_path",
                       "fielddata": true
+                    },
+                    "fulltext": {
+                      "type": "text"
                     }
                   }
                 }
