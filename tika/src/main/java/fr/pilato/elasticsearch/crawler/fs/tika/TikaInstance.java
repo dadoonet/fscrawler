@@ -117,6 +117,9 @@ public class TikaInstance {
                     config.setTessdataPath(fs.getOcr().getDataPath());
                 }
                 config.setLanguage(fs.getOcr().getLanguage());
+                if (fs.getOcr().getOutputType() != null) {
+                    config.setOutputType(fs.getOcr().getOutputType());
+                }
                 context.set(TesseractOCRConfig.class, config);
             }
         }

@@ -26,6 +26,8 @@ public class Ocr {
     private String path = null;
     // Path to tesseract data
     private String dataPath = null;
+    // Output Type. Can be txt (default) or hocr. null means the default value.
+    private String outputType = null;
 
     public static Builder builder() {
         return new Builder();
@@ -36,6 +38,7 @@ public class Ocr {
         private String language = "eng";
         private String path = null;
         private String dataPath = null;
+        private String outputType = null;
 
         public Builder setLanguage(String language) {
             this.language = language;
@@ -52,8 +55,13 @@ public class Ocr {
             return this;
         }
 
+        public Builder setOutputType(String outputType) {
+            this.outputType = outputType;
+            return this;
+        }
+
         public Ocr build() {
-            return new Ocr(language, path, dataPath);
+            return new Ocr(language, path, dataPath, outputType);
         }
 
     }
@@ -62,10 +70,11 @@ public class Ocr {
 
     }
 
-    private Ocr(String language, String path, String dataPath) {
+    private Ocr(String language, String path, String dataPath, String outputType) {
         this.language = language;
         this.path = path;
         this.dataPath = dataPath;
+        this.outputType = outputType;
     }
 
     public String getLanguage() {
@@ -90,5 +99,13 @@ public class Ocr {
 
     public void setDataPath(String dataPath) {
         this.dataPath = dataPath;
+    }
+
+    public String getOutputType() {
+        return outputType;
+    }
+
+    public void setOutputType(String outputType) {
+        this.outputType = outputType;
     }
 }

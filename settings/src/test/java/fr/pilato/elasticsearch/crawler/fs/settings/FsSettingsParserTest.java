@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
-    private static final Ocr OCR_FULL = Ocr.builder().setLanguage("eng").build();
+    private static final Ocr OCR_FULL = Ocr.builder().setLanguage("eng").setOutputType("txt").build();
 
     private static final Fs FS_EMPTY = Fs.builder().build();
     private static final Fs FS_FULL = Fs.builder()
