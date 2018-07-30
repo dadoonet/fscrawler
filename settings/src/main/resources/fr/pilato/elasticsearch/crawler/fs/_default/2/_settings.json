@@ -164,6 +164,9 @@
                 "tree": {
                   "type": "string",
                   "analyzer": "fscrawler_path"
+                },
+                "fulltext": {
+                  "type": "string"
                 }
               }
             },
@@ -178,6 +181,9 @@
                 "tree": {
                   "type": "string",
                   "analyzer": "fscrawler_path"
+                },
+                "fulltext": {
+                  "type": "string"
                 }
               }
             }

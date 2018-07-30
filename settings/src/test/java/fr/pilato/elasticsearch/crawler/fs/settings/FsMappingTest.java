@@ -228,6 +228,9 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "                \"tree\": {\n" +
                 "                  \"type\": \"string\",\n" +
                 "                  \"analyzer\": \"fscrawler_path\"\n" +
+                "                },\n" +
+                "                \"fulltext\": {\n" +
+                "                  \"type\": \"string\"\n" +
                 "                }\n" +
                 "              }\n" +
                 "            },\n" +
@@ -242,6 +245,9 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "                \"tree\": {\n" +
                 "                  \"type\": \"string\",\n" +
                 "                  \"analyzer\": \"fscrawler_path\"\n" +
+                "                },\n" +
+                "                \"fulltext\": {\n" +
+                "                  \"type\": \"string\"\n" +
                 "                }\n" +
                 "              }\n" +
                 "            }\n" +
@@ -515,6 +521,9 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "                  \"type\": \"text\",\n" +
                 "                  \"analyzer\": \"fscrawler_path\",\n" +
                 "                  \"fielddata\": true\n" +
+                "                },\n" +
+                "                \"fulltext\": {\n" +
+                "                  \"type\": \"text\"\n" +
                 "                }\n" +
                 "              }\n" +
                 "            },\n" +
@@ -528,6 +537,9 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "                  \"type\": \"text\",\n" +
                 "                  \"analyzer\": \"fscrawler_path\",\n" +
                 "                  \"fielddata\": true\n" +
+                "                },\n" +
+                "                \"fulltext\": {\n" +
+                "                  \"type\": \"text\"\n" +
                 "                }\n" +
                 "              }\n" +
                 "            }\n" +
@@ -786,6 +798,9 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "                  \"type\": \"text\",\n" +
                 "                  \"analyzer\": \"fscrawler_path\",\n" +
                 "                  \"fielddata\": true\n" +
+                "                },\n" +
+                "                \"fulltext\": {\n" +
+                "                  \"type\": \"text\"\n" +
                 "                }\n" +
                 "              }\n" +
                 "            },\n" +
@@ -799,6 +814,9 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "                  \"type\": \"text\",\n" +
                 "                  \"analyzer\": \"fscrawler_path\",\n" +
                 "                  \"fielddata\": true\n" +
+                "                },\n" +
+                "                \"fulltext\": {\n" +
+                "                  \"type\": \"text\"\n" +
                 "                }\n" +
                 "              }\n" +
                 "            }\n" +

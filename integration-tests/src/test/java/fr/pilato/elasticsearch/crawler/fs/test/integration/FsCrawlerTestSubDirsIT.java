@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -64,6 +65,12 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
                     .get(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.VIRTUAL);
             assertThat(virtual, isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
         }
+
+        // Try to search within part of the full path, ie subdir
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.termQuery("path.virtual.fulltext", "subdir"))), 1L, null);
+        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
+                .query(QueryBuilders.termQuery("path.real.fulltext", "subdir"))), 1L, null);
     }
 
     @Test
