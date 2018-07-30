@@ -525,4 +525,24 @@ public class FsCrawlerUtil {
             }
         }
     }
+
+    /**
+     * Compare if a file size is strictly under a given limit
+     * @param limit Limit. If null, we consider that there is no limit and we return true.
+     * @param fileSizeAsBytes File size
+     * @return true if under the limit. false otherwise.
+     */
+    public static boolean isFileSizeUnderLimit(ByteSizeValue limit, long fileSizeAsBytes) {
+        boolean result = true;
+        if (limit != null) {
+            // We check the file size to avoid indexing too big files
+            ByteSizeValue fileSize = new ByteSizeValue(fileSizeAsBytes);
+            int compare = fileSize.compareTo(limit);
+            result = compare <= 0;
+            logger.debug("Comparing file size [{}] with current limit [{}] -> {}", fileSize, limit,
+                    result ? "under limit" : "above limit");
+        }
+
+        return result;
+    }
 }

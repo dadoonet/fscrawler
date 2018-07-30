@@ -253,5 +253,5 @@ The default mapping changed for FSCrawler for ``meta.raw.*`` fields.
 Might be better to reindex your data.
 
 - For new indices, FSCrawler now uses ``_doc`` as the default type name for clusters
-running elasticsearch 6.x or superior.
+  running elasticsearch 6.x or superior.
 
