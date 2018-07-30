@@ -255,7 +255,6 @@ public class FsCrawler {
                     fsSettingsFileHandler.write(fsSettings);
                 }
             } else {
-                Path jobMappingDir = configDir.resolve(fsSettings.getName()).resolve("_mappings");
                 fsCrawler.getEsClientManager().start();
                 Version elasticsearchVersion = fsCrawler.getEsClientManager().client().info().getVersion();
                 checkForDeprecatedResources(configDir, elasticsearchVersion);

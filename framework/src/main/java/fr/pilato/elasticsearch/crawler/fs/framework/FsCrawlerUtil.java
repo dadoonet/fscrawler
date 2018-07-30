@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.CopyOption;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
@@ -107,10 +106,9 @@ public class FsCrawlerUtil {
      * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param filename The expected filename (will be expanded to filename.json)
      * @return the mapping
-     * @throws URISyntaxException If URI is malformed
      * @throws IOException If the mapping can not be read
      */
-    public static String readJsonFile(Path dir, Path config, String version, String filename) throws URISyntaxException, IOException {
+    public static String readJsonFile(Path dir, Path config, String version, String filename) throws IOException {
         try {
             return readJsonVersionedFile(dir, version, filename);
         } catch (NoSuchFileException e) {
