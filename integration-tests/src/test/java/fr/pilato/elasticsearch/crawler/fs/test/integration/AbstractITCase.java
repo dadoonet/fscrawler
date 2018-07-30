@@ -118,6 +118,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static ElasticsearchContainer container;
     private static RestClient esRestClient;
+    static String typeName;
 
     @BeforeClass
     public static void createFsCrawlerJobDir() throws IOException {
@@ -279,6 +280,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         // We set what will be elasticsearch behavior as it depends on the cluster version
         elasticsearchClient.setElasticsearchBehavior();
+
+        typeName = elasticsearchClient.getDefaultTypeName();
     }
 
     @BeforeClass

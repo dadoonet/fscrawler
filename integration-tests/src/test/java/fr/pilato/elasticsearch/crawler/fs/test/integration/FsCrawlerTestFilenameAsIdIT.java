@@ -47,7 +47,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), "doc", "roottxtfile.txt"));
+                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "roottxtfile.txt"));
             } catch (IOException e) {
                 return false;
             }
@@ -70,14 +70,14 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         assertThat("Document should exists with [id1.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), "doc", "id1.txt"));
+                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "id1.txt"));
             } catch (IOException e) {
                 return false;
             }
         }), equalTo(true));
         assertThat("Document should exists with [id2.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), "doc", "id2.txt"));
+                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "id2.txt"));
             } catch (IOException e) {
                 return false;
             }

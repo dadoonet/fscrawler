@@ -107,6 +107,11 @@ Or fall back to the command line:
     -  ``6/_settings.json``: for elasticsearch 6.x series document index settings
     -  ``6/_settings_folder.json``: for elasticsearch 6.x series folder index settings
 
+.. note::
+
+    For versions before 6.x series, the type of the document is ``doc``.
+    From 6.x, the type of the document is ``_doc``.
+
 Creating your own mapping (analyzers)
 """""""""""""""""""""""""""""""""""""
 
@@ -138,7 +143,7 @@ The following example uses a ``french`` analyzer to index the
        }
      },
      "mappings": {
-       "doc": {
+       "_doc": {
          "properties" : {
            "attachment" : {
              "type" : "binary",
