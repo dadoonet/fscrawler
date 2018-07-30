@@ -293,7 +293,7 @@ public class ElasticsearchClient extends RestHighLevelClient {
 
     public static Node decodeCloudId(String cloudId) {
      	// 1. Ignore anything before `:`.
-        String id = cloudId.substring(cloudId.indexOf(":")+1);
+        String id = cloudId.substring(cloudId.indexOf(':')+1);
 
      	// 2. base64 decode
         String decoded = new String(Base64.getDecoder().decode(id));

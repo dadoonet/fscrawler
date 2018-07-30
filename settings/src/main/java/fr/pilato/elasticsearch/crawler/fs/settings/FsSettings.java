@@ -148,13 +148,11 @@ public class FsSettings {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("FsSettings{");
-        sb.append("name='").append(name).append('\'');
-        sb.append(", fs=").append(fs);
-        sb.append(", server=").append(server);
-        sb.append(", elasticsearch=").append(elasticsearch);
-        sb.append(", rest=").append(rest);
-        sb.append('}');
-        return sb.toString();
+        return "FsSettings{" + "name='" + name + '\'' +
+                ", fs=" + fs +
+                ", server=" + server +
+                ", elasticsearch=" + elasticsearch +
+                ", rest=" + rest +
+                '}';
     }
 }
