@@ -22,12 +22,12 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import org.apache.commons.io.FilenameUtils;
-import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -51,14 +51,14 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDa
 @Path("/_upload")
 public class UploadApi extends RestApi {
 
-    private final BulkProcessor bulkProcessor;
+    private final ElasticsearchClientManager elasticsearchClientManager;
     private final FsSettings settings;
     private final MessageDigest messageDigest;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
 
-    UploadApi(FsSettings settings, BulkProcessor bulkProcessor) {
+    UploadApi(FsSettings settings, ElasticsearchClientManager elasticsearchClientManager) {
         this.settings = settings;
-        this.bulkProcessor = bulkProcessor;
+        this.elasticsearchClientManager = elasticsearchClientManager;
         // Create MessageDigest instance
         try {
             messageDigest = settings.getFs().getChecksum() == null ?
@@ -110,9 +110,13 @@ public class UploadApi extends RestApi {
             logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch.", filename);
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
-            bulkProcessor.add(new org.elasticsearch.action.index.IndexRequest(settings.getElasticsearch().getIndex(), "doc", id)
-                    .setPipeline(settings.getElasticsearch().getPipeline())
-                    .source(DocParser.toJson(doc), XContentType.JSON));
+            elasticsearchClientManager.bulkProcessorDoc().add(
+                    new org.elasticsearch.action.index.IndexRequest(
+                            settings.getElasticsearch().getIndex(),
+                            elasticsearchClientManager.client().getDefaultTypeName(),
+                            id)
+                            .setPipeline(settings.getElasticsearch().getPipeline())
+                            .source(DocParser.toJson(doc), XContentType.JSON));
             // Elasticsearch entity coordinates (we use the first node address)
             Elasticsearch.Node node = settings.getElasticsearch().getNodes().get(0);
             if (node.getCloudId() != null) {
@@ -121,7 +125,7 @@ public class UploadApi extends RestApi {
             url = buildUrl(
                     node.getScheme().toLowerCase(), node.getHost(), node.getPort()) + "/" +
                     settings.getElasticsearch().getIndex() + "/" +
-                    "doc" + "/" +
+                    elasticsearchClientManager.client().getDefaultTypeName() + "/" +
                     id;
         }
 

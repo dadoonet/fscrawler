@@ -59,9 +59,15 @@ public class ElasticsearchClient extends RestHighLevelClient {
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
 
     private boolean INGEST_SUPPORT = true;
+    @Deprecated
+    private static final String INDEX_TYPE_DOC_V5 = "doc";
+    @Deprecated
+    private static final String INDEX_TYPE_DOC = "_doc";
+    @Deprecated
+    private String DEFAULT_TYPE = INDEX_TYPE_DOC;
     private Version VERSION = null;
 
-    public ElasticsearchClient(RestClientBuilder client) throws IOException {
+    public ElasticsearchClient(RestClientBuilder client) {
         super(client);
     }
 
@@ -280,6 +286,14 @@ public class ElasticsearchClient extends RestHighLevelClient {
                 INGEST_SUPPORT = false;
                 logger.debug("Using elasticsearch < 5, so we can't use ingest node feature");
             }
+
+            // With elasticsearch 6.x, we can use _doc as the default type name
+            if (VERSION.onOrAfter(Version.V_6_0_0)) {
+                logger.debug("Using elasticsearch >= 6, so we can use {} as the default type name", DEFAULT_TYPE);
+            } else {
+                DEFAULT_TYPE = INDEX_TYPE_DOC_V5;
+                logger.debug("Using elasticsearch < 6, so we use {} as the default type name", DEFAULT_TYPE);
+            }
         }
     }
 
@@ -289,6 +303,10 @@ public class ElasticsearchClient extends RestHighLevelClient {
 
     public Version getVersion() {
         return VERSION;
+    }
+
+    public String getDefaultTypeName() {
+        return DEFAULT_TYPE;
     }
 
     public static Node decodeCloudId(String cloudId) {
