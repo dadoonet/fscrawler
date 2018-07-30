@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 
@@ -49,6 +50,7 @@ public class Fs {
     private boolean continueOnError = false;
     private boolean pdfOcr = true;
     private Ocr ocr = new Ocr();
+    private ByteSizeValue ignoreAbove = null;
 
     public static Builder builder() {
         return new Builder();
@@ -80,6 +82,7 @@ public class Fs {
         private boolean continueOnError = false;
         private boolean pdfOcr = true;
         private Ocr ocr = new Ocr();
+        private ByteSizeValue ignoreAbove = null;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -212,10 +215,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setIgnoreAbove(ByteSizeValue ignoreAbove) {
+            this.ignoreAbove = ignoreAbove;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, pdfOcr, ocr);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, pdfOcr, ocr, ignoreAbove);
         }
     }
 
@@ -226,7 +234,7 @@ public class Fs {
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError, boolean pdfOcr, Ocr ocr) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError, boolean pdfOcr, Ocr ocr, ByteSizeValue ignoreAbove) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -248,6 +256,7 @@ public class Fs {
         this.continueOnError = continueOnError;
         this.pdfOcr = pdfOcr;
         this.ocr = ocr;
+        this.ignoreAbove = ignoreAbove;
     }
 
     public String getUrl() {
@@ -418,6 +427,14 @@ public class Fs {
         this.ocr = ocr;
     }
 
+    public ByteSizeValue getIgnoreAbove() {
+        return ignoreAbove;
+    }
+
+    public void setIgnoreAbove(ByteSizeValue ignoreAbove) {
+        this.ignoreAbove = ignoreAbove;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -439,6 +456,7 @@ public class Fs {
         if (langDetect != fs.langDetect) return false;
         if (continueOnError != fs.continueOnError) return false;
         if (pdfOcr != fs.pdfOcr) return false;
+        if (ignoreAbove != fs.ignoreAbove) return false;
         if (url != null ? !url.equals(fs.url) : fs.url != null) return false;
         if (updateRate != null ? !updateRate.equals(fs.updateRate) : fs.updateRate != null) return false;
         if (includes != null ? !includes.equals(fs.includes) : fs.includes != null) return false;
@@ -496,6 +514,7 @@ public class Fs {
                 ", continueOnError=" + continueOnError +
                 ", pdfOcr=" + pdfOcr +
                 ", ocr=" + ocr +
+                ", ignoreAbove=" + ignoreAbove +
                 '}';
     }
 }

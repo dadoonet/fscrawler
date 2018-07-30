@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
@@ -63,6 +64,7 @@ import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isExcluded;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
@@ -264,16 +266,21 @@ public abstract class FsParser implements Runnable {
                         fsFiles.add(filename);
                         if (child.getLastModifiedDate().isAfter(lastScanDate) ||
                                 (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
-                            try {
-                                indexFile(child, stats, filepath,
-                                        fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
-                                stats.addFile();
-                            } catch (java.io.FileNotFoundException e) {
-                                if (fsSettings.getFs().isContinueOnError()) {
-                                    logger.warn("Unable to open Input Stream for {}, skipping...: {}", filename, e.getMessage());
-                                } else {
-                                    throw e;
+                            if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
+                                try {
+                                    indexFile(child, stats, filepath,
+                                            fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
+                                    stats.addFile();
+                                } catch (java.io.FileNotFoundException e) {
+                                    if (fsSettings.getFs().isContinueOnError()) {
+                                        logger.warn("Unable to open Input Stream for {}, skipping...: {}", filename, e.getMessage());
+                                    } else {
+                                        throw e;
+                                    }
                                 }
+                            } else {
+                                logger.debug("file [{}] has a size [{}] above the limit [{}]. We skip it.", filename,
+                                        new ByteSizeValue(child.getSize()), fsSettings.getFs().getIgnoreAbove());
                             }
                         } else {
                             logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
