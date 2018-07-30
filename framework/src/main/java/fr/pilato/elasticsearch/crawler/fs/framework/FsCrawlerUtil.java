@@ -218,6 +218,34 @@ public class FsCrawlerUtil {
         return time;
     }
 
+    public static LocalDateTime getModificationTime(File file) {
+        LocalDateTime time;
+        try  {
+            Path path = Paths.get(file.getAbsolutePath());
+            BasicFileAttributes fileattr = Files
+                    .getFileAttributeView(path, BasicFileAttributeView.class)
+                    .readAttributes();
+            time = LocalDateTime.ofInstant(fileattr.lastModifiedTime().toInstant(), ZoneId.systemDefault());
+        } catch (Exception e) {
+            time = null;
+        }
+        return time;
+    }
+
+    public static LocalDateTime getLastAccessTime(File file) {
+        LocalDateTime time;
+        try  {
+            Path path = Paths.get(file.getAbsolutePath());
+            BasicFileAttributes fileattr = Files
+                    .getFileAttributeView(path, BasicFileAttributeView.class)
+                    .readAttributes();
+            time = LocalDateTime.ofInstant(fileattr.lastAccessTime().toInstant(), ZoneId.systemDefault());
+        } catch (Exception e) {
+            time = null;
+        }
+        return time;
+    }
+
     public static Date localDateTimeToDate(LocalDateTime ldt) {
         return Date.from(ldt.atZone(TimeZone.getDefault().toZoneId()).toInstant());
     }
