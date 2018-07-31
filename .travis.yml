@@ -19,7 +19,7 @@ before_script:
 script:
   - mvn --batch-mode clean verify -Pes-5x
   - mvn --batch-mode clean verify -Poss
-  - "[[ ${TRAVIS_SECURE_ENV_VARS} == 'true' ]] && mvn --batch-mode clean org.jacoco:jacoco-maven-plugin:prepare-agent verify sonar:sonar -DskipIntegTests=true"
+  - "[[ ${TRAVIS_SECURE_ENV_VARS} == 'true' ]] && mvn --batch-mode clean org.jacoco:jacoco-maven-plugin:prepare-agent verify sonar:sonar"
 after_success:
   - "[[ ${TRAVIS_PULL_REQUEST} == 'false' ]] && [[ ${TRAVIS_TAG} == '' ]] && mvn deploy -DskipTests --settings deploy-settings.xml"
 cache:
