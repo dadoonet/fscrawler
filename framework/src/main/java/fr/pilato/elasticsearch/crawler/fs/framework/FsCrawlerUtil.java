@@ -124,13 +124,33 @@ public class FsCrawlerUtil {
      * @param includes include rules, may be empty not null
      * @param excludes exclude rules, may be empty not null
      */
-    public static boolean isIndexable(String filename, List<String> includes, List<String> excludes) {
-        logger.debug("filename = [{}], includes = [{}], excludes = [{}]", filename, includes, excludes);
-
+    private static boolean isIndexable(String filename, List<String> includes, List<String> excludes) {
         boolean excluded = isExcluded(filename, excludes);
         if (excluded) return false;
 
         return isIncluded(filename, includes);
+    }
+
+    /**
+     * We check if we can index the file or if we should ignore it
+     *
+     * @param directory true if the current file is a directory, false in other case (actual file)
+     * @param filename The filename to scan
+     * @param includes include rules, may be empty not null
+     * @param excludes exclude rules, may be empty not null
+     */
+    public static boolean isIndexable(boolean directory, String filename, List<String> includes, List<String> excludes) {
+        logger.debug("directory = [{}], filename = [{}], includes = [{}], excludes = [{}]", directory, filename, includes, excludes);
+
+        boolean isIndexable = isIndexable(filename, includes, excludes);
+
+        // It can happen that we a dir "foo" which does not match the include name like "*.txt"
+        // We need to go in it unless it has been explicitly excluded by the user
+        if (directory && !isExcluded(filename, excludes)) {
+            isIndexable = true;
+        }
+
+        return isIndexable;
     }
 
     /**

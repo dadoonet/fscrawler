@@ -104,6 +104,8 @@ file system and another run. Which means that if you set it to ``15m``,
 the next scan will happen on 15 minutes after the end of the current
 scan, whatever its duration.
 
+.. _includes_excludes:
+
 Includes and excludes
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -119,20 +121,58 @@ Define ``fs.includes`` and ``fs.excludes`` properties in your
      "name" : "test",
      "fs": {
        "includes": [
-         "*.doc",
-         "*.pdf"
+         "*/*.doc",
+         "*/*.pdf"
        ],
        "excludes": [
-         "resume*"
+         "*/resume*"
        ]
      }
    }
 
-It also applies to directory names. So if you want to ignore ``.ignore``
-dir, just add ``.ignore`` as an excluded name. Note that ``includes``
-does not apply to directory names but only to filenames.
 
 By default, FSCrawler will exclude files starting with ``~``.
+
+.. versionadded:: 2.5
+
+It also applies to directory names. So if you want to ignore ``.ignore``
+dir, just add ``.ignore`` as an excluded name. Note that ``includes`` and ``excludes``
+apply to directory names as well.
+
+Let's take the following example with the ``root`` dir as ``/tmp``:
+
+.. code::
+
+    /tmp
+    ├── folderA
+    │   ├── subfolderA
+    │   ├── subfolderB
+    │   └── subfolderC
+    ├── folderB
+    │   ├── subfolderA
+    │   ├── subfolderB
+    │   └── subfolderC
+    └── folderC
+        ├── subfolderA
+        ├── subfolderB
+        └── subfolderC
+
+If you define the following ``fs.excludes`` property in your
+``~/.fscrawler/test/_settings.json`` file:
+
+.. code:: json
+
+   {
+     "name" : "test",
+     "fs": {
+       "excludes": [
+         "/folderB/subfolder*"
+       ]
+     }
+   }
+
+Then all files but the ones in ``/folderB/subfolderA``, ``/folderB/subfolderB`` and
+``/folderB/subfolderC`` will be indexed.
 
 Indexing JSon docs
 ^^^^^^^^^^^^^^^^^^

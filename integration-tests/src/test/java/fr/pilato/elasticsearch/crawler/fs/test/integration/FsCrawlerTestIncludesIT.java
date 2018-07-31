@@ -30,7 +30,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_includes() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .addInclude("*_include.txt")
+                .addInclude("*/*_include\\.txt")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
@@ -39,7 +39,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_subdirs_with_patterns() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .addInclude("*.txt")
+                .addInclude("*/*\\.txt")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
@@ -50,11 +50,12 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_ignore_dir() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .addExclude(".ignore")
+                .addExclude("*/\\.ignore")
+                .addExclude("/subdir/sub*")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have one file
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
     }
 }
