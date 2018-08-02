@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import java.util.Objects;
+
 public class Ocr {
     // Language dictionary to be used.
     private String language = "eng";
@@ -107,5 +109,30 @@ public class Ocr {
 
     public void setOutputType(String outputType) {
         this.outputType = outputType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Ocr ocr = (Ocr) o;
+        return Objects.equals(language, ocr.language) &&
+                Objects.equals(path, ocr.path) &&
+                Objects.equals(dataPath, ocr.dataPath) &&
+                Objects.equals(outputType, ocr.outputType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(language, path, dataPath, outputType);
+    }
+
+    @Override
+    public String toString() {
+        return "Ocr{" + "language='" + language + '\'' +
+                ", path='" + path + '\'' +
+                ", dataPath='" + dataPath + '\'' +
+                ", outputType='" + outputType + '\'' +
+                '}';
     }
 }

@@ -49,6 +49,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .addExclude("resume.doc")
             .addInclude("*.doc")
             .addInclude("*.xls")
+            .addFilter("foo")
             .setFilenameAsId(true)
             .setIndexedChars(new Percentage(10000))
             .setRemoveDeleted(true)
