@@ -63,7 +63,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isExcluded;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
@@ -485,10 +484,15 @@ public abstract class FsParser implements Runnable {
                 }
 
                 // We index the data structure
-                esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
-                        generateIdFromFilename(filename, dirname),
-                        DocParser.toJson(doc),
-                        fsSettings.getElasticsearch().getPipeline());
+                if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
+                    esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
+                            generateIdFromFilename(filename, dirname),
+                            DocParser.toJson(doc),
+                            fsSettings.getElasticsearch().getPipeline());
+                } else {
+                    logger.debug("We ignore file [{}] because it does not match all the patterns {}", filename,
+                            fsSettings.getFs().getFilters());
+                }
             } else {
                 if (fsSettings.getFs().isJsonSupport()) {
                     // We index the json content directly

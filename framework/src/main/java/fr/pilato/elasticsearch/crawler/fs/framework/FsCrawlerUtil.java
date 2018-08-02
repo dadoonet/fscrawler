@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
@@ -208,6 +209,40 @@ public class FsCrawlerUtil {
 
         logger.trace("does not match any include pattern");
         return false;
+    }
+
+    /**
+     * We check if we can index the content or skip it
+     *
+     * @param content Content to parse
+     * @param filters regular expressions that all needs to match if we want to index. If empty
+     *                we consider it always matches.
+     */
+    public static boolean isIndexable(String content, List<String> filters) {
+        logger.debug("content = [{}], filters = {}", content, filters);
+
+        if (isNullOrEmpty(content)) {
+            logger.trace("Null or empty content always matches.");
+            return true;
+        }
+
+        if (filters == null || filters.isEmpty()) {
+            logger.trace("No pattern always matches.");
+            return true;
+        }
+
+        for (String filter : filters) {
+            Pattern pattern = Pattern.compile(filter, Pattern.MULTILINE | Pattern.UNIX_LINES);
+            logger.trace("Testing filter [{}]", filter);
+            if (!pattern.matcher(content).find()) {
+                logger.trace("Filter [{}] is not matching.", filter);
+                return false;
+            } else {
+                logger.trace("Filter [{}] is matching.", filter);
+            }
+        }
+
+        return true;
     }
 
     public static String computeVirtualPathName(String rootPath, String realPath) {
