@@ -1,1 +1,28 @@
-{"tenant":"23","project":"34"}
+{
+    "content": "OVERWRITTEN CONTENT",
+    "external": {
+        "tenant" : 23,
+        "company": "shoe company",
+        "project": 34,
+        "project": "business development",
+        "daysOpen": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+        ],
+        "products": [
+            {
+                "brand": "nike",
+                "size": 41,
+                "sub": "Air MAX"
+            },
+            {
+                "brand": "reebok",
+                "size": 43,
+                "sub": "Pump"
+            }
+        ]
+    }
+}

@@ -196,14 +196,57 @@ file will result in 2 different documents indexed.
 Additional tags
 ~~~~~~~~~~~~~~~
 
-Add custom tags to the document. In case you want to do filtering on those tags (examples are projectId or tenantId). These tags are assigned to meta.raw
+Add custom tags to the document. In case you want to do filtering on those tags (examples are projectId or tenantId).
+These tags can be assigned to 'external'. As you can see in the json, you are able to overwrite the content.
+Meta, file and path can be overwritten as well.
 To upload a binary with additional tags, you can call POST /_upload endpoint:
+
+.. code:: json
+    {
+      "content": "OVERWRITE CONTENT",
+      "external" {
+        "tenant": 23,
+        "project": 34,
+        "description": "these are additional tags"
+      }
+    }
 
 .. code:: sh
 
-   echo "This is my text" > test.txt
-   echo "{\"tenant\":\"23\",\"project\":\"34\"}" > tags.txt
-   curl -F "file=@test.txt" -F "tags=@tags.txt" "http://127.0.0.1:8080/fscrawler/_upload"
+    echo "This is my text" > test.txt
+    echo "{\"content\":\"OVERWRITE CONTENT\",\"external\"{\"tenant\": 23,\"project\": 34,\"description\":\"these are additional tags\"}}" > tags.txt
+    curl -F "file=@test.txt" -F "tags=@tags.txt" "http://127.0.0.1:8080/fscrawler/_upload"
+
+The field external doesn't necessarily be a flat structure. This is a more advanced example:
+
+.. code:: json
+    {
+      "external": {
+        "tenant" : 23,
+        "company": "shoe company",
+        "project": 34,
+        "project": "business development",
+        "daysOpen": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "products": [
+          {
+            "brand": "nike",
+            "size": 41,
+            "sub": "Air MAX"
+          },
+          {
+            "brand": "reebok",
+            "size": 43,
+            "sub": "Pump"
+          }
+        ]
+      }
+    }
 
 REST settings
 ~~~~~~~~~~~~~

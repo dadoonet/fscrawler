@@ -33,9 +33,7 @@ import org.junit.Test;
 import javax.ws.rs.core.MediaType;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -85,7 +83,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         Path tagsFilePath = from.resolve("fscrawler-test-upload-with-tags.txt").toAbsolutePath();
 
         Files.walk(from)
-                .filter(path -> Files.isRegularFile(path))
+                .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().contains("fscrawler-test-upload-with-tags.txt"))
                 .limit(1)
                 .forEach(path -> {
                     UploadResponse response = uploadFile(path, tagsFilePath);
@@ -96,18 +94,43 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         SearchResponse response = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null, TimeValue
                 .timeValueMinutes(2));
         for (SearchHit hit : response.getHits()) {
+            String content = (String) hit.getSourceAsMap().get("content");
+            assertThat(content, is("OVERWRITTEN CONTENT"));
+
             assertThat(hit.getSourceAsMap(), hasKey("file"));
             assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
             assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), hasKey("raw"));
 
-            Map<String, Object> meta = (Map<String, Object>) hit.getSourceAsMap().get("meta");
-            Map<String, Object> raw = (Map<String, Object>) meta.get("raw");
-            assertThat(raw, hasKey("project"));
-            assertThat(raw, hasKey("tenant"));
-            String project = (String) raw.get("project");
-            String tenant = (String) raw.get("tenant");
-            assertThat(project, is("34"));
-            assertThat(tenant, is("23"));
+            assertThat(hit.getSourceAsMap(), hasKey("external"));
+            Map<String, Object> external = (Map<String, Object>) hit.getSourceAsMap().get("external");
+            assertThat(external, hasKey("tenant"));
+            Integer tenant = (Integer) external.get("tenant");
+            assertThat(tenant, is(23));
+
+            assertThat(external, hasKey("company"));
+            String company = (String) external.get("company");
+            assertThat(company, is("shoe company"));
+
+            assertThat(external, hasKey("daysOpen"));
+            List<String> daysOpen = (List<String>) external.get("daysOpen");
+            assertThat(daysOpen.size(), is(5));
+            assertThat(daysOpen.get(0), is("Mon"));
+            assertThat(daysOpen.get(4), is("Fri"));
+
+            assertThat(external, hasKey("products"));
+            List<Object> products = (List<Object>) external.get("products");
+            assertThat(products.size(), is(2));
+
+            Map<String, Object> nike = (Map<String, Object>) products.get(0);
+            assertThat(nike, hasKey("brand"));
+            assertThat(nike, hasKey("size"));
+            assertThat(nike, hasKey("sub"));
+            String brand = (String) nike.get("brand");
+            Integer size = (Integer) nike.get("size");
+            String sub = (String) nike.get("sub");
+            assertThat(brand, is("nike"));
+            assertThat(size, is(41));
+            assertThat(sub, is("Air MAX"));
         }
     }
 

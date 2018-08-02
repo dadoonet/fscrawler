@@ -19,10 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaParser;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
@@ -34,19 +34,13 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.buildUrl;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
@@ -106,15 +100,6 @@ public class UploadApi extends RestApi {
         doc.getPath().setReal(filename);
         // Path
 
-        // Add additional tags to meta
-        if (tags != null) {
-            TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {};
-            HashMap<String, Object> o = MetaParser.mapper.readValue(tags, typeRef);
-            for (Map.Entry<String, Object> e: o.entrySet()) {
-                doc.getMeta().addRaw(e.getKey(), String.valueOf(e.getValue()));
-            }
-        }
-
         // Read the file content
         TikaDocParser.generate(settings, filecontent, filename, doc, messageDigest, filesize);
 
@@ -123,6 +108,7 @@ public class UploadApi extends RestApi {
             logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch.", filename);
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
+            doc = this.getMergedJsonDoc(doc, tags);
             bulkProcessor.add(new org.elasticsearch.action.index.IndexRequest(settings.getElasticsearch().getIndex(), "doc", id)
                     .setPipeline(settings.getElasticsearch().getPipeline())
                     .source(DocParser.toJson(doc), XContentType.JSON));
@@ -147,4 +133,24 @@ public class UploadApi extends RestApi {
 
         return response;
     }
+
+    private Doc getMergedJsonDoc(Doc doc, InputStream tags) throws BadRequestException {
+        if (tags == null) {
+            return doc;
+        }
+
+        try {
+            JsonNode tagsNode = MetaParser.mapper.readTree(tags);
+            JsonNode docNode = MetaParser.mapper.convertValue(doc, JsonNode.class);
+
+            JsonNode mergedNode = FsCrawlerUtil.merge(tagsNode, docNode);
+
+            Doc mergedDoc = MetaParser.mapper.treeToValue(mergedNode, Doc.class);
+            return mergedDoc;
+        } catch (Exception e) {
+            logger.error("Error parsing tags", e);
+            throw new BadRequestException("Error parsing tags", e);
+        }
+    }
+
 }
