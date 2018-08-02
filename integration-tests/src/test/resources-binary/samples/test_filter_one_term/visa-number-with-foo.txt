@@ -1,0 +1,8 @@
+This file contains
+
+4012-8888-8888-1881
+
+^^^ This is a fake VISA number.
+
+This will be indexed unless we check for a word which
+is not inside this text, like "foo".

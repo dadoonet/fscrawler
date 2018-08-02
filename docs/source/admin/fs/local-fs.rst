@@ -16,6 +16,8 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.excludes``            | ``["~*"]``            | `Includes and excludes`_        |
 +----------------------------+-----------------------+---------------------------------+
+| ``fs.filters``             | ``null``              | `Filter content`_               |
++----------------------------+-----------------------+---------------------------------+
 | ``fs.json_support``        | ``false``             | `Indexing JSon docs`_           |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.xml_support``         | ``false``             | `Indexing XML docs`_            |
@@ -173,6 +175,35 @@ If you define the following ``fs.excludes`` property in your
 
 Then all files but the ones in ``/folderB/subfolderA``, ``/folderB/subfolderB`` and
 ``/folderB/subfolderC`` will be indexed.
+
+Filter content
+^^^^^^^^^^^^^^
+
+.. versionadded:: 2.5
+
+You can filter out documents you would like to index by adding one or more
+regular expression that match the extracted content.
+Documents which are not matching will be simply ignored and not indexed.
+
+If you define the following ``fs.filters`` property in your
+``~/.fscrawler/test/_settings.json`` file:
+
+.. code:: json
+
+   {
+     "name" : "test",
+     "fs": {
+       "filters": [
+         ".*foo.*",
+         "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"
+       ]
+     }
+   }
+
+With this example, only documents which contains the word ``foo`` and a VISA credit card number
+with the form like ``4012888888881881``, ``4012 8888 8888 1881`` or ``4012-8888-8888-1881``
+will be indexed.
+
 
 Indexing JSon docs
 ^^^^^^^^^^^^^^^^^^
