@@ -19,10 +19,12 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-
+import com.fasterxml.jackson.databind.JsonNode;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.MetaParser;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -37,6 +39,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,6 +78,7 @@ public class UploadApi extends RestApi {
             @QueryParam("debug") String debug,
             @QueryParam("simulate") String simulate,
             @FormDataParam("id") String id,
+            @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
 
@@ -110,6 +114,7 @@ public class UploadApi extends RestApi {
             logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch.", filename);
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
+            doc = this.getMergedJsonDoc(doc, tags);
             elasticsearchClientManager.bulkProcessorDoc().add(
                     new org.elasticsearch.action.index.IndexRequest(
                             settings.getElasticsearch().getIndex(),
@@ -141,4 +146,24 @@ public class UploadApi extends RestApi {
 
         return response;
     }
+
+    private Doc getMergedJsonDoc(Doc doc, InputStream tags) throws BadRequestException {
+        if (tags == null) {
+            return doc;
+        }
+
+        try {
+            JsonNode tagsNode = MetaParser.mapper.readTree(tags);
+            JsonNode docNode = MetaParser.mapper.convertValue(doc, JsonNode.class);
+
+            JsonNode mergedNode = FsCrawlerUtil.merge(tagsNode, docNode);
+
+            Doc mergedDoc = MetaParser.mapper.treeToValue(mergedNode, Doc.class);
+            return mergedDoc;
+        } catch (Exception e) {
+            logger.error("Error parsing tags", e);
+            throw new BadRequestException("Error parsing tags", e);
+        }
+    }
+
 }
