@@ -33,7 +33,10 @@ import org.junit.Test;
 import javax.ws.rs.core.MediaType;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -80,10 +83,10 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        Path tagsFilePath = from.resolve("fscrawler-test-upload-with-tags.txt").toAbsolutePath();
+        Path tagsFilePath = from.resolve("fscrawler-test-upload-with-tags.json").toAbsolutePath();
 
         Files.walk(from)
-                .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().contains("fscrawler-test-upload-with-tags.txt"))
+                .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().contains("fscrawler-test-upload-with-tags.json"))
                 .limit(1)
                 .forEach(path -> {
                     UploadResponse response = uploadFile(path, tagsFilePath);

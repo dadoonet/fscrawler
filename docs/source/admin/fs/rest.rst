@@ -204,7 +204,7 @@ To upload a binary with additional tags, you can call POST /_upload endpoint:
 .. code:: json
     {
       "content": "OVERWRITE CONTENT",
-      "external" {
+      "external": {
         "tenant": 23,
         "project": 34,
         "description": "these are additional tags"

@@ -52,7 +52,7 @@ public class Doc {
         meta = new Meta();
         file = new File();
         path = new Path();
-        external = new HashMap<>();
+        external = null;
     }
 
     public Map getObject() {

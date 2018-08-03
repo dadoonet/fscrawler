@@ -50,7 +50,14 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Date;
+import java.util.TimeZone;
+import java.util.Properties;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
