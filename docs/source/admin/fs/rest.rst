@@ -53,6 +53,7 @@ It will give you a response similar to:
          "index_folder" : "fscrawler-rest-tests_folder",
          "bulk_size" : 100,
          "flush_interval" : "5s",
+         "byte_size" : "10mb",
          "username" : "elastic"
        },
        "rest" : {
@@ -97,7 +98,7 @@ You will get back your document as it has been stored by elasticsearch:
 
    {
      "_index" : "fscrawler-rest-tests_doc",
-     "_type" : "doc",
+     "_type" : "_doc",
      "_id" : "dd18bf3a8ea2a3e53e2661c7fb53534",
      "_version" : 1,
      "found" : true,

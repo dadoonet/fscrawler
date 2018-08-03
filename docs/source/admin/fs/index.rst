@@ -43,6 +43,10 @@ The job file must comply to the following ``json`` specifications:
      },
      "elasticsearch" : {
        "nodes" : [ {
+         // With Cloud ID
+         "cloud_id" : "CLOUD_ID"
+       }, {
+         // With scheme, host and port
          "host" : "127.0.0.1",
          "port" : 9200,
          "scheme" : "HTTP"
@@ -50,6 +54,7 @@ The job file must comply to the following ``json`` specifications:
        "index" : "docs",
        "bulk_size" : 1000,
        "flush_interval" : "5s",
+       "byte_size" : "10mb",
        "username" : "elastic",
        "password" : "password"
      },

@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
@@ -62,7 +63,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isExcluded;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
@@ -80,6 +81,12 @@ public abstract class FsParser implements Runnable {
     private final ElasticsearchClientManager esClientManager;
     private final Integer loop;
     private final MessageDigest messageDigest;
+
+    /**
+     * This is a temporary value we need to support both v5 and newer versions.
+     * V5 does not allow a type named _doc but V6 recommends using it.
+     */
+    private final String typeName;
 
     private ScanStatistic stats;
     private final AtomicInteger runNumber = new AtomicInteger(0);
@@ -105,6 +112,8 @@ public abstract class FsParser implements Runnable {
         } else {
             messageDigest = null;
         }
+
+        typeName = esClientManager.client().getDefaultTypeName();
     }
 
     protected abstract FileAbstractor buildFileAbstractor();
@@ -238,49 +247,50 @@ public abstract class FsParser implements Runnable {
 
         if (children != null) {
             for (FileAbstractModel child : children) {
-                String filename = child.name;
+                String filename = child.getName();
+
+                String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, filename).toString());
 
                 // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
-                boolean isIndexable = isIndexable(filename, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
+                boolean isIndexable = isIndexable(child.isDirectory(), virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
 
-                // It can happen that we a dir "foo" which does not match the include name like "*.txt"
-                // We need to go in it unless it has been explicitly excluded by the user
-                if (child.directory && !isExcluded(filename, fsSettings.getFs().getExcludes())) {
-                    isIndexable = true;
-                }
-
-                logger.debug("[{}] can be indexed: [{}]", filename, isIndexable);
+                logger.debug("[{}] can be indexed: [{}]", virtualFileName, isIndexable);
                 if (isIndexable) {
-                    if (child.file) {
-                        logger.debug("  - file: {}", filename);
+                    if (child.isFile()) {
+                        logger.debug("  - file: {}", virtualFileName);
                         fsFiles.add(filename);
-                        if (child.lastModifiedDate.isAfter(lastScanDate) ||
-                                (child.creationDate != null && child.creationDate.isAfter(lastScanDate))) {
-                            try {
-                                indexFile(child, stats, filepath,
-                                        fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.size);
-                                stats.addFile();
-                            } catch (java.io.FileNotFoundException e) {
-                                if (fsSettings.getFs().isContinueOnError()) {
-                                    logger.warn("Unable to open Input Stream for {}, skipping...: {}", filename, e.getMessage());
-                                } else {
-                                    throw e;
+                        if (child.getLastModifiedDate().isAfter(lastScanDate) ||
+                                (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
+                            if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
+                                try {
+                                    indexFile(child, stats, filepath,
+                                            fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
+                                    stats.addFile();
+                                } catch (java.io.FileNotFoundException e) {
+                                    if (fsSettings.getFs().isContinueOnError()) {
+                                        logger.warn("Unable to open Input Stream for {}, skipping...: {}", filename, e.getMessage());
+                                    } else {
+                                        throw e;
+                                    }
                                 }
+                            } else {
+                                logger.debug("file [{}] has a size [{}] above the limit [{}]. We skip it.", filename,
+                                        new ByteSizeValue(child.getSize()), fsSettings.getFs().getIgnoreAbove());
                             }
                         } else {
                             logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
-                                    child.creationDate, child.lastModifiedDate, lastScanDate);
+                                    child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
                         }
-                    } else if (child.directory) {
+                    } else if (child.isDirectory()) {
                         logger.debug("  - folder: {}", filename);
                         if (fsSettings.getFs().isIndexFolders()) {
-                            fsFolders.add(child.fullpath);
-                            indexDirectory(child.fullpath);
+                            fsFolders.add(child.getFullpath());
+                            indexDirectory(child.getFullpath());
                         }
-                        addFilesRecursively(path, child.fullpath, lastScanDate);
+                        addFilesRecursively(path, child.getFullpath(), lastScanDate);
                     } else {
                         logger.debug("  - other: {}", filename);
-                        logger.debug("Not a file nor a dir. Skipping {}", child.fullpath);
+                        logger.debug("Not a file nor a dir. Skipping {}", child.getFullpath());
                     }
                 } else {
                     logger.debug("  - ignored file/dir: {}", filename);
@@ -300,7 +310,8 @@ public abstract class FsParser implements Runnable {
             for (String esfile : esFiles) {
                 logger.trace("Checking file [{}]", esfile);
 
-                if (isIndexable(esfile, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
+                String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, esfile).toString());
+                if (isIndexable(false, virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
                         && !fsFiles.contains(esfile)) {
                     logger.trace("Removing file [{}] in elasticsearch", esfile);
                     esDelete(fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, filepath));
@@ -314,7 +325,8 @@ public abstract class FsParser implements Runnable {
 
                 // for the delete folder
                 for (String esfolder : esFolders) {
-                    if (isIndexable(esfolder, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
+                    String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, esfolder).toString());
+                    if (isIndexable(true, virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
                         logger.trace("Checking directory [{}]", esfolder);
                         if (!fsFolders.contains(esfolder)) {
                             logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
@@ -409,10 +421,12 @@ public abstract class FsParser implements Runnable {
      */
     private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
                            long filesize) throws Exception {
-        final String filename = fileAbstractModel.name;
-        final LocalDateTime lastmodified = fileAbstractModel.lastModifiedDate;
-        final String extension = fileAbstractModel.extension;
-        final long size = fileAbstractModel.size;
+        final String filename = fileAbstractModel.getName();
+        final LocalDateTime created = fileAbstractModel.getCreationDate();
+        final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();
+        final LocalDateTime lastAccessed = fileAbstractModel.getAccessDate();
+        final String extension = fileAbstractModel.getExtension();
+        final long size = fileAbstractModel.getSize();
 
         logger.debug("fetching content from [{}],[{}]", dirname, filename);
 
@@ -426,7 +440,9 @@ public abstract class FsParser implements Runnable {
 
                 // File
                 doc.getFile().setFilename(filename);
-                doc.getFile().setLastModified(localDateTimeToDate(lastmodified));
+                doc.getFile().setCreated(localDateTimeToDate(created));
+                doc.getFile().setLastModified(localDateTimeToDate(lastModified));
+                doc.getFile().setLastAccessed(localDateTimeToDate(lastAccessed));
                 doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
                 doc.getFile().setUrl("file://" + fullFilename);
                 doc.getFile().setExtension(extension);
@@ -447,8 +463,11 @@ public abstract class FsParser implements Runnable {
                 // Attributes
                 if (fsSettings.getFs().isAttributesSupport()) {
                     doc.setAttributes(new Attributes());
-                    doc.getAttributes().setOwner(fileAbstractModel.owner);
-                    doc.getAttributes().setGroup(fileAbstractModel.group);
+                    doc.getAttributes().setOwner(fileAbstractModel.getOwner());
+                    doc.getAttributes().setGroup(fileAbstractModel.getGroup());
+                    if (fileAbstractModel.getPermissions() >= 0) {
+                        doc.getAttributes().setPermissions(fileAbstractModel.getPermissions());
+                    }
                 }
                 // Attributes
 
@@ -465,10 +484,15 @@ public abstract class FsParser implements Runnable {
                 }
 
                 // We index the data structure
-                esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
-                        generateIdFromFilename(filename, dirname),
-                        DocParser.toJson(doc),
-                        fsSettings.getElasticsearch().getPipeline());
+                if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
+                    esIndex(esClientManager.bulkProcessorDoc(), fsSettings.getElasticsearch().getIndex(),
+                            generateIdFromFilename(filename, dirname),
+                            DocParser.toJson(doc),
+                            fsSettings.getElasticsearch().getPipeline());
+                } else {
+                    logger.debug("We ignore file [{}] because it does not match all the patterns {}", filename,
+                            fsSettings.getFs().getFilters());
+                }
             } else {
                 if (fsSettings.getFs().isJsonSupport()) {
                     // We index the json content directly
@@ -555,13 +579,13 @@ public abstract class FsParser implements Runnable {
      * Add to bulk an IndexRequest in JSon format
      */
     void esIndex(BulkProcessor bulkProcessor, String index, String id, String json, String pipeline) {
-        logger.debug("Indexing {}/doc/{}?pipeline={}", index, id, pipeline);
+        logger.debug("Indexing {}/{}/{}?pipeline={}", index, typeName, id, pipeline);
         logger.trace("JSon indexed : {}", json);
 
         if (!closed) {
-            bulkProcessor.add(new IndexRequest(index, "doc", id).source(json, XContentType.JSON).setPipeline(pipeline));
+            bulkProcessor.add(new IndexRequest(index, typeName, id).source(json, XContentType.JSON).setPipeline(pipeline));
         } else {
-            logger.warn("trying to add new file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
+            logger.warn("trying to add new file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, typeName, id);
         }
     }
 
@@ -569,11 +593,11 @@ public abstract class FsParser implements Runnable {
      * Add to bulk a DeleteRequest
      */
     void esDelete(String index, String id) {
-        logger.debug("Deleting {}/doc/{}", index, id);
+        logger.debug("Deleting {}/{}/{}", index, typeName, id);
         if (!closed) {
-            esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, "doc", id));
+            esClientManager.bulkProcessorDoc().add(new DeleteRequest(index, typeName, id));
         } else {
-            logger.warn("trying to remove a file while closing crawler. Document [{}]/[doc]/[{}] has been ignored", index, id);
+            logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, typeName, id);
         }
     }
 

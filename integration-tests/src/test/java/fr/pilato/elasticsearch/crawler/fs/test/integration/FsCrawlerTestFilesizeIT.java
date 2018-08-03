@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import org.elasticsearch.action.search.SearchRequest;
@@ -28,6 +29,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
+import java.nio.file.Files;
 import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
@@ -43,19 +45,7 @@ import static org.hamcrest.Matchers.nullValue;
 public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void test_filesize() throws Exception {
-        startCrawler();
-
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
-            Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
-            assertThat(file, notNullValue());
-            assertThat(file.get(File.FIELD_NAMES.FILESIZE), is(12230));
-        }
-    }
-
-    @Test
-    public void test_filesize_limit() throws Exception {
+    public void test_indexed_chars() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setIndexedChars(new Percentage(7))
                 .build();
@@ -75,7 +65,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_filesize_limit_percentage() throws Exception {
+    public void test_indexed_chars_percentage() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setIndexedChars(Percentage.parse("0.1%"))
                 .build();
@@ -95,7 +85,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_filesize_nolimit() throws Exception {
+    public void test_indexed_chars_nolimit() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setIndexedChars(new Percentage(-1))
                 .build();
@@ -114,6 +104,18 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
+    public void test_filesize() throws Exception {
+        startCrawler();
+
+        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
+            Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
+            assertThat(file, notNullValue());
+            assertThat(file.get(File.FIELD_NAMES.FILESIZE), is(12230));
+        }
+    }
+
+    @Test
     public void test_filesize_disabled() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setAddFilesize(false)
@@ -126,5 +128,18 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
             assertThat(file, notNullValue());
             assertThat(file.get(File.FIELD_NAMES.FILESIZE), nullValue());
         }
+    }
+
+    @Test
+    public void test_filesize_limit() throws Exception {
+        logger.info(" ---> Creating a smaller file small.txt");
+        Files.write(currentTestResourceDir.resolve("small.txt"), "This is a second file smaller than the previous one".getBytes());
+
+        Fs fs = startCrawlerDefinition()
+                .setIgnoreAbove(ByteSizeValue.parseBytesSizeValue("10kb"))
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
+        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
     }
 }

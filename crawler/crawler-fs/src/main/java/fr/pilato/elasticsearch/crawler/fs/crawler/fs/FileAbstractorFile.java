@@ -26,16 +26,16 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getCreationTime;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFileExtension;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFilePermissions;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getLastAccessTime;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getModificationTime;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
 
 public class FileAbstractorFile extends FileAbstractor<File> {
@@ -45,25 +45,24 @@ public class FileAbstractorFile extends FileAbstractor<File> {
 
     @Override
     public FileAbstractModel toFileAbstractModel(String path, File file) {
-        FileAbstractModel model = new FileAbstractModel();
-        model.name = file.getName();
-        model.file = file.isFile();
-        model.directory = !model.file;
-        model.lastModifiedDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault());
-        model.creationDate = getCreationTime(file);
-        model.extension = getFileExtension(file);
-        model.path = path;
-        model.fullpath = file.getAbsolutePath();
-        model.size = file.length();
-        model.owner = getOwnerName(file);
-        model.group = getGroupName(file);
-
-        return model;
+        return new FileAbstractModel(
+                file.getName(),
+                file.isFile(),
+                getModificationTime(file),
+                getCreationTime(file),
+                getLastAccessTime(file),
+                getFileExtension(file),
+                path,
+                file.getAbsolutePath(),
+                file.length(),
+                getOwnerName(file),
+                getGroupName(file),
+                getFilePermissions(file));
     }
 
     @Override
     public InputStream getInputStream(FileAbstractModel file) throws Exception {
-        return new FileInputStream(new File(file.fullpath));
+        return new FileInputStream(new File(file.getFullpath()));
     }
 
     @Override
@@ -95,12 +94,12 @@ public class FileAbstractorFile extends FileAbstractor<File> {
     }
 
     @Override
-    public void open() throws Exception {
+    public void open() {
         // Do nothing because we don't open resources in the File implementation.
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         // Do nothing because we don't open resources in the File implementation.
     }
 }

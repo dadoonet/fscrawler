@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.CopyOption;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
@@ -47,6 +46,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -58,6 +58,8 @@ import java.util.Properties;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
@@ -73,10 +75,9 @@ public class FsCrawlerUtil {
      * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param type The expected type (will be expanded to type.json)
      * @return the mapping
-     * @throws URISyntaxException If URI is malformed
      * @throws IOException If the mapping can not be read
      */
-    public static String readDefaultJsonVersionedFile(Path config, String version, String type) throws URISyntaxException, IOException {
+    public static String readDefaultJsonVersionedFile(Path config, String version, String type) throws IOException {
         Path defaultConfigDir = config.resolve("_default");
         try {
             return readJsonVersionedFile(defaultConfigDir, version, type);
@@ -109,10 +110,9 @@ public class FsCrawlerUtil {
      * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
      * @param filename The expected filename (will be expanded to filename.json)
      * @return the mapping
-     * @throws URISyntaxException If URI is malformed
      * @throws IOException If the mapping can not be read
      */
-    public static String readJsonFile(Path dir, Path config, String version, String filename) throws URISyntaxException, IOException {
+    public static String readJsonFile(Path dir, Path config, String version, String filename) throws IOException {
         try {
             return readJsonVersionedFile(dir, version, filename);
         } catch (NoSuchFileException e) {
@@ -161,13 +161,33 @@ public class FsCrawlerUtil {
      * @param includes include rules, may be empty not null
      * @param excludes exclude rules, may be empty not null
      */
-    public static boolean isIndexable(String filename, List<String> includes, List<String> excludes) {
-        logger.debug("filename = [{}], includes = [{}], excludes = [{}]", filename, includes, excludes);
-
+    private static boolean isIndexable(String filename, List<String> includes, List<String> excludes) {
         boolean excluded = isExcluded(filename, excludes);
         if (excluded) return false;
 
         return isIncluded(filename, includes);
+    }
+
+    /**
+     * We check if we can index the file or if we should ignore it
+     *
+     * @param directory true if the current file is a directory, false in other case (actual file)
+     * @param filename The filename to scan
+     * @param includes include rules, may be empty not null
+     * @param excludes exclude rules, may be empty not null
+     */
+    public static boolean isIndexable(boolean directory, String filename, List<String> includes, List<String> excludes) {
+        logger.debug("directory = [{}], filename = [{}], includes = [{}], excludes = [{}]", directory, filename, includes, excludes);
+
+        boolean isIndexable = isIndexable(filename, includes, excludes);
+
+        // It can happen that we a dir "foo" which does not match the include name like "*.txt"
+        // We need to go in it unless it has been explicitly excluded by the user
+        if (directory && !isExcluded(filename, excludes)) {
+            isIndexable = true;
+        }
+
+        return isIndexable;
     }
 
     /**
@@ -227,6 +247,40 @@ public class FsCrawlerUtil {
         return false;
     }
 
+    /**
+     * We check if we can index the content or skip it
+     *
+     * @param content Content to parse
+     * @param filters regular expressions that all needs to match if we want to index. If empty
+     *                we consider it always matches.
+     */
+    public static boolean isIndexable(String content, List<String> filters) {
+        logger.debug("content = [{}], filters = {}", content, filters);
+
+        if (isNullOrEmpty(content)) {
+            logger.trace("Null or empty content always matches.");
+            return true;
+        }
+
+        if (filters == null || filters.isEmpty()) {
+            logger.trace("No pattern always matches.");
+            return true;
+        }
+
+        for (String filter : filters) {
+            Pattern pattern = Pattern.compile(filter, Pattern.MULTILINE | Pattern.UNIX_LINES);
+            logger.trace("Testing filter [{}]", filter);
+            if (!pattern.matcher(content).find()) {
+                logger.trace("Filter [{}] is not matching.", filter);
+                return false;
+            } else {
+                logger.trace("Filter [{}] is matching.", filter);
+            }
+        }
+
+        return true;
+    }
+
     public static String computeVirtualPathName(String rootPath, String realPath) {
         String result = "/";
         if (realPath != null && realPath.length() > rootPath.length()) {
@@ -246,6 +300,34 @@ public class FsCrawlerUtil {
                     .getFileAttributeView(path, BasicFileAttributeView.class)
                     .readAttributes();
             time = LocalDateTime.ofInstant(fileattr.creationTime().toInstant(), ZoneId.systemDefault());
+        } catch (Exception e) {
+            time = null;
+        }
+        return time;
+    }
+
+    public static LocalDateTime getModificationTime(File file) {
+        LocalDateTime time;
+        try  {
+            Path path = Paths.get(file.getAbsolutePath());
+            BasicFileAttributes fileattr = Files
+                    .getFileAttributeView(path, BasicFileAttributeView.class)
+                    .readAttributes();
+            time = LocalDateTime.ofInstant(fileattr.lastModifiedTime().toInstant(), ZoneId.systemDefault());
+        } catch (Exception e) {
+            time = null;
+        }
+        return time;
+    }
+
+    public static LocalDateTime getLastAccessTime(File file) {
+        LocalDateTime time;
+        try  {
+            Path path = Paths.get(file.getAbsolutePath());
+            BasicFileAttributes fileattr = Files
+                    .getFileAttributeView(path, BasicFileAttributeView.class)
+                    .readAttributes();
+            time = LocalDateTime.ofInstant(fileattr.lastAccessTime().toInstant(), ZoneId.systemDefault());
         } catch (Exception e) {
             time = null;
         }
@@ -299,6 +381,43 @@ public class FsCrawlerUtil {
             logger.warn("Failed to determine 'group' of {}: {}", file, e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Determines file permissions.
+     */
+    public static int getFilePermissions(final File file) {
+        if (OsValidator.WINDOWS) {
+            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            return -1;
+        }
+        try {
+            final Path path = Paths.get(file.getAbsolutePath());
+            PosixFileAttributes attrs = Files.getFileAttributeView(path, PosixFileAttributeView.class).readAttributes();
+            Set<PosixFilePermission> permissions = attrs.permissions();
+            int user = toOctalPermission(
+                    permissions.contains(PosixFilePermission.OWNER_READ),
+                    permissions.contains(PosixFilePermission.OWNER_WRITE),
+                    permissions.contains(PosixFilePermission.OWNER_EXECUTE));
+            int group = toOctalPermission(
+                    permissions.contains(PosixFilePermission.GROUP_READ),
+                    permissions.contains(PosixFilePermission.GROUP_WRITE),
+                    permissions.contains(PosixFilePermission.GROUP_EXECUTE));
+            int others = toOctalPermission(
+                    permissions.contains(PosixFilePermission.OTHERS_READ),
+                    permissions.contains(PosixFilePermission.OTHERS_WRITE),
+                    permissions.contains(PosixFilePermission.OTHERS_EXECUTE));
+
+            return user * 100 + group * 10 + others;
+        }
+        catch(Exception e) {
+            logger.warn("Failed to determine 'owner' of {}: {}", file, e.getMessage());
+            return -1;
+        }
+    }
+
+    private static int toOctalPermission(boolean read, boolean write, boolean execute) {
+        return (read ? 4 : 0) + (write ? 2 : 0) + (execute ? 1 : 0);
     }
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
@@ -473,5 +592,48 @@ public class FsCrawlerUtil {
                 Files.createDirectory(root);
             }
         } catch (IOException ignored) { }
+    }
+
+    /**
+     * Format the double value with a single decimal points, trimming trailing '.0'.
+     */
+    public static String format1Decimals(double value, String suffix) {
+        String p = String.valueOf(value);
+        int ix = p.indexOf('.') + 1;
+        int ex = p.indexOf('E');
+        char fraction = p.charAt(ix);
+        if (fraction == '0') {
+            if (ex != -1) {
+                return p.substring(0, ix - 1) + p.substring(ex) + suffix;
+            } else {
+                return p.substring(0, ix - 1) + suffix;
+            }
+        } else {
+            if (ex != -1) {
+                return p.substring(0, ix) + fraction + p.substring(ex) + suffix;
+            } else {
+                return p.substring(0, ix) + fraction + suffix;
+            }
+        }
+    }
+
+    /**
+     * Compare if a file size is strictly under a given limit
+     * @param limit Limit. If null, we consider that there is no limit and we return true.
+     * @param fileSizeAsBytes File size
+     * @return true if under the limit. false otherwise.
+     */
+    public static boolean isFileSizeUnderLimit(ByteSizeValue limit, long fileSizeAsBytes) {
+        boolean result = true;
+        if (limit != null) {
+            // We check the file size to avoid indexing too big files
+            ByteSizeValue fileSize = new ByteSizeValue(fileSizeAsBytes);
+            int compare = fileSize.compareTo(limit);
+            result = compare <= 0;
+            logger.debug("Comparing file size [{}] with current limit [{}] -> {}", fileSize, limit,
+                    result ? "under limit" : "above limit");
+        }
+
+        return result;
     }
 }

@@ -19,12 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
 public class Fs {
@@ -32,6 +34,7 @@ public class Fs {
     private TimeValue updateRate = TimeValue.timeValueMinutes(15);
     private List<String> includes = null;
     private List<String> excludes = null;
+    private List<String> filters = null;
     private boolean jsonSupport = false;
     private boolean filenameAsId = false;
     private boolean addFilesize = true;
@@ -49,13 +52,14 @@ public class Fs {
     private boolean continueOnError = false;
     private boolean pdfOcr = true;
     private Ocr ocr = new Ocr();
+    private ByteSizeValue ignoreAbove = null;
 
     public static Builder builder() {
         return new Builder();
     }
 
     public static final String DEFAULT_DIR = "/tmp/es";
-    public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("~*");
+    public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("*/~*");
     public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).setExcludes(DEFAULT_EXCLUDED).build();
 
     public static class Builder {
@@ -63,6 +67,7 @@ public class Fs {
         private TimeValue updateRate = TimeValue.timeValueMinutes(15);
         private List<String> includes = null;
         private List<String> excludes = null;
+        private List<String> filters = null;
         private boolean jsonSupport = false;
         private boolean filenameAsId = false;
         private boolean addFilesize = true;
@@ -80,6 +85,7 @@ public class Fs {
         private boolean continueOnError = false;
         private boolean pdfOcr = true;
         private Ocr ocr = new Ocr();
+        private ByteSizeValue ignoreAbove = null;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -122,6 +128,24 @@ public class Fs {
             // We refuse to add duplicates
             if (!this.excludes.contains(exclude)) {
                 this.excludes.add(exclude);
+            }
+
+            return this;
+        }
+
+        public Builder setFilters(List<String> filters) {
+            this.filters = filters;
+            return this;
+        }
+
+        public Builder addFilter(String filter) {
+            if (this.filters == null) {
+                this.filters = new ArrayList<>();
+            }
+
+            // We refuse to add duplicates
+            if (!this.filters.contains(filter)) {
+                this.filters.add(filter);
             }
 
             return this;
@@ -212,10 +236,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setIgnoreAbove(ByteSizeValue ignoreAbove) {
+            this.ignoreAbove = ignoreAbove;
+            return this;
+        }
+
         public Fs build() {
-            return new Fs(url, updateRate, includes, excludes, jsonSupport, filenameAsId, addFilesize,
+            return new Fs(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, pdfOcr, ocr);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, pdfOcr, ocr, ignoreAbove);
         }
     }
 
@@ -223,14 +252,15 @@ public class Fs {
 
     }
 
-    private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, boolean jsonSupport,
+    private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, List<String> filters, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError, boolean pdfOcr, Ocr ocr) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError, boolean pdfOcr, Ocr ocr, ByteSizeValue ignoreAbove) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
         this.excludes = excludes;
+        this.filters = filters;
         this.jsonSupport = jsonSupport;
         this.filenameAsId = filenameAsId;
         this.addFilesize = addFilesize;
@@ -248,6 +278,7 @@ public class Fs {
         this.continueOnError = continueOnError;
         this.pdfOcr = pdfOcr;
         this.ocr = ocr;
+        this.ignoreAbove = ignoreAbove;
     }
 
     public String getUrl() {
@@ -280,6 +311,14 @@ public class Fs {
 
     public void setExcludes(List<String> excludes) {
         this.excludes = excludes;
+    }
+
+    public List<String> getFilters() {
+        return filters;
+    }
+
+    public void setFilters(List<String> filters) {
+        this.filters = filters;
     }
 
     public boolean isJsonSupport() {
@@ -418,58 +457,75 @@ public class Fs {
         this.ocr = ocr;
     }
 
+    public ByteSizeValue getIgnoreAbove() {
+        return ignoreAbove;
+    }
+
+    public void setIgnoreAbove(ByteSizeValue ignoreAbove) {
+        this.ignoreAbove = ignoreAbove;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         Fs fs = (Fs) o;
-
-        if (jsonSupport != fs.jsonSupport) return false;
-        if (xmlSupport != fs.xmlSupport) return false;
-        if (indexFolders != fs.indexFolders) return false;
-        if (filenameAsId != fs.filenameAsId) return false;
-        if (addFilesize != fs.addFilesize) return false;
-        if (removeDeleted != fs.removeDeleted) return false;
-        if (addAsInnerObject != fs.addAsInnerObject) return false;
-        if (storeSource != fs.storeSource) return false;
-        if (indexContent != fs.indexContent) return false;
-        if (attributesSupport != fs.attributesSupport) return false;
-        if (rawMetadata != fs.rawMetadata) return false;
-        if (langDetect != fs.langDetect) return false;
-        if (continueOnError != fs.continueOnError) return false;
-        if (pdfOcr != fs.pdfOcr) return false;
-        if (url != null ? !url.equals(fs.url) : fs.url != null) return false;
-        if (updateRate != null ? !updateRate.equals(fs.updateRate) : fs.updateRate != null) return false;
-        if (includes != null ? !includes.equals(fs.includes) : fs.includes != null) return false;
-        if (excludes != null ? !excludes.equals(fs.excludes) : fs.excludes != null) return false;
-        if (indexedChars != null ? !indexedChars.equals(fs.indexedChars) : fs.indexedChars != null) return false;
-        return checksum != null ? checksum.equals(fs.checksum) : fs.checksum == null;
-
+        return jsonSupport == fs.jsonSupport &&
+                filenameAsId == fs.filenameAsId &&
+                addFilesize == fs.addFilesize &&
+                removeDeleted == fs.removeDeleted &&
+                addAsInnerObject == fs.addAsInnerObject &&
+                storeSource == fs.storeSource &&
+                indexContent == fs.indexContent &&
+                attributesSupport == fs.attributesSupport &&
+                rawMetadata == fs.rawMetadata &&
+                xmlSupport == fs.xmlSupport &&
+                indexFolders == fs.indexFolders &&
+                langDetect == fs.langDetect &&
+                continueOnError == fs.continueOnError &&
+                pdfOcr == fs.pdfOcr &&
+                Objects.equals(url, fs.url) &&
+                Objects.equals(updateRate, fs.updateRate) &&
+                Objects.equals(includes, fs.includes) &&
+                Objects.equals(excludes, fs.excludes) &&
+                Objects.equals(filters, fs.filters) &&
+                Objects.equals(indexedChars, fs.indexedChars) &&
+                Objects.equals(checksum, fs.checksum) &&
+                Objects.equals(ocr, fs.ocr) &&
+                Objects.equals(ignoreAbove, fs.ignoreAbove);
     }
 
     @Override
     public int hashCode() {
-        int result = url != null ? url.hashCode() : 0;
-        result = 31 * result + (updateRate != null ? updateRate.hashCode() : 0);
-        result = 31 * result + (includes != null ? includes.hashCode() : 0);
-        result = 31 * result + (excludes != null ? excludes.hashCode() : 0);
-        result = 31 * result + (jsonSupport ? 1 : 0);
-        result = 31 * result + (filenameAsId ? 1 : 0);
-        result = 31 * result + (addFilesize ? 1 : 0);
-        result = 31 * result + (removeDeleted ? 1 : 0);
-        result = 31 * result + (addAsInnerObject ? 1 : 0);
-        result = 31 * result + (storeSource ? 1 : 0);
-        result = 31 * result + (indexContent ? 1 : 0);
-        result = 31 * result + (indexedChars != null ? indexedChars.hashCode() : 0);
-        result = 31 * result + (attributesSupport ? 1 : 0);
-        result = 31 * result + (rawMetadata ? 1 : 0);
-        result = 31 * result + (xmlSupport ? 1 : 0);
-        result = 31 * result + (checksum != null ? checksum.hashCode() : 0);
-        result = 31 * result + (indexFolders ? 1 : 0);
-        result = 31 * result + (langDetect ? 1 : 0);
-        result = 31 * result + (continueOnError ? 1 : 0);
-        result = 31 * result + (pdfOcr ? 1 : 0);
-        return result;
+        return Objects.hash(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
+                removeDeleted, addAsInnerObject, storeSource, indexContent, indexedChars, attributesSupport, rawMetadata, xmlSupport, checksum, indexFolders, langDetect, continueOnError, pdfOcr, ocr, ignoreAbove);
+    }
+
+    @Override
+    public String toString() {
+        return "Fs{" + "url='" + url + '\'' +
+                ", updateRate=" + updateRate +
+                ", includes=" + includes +
+                ", excludes=" + excludes +
+                ", filters=" + filters +
+                ", jsonSupport=" + jsonSupport +
+                ", filenameAsId=" + filenameAsId +
+                ", addFilesize=" + addFilesize +
+                ", removeDeleted=" + removeDeleted +
+                ", addAsInnerObject=" + addAsInnerObject +
+                ", storeSource=" + storeSource +
+                ", indexContent=" + indexContent +
+                ", indexedChars=" + indexedChars +
+                ", attributesSupport=" + attributesSupport +
+                ", rawMetadata=" + rawMetadata +
+                ", xmlSupport=" + xmlSupport +
+                ", checksum='" + checksum + '\'' +
+                ", indexFolders=" + indexFolders +
+                ", langDetect=" + langDetect +
+                ", continueOnError=" + continueOnError +
+                ", pdfOcr=" + pdfOcr +
+                ", ocr=" + ocr +
+                ", ignoreAbove=" + ignoreAbove +
+                '}';
     }
 }

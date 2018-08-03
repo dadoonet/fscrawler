@@ -42,32 +42,104 @@ package fr.pilato.elasticsearch.crawler.fs.crawler;
 import java.time.LocalDateTime;
 
 public class FileAbstractModel {
-    public String name;
-    public boolean file;
-    public boolean directory;
-    public LocalDateTime lastModifiedDate;
-    public LocalDateTime creationDate;
-    public String path;
-    public String fullpath;
-    public long size;
-    public String owner;
-    public String group;
-    public String extension;
+    private String name;
+    private boolean file;
+    private boolean directory;
+    private LocalDateTime lastModifiedDate;
+    private LocalDateTime creationDate;
+    private LocalDateTime accessDate;
+    private String path;
+    private String fullpath;
+    private long size;
+    private String owner;
+    private String group;
+    private int permissions;
+    private String extension;
+
+    public FileAbstractModel(String name, boolean file, LocalDateTime lastModifiedDate, LocalDateTime creationDate, LocalDateTime accessDate,
+                             String extension, String path, String fullpath, long size, String owner, String group, int permissions) {
+        this.name = name;
+        this.file = file;
+        this.directory = !file;
+        this.lastModifiedDate = lastModifiedDate;
+        this.creationDate = creationDate;
+        this.accessDate = accessDate;
+        this.path = path;
+        this.fullpath = fullpath;
+        this.size = size;
+        this.owner = owner;
+        this.group = group;
+        this.permissions = permissions;
+        this.extension = extension;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isFile() {
+        return file;
+    }
+
+    public boolean isDirectory() {
+        return directory;
+    }
+
+    public LocalDateTime getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    public LocalDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    public LocalDateTime getAccessDate() {
+        return accessDate;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getFullpath() {
+        return fullpath;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public int getPermissions() {
+        return permissions;
+    }
+
+    public String getExtension() {
+        return extension;
+    }
 
     @Override
     public String toString() {
-        String sb = "FileAbstractModel{" + "name='" + name + '\'' +
+        return "FileAbstractModel{" + "name='" + name + '\'' +
                 ", file=" + file +
                 ", directory=" + directory +
                 ", lastModifiedDate=" + lastModifiedDate +
                 ", creationDate=" + creationDate +
+                ", accessDate=" + accessDate +
                 ", path='" + path + '\'' +
                 ", owner='" + owner + '\'' +
                 ", group='" + group + '\'' +
+                ", permissions=" + permissions +
                 ", extension='" + extension + '\'' +
                 ", fullpath='" + fullpath + '\'' +
                 ", size=" + size +
                 '}';
-        return sb;
     }
 }

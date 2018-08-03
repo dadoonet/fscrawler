@@ -32,164 +32,178 @@
           }
         }
       ],
-      "properties" : {
-        "attachment" : {
-          "type" : "binary",
+      "properties": {
+        "attachment": {
+          "type": "binary",
           "doc_values": false
         },
-        "attributes" : {
-          "properties" : {
-            "group" : {
-              "type" : "keyword"
+        "attributes": {
+          "properties": {
+            "group": {
+              "type": "keyword"
             },
-            "owner" : {
-              "type" : "keyword"
+            "owner": {
+              "type": "keyword"
             }
           }
         },
-        "content" : {
-          "type" : "text"
+        "content": {
+          "type": "text"
         },
-        "file" : {
-          "properties" : {
-            "content_type" : {
-              "type" : "keyword"
+        "file": {
+          "properties": {
+            "content_type": {
+              "type": "keyword"
             },
-            "filename" : {
-              "type" : "keyword",
-              "store" : true
+            "filename": {
+              "type": "keyword",
+              "store": true
             },
-            "extension" : {
-              "type" : "keyword"
+            "extension": {
+              "type": "keyword"
             },
-            "filesize" : {
-              "type" : "long"
+            "filesize": {
+              "type": "long"
             },
-            "indexed_chars" : {
-              "type" : "long"
+            "indexed_chars": {
+              "type": "long"
             },
-            "indexing_date" : {
-              "type" : "date",
-              "format" : "dateOptionalTime"
+            "indexing_date": {
+              "type": "date",
+              "format": "dateOptionalTime"
             },
-            "last_modified" : {
-              "type" : "date",
-              "format" : "dateOptionalTime"
+            "created": {
+              "type": "date",
+              "format": "dateOptionalTime"
+            },
+            "last_modified": {
+              "type": "date",
+              "format": "dateOptionalTime"
+            },
+            "last_accessed": {
+              "type": "date",
+              "format": "dateOptionalTime"
             },
             "checksum": {
               "type": "keyword"
             },
-            "url" : {
-              "type" : "keyword",
-              "index" : false
+            "url": {
+              "type": "keyword",
+              "index": false
             }
           }
         },
-        "meta" : {
-          "properties" : {
-            "author" : {
-              "type" : "text"
+        "meta": {
+          "properties": {
+            "author": {
+              "type": "text"
             },
-            "date" : {
-              "type" : "date",
-              "format" : "dateOptionalTime"
+            "date": {
+              "type": "date",
+              "format": "dateOptionalTime"
             },
-            "keywords" : {
-              "type" : "text"
+            "keywords": {
+              "type": "text"
             },
-            "title" : {
-              "type" : "text"
+            "title": {
+              "type": "text"
             },
-            "language" : {
-              "type" : "keyword"
+            "language": {
+              "type": "keyword"
             },
-            "format" : {
-              "type" : "text"
+            "format": {
+              "type": "text"
             },
-            "identifier" : {
-              "type" : "text"
+            "identifier": {
+              "type": "text"
             },
-            "contributor" : {
-              "type" : "text"
+            "contributor": {
+              "type": "text"
             },
-            "coverage" : {
-              "type" : "text"
+            "coverage": {
+              "type": "text"
             },
-            "modifier" : {
-              "type" : "text"
+            "modifier": {
+              "type": "text"
             },
-            "creator_tool" : {
-              "type" : "keyword"
+            "creator_tool": {
+              "type": "keyword"
             },
-            "publisher" : {
-              "type" : "text"
+            "publisher": {
+              "type": "text"
             },
-            "relation" : {
-              "type" : "text"
+            "relation": {
+              "type": "text"
             },
-            "rights" : {
-              "type" : "text"
+            "rights": {
+              "type": "text"
             },
-            "source" : {
-              "type" : "text"
+            "source": {
+              "type": "text"
             },
-            "type" : {
-              "type" : "text"
+            "type": {
+              "type": "text"
             },
-            "description" : {
-              "type" : "text"
+            "description": {
+              "type": "text"
             },
-            "created" : {
-              "type" : "date",
-              "format" : "dateOptionalTime"
+            "created": {
+              "type": "date",
+              "format": "dateOptionalTime"
             },
-            "print_date" : {
-              "type" : "date",
-              "format" : "dateOptionalTime"
+            "print_date": {
+              "type": "date",
+              "format": "dateOptionalTime"
             },
-            "metadata_date" : {
-              "type" : "date",
-              "format" : "dateOptionalTime"
+            "metadata_date": {
+              "type": "date",
+              "format": "dateOptionalTime"
             },
-            "latitude" : {
-              "type" : "text"
+            "latitude": {
+              "type": "text"
             },
-            "longitude" : {
-              "type" : "text"
+            "longitude": {
+              "type": "text"
             },
-            "altitude" : {
-              "type" : "text"
+            "altitude": {
+              "type": "text"
             },
-            "rating" : {
-              "type" : "byte"
+            "rating": {
+              "type": "byte"
             },
-            "comments" : {
-              "type" : "text"
+            "comments": {
+              "type": "text"
             }
           }
         },
-        "path" : {
-          "properties" : {
-            "real" : {
-              "type" : "keyword",
+        "path": {
+          "properties": {
+            "real": {
+              "type": "keyword",
               "fields": {
                 "tree": {
-                  "type" : "text",
+                  "type": "text",
                   "analyzer": "fscrawler_path",
                   "fielddata": true
+                },
+                "fulltext": {
+                  "type": "text"
                 }
               }
             },
-            "root" : {
-              "type" : "keyword"
+            "root": {
+              "type": "keyword"
             },
-            "virtual" : {
-              "type" : "keyword",
+            "virtual": {
+              "type": "keyword",
               "fields": {
                 "tree": {
-                  "type" : "text",
+                  "type": "text",
                   "analyzer": "fscrawler_path",
                   "fielddata": true
+                },
+                "fulltext": {
+                  "type": "text"
                 }
               }
             }

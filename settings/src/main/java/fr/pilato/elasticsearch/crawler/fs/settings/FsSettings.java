@@ -145,4 +145,14 @@ public class FsSettings {
         result = 31 * result + (elasticsearch != null ? elasticsearch.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "FsSettings{" + "name='" + name + '\'' +
+                ", fs=" + fs +
+                ", server=" + server +
+                ", elasticsearch=" + elasticsearch +
+                ", rest=" + rest +
+                '}';
+    }
 }

@@ -65,15 +65,17 @@ OCR settings
 
 Here is a list of OCR settings (under ``fs.ocr`` prefix)`:
 
-+----------------------+---------------+------------------------------------+
-| Name                 | Default value | Documentation                      |
-+======================+===============+====================================+
-| ``fs.ocr.language``  | ``"eng"``     | `OCR Language`_                    |
-+----------------------+---------------+------------------------------------+
-| ``fs.ocr.path``      | ``null``      | `OCR Path`_                        |
-+----------------------+---------------+------------------------------------+
-| ``fs.ocr.data_path`` | ``null``      | `OCR Data Path`_                   |
-+----------------------+---------------+------------------------------------+
++------------------------+---------------+------------------------------------+
+| Name                   | Default value | Documentation                      |
++========================+===============+====================================+
+| ``fs.ocr.language``    | ``"eng"``     | `OCR Language`_                    |
++------------------------+---------------+------------------------------------+
+| ``fs.ocr.path``        | ``null``      | `OCR Path`_                        |
++------------------------+---------------+------------------------------------+
+| ``fs.ocr.data_path``   | ``null``      | `OCR Data Path`_                   |
++------------------------+---------------+------------------------------------+
+| ``fs.ocr.output_type`` | ``txt``       | `OCR Output Type`_                 |
++------------------------+---------------+------------------------------------+
 
 OCR Language
 ^^^^^^^^^^^^
@@ -136,6 +138,28 @@ define the path to use by setting ``fs.ocr.data_path`` property in your
        }
      }
    }
+
+OCR Output Type
+^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.5
+
+Set the output type from ocr process. ``fs.ocr.output_type`` property can be defined to
+``txt`` or ``hocr`` in your ``~/.fscrawler/test/_settings.json`` file:
+
+.. code:: json
+
+   {
+     "name" : "test",
+     "fs" : {
+       "url" : "/path/to/data/dir",
+       "ocr" : {
+         "output_type": "hocr"
+       }
+     }
+   }
+
+.. note:: When omitted, ``txt`` value is used.
 
 Using docker
 ------------

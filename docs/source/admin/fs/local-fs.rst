@@ -16,6 +16,8 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.excludes``            | ``["~*"]``            | `Includes and excludes`_        |
 +----------------------------+-----------------------+---------------------------------+
+| ``fs.filters``             | ``null``              | `Filter content`_               |
++----------------------------+-----------------------+---------------------------------+
 | ``fs.json_support``        | ``false``             | `Indexing JSon docs`_           |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.xml_support``         | ``false``             | `Indexing XML docs`_            |
@@ -45,6 +47,8 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 | ``fs.pdf_ocr``             | ``true``              | :ref:`ocr_integration`          |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.indexed_chars``       | ``100000.0``          | `Extracted characters`_         |
++----------------------------+-----------------------+---------------------------------+
+| ``fs.ignore_above``        | ``null``              | `Ignore above`_                 |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.checksum``            | ``null``              | `File Checksum`_                |
 +----------------------------+-----------------------+---------------------------------+
@@ -102,6 +106,8 @@ file system and another run. Which means that if you set it to ``15m``,
 the next scan will happen on 15 minutes after the end of the current
 scan, whatever its duration.
 
+.. _includes_excludes:
+
 Includes and excludes
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -117,20 +123,87 @@ Define ``fs.includes`` and ``fs.excludes`` properties in your
      "name" : "test",
      "fs": {
        "includes": [
-         "*.doc",
-         "*.pdf"
+         "*/*.doc",
+         "*/*.pdf"
        ],
        "excludes": [
-         "resume*"
+         "*/resume*"
        ]
      }
    }
 
-It also applies to directory names. So if you want to ignore ``.ignore``
-dir, just add ``.ignore`` as an excluded name. Note that ``includes``
-does not apply to directory names but only to filenames.
 
 By default, FSCrawler will exclude files starting with ``~``.
+
+.. versionadded:: 2.5
+
+It also applies to directory names. So if you want to ignore ``.ignore``
+dir, just add ``.ignore`` as an excluded name. Note that ``includes`` and ``excludes``
+apply to directory names as well.
+
+Let's take the following example with the ``root`` dir as ``/tmp``:
+
+.. code::
+
+    /tmp
+    ├── folderA
+    │   ├── subfolderA
+    │   ├── subfolderB
+    │   └── subfolderC
+    ├── folderB
+    │   ├── subfolderA
+    │   ├── subfolderB
+    │   └── subfolderC
+    └── folderC
+        ├── subfolderA
+        ├── subfolderB
+        └── subfolderC
+
+If you define the following ``fs.excludes`` property in your
+``~/.fscrawler/test/_settings.json`` file:
+
+.. code:: json
+
+   {
+     "name" : "test",
+     "fs": {
+       "excludes": [
+         "/folderB/subfolder*"
+       ]
+     }
+   }
+
+Then all files but the ones in ``/folderB/subfolderA``, ``/folderB/subfolderB`` and
+``/folderB/subfolderC`` will be indexed.
+
+Filter content
+^^^^^^^^^^^^^^
+
+.. versionadded:: 2.5
+
+You can filter out documents you would like to index by adding one or more
+regular expression that match the extracted content.
+Documents which are not matching will be simply ignored and not indexed.
+
+If you define the following ``fs.filters`` property in your
+``~/.fscrawler/test/_settings.json`` file:
+
+.. code:: json
+
+   {
+     "name" : "test",
+     "fs": {
+       "filters": [
+         ".*foo.*",
+         "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"
+       ]
+     }
+   }
+
+With this example, only documents which contains the word ``foo`` and a VISA credit card number
+with the form like ``4012888888881881``, ``4012 8888 8888 1881`` or ``4012-8888-8888-1881``
+will be indexed.
+
 
 Indexing JSon docs
 ^^^^^^^^^^^^^^^^^^
@@ -354,8 +427,8 @@ You can force to use the ``_id`` to be the filename using
 Adding file attributes
 ^^^^^^^^^^^^^^^^^^^^^^
 
-If you want to add file attributes such as ``attributes.owner`` and
-``attributes.group``, you can set ``attributes_support`` to ``true``.
+If you want to add file attributes such as ``attributes.owner``, ``attributes.group``
+and ``attributes.permissions``, you can set ``attributes_support`` to ``true``.
 
 .. code:: json
 
@@ -365,6 +438,11 @@ If you want to add file attributes such as ``attributes.owner`` and
        "attributes_support" : true
      }
    }
+
+.. note::
+
+    On Windows systems, ``attributes.group`` and ``attributes.permissions`` are
+    not generated.
 
 Disabling raw metadata
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -642,7 +720,7 @@ JSon document. This field is not indexed. Default mapping for
 .. code:: json
 
    {
-     "doc" : {
+     "_doc" : {
        "properties" : {
          "attachment" : {
            "type" : "binary",
@@ -686,9 +764,30 @@ increase ``indexed_chars`` to more than ``"100%"``. For example,
 If you want to extract the full content, define ``indexed_chars`` to
 ``"-1"``.
 
-**Note**: Tika requires to allocate in memory a data structure to
-extract text. Setting ``indexed_chars`` to a high number will require
-more memory!
+.. note::
+
+    Tika requires to allocate in memory a data structure to
+    extract text. Setting ``indexed_chars`` to a high number will require
+    more memory!
+
+Ignore Above
+^^^^^^^^^^^^
+
+.. versionadded:: 2.5
+
+By default FSCrawler will send to Tika every single file, whatever its size.
+But some files on your file system might be a way too big to be parsed.
+
+Set ``ignore_above`` to the desired value of the limit.
+
+.. code:: json
+
+   {
+     "name": "test",
+     "fs": {
+       "ignore_above": "5mb"
+     }
+   }
 
 File checksum
 ^^^^^^^^^^^^^

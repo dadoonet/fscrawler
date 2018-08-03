@@ -40,6 +40,7 @@ import org.elasticsearch.index.query.TermQueryBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,9 +59,27 @@ public class ElasticsearchClient extends RestHighLevelClient {
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
 
     private boolean INGEST_SUPPORT = true;
+    /**
+     * Type name for Elasticsearch versions < 6.0
+     * @deprecated Will be removed with Elasticsearch V8
+     */
+    @Deprecated
+    private static final String INDEX_TYPE_DOC_V5 = "doc";
+    /**
+     * Type name for Elasticsearch versions >= 6.0
+     * @deprecated Will be removed with Elasticsearch V8
+     */
+    @Deprecated
+    private static final String INDEX_TYPE_DOC = "_doc";
+    /**
+     * Type name to use. It depends on elasticsearch version.
+     * @deprecated Will be removed with Elasticsearch V8
+     */
+    @Deprecated
+    private String defaultTypeName = INDEX_TYPE_DOC;
     private Version VERSION = null;
 
-    public ElasticsearchClient(RestClientBuilder client) throws IOException {
+    public ElasticsearchClient(RestClientBuilder client) {
         super(client);
     }
 
@@ -279,6 +298,14 @@ public class ElasticsearchClient extends RestHighLevelClient {
                 INGEST_SUPPORT = false;
                 logger.debug("Using elasticsearch < 5, so we can't use ingest node feature");
             }
+
+            // With elasticsearch 6.x, we can use _doc as the default type name
+            if (VERSION.onOrAfter(Version.V_6_0_0)) {
+                logger.debug("Using elasticsearch >= 6, so we can use {} as the default type name", defaultTypeName);
+            } else {
+                defaultTypeName = INDEX_TYPE_DOC_V5;
+                logger.debug("Using elasticsearch < 6, so we use {} as the default type name", defaultTypeName);
+            }
         }
     }
 
@@ -290,9 +317,32 @@ public class ElasticsearchClient extends RestHighLevelClient {
         return VERSION;
     }
 
+    public String getDefaultTypeName() {
+        return defaultTypeName;
+    }
+
+    public static Node decodeCloudId(String cloudId) {
+     	// 1. Ignore anything before `:`.
+        String id = cloudId.substring(cloudId.indexOf(':')+1);
+
+     	// 2. base64 decode
+        String decoded = new String(Base64.getDecoder().decode(id));
+
+        // 3. separate based on `$`
+        String[] words = decoded.split("\\$");
+
+ 	    // 4. form the URLs
+        return Node.builder().setHost(words[1] + "." + words[0]).setPort(443).setScheme(Node.Scheme.HTTPS).build();
+    }
+
     public static RestClientBuilder buildRestClient(Elasticsearch settings) {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
         settings.getNodes().forEach(node -> {
+            if (node.getCloudId() != null) {
+                // We have a cloud id which simplifies all
+                node = decodeCloudId(node.getCloudId());
+            }
+
             Node.Scheme scheme = node.getScheme();
             if (scheme == null) {
                 // Default to HTTP. In case we are reading an old configuration

@@ -16,6 +16,8 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.flush_interval`` | ``"5s"``                  | `Bulk settings`_                |
 +----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.byte_size``      | ``"10mb"``                | `Bulk settings`_                |
++----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.pipeline``       | ``null``                  | :ref:`ingest_node`              |
 +----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.nodes``          | ``http://127.0.0.1:9200`` | `Node settings`_                |
@@ -105,6 +107,11 @@ Or fall back to the command line:
     -  ``6/_settings.json``: for elasticsearch 6.x series document index settings
     -  ``6/_settings_folder.json``: for elasticsearch 6.x series folder index settings
 
+.. note::
+
+    For versions before 6.x series, the type of the document is ``doc``.
+    From 6.x, the type of the document is ``_doc``.
+
 Creating your own mapping (analyzers)
 """""""""""""""""""""""""""""""""""""
 
@@ -119,194 +126,222 @@ The following example uses a ``french`` analyzer to index the
 
 .. code:: json
 
-   {
-     "settings": {
-       "index.mapping.total_fields.limit": 2000,
-       "analysis": {
-         "analyzer": {
-           "fscrawler_path": {
-             "tokenizer": "fscrawler_path"
-           }
-         },
-         "tokenizer": {
-           "fscrawler_path": {
-             "type": "path_hierarchy"
-           }
-         }
-       }
-     },
-     "mappings": {
-       "doc": {
-         "properties" : {
-           "attachment" : {
-             "type" : "binary",
-             "doc_values": false
-           },
-           "attributes" : {
-             "properties" : {
-               "group" : {
-                 "type" : "keyword"
-               },
-               "owner" : {
-                 "type" : "keyword"
-               }
-             }
-           },
-           "content" : {
-             "type" : "text",
-             "analyzer" : "french"
-           },
-           "file" : {
-             "properties" : {
-               "content_type" : {
-                 "type" : "keyword"
-               },
-               "filename" : {
-                 "type" : "keyword"
-               },
-               "extension" : {
-                 "type" : "keyword"
-               },
-               "filesize" : {
-                 "type" : "long"
-               },
-               "indexed_chars" : {
-                 "type" : "long"
-               },
-               "indexing_date" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "last_modified" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "checksum": {
-                 "type": "keyword"
-               },
-               "url" : {
-                 "type" : "keyword",
-                 "index" : false
-               }
-             }
-           },
-           "object" : {
-             "type" : "object"
-           },
-           "meta" : {
-             "properties" : {
-               "author" : {
-                 "type" : "text"
-               },
-               "date" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "keywords" : {
-                 "type" : "text"
-               },
-               "title" : {
-                 "type" : "text"
-               },
-               "language" : {
-                 "type" : "keyword"
-               },
-               "format" : {
-                 "type" : "text"
-               },
-               "identifier" : {
-                 "type" : "text"
-               },
-               "contributor" : {
-                 "type" : "text"
-               },
-               "coverage" : {
-                 "type" : "text"
-               },
-               "modifier" : {
-                 "type" : "text"
-               },
-               "creator_tool" : {
-                 "type" : "keyword"
-               },
-               "publisher" : {
-                 "type" : "text"
-               },
-               "relation" : {
-                 "type" : "text"
-               },
-               "rights" : {
-                 "type" : "text"
-               },
-               "source" : {
-                 "type" : "text"
-               },
-               "type" : {
-                 "type" : "text"
-               },
-               "description" : {
-                 "type" : "text"
-               },
-               "created" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "print_date" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "metadata_date" : {
-                 "type" : "date",
-                 "format" : "dateOptionalTime"
-               },
-               "latitude" : {
-                 "type" : "text"
-               },
-               "longitude" : {
-                 "type" : "text"
-               },
-               "altitude" : {
-                 "type" : "text"
-               },
-               "rating" : {
-                 "type" : "keyword"
-               },
-               "comments" : {
-                 "type" : "text"
-               }
-             }
-           },
-           "path" : {
-             "properties" : {
-               "real" : {
-                 "type" : "keyword",
-                 "fields": {
-                   "tree": {
-                     "type" : "text",
-                     "analyzer": "fscrawler_path",
-                     "fielddata": true
-                   }
-                 }
-               },
-               "root" : {
-                 "type" : "keyword"
-               },
-               "virtual" : {
-                 "type" : "keyword",
-                 "fields": {
-                   "tree": {
-                     "type" : "text",
-                     "analyzer": "fscrawler_path",
-                     "fielddata": true
-                   }
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-   }
+    {
+      "settings": {
+        "index.mapping.total_fields.limit": 2000,
+        "analysis": {
+          "analyzer": {
+            "fscrawler_path": {
+              "tokenizer": "fscrawler_path"
+            }
+          },
+          "tokenizer": {
+            "fscrawler_path": {
+              "type": "path_hierarchy"
+            }
+          }
+        }
+      },
+      "mappings": {
+        "_doc": {
+          "dynamic_templates": [
+            {
+              "raw_as_text": {
+                "path_match": "meta.raw.*",
+                "mapping": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "attachment": {
+              "type": "binary",
+              "doc_values": false
+            },
+            "attributes": {
+              "properties": {
+                "group": {
+                  "type": "keyword"
+                },
+                "owner": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "content": {
+              "type": "text",
+              "analyzer": "french"
+            },
+            "file": {
+              "properties": {
+                "content_type": {
+                  "type": "keyword"
+                },
+                "filename": {
+                  "type": "keyword",
+                  "store": true
+                },
+                "extension": {
+                  "type": "keyword"
+                },
+                "filesize": {
+                  "type": "long"
+                },
+                "indexed_chars": {
+                  "type": "long"
+                },
+                "indexing_date": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "created": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "last_modified": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "last_accessed": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "checksum": {
+                  "type": "keyword"
+                },
+                "url": {
+                  "type": "keyword",
+                  "index": false
+                }
+              }
+            },
+            "meta": {
+              "properties": {
+                "author": {
+                  "type": "text"
+                },
+                "date": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "keywords": {
+                  "type": "text"
+                },
+                "title": {
+                  "type": "text"
+                },
+                "language": {
+                  "type": "keyword"
+                },
+                "format": {
+                  "type": "text"
+                },
+                "identifier": {
+                  "type": "text"
+                },
+                "contributor": {
+                  "type": "text"
+                },
+                "coverage": {
+                  "type": "text"
+                },
+                "modifier": {
+                  "type": "text"
+                },
+                "creator_tool": {
+                  "type": "keyword"
+                },
+                "publisher": {
+                  "type": "text"
+                },
+                "relation": {
+                  "type": "text"
+                },
+                "rights": {
+                  "type": "text"
+                },
+                "source": {
+                  "type": "text"
+                },
+                "type": {
+                  "type": "text"
+                },
+                "description": {
+                  "type": "text"
+                },
+                "created": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "print_date": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "metadata_date": {
+                  "type": "date",
+                  "format": "dateOptionalTime"
+                },
+                "latitude": {
+                  "type": "text"
+                },
+                "longitude": {
+                  "type": "text"
+                },
+                "altitude": {
+                  "type": "text"
+                },
+                "rating": {
+                  "type": "byte"
+                },
+                "comments": {
+                  "type": "text"
+                }
+              }
+            },
+            "path": {
+              "properties": {
+                "real": {
+                  "type": "keyword",
+                  "fields": {
+                    "tree": {
+                      "type": "text",
+                      "analyzer": "fscrawler_path",
+                      "fielddata": true
+                    },
+                    "fulltext": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "root": {
+                  "type": "keyword"
+                },
+                "virtual": {
+                  "type": "keyword",
+                  "fields": {
+                    "tree": {
+                      "type": "text",
+                      "analyzer": "fscrawler_path",
+                      "fielddata": true
+                    },
+                    "fulltext": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
 
 Note that if you want to push manually the mapping to elasticsearch you
 can use the classic REST calls:
@@ -355,8 +390,8 @@ Bulk settings
 ^^^^^^^^^^^^^
 
 FSCrawler is using bulks to send data to elasticsearch. By default the
-bulk is executed every 100 operations or every 5 seconds. You can change
-default settings using ``bulk_size`` and ``flush_interval``:
+bulk is executed every 100 operations or every 5 seconds or every 10 megabytes. You can change
+default settings using ``bulk_size``, ``byte_size`` and ``flush_interval``:
 
 .. code:: json
 
@@ -364,6 +399,7 @@ default settings using ``bulk_size`` and ``flush_interval``:
      "name" : "test",
      "elasticsearch" : {
        "bulk_size" : 1000,
+       "byte_size" : "500kb",
        "flush_interval" : "2s"
      }
    }
@@ -382,7 +418,7 @@ default settings using ``bulk_size`` and ``flush_interval``:
     ``http.max_content_length`` to a higher value but please be aware that
     this will consume much more memory on elasticsearch side.
 
-    Or you can decrease the ``bulk_size`` setting to a smaller value.
+    Or you can decrease the ``bulk_size`` or ``byte_size`` setting to a smaller value.
 
 .. _ingest_node:
 
@@ -448,6 +484,27 @@ a production cluster:
        ]
      }
    }
+
+If you are using `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
+you can just use the ``Cloud ID`` which is available in the Cloud Console and paste it:
+
+.. code:: json
+
+   {
+     "name" : "test",
+     "elasticsearch" : {
+       "nodes" : [
+         { "cloud_id" : "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==" }
+       ]
+     }
+   }
+
+This ID will be used to automatically generate the right host, port and scheme.
+
+.. hint::
+
+    In the context of `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
+    you will most likely need to provide as well the username and the password. See :ref:`credentials`.
 
 You can define multiple nodes:
 
@@ -557,131 +614,129 @@ It will prompt you for the password. Enter the certificate password like ``chang
 Generated fields
 ^^^^^^^^^^^^^^^^
 
-FSCrawler creates the following fields :
+FSCrawler may create the following fields depending on configuration and available data:
 
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| Field                  | Description          | Example                                      | Javadoc                                                             |
-+========================+======================+==============================================+=====================================================================+
-| ``content``            | Extracted content    | ``"This is my text!"``                       |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``attachment``         | BASE64 encoded       | BASE64 Encoded document                      |                                                                     |
-|                        | binary file          |                                              |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.author``        | Author if any in     | ``"David Pilato"``                           | `CREATOR <https://tika.apache.org/1.18/api/org/apache/tika/         |
-|                        |                      |                                              | metadata/TikaCoreProperties.html#CREATOR>`__                        |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.title``         | Title if any in      | ``"My document title"``                      | `TITLE <https://tika.apache.org/1.18/api/org/apache/tika/           |
-|                        | document metadata    |                                              | metadata/TikaCoreProperties.html#TITLE>`__                          |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.date``          | Last modified date   | ``"2013-04-04T15:21:35"``                    | `MODIFIED <https://tika.apache.org/1.18/api/org/apache/tika/        |
-|                        |                      |                                              | metadata/TikaCoreProperties.html#MODIFIED>`__                       |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.keywords``      | Keywords if any in   | ``["fs","elasticsearch"]``                   | `KEYWORDS <https://tika.apache.org/1.18/api/org/apache/tika/        |
-|                        | document metadata    |                                              | metadata/TikaCoreProperties.html#KEYWORDS>`__                       |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.language``      | Language (can be     | ``"fr"``                                     | `LANGUAGE <https://tika.apache.org/1.18/api/org/apache/tika/        |
-|                        | detected)            |                                              | metadata/TikaCoreProperties.html#LANGUAGE>`__                       |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.format``        | Format of the media  | ``"application/pdf; version=1.6"``           | `FORMAT <https://tika.apache.org/1.18/api/org/apache/tika/          |
-|                        |                      |                                              | metadata/TikaCoreProperties.html#FORMAT>`__                         |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.identifier``    | URL/DOI/ISBN for     | ``"FOOBAR"``                                 | `IDENTIFIER <https://tika.apache.org/1.18/api/org/apache/tika/      |
-|                        | example              |                                              | metadata/TikaCoreProperties.html#IDENTIFIER>`__                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.contributor``   | Contributor          | ``"foo bar"``                                | `CONTRIBUTOR <https://tika.apache.org/1.18/api/org/apache/tika/     |
-|                        |                      |                                              | metadata/TikaCoreProperties.html#CONTRIBUTOR>`__                    |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.coverage``      | Coverage             | ``"FOOBAR"``                                 | `COVERAGE <https://tika.apache.org/1.18/api/org/apache/tika/        |
-|                        |                      |                                              | metadata/TikaCoreProperties.html#COVERAGE>`__                       |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.modifier``      | Last author          | ``"David Pilato"``                           | `MODIFIER <https://tika.apache.org/1.18/api/org/apache/tika/        |
-|                        |                      |                                              | metadata/TikaCoreProperties.html#MODIFIER>`__                       |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.creator_tool``  | Tool used to create  | ``"HTML2PDF- TCPDF"``                        | `CREATOR_TOOL <https://tika.apache.org/1.18/api/org/apache/tika/    |
-|                        | the resource         |                                              | metadata/TikaCoreProperties.html#CREATOR_TOOL>`__                   |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.publisher``     | Publisher: person,   | ``"elastic"``                                | `PUBLISHER <https://tika.apache.org/1.18/api/org/apache/tika/       |
-|                        | organisation, service|                                              | metadata/TikaCoreProperties.html#PUBLISHER>`__                      |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.relation``      | Related resource     | ``"FOOBAR"``                                 | `RELATION <https://tika.apache.org/1.18/api/org/apache/tika/        |
-|                        |                      |                                              | metadata/TikaCoreProperties.html#RELATION>`__                       |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.rights``        | Information about    | ``"CC-BY-ND"``                               | `RIGHTS <https://tika.apache.org/1.18/api/org/apache/tika/          |
-|                        | rights               |                                              | metadata/TikaCoreProperties.html#RIGHTS>`__                         |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.source``        | Source for the       | ``"FOOBAR"``                                 | `SOURCE <https://tika.apache.org/1.18/api/org/apache/tika/          |
-|                        | current document     |                                              | metadata/TikaCoreProperties.html#SOURCE>`__                         |
-|                        | (derivated)          |                                              |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.type``          | Nature or genre of   | ``"Image"``                                  | `TYPE <https://tika.apache.org/1.18/api/org/apache/tika/            |
-|                        | the content          |                                              | metadata/TikaCoreProperties.html#TYPE>`__                           |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.description``   | An account of the    | ``"This is a description"``                  | `DESCRIPTION <https://tika.apache.org/1.18/api/org/apache/tika/     |
-|                        | content              |                                              | metadata/TikaCoreProperties.html#DESCRIPTION>`__                    |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.created``       | Date of creation     | ``"2013-04-04T15:21:35"``                    | `CREATED <https://tika.apache.org/1.18/api/org/apache/tika/         |
-|                        |                      |                                              | metadata/TikaCoreProperties.html#CREATED>`__                        |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.print_date``    | When was the doc     | ``"2013-04-04T15:21:35"``                    | `PRINT_DATE <https://tika.apache.org/1.18/api/org/apache/tika/      |
-|                        | last printed?        |                                              | metadata/TikaCoreProperties.html#PRINT_DATE>`__                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.metadata_date`` | Last modification of | ``"2013-04-04T15:21:35"``                    | `METADATA_DATE <https://tika.apache.org/1.18/api/org/apache/tika/   |
-|                        | metadata             |                                              | metadata/TikaCoreProperties.html#METADATA_DATE>`__                  |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.latitude``      | The WGS84 Latitude   | ``"N 48° 51' 45.81''"``                      | `LATITUDE <https://tika.apache.org/1.18/api/org/apache/tika/        |
-|                        | of the Point         |                                              | metadata/TikaCoreProperties.html#LATITUDE>`__                       |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.longitude``     | The WGS84 Longitude  | ``"E 2° 17'15.331''"``                       | `LONGITUDE <https://tika.apache.org/1.18/api/org/apache/tika/       |
-|                        | of the Point         |                                              | metadata/TikaCoreProperties.html#LONGITUDE>`__                      |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.altitude``      | The WGS84 Altitude   | ``""``                                       | `ALTITUDE <https://tika.apache.org/1.18/api/org/apache/tika/        |
-|                        | of the Point         |                                              | metadata/TikaCoreProperties.html#ALTITUDE>`__                       |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.rating``        | A user-assigned      | ``0``                                        | `RATING <https://tika.apache.org/1.18/api/org/apache/tika/          |
-|                        | rating -1, [0..5]    |                                              | metadata/TikaCoreProperties.html#RATING>`__                         |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.comments``      | Comments             | ``"Comments"``                               | `COMMENTS <https://tika.apache.org/1.18/api/org/apache/tika/        |
-|                        |                      |                                              | metadata/TikaCoreProperties.html#COMMENTS>`__                       |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.raw``           | An object with all   | ``"meta.raw.channels": "2"``                 |                                                                     |
-|                        | raw metadata         |                                              |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.content_type``  | Content Type         | ``"application/vnd.oasis.opendocument.text"``|                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.last_modified`` | Last modification    | ``1386855978000``                            |                                                                     |
-|                        | date                 |                                              |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.indexing_date`` | Indexing date        | ``"2013-12-12T13:50:58.758Z"``               |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.filesize``      | File size in bytes   | ``1256362``                                  |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.indexed_chars`` | Extracted chars if   | ``100000``                                   |                                                                     |
-|                        | ``fs.indexed_chars`` |                                              |                                                                     |
-|                        | > 0                  |                                              |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.filename``      | Original file name   | ``"mydocument.pdf"``                         |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.extension``     | Original file name   | ``"pdf"``                                    |                                                                     |
-|                        | extension (from 2.2) |                                              |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.url``           | Original file url    | ``"file://tmp/otherdir/mydocument.pdf"``     |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``file.checksum``      | Checksum if          | ``"c32eafae2587bef4b3b32f73743c3c61"``       |                                                                     |
-|                        | ``fs.checksum`` set  |                                              |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``path.virtual``       | Relative path from   | ``"/otherdir/mydocument.pdf"``               |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``path.root``          | MD5 encoded parent   | ``"112aed83738239dbfe4485f024cd4ce1"``       |                                                                     |
-|                        | path (internal use)  |                                              |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``path.real``          | Real path name       | ``"/tmp/otherdir/mydocument.pdf"``           |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``attributes.owner``   | Owner name           | ``"david"``                                  |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``attributes.group``   | Group name           | ``"staff"``                                  |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``external``           | Additional tags      | ``{ "tenantId": 22, "projectId": 33 }``      |                                                                     |
-+------------------------+----------------------+----------------------------------------------+---------------------------------------------------------------------+
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| Field                      | Description                            | Example                                      | Javadoc                                                             |
++============================+========================================+==============================================+=====================================================================+
+| ``content``                | Extracted content                      | ``"This is my text!"``                       |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``attachment``             | BASE64 encoded binary file             | BASE64 Encoded document                      |                                                                     |
+|                            |                                        |                                              |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.author``            | Author if any in                       | ``"David Pilato"``                           | `CREATOR <https://tika.apache.org/1.18/api/org/apache/tika/         |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#CREATOR>`__                        |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.title``             | Title if any in document metadata      | ``"My document title"``                      | `TITLE <https://tika.apache.org/1.18/api/org/apache/tika/           |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#TITLE>`__                          |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.date``              | Last modified date                     | ``"2013-04-04T15:21:35"``                    | `MODIFIED <https://tika.apache.org/1.18/api/org/apache/tika/        |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#MODIFIED>`__                       |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.keywords``          | Keywords if any in document metadata   | ``["fs","elasticsearch"]``                   | `KEYWORDS <https://tika.apache.org/1.18/api/org/apache/tika/        |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#KEYWORDS>`__                       |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.language``          | Language (can be detected)             | ``"fr"``                                     | `LANGUAGE <https://tika.apache.org/1.18/api/org/apache/tika/        |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#LANGUAGE>`__                       |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.format``            | Format of the media                    | ``"application/pdf; version=1.6"``           | `FORMAT <https://tika.apache.org/1.18/api/org/apache/tika/          |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#FORMAT>`__                         |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.identifier``        | URL/DOI/ISBN for example               | ``"FOOBAR"``                                 | `IDENTIFIER <https://tika.apache.org/1.18/api/org/apache/tika/      |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#IDENTIFIER>`__                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.contributor``       | Contributor                            | ``"foo bar"``                                | `CONTRIBUTOR <https://tika.apache.org/1.18/api/org/apache/tika/     |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#CONTRIBUTOR>`__                    |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.coverage``          | Coverage                               | ``"FOOBAR"``                                 | `COVERAGE <https://tika.apache.org/1.18/api/org/apache/tika/        |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#COVERAGE>`__                       |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.modifier``          | Last author                            | ``"David Pilato"``                           | `MODIFIER <https://tika.apache.org/1.18/api/org/apache/tika/        |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#MODIFIER>`__                       |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.creator_tool``      | Tool used to create the resource       | ``"HTML2PDF- TCPDF"``                        | `CREATOR_TOOL <https://tika.apache.org/1.18/api/org/apache/tika/    |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#CREATOR_TOOL>`__                   |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.publisher``         | Publisher: person, organisation,       | ``"elastic"``                                | `PUBLISHER <https://tika.apache.org/1.18/api/org/apache/tika/       |
+|                            | service                                |                                              | metadata/TikaCoreProperties.html#PUBLISHER>`__                      |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.relation``          | Related resource                       | ``"FOOBAR"``                                 | `RELATION <https://tika.apache.org/1.18/api/org/apache/tika/        |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#RELATION>`__                       |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.rights``            | Information about rights               | ``"CC-BY-ND"``                               | `RIGHTS <https://tika.apache.org/1.18/api/org/apache/tika/          |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#RIGHTS>`__                         |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.source``            | Source for the current document        | ``"FOOBAR"``                                 | `SOURCE <https://tika.apache.org/1.18/api/org/apache/tika/          |
+|                            | (derivated)                            |                                              | metadata/TikaCoreProperties.html#SOURCE>`__                         |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.type``              | Nature or genre of the content         | ``"Image"``                                  | `TYPE <https://tika.apache.org/1.18/api/org/apache/tika/            |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#TYPE>`__                           |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.description``       | An account of the content              | ``"This is a description"``                  | `DESCRIPTION <https://tika.apache.org/1.18/api/org/apache/tika/     |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#DESCRIPTION>`__                    |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.created``           | Date of creation                       | ``"2013-04-04T15:21:35"``                    | `CREATED <https://tika.apache.org/1.18/api/org/apache/tika/         |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#CREATED>`__                        |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.print_date``        | When was the doc last printed?         | ``"2013-04-04T15:21:35"``                    | `PRINT_DATE <https://tika.apache.org/1.18/api/org/apache/tika/      |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#PRINT_DATE>`__                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.metadata_date``     | Last modification of metadata          | ``"2013-04-04T15:21:35"``                    | `METADATA_DATE <https://tika.apache.org/1.18/api/org/apache/tika/   |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#METADATA_DATE>`__                  |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.latitude``          | The WGS84 Latitude of the Point        | ``"N 48° 51' 45.81''"``                      | `LATITUDE <https://tika.apache.org/1.18/api/org/apache/tika/        |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#LATITUDE>`__                       |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.longitude``         | The WGS84 Longitude of the Point       | ``"E 2° 17'15.331''"``                       | `LONGITUDE <https://tika.apache.org/1.18/api/org/apache/tika/       |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#LONGITUDE>`__                      |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.altitude``          | The WGS84 Altitude of the Point        | ``""``                                       | `ALTITUDE <https://tika.apache.org/1.18/api/org/apache/tika/        |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#ALTITUDE>`__                       |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.rating``            | A user-assigned rating -1, [0..5]      | ``0``                                        | `RATING <https://tika.apache.org/1.18/api/org/apache/tika/          |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#RATING>`__                         |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.comments``          | Comments                               | ``"Comments"``                               | `COMMENTS <https://tika.apache.org/1.18/api/org/apache/tika/        |
+|                            |                                        |                                              | metadata/TikaCoreProperties.html#COMMENTS>`__                       |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``meta.raw``               | An object with all raw metadata        | ``"meta.raw.channels": "2"``                 |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.content_type``      | Content Type                           | ``"application/vnd.oasis.opendocument.text"``|                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.created``           | Creation date                          | ``"2018-07-30T11:19:23.000+0000"``           |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.last_modified``     | Last modification date                 | ``"2018-07-30T11:19:23.000+0000"``           |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.last_accessed``     | Last accessed date                     | ``"2018-07-30T11:19:23.000+0000"``           |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.indexing_date``     | Indexing date                          | ``"2018-07-30T11:19:30.703+0000"``           |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.filesize``          | File size in bytes                     | ``1256362``                                  |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.indexed_chars``     | Extracted chars                        | ``100000``                                   |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.filename``          | Original file name                     | ``"mydocument.pdf"``                         |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.extension``         | Original file name extension           | ``"pdf"``                                    |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.url``               | Original file url                      | ``"file://tmp/otherdir/mydocument.pdf"``     |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``file.checksum``          | Checksum                               | ``"c32eafae2587bef4b3b32f73743c3c61"``       |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``path.virtual``           | Relative path from                     | ``"/otherdir/mydocument.pdf"``               |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``path.root``              | MD5 encoded parent path (internal use) | ``"112aed83738239dbfe4485f024cd4ce1"``       |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``path.real``              | Real path name                         | ``"/tmp/otherdir/mydocument.pdf"``           |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``attributes.owner``       | Owner name                             | ``"david"``                                  |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``attributes.group``       | Group name                             | ``"staff"``                                  |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``attributes.permissions`` | Permissions                            | ``764``                                      |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``external``               | Additional tags                        | ``{ "tenantId": 22, "projectId": 33 }``      |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
 
 For more information about meta data, please read the `TikaCoreProperties <https://tika.apache.org/1.18/api/org/apache/tika/metadata/TikaCoreProperties.html>`__.
 
@@ -689,40 +744,37 @@ Here is a typical JSON document generated by the crawler:
 
 .. code:: json
 
-   {
-      "file":{
-         "filename":"test.odt",
-         "extension":"odt",
-         "last_modified":1386855978000,
-         "indexing_date":"2013-12-12T13:50:58.758Z",
-         "content_type":"application/vnd.oasis.opendocument.text",
-         "url":"file:///tmp/testfs_metadata/test.odt",
-         "indexed_chars":100000,
-         "filesize":8355,
-         "checksum":"c32eafae2587bef4b3b32f73743c3c61"
-      },
-      "path":{
-         "root":"bceb3913f6d793e915beb70a4735592",
-         "virtual":"/test.odt",
-         "real":"/tmp/testfs_metadata/test.odt"
-      },
-      "attributes": {
-         "owner": "david",
-         "group": "staff"
-      },
-      "meta":{
-         "author":"David Pilato",
-         "title":"Mon titre",
-         "date":"2013-04-04T15:21:35",
-         "keywords":[
-            "fs",
-            "elasticsearch",
-            "crawler"
-         ],
-         "language":"fr"
-      },
-      "content":"Bonjour David\n\n\n"
-   }
+    {
+       "content":"This is a sample text available in page 1\n\nThis second part of the text is in Page 2\n\n",
+       "meta":{
+          "author":"David Pilato",
+          "title":"Test Tika title",
+          "date":"2016-07-07T16:37:00.000+0000",
+          "keywords":[
+             "keyword1",
+             "  keyword2"
+          ],
+          "language":"en",
+          "description":"Comments",
+          "created":"2016-07-07T16:37:00.000+0000"
+       },
+       "file":{
+          "extension":"odt",
+          "content_type":"application/vnd.oasis.opendocument.text",
+          "created":"2018-07-30T11:35:08.000+0000",
+          "last_modified":"2018-07-30T11:35:08.000+0000",
+          "last_accessed":"2018-07-30T11:35:08.000+0000",
+          "indexing_date":"2018-07-30T11:35:19.781+0000",
+          "filesize":6236,
+          "filename":"test.odt",
+          "url":"file:///tmp/test.odt"
+       },
+       "path":{
+          "root":"7537e4fb47e553f110a1ec312c2537c0",
+          "virtual":"/test.odt",
+          "real":"/tmp/test.odt"
+       }
+    }
 
 .. _search-examples:
 

@@ -169,9 +169,18 @@ public class Server {
         int result = hostname != null ? hostname.hashCode() : 0;
         result = 31 * result + port;
         result = 31 * result + (username != null ? username.hashCode() : 0);
-        result = 31 * result + (password != null ? password.hashCode() : 0);
         result = 31 * result + (protocol != null ? protocol.hashCode() : 0);
         result = 31 * result + (pemPath != null ? pemPath.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Server{" + "hostname='" + hostname + '\'' +
+                ", port=" + port +
+                ", username='" + username + '\'' +
+                ", protocol='" + protocol + '\'' +
+                ", pemPath='" + pemPath + '\'' +
+                '}';
     }
 }

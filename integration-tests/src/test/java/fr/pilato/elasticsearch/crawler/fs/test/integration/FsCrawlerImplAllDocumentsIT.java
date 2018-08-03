@@ -83,7 +83,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         crawler = new FsCrawlerImpl(metadataDir,
                 FsSettings.builder("fscrawler_test_all_documents")
                         .setElasticsearch(generateElasticsearchConfig("fscrawler_test_all_documents", "fscrawler_test_all_documents_folder",
-                                5, TimeValue.timeValueSeconds(1)))
+                                5, TimeValue.timeValueSeconds(1), null))
                         .setFs(Fs.builder()
                                 .setUrl(testResourceTarget.toString())
                                 .setLangDetect(true)
@@ -132,7 +132,9 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.URL), notNullValue());
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILESIZE), notNullValue());
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE), notNullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CREATED), notNullValue());
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED), notNullValue());
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_ACCESSED), notNullValue());
 
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.TITLE), notNullValue());
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.KEYWORDS), notNullValue());

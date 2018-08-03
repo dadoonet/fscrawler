@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaParser;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
@@ -29,12 +30,16 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import org.apache.commons.io.FilenameUtils;
-import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,20 +47,21 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.buildUrl;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 
 @Path("/_upload")
 public class UploadApi extends RestApi {
 
-    private final BulkProcessor bulkProcessor;
+    private final ElasticsearchClientManager elasticsearchClientManager;
     private final FsSettings settings;
     private final MessageDigest messageDigest;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
 
-    UploadApi(FsSettings settings, BulkProcessor bulkProcessor) {
+    UploadApi(FsSettings settings, ElasticsearchClientManager elasticsearchClientManager) {
         this.settings = settings;
-        this.bulkProcessor = bulkProcessor;
+        this.elasticsearchClientManager = elasticsearchClientManager;
         // Create MessageDigest instance
         try {
             messageDigest = settings.getFs().getChecksum() == null ?
@@ -109,15 +115,22 @@ public class UploadApi extends RestApi {
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
             doc = this.getMergedJsonDoc(doc, tags);
-            bulkProcessor.add(new org.elasticsearch.action.index.IndexRequest(settings.getElasticsearch().getIndex(), "doc", id)
-                    .setPipeline(settings.getElasticsearch().getPipeline())
-                    .source(DocParser.toJson(doc), XContentType.JSON));
+            elasticsearchClientManager.bulkProcessorDoc().add(
+                    new org.elasticsearch.action.index.IndexRequest(
+                            settings.getElasticsearch().getIndex(),
+                            elasticsearchClientManager.client().getDefaultTypeName(),
+                            id)
+                            .setPipeline(settings.getElasticsearch().getPipeline())
+                            .source(DocParser.toJson(doc), XContentType.JSON));
             // Elasticsearch entity coordinates (we use the first node address)
             Elasticsearch.Node node = settings.getElasticsearch().getNodes().get(0);
+            if (node.getCloudId() != null) {
+                node = decodeCloudId(node.getCloudId());
+            }
             url = buildUrl(
                     node.getScheme().toLowerCase(), node.getHost(), node.getPort()) + "/" +
                     settings.getElasticsearch().getIndex() + "/" +
-                    "doc" + "/" +
+                    elasticsearchClientManager.client().getDefaultTypeName() + "/" +
                     id;
         }
 

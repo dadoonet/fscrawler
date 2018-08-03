@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import java.util.Objects;
+
 public class Ocr {
     // Language dictionary to be used.
     private String language = "eng";
@@ -26,6 +28,8 @@ public class Ocr {
     private String path = null;
     // Path to tesseract data
     private String dataPath = null;
+    // Output Type. Can be txt (default) or hocr. null means the default value.
+    private String outputType = null;
 
     public static Builder builder() {
         return new Builder();
@@ -36,6 +40,7 @@ public class Ocr {
         private String language = "eng";
         private String path = null;
         private String dataPath = null;
+        private String outputType = null;
 
         public Builder setLanguage(String language) {
             this.language = language;
@@ -52,8 +57,13 @@ public class Ocr {
             return this;
         }
 
+        public Builder setOutputType(String outputType) {
+            this.outputType = outputType;
+            return this;
+        }
+
         public Ocr build() {
-            return new Ocr(language, path, dataPath);
+            return new Ocr(language, path, dataPath, outputType);
         }
 
     }
@@ -62,10 +72,11 @@ public class Ocr {
 
     }
 
-    private Ocr(String language, String path, String dataPath) {
+    private Ocr(String language, String path, String dataPath, String outputType) {
         this.language = language;
         this.path = path;
         this.dataPath = dataPath;
+        this.outputType = outputType;
     }
 
     public String getLanguage() {
@@ -90,5 +101,38 @@ public class Ocr {
 
     public void setDataPath(String dataPath) {
         this.dataPath = dataPath;
+    }
+
+    public String getOutputType() {
+        return outputType;
+    }
+
+    public void setOutputType(String outputType) {
+        this.outputType = outputType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Ocr ocr = (Ocr) o;
+        return Objects.equals(language, ocr.language) &&
+                Objects.equals(path, ocr.path) &&
+                Objects.equals(dataPath, ocr.dataPath) &&
+                Objects.equals(outputType, ocr.outputType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(language, path, dataPath, outputType);
+    }
+
+    @Override
+    public String toString() {
+        return "Ocr{" + "language='" + language + '\'' +
+                ", path='" + path + '\'' +
+                ", dataPath='" + dataPath + '\'' +
+                ", outputType='" + outputType + '\'' +
+                '}';
     }
 }

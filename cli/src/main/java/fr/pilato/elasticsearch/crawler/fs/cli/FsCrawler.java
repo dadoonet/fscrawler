@@ -1,4 +1,4 @@
-package fr.pilato.elasticsearch.crawler.fs.cli;/*
+/*
  * Licensed to David Pilato (the "Author") under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,6 +16,8 @@ package fr.pilato.elasticsearch.crawler.fs.cli;/*
  * specific language governing permissions and limitations
  * under the License.
  */
+
+package fr.pilato.elasticsearch.crawler.fs.cli;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -49,15 +51,12 @@ import java.util.Scanner;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.moveLegacyResource;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readDefaultJsonVersionedFile;
 
 /**
  * Main entry point to launch FsCrawler
  */
 public class FsCrawler {
-
-    @Deprecated
-    public static final String INDEX_SETTINGS_FILE = "_settings";
 
     private static final long CLOSE_POLLING_WAIT_MS = 100;
 
@@ -258,16 +257,9 @@ public class FsCrawler {
                     fsSettingsFileHandler.write(fsSettings);
                 }
             } else {
-                Path jobMappingDir = configDir.resolve(fsSettings.getName()).resolve("_mappings");
                 fsCrawler.getEsClientManager().start();
                 Version elasticsearchVersion = fsCrawler.getEsClientManager().client().info().getVersion();
-                try {
-                    // If we are able to read an old configuration file, we should tell the user to check the documentation
-                    readJsonFile(jobMappingDir, configDir, Byte.toString(elasticsearchVersion.major), INDEX_SETTINGS_FILE);
-                    logger.warn("We found old configuration index settings in [{}] or [{}]. You should look at the documentation" +
-                            " about upgrades: https://github.com/dadoonet/fscrawler#upgrade-to-23", configDir, jobMappingDir);
-                } catch (IllegalArgumentException ignored) { }
-
+                checkForDeprecatedResources(configDir, elasticsearchVersion);
                 fsCrawler.start();
 
                 // Start the REST Server if needed
@@ -311,6 +303,23 @@ public class FsCrawler {
         } catch (IOException e) {
             logger.warn("Got error while moving legacy content", e);
         }
+    }
+
+    private static void checkForDeprecatedResources(Path configDir, Version elasticsearchVersion) throws IOException {
+        try {
+            // If we are able to read an old configuration file, we should tell the user to check the documentation
+            readDefaultJsonVersionedFile(configDir, Byte.toString(elasticsearchVersion.major), "doc");
+            logger.warn("We found old configuration index settings: [{}/_default/doc.json]. You should look at the documentation" +
+                    " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
+                    configDir);
+        } catch (IllegalArgumentException ignored) { }
+        try {
+            // If we are able to read an old configuration file, we should tell the user to check the documentation
+            readDefaultJsonVersionedFile(configDir, Byte.toString(elasticsearchVersion.major), "folder");
+            logger.warn("We found old configuration index settings: [{}/_default/folder.json]. You should look at the documentation" +
+                    " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
+                    configDir);
+        } catch (IllegalArgumentException ignored) { }
     }
 
     private static void sleep() {

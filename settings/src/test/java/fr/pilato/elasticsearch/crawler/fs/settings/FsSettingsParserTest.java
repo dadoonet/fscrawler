@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -37,7 +39,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
-    private static final Ocr OCR_FULL = Ocr.builder().setLanguage("eng").build();
+    private static final Ocr OCR_FULL = Ocr.builder().setLanguage("eng").setOutputType("txt").build();
 
     private static final Fs FS_EMPTY = Fs.builder().build();
     private static final Fs FS_FULL = Fs.builder()
@@ -47,6 +49,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .addExclude("resume.doc")
             .addInclude("*.doc")
             .addInclude("*.xls")
+            .addFilter("foo")
             .setFilenameAsId(true)
             .setIndexedChars(new Percentage(10000))
             .setRemoveDeleted(true)
@@ -109,6 +112,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getElasticsearch(), notNullValue());
         assertThat(settings.getElasticsearch().getBulkSize(), is(100));
         assertThat(settings.getElasticsearch().getFlushInterval(), is(TimeValue.timeValueSeconds(5)));
+        assertThat(settings.getElasticsearch().getByteSize(), is(new ByteSizeValue(10, ByteSizeUnit.MB)));
         assertThat(settings.getElasticsearch().getIndex(), is("test"));
         assertThat(settings.getElasticsearch().getIndexFolder(), is("test_folder"));
         assertThat(settings.getElasticsearch().getNodes(), iterableWithSize(1));
@@ -123,7 +127,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getFs(), notNullValue());
         assertThat(settings.getFs().getChecksum(), nullValue());
         assertThat(settings.getFs().getIncludes(), nullValue());
-        assertThat(settings.getFs().getExcludes(), contains("~*"));
+        assertThat(settings.getFs().getExcludes(), contains("*/~*"));
         assertThat(settings.getFs().getIndexedChars(), nullValue());
         assertThat(settings.getFs().getUpdateRate(), is(TimeValue.timeValueMinutes(15)));
         assertThat(settings.getFs().getUrl(), is("/tmp/es"));
@@ -221,6 +225,20 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
                                         .setHost("localhost")
                                         .setPort(9243)
                                         .setScheme(Elasticsearch.Node.Scheme.HTTPS)
+                                        .build())
+                                .build())
+                        .build()
+        );
+    }
+
+    @Test
+    public void testParseSettingsElasticsearchCloudId() throws IOException {
+        String cloudId = "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==";
+        settingsTester(
+                FsSettings.builder(getCurrentTestName())
+                        .setElasticsearch(Elasticsearch.builder()
+                                .addNode(Elasticsearch.Node.builder()
+                                        .setCloudId(cloudId)
                                         .build())
                                 .build())
                         .build()
