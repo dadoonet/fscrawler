@@ -1,9 +1,9 @@
 {
     "content": "OVERWRITTEN CONTENT",
     "external": {
-        "tenant" : 23,
+        "tenantId" : 23,
         "company": "shoe company",
-        "project": 34,
+        "projectId": 34,
         "project": "business development",
         "daysOpen": [
             "Mon",

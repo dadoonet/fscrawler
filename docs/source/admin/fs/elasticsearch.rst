@@ -610,6 +610,7 @@ It will prompt you for the password. Enter the certificate password like ``chang
 
     If you can not find ``keytool``, it probably means that you did not add your ``JAVA_HOME/bin`` directory to your path.
 
+.. _generated_fields:
 
 Generated fields
 ^^^^^^^^^^^^^^^^

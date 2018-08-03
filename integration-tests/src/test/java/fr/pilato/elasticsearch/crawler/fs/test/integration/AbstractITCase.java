@@ -23,6 +23,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import fr.pilato.elasticsearch.containers.ElasticsearchContainer;
+import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
@@ -48,6 +49,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import javax.ws.rs.client.Client;
@@ -120,6 +122,43 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static RestClient esRestClient;
     static String typeName;
 
+    FsCrawlerImpl crawler = null;
+    Path currentTestResourceDir;
+
+    private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
+
+    /**
+     * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
+     * more readable.
+     * The temp folder which is used as a root is automatically cleaned after the test so we don't have to worry
+     * about it.
+     */
+    @Before
+    public void copyTestResources() throws IOException {
+        Path testResourceTarget = rootTmpDir.resolve("resources");
+        if (Files.notExists(testResourceTarget)) {
+            Files.createDirectory(testResourceTarget);
+        }
+
+        String currentTestName = getCurrentTestName();
+        // We copy files from the src dir to the temp dir
+        staticLogger.info("  --> Launching test [{}]", currentTestName);
+        currentTestResourceDir = testResourceTarget.resolve(currentTestName);
+        String url = getUrl("samples", currentTestName);
+        Path from = Paths.get(url);
+
+        if (Files.exists(from)) {
+            staticLogger.debug("  --> Copying test resources from [{}]", from);
+        } else {
+            staticLogger.debug("  --> Copying test resources from [{}]", DEFAULT_RESOURCES);
+            from = DEFAULT_RESOURCES;
+        }
+
+        copyDirs(from, currentTestResourceDir);
+
+        staticLogger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
+    }
+
     @BeforeClass
     public static void createFsCrawlerJobDir() throws IOException {
         // We also need to create default mapping files
@@ -169,7 +208,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         // We copy files from the src dir to the temp dir
         copyTestDocumentsToTargetDir(testResourceTarget, "documents", "/fscrawler-test-documents-marker.txt");
-        copyTestDocumentsToTargetDir(testResourceTarget, "tags", "/fscrawler-test-documents-marker.txt");
 
         staticLogger.debug("  --> Test resources ready in [{}]:", testResourceTarget);
     }

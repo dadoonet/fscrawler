@@ -32,55 +32,14 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
-
-    FsCrawlerImpl crawler = null;
-    Path currentTestResourceDir;
-
-    private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
-
-    /**
-     * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
-     * more readable.
-     * The temp folder which is used as a root is automatically cleaned after the test so we don't have to worry
-     * about it.
-     */
-    @Before
-    public void copyTestResources() throws IOException {
-        Path testResourceTarget = rootTmpDir.resolve("resources");
-        if (Files.notExists(testResourceTarget)) {
-            Files.createDirectory(testResourceTarget);
-        }
-
-        String currentTestName = getCurrentTestName();
-        // We copy files from the src dir to the temp dir
-        staticLogger.info("  --> Launching test [{}]", currentTestName);
-        String url = getUrl("samples", currentTestName);
-        Path from = Paths.get(url);
-        currentTestResourceDir = testResourceTarget.resolve(currentTestName);
-
-        if (Files.exists(from)) {
-            staticLogger.debug("  --> Copying test resources from [{}]", from);
-        } else {
-            staticLogger.debug("  --> Copying test resources from [{}]", DEFAULT_RESOURCES);
-            from = DEFAULT_RESOURCES;
-        }
-
-        copyDirs(from, currentTestResourceDir);
-
-        staticLogger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
-    }
 
     @Before
     public void cleanExistingIndex() throws IOException {
