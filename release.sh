@@ -126,6 +126,9 @@ git checkout -q -b ${RELEASE_BRANCH}
 echo "Changing maven version to $RELEASE_VERSION..."
 mvn versions:set -DnewVersion=${RELEASE_VERSION} >> /tmp/fscrawler-${RELEASE_VERSION}.log
 
+# We need to also commit files that changed for documentation
+mvn clean generate-sources >> /tmp/fscrawler-${RELEASE_VERSION}.log
+
 # Git commit release
 git commit -q -a -m "prepare release fscrawler-$RELEASE_VERSION"
 
