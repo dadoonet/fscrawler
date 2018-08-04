@@ -183,6 +183,8 @@ fi
 
 echo "Changing maven version to $NEXT_VERSION..."
 mvn versions:set -DnewVersion=${NEXT_VERSION} >> /tmp/fscrawler-${RELEASE_VERSION}.log
+# We need to also commit files that changed for documentation
+mvn clean generate-sources >> /tmp/fscrawler-${RELEASE_VERSION}.log
 git commit -q -a -m "prepare for next development iteration"
 
 # git checkout branch we started from
