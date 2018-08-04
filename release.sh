@@ -218,7 +218,9 @@ then
         then
             # We need to checkout the tag, announce and checkout the branch we started from
             git checkout -q fscrawler-${RELEASE_VERSION}
-            mvn changes:announcement-mail >> /tmp/fscrawler-${RELEASE_VERSION}.log
+            SMTP_USERNAME=$(readvalue "Enter your SMTP username" "david@pilato.fr")
+            SMTP_PASSWORD=$(readvalue "Enter your SMTP password" "")
+            mvn changes:announcement-mail -Dchanges.username='${SMTP_USERNAME}' -Dchanges.password='${SMTP_PASSWORD}' >> /tmp/fscrawler-${RELEASE_VERSION}.log
             git checkout -q ${CURRENT_BRANCH}
         else
             echo "Message not sent. You can send it manually using:"
