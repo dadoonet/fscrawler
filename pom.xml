@@ -5,7 +5,7 @@
     <groupId>fr.pilato.elasticsearch.crawler</groupId>
     <artifactId>fscrawler-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.5-SNAPSHOT</version>
+    <version>2.5</version>
     <modules>
         <module>framework</module>
         <module>test-framework</module>
@@ -366,72 +366,72 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-framework</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-test-framework</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-test-documents</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-core</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-settings</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-elasticsearch-client</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-cli</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-beans</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-crawler</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-crawler-abstract</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-crawler-fs</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-crawler-ssh</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-tika</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-rest</artifactId>
-                <version>2.5-SNAPSHOT</version>
+                <version>2.5</version>
             </dependency>
 
             <dependency>
