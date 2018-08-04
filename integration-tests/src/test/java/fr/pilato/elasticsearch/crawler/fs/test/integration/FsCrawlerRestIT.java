@@ -33,6 +33,7 @@ import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -93,7 +94,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         Files.walk(from)
                 .filter(path -> Files.isRegularFile(path))
                 .forEach(path -> {
-                    UploadResponse response = uploadFile(path);
+                    UploadResponse response = uploadFile(target, path);
                     assertThat(response.getFilename(), is(path.getFileName().toString()));
                 });
 
@@ -116,7 +117,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 .forEach(path -> {
                     Path tagsFilePath = currentTestTagDir.resolve(path.getFileName().toString() + ".json");
                     logger.debug("Upload file #[{}]: [{}] with tags [{}]", numFiles.incrementAndGet(), path.getFileName(), tagsFilePath.getFileName());
-                    UploadResponse response = uploadFile(path, tagsFilePath);
+                    UploadResponse response = uploadFile(target, path, tagsFilePath);
                     assertThat(response.getFilename(), is(path.getFileName().toString()));
                 });
 
@@ -253,11 +254,11 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         debugOption.put("simulate", true);
     }
 
-    public static UploadResponse uploadFile(Path file) {
-        return uploadFile(file, null);
+    public static UploadResponse uploadFile(WebTarget target, Path file) {
+        return uploadFile(target, file, null);
     }
 
-    public static UploadResponse uploadFile(Path file, Path tagsFile) {
+    public static UploadResponse uploadFile(WebTarget target, Path file, Path tagsFile) {
         assertThat(Files.exists(file), is(true));
 
         // MediaType of the body part will be derived from the file.
@@ -271,9 +272,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
 
         if (staticLogger.isDebugEnabled()) {
-            staticLogger.debug("Rest response: {}", restCall("/_upload", mp, String.class, debugOption));
+            staticLogger.debug("Rest response: {}", restCall(target, "/_upload", mp, String.class, debugOption));
         }
 
-        return restCall("/_upload", mp, UploadResponse.class, Collections.emptyMap());
+        return restCall(target, "/_upload", mp, UploadResponse.class, Collections.emptyMap());
     }
 }

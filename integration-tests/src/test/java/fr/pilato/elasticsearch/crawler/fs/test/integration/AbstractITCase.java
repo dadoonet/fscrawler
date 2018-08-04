@@ -195,8 +195,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
     static Elasticsearch elasticsearchWithSecurity;
 
-    private static WebTarget target;
-    private static Client client;
+    static WebTarget target;
+    static Client client;
 
     @BeforeClass
     public static void copyResourcesToTestDir() throws IOException {
@@ -549,6 +549,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     public static <T> T restCall(String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
+        return restCall(target, path, mp, clazz, params);
+    }
+
+    public static <T> T restCall(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
         WebTarget targetPath = target.path(path);
         params.forEach(targetPath::queryParam);
 

@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.junit.Test;
 
+import javax.ws.rs.client.WebTarget;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -53,7 +54,7 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
                     .setElasticsearch(endCrawlerDefinition(getCrawlerName()))
                     .setFs(startCrawlerDefinition().build())
                     .setServer(null)
-                    .setRest(Rest.builder().setPort(testRestPort).build()).build();
+                    .setRest(Rest.builder().setPort(testRestPort+1).build()).build();
             crawler = new FsCrawlerImpl(
                     metadataDir,
                     fsSettings,
@@ -68,10 +69,11 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
                 throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
             }
 
+            WebTarget target = client.target(Rest.builder().setPort(testRestPort + 1).build().url());
             Files.walk(from)
                     .filter(path -> Files.isRegularFile(path))
                     .forEach(path -> {
-                        UploadResponse response = uploadFile(path);
+                        UploadResponse response = uploadFile(target, path);
                         assertThat(response.getFilename(), is(path.getFileName().toString()));
                     });
 
