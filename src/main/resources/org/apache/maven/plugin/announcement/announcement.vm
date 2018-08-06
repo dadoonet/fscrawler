@@ -48,13 +48,13 @@ y
 Create a directory named `/tmp/es` or `c:\tmp\es`, add some files you want to index in it and start again:
 
 ```sh
-$ bin/fscrawler --config_dir ./test job_name
+$ bin/fscrawler job_name
 18:30:34,330 INFO  [f.p.e.c.f.FsCrawlerImpl] Starting FS crawler
 18:30:34,332 INFO  [f.p.e.c.f.FsCrawlerImpl] FS crawler started in watch mode. It will run unless you stop it with CTRL+C.
 18:30:34,682 INFO  [f.p.e.c.f.FsCrawlerImpl] FS crawler started for [job_name] for [/tmp/es] every [15m]
 ```
 
-More details in the [documentation](${project.url}).
+More details in the [documentation](https://fscrawler.readthedocs.io/en/fscrawler-${project.version}/).
 
 #if ($release.getActions().size() == 0)
 No changes defined in this version.
