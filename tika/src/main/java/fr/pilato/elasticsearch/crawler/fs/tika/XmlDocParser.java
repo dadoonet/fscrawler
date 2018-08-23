@@ -19,14 +19,21 @@
 
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.std.UntypedObjectDeserializer;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
@@ -41,14 +48,8 @@ public class XmlDocParser {
 
     static {
         xmlMapper = new XmlMapper();
-    }
-
-    private static Map<String, Object> asMap(InputStream stream) {
-        try {
-            return xmlMapper.readValue(stream, new TypeReference<Map<String, Object>>(){});
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        xmlMapper.registerModule(new SimpleModule()
+                .addDeserializer(Object.class, new FixedUntypedObjectDeserializer()));
     }
 
     public static String generate(InputStream inputStream) throws IOException {
@@ -56,7 +57,7 @@ public class XmlDocParser {
         // Extracting XML content
         // See #185: https://github.com/dadoonet/fscrawler/issues/185
 
-        Map<String, Object> map = asMap(inputStream);
+        Map<String, Object> map = generateMap(inputStream);
 
         // Serialize to JSON
         String json = mapper.writeValueAsString(map);
@@ -69,13 +70,73 @@ public class XmlDocParser {
      * Extracting XML content. See #185: https://github.com/dadoonet/fscrawler/issues/185
      * @param inputStream The XML Stream
      * @return The XML Content as a map
-     * @throws IOException
      */
-    public static Map generateMap(InputStream inputStream) throws IOException {
+    public static Map<String, Object> generateMap(InputStream inputStream) {
         logger.trace("Converting XML document [{}]");
         Map<String, Object> map = asMap(inputStream);
 
         logger.trace("Generated JSON: {}", map);
         return map;
+    }
+
+    private static Map<String, Object> asMap(InputStream stream) {
+        try {
+            return (Map<String, Object>) xmlMapper.readValue(stream, Object.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // This code is coming from the gist provided at https://github.com/FasterXML/jackson-dataformat-xml/issues/205
+    @SuppressWarnings({"deprecation", "serial"})
+    public static class FixedUntypedObjectDeserializer extends UntypedObjectDeserializer {
+        @Override
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        protected Object mapObject(JsonParser p, DeserializationContext ctx) throws IOException {
+            String firstKey;
+
+            JsonToken t = p.getCurrentToken();
+
+            if (t == JsonToken.START_OBJECT) {
+                firstKey = p.nextFieldName();
+            } else if (t == JsonToken.FIELD_NAME) {
+                firstKey = p.getCurrentName();
+            } else {
+                if (t != JsonToken.END_OBJECT) {
+                    throw ctx.mappingException(handledType(), p.getCurrentToken());
+                }
+                firstKey = null;
+            }
+
+            // empty map might work; but caller may want to modify... so better
+            // just give small modifiable
+            Map<String, Object> resultMap = new LinkedHashMap<>(2);
+            if (firstKey == null) {
+                return resultMap;
+            }
+
+            p.nextToken();
+            resultMap.put(firstKey, deserialize(p, ctx));
+
+            String nextKey;
+            while ((nextKey = p.nextFieldName()) != null) {
+                p.nextToken();
+                if (resultMap.containsKey(nextKey)) {
+                    Object listObject = resultMap.get(nextKey);
+
+                    if (!(listObject instanceof List)) {
+                        listObject = new ArrayList<>();
+                        ((List) listObject).add(resultMap.get(nextKey));
+                        resultMap.put(nextKey, listObject);
+                    }
+
+                    ((List) listObject).add(deserialize(p, ctx));
+                } else {
+                    resultMap.put(nextKey, deserialize(p, ctx));
+                }
+            }
+
+            return resultMap;
+        }
     }
 }

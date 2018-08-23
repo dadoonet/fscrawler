@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<dataset>
+    <object>
+        <id>1</id>
+        <name>foo</name>
+    </object>
+    <object>
+        <id>2</id>
+        <name>bar</name>
+    </object>
+</dataset>
