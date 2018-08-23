@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +59,7 @@ public class Fs {
         return new Builder();
     }
 
-    public static final String DEFAULT_DIR = "/tmp/es";
+    public static final String DEFAULT_DIR = Paths.get("/tmp/es").toString();
     public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("*/~*");
     public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).setExcludes(DEFAULT_EXCLUDED).build();
 
