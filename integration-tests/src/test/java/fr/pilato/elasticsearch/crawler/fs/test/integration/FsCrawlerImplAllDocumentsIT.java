@@ -27,8 +27,10 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.tika.parser.external.ExternalParser;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -74,9 +76,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
             throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents]");
-        elasticsearchClient.deleteIndex("fscrawler_test_all_documents");
-        elasticsearchClient.deleteIndex("fscrawler_test_all_documents_folder");
+        staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents*]");
+        elasticsearchClient.indices().delete(new DeleteIndexRequest("fscrawler_test_all_documents*"), RequestOptions.DEFAULT);
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
@@ -243,7 +244,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
             assumeVersion6AtLeast();
             query.must(QueryBuilders.matchQuery("content", content));
         }
-        SearchResponse response = elasticsearchClient.search(new SearchRequest("fscrawler_test_all_documents").source(new SearchSourceBuilder().query(query)));
+        SearchResponse response = elasticsearchClient.search(new SearchRequest("fscrawler_test_all_documents").source(new SearchSourceBuilder().query(query)),
+                RequestOptions.DEFAULT);
         assertThat(response.getHits().getTotalHits(), is(1L));
         return response;
     }

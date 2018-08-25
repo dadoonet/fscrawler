@@ -27,7 +27,9 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.client.RequestOptions;
 import org.junit.After;
 import org.junit.Before;
 
@@ -44,7 +46,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     @Before
     public void cleanExistingIndex() throws IOException {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        elasticsearchClient.deleteIndex(getCrawlerName() + "*");
+        elasticsearchClient.indices().delete(new DeleteIndexRequest(getCrawlerName() + "*"), RequestOptions.DEFAULT);
     }
 
     @After

@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
@@ -55,7 +56,7 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
 
         countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
 
-        SearchResponse searchResponse = elasticsearchClient.search(new SearchRequest(getCrawlerName()));
+        SearchResponse searchResponse = elasticsearchClient.search(new SearchRequest(getCrawlerName()), RequestOptions.DEFAULT);
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             // We check that the field is not part of _source
             assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());

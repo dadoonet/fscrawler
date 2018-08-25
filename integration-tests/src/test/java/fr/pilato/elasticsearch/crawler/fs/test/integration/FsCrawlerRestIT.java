@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -234,7 +235,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     private void checkDocument(String filename, HitChecker checker) throws IOException {
         SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder().query(
                 QueryBuilders.termQuery("file.filename", filename)
-        )));
+        )), RequestOptions.DEFAULT);
 
         assertThat(response.getHits().totalHits, is(1L));
         SearchHit hit = response.getHits().getHits()[0];

@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -86,7 +87,8 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
             SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
                     new SearchSourceBuilder()
                             .size(0)
-                            .aggregation(AggregationBuilders.terms("folders").field("path.virtual.tree"))));
+                            .aggregation(AggregationBuilders.terms("folders").field("path.virtual.tree"))),
+                    RequestOptions.DEFAULT);
             assertThat(response.getHits().getTotalHits(), is(7L));
 
             // aggregations
@@ -97,7 +99,8 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
             assertThat(buckets, iterableWithSize(10));
 
             // Check files
-            response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder().sort("path.virtual")));
+            response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder().sort("path.virtual")),
+                    RequestOptions.DEFAULT);
             assertThat(response.getHits().getTotalHits(), is(7L));
 
             int i = 0;
@@ -111,7 +114,8 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
 
             // Check folders
-            response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER).source(new SearchSourceBuilder().sort("virtual")));
+            response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER).source(new SearchSourceBuilder().sort("virtual")),
+                    RequestOptions.DEFAULT);
             assertThat(response.getHits().getTotalHits(), is(7L));
 
             i = 0;
@@ -176,7 +180,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
             SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
                     new SearchSourceBuilder()
                             .size(0)
-                            .aggregation(AggregationBuilders.terms("folders").field("path.virtual.tree"))));
+                            .aggregation(AggregationBuilders.terms("folders").field("path.virtual.tree"))), RequestOptions.DEFAULT);
             assertThat(response.getHits().getTotalHits(), is(subdirs+1));
 
             // aggregations
@@ -213,7 +217,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
                         new SearchSourceBuilder()
                                 .size(1000)
-                                .sort("path.virtual")));
+                                .sort("path.virtual")), RequestOptions.DEFAULT);
         assertThat(response.getHits().getTotalHits(), is(subdirs+1));
 
         for (int i = 0; i < subdirs; i++) {
@@ -224,7 +228,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER).source(
                         new SearchSourceBuilder()
                                 .size(1000)
-                                .sort("virtual")));
+                                .sort("virtual")), RequestOptions.DEFAULT);
         assertThat(response.getHits().getTotalHits(), is(subdirs+2));
 
         // Let's remove the main subdir and wait...

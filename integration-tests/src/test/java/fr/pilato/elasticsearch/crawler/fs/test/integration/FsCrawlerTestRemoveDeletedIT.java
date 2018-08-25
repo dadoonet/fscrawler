@@ -26,6 +26,7 @@ import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -236,7 +237,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         for (SearchHit hit : response.getHits().getHits()) {
             // Read the document. This is needed since 5.0 as search does not return the _version field
             try {
-                GetResponse getHit = elasticsearchClient.get(new GetRequest(hit.getIndex(), typeName, hit.getId()));
+                GetResponse getHit = elasticsearchClient.get(new GetRequest(hit.getIndex(), typeName, hit.getId()), RequestOptions.DEFAULT);
                 assertThat(getHit.getVersion(), lessThanOrEqualTo(maxVersion));
             } catch (IOException e) {
                 fail("We got an IOException: " + e.getMessage());

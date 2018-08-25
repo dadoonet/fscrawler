@@ -40,6 +40,7 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -358,7 +359,8 @@ public abstract class FsParser implements Runnable {
                             new SearchSourceBuilder()
                                     .size(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
                                     .storedField(FILE_FILENAME)
-                                    .query(QueryBuilders.termQuery(PATH_ROOT, SignTool.sign(path)))));
+                                    .query(QueryBuilders.termQuery(PATH_ROOT, SignTool.sign(path)))),
+                    RequestOptions.DEFAULT);
 
             logger.trace("Response [{}]", response.toString());
             if (response.getHits() != null && response.getHits().getHits() != null) {
@@ -404,7 +406,8 @@ public abstract class FsParser implements Runnable {
                 new SearchRequest(fsSettings.getElasticsearch().getIndexFolder()).source(
                         new SearchSourceBuilder()
                                 .size(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                                .query(QueryBuilders.termQuery(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT, SignTool.sign(path)))));
+                                .query(QueryBuilders.termQuery(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT, SignTool.sign(path)))),
+                RequestOptions.DEFAULT);
 
         if (response.getHits() != null && response.getHits().getHits() != null) {
             for (SearchHit hit : response.getHits().getHits()) {

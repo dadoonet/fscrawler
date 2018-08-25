@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.client.RequestOptions;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "roottxtfile.txt"));
+                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "roottxtfile.txt"), RequestOptions.DEFAULT);
             } catch (IOException e) {
                 return false;
             }
@@ -70,14 +71,14 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         assertThat("Document should exists with [id1.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "id1.txt"));
+                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "id1.txt"), RequestOptions.DEFAULT);
             } catch (IOException e) {
                 return false;
             }
         }), equalTo(true));
         assertThat("Document should exists with [id2.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "id2.txt"));
+                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "id2.txt"), RequestOptions.DEFAULT);
             } catch (IOException e) {
                 return false;
             }

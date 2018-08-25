@@ -42,6 +42,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.main.MainResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -283,7 +284,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 // We test if we have already something running at the testClusterHost address
                 elasticsearchClientTemporary = new ElasticsearchClient(getClientBuilder(
                         new HttpHost(testClusterHost, testClusterPort, testClusterScheme.toLowerCase()), testClusterUser, testClusterPass));
-                elasticsearchClientTemporary.info();
+                elasticsearchClientTemporary.info(RequestOptions.DEFAULT);
                 staticLogger.debug("A node is already running locally. No need to start a Docker instance.");
             } catch (IOException e) {
                 staticLogger.debug("No local node running. We need to start a Docker instance.");
@@ -306,7 +307,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         // We build the elasticsearch High Level Client based on the parameters
         elasticsearchClient = new ElasticsearchClient(getClientBuilder(
                 new HttpHost(testClusterHost, testClusterPort, testClusterScheme.toLowerCase()), testClusterUser, testClusterPass));
-        elasticsearchClient.info();
+        elasticsearchClient.info(RequestOptions.DEFAULT);
         elasticsearchWithSecurity = Elasticsearch.builder()
                 .addNode(Elasticsearch.Node.builder()
                         .setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
@@ -366,7 +367,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static void testClusterRunning() throws IOException {
         try {
-            MainResponse info = elasticsearchClient.info();
+            MainResponse info = elasticsearchClient.info(RequestOptions.DEFAULT);
             staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", info.getVersion());
         } catch (ConnectException e) {
             // If we have an exception here, let's ignore the test
@@ -452,7 +453,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
             // Let's search for entries
             try {
-                response[0] = elasticsearchClient.search(request);
+                response[0] = elasticsearchClient.search(request, RequestOptions.DEFAULT);
             } catch (IOException e) {
                 staticLogger.warn("error caught", e);
                 return -1;
@@ -578,6 +579,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     protected void assumeVersion6AtLeast() throws IOException {
-        assumeThat("Sadly the HL Rest Client 6.x can not always be used with 5.x versions", elasticsearchClient.info().getVersion().onOrAfter(Version.V_6_0_0), is(true));
+        assumeThat("Sadly the HL Rest Client 6.x can not always be used with 5.x versions", elasticsearchClient.info(RequestOptions.DEFAULT).getVersion().onOrAfter(Version.V_6_0_0), is(true));
     }
 }
