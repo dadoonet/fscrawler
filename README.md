@@ -27,6 +27,8 @@ You need to install a version matching your Elasticsearch version:
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler/badge.svg?style=flat-square)](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler/)
 [![Travis](https://secure.travis-ci.org/dadoonet/fscrawler.png)](http://travis-ci.org/dadoonet/fscrawler)
 [![Documentation Status](https://readthedocs.org/projects/fscrawler/badge/?version=latest)](https://fscrawler.readthedocs.io/en/latest/?badge=latest)
+[![Code Quality: Java](https://img.shields.io/lgtm/grade/java/g/dadoonet/fscrawler.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/dadoonet/fscrawler/context:java)
+[![Total Alerts](https://img.shields.io/lgtm/alerts/g/dadoonet/fscrawler.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/dadoonet/fscrawler/alerts)
 
 [![Lines](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=ncloc)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
 [![Duplicated Lines](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=duplicated_lines_density)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
