@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.File;
 import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -104,7 +105,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
         SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
                 new SearchSourceBuilder()
                         .query(QueryBuilders.matchQuery("content", "exemplo"))
-                        .highlighter(new HighlightBuilder().field("content"))));
+                        .highlighter(new HighlightBuilder().field("content"))), RequestOptions.DEFAULT);
         staticLogger.trace("result {}", response.toString());
         assertThat(response.getHits().getTotalHits(), is(1L));
 

@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
@@ -70,10 +71,10 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
         // This will cause an Elasticsearch Exception as the String is not a Date
         // If the mapping is incorrect
         elasticsearchClient.index(new IndexRequest(getCrawlerName(), typeName, "1")
-            .source(json1, XContentType.JSON)
+            .source(json1, XContentType.JSON), RequestOptions.DEFAULT
         );
         elasticsearchClient.index(new IndexRequest(getCrawlerName(), typeName, "2")
-            .source(json2, XContentType.JSON)
+            .source(json2, XContentType.JSON), RequestOptions.DEFAULT
         );
     }
 

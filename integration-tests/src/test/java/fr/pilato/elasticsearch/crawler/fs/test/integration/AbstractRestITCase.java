@@ -24,6 +24,8 @@ import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.client.RequestOptions;
 import org.junit.After;
 import org.junit.Before;
 
@@ -43,8 +45,8 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         esClientManager.start();
         RestServer.start(fsSettings, esClientManager);
 
-        logger.info(" -> Removing existing index [{}]", getCrawlerName());
-        elasticsearchClient.deleteIndex(getCrawlerName());
+        logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
+        elasticsearchClient.indices().delete(new DeleteIndexRequest(getCrawlerName() + "*"), RequestOptions.DEFAULT);
 
         logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
         esClientManager.createIndices();

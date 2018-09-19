@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
@@ -47,7 +48,7 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
         countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
 
         // We expect having no folders
-        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER));
+        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER), RequestOptions.DEFAULT);
         staticLogger.trace("result {}", response.toString());
         assertThat(response.getHits().getTotalHits(), is(0L));
     }

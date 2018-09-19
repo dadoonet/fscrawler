@@ -20,15 +20,13 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Test;
-
-import java.util.Collections;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -66,10 +64,10 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
+        Request request = new Request("PUT", "/_ingest/pipeline/" + crawlerName);
+        request.setJsonEntity(pipeline);
 
-        elasticsearchClient.getLowLevelClient().performRequest("PUT", "/_ingest/pipeline/" + crawlerName,
-                Collections.emptyMap(), entity);
+        elasticsearchClient.getLowLevelClient().performRequest(request);
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);
@@ -81,7 +79,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 .query(QueryBuilders.matchQuery("my_content_field", "perniciosoque"))), 1L, currentTestResourceDir);
 
         // We expect to have one folder
-        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER));
+        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER), RequestOptions.DEFAULT);
         assertThat(response.getHits().getTotalHits(), is(1L));
     }
 
@@ -117,10 +115,10 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
+        Request request = new Request("PUT", "/_ingest/pipeline/" + crawlerName);
+        request.setJsonEntity(pipeline);
 
-        elasticsearchClient.getLowLevelClient().performRequest("PUT", "/_ingest/pipeline/" + crawlerName,
-                Collections.emptyMap(), entity);
+        elasticsearchClient.getLowLevelClient().performRequest(request);
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);

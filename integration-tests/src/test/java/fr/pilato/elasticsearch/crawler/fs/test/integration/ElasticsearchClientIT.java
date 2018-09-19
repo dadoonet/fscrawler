@@ -19,12 +19,13 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -33,7 +34,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Properties;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
@@ -51,7 +51,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     @Before
     public void cleanExistingIndex() throws IOException {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        elasticsearchClient.deleteIndex(getCrawlerName() + "*");
+        elasticsearchClient.indices().delete(new DeleteIndexRequest(getCrawlerName() + "*"), RequestOptions.DEFAULT);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     @Test
     public void testSearch() throws IOException {
         // Depending on the version we are using, we need to adapt the test settings (mapping)
-        assumeThat("We only test our internal search stuff for version < 5.0", elasticsearchClient.info().getVersion().onOrAfter(Version.V_5_0_0_alpha1), is(false));
+        assumeThat("We only test our internal search stuff for version < 5.0", elasticsearchClient.info(RequestOptions.DEFAULT).getVersion().onOrAfter(Version.V_5_0_0_alpha1), is(false));
 
         String settings = "{\n" +
                 "  \"mappings\": {\n" +
@@ -116,18 +116,18 @@ public class ElasticsearchClientIT extends AbstractITCase {
         elasticsearchClient.createIndex(getCrawlerName(), false, settings);
         elasticsearchClient.waitForHealthyIndex(getCrawlerName());
 
-        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "doc", "1").source("{ \"foo\": { \"bar\": \"bar\" } }", XContentType.JSON));
-        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "doc", "2").source("{ \"foo\": { \"bar\": \"baz\" } }", XContentType.JSON));
+        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "doc", "1").source("{ \"foo\": { \"bar\": \"bar\" } }", XContentType.JSON), RequestOptions.DEFAULT);
+        elasticsearchClient.index(new IndexRequest(getCrawlerName(), "doc", "2").source("{ \"foo\": { \"bar\": \"baz\" } }", XContentType.JSON), RequestOptions.DEFAULT);
 
         elasticsearchClient.refresh(getCrawlerName());
 
         // match_all
-        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()));
+        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()), RequestOptions.DEFAULT);
         assertThat(response.getHits().getTotalHits(), is(2L));
 
         // term
         response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.termQuery("foo.bar", "bar"))));
+                .query(QueryBuilders.termQuery("foo.bar", "bar"))), RequestOptions.DEFAULT);
         assertThat(response.getHits().getTotalHits(), is(1L));
 
         // using fields
@@ -139,7 +139,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
     @Test
     public void testFindVersion() throws IOException {
-        Version version = elasticsearchClient.info().getVersion();
+        Version version = elasticsearchClient.info(RequestOptions.DEFAULT).getVersion();
         logger.info("Current elasticsearch version: [{}]", version);
 
         // If we did not use an external URL but the docker instance we can test for sure that the version is the expected one
@@ -178,11 +178,10 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        StringEntity entity = new StringEntity(pipeline, ContentType.APPLICATION_JSON);
+        Request request = new Request("PUT", "/_ingest/pipeline/" + crawlerName);
+        request.setJsonEntity(pipeline);
 
-        elasticsearchClient.getLowLevelClient().performRequest("PUT", "/_ingest/pipeline/" + crawlerName,
-                Collections.emptyMap(), entity);
-
+        elasticsearchClient.getLowLevelClient().performRequest(request);
 
         assertThat(elasticsearchClient.isExistingPipeline(crawlerName), is(true));
         assertThat(elasticsearchClient.isExistingPipeline(crawlerName + "_foo"), is(false));

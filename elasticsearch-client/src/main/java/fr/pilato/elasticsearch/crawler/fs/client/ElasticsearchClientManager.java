@@ -23,15 +23,18 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
@@ -107,14 +110,17 @@ public class ElasticsearchClientManager {
             }
         }
 
-        bulkProcessorDoc = BulkProcessor.builder(client::bulkAsync, new DebugListener(logger))
+        BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
+                (request, bulkListener) -> client.bulkAsync(request, RequestOptions.DEFAULT, bulkListener);
+
+        bulkProcessorDoc = BulkProcessor.builder(bulkConsumer, new DebugListener(logger))
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 .setBulkSize(new ByteSizeValue(settings.getElasticsearch().getByteSize().getBytes()))
                 // TODO fix when elasticsearch will support global pipelines
 //                .setPipeline(settings.getElasticsearch().getPipeline())
                 .build();
-        bulkProcessorFolder = BulkProcessor.builder(client::bulkAsync, new DebugListener(logger))
+        bulkProcessorFolder = BulkProcessor.builder(bulkConsumer, new DebugListener(logger))
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setBulkSize(new ByteSizeValue(settings.getElasticsearch().getByteSize().getBytes()))
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
@@ -157,7 +163,7 @@ public class ElasticsearchClientManager {
         Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
 
         // Let's read the current version of elasticsearch cluster
-        Version version = client.info().getVersion();
+        Version version = client.info(RequestOptions.DEFAULT).getVersion();
         logger.debug("FS crawler connected to an elasticsearch [{}] node.", version.toString());
 
         elasticsearchVersion = Byte.toString(version.major);
