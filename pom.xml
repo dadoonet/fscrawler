@@ -37,7 +37,7 @@
     <properties>
         <elasticsearch.version>6.4.1</elasticsearch.version>
 
-        <tika.version>1.18</tika.version>
+        <tika.version>1.19</tika.version>
         <jackson.version>2.9.7</jackson.version>
         <log4j.version>2.11.1</log4j.version>
         <jansi.version>1.17.1</jansi.version>
@@ -490,6 +490,11 @@
                 <artifactId>tika-parsers</artifactId>
                 <version>${tika.version}</version>
                 <exclusions>
+                    <!-- Conflicting lib with log4j-slf4j-impl-2.11.1 -->
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
                     <!-- Not Apache2 License compatible -->
                     <exclusion>
                         <groupId>edu.ucar</groupId>

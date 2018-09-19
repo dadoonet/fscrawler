@@ -167,6 +167,7 @@ public class TikaDocParser {
 
             if (fsSettings.getFs().isRawMetadata()) {
                 logger.trace("Listing all available metadata:");
+                logger.trace("  assertThat(raw.entrySet(), iterableWithSize({}));", metadata.size());
                 for (String metadataName : metadata.names()) {
                     String value = metadata.get(metadataName);
                     // This is a logger trick which helps to generate our unit tests
