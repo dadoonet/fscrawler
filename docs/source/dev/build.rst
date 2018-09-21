@@ -2,6 +2,15 @@ Building the project
 --------------------
 
 This project is built with `Maven <https://maven.apache.org/>`_.
+Source code is available on `GitHub <https://github.com/dadoonet/fscrawler/>`_.
+
+Clone the project
+^^^^^^^^^^^^^^^^^
+
+Use git to clone the project locally::
+
+    git clone git@github.com:dadoonet/fscrawler.git
+    cd fscrawler
 
 Build the artifact
 ^^^^^^^^^^^^^^^^^^
@@ -80,4 +89,8 @@ setting ``sonatype.username`` and ``sonatype.password``::
         mvn verify -DskipTests \
             -Dsonatype.username=youremail@domain.com \
             -Dsonatype.password=yourverysecuredpassword
+
+If you want to skip the check, you can run with ``-Dossindex.fail=false``::
+
+        mvn clean install -Dossindex.fail=false
 
