@@ -193,6 +193,9 @@ public class FsCrawlerImpl {
             while (fsCrawlerThread.isAlive()) {
                 // We check that the crawler has been closed effectively
                 logger.debug("FS crawler thread is still running");
+                if (logger.isDebugEnabled()) {
+                    Thread.dumpStack();
+                }
                 Thread.sleep(500);
             }
             logger.debug("FS crawler thread is now stopped");
