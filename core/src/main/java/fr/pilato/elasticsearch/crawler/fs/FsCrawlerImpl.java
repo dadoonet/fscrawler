@@ -172,17 +172,20 @@ public class FsCrawlerImpl {
                 throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +
                         Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH);
             }
-
-            fsCrawlerThread = new Thread(fsParser, "fs-crawler");
-            fsCrawlerThread.start();
+        } else {
+            // We start a No-OP parser
+            fsParser = new FsParserNoop(settings);
         }
+
+        fsCrawlerThread = new Thread(fsParser, "fs-crawler");
+        fsCrawlerThread.start();
     }
 
     public void close() throws InterruptedException {
         logger.debug("Closing FS crawler [{}]", settings.getName());
 
         if (fsParser != null) {
-            fsParser.setClosed(true);
+            fsParser.close();
 
             synchronized(fsParser.getSemaphore()) {
                 fsParser.getSemaphore().notifyAll();
