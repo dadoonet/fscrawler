@@ -26,7 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 import java.nio.file.Path;
 
-public class FsParserSsh extends FsParser {
+public class FsParserSsh extends FsParserAbstract {
 
     public FsParserSsh(FsSettings fsSettings, Path config, ElasticsearchClientManager esClientManager, Integer loop) {
         super(fsSettings, config, esClientManager, loop);

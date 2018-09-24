@@ -26,7 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 import java.nio.file.Path;
 
-public class FsParserLocal extends FsParser {
+public class FsParserLocal extends FsParserAbstract {
 
     public FsParserLocal(FsSettings fsSettings, Path config, ElasticsearchClientManager esClientManager, Integer loop) {
         super(fsSettings, config, esClientManager, loop);
