@@ -218,7 +218,7 @@ To upload a binary with additional tags, you can call ``POST /_upload`` endpoint
 .. code:: sh
 
     echo "This is my text" > test.txt
-    echo "{\"content\":\"OVERWRITE CONTENT\",\"external\"{\"tenantId\": 23,\"projectId\": 34,\"description\":\"these are additional tags\"}}" > tags.txt
+    echo "{\"content\":\"OVERWRITE CONTENT\",\"external\":{\"tenantId\": 23,\"projectId\": 34,\"description\":\"these are additional tags\"}}" > tags.txt
     curl -F "file=@test.txt" -F "tags=@tags.txt" "http://127.0.0.1:8080/fscrawler/_upload"
 
 The field ``external`` doesn't necessarily be a flat structure. This is a more advanced example:
