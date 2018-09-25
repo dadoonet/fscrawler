@@ -11,6 +11,13 @@
 
     <artifactId>fscrawler-elasticsearch-client</artifactId>
     <name>FSCrawler Elasticsearch Client</name>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>elasticsearch-client-base</module>
+        <module>elasticsearch-client-v5</module>
+        <module>elasticsearch-client-v6</module>
+    </modules>
 
     <build>
         <plugins>
@@ -44,35 +51,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <dependencies>
-        <!-- Our framework -->
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-framework</artifactId>
-        </dependency>
-
-        <!-- Our settings -->
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-settings</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-        </dependency>
-
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-test-framework</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
 </project>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>fscrawler-parent</artifactId>
+        <groupId>fr.pilato.elasticsearch.crawler</groupId>
+        <version>2.6-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>fscrawler-elasticsearch-client-base</artifactId>
+    <name>FSCrawler Elasticsearch Client Base</name>
+
+    <dependencies>
+        <!-- Our framework -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-framework</artifactId>
+        </dependency>
+
+        <!-- Our settings -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-settings</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-test-framework</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

@@ -410,6 +410,21 @@
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-elasticsearch-client-base</artifactId>
+                <version>2.6-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-elasticsearch-client-v5</artifactId>
+                <version>2.6-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-elasticsearch-client-v6</artifactId>
+                <version>2.6-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-cli</artifactId>
                 <version>2.6-SNAPSHOT</version>
             </dependency>
