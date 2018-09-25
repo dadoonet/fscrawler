@@ -1,0 +1,9 @@
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  ## Thanks to
+
+  $CONTRIBUTORS
+
