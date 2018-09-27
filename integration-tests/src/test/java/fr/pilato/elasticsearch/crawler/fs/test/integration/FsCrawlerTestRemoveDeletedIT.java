@@ -20,16 +20,12 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.google.common.base.Charsets;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import org.apache.logging.log4j.Level;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -56,14 +52,14 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
-        countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
 
         // We remove a file
         logger.info("  ---> Removing file deleted_roottxtfile.txt");
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
         // We expect to have one file
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
     @Test
@@ -74,14 +70,14 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
-        countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
 
         // We remove a file
         logger.info(" ---> Removing file deleted_roottxtfile.txt");
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
         // We expect to have two files
-        countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
     }
 
     /**
@@ -95,7 +91,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have 7 docs first
-        countTestHelper(new SearchRequest(getCrawlerName()), 7L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, currentTestResourceDir);
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
@@ -106,7 +102,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
         // We expect to have 4 docs now
-        countTestHelper(new SearchRequest(getCrawlerName()), 4L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L, currentTestResourceDir);
     }
 
     /**
@@ -118,7 +114,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         startCrawler();
 
         // We should have one doc first
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
 
         // We rename the file
         logger.info(" ---> Renaming file roottxtfile.txt to renamed_roottxtfile.txt");
@@ -127,8 +123,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
                 currentTestResourceDir.resolve("renamed_roottxtfile.txt"));
 
         // We expect to have one file only with a new name
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.termQuery("file.filename", "renamed_roottxtfile.txt"))), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.filename", "renamed_roottxtfile.txt")), 1L, currentTestResourceDir);
     }
 
     /**
@@ -140,7 +135,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         startCrawler();
 
         // We should have one doc first
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
 
         // We move the file
         logger.info(" ---> Moving file roottxtfile.txt to a tmp dir");
@@ -148,7 +143,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
                 rootTmpDir.resolve("roottxtfile.txt"), StandardCopyOption.ATOMIC_MOVE);
 
         // We expect to have 0 file
-        countTestHelper(new SearchRequest(getCrawlerName()), 0L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 0L, currentTestResourceDir);
 
         // We move the file back
         logger.info(" ---> Moving file roottxtfile.txt from the tmp dir");
@@ -159,7 +154,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         Files.setLastModifiedTime(currentTestResourceDir.resolve("roottxtfile.txt"), FileTime.from(Instant.now()));
 
         // We expect to have 1 file
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
     /**
@@ -183,7 +178,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         Files.write(file, "Hello world".getBytes(Charsets.UTF_8));
 
         // We should have 1 doc first
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
@@ -194,7 +189,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
         // We expect to have 2 docs now
-        countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
     /**
@@ -205,14 +200,14 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         startCrawler();
 
         // We should have one doc first
-        SearchResponse response = countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
         checkDocVersions(response, 1L);
 
         logger.info(" ---> Creating a new file new_roottxtfile.txt");
         Files.write(currentTestResourceDir.resolve("new_roottxtfile.txt"), "This is a second file".getBytes());
 
         // We expect to have two files
-        response = countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
+        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
 
         // It should be only version <= 2 for both docs
         checkDocVersions(response, 2L);
@@ -221,7 +216,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         Files.write(currentTestResourceDir.resolve("new_new_roottxtfile.txt"), "This is a third file".getBytes());
 
         // We expect to have three files
-        response = countTestHelper(new SearchRequest(getCrawlerName()), 3L, currentTestResourceDir);
+        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, currentTestResourceDir);
 
         // It should be only version <= 2 for all docs
         checkDocVersions(response, 2L);
@@ -232,12 +227,12 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * @param response The search response object
      * @param maxVersion Maximum version number we can have
      */
-    private void checkDocVersions(SearchResponse response, long maxVersion) {
+    private void checkDocVersions(ESSearchResponse response, long maxVersion) {
         // It should be only version <= maxVersion for all docs
-        for (SearchHit hit : response.getHits().getHits()) {
+        for (ESSearchHit hit : response.getHits()) {
             // Read the document. This is needed since 5.0 as search does not return the _version field
             try {
-                GetResponse getHit = elasticsearchClient.get(new GetRequest(hit.getIndex(), typeName, hit.getId()), RequestOptions.DEFAULT);
+                ESSearchHit getHit = esClient.get(hit.getIndex(), typeName, hit.getId());
                 assertThat(getHit.getVersion(), lessThanOrEqualTo(maxVersion));
             } catch (IOException e) {
                 fail("We got an IOException: " + e.getMessage());

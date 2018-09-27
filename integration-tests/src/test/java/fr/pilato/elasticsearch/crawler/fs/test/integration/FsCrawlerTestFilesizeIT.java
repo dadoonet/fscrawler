@@ -21,12 +21,12 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -51,8 +51,8 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             Object content = hit.getSourceAsMap().get(Doc.FIELD_NAMES.CONTENT);
             Object indexedChars = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
@@ -71,8 +71,8 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             Object content = hit.getSourceAsMap().get(Doc.FIELD_NAMES.CONTENT);
             Object indexedChars = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
@@ -91,8 +91,8 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             Object content = hit.getSourceAsMap().get(Doc.FIELD_NAMES.CONTENT);
             Object indexedChars = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
             assertThat(content, notNullValue());
@@ -107,8 +107,8 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     public void test_filesize() throws Exception {
         startCrawler();
 
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
             assertThat(file, notNullValue());
             assertThat(file.get(File.FIELD_NAMES.FILESIZE), is(12230));
@@ -122,8 +122,8 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
             assertThat(file, notNullValue());
             assertThat(file.get(File.FIELD_NAMES.FILESIZE), nullValue());
@@ -140,6 +140,6 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 }

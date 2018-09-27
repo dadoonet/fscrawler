@@ -19,13 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
@@ -45,12 +43,10 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_ingest_pipeline() throws Exception {
-        assumeVersion6AtLeast();
         String crawlerName = getCrawlerName();
 
         // We can only run this test against a 5.0 cluster or >
-        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
-                elasticsearchClient.isIngestSupported(), is(true));
+        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >", esClient.isIngestSupported(), is(true));
 
         // Create an empty ingest pipeline
         String pipeline = "{\n" +
@@ -64,10 +60,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        Request request = new Request("PUT", "/_ingest/pipeline/" + crawlerName);
-        request.setJsonEntity(pipeline);
-
-        elasticsearchClient.getLowLevelClient().performRequest(request);
+        esClient.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);
@@ -75,12 +68,13 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
 
         // We expect to have one file
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.matchQuery("my_content_field", "perniciosoque"))), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withESQuery(new ESMatchQuery("my_content_field", "perniciosoque")), 1L, currentTestResourceDir);
 
         // We expect to have one folder
-        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER), RequestOptions.DEFAULT);
-        assertThat(response.getHits().getTotalHits(), is(1L));
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
+        assertThat(response.getTotalHits(), is(1L));
     }
 
     /**
@@ -91,8 +85,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         String crawlerName = getCrawlerName();
 
         // We can only run this test against a 5.0 cluster or >
-        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
-                elasticsearchClient.isIngestSupported(), is(true));
+        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >", esClient.isIngestSupported(), is(true));
 
         // Create an empty ingest pipeline
         String pipeline = "{\n" +
@@ -115,10 +108,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        Request request = new Request("PUT", "/_ingest/pipeline/" + crawlerName);
-        request.setJsonEntity(pipeline);
-
-        elasticsearchClient.getLowLevelClient().performRequest(request);
+        esClient.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);
@@ -126,8 +116,8 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
 
         // We expect to have one file
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.termQuery("ip_addr", "10.21.23.123"))), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESTermQuery("ip_addr", "10.21.23.123")), 1L, currentTestResourceDir);
     }
 
     /**
@@ -139,7 +129,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
 
         // We can only run this test against a 5.0 cluster or >
         assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
-                elasticsearchClient.isIngestSupported(), is(true));
+                esClient.isIngestSupported(), is(true));
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);

@@ -23,18 +23,16 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
 import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
+import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.tika.parser.external.ExternalParser;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -77,7 +75,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         }
 
         staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents*]");
-        elasticsearchClient.indices().delete(new DeleteIndexRequest("fscrawler_test_all_documents*"), RequestOptions.DEFAULT);
+        esClient.deleteIndex("fscrawler_test_all_documents*");
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
@@ -94,7 +92,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         crawler.start();
 
         // We wait until we have all docs
-        countTestHelper(new SearchRequest("fscrawler_test_all_documents"), numFiles, null, TimeValue.timeValueMinutes(1));
+        countTestHelper(new ESSearchRequest().withIndex("fscrawler_test_all_documents"), numFiles, null, TimeValue.timeValueMinutes(1));
     }
 
     @AfterClass
@@ -126,8 +124,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
     @Test
     public void testExtractFromDocx() throws IOException {
-        SearchResponse response = runSearch("test.docx", "sample");
-        for (SearchHit hit : response.getHits().getHits()) {
+        ESSearchResponse response = runSearch("test.docx", "sample");
+        for (ESSearchHit hit : response.getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILENAME), notNullValue());
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CONTENT_TYPE), notNullValue());
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.URL), notNullValue());
@@ -196,16 +194,16 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
     @Test
     public void testLanguageDetection() throws IOException {
-        SearchResponse response = runSearch("test-fr.txt", "fichier");
-        for (SearchHit hit : response.getHits().getHits()) {
+        ESSearchResponse response = runSearch("test-fr.txt", "fichier");
+        for (ESSearchHit hit : response.getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("fr"));
         }
         response = runSearch("test-de.txt", "Datei");
-        for (SearchHit hit : response.getHits().getHits()) {
+        for (ESSearchHit hit : response.getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("de"));
         }
         response = runSearch("test.txt", "contains");
-        for (SearchHit hit : response.getHits().getHits()) {
+        for (ESSearchHit hit : response.getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("en"));
         }
     }
@@ -232,21 +230,21 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         runSearch("issue-418-中文名称.txt");
     }
 
-    private SearchResponse runSearch(String filename) throws IOException {
+    private ESSearchResponse runSearch(String filename) throws IOException {
         return runSearch(filename, null);
     }
 
-    private SearchResponse runSearch(String filename, String content) throws IOException {
+    private ESSearchResponse runSearch(String filename, String content) throws IOException {
         logger.info(" -> Testing if file [{}] has been indexed correctly{}.", filename,
                 content == null ? "" : " and contains [" + content + "]");
-        BoolQueryBuilder query = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("file.filename", filename));
+        ESBoolQuery query = new ESBoolQuery().addMust(new ESTermQuery("file.filename", filename));
         if (content != null) {
-            assumeVersion6AtLeast();
-            query.must(QueryBuilders.matchQuery("content", content));
+            query.addMust(new ESMatchQuery("content", content));
         }
-        SearchResponse response = elasticsearchClient.search(new SearchRequest("fscrawler_test_all_documents").source(new SearchSourceBuilder().query(query)),
-                RequestOptions.DEFAULT);
-        assertThat(response.getHits().getTotalHits(), is(1L));
+        ESSearchResponse response = esClient.search(new ESSearchRequest()
+                        .withIndex("fscrawler_test_all_documents")
+                        .withESQuery(query));
+        assertThat(response.getTotalHits(), is(1L));
         return response;
     }
 }

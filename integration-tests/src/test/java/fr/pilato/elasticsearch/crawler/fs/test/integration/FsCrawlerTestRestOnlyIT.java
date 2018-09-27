@@ -20,12 +20,12 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
-import org.elasticsearch.action.search.SearchRequest;
 import org.junit.Test;
 
 import javax.ws.rs.client.WebTarget;
@@ -61,7 +61,7 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
                     0,
                     true);
             crawler.start();
-            RestServer.start(fsSettings, crawler.getEsClientManager());
+            RestServer.start(fsSettings, crawler.getEsClient());
 
             Path from = rootTmpDir.resolve("resources").resolve("documents");
             if (Files.notExists(from)) {
@@ -78,7 +78,7 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
                     });
 
             // We wait until we have all docs
-            countTestHelper(new SearchRequest(getCrawlerName()), Files.list(from).count(), null, TimeValue.timeValueMinutes(1));
+            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), Files.list(from).count(), null, TimeValue.timeValueMinutes(1));
         } finally {
             RestServer.close();
         }

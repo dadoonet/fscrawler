@@ -21,10 +21,10 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
 import java.security.MessageDigest;
@@ -52,8 +52,8 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
                 .setChecksum("MD5")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             Object checksum = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
             assertThat(checksum, is("caa71e1914ecbcf5ae4f46cf85de8648"));
         }
@@ -71,8 +71,8 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
                 .setChecksum("SHA-1")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             Object checksum = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
             assertThat(checksum, is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
         }

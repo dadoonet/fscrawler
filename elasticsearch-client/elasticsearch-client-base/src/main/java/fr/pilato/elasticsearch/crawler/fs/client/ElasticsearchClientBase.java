@@ -30,10 +30,16 @@ import java.io.IOException;
 public interface ElasticsearchClientBase extends Closeable {
 
     /**
-     * Shutdown the internal REST Low Level client
-     * @throws IOException In case of error
+     * Start the client and its internal resources. This must be called before any operation can be performed.
+     * @throws IOException in case of communication error with the cluster
      */
-    void shutdown() throws IOException;
+    void start() throws IOException;
+
+    /**
+     * Get version about the node it's connected to
+     * @throws IOException in case of communication error with the cluster
+     */
+    ESVersion getVersion() throws IOException;
 
     /**
      * Create an index
@@ -99,7 +105,7 @@ public interface ElasticsearchClientBase extends Closeable {
     String getDefaultTypeName();
 
     /**
-     * Index a document
+     * Index a document using a BulkProcessor behind the scenes
      * @param index     Index name
      * @param type      Type name
      * @param id        Document ID
@@ -109,7 +115,16 @@ public interface ElasticsearchClientBase extends Closeable {
     void index(String index, String type, String id, String json, String pipeline);
 
     /**
-     * Delete a document
+     * Index a document (for test purposes only)
+     * @param index     Index name
+     * @param type      Type name
+     * @param id        Document ID
+     * @param json      JSON
+     */
+    void indexSingle(String index, String type, String id, String json) throws IOException;
+
+    /**
+     * Delete a document using a BulkProcessor behind the scenes
      * @param index     Index name
      * @param type      Type name
      * @param id        Document ID
@@ -117,8 +132,60 @@ public interface ElasticsearchClientBase extends Closeable {
     void delete(String index, String type, String id);
 
     /**
-     * Close the client. Helpful to close all internal resources like bulk processors.
-     * You also need to call super.close();
+     * Create all needed indices
+     * @throws Exception in case of error
+     * @deprecated replace with an index template
      */
-    void close() throws IOException;
+    public void createIndices() throws Exception;
+
+    /**
+     * Run a search
+     * @param request Search Request
+     * @return A search response object
+     * @throws IOException In case of error
+     */
+    ESSearchResponse search(ESSearchRequest request) throws IOException;
+
+    /**
+     * Remove an index
+     * @param index Index name
+     * @throws IOException In case of error
+     */
+    void deleteIndex(String index) throws IOException;
+
+    /**
+     * Flush any pending Bulk operation. Used for tests only.
+     * Note that flushing means immediate execution of the bulk but it does
+     * not wait for the bulk to be fully executed.
+     */
+    void flush();
+
+    /**
+     * Perform a LowLevel Request
+     * @param method        HTTP method
+     * @param endpoint      Endpoint
+     * @param jsonEntity    Json entity if any
+     * @throws IOException In case of error
+     */
+    void performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException;
+
+    /**
+     * Get a document by its ID
+     * @param index Index name
+     * @param type  Type
+     * @param id    Document id
+     * @return A Search Hit
+     * @throws IOException In case of error
+     */
+    ESSearchHit get(String index, String type, String id) throws IOException;
+
+    /**
+     * Check that a document exists
+     * @param index Index name
+     * @param type  Type
+     * @param id    Document id
+     * @return true if it exists, false otherwise
+     * @throws IOException In case of error
+     */
+    boolean exists(String index, String type, String id) throws IOException;
 }

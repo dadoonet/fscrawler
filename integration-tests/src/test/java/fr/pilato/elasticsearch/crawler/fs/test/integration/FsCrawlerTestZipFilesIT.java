@@ -19,8 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import org.elasticsearch.action.search.SearchRequest;
 import org.junit.Test;
 
 /**
@@ -38,6 +38,6 @@ public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
                 TimeValue.timeValueMinutes(2));
 
         // We expect to have one file
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 }

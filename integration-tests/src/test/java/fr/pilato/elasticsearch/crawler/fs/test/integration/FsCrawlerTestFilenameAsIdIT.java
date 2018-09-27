@@ -19,10 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.client.RequestOptions;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -48,7 +46,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "roottxtfile.txt"), RequestOptions.DEFAULT);
+                return esClient.exists(getCrawlerName(), typeName, "roottxtfile.txt");
             } catch (IOException e) {
                 return false;
             }
@@ -67,18 +65,18 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
-        countTestHelper(new SearchRequest(getCrawlerName()), 2L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
 
         assertThat("Document should exists with [id1.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "id1.txt"), RequestOptions.DEFAULT);
+                return esClient.exists(getCrawlerName(), typeName, "id1.txt");
             } catch (IOException e) {
                 return false;
             }
         }), equalTo(true));
         assertThat("Document should exists with [id2.txt] id...", awaitBusy(() -> {
             try {
-                return elasticsearchClient.exists(new GetRequest(getCrawlerName(), typeName, "id2.txt"), RequestOptions.DEFAULT);
+                return esClient.exists(getCrawlerName(), typeName, "id2.txt");
             } catch (IOException e) {
                 return false;
             }
@@ -89,6 +87,6 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         Files.delete(currentTestResourceDir.resolve("id2.txt"));
 
         // We expect to have two files
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
     }
 }

@@ -19,7 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientAbstract;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
@@ -27,8 +30,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,7 +55,7 @@ public class FsCrawlerImpl {
 
     private Thread fsCrawlerThread;
 
-    private final ElasticsearchClientManager esClientManager;
+    private final ElasticsearchClientBase esClient;
     private FsParser fsParser;
 
     public FsCrawlerImpl(Path config, FsSettings settings) {
@@ -68,7 +69,7 @@ public class FsCrawlerImpl {
         this.settings = settings;
         this.loop = loop;
         this.rest = rest;
-        this.esClientManager = new ElasticsearchClientManager(config, settings);
+        this.esClient = ElasticsearchClientAbstract.getInstance(config, settings);
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
@@ -85,8 +86,8 @@ public class FsCrawlerImpl {
         }
     }
 
-    public ElasticsearchClientManager getEsClientManager() {
-        return esClientManager;
+    public ElasticsearchClientBase getEsClient() {
+        return esClient;
     }
 
     /**
@@ -97,21 +98,21 @@ public class FsCrawlerImpl {
     @SuppressWarnings("deprecation")
     public boolean upgrade() throws Exception {
         // We need to start a client so we can send requests to elasticsearch
-        esClientManager.start();
+        esClient.start();
 
         // The upgrade script is for now a bit dumb. It assumes that you had an old version of FSCrawler (< 2.3) and it will
         // simply move data from index/folder to index_folder
         String index = settings.getElasticsearch().getIndex();
 
         // Check that the old index actually exists
-        if (esClientManager.client().isExistingIndex(index)) {
+        if (esClient.isExistingIndex(index)) {
             // We check that the new indices don't exist yet or are empty
             String indexFolder = settings.getElasticsearch().getIndexFolder();
-            boolean indexExists = esClientManager.client().isExistingIndex(indexFolder);
+            boolean indexExists = esClient.isExistingIndex(indexFolder);
             long numberOfDocs = 0;
             if (indexExists) {
-                SearchResponse responseFolder = esClientManager.client().search(new SearchRequest(indexFolder));
-                numberOfDocs = responseFolder.getHits().getTotalHits();
+                ESSearchResponse responseFolder = esClient.search(new ESSearchRequest().withIndex(indexFolder));
+                numberOfDocs = responseFolder.getTotalHits();
             }
             if (numberOfDocs > 0) {
                 logger.warn("[{}] already exists and is not empty. No upgrade needed.", indexFolder);
@@ -120,18 +121,18 @@ public class FsCrawlerImpl {
 
                 // Create the new indices with the right mappings (well, we don't read existing user configuration)
                 if (!indexExists) {
-                    esClientManager.createIndices();
+                    esClient.createIndices();
                     logger.info("[{}] has been created.", indexFolder);
                 }
 
                 // Run reindex task for folders
                 logger.info("Starting reindex folders...");
-                int folders = esClientManager.client().reindex(index, INDEX_TYPE_FOLDER, indexFolder);
+                int folders = esClient.reindex(index, INDEX_TYPE_FOLDER, indexFolder);
                 logger.info("Done reindexing [{}] folders...", folders);
 
                 // Run delete by query task for folders
                 logger.info("Starting removing folders from [{}]...", index);
-                esClientManager.client().deleteByQuery(index, INDEX_TYPE_FOLDER);
+                esClient.deleteByQuery(index, INDEX_TYPE_FOLDER);
                 logger.info("Done removing folders from [{}]", index);
 
                 logger.info("You can now upgrade your elasticsearch cluster to >=6.0.0!");
@@ -155,18 +156,18 @@ public class FsCrawlerImpl {
             return;
         }
 
-        esClientManager.start();
-        esClientManager.createIndices();
+        esClient.start();
+        esClient.createIndices();
 
         // Start the crawler thread - but not if only in rest mode
         if (loop != 0) {
             // What is the protocol used?
             if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
                 // Local FS
-                fsParser = new FsParserLocal(settings, config, esClientManager, loop);
+                fsParser = new FsParserLocal(settings, config, esClient, loop);
             } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
                 // Remote SSH FS
-                fsParser = new FsParserSsh(settings, config, esClientManager, loop);
+                fsParser = new FsParserSsh(settings, config, esClient, loop);
             } else {
                 // Non supported protocol
                 throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +
@@ -181,7 +182,7 @@ public class FsCrawlerImpl {
         fsCrawlerThread.start();
     }
 
-    public void close() throws InterruptedException {
+    public void close() throws InterruptedException, IOException {
         logger.debug("Closing FS crawler [{}]", settings.getName());
 
         if (fsParser != null) {
@@ -204,7 +205,7 @@ public class FsCrawlerImpl {
             logger.debug("FS crawler thread is now stopped");
         }
 
-        esClientManager.close();
+        esClient.close();
         logger.debug("ES Client Manager stopped");
 
         logger.info("FS crawler [{}] stopped", settings.getName());

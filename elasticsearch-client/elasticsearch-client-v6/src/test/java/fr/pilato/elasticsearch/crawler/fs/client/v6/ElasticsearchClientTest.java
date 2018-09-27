@@ -19,24 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client.v6;
 
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientAbstract;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.client.v5.ElasticsearchClientBase.decodeCloudId;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
 public class ElasticsearchClientTest extends AbstractFSCrawlerTestCase {
 
-    @Test
-    public void testCloudId() {
-
-        String cloudId = "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==";
-        Elasticsearch.Node httpHost = decodeCloudId(cloudId);
-
-        assertThat(httpHost.getHost(), is("1d1ea996887745a6a2b7cb79315348a3.europe-west1.gcp.cloud.es.io"));
-        assertThat(httpHost.getPort(), is(443));
-        assertThat(httpHost.getScheme(), is(Elasticsearch.Node.Scheme.HTTPS));
+    @Test(expected = NullPointerException.class)
+    public void testGetInstanceWithNullSettings() {
+        ElasticsearchClientAbstract.getInstance(null, null);
     }
 }

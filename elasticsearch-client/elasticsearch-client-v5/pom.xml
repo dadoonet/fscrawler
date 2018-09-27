@@ -3,14 +3,18 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>fscrawler-parent</artifactId>
         <groupId>fr.pilato.elasticsearch.crawler</groupId>
+        <artifactId>fscrawler-elasticsearch-client</artifactId>
         <version>2.6-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>fscrawler-elasticsearch-client-v5</artifactId>
     <name>FSCrawler Elasticsearch Client V5</name>
+
+    <properties>
+        <elasticsearch.version>5.6.10</elasticsearch.version>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -20,10 +24,12 @@
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client</artifactId>
+            <version>${elasticsearch.version}</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <version>${elasticsearch.version}</version>
         </dependency>
     </dependencies>
 

@@ -19,12 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -42,7 +40,6 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_json_support() throws Exception {
-        assumeVersion6AtLeast();
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(true)
                 .build();
@@ -50,9 +47,10 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
-                        new SearchSourceBuilder().query(QueryBuilders.matchQuery("text", "tweet"))), RequestOptions.DEFAULT);
-                return response.getHits().getTotalHits() == 2;
+                ESSearchResponse response = esClient.search(new ESSearchRequest()
+                        .withIndex(getCrawlerName())
+                        .withESQuery(new ESMatchQuery("text", "tweet")));
+                return response.getTotalHits() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
@@ -65,7 +63,6 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_json_disabled() throws Exception {
-        assumeVersion6AtLeast();
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(false)
                 .build();
@@ -73,9 +70,10 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
-                        new SearchSourceBuilder().query(QueryBuilders.matchQuery("text", "tweet"))), RequestOptions.DEFAULT);
-                return response.getHits().getTotalHits() == 0;
+                ESSearchResponse response = esClient.search(new ESSearchRequest()
+                        .withIndex(getCrawlerName())
+                        .withESQuery(new ESMatchQuery("text", "tweet")));
+                return response.getTotalHits() == 0;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
@@ -84,9 +82,10 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat("We should have 2 docs for tweet in content field...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
-                        new SearchSourceBuilder().query(QueryBuilders.matchQuery("content", "tweet"))), RequestOptions.DEFAULT);
-                return response.getHits().getTotalHits() == 2;
+                ESSearchResponse response = esClient.search(new ESSearchRequest()
+                        .withIndex(getCrawlerName())
+                        .withESQuery(new ESMatchQuery("content", "tweet")));
+                return response.getTotalHits() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
@@ -99,7 +98,6 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_add_as_inner_object() throws Exception {
-        assumeVersion6AtLeast();
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(true)
                 .setAddAsInnerObject(true)
@@ -108,9 +106,10 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat("We should have 2 doc for tweet in object.text field...", awaitBusy(() -> {
             try {
-                fr.pilato.elasticsearch.crawler.fs.client.SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
-                        "{\"query\":{\"match\":{\"object.text\":\"tweet\"}}}");
-                return response.getHits().getTotal() == 2;
+                ESSearchResponse response = esClient.search(new ESSearchRequest()
+                        .withIndex(getCrawlerName())
+                        .withESQuery(new ESMatchQuery("object.text", "tweet")));
+                return response.getTotalHits() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
@@ -130,8 +129,8 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat("We should have 2 docs only...", awaitBusy(() -> {
             try {
-                SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()), RequestOptions.DEFAULT);
-                return response.getHits().getTotalHits() == 2;
+                ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+                return response.getTotalHits() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;

@@ -21,6 +21,10 @@
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-rest</artifactId>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-elasticsearch-client-v6</artifactId>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>

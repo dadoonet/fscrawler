@@ -20,13 +20,10 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
@@ -70,12 +67,9 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
         // This will cause an Elasticsearch Exception as the String is not a Date
         // If the mapping is incorrect
-        elasticsearchClient.index(new IndexRequest(getCrawlerName(), typeName, "1")
-            .source(json1, XContentType.JSON), RequestOptions.DEFAULT
-        );
-        elasticsearchClient.index(new IndexRequest(getCrawlerName(), typeName, "2")
-            .source(json2, XContentType.JSON), RequestOptions.DEFAULT
-        );
+        esClient.index(getCrawlerName(), typeName, "1", json1, null);
+        esClient.index(getCrawlerName(), typeName, "2", json2, null);
+        esClient.flush();
     }
 
     @Test
@@ -84,8 +78,8 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
                 .setRawMetadata(false)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get("raw"), nullValue());
         }
     }
@@ -98,8 +92,8 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
             builder.setRawMetadata(true);
         }
         startCrawler(getCrawlerName(), builder.build(), endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get("raw"), notNullValue());
         }
     }

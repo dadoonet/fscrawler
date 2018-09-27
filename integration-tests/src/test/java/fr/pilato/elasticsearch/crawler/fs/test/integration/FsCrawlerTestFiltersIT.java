@@ -19,8 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
 import org.junit.Test;
 
 /**
@@ -33,7 +33,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
                 .addFilter(".*foo.*")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
     @Test
@@ -42,7 +42,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
                 .addFilter("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
     @Test
@@ -52,6 +52,6 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
                 .addFilter(".*foo.*")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 }

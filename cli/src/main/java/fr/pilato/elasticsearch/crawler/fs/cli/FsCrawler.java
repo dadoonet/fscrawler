@@ -23,6 +23,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
@@ -38,7 +39,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.elasticsearch.Version;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -257,14 +257,14 @@ public class FsCrawler {
                     fsSettingsFileHandler.write(fsSettings);
                 }
             } else {
-                fsCrawler.getEsClientManager().start();
-                Version elasticsearchVersion = fsCrawler.getEsClientManager().client().info().getVersion();
+                fsCrawler.getEsClient().start();
+                ESVersion elasticsearchVersion = fsCrawler.getEsClient().getVersion();
                 checkForDeprecatedResources(configDir, elasticsearchVersion);
                 fsCrawler.start();
 
                 // Start the REST Server if needed
                 if (commands.rest) {
-                    RestServer.start(fsSettings, fsCrawler.getEsClientManager());
+                    RestServer.start(fsSettings, fsCrawler.getEsClient());
                 }
 
                 // We just have to wait until the process is stopped
@@ -305,7 +305,7 @@ public class FsCrawler {
         }
     }
 
-    private static void checkForDeprecatedResources(Path configDir, Version elasticsearchVersion) throws IOException {
+    private static void checkForDeprecatedResources(Path configDir, ESVersion elasticsearchVersion) throws IOException {
         try {
             // If we are able to read an old configuration file, we should tell the user to check the documentation
             readDefaultJsonVersionedFile(configDir, Byte.toString(elasticsearchVersion.major), "doc");

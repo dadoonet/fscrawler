@@ -20,11 +20,10 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -43,8 +42,8 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             // We check that the field is in _source
             assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
         }
@@ -54,10 +53,10 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
     public void test_do_not_store_source() throws Exception {
         startCrawler();
 
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
-        SearchResponse searchResponse = elasticsearchClient.search(new SearchRequest(getCrawlerName()), RequestOptions.DEFAULT);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+        for (ESSearchHit hit : searchResponse.getHits()) {
             // We check that the field is not part of _source
             assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
         }
@@ -71,8 +70,8 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             // We check that the field is in _source
             assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
         }

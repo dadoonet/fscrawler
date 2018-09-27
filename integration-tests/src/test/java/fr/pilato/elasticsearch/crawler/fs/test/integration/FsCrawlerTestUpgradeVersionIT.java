@@ -20,14 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import org.elasticsearch.Version;
-import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
@@ -43,7 +38,7 @@ public class FsCrawlerTestUpgradeVersionIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_upgrade_version() throws Exception {
         // We can only run this test if elasticsearch version is >= 2.3 and < 6.0
-        Version version = elasticsearchClient.getVersion();
+        ESVersion version = esClient.getVersion();
         assumeFalse("We can only run the upgrade process on version between >= 2.3 and < 6.0",
                 version.major < 2 || (version.major == 2 && version.minor < 4) || version.major >= 6);
 
@@ -51,30 +46,19 @@ public class FsCrawlerTestUpgradeVersionIT extends AbstractFsCrawlerITCase {
         long nbDocs = randomLongBetween(10, 100);
         long nbFolders = randomLongBetween(1, 10);
 
-        elasticsearchClient.createIndex(getCrawlerName(), false, null);
-
-        BulkProcessor.Listener listener = new BulkProcessor.Listener() {
-            @Override public void beforeBulk(long executionId, BulkRequest request) { }
-            @Override public void afterBulk(long executionId, BulkRequest request, BulkResponse response) { }
-            @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) { }
-        };
-
-        BulkProcessor bulkProcessor = BulkProcessor.builder(elasticsearchClient::bulkAsync, listener)
-                .setBulkActions(1000)
-                .setFlushInterval(org.elasticsearch.common.unit.TimeValue.timeValueSeconds(2))
-                .build();
+        esClient.createIndex(getCrawlerName(), false, null);
 
         // Create fake data
         for (int i = 0; i < nbDocs; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "doc", "id" + i).source("{\"foo\":\"bar\"}", XContentType.JSON));
+            esClient.index(getCrawlerName(), "doc", "id" + i, "{\"foo\":\"bar\"}", null);
         }
         for (int i = 0; i < nbFolders; i++) {
-            bulkProcessor.add(new IndexRequest(getCrawlerName(), "folder", "id" + i).source("{\"foo\":\"bar\"}", XContentType.JSON));
+            esClient.index(getCrawlerName(), "folder", "id" + i, "{\"foo\":\"bar\"}", null);
         }
-        bulkProcessor.close();
+        esClient.flush();
 
         // Let's wait that everything has been indexed
-        countTestHelper(new SearchRequest(getCrawlerName()), nbDocs+nbFolders, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbDocs+nbFolders, null);
 
         // Let's create a crawler instance
         FsSettings fsSettings = FsSettings.builder(getCrawlerName())
@@ -87,12 +71,12 @@ public class FsCrawlerTestUpgradeVersionIT extends AbstractFsCrawlerITCase {
 
         // Test that we have all needed docs in old index and new indices
         long expectedDocs = nbDocs;
-        if (elasticsearchClient.getVersion().major < 5) {
+        if (esClient.getVersion().major < 5) {
             // If we ran our tests against a 2.x cluster, _delete_by_query is skipped (as it does not exist).
             // Which means that folders are still there
             expectedDocs += nbFolders;
         }
-        countTestHelper(new SearchRequest(getCrawlerName()), expectedDocs, null);
-        countTestHelper(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER), nbFolders, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), expectedDocs, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), nbFolders, null);
     }
 }

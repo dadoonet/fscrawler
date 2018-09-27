@@ -19,10 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESPrefixQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Test;
 
 /**
@@ -41,13 +41,10 @@ public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have one file
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.prefixQuery("content", "file*"))), 0L, null);
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.prefixQuery("file.content_type", "text*"))), 0L, null);
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.termQuery("file.extension", "txt"))), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESPrefixQuery("content", "file*")), 0L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESPrefixQuery("file.content_type", "text*")), 0L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.extension", "txt")), 1L, null);
     }
 }

@@ -22,13 +22,11 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
 import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
@@ -50,10 +48,10 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
         startCrawler();
 
         // We expect to have one file
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
         // The default configuration should not add file attributes
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTRIBUTES), nullValue());
         }
     }
@@ -62,8 +60,8 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
     public void test_default_metadata() throws Exception {
         startCrawler();
 
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
 
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILENAME), notNullValue());
@@ -85,8 +83,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
         startCrawler();
 
         // We should have one doc
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.termQuery("file.filename", "roottxtfile.txt"))), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")), 1L, null);
     }
 
     /**
@@ -95,23 +92,22 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_highlight_documents() throws Exception {
-        assumeVersion6AtLeast();
         startCrawler();
 
         // We expect to have one file
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
         // Let's test highlighting
-        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
-                new SearchSourceBuilder()
-                        .query(QueryBuilders.matchQuery("content", "exemplo"))
-                        .highlighter(new HighlightBuilder().field("content"))), RequestOptions.DEFAULT);
+        ESSearchResponse response = esClient.search(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withESQuery(new ESMatchQuery("content", "exemplo"))
+                .addHighlighter("content"));
         staticLogger.trace("result {}", response.toString());
-        assertThat(response.getHits().getTotalHits(), is(1L));
+        assertThat(response.getTotalHits(), is(1L));
 
-        SearchHit hit = response.getHits().getHits()[0];
+        ESSearchHit hit = response.getHits().get(0);
         assertThat(hit.getHighlightFields(), hasKey("content"));
         assertThat(hit.getHighlightFields().get("content").getFragments(), arrayWithSize(1));
-        assertThat(hit.getHighlightFields().get("content").getFragments()[0].string(), containsString("<em>exemplo</em>"));
+        assertThat(hit.getHighlightFields().get("content").getFragments()[0], containsString("<em>exemplo</em>"));
     }
 }

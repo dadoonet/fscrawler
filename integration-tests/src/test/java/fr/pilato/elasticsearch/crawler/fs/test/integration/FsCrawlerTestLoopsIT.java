@@ -20,9 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import org.elasticsearch.action.search.SearchRequest;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,7 +46,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
                 .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1, false);
         crawler.start();
 
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
         assertThat("Job should stop after one run", crawler.getFsParser().isClosed(), is(true));
         assertThat(crawler.getFsParser().getRunNumber(), is(1));
@@ -65,7 +65,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
                 .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2, false);
         crawler.start();
 
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
         assertThat("Job should stop after two runs", awaitBusy(() -> crawler.getFsParser().isClosed()), is(true));
         assertThat(crawler.getFsParser().getRunNumber(), is(2));

@@ -21,11 +21,11 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
@@ -45,8 +45,8 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
                 .setAttributesSupport(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.ATTRIBUTES).get(Attributes.FIELD_NAMES.OWNER), notNullValue());
             if (OsValidator.WINDOWS) {
                 // We should not have values for group and permissions on Windows OS

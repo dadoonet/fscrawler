@@ -20,8 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
 import org.junit.Test;
 
 /**
@@ -36,9 +36,9 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
         FsCrawlerImpl crawler1 = startCrawler(getCrawlerName() + "_1", fs1, endCrawlerDefinition(getCrawlerName() + "_1"), null);
         FsCrawlerImpl crawler2 = startCrawler(getCrawlerName() + "_2", fs2, endCrawlerDefinition(getCrawlerName() + "_2"), null);
         // We should have one doc in index 1...
-        countTestHelper(new SearchRequest(getCrawlerName() + "_1"), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_1"), 1L, null);
         // We should have one doc in index 2...
-        countTestHelper(new SearchRequest(getCrawlerName() + "_2"), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_2"), 1L, null);
 
         crawler1.close();
         crawler2.close();

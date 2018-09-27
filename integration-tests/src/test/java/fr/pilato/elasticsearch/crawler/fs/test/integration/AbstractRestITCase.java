@@ -19,45 +19,47 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientAbstract;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.client.RequestOptions;
 import org.junit.After;
 import org.junit.Before;
 
+import java.io.IOException;
+
 public abstract class AbstractRestITCase extends AbstractITCase {
 
-    private ElasticsearchClientManager esClientManager;
+    private ElasticsearchClientBase esTmpClient;
 
     @Before
     public void startRestServer() throws Exception {
+        logger.fatal("Working ON {}", getCrawlerName());
+
         FsSettings fsSettings = FsSettings.builder(getCrawlerName())
                 .setRest(Rest.builder().setPort(testRestPort).build())
                 .setElasticsearch(elasticsearchWithSecurity)
                 .build();
         fsSettings.getElasticsearch().setIndex(getCrawlerName());
         FsCrawlerValidator.validateSettings(logger, fsSettings, true);
-        esClientManager = new ElasticsearchClientManager(metadataDir, fsSettings);
-        esClientManager.start();
-        RestServer.start(fsSettings, esClientManager);
+        esTmpClient = ElasticsearchClientAbstract.getInstance(metadataDir, fsSettings);
+        esTmpClient.start();
+        RestServer.start(fsSettings, esTmpClient);
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
-        elasticsearchClient.indices().delete(new DeleteIndexRequest(getCrawlerName() + "*"), RequestOptions.DEFAULT);
+        esTmpClient.deleteIndex(getCrawlerName() + "*");
 
         logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
-        esClientManager.createIndices();
     }
 
     @After
-    public void stopRestServer() throws InterruptedException {
+    public void stopRestServer() throws IOException {
         RestServer.close();
-        if (esClientManager != null) {
-            esClientManager.close();
-            esClientManager = null;
+        if (esTmpClient != null) {
+            esTmpClient.close();
+            esTmpClient = null;
         }
     }
 }

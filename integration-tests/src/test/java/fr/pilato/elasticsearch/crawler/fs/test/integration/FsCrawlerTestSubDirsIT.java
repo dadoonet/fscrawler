@@ -20,14 +20,11 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
@@ -58,20 +55,18 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         startCrawler();
 
         // We expect to have two files
-        SearchResponse searchResponse = countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
 
         // We check that the subdir document has his meta path data correctly set
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
+        for (ESSearchHit hit : searchResponse.getHits()) {
             Object virtual = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.PATH)
                     .get(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.VIRTUAL);
             assertThat(virtual, isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
         }
 
         // Try to search within part of the full path, ie subdir
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.termQuery("path.virtual.fulltext", "subdir"))), 1L, null);
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.termQuery("path.real.fulltext", "subdir"))), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("path.virtual.fulltext", "subdir")), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("path.real.fulltext", "subdir")), 1L, null);
     }
 
     @Test
@@ -79,75 +74,48 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         startCrawler();
 
         // We expect to have 7 files
-        countTestHelper(new SearchRequest(getCrawlerName()), 7L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
 
         // Run aggs
-        if (elasticsearchClient.getVersion().major >= 6) {
-            // We can use the high level REST Client
-            SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
-                    new SearchSourceBuilder()
-                            .size(0)
-                            .aggregation(AggregationBuilders.terms("folders").field("path.virtual.tree"))),
-                    RequestOptions.DEFAULT);
-            assertThat(response.getHits().getTotalHits(), is(7L));
+        ESSearchResponse response = esClient.search(new ESSearchRequest()
+                        .withIndex(getCrawlerName())
+                        .withSize(0)
+                        .withAggregation(new ESTermsAggregation("folders", "path.virtual.tree")));
+        assertThat(response.getTotalHits(), is(7L));
 
-            // aggregations
-            assertThat(response.getAggregations().asMap(), hasKey("folders"));
-            Terms aggregation = response.getAggregations().get("folders");
-            List<? extends Terms.Bucket> buckets = aggregation.getBuckets();
+        // aggregations
+        assertThat(response.getAggregations(), hasKey("folders"));
+        ESTermsAggregation aggregation = response.getAggregations().get("folders");
+        List<ESTermsAggregation.ESTermsBucket> buckets = aggregation.getBuckets();
 
-            assertThat(buckets, iterableWithSize(10));
+        assertThat(buckets, iterableWithSize(10));
 
-            // Check files
-            response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder().sort("path.virtual")),
-                    RequestOptions.DEFAULT);
-            assertThat(response.getHits().getTotalHits(), is(7L));
+        // Check files
+        response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()).withSort("path.virtual"));
+        assertThat(response.getTotalHits(), is(7L));
 
-            int i = 0;
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/roottxtfile.txt", is("/roottxtfile.txt"));
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", is("/subdir1/roottxtfile_multi_feed.txt"));
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", is("/subdir1/subdir11/roottxtfile.txt"));
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", is("/subdir1/subdir12/roottxtfile.txt"));
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", is("/subdir2/roottxtfile_multi_feed.txt"));
-            pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", is("/subdir2/subdir21/roottxtfile.txt"));
-            pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", is("/subdir2/subdir22/roottxtfile.txt"));
+        int i = 0;
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/roottxtfile.txt", is("/roottxtfile.txt"));
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", is("/subdir1/roottxtfile_multi_feed.txt"));
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", is("/subdir1/subdir11/roottxtfile.txt"));
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", is("/subdir1/subdir12/roottxtfile.txt"));
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", is("/subdir2/roottxtfile_multi_feed.txt"));
+        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", is("/subdir2/subdir21/roottxtfile.txt"));
+        pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", is("/subdir2/subdir22/roottxtfile.txt"));
 
 
-            // Check folders
-            response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER).source(new SearchSourceBuilder().sort("virtual")),
-                    RequestOptions.DEFAULT);
-            assertThat(response.getHits().getTotalHits(), is(7L));
+        // Check folders
+        response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER).withSort("virtual"));
+        assertThat(response.getTotalHits(), is(7L));
 
-            i = 0;
-            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree", is("/"));
-            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1", is("/subdir1"));
-            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1/subdir11", is("/subdir1/subdir11"));
-            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1/subdir12", is("/subdir1/subdir12"));
-            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2", is("/subdir2"));
-            pathHitTester(response, i++, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2/subdir21", is("/subdir2/subdir21"));
-            pathHitTester(response, i, SearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2/subdir22", is("/subdir2/subdir22"));
-        } else {
-            // We need to use the old deprecated fashion for version < 5.0
-            // We do minimal tests
-            // Run aggs
-            fr.pilato.elasticsearch.crawler.fs.client.SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
-                    "{\n" +
-                            "  \"size\": 0, \n" +
-                            "  \"aggs\": {\n" +
-                            "    \"folders\": {\n" +
-                            "      \"terms\": {\n" +
-                            "        \"field\": \"path.virtual.tree\"\n" +
-                            "      }\n" +
-                            "    }\n" +
-                            "  }\n" +
-                            "}");
-            assertThat(response.getHits().getTotal(), is(7L));
-
-            // aggregations
-            assertThat(response.getAggregations(), hasKey("folders"));
-            List<Object> buckets = (List) extractFromPath(response.getAggregations(), "folders").get("buckets");
-            assertThat(buckets, iterableWithSize(10));
-        }
+        i = 0;
+        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree", is("/"));
+        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1", is("/subdir1"));
+        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1/subdir11", is("/subdir1/subdir11"));
+        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1/subdir12", is("/subdir1/subdir12"));
+        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2", is("/subdir2"));
+        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2/subdir21", is("/subdir2/subdir21"));
+        pathHitTester(response, i, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2/subdir22", is("/subdir2/subdir22"));
     }
 
     @Test
@@ -172,76 +140,51 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         startCrawler();
 
         // We expect to have x files (<- whoa that's funny Mulder!)
-        countTestHelper(new SearchRequest(getCrawlerName()), subdirs+1, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), subdirs+1, null);
 
-        if (elasticsearchClient.getVersion().major >= 6) {
-            // We can use the high level REST Client
-            // Run aggs
-            SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
-                    new SearchSourceBuilder()
-                            .size(0)
-                            .aggregation(AggregationBuilders.terms("folders").field("path.virtual.tree"))), RequestOptions.DEFAULT);
-            assertThat(response.getHits().getTotalHits(), is(subdirs+1));
+        // Run aggs
+        ESSearchResponse response = esClient.search(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withSize(0)
+                .withAggregation(new ESTermsAggregation("folders", "path.virtual.tree")));
+        assertThat(response.getTotalHits(), is(subdirs+1));
 
-            // aggregations
-            assertThat(response.getAggregations().asMap(), hasKey("folders"));
-            Terms aggregation = response.getAggregations().get("folders");
-            List<? extends Terms.Bucket> buckets = aggregation.getBuckets();
+        // aggregations
+        assertThat(response.getAggregations(), hasKey("folders"));
+        ESTermsAggregation aggregation = response.getAggregations().get("folders");
+        List<ESTermsAggregation.ESTermsBucket> buckets = aggregation.getBuckets();
 
-            assertThat(buckets, iterableWithSize(10));
-        } else {
-            // We need to use the old deprecated fashion for version < 5.0
-            // We do minimal tests
-            // Run aggs
-            fr.pilato.elasticsearch.crawler.fs.client.SearchResponse response = elasticsearchClient.searchJson(getCrawlerName(),
-                    "{\n" +
-                            "  \"size\": 0, \n" +
-                            "  \"aggs\": {\n" +
-                            "    \"folders\": {\n" +
-                            "      \"terms\": {\n" +
-                            "        \"field\": \"path.virtual.tree\"\n" +
-                            "      }\n" +
-                            "    }\n" +
-                            "  }\n" +
-                            "}");
-            assertThat(response.getHits().getTotal(), is(subdirs +1));
-
-            // aggregations
-            assertThat(response.getAggregations(), hasKey("folders"));
-            List<Object> buckets = (List) extractFromPath(response.getAggregations(), "folders").get("buckets");
-
-            assertThat(buckets, iterableWithSize(10));
-        }
+        assertThat(buckets, iterableWithSize(10));
 
         // Check files
-        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(
-                        new SearchSourceBuilder()
-                                .size(1000)
-                                .sort("path.virtual")), RequestOptions.DEFAULT);
-        assertThat(response.getHits().getTotalHits(), is(subdirs+1));
+        response = esClient.search(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withSize(1000)
+                .withSort("path.virtual"));
+        assertThat(response.getTotalHits(), is(subdirs+1));
 
         for (int i = 0; i < subdirs; i++) {
             pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "sample.txt", endsWith("/" + "sample.txt"));
         }
 
         // Check folders
-        response = elasticsearchClient.search(new SearchRequest(getCrawlerName() + INDEX_SUFFIX_FOLDER).source(
-                        new SearchSourceBuilder()
-                                .size(1000)
-                                .sort("virtual")), RequestOptions.DEFAULT);
-        assertThat(response.getHits().getTotalHits(), is(subdirs+2));
+        response = esClient.search(new ESSearchRequest()
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER)
+                .withSize(1000)
+                .withSort("virtual"));
+        assertThat(response.getTotalHits(), is(subdirs+2));
 
         // Let's remove the main subdir and wait...
         staticLogger.debug("  --> Removing all dirs from [{}]", mainDir);
         deleteRecursively(mainDir);
 
         // We expect to have 1 doc now
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
-    private void pathHitTester(SearchResponse response, int position, Function<SearchHit, Map<String, Object>> extractPath,
+    private void pathHitTester(ESSearchResponse response, int position, Function<ESSearchHit, Map<String, Object>> extractPath,
                                String expectedReal, Matcher<String> expectedVirtual) {
-        SearchHit hit = response.getHits().getHits()[position];
+        ESSearchHit hit = response.getHits().get(position);
         Map<String, Object> path = extractPath.apply(hit);
         String real = (String) path.get("real");
         String virtual = (String) path.get("virtual");

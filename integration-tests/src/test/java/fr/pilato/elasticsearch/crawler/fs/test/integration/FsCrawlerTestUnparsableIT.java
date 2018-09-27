@@ -19,8 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
 import org.junit.Test;
 
 import java.nio.file.FileSystems;
@@ -44,7 +44,7 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
         startCrawler();
 
         // We expect to have two files
-        countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
     /**
@@ -70,6 +70,6 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have one doc first
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
     }
 }

@@ -21,16 +21,16 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.List;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -53,13 +53,13 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         Files.write(currentTestResourceDir.resolve("second.txt"), "This is a second file".getBytes());
 
         // We expect to have two files
-        SearchResponse responseNotModified = countTestHelper(new SearchRequest(getCrawlerName()).source(
-                    new SearchSourceBuilder().sort(Doc.FIELD_NAMES.FILE + "." + File.FIELD_NAMES.CREATED)
-                )
+        ESSearchResponse responseNotModified = countTestHelper(new ESSearchRequest()
+                        .withIndex(getCrawlerName())
+                        .withSort(Doc.FIELD_NAMES.FILE + "." + File.FIELD_NAMES.CREATED)
                 , 2L, currentTestResourceDir);
 
         // We look at the dates.
-        showHitDates(responseNotModified.getHits().getHits());
+        showHitDates(responseNotModified.getHits());
 
         // We record what the current date is
         Instant mockAccessDate = Instant.now(); //can be LocalDateTime
@@ -72,20 +72,20 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         Files.write(currentTestResourceDir.resolve("third.txt"), "This is a third file".getBytes());
 
         // We expect to have 3 files
-        SearchResponse responseModified = countTestHelper(new SearchRequest(getCrawlerName()).source(
-                new SearchSourceBuilder().sort(Doc.FIELD_NAMES.FILE + "." + File.FIELD_NAMES.CREATED)
-                )
+        ESSearchResponse responseModified = countTestHelper(new ESSearchRequest()
+                        .withIndex(getCrawlerName())
+                        .withSort(Doc.FIELD_NAMES.FILE + "." + File.FIELD_NAMES.CREATED)
                 , 3L, currentTestResourceDir);
 
         // We look at the dates.
-        showHitDates(responseModified.getHits().getHits());
+        showHitDates(responseModified.getHits());
 
         // Let's compare dates from 1st run and 2nd run
-        compareHits(responseNotModified.getHits().getHits()[0], responseModified.getHits().getHits()[0], true);
-        compareHits(responseNotModified.getHits().getHits()[1], responseModified.getHits().getHits()[1], false);
+        compareHits(responseNotModified.getHits().get(0), responseModified.getHits().get(0), true);
+        compareHits(responseNotModified.getHits().get(1), responseModified.getHits().get(1), false);
     }
 
-    private void compareHits(SearchHit hitBefore, SearchHit hitAfter, boolean shouldBeIdentical) {
+    private void compareHits(ESSearchHit hitBefore, ESSearchHit hitAfter, boolean shouldBeIdentical) {
         String hitBeforeCreated = (String) extractFromPath(hitBefore.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CREATED);
         String hitBeforeIndexingDate = (String) extractFromPath(hitBefore.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE);
         String hitBeforeLastModified = (String) extractFromPath(hitBefore.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED);
@@ -112,10 +112,10 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         }
     }
 
-    private void showHitDates(SearchHit[] hits) {
+    private void showHitDates(List<ESSearchHit> hits) {
         logger.info("|        created date        |        indexing date       |     last modified date     |     last accessed date     |");
         logger.info("|----------------------------|----------------------------|----------------------------|----------------------------|");
-        for (SearchHit hit : hits) {
+        for (ESSearchHit hit : hits) {
             String created = (String) extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CREATED);
             String indexingDate = (String) extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE);
             String lastModified = (String) extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED);

@@ -21,15 +21,13 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.client.RequestOptions;
 import org.junit.After;
 import org.junit.Before;
 
@@ -46,11 +44,11 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     @Before
     public void cleanExistingIndex() throws IOException {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        elasticsearchClient.indices().delete(new DeleteIndexRequest(getCrawlerName() + "*"), RequestOptions.DEFAULT);
+        esClient.deleteIndex(getCrawlerName() + "*");
     }
 
     @After
-    public void shutdownCrawler() throws InterruptedException {
+    public void shutdownCrawler() throws InterruptedException, IOException {
         stopCrawler();
     }
 
@@ -115,7 +113,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
             }
         }, duration.seconds(), TimeUnit.SECONDS), equalTo(true));
 
-        countTestHelper(new SearchRequest(jobName), null, null);
+        countTestHelper(new ESSearchRequest().withIndex(jobName), null, null);
 
         // Make sure we refresh indexed docs before launching tests
         refresh();
@@ -123,7 +121,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         return crawler;
     }
 
-    private void stopCrawler() throws InterruptedException {
+    private void stopCrawler() throws InterruptedException, IOException {
         if (crawler != null) {
             staticLogger.info("  --> Stopping crawler");
             crawler.close();

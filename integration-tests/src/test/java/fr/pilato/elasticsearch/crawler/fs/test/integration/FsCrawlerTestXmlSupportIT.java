@@ -19,12 +19,12 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESRangeQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Test;
 
 /**
@@ -37,20 +37,22 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_xml_enabled() throws Exception {
-        assumeVersion6AtLeast();
         Fs fs = startCrawlerDefinition()
                 .setXmlSupport(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        SearchResponse response = countTestHelper(new SearchRequest(getCrawlerName()), 3L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
 
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.matchQuery("title", "maeve"))), 1L, null);
-        countTestHelper(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder()
-                .query(QueryBuilders.rangeQuery("price").from(5).to(6))), 2L, null);
+        countTestHelper(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withESQuery(new ESMatchQuery("title", "maeve")),
+                1L, null);
+        countTestHelper(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withESQuery(new ESRangeQuery("price").withFrom(5).withTo(6)), 2L, null);
 
         logger.info("XML documents converted to:");
-        for (SearchHit hit : response.getHits().getHits()) {
+        for (ESSearchHit hit : response.getHits()) {
             logger.info("{}", hit.getSourceAsString());
         }
     }

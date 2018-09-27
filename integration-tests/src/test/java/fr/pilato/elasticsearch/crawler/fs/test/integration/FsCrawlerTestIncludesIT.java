@@ -19,8 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import org.elasticsearch.action.search.SearchRequest;
 import org.junit.Test;
 
 /**
@@ -33,7 +33,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
                 .addInclude("*/*_include\\.txt")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-        countTestHelper(new SearchRequest(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 
     @Test
@@ -44,7 +44,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have seven files
-        countTestHelper(new SearchRequest(getCrawlerName()), 7L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
     }
 
     @Test
@@ -56,6 +56,6 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have one file
-        countTestHelper(new SearchRequest(getCrawlerName()), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 }

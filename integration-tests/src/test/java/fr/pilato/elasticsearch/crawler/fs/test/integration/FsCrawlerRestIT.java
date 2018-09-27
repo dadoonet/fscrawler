@@ -19,16 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.Before;
@@ -100,9 +98,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all docs
-        SearchResponse response = countTestHelper(new SearchRequest(getCrawlerName()), Files.list(from).count(), null, TimeValue
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), Files.list(from).count(), null, TimeValue
                 .timeValueMinutes(2));
-        for (SearchHit hit : response.getHits()) {
+        for (ESSearchHit hit : response.getHits()) {
             assertThat(hit.getSourceAsMap(), hasKey("file"));
             assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
         }
@@ -123,7 +121,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all our documents docs
-        countTestHelper(new SearchRequest(getCrawlerName()), numFiles.longValue(), null, TimeValue.timeValueMinutes(2));
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), numFiles.longValue(), null, TimeValue.timeValueMinutes(2));
 
         // Let's test every single document that has been enriched
         checkDocument("add_external.txt", hit -> {
@@ -233,19 +231,19 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     private void checkDocument(String filename, HitChecker checker) throws IOException {
-        SearchResponse response = elasticsearchClient.search(new SearchRequest(getCrawlerName()).source(new SearchSourceBuilder().query(
-                QueryBuilders.termQuery("file.filename", filename)
-        )), RequestOptions.DEFAULT);
+        ESSearchResponse response = esClient.search(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withESQuery(new ESTermQuery("file.filename", filename)));
 
-        assertThat(response.getHits().totalHits, is(1L));
-        SearchHit hit = response.getHits().getHits()[0];
+        assertThat(response.getTotalHits(), is(1L));
+        ESSearchHit hit = response.getHits().get(0);
         logger.debug("For [file.filename:{}], we got: {}", filename, hit.getSourceAsString());
 
         checker.check(hit);
     }
 
     private interface HitChecker {
-        void check(SearchHit hit);
+        void check(ESSearchHit hit);
     }
 
     private static final Map<String, Object> debugOption = new HashMap<>();

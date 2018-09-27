@@ -20,8 +20,23 @@
 package fr.pilato.elasticsearch.crawler.fs.client.v6;
 
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESDocumentField;
+import fr.pilato.elasticsearch.crawler.fs.client.ESHighlightField;
+import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESPrefixQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESRangeQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
+import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -29,70 +44,163 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.ingest.GetPipelineRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
-import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.document.DocumentField;
+import org.elasticsearch.common.text.Text;
+import org.elasticsearch.common.unit.ByteSizeValue;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
 import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.Node;
+import static org.elasticsearch.action.support.IndicesOptions.LENIENT_EXPAND_OPEN;
 
 /**
- * Simple Elasticsearch client over HTTP or HTTPS.
- * Only needed methods are exposed.
+ * Elasticsearch Client for Clusters running v6.
  */
-public class ElasticsearchClientV6 extends RestHighLevelClient
-        implements ElasticsearchClientBase {
+public class ElasticsearchClientV6 implements ElasticsearchClientBase {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClientV6.class);
+    private final Path config;
+    private final FsSettings settings;
 
-    private boolean INGEST_SUPPORT = true;
-    /**
-     * Type name for Elasticsearch versions < 6.0
-     * @deprecated Will be removed with Elasticsearch V8
-     */
-    @Deprecated
-    private static final String INDEX_TYPE_DOC_V5 = "doc";
+    private RestHighLevelClient client = null;
+    private BulkProcessor bulkProcessor = null;
+
     /**
      * Type name for Elasticsearch versions >= 6.0
      * @deprecated Will be removed with Elasticsearch V8
      */
     @Deprecated
     private static final String INDEX_TYPE_DOC = "_doc";
-    /**
-     * Type name to use. It depends on elasticsearch version.
-     * @deprecated Will be removed with Elasticsearch V8
-     */
-    @Deprecated
-    private String defaultTypeName = INDEX_TYPE_DOC;
-    private Version VERSION = null;
 
-    public ElasticsearchClientV6(RestClientBuilder client) {
-        super(client);
+    public ElasticsearchClientV6(Path config, FsSettings settings) {
+        this.config = config;
+        this.settings = settings;
     }
 
-    /**
-     * Shutdown the internal REST Low Level client
-     * @throws IOException In case of error
-     */
-    public void shutdown() throws IOException {
-        logger.debug("Closing REST client");
-        close();
+    @Override
+    public void start() throws IOException {
+        if (client != null) {
+            // The client has already been initialized. Let's skip this again
+            return;
+        }
+
+        try {
+            // Create an elasticsearch client
+            client = new RestHighLevelClient(buildRestClient(settings.getElasticsearch()));
+            // We set what will be elasticsearch behavior as it depends on the cluster version
+            logger.info("Elasticsearch Client V{} connected to a node running V{}", "6", getVersion());
+        } catch (Exception e) {
+            logger.warn("failed to create elasticsearch client, disabling crawler...");
+            throw e;
+        }
+
+        if (settings.getElasticsearch().getPipeline() != null) {
+            // Check that the pipeline exists
+            if (!isExistingPipeline(settings.getElasticsearch().getPipeline())) {
+                throw new RuntimeException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
+                        ", but it does not exist.");
+            }
+        }
+
+        BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
+                (request, bulkListener) -> client.bulkAsync(request, RequestOptions.DEFAULT, bulkListener);
+
+        bulkProcessor = BulkProcessor.builder(bulkConsumer, new DebugListener(logger))
+                .setBulkActions(settings.getElasticsearch().getBulkSize())
+                .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
+                .setBulkSize(new ByteSizeValue(settings.getElasticsearch().getByteSize().getBytes()))
+                .build();
+    }
+
+    @Override
+    public ESVersion getVersion() throws IOException {
+        Version version = client.info(RequestOptions.DEFAULT).getVersion();
+        return ESVersion.fromString(version.toString());
+    }
+
+    class DebugListener implements BulkProcessor.Listener {
+        private final Logger logger;
+
+        DebugListener(Logger logger) {
+            this.logger = logger;
+        }
+
+        @Override public void beforeBulk(long executionId, BulkRequest request) {
+            logger.trace("Sending a bulk request of [{}] requests", request.numberOfActions());
+        }
+
+        @Override public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+            logger.trace("Executed bulk request with [{}] requests", request.numberOfActions());
+            if (response.hasFailures()) {
+                final int[] failures = {0};
+                response.iterator().forEachRemaining(bir -> {
+                    if (bir.isFailed()) {
+                        failures[0]++;
+                        logger.debug("Error caught for [{}]/[{}]/[{}]: {}", bir.getIndex(),
+                                bir.getType(), bir.getId(), bir.getFailureMessage());
+                    };
+                });
+                logger.warn("Got [{}] failures of [{}] requests", failures[0], request.numberOfActions());
+            }
+        }
+
+        @Override public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+            logger.warn("Got a hard failure when executing the bulk request", failure);
+        }
     }
 
     /**
@@ -106,8 +214,10 @@ public class ElasticsearchClientV6 extends RestHighLevelClient
         logger.debug("create index [{}]", index);
         logger.trace("index settings: [{}]", indexSettings);
         CreateIndexRequest cir = new CreateIndexRequest(index);
-        cir.settings(indexSettings, XContentType.JSON);
-        CreateIndexResponse indexResponse = indices().create(cir, RequestOptions.DEFAULT);
+        if (Strings.hasText(indexSettings)) {
+            cir.source(indexSettings, XContentType.JSON);
+        }
+        CreateIndexResponse indexResponse = client.indices().create(cir, RequestOptions.DEFAULT);
         if (!indexResponse.isAcknowledged() && !ignoreErrors) {
             throw new RuntimeException("index already exists");
         }
@@ -123,28 +233,24 @@ public class ElasticsearchClientV6 extends RestHighLevelClient
         logger.debug("is existing index [{}]", index);
         GetIndexRequest gir = new GetIndexRequest();
         gir.indices(index);
-        return indices().exists(gir, RequestOptions.DEFAULT);
+        return client.indices().exists(gir, RequestOptions.DEFAULT);
     }
 
     /**
      * Check if a pipeline exists
-     * @param pipeline pipeline name
+     * @param pipelineName pipeline name
      * @return true if the pipeline exists, false otherwise
      * @throws IOException In case of error
      */
-    public boolean isExistingPipeline(String pipeline) throws IOException {
-        logger.debug("is existing pipeline [{}]", pipeline);
-
+    public boolean isExistingPipeline(String pipelineName) throws IOException {
+        logger.debug("is existing pipeline [{}]", pipelineName);
         try {
-            Response restResponse = getLowLevelClient().performRequest(new Request("GET", "/_ingest/pipeline/" + pipeline));
-            logger.trace("get pipeline metadata response: {}", LowLevelClientJsonUtil.asMap(restResponse));
-            return true;
-        } catch (ResponseException e) {
-            if (e.getResponse().getStatusLine().getStatusCode() == 404) {
-                logger.debug("pipeline [{}] does not exist", pipeline);
+            return client.ingest().getPipeline(new GetPipelineRequest(pipelineName), RequestOptions.DEFAULT).isFound();
+        } catch (ElasticsearchStatusException e) {
+            if (e.status().getStatus() == 404) {
                 return false;
             }
-            throw e;
+            throw new IOException(e);
         }
     }
 
@@ -155,17 +261,12 @@ public class ElasticsearchClientV6 extends RestHighLevelClient
      */
     public void refresh(String index) throws IOException {
         logger.debug("refresh index [{}]", index);
-
-        String path = "/";
-
-        if (index != null) {
-            path += index + "/";
+        RefreshRequest request = new RefreshRequest();
+        if (Strings.hasText(index)) {
+            request.indices(index);
         }
-
-        path += "_refresh";
-
-        Response restResponse = getLowLevelClient().performRequest(new Request("POST", path));
-        logger.trace("refresh raw response: {}", LowLevelClientJsonUtil.asMap(restResponse));
+        RefreshResponse refresh = client.indices().refresh(request, RequestOptions.DEFAULT);
+        logger.trace("refresh response: {}", refresh);
     }
 
     /**
@@ -175,11 +276,9 @@ public class ElasticsearchClientV6 extends RestHighLevelClient
      */
     public void waitForHealthyIndex(String index) throws IOException {
         logger.debug("wait for yellow health on index [{}]", index);
-
-        Request request = new Request("GET", "/_cluster/health/" + index);
-        request.addParameter("wait_for_status", "yellow");
-        Response restResponse = getLowLevelClient().performRequest(request);
-        logger.trace("health response: {}", LowLevelClientJsonUtil.asMap(restResponse));
+        ClusterHealthResponse health = client.cluster().health(new ClusterHealthRequest(index).waitForYellowStatus(),
+                RequestOptions.DEFAULT);
+        logger.trace("health response: {}", health);
     }
 
     /**
@@ -192,11 +291,6 @@ public class ElasticsearchClientV6 extends RestHighLevelClient
      */
     public int reindex(String sourceIndex, String sourceType, String targetIndex) throws IOException {
         logger.debug("reindex [{}]/[{}] -> [{}]/[doc]", sourceIndex, sourceType, targetIndex);
-
-        if (VERSION.major < 2 || (VERSION.major == 2 && VERSION.minor < 4)) {
-            logger.warn("Can not use reindex API with elasticsearch [{}]", VERSION);
-            return 0;
-        }
 
         String reindexQuery = "{  \"source\": {\n" +
                 "    \"index\": \"" + sourceIndex + "\",\n" +
@@ -213,8 +307,8 @@ public class ElasticsearchClientV6 extends RestHighLevelClient
         Request request = new Request("POST", "/_reindex");
         request.setJsonEntity(reindexQuery);
 
-        Response restResponse = getLowLevelClient().performRequest(request);
-        Map<String, Object> response = LowLevelClientJsonUtil.asMap(restResponse);
+        Response restResponse = client.getLowLevelClient().performRequest(request);
+        Map<String, Object> response = asMap(restResponse);
         logger.debug("reindex response: {}", response);
 
         return (int) response.get("total");
@@ -229,12 +323,6 @@ public class ElasticsearchClientV6 extends RestHighLevelClient
     public void deleteByQuery(String index, String type) throws IOException {
         logger.debug("deleteByQuery [{}]/[{}]", index, type);
 
-        if (VERSION.onOrBefore(Version.V_5_0_0_alpha1)) {
-            logger.warn("Can not use _delete_by_query API with elasticsearch [{}]. You have to reindex probably to get rid of [{}]/[{}].",
-                    VERSION, index, type);
-            return;
-        }
-
         String deleteByQuery = "{\n" +
                 "  \"query\": {\n" +
                 "    \"match_all\": {}\n" +
@@ -243,63 +331,55 @@ public class ElasticsearchClientV6 extends RestHighLevelClient
 
         Request request = new Request("POST", "/" + index + "/" + type + "/_delete_by_query");
         request.setJsonEntity(deleteByQuery);
-        Response restResponse = getLowLevelClient().performRequest(request);
-        Map<String, Object> response = LowLevelClientJsonUtil.asMap(restResponse);
+        Response restResponse = client.getLowLevelClient().performRequest(request);
+        Map<String, Object> response = asMap(restResponse);
         logger.debug("reindex response: {}", response);
     }
 
     // Utility methods
 
-    public void setElasticsearchBehavior() throws IOException {
-        if (VERSION == null) {
-            VERSION = info(RequestOptions.DEFAULT).getVersion();
-
-            // With elasticsearch 5.0.0, we have ingest node
-            if (VERSION.onOrAfter(Version.V_5_0_0_alpha1)) {
-                INGEST_SUPPORT = true;
-                logger.debug("Using elasticsearch >= 5, so we can use ingest node feature");
-            } else {
-                INGEST_SUPPORT = false;
-                logger.debug("Using elasticsearch < 5, so we can't use ingest node feature");
-            }
-
-            // With elasticsearch 6.x, we can use _doc as the default type name
-            if (VERSION.onOrAfter(Version.V_6_0_0)) {
-                logger.debug("Using elasticsearch >= 6, so we can use {} as the default type name", defaultTypeName);
-            } else {
-                defaultTypeName = INDEX_TYPE_DOC_V5;
-                logger.debug("Using elasticsearch < 6, so we use {} as the default type name", defaultTypeName);
-            }
-        }
-    }
-
     public boolean isIngestSupported() {
-        return INGEST_SUPPORT;
-    }
-
-    public Version getVersion() {
-        return VERSION;
+        return true;
     }
 
     public String getDefaultTypeName() {
-        return defaultTypeName;
+        return INDEX_TYPE_DOC;
     }
 
-    public static Node decodeCloudId(String cloudId) {
-     	// 1. Ignore anything before `:`.
-        String id = cloudId.substring(cloudId.indexOf(':')+1);
-
-     	// 2. base64 decode
-        String decoded = new String(Base64.getDecoder().decode(id));
-
-        // 3. separate based on `$`
-        String[] words = decoded.split("\\$");
-
- 	    // 4. form the URLs
-        return Node.builder().setHost(words[1] + "." + words[0]).setPort(443).setScheme(Node.Scheme.HTTPS).build();
+    @Override
+    public void index(String index, String type, String id, String json, String pipeline) {
+        bulkProcessor.add(new IndexRequest(index, type, id).setPipeline(pipeline).source(json, XContentType.JSON));
     }
 
-    public static RestClientBuilder buildRestClient(Elasticsearch settings) {
+    @Override
+    public void indexSingle(String index, String type, String id, String json) throws IOException {
+        IndexRequest request = new IndexRequest(index, type, id);
+        request.source(json, XContentType.JSON);
+        client.index(request, RequestOptions.DEFAULT);
+    }
+
+    @Override
+    public void delete(String index, String type, String id) {
+        bulkProcessor.add(new DeleteRequest(index, type, id));
+    }
+
+    @Override
+    public void close() throws IOException {
+        logger.debug("Closing Elasticsearch client manager");
+        if (bulkProcessor != null) {
+            try {
+                bulkProcessor.awaitClose(30, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warn("Did not succeed in closing the bulk processor for documents", e);
+                throw new IOException(e);
+            }
+        }
+        if (client != null) {
+            client.close();
+        }
+    }
+
+    private static RestClientBuilder buildRestClient(Elasticsearch settings) {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
         settings.getNodes().forEach(node -> {
             if (node.getCloudId() != null) {
@@ -327,97 +407,200 @@ public class ElasticsearchClientV6 extends RestHighLevelClient
         return builder;
     }
 
-    // Deprecated methods
-    /**
-     * Search for stored fields in elasticsearch: V2 implementation using fields vs source_fields.
-     * TODO: Remove when we won't support anymore 2.0
-     */
-    @Deprecated
-    public Collection<String> getFromStoredFieldsV2(String index, int size, String fieldFullPath, String path, TermQueryBuilder termQuery)
-            throws IOException {
-        Collection<String> files = new ArrayList<>();
-        // We need to fallback on old implementation
-        logger.debug("using low level client search [{}], request [{}]", index, termQuery);
+    public void createIndices() throws Exception {
+        String elasticsearchVersion;
+        Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
 
-        String url = "/";
+        // Let's read the current version of elasticsearch cluster
+        Version version = client.info(RequestOptions.DEFAULT).getVersion();
+        logger.debug("FS crawler connected to an elasticsearch [{}] node.", version.toString());
 
-        if (index != null) {
-            url += index + "/";
+        elasticsearchVersion = Byte.toString(version.major);
+
+        // If needed, we create the new settings for this files index
+        if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
+            createIndex(jobMappingDir, elasticsearchVersion, INDEX_SETTINGS_FILE, settings.getElasticsearch().getIndex());
+        } else {
+            createIndex(settings.getElasticsearch().getIndex(), true, null);
         }
 
-        url += "_search";
+        // If needed, we create the new settings for this folder index
+        if (settings.getFs().isIndexFolders()) {
+            createIndex(jobMappingDir, elasticsearchVersion, INDEX_SETTINGS_FOLDER_FILE, settings.getElasticsearch().getIndexFolder());
+        } else {
+            createIndex(settings.getElasticsearch().getIndexFolder(), true, null);
+        }
+    }
 
-        Request request = new Request("GET", url);
+    @Override
+    public ESSearchResponse search(ESSearchRequest request) throws IOException {
 
-        if (termQuery !=  null) {
-            request.addParameter("q", termQuery.fieldName() + ":" + termQuery.value());
+        SearchRequest searchRequest = new SearchRequest();
+        if (Strings.hasText(request.getIndex())) {
+            searchRequest.indices(request.getIndex());
         }
 
-        request.addParameter("fields", fieldFullPath);
-        request.addParameter("size", Integer.toString(size));
+        SearchSourceBuilder ssb = new SearchSourceBuilder();
+        if (request.getSize() != null) {
+            ssb.size(request.getSize());
+        }
+        if (!request.getFields().isEmpty()) {
+            ssb.storedFields(request.getFields());
+        }
+        if (request.getESQuery() != null) {
+            ssb.query(toElasticsearchQuery(request.getESQuery()));
+        }
+        if (Strings.hasText(request.getSort())) {
+            ssb.sort(request.getSort());
+        }
+        for (String highlighter : request.getHighlighters()) {
+            ssb.highlighter(new HighlightBuilder().field(highlighter));
+        }
+        for (ESTermsAggregation aggregation : request.getAggregations()) {
+            ssb.aggregation(AggregationBuilders.terms(aggregation.getName()).field(aggregation.getField()));
+        }
 
-        Response restResponse = getLowLevelClient().performRequest(request);
-        fr.pilato.elasticsearch.crawler.fs.client.v6.SearchResponse response = LowLevelClientJsonUtil.deserialize(restResponse, fr.pilato.elasticsearch.crawler.fs.client.v6.SearchResponse.class);
+        searchRequest.source(ssb);
+        searchRequest.indicesOptions(LENIENT_EXPAND_OPEN);
 
-        logger.trace("Response [{}]", response.toString());
-        if (response.getHits() != null && response.getHits().getHits() != null) {
-            for (fr.pilato.elasticsearch.crawler.fs.client.v6.SearchResponse.Hit hit : response.getHits().getHits()) {
-                String name;
-                if (hit.getFields() != null
-                        && hit.getFields().get(fieldFullPath) != null) {
-                    name = getName(hit.getFields().get(fieldFullPath));
-                } else {
-                    // Houston, we have a problem ! We can't get the old files from ES
-                    logger.warn("Can't find stored field name to check existing filenames in path [{}]. " +
-                            "Please set store: true on field [{}]", path, fieldFullPath);
-                    throw new RuntimeException("Mapping is incorrect: please set stored: true on field [" +
-                            fieldFullPath + "].");
+        SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+        ESSearchResponse esSearchResponse = new ESSearchResponse();
+        if (response.getHits() != null) {
+            for (SearchHit hit : response.getHits()) {
+                ESSearchHit esSearchHit = new ESSearchHit();
+                if (!hit.getFields().isEmpty()) {
+                    Map<String, ESDocumentField> esFields = new HashMap<>();
+                    for (Map.Entry<String, DocumentField> entry : hit.getFields().entrySet()) {
+                        esFields.put(entry.getKey(), new ESDocumentField(entry.getKey(), entry.getValue().getValues()));
+                    }
+                    esSearchHit.setFields(esFields);
                 }
-                files.add(name);
+                esSearchHit.setIndex(hit.getIndex());
+                esSearchHit.setId(hit.getId());
+                esSearchHit.setSourceAsMap(hit.getSourceAsMap());
+                esSearchHit.setSourceAsString(hit.getSourceAsString());
+
+                hit.getHighlightFields().forEach((key, value) -> {
+                    String[] texts = new String[value.fragments().length];
+                    for (int i = 0; i < value.fragments().length; i++) {
+                        Text fragment = value.fragments()[i];
+                        texts[i] = fragment.string();
+                    }
+                    esSearchHit.addHighlightField(key, new ESHighlightField(key, texts));
+                });
+
+                esSearchResponse.addHit(esSearchHit);
+            }
+
+            esSearchResponse.setTotalHits(response.getHits().getTotalHits());
+
+            if (response.getAggregations() != null) {
+                for (String name : response.getAggregations().asMap().keySet()) {
+                    Terms termsAgg = response.getAggregations().get(name);
+                    ESTermsAggregation aggregation = new ESTermsAggregation(name, null);
+                    for (Terms.Bucket bucket : termsAgg.getBuckets()) {
+                        aggregation.addBucket(new ESTermsAggregation.ESTermsBucket(bucket.getKeyAsString(), bucket.getDocCount()));
+                    }
+                    esSearchResponse.addAggregation(name, aggregation);
+                }
             }
         }
 
-        return files;
+        return esSearchResponse;
     }
 
-    @Deprecated
-    private String getName(Object nameObject) {
-        if (nameObject instanceof List) {
-            return String.valueOf (((List) nameObject).get(0));
+    private QueryBuilder toElasticsearchQuery(ESQuery query) {
+        if (query instanceof ESTermQuery) {
+            ESTermQuery esQuery = (ESTermQuery) query;
+            return QueryBuilders.termQuery(esQuery.getField(), esQuery.getValue());
         }
-
-        throw new RuntimeException("search result, " + nameObject +
-                " not of type List<String> but " +
-                nameObject.getClass().getName() + " with value " + nameObject);
+        if (query instanceof ESMatchQuery) {
+            ESMatchQuery esQuery = (ESMatchQuery) query;
+            return QueryBuilders.matchQuery(esQuery.getField(), esQuery.getValue());
+        }
+        if (query instanceof ESPrefixQuery) {
+            ESPrefixQuery esQuery = (ESPrefixQuery) query;
+            return QueryBuilders.prefixQuery(esQuery.getField(), esQuery.getValue());
+        }
+        if (query instanceof ESRangeQuery) {
+            ESRangeQuery esQuery = (ESRangeQuery) query;
+            RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(esQuery.getField());
+            if (esQuery.getFrom() != null) {
+                rangeQuery.from(esQuery.getFrom());
+            }
+            if (esQuery.getTo() != null) {
+                rangeQuery.to(esQuery.getTo());
+            }
+            return rangeQuery;
+        }
+        if (query instanceof ESBoolQuery) {
+            ESBoolQuery esQuery = (ESBoolQuery) query;
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            for (ESQuery clause : esQuery.getMustClauses()) {
+                boolQuery.must(toElasticsearchQuery(clause));
+            }
+            return boolQuery;
+        }
+        throw new IllegalArgumentException("Query " + query.getClass().getSimpleName() + " not implemented yet");
     }
 
-    /**
-     * Search with a JSON Body
-     * TODO: Remove when we won't support anymore 2.0
-     * @param index Index. Might be null.
-     * @param json  Json Source
-     * @return The Response object
-     * @throws IOException if something goes wrong
-     */
-    @Deprecated
-    public fr.pilato.elasticsearch.crawler.fs.client.v6.SearchResponse searchJson(String index, String json) throws IOException {
-        logger.debug("search [{}], request [{}]", index, json);
+    @Override
+    public void deleteIndex(String index) throws IOException {
+        client.indices().delete(new DeleteIndexRequest(index), RequestOptions.DEFAULT);
+    }
 
-        String path = "/";
+    @Override
+    public void flush() {
+        bulkProcessor.flush();
+    }
 
-        if (index != null) {
-            path += index + "/";
+    @Override
+    public void performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException {
+        Request request = new Request(method, endpoint);
+        if (Strings.hasText(jsonEntity)) {
+            request.setJsonEntity(jsonEntity);
         }
 
-        path += "_search";
+        client.getLowLevelClient().performRequest(request);
+    }
 
-        Request request = new Request("GET", path);
-        request.setJsonEntity(json);
+    @Override
+    public ESSearchHit get(String index, String type, String id) throws IOException {
+        GetRequest request = new GetRequest(index, type, id);
+        GetResponse response = client.get(request, RequestOptions.DEFAULT);
+        ESSearchHit hit = new ESSearchHit();
+        hit.setIndex(response.getIndex());
+        hit.setId(response.getId());
+        hit.setVersion(response.getVersion());
+        hit.setSourceAsMap(response.getSourceAsMap());
+        return hit;
+    }
 
-        Response restResponse = getLowLevelClient().performRequest(request);
-        fr.pilato.elasticsearch.crawler.fs.client.v6.SearchResponse searchResponse = LowLevelClientJsonUtil.deserialize(restResponse, SearchResponse.class);
+    @Override
+    public boolean exists(String index, String type, String id) throws IOException {
+        return client.exists(new GetRequest(index, type, id), RequestOptions.DEFAULT);
+    }
 
-        logger.trace("search response: {}", searchResponse);
-        return searchResponse;
+    private void createIndex(Path jobMappingDir, String elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
+        try {
+            // If needed, we create the new settings for this files index
+            String indexSettings = readJsonFile(jobMappingDir, config, elasticsearchVersion, indexSettingsFile);
+
+            createIndex(indexName, true, indexSettings);
+        } catch (Exception e) {
+            logger.warn("failed to create index [{}], disabling crawler...", indexName);
+            throw e;
+        }
+    }
+
+    static Map<String, Object> asMap(Response response) {
+        try {
+            if (response.getEntity() == null) {
+                return null;
+            }
+            return JsonUtil.asMap(response.getEntity().getContent());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

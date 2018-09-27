@@ -23,7 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.decodeCloudId;
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
