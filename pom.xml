@@ -37,7 +37,7 @@
     <properties>
         <elasticsearch.version>6.4.1</elasticsearch.version>
         <elasticsearch6.version>${elasticsearch.version}</elasticsearch6.version>
-        <elasticsearch5.version>6.4.1</elasticsearch5.version>
+        <elasticsearch5.version>5.6.11</elasticsearch5.version>
 
         <tika.version>1.19</tika.version>
         <jackson.version>2.9.7</jackson.version>
@@ -754,10 +754,33 @@
             </properties>
         </profile>
         <profile>
+            <id>es-6x</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <integ.elasticsearch.version>${elasticsearch6.version}</integ.elasticsearch.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                    <artifactId>fscrawler-elasticsearch-client-v6</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>es-5x</id>
             <properties>
-                <integ.elasticsearch.version>5.6.5</integ.elasticsearch.version>
+                <integ.elasticsearch.version>${elasticsearch5.version}</integ.elasticsearch.version>
             </properties>
+            <dependencies>
+                <!-- TODO Include version 5
+                <dependency>
+                    <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                    <artifactId>fscrawler-elasticsearch-client-v5</artifactId>
+                </dependency>
+                -->
+            </dependencies>
         </profile>
         <profile>
             <id>check_cve_anonymous</id>
