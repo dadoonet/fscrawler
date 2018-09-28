@@ -324,6 +324,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             client = null;
         }
 
+        if (esClient != null) {
+            esClient.close();
+            esClient = null;
+        }
+
         /*
         if (container != null) {
             container.close();

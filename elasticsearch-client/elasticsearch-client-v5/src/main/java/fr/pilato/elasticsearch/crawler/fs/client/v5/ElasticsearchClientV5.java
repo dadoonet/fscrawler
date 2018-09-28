@@ -63,6 +63,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Response;
+import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -87,6 +88,8 @@ import org.elasticsearch.threadpool.ThreadPool;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -97,6 +100,7 @@ import java.util.function.BiConsumer;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
 import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.Node;
 
@@ -138,7 +142,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
             // Create an elasticsearch client
             this.client = new RestHighLevelClient(lowLevelClient);
             // We set what will be elasticsearch behavior as it depends on the cluster version
-            logger.info("Elasticsearch Client V{} connected to a node running V{}", "6", getVersion());
+            logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", "5", getVersion());
         } catch (Exception e) {
             logger.warn("failed to create elasticsearch client, disabling crawler...");
             throw e;
@@ -210,18 +214,23 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
     public void createIndex(String index, boolean ignoreErrors, String indexSettings) throws IOException {
         logger.debug("create index [{}]", index);
         logger.trace("index settings: [{}]", indexSettings);
-        CreateIndexRequest cir = new CreateIndexRequest(index);
-        if (Strings.hasText(indexSettings)) {
-            cir.source(indexSettings, XContentType.JSON);
-        }
-        throw new IllegalArgumentException("NOT IMPLEMENTED");
 
-        /*
-        CreateIndexResponse indexResponse = client.indices().create(cir);
-        if (!indexResponse.isAcknowledged() && !ignoreErrors) {
-            throw new RuntimeException("index already exists");
+        try {
+            Response response = lowLevelClient.performRequest("PUT", "/" + index,
+                    Collections.emptyMap(), createEntity(indexSettings));
+            logger.trace("create index response: {}", asMap(response));
+        } catch (ResponseException e) {
+            if (e.getResponse().getStatusLine().getStatusCode() == 400 &&
+                    (e.getMessage().contains("index_already_exists_exception") || // ES 5.x
+                            e.getMessage().contains("IndexAlreadyExistsException") )) { // ES 1.x and 2.x
+                if (!ignoreErrors) {
+                    throw new RuntimeException("index already exists");
+                }
+                logger.trace("index already exists. Ignoring error...");
+                return;
+            }
+            throw e;
         }
-        */
     }
 
     /**
@@ -232,12 +241,17 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
      */
     public boolean isExistingIndex(String index) throws IOException {
         logger.debug("is existing index [{}]", index);
-        GetIndexRequest gir = new GetIndexRequest();
-        gir.indices(index);
-        throw new IllegalArgumentException("NOT IMPLEMENTED");
-        /*
-        return client.indices().exists(gir);
-        */
+        try {
+            Response restResponse = lowLevelClient.performRequest("GET", "/" + index);
+            logger.trace("get index metadata response: {}", asMap(restResponse));
+            return true;
+        } catch (ResponseException e) {
+            if (e.getResponse().getStatusLine().getStatusCode() == 404) {
+                logger.debug("index [{}] does not exist", index);
+                return false;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -248,17 +262,18 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
      */
     public boolean isExistingPipeline(String pipelineName) throws IOException {
         logger.debug("is existing pipeline [{}]", pipelineName);
-        throw new IllegalArgumentException("NOT IMPLEMENTED");
-        /*
+
         try {
-            return client.ingest().getPipeline(new GetPipelineRequest(pipelineName)).isFound();
-        } catch (ElasticsearchStatusException e) {
-            if (e.status().getStatus() == 404) {
+            Response restResponse = lowLevelClient.performRequest("GET", "/_ingest/pipeline/" + pipelineName);
+            logger.trace("get pipeline metadata response: {}", asMap(restResponse));
+            return true;
+        } catch (ResponseException e) {
+            if (e.getResponse().getStatusLine().getStatusCode() == 404) {
+                logger.debug("pipeline [{}] does not exist", pipelineName);
                 return false;
             }
-            throw new IOException(e);
+            throw e;
         }
-        */
     }
 
     /**
@@ -268,15 +283,17 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
      */
     public void refresh(String index) throws IOException {
         logger.debug("refresh index [{}]", index);
-        RefreshRequest request = new RefreshRequest();
-        if (Strings.hasText(index)) {
-            request.indices(index);
+
+        String path = "/";
+
+        if (index != null) {
+            path += index + "/";
         }
-        throw new IllegalArgumentException("NOT IMPLEMENTED");
-        /*
-        RefreshResponse refresh = client.indices().refresh(request);
-        logger.trace("refresh response: {}", refresh);
-        */
+
+        path += "_refresh";
+
+        Response restResponse = lowLevelClient.performRequest("POST", path);
+        logger.trace("refresh raw response: {}", asMap(restResponse));
     }
 
     /**
@@ -286,11 +303,10 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
      */
     public void waitForHealthyIndex(String index) throws IOException {
         logger.debug("wait for yellow health on index [{}]", index);
-        throw new IllegalArgumentException("NOT IMPLEMENTED");
-        /*
-        ClusterHealthResponse health = client.cluster().health(new ClusterHealthRequest(index).waitForYellowStatus());
-        logger.trace("health response: {}", health);
-        */
+
+        Response restResponse = lowLevelClient.performRequest("GET", "/_cluster/health/" + index,
+                Collections.singletonMap("wait_for_status", "yellow"));
+        logger.trace("health response: {}", asMap(restResponse));
     }
 
     /**
@@ -384,7 +400,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
             }
         }
         if (threadPool != null) {
-            threadPool.close();
+            threadPool.shutdownNow();
         }
         if (lowLevelClient != null) {
             lowLevelClient.close();
@@ -448,7 +464,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
     public ESSearchResponse search(ESSearchRequest request) throws IOException {
 
         SearchRequest searchRequest = new SearchRequest();
-        if (Strings.hasText(request.getIndex())) {
+        if (!isNullOrEmpty(request.getIndex())) {
             searchRequest.indices(request.getIndex());
         }
 
@@ -462,7 +478,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
         if (request.getESQuery() != null) {
             ssb.query(toElasticsearchQuery(request.getESQuery()));
         }
-        if (Strings.hasText(request.getSort())) {
+        if (!isNullOrEmpty(request.getSort())) {
             ssb.sort(request.getSort());
         }
         for (String highlighter : request.getHighlighters()) {
@@ -558,10 +574,16 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
 
     @Override
     public void deleteIndex(String index) throws IOException {
-        throw new IllegalArgumentException("NOT IMPLEMENTED");
-        /*
-        client.indices().delete(new DeleteIndexRequest(index));
-        */
+        try {
+            Response response = lowLevelClient.performRequest("DELETE", "/" + index);
+            logger.trace("delete index response: {}", asMap(response));
+        } catch (ResponseException e) {
+            if (e.getResponse().getStatusLine().getStatusCode() == 404) {
+                logger.trace("index does not exist. Ignoring error...");
+                return;
+            }
+            throw e;
+        }
     }
 
     @Override
@@ -613,5 +635,13 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    public HttpEntity createEntity(String json) {
+        if (isNullOrEmpty(json)) {
+            return null;
+        }         
+        return EntityBuilder.create().setText(json).setContentType(ContentType.APPLICATION_JSON).build();
     }
 }

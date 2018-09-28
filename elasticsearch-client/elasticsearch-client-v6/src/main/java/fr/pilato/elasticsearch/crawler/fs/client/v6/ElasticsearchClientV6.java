@@ -28,12 +28,12 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESPrefixQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESRangeQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -52,7 +52,6 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
@@ -66,14 +65,12 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.ingest.GetPipelineRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -83,9 +80,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
-import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -103,6 +98,7 @@ import java.util.function.BiConsumer;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
 import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.Node;
 import static org.elasticsearch.action.support.IndicesOptions.LENIENT_EXPAND_OPEN;
@@ -142,7 +138,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClientBase {
             // Create an elasticsearch client
             client = new RestHighLevelClient(buildRestClient(settings.getElasticsearch()));
             // We set what will be elasticsearch behavior as it depends on the cluster version
-            logger.info("Elasticsearch Client V{} connected to a node running V{}", "6", getVersion());
+            logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", "6", getVersion());
         } catch (Exception e) {
             logger.warn("failed to create elasticsearch client, disabling crawler...");
             throw e;
@@ -214,7 +210,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClientBase {
         logger.debug("create index [{}]", index);
         logger.trace("index settings: [{}]", indexSettings);
         CreateIndexRequest cir = new CreateIndexRequest(index);
-        if (Strings.hasText(indexSettings)) {
+        if (!isNullOrEmpty(indexSettings)) {
             cir.source(indexSettings, XContentType.JSON);
         }
         CreateIndexResponse indexResponse = client.indices().create(cir, RequestOptions.DEFAULT);
@@ -262,7 +258,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClientBase {
     public void refresh(String index) throws IOException {
         logger.debug("refresh index [{}]", index);
         RefreshRequest request = new RefreshRequest();
-        if (Strings.hasText(index)) {
+        if (!isNullOrEmpty(index)) {
             request.indices(index);
         }
         RefreshResponse refresh = client.indices().refresh(request, RequestOptions.DEFAULT);
@@ -436,7 +432,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClientBase {
     public ESSearchResponse search(ESSearchRequest request) throws IOException {
 
         SearchRequest searchRequest = new SearchRequest();
-        if (Strings.hasText(request.getIndex())) {
+        if (!isNullOrEmpty(request.getIndex())) {
             searchRequest.indices(request.getIndex());
         }
 
@@ -450,7 +446,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClientBase {
         if (request.getESQuery() != null) {
             ssb.query(toElasticsearchQuery(request.getESQuery()));
         }
-        if (Strings.hasText(request.getSort())) {
+        if (!isNullOrEmpty(request.getSort())) {
             ssb.sort(request.getSort());
         }
         for (String highlighter : request.getHighlighters()) {
@@ -557,7 +553,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClientBase {
     @Override
     public void performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException {
         Request request = new Request(method, endpoint);
-        if (Strings.hasText(jsonEntity)) {
+        if (!isNullOrEmpty(jsonEntity)) {
             request.setJsonEntity(jsonEntity);
         }
 
