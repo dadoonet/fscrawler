@@ -12,10 +12,6 @@
     <artifactId>fscrawler-elasticsearch-client-v5</artifactId>
     <name>FSCrawler Elasticsearch Client V5</name>
 
-    <properties>
-        <elasticsearch.version>5.6.10</elasticsearch.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
@@ -23,13 +19,8 @@
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-client</artifactId>
-            <version>${elasticsearch.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>${elasticsearch.version}</version>
+            <version>${elasticsearch5.version}</version>
         </dependency>
     </dependencies>
 

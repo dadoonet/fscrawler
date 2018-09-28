@@ -35,7 +35,8 @@ public abstract class ElasticsearchClientAbstract implements ElasticsearchClient
      */
     public static ElasticsearchClientBase getInstance(Path config, FsSettings settings) {
         Objects.requireNonNull(settings, "settings can not be null");
-        String className = "fr.pilato.elasticsearch.crawler.fs.client.v6.ElasticsearchClientV6";
+        // String className = "fr.pilato.elasticsearch.crawler.fs.client.v6.ElasticsearchClientV6";
+        String className = "fr.pilato.elasticsearch.crawler.fs.client.v5.ElasticsearchClientV5";
         try {
             Class<?> aClass = Class.forName(className);
             Class<?>[] interfaces = aClass.getInterfaces();

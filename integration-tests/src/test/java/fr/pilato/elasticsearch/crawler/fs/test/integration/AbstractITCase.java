@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
-import fr.pilato.elasticsearch.containers.ElasticsearchContainer;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -38,7 +37,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import org.apache.logging.log4j.Level;
-import org.elasticsearch.client.RestClient;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -63,14 +61,12 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.unzip;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -78,6 +74,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeThat;
 
 /**
@@ -112,8 +109,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     static Path metadataDir = null;
 
-    private static ElasticsearchContainer container;
-    private static RestClient esRestClient;
     static String typeName;
 
     FsCrawlerImpl crawler = null;
@@ -282,14 +277,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 esClientTemporary.start();
                 staticLogger.debug("A node is already running locally. No need to start a Docker instance.");
             } catch (IOException e) {
-                staticLogger.debug("No local node running. We need to start a Docker instance.");
-                // We start an elasticsearch Docker instance
-                Properties props = readPropertiesFromClassLoader("elasticsearch.version.properties");
-                container = ElasticsearchContainerSingleton.getInstance(props.getProperty("version"),
-                        testClusterUser, testClusterPass);
-
-                testClusterHost = container.getHost().getHostName();
-                testClusterPort = container.getFirstMappedPort();
+                staticLogger.fatal("No local node running. We can't run our test suite.");
+                assumeNoException(e);
             } finally {
                 // We need to close the temporary client
                 if (esClientTemporary != null) {
@@ -333,11 +322,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         if (client != null) {
             client.close();
             client = null;
-        }
-
-        if (esRestClient != null) {
-            esRestClient.close();
-            esRestClient = null;
         }
 
         /*

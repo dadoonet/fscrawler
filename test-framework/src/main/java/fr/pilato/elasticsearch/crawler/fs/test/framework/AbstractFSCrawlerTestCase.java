@@ -18,13 +18,13 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
+import com.carrotsearch.randomizedtesting.RandomizedContext;
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.annotations.Listeners;
 import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import com.carrotsearch.randomizedtesting.generators.RandomNumbers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.util.TimeUnits;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -47,11 +47,10 @@ import java.util.function.LongSupplier;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
-import static org.apache.lucene.util.LuceneTestCase.random;
 
 @RunWith(RandomizedRunner.class)
 @Listeners({FSCrawlerReproduceInfoPrinter.class})
-@TimeoutSuite(millis = 5 * TimeUnits.MINUTE)
+@TimeoutSuite(millis = 5 * 60 * 1000)
 public abstract class AbstractFSCrawlerTestCase {
 
     protected static final Logger staticLogger = LogManager.getLogger(AbstractFSCrawlerTestCase.class);
@@ -110,7 +109,7 @@ public abstract class AbstractFSCrawlerTestCase {
     }
 
     public static int between(int min, int max) {
-        return RandomNumbers.randomIntBetween(random(), min, max);
+        return RandomNumbers.randomIntBetween(RandomizedContext.current().getRandom(), min, max);
     }
 
     public static boolean awaitBusy(BooleanSupplier breakSupplier) throws InterruptedException {

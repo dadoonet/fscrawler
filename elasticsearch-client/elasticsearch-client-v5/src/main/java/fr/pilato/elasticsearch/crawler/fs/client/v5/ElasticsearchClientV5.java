@@ -20,75 +20,106 @@
 package fr.pilato.elasticsearch.crawler.fs.client.v5;
 
 
+import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESDocumentField;
+import fr.pilato.elasticsearch.crawler.fs.client.ESHighlightField;
+import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESPrefixQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESRangeQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
+import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.entity.EntityBuilder;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.ingest.GetPipelineRequest;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
 import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.Node;
 
 /**
- * Elasticsearch Client for Clusters running v6.
+ * Elasticsearch Client for Clusters running v5.
  */
 public class ElasticsearchClientV5 implements ElasticsearchClientBase {
 
-    private static final Logger logger = LogManager.getLogger(ElasticsearchClientV6.class);
+    private static final Logger logger = LogManager.getLogger(ElasticsearchClientV5.class);
     private final Path config;
     private final FsSettings settings;
 
     private RestHighLevelClient client = null;
-    private BulkProcessor bulkProcessorDoc = null;
-    private BulkProcessor bulkProcessorFolder = null;
+    private BulkProcessor bulkProcessor = null;
 
     /**
-     * Type name for Elasticsearch versions >= 6.0
+     * Type name for Elasticsearch versions >= 5.0 and < 6.0
      * @deprecated Will be removed with Elasticsearch V8
      */
     @Deprecated
-    private static final String INDEX_TYPE_DOC = "_doc";
+    private static final String INDEX_TYPE_DOC = "doc";
+    private ThreadPool threadPool;
+    private RestClient lowLevelClient;
 
     public ElasticsearchClientV5(Path config, FsSettings settings) {
         this.config = config;
@@ -102,11 +133,12 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
             return;
         }
 
+        lowLevelClient = buildRestClient(settings.getElasticsearch()).build();
         try {
             // Create an elasticsearch client
-            client = new RestHighLevelClient(buildRestClient(settings.getElasticsearch()));
+            this.client = new RestHighLevelClient(lowLevelClient);
             // We set what will be elasticsearch behavior as it depends on the cluster version
-            displayVersion();
+            logger.info("Elasticsearch Client V{} connected to a node running V{}", "6", getVersion());
         } catch (Exception e) {
             logger.warn("failed to create elasticsearch client, disabling crawler...");
             throw e;
@@ -121,25 +153,20 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
         }
 
         BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
-                (request, bulkListener) -> client.bulkAsync(request, RequestOptions.DEFAULT, bulkListener);
+                (request, bulkListener) -> client.bulkAsync(request, bulkListener);
 
-        bulkProcessorDoc = BulkProcessor.builder(bulkConsumer, new DebugListener(logger))
+        threadPool = new ThreadPool(Settings.builder().put("node.name", "fscrawler-client").build());
+        bulkProcessor = new BulkProcessor.Builder(bulkConsumer, new DebugListener(logger), threadPool)
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 .setBulkSize(new ByteSizeValue(settings.getElasticsearch().getByteSize().getBytes()))
-                // TODO fix when elasticsearch will support global pipelines
-//                .setPipeline(settings.getElasticsearch().getPipeline())
-                .build();
-        bulkProcessorFolder = BulkProcessor.builder(bulkConsumer, new DebugListener(logger))
-                .setBulkActions(settings.getElasticsearch().getBulkSize())
-                .setBulkSize(new ByteSizeValue(settings.getElasticsearch().getByteSize().getBytes()))
-                .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 .build();
     }
 
-    public void displayVersion() throws IOException {
-        Version version = client.info(RequestOptions.DEFAULT).getVersion();
-        logger.info("Elasticsearch Client V{} connected to a node running V{}", "6", version.toString());
+    @Override
+    public ESVersion getVersion() throws IOException {
+        Version version = client.info().getVersion();
+        return ESVersion.fromString(version.toString());
     }
 
     class DebugListener implements BulkProcessor.Listener {
@@ -184,11 +211,17 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
         logger.debug("create index [{}]", index);
         logger.trace("index settings: [{}]", indexSettings);
         CreateIndexRequest cir = new CreateIndexRequest(index);
-        cir.settings(indexSettings, XContentType.JSON);
-        CreateIndexResponse indexResponse = client.indices().create(cir, RequestOptions.DEFAULT);
+        if (Strings.hasText(indexSettings)) {
+            cir.source(indexSettings, XContentType.JSON);
+        }
+        throw new IllegalArgumentException("NOT IMPLEMENTED");
+
+        /*
+        CreateIndexResponse indexResponse = client.indices().create(cir);
         if (!indexResponse.isAcknowledged() && !ignoreErrors) {
             throw new RuntimeException("index already exists");
         }
+        */
     }
 
     /**
@@ -201,7 +234,10 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
         logger.debug("is existing index [{}]", index);
         GetIndexRequest gir = new GetIndexRequest();
         gir.indices(index);
-        return client.indices().exists(gir, RequestOptions.DEFAULT);
+        throw new IllegalArgumentException("NOT IMPLEMENTED");
+        /*
+        return client.indices().exists(gir);
+        */
     }
 
     /**
@@ -212,7 +248,17 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
      */
     public boolean isExistingPipeline(String pipelineName) throws IOException {
         logger.debug("is existing pipeline [{}]", pipelineName);
-        return client.ingest().getPipeline(new GetPipelineRequest(pipelineName), RequestOptions.DEFAULT).isFound();
+        throw new IllegalArgumentException("NOT IMPLEMENTED");
+        /*
+        try {
+            return client.ingest().getPipeline(new GetPipelineRequest(pipelineName)).isFound();
+        } catch (ElasticsearchStatusException e) {
+            if (e.status().getStatus() == 404) {
+                return false;
+            }
+            throw new IOException(e);
+        }
+        */
     }
 
     /**
@@ -222,8 +268,15 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
      */
     public void refresh(String index) throws IOException {
         logger.debug("refresh index [{}]", index);
-        RefreshResponse refresh = client.indices().refresh(new RefreshRequest(index), RequestOptions.DEFAULT);
+        RefreshRequest request = new RefreshRequest();
+        if (Strings.hasText(index)) {
+            request.indices(index);
+        }
+        throw new IllegalArgumentException("NOT IMPLEMENTED");
+        /*
+        RefreshResponse refresh = client.indices().refresh(request);
         logger.trace("refresh response: {}", refresh);
+        */
     }
 
     /**
@@ -233,9 +286,11 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
      */
     public void waitForHealthyIndex(String index) throws IOException {
         logger.debug("wait for yellow health on index [{}]", index);
-        ClusterHealthResponse health = client.cluster().health(new ClusterHealthRequest(index).waitForYellowStatus(),
-                RequestOptions.DEFAULT);
+        throw new IllegalArgumentException("NOT IMPLEMENTED");
+        /*
+        ClusterHealthResponse health = client.cluster().health(new ClusterHealthRequest(index).waitForYellowStatus());
         logger.trace("health response: {}", health);
+        */
     }
 
     /**
@@ -261,10 +316,8 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
 
         logger.trace("{}", reindexQuery);
 
-        Request request = new Request("POST", "/_reindex");
-        request.setJsonEntity(reindexQuery);
-
-        Response restResponse = client.getLowLevelClient().performRequest(request);
+        HttpEntity entity = EntityBuilder.create().setText(reindexQuery).setContentType(ContentType.APPLICATION_JSON).build();
+        Response restResponse = lowLevelClient.performRequest("POST", "/_reindex", Collections.emptyMap(), entity);
         Map<String, Object> response = asMap(restResponse);
         logger.debug("reindex response: {}", response);
 
@@ -286,9 +339,8 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
                 "  }\n" +
                 "}";
 
-        Request request = new Request("POST", "/" + index + "/" + type + "/_delete_by_query");
-        request.setJsonEntity(deleteByQuery);
-        Response restResponse = client.getLowLevelClient().performRequest(request);
+        HttpEntity entity = EntityBuilder.create().setText(deleteByQuery).setContentType(ContentType.APPLICATION_JSON).build();
+        Response restResponse = lowLevelClient.performRequest("POST", "/" + index + "/" + type + "/_delete_by_query", Collections.emptyMap(), entity);
         Map<String, Object> response = asMap(restResponse);
         logger.debug("reindex response: {}", response);
     }
@@ -305,53 +357,41 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
 
     @Override
     public void index(String index, String type, String id, String json, String pipeline) {
-        bulkProcessorDoc.add(new IndexRequest(index, type, id).setPipeline(pipeline).source(json, XContentType.JSON));
+        bulkProcessor.add(new IndexRequest(index, type, id).setPipeline(pipeline).source(json, XContentType.JSON));
+    }
+
+    @Override
+    public void indexSingle(String index, String type, String id, String json) throws IOException {
+        IndexRequest request = new IndexRequest(index, type, id);
+        request.source(json, XContentType.JSON);
+        client.index(request);
     }
 
     @Override
     public void delete(String index, String type, String id) {
-        bulkProcessorDoc.add(new DeleteRequest(index, type, id));
+        bulkProcessor.add(new DeleteRequest(index, type, id));
     }
 
     @Override
     public void close() throws IOException {
         logger.debug("Closing Elasticsearch client manager");
-        if (bulkProcessorDoc != null) {
+        if (bulkProcessor != null) {
             try {
-                bulkProcessorDoc.awaitClose(30, TimeUnit.SECONDS);
+                bulkProcessor.awaitClose(30, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.warn("Did not succeed in closing the bulk processor for documents", e);
                 throw new IOException(e);
             }
         }
-        if (bulkProcessorFolder != null) {
-            try {
-                bulkProcessorFolder.awaitClose(30, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                logger.warn("Did not succeed in closing the bulk processor for folders", e);
-                throw new IOException(e);
-            }
+        if (threadPool != null) {
+            threadPool.close();
         }
-        if (client != null) {
-            client.close();
+        if (lowLevelClient != null) {
+            lowLevelClient.close();
         }
     }
 
-    public static Node decodeCloudId(String cloudId) {
-     	// 1. Ignore anything before `:`.
-        String id = cloudId.substring(cloudId.indexOf(':')+1);
-
-     	// 2. base64 decode
-        String decoded = new String(Base64.getDecoder().decode(id));
-
-        // 3. separate based on `$`
-        String[] words = decoded.split("\\$");
-
- 	    // 4. form the URLs
-        return Node.builder().setHost(words[1] + "." + words[0]).setPort(443).setScheme(Node.Scheme.HTTPS).build();
-    }
-
-    public static RestClientBuilder buildRestClient(Elasticsearch settings) {
+    private static RestClientBuilder buildRestClient(Elasticsearch settings) {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
         settings.getNodes().forEach(node -> {
             if (node.getCloudId() != null) {
@@ -384,7 +424,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
         Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
 
         // Let's read the current version of elasticsearch cluster
-        Version version = client.info(RequestOptions.DEFAULT).getVersion();
+        Version version = client.info().getVersion();
         logger.debug("FS crawler connected to an elasticsearch [{}] node.", version.toString());
 
         elasticsearchVersion = Byte.toString(version.major);
@@ -402,6 +442,154 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
         } else {
             createIndex(settings.getElasticsearch().getIndexFolder(), true, null);
         }
+    }
+
+    @Override
+    public ESSearchResponse search(ESSearchRequest request) throws IOException {
+
+        SearchRequest searchRequest = new SearchRequest();
+        if (Strings.hasText(request.getIndex())) {
+            searchRequest.indices(request.getIndex());
+        }
+
+        SearchSourceBuilder ssb = new SearchSourceBuilder();
+        if (request.getSize() != null) {
+            ssb.size(request.getSize());
+        }
+        if (!request.getFields().isEmpty()) {
+            ssb.storedFields(request.getFields());
+        }
+        if (request.getESQuery() != null) {
+            ssb.query(toElasticsearchQuery(request.getESQuery()));
+        }
+        if (Strings.hasText(request.getSort())) {
+            ssb.sort(request.getSort());
+        }
+        for (String highlighter : request.getHighlighters()) {
+            ssb.highlighter(new HighlightBuilder().field(highlighter));
+        }
+        for (ESTermsAggregation aggregation : request.getAggregations()) {
+            ssb.aggregation(AggregationBuilders.terms(aggregation.getName()).field(aggregation.getField()));
+        }
+
+        searchRequest.source(ssb);
+        searchRequest.indicesOptions(IndicesOptions.lenientExpandOpen());
+
+        SearchResponse response = client.search(searchRequest);
+        ESSearchResponse esSearchResponse = new ESSearchResponse();
+        if (response.getHits() != null) {
+            for (SearchHit hit : response.getHits()) {
+                ESSearchHit esSearchHit = new ESSearchHit();
+                if (!hit.getFields().isEmpty()) {
+                    Map<String, ESDocumentField> esFields = new HashMap<>();
+                    for (Map.Entry<String, SearchHitField> entry : hit.getFields().entrySet()) {
+                        esFields.put(entry.getKey(), new ESDocumentField(entry.getKey(), entry.getValue().getValues()));
+                    }
+                    esSearchHit.setFields(esFields);
+                }
+                esSearchHit.setIndex(hit.getIndex());
+                esSearchHit.setId(hit.getId());
+                esSearchHit.setSourceAsMap(hit.getSourceAsMap());
+                esSearchHit.setSourceAsString(hit.getSourceAsString());
+
+                hit.getHighlightFields().forEach((key, value) -> {
+                    String[] texts = new String[value.fragments().length];
+                    for (int i = 0; i < value.fragments().length; i++) {
+                        Text fragment = value.fragments()[i];
+                        texts[i] = fragment.string();
+                    }
+                    esSearchHit.addHighlightField(key, new ESHighlightField(key, texts));
+                });
+
+                esSearchResponse.addHit(esSearchHit);
+            }
+
+            esSearchResponse.setTotalHits(response.getHits().getTotalHits());
+
+            if (response.getAggregations() != null) {
+                for (String name : response.getAggregations().asMap().keySet()) {
+                    Terms termsAgg = response.getAggregations().get(name);
+                    ESTermsAggregation aggregation = new ESTermsAggregation(name, null);
+                    for (Terms.Bucket bucket : termsAgg.getBuckets()) {
+                        aggregation.addBucket(new ESTermsAggregation.ESTermsBucket(bucket.getKeyAsString(), bucket.getDocCount()));
+                    }
+                    esSearchResponse.addAggregation(name, aggregation);
+                }
+            }
+        }
+
+        return esSearchResponse;
+    }
+
+    private QueryBuilder toElasticsearchQuery(ESQuery query) {
+        if (query instanceof ESTermQuery) {
+            ESTermQuery esQuery = (ESTermQuery) query;
+            return QueryBuilders.termQuery(esQuery.getField(), esQuery.getValue());
+        }
+        if (query instanceof ESMatchQuery) {
+            ESMatchQuery esQuery = (ESMatchQuery) query;
+            return QueryBuilders.matchQuery(esQuery.getField(), esQuery.getValue());
+        }
+        if (query instanceof ESPrefixQuery) {
+            ESPrefixQuery esQuery = (ESPrefixQuery) query;
+            return QueryBuilders.prefixQuery(esQuery.getField(), esQuery.getValue());
+        }
+        if (query instanceof ESRangeQuery) {
+            ESRangeQuery esQuery = (ESRangeQuery) query;
+            RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(esQuery.getField());
+            if (esQuery.getFrom() != null) {
+                rangeQuery.from(esQuery.getFrom());
+            }
+            if (esQuery.getTo() != null) {
+                rangeQuery.to(esQuery.getTo());
+            }
+            return rangeQuery;
+        }
+        if (query instanceof ESBoolQuery) {
+            ESBoolQuery esQuery = (ESBoolQuery) query;
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            for (ESQuery clause : esQuery.getMustClauses()) {
+                boolQuery.must(toElasticsearchQuery(clause));
+            }
+            return boolQuery;
+        }
+        throw new IllegalArgumentException("Query " + query.getClass().getSimpleName() + " not implemented yet");
+    }
+
+    @Override
+    public void deleteIndex(String index) throws IOException {
+        throw new IllegalArgumentException("NOT IMPLEMENTED");
+        /*
+        client.indices().delete(new DeleteIndexRequest(index));
+        */
+    }
+
+    @Override
+    public void flush() {
+        bulkProcessor.flush();
+    }
+
+    @Override
+    public void performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException {
+        HttpEntity entity = EntityBuilder.create().setText(jsonEntity).setContentType(ContentType.APPLICATION_JSON).build();
+        lowLevelClient.performRequest(method, endpoint, Collections.emptyMap(), entity);
+    }
+
+    @Override
+    public ESSearchHit get(String index, String type, String id) throws IOException {
+        GetRequest request = new GetRequest(index, type, id);
+        GetResponse response = client.get(request);
+        ESSearchHit hit = new ESSearchHit();
+        hit.setIndex(response.getIndex());
+        hit.setId(response.getId());
+        hit.setVersion(response.getVersion());
+        hit.setSourceAsMap(response.getSourceAsMap());
+        return hit;
+    }
+
+    @Override
+    public boolean exists(String index, String type, String id) throws IOException {
+        return client.exists(new GetRequest(index, type, id));
     }
 
     private void createIndex(Path jobMappingDir, String elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {

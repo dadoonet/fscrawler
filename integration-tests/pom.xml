@@ -16,10 +16,12 @@
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-core</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-rest</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <!-- Test dependencies -->
@@ -31,11 +33,6 @@
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-test-documents</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.testcontainers</groupId>
-            <artifactId>testcontainers-elasticsearch</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -133,4 +130,32 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>es-6x</id>
+            <properties>
+                <integ.elasticsearch.version>${elasticsearch6.version}</integ.elasticsearch.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                    <artifactId>fscrawler-elasticsearch-client-v6</artifactId>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>es-5x</id>
+            <properties>
+                <integ.elasticsearch.version>${elasticsearch5.version}</integ.elasticsearch.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                    <artifactId>fscrawler-elasticsearch-client-v5</artifactId>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>
