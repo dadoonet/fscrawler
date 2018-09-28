@@ -22,7 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaParser;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
@@ -53,12 +53,12 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDa
 @Path("/_upload")
 public class UploadApi extends RestApi {
 
-    private final ElasticsearchClientBase esClient;
+    private final ElasticsearchClient esClient;
     private final FsSettings settings;
     private final MessageDigest messageDigest;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
 
-    UploadApi(FsSettings settings, ElasticsearchClientBase esClient) {
+    UploadApi(FsSettings settings, ElasticsearchClient esClient) {
         this.settings = settings;
         this.esClient = esClient;
         // Create MessageDigest instance

@@ -27,7 +27,15 @@ import java.io.IOException;
  * Simple Elasticsearch client over HTTP or HTTPS.
  * Only needed methods are exposed.
  */
-public interface ElasticsearchClientBase extends Closeable {
+public interface ElasticsearchClient extends Closeable {
+
+    /**
+     * The Major digit of the compatible version the client has been designed for.
+     * For example, a compatible version 6 should work on every 6.x.y cluster but
+     * won't work with a cluster 5.x.y or 7.x.y.
+     * @return The major digit of the compatible elasticsearch version
+     */
+    byte compatibleVersion();
 
     /**
      * Start the client and its internal resources. This must be called before any operation can be performed.
@@ -188,4 +196,13 @@ public interface ElasticsearchClientBase extends Closeable {
      * @throws IOException In case of error
      */
     boolean exists(String index, String type, String id) throws IOException;
+
+    default void checkVersion() throws IOException {
+        ESVersion esVersion = getVersion();
+        if (esVersion.major != compatibleVersion()) {
+            throw new RuntimeException("The Elasticsearch client version [" +
+                    compatibleVersion() + "] is not compatible with the Elasticsearch cluster version [" +
+                    esVersion.toString() + "].");
+        }
+    }
 }

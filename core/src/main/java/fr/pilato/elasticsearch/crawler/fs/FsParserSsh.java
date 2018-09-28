@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.crawler.ssh.FileAbstractorSSH;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -28,7 +28,7 @@ import java.nio.file.Path;
 
 public class FsParserSsh extends FsParserAbstract {
 
-    public FsParserSsh(FsSettings fsSettings, Path config, ElasticsearchClientBase esClient, Integer loop) {
+    public FsParserSsh(FsSettings fsSettings, Path config, ElasticsearchClient esClient, Integer loop) {
         super(fsSettings, config, esClient, loop);
     }
 

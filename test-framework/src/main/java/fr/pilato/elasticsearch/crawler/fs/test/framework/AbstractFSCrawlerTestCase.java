@@ -44,9 +44,13 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.fail;
 
 @RunWith(RandomizedRunner.class)
 @Listeners({FSCrawlerReproduceInfoPrinter.class})
@@ -203,4 +207,20 @@ public abstract class AbstractFSCrawlerTestCase {
         }
     }
 
+    /**
+     * Helper to check that something actually throws an error
+     * @param exceptionClass    Expected error
+     * @param function          Function to be executed
+     */
+    public static <T extends Throwable> T expectThrows(Class<T> exceptionClass, Supplier function) {
+        try {
+            Object o = function.get();
+            fail("We should have caught a " + exceptionClass.getName() + ". " +
+                    "But we returned " + o + ".");
+        } catch (Throwable t) {
+            assertThat(t, instanceOf(exceptionClass));
+            return (T) t;
+        }
+        return null;
+    }
 }

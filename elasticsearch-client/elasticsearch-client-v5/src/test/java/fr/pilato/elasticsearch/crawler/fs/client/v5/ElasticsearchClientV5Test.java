@@ -19,14 +19,25 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client.v5;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientAbstract;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
-public class ElasticsearchClientTest extends AbstractFSCrawlerTestCase {
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
+
+public class ElasticsearchClientV5Test extends AbstractFSCrawlerTestCase {
 
     @Test(expected = NullPointerException.class)
     public void testGetInstanceWithNullSettings() {
-        ElasticsearchClientAbstract.getInstance(null, null);
+        ElasticsearchClientUtil.getInstance(null, null);
+    }
+
+    @Test
+    public void testGetInstance() {
+        ElasticsearchClient instance = ElasticsearchClientUtil.getInstance(null, FsSettings.builder("foo").build());
+        assertThat(instance, instanceOf(ElasticsearchClientV5.class));
     }
 }

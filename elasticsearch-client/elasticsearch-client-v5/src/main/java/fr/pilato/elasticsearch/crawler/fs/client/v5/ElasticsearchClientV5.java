@@ -33,7 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -49,9 +49,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -67,7 +64,6 @@ import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -88,8 +84,6 @@ import org.elasticsearch.threadpool.ThreadPool;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -107,7 +101,7 @@ import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.Node;
 /**
  * Elasticsearch Client for Clusters running v5.
  */
-public class ElasticsearchClientV5 implements ElasticsearchClientBase {
+public class ElasticsearchClientV5 implements ElasticsearchClient {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClientV5.class);
     private final Path config;
@@ -131,6 +125,11 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
     }
 
     @Override
+    public byte compatibleVersion() {
+        return 5;
+    }
+
+    @Override
     public void start() throws IOException {
         if (client != null) {
             // The client has already been initialized. Let's skip this again
@@ -142,7 +141,8 @@ public class ElasticsearchClientV5 implements ElasticsearchClientBase {
             // Create an elasticsearch client
             this.client = new RestHighLevelClient(lowLevelClient);
             // We set what will be elasticsearch behavior as it depends on the cluster version
-            logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", "5", getVersion());
+            logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", compatibleVersion(), getVersion());
+            checkVersion();
         } catch (Exception e) {
             logger.warn("failed to create elasticsearch client, disabling crawler...");
             throw e;

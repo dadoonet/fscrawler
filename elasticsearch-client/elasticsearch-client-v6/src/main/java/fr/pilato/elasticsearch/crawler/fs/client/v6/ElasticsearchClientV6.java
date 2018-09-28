@@ -33,7 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -106,7 +106,7 @@ import static org.elasticsearch.action.support.IndicesOptions.LENIENT_EXPAND_OPE
 /**
  * Elasticsearch Client for Clusters running v6.
  */
-public class ElasticsearchClientV6 implements ElasticsearchClientBase {
+public class ElasticsearchClientV6 implements ElasticsearchClient {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClientV6.class);
     private final Path config;
@@ -128,6 +128,11 @@ public class ElasticsearchClientV6 implements ElasticsearchClientBase {
     }
 
     @Override
+    public byte compatibleVersion() {
+        return 6;
+    }
+
+    @Override
     public void start() throws IOException {
         if (client != null) {
             // The client has already been initialized. Let's skip this again
@@ -138,7 +143,8 @@ public class ElasticsearchClientV6 implements ElasticsearchClientBase {
             // Create an elasticsearch client
             client = new RestHighLevelClient(buildRestClient(settings.getElasticsearch()));
             // We set what will be elasticsearch behavior as it depends on the cluster version
-            logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", "6", getVersion());
+            logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", compatibleVersion(), getVersion());
+            checkVersion();
         } catch (Exception e) {
             logger.warn("failed to create elasticsearch client, disabling crawler...");
             throw e;

@@ -26,8 +26,8 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientAbstract;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
@@ -173,7 +173,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
-    static ElasticsearchClientBase esClient;
+    static ElasticsearchClient esClient;
 
     private static String testClusterCloudId;
     private static String testClusterHost;
@@ -266,14 +266,14 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
 
         if (testClusterHost == null) {
-            ElasticsearchClientBase esClientTemporary = null;
+            ElasticsearchClient esClientTemporary = null;
             try {
                 testClusterHost = "localhost";
                 // We test if we have already something running at the testClusterHost address
                 FsSettings fsSettings = FsSettings.builder("esClientTmp").setElasticsearch(Elasticsearch.builder()
                         .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
                         .build()).build();
-                esClientTemporary = ElasticsearchClientAbstract.getInstance(null, fsSettings);
+                esClientTemporary = ElasticsearchClientUtil.getInstance(null, fsSettings);
                 esClientTemporary.start();
                 staticLogger.debug("A node is already running locally. No need to start a Docker instance.");
             } catch (IOException e) {
@@ -296,7 +296,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 .setPassword(testClusterPass)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
-        esClient = ElasticsearchClientAbstract.getInstance(null, fsSettings);
+        esClient = ElasticsearchClientUtil.getInstance(null, fsSettings);
         esClient.start();
 
         // We make sure the cluster is running

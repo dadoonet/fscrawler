@@ -105,11 +105,6 @@
             <artifactId>fscrawler-test-documents</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.testcontainers</groupId>
-            <artifactId>testcontainers-elasticsearch</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
 </project>

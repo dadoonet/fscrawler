@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,7 +41,7 @@ public class RestServer {
      * @param settings FSCrawler settings
      * @param esClient Elasticsearch client
      */
-    public static void start(FsSettings settings, ElasticsearchClientBase esClient) {
+    public static void start(FsSettings settings, ElasticsearchClient esClient) {
         // We create the service only one
         if (httpServer == null) {
             // create a resource config that scans for JAX-RS resources and providers

@@ -20,7 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
@@ -36,10 +36,10 @@ import java.io.IOException;
 @Path("/")
 public class ServerStatusApi extends RestApi {
 
-    private final ElasticsearchClientBase esClient;
+    private final ElasticsearchClient esClient;
     private final FsSettings settings;
 
-    ServerStatusApi(ElasticsearchClientBase esClient, FsSettings settings) {
+    ServerStatusApi(ElasticsearchClient esClient, FsSettings settings) {
         this.esClient = esClient;
         this.settings = settings;
     }

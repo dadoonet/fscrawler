@@ -26,7 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.PathParser;
 import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -73,7 +73,7 @@ public abstract class FsParserAbstract extends FsParser {
 
     final FsSettings fsSettings;
     private final FsJobFileHandler fsJobFileHandler;
-    private final ElasticsearchClientBase esClient;
+    private final ElasticsearchClient esClient;
     private final Integer loop;
     private final MessageDigest messageDigest;
 
@@ -85,7 +85,7 @@ public abstract class FsParserAbstract extends FsParser {
 
     private ScanStatistic stats;
 
-    FsParserAbstract(FsSettings fsSettings, Path config, ElasticsearchClientBase esClient, Integer loop) {
+    FsParserAbstract(FsSettings fsSettings, Path config, ElasticsearchClient esClient, Integer loop) {
         this.fsSettings = fsSettings;
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.esClient = esClient;

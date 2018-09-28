@@ -21,8 +21,8 @@ package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientAbstract;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
@@ -55,7 +55,7 @@ public class FsCrawlerImpl {
 
     private Thread fsCrawlerThread;
 
-    private final ElasticsearchClientBase esClient;
+    private final ElasticsearchClient esClient;
     private FsParser fsParser;
 
     public FsCrawlerImpl(Path config, FsSettings settings) {
@@ -69,7 +69,7 @@ public class FsCrawlerImpl {
         this.settings = settings;
         this.loop = loop;
         this.rest = rest;
-        this.esClient = ElasticsearchClientAbstract.getInstance(config, settings);
+        this.esClient = ElasticsearchClientUtil.getInstance(config, settings);
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
@@ -86,7 +86,7 @@ public class FsCrawlerImpl {
         }
     }
 
-    public ElasticsearchClientBase getEsClient() {
+    public ElasticsearchClient getEsClient() {
         return esClient;
     }
 

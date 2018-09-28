@@ -19,8 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientAbstract;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientBase;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -32,7 +32,7 @@ import java.io.IOException;
 
 public abstract class AbstractRestITCase extends AbstractITCase {
 
-    private ElasticsearchClientBase esTmpClient;
+    private ElasticsearchClient esTmpClient;
 
     @Before
     public void startRestServer() throws Exception {
@@ -44,7 +44,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
                 .build();
         fsSettings.getElasticsearch().setIndex(getCrawlerName());
         FsCrawlerValidator.validateSettings(logger, fsSettings, true);
-        esTmpClient = ElasticsearchClientAbstract.getInstance(metadataDir, fsSettings);
+        esTmpClient = ElasticsearchClientUtil.getInstance(metadataDir, fsSettings);
         esTmpClient.start();
         RestServer.start(fsSettings, esTmpClient);
 
