@@ -19,8 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import fr.pilato.elasticsearch.crawler.fs.client.dummy.ElasticsearchClientDummyGoodVersion;
-import fr.pilato.elasticsearch.crawler.fs.client.dummy.ElasticsearchClientDummyWrongVersion;
+import fr.pilato.elasticsearch.crawler.fs.client.v0.ElasticsearchClientV0;
+import fr.pilato.elasticsearch.crawler.fs.client.v1.ElasticsearchClientV1;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -50,22 +50,27 @@ public class ElasticsearchClientTest extends AbstractFSCrawlerTestCase {
     @Test
     public void testGetInstanceWithNullSettings() {
         NullPointerException npe = expectThrows(NullPointerException.class,
-                () -> ElasticsearchClientUtil.getInstance(null, null));
+                () -> {
+                    try {
+                        return ElasticsearchClientUtil.getInstance(null, null, 0);
+                    } catch (ClassNotFoundException e) {
+                        throw new AssertionError("We should have been able to load a client version 0");
+                    }
+                });
         assertThat(npe.getMessage(), is("settings can not be null"));
     }
 
     @Test
-    public void testGetInstance() throws IOException {
-        ElasticsearchClient instance = ElasticsearchClientUtil.getInstance(null, FsSettings.builder("foo").build());
-        assertThat(instance, instanceOf(ElasticsearchClientDummyGoodVersion.class));
+    public void testGetInstance() throws IOException, ClassNotFoundException {
+        ElasticsearchClient instance = ElasticsearchClientUtil.getInstance(null, FsSettings.builder("foo").build(), 0);
+        assertThat(instance, instanceOf(ElasticsearchClientV0.class));
         instance.checkVersion();
     }
 
     @Test
-    public void testGetInstanceWrongVersions() {
-        ElasticsearchClient instance = ElasticsearchClientUtil.getInstance(null, FsSettings.builder("foo").build(),
-                "fr/pilato/elasticsearch/crawler/fs/client/dummy/fscrawler-client-wrong-version.properties");
-        assertThat(instance, instanceOf(ElasticsearchClientDummyWrongVersion.class));
+    public void testGetInstanceWrongVersions() throws ClassNotFoundException {
+        ElasticsearchClient instance = ElasticsearchClientUtil.getInstance(null, FsSettings.builder("foo").build(), 1);
+        assertThat(instance, instanceOf(ElasticsearchClientV1.class));
         RuntimeException exception = expectThrows(RuntimeException.class, () -> {
             try {
                 instance.checkVersion();
@@ -74,6 +79,6 @@ public class ElasticsearchClientTest extends AbstractFSCrawlerTestCase {
                 return e;
             }
         });
-        assertThat(exception.getMessage(), is("The Elasticsearch client version [5] is not compatible with the Elasticsearch cluster version [6.4.1]."));
+        assertThat(exception.getMessage(), is("The Elasticsearch client version [1] is not compatible with the Elasticsearch cluster version [6.4.1]."));
     }
 }

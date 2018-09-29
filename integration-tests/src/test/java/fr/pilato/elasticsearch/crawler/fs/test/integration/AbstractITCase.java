@@ -328,13 +328,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             esClient.close();
             esClient = null;
         }
-
-        /*
-        if (container != null) {
-            container.close();
-            container = null;
-        }
-        */
     }
 
     private static void testClusterRunning() throws IOException {

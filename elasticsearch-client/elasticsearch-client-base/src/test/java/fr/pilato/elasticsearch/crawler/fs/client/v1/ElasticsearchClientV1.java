@@ -17,21 +17,23 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.client.dummy;
+package fr.pilato.elasticsearch.crawler.fs.client.v1;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientDummyBase;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 import java.nio.file.Path;
 
-public class ElasticsearchClientDummyGoodVersion extends ElasticsearchClientDummyBase {
+public class ElasticsearchClientV1 extends ElasticsearchClientDummyBase {
 
-    public ElasticsearchClientDummyGoodVersion(Path path, FsSettings settings) {
+    public ElasticsearchClientV1(Path path, FsSettings settings) {
+
     }
 
     @Override
     public byte compatibleVersion() {
-        return 6;
+        return 1;
     }
 
     @Override

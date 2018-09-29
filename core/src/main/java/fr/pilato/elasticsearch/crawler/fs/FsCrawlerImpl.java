@@ -58,10 +58,6 @@ public class FsCrawlerImpl {
     private final ElasticsearchClient esClient;
     private FsParser fsParser;
 
-    public FsCrawlerImpl(Path config, FsSettings settings) {
-        this(config, settings, LOOP_INFINITE, false);
-    }
-
     public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
         FsCrawlerUtil.createDirIfMissing(config);
 

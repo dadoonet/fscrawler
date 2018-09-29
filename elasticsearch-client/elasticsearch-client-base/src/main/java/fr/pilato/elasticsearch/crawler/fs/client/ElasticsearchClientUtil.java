@@ -24,14 +24,15 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Objects;
-import java.util.Properties;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 
 public abstract class ElasticsearchClientUtil {
 
@@ -41,12 +42,13 @@ public abstract class ElasticsearchClientUtil {
      * Decode a cloudId to a Node representation. This helps when using
      * official elasticsearch as a service: https://cloud.elastic.co
      * The cloudId can be found from the cloud console.
+     *
      * @param cloudId The cloud ID to decode.
      * @return A Node running on https://address:443
      */
     public static Node decodeCloudId(String cloudId) {
         // 1. Ignore anything before `:`.
-        String id = cloudId.substring(cloudId.indexOf(':')+1);
+        String id = cloudId.substring(cloudId.indexOf(':') + 1);
 
         // 2. base64 decode
         String decoded = new String(Base64.getDecoder().decode(id));
@@ -58,63 +60,89 @@ public abstract class ElasticsearchClientUtil {
         return Node.builder().setHost(words[1] + "." + words[0]).setPort(443).setScheme(Node.Scheme.HTTPS).build();
     }
 
-    private final static String ES_CLIENT_PROPERTIES = "fr/pilato/elasticsearch/crawler/fs/client/fscrawler-client.properties";
-    private final static String ES_CLIENT_CLASS_PROPERTY = "es-client.class";
-
     /**
-     * Reads the classpath to get the right instance to be injected as the Client
-     * implementation
+     * Try to find a client version in the classpath
      * @param config Path to FSCrawler configuration files (elasticsearch templates)
      * @param settings FSCrawler settings. Can not be null.
      * @return A Client instance
      */
     public static ElasticsearchClient getInstance(Path config, FsSettings settings) {
-        return getInstance(config, settings, ES_CLIENT_PROPERTIES);
+
+        Objects.requireNonNull(settings, "settings can not be null");
+
+        for (int i = 6; i >= 1; i--) {
+            logger.debug("Trying to find a client version {}", i);
+
+            try {
+                return getInstance(config, settings, i);
+            } catch (ClassNotFoundException ignored) {
+            }
+        }
+
+        throw new IllegalArgumentException("Can not find any ElasticsearchClient in the classpath. " +
+                "Did you forget to add the elasticsearch client library?");
     }
 
     /**
-     * Reads the classpath to get the right instance to be injected as the Client
-     * implementation
+     * Try to find a client version in the classpath
      * @param config Path to FSCrawler configuration files (elasticsearch templates)
      * @param settings FSCrawler settings. Can not be null.
-     * @param propertyFile Property file name. For test purpose only.
+     * @param version Version to load
      * @return A Client instance
      */
-    static ElasticsearchClient getInstance(Path config, FsSettings settings, String propertyFile) {
+    public static ElasticsearchClient getInstance(Path config, FsSettings settings, int version) throws ClassNotFoundException {
         Objects.requireNonNull(settings, "settings can not be null");
 
-        String className;
-
+        Class<ElasticsearchClient> clazz = null;
         try {
-            Properties properties = readPropertiesFromClassLoader(propertyFile);
-            className = properties.getProperty(ES_CLIENT_CLASS_PROPERTY);
-        } catch (NullPointerException npe) {
-            throw new IllegalArgumentException("Can not find " + propertyFile + " in the classpath. " +
+            clazz = findClass(version);
+        } catch (ClassNotFoundException e) {
+            logger.trace("ElasticsearchClient class not found for version {} in the classpath. Skipping...", version);
+        }
+
+        if (clazz == null) {
+            throw new ClassNotFoundException("Can not find any ElasticsearchClient in the classpath. " +
                     "Did you forget to add the elasticsearch client library?");
         }
 
-        if (className == null) {
-            throw new IllegalArgumentException("Can not find " + ES_CLIENT_CLASS_PROPERTY + " property in " +
-                    propertyFile + " file.");
-        }
-
+        logger.trace("Found [{}] class as the elasticsearch client implementation.", clazz.getName());
         try {
-            Class<?> aClass = Class.forName(className);
-            boolean isImplementingInterface = ElasticsearchClient.class.isAssignableFrom(aClass);
-            if (!isImplementingInterface) {
-                throw new IllegalArgumentException("Class " + className + " does not implement " + ElasticsearchClient.class.getName() + " interface");
-            }
-
-            Class<ElasticsearchClient> clazz = (Class<ElasticsearchClient>) aClass;
-
             Constructor<? extends ElasticsearchClient> constructor = clazz.getConstructor(Path.class, FsSettings.class);
             return constructor.newInstance(config, settings);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Class " + className + " not found.", e);
         } catch (NoSuchMethodException e) {
-            throw new IllegalArgumentException("Class " + className + " does not have the expected ctor (Path, FsSettings).", e);
+            throw new IllegalArgumentException("Class " + clazz.getName() + " does not have the expected ctor (Path, FsSettings).", e);
         } catch (IllegalAccessException|InstantiationException| InvocationTargetException e) {
-            throw new IllegalArgumentException("Can not create an instance of " + className, e);
+            throw new IllegalArgumentException("Can not create an instance of " + clazz.getName(), e);
         }
+    }
+
+    /**
+     * Try to load an ElasticsearchClient class
+     * @param version Version number to use. It's only the major part of the version. Like 5 or 6.
+     * @return The Client class
+     */
+    private static Class<ElasticsearchClient> findClass(int version) throws ClassNotFoundException {
+        String className = "fr.pilato.elasticsearch.crawler.fs.client.v" + version + ".ElasticsearchClientV" + version;
+        Class<?> aClass = findClass(className);
+        boolean isImplementingInterface = ElasticsearchClient.class.isAssignableFrom(aClass);
+        if (!isImplementingInterface) {
+            throw new IllegalArgumentException("Class " + className + " does not implement " + ElasticsearchClient.class.getName() + " interface");
+        }
+
+        return (Class<ElasticsearchClient>) aClass;
+    }
+
+    /**
+     * Try to load a class
+     * @param className Class to find.
+     * @return The class
+     */
+    private static Class<?> findClass(String className) throws ClassNotFoundException {
+        logger.trace("Trying to find a class named [{}]", className);
+        // Let's try the default classloader
+        ClassLoader classLoader = ElasticsearchClientUtil.class.getClassLoader();
+        Class aClass = classLoader.loadClass(className);
+        System.out.println("aClass.getName() = " + aClass.getName());
+        return aClass;
     }
 }

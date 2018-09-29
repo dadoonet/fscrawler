@@ -24,13 +24,15 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+
 public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
     @Test(expected = RuntimeException.class)
     public void test_checksum_non_existing_algorithm() {
         FsSettings fsSettings = FsSettings.builder("test_checksum_non_existing_algorithm")
                 .setFs(Fs.builder().setChecksum("FSCRAWLER").build())
                 .build();
-        new FsCrawlerImpl(rootTmpDir, fsSettings);
+        new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false);
     }
 
     /**
@@ -41,6 +43,6 @@ public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
         FsSettings fsSettings = FsSettings.builder("test_xml_and_json_enabled")
                 .setFs(Fs.builder().setXmlSupport(true).setJsonSupport(true).build())
                 .build();
-        new FsCrawlerImpl(rootTmpDir, fsSettings);
+        new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false);
     }
 }

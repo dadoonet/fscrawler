@@ -14,7 +14,7 @@
 
     <fileSets>
         <fileSet>
-            <directory>${project.build.scriptSourceDirectory}</directory>
+            <directory>${project.parent.basedir}/src/main/scripts</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>fscrawler*</include>
@@ -22,7 +22,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${project.parent.basedir}</directory>
+            <directory>${project.parent.basedir}/..</directory>
             <outputDirectory/>
             <includes>
                 <include>LICENSE</include>

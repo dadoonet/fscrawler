@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
+import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -87,7 +88,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
                                 .setUrl(testResourceTarget.toString())
                                 .setLangDetect(true)
                                 .build())
-                        .build());
+                        .build(), LOOP_INFINITE, false);
 
         crawler.start();
 

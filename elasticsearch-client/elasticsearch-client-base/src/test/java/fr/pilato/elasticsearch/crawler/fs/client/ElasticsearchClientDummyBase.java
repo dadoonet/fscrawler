@@ -17,16 +17,13 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.client.dummy;
+package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-
-import java.nio.file.Path;
 
 public abstract class ElasticsearchClientDummyBase implements ElasticsearchClient {
 
