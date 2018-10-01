@@ -9,13 +9,13 @@
         <version>2.6-SNAPSHOT</version>
     </parent>
 
-    <artifactId>fscrawler-es5</artifactId>
-    <name>FSCrawler ZIP Distribution for Elasticsearch 5.x</name>
+    <artifactId>fscrawler-es6</artifactId>
+    <name>FSCrawler ZIP Distribution for Elasticsearch 6.x</name>
 
     <dependencies>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-elasticsearch-client-v5</artifactId>
+            <artifactId>fscrawler-elasticsearch-client-v6</artifactId>
         </dependency>
     </dependencies>
 

@@ -71,7 +71,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testCreateIndexAlreadyExists() throws IOException {
+    public void testCreateIndexAlreadyExistsShouldFail() throws IOException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
         try {
@@ -80,6 +80,13 @@ public class ElasticsearchClientIT extends AbstractITCase {
         } catch (RuntimeException e) {
             assertThat(e.getMessage(), containsString("already exists"));
         }
+    }
+
+    @Test
+    public void testCreateIndexAlreadyExistsShouldBeIgnored() throws IOException {
+        esClient.createIndex(getCrawlerName(), false, null);
+        esClient.waitForHealthyIndex(getCrawlerName());
+        esClient.createIndex(getCrawlerName(), true, null);
     }
 
     @Test

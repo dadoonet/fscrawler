@@ -6,7 +6,6 @@
     </formats>
     <dependencySets>
         <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
             <outputDirectory>/lib</outputDirectory>
             <unpack>false</unpack>
         </dependencySet>

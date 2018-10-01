@@ -219,9 +219,12 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         if (!isNullOrEmpty(indexSettings)) {
             cir.source(indexSettings, XContentType.JSON);
         }
-        CreateIndexResponse indexResponse = client.indices().create(cir, RequestOptions.DEFAULT);
-        if (!indexResponse.isAcknowledged() && !ignoreErrors) {
-            throw new RuntimeException("index already exists");
+        try {
+            client.indices().create(cir, RequestOptions.DEFAULT);
+        } catch (ElasticsearchStatusException e) {
+            if (e.getMessage().contains("resource_already_exists_exception") && !ignoreErrors) {
+                throw new RuntimeException("index already exists");
+            }
         }
     }
 

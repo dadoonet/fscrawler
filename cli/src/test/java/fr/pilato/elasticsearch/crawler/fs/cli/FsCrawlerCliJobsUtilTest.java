@@ -35,7 +35,7 @@ import static org.hamcrest.Matchers.hasSize;
 /**
  * We want to test some utilities
  */
-public class FsCrawlerJobsUtilTest extends AbstractFSCrawlerMetadataTestCase {
+public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void testListExistingJobs() throws IOException {

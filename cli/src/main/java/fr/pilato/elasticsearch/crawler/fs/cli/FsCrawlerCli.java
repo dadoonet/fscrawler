@@ -41,8 +41,6 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -58,11 +56,11 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readDef
 /**
  * Main entry point to launch FsCrawler
  */
-public class FsCrawler {
+public class FsCrawlerCli {
 
     private static final long CLOSE_POLLING_WAIT_MS = 100;
 
-    private static final Logger logger = LogManager.getLogger(FsCrawler.class);
+    private static final Logger logger = LogManager.getLogger(FsCrawlerCli.class);
 
     private static FsCrawlerImpl fsCrawler;
 
@@ -116,7 +114,7 @@ public class FsCrawler {
         if (commands.debug || commands.trace || commands.silent) {
             LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
             Configuration config = ctx.getConfiguration();
-            LoggerConfig loggerConfig = config.getLoggerConfig(FsCrawler.class.getPackage().getName());
+            LoggerConfig loggerConfig = config.getLoggerConfig(FsCrawlerCli.class.getPackage().getName());
 
             if (commands.silent) {
                 // We change the full rootLogger level

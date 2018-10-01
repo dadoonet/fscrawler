@@ -24,12 +24,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Objects;
@@ -123,26 +119,13 @@ public abstract class ElasticsearchClientUtil {
      */
     private static Class<ElasticsearchClient> findClass(int version) throws ClassNotFoundException {
         String className = "fr.pilato.elasticsearch.crawler.fs.client.v" + version + ".ElasticsearchClientV" + version;
-        Class<?> aClass = findClass(className);
+        logger.trace("Trying to find a class named [{}]", className);
+        Class<?> aClass = Class.forName(className);
         boolean isImplementingInterface = ElasticsearchClient.class.isAssignableFrom(aClass);
         if (!isImplementingInterface) {
             throw new IllegalArgumentException("Class " + className + " does not implement " + ElasticsearchClient.class.getName() + " interface");
         }
 
         return (Class<ElasticsearchClient>) aClass;
-    }
-
-    /**
-     * Try to load a class
-     * @param className Class to find.
-     * @return The class
-     */
-    private static Class<?> findClass(String className) throws ClassNotFoundException {
-        logger.trace("Trying to find a class named [{}]", className);
-        // Let's try the default classloader
-        ClassLoader classLoader = ElasticsearchClientUtil.class.getClassLoader();
-        Class aClass = classLoader.loadClass(className);
-        System.out.println("aClass.getName() = " + aClass.getName());
-        return aClass;
     }
 }

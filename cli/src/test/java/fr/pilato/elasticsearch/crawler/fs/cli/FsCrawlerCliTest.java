@@ -41,7 +41,7 @@ import static org.hamcrest.Matchers.is;
 /**
  * We want to test FSCrawler main app
  */
-public class FsCrawlerTest extends AbstractFSCrawlerTestCase {
+public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/legacy/2_0/";
     private static final String[] LEGACY_RESOURCES = {
@@ -92,14 +92,14 @@ public class FsCrawlerTest extends AbstractFSCrawlerTestCase {
 
         String[] args = { "--config_dir", metadataDir.toString(), "--loop", "0", "--restart", jobName };
 
-        FsCrawler.main(args);
+        FsCrawlerCli.main(args);
 
         assertThat(Files.exists(jobDir.resolve(FsJobFileHandler.FILENAME)), is(false));
     }
 
     @Test
     public void testFrom2_0Version() {
-        FsCrawler.moveLegacyResources(metadataDir);
+        FsCrawlerCli.moveLegacyResources(metadataDir);
 
         // We should have now our files in david dir
         Path david = metadataDir.resolve("david");
