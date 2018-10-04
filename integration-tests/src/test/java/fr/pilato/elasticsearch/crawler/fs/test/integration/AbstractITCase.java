@@ -272,6 +272,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 // We test if we have already something running at the testClusterHost address
                 FsSettings fsSettings = FsSettings.builder("esClientTmp").setElasticsearch(Elasticsearch.builder()
                         .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
+                        .setUsername(testClusterUser)
+                        .setPassword(testClusterPass)
                         .build()).build();
                 esClientTemporary = ElasticsearchClientUtil.getInstance(null, fsSettings);
                 esClientTemporary.start();

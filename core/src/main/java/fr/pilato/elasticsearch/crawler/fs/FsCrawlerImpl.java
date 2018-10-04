@@ -94,7 +94,12 @@ public class FsCrawlerImpl {
     @SuppressWarnings("deprecation")
     public boolean upgrade() throws Exception {
         // We need to start a client so we can send requests to elasticsearch
-        esClient.start();
+        try {
+            esClient.start();
+        } catch (Throwable t) {
+            logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
+            return false;
+        }
 
         // The upgrade script is for now a bit dumb. It assumes that you had an old version of FSCrawler (< 2.3) and it will
         // simply move data from index/folder to index_folder

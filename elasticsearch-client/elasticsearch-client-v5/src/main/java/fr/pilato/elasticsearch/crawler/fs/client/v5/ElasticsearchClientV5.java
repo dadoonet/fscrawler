@@ -47,6 +47,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -140,9 +141,11 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
         try {
             // Create an elasticsearch client
             this.client = new RestHighLevelClient(lowLevelClient);
-            // We set what will be elasticsearch behavior as it depends on the cluster version
-            logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", compatibleVersion(), getVersion());
             checkVersion();
+            logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", compatibleVersion(), getVersion());
+        } catch (ElasticsearchStatusException e) {
+            logger.debug("got an error while trying to connect to elasticsearch cluster");
+            throw new IOException(e);
         } catch (Exception e) {
             logger.warn("failed to create elasticsearch client, disabling crawler...");
             throw e;

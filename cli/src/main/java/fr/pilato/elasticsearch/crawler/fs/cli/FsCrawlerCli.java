@@ -257,7 +257,12 @@ public class FsCrawlerCli {
                     fsSettingsFileHandler.write(fsSettings);
                 }
             } else {
-                fsCrawler.getEsClient().start();
+                try {
+                    fsCrawler.getEsClient().start();
+                } catch (Throwable t) {
+                    logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
+                    return;
+                }
                 ESVersion elasticsearchVersion = fsCrawler.getEsClient().getVersion();
                 checkForDeprecatedResources(configDir, elasticsearchVersion);
                 fsCrawler.start();

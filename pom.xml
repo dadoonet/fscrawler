@@ -35,7 +35,7 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch.version>6.4.1</elasticsearch.version>
+        <elasticsearch.version>6.4.2</elasticsearch.version>
         <elasticsearch6.version>${elasticsearch.version}</elasticsearch6.version>
         <elasticsearch5.version>5.6.11</elasticsearch5.version>
 
@@ -262,7 +262,6 @@
                                 </run>
                             </image>
                         </images>
-                        <skip>${skipIntegTests}</skip>
                     </configuration>
                     <executions>
                         <execution>
@@ -726,6 +725,50 @@
     </repositories>
 
     <profiles>
+        <profile>
+            <id>es-5x</id>
+        </profile>
+        <profile>
+            <id>es-6x</id>
+        </profile>
+        <profile>
+            <id>skip-fabric8</id>
+            <activation>
+                <property>
+                    <name>tests.cluster.host</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>run-fabric8</id>
+            <activation>
+                <property>
+                    <name>!tests.cluster.host</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>${skipIntegTests}</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>oss</id>
             <properties>

@@ -142,9 +142,8 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         try {
             // Create an elasticsearch client
             client = new RestHighLevelClient(buildRestClient(settings.getElasticsearch()));
-            // We set what will be elasticsearch behavior as it depends on the cluster version
-            logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", compatibleVersion(), getVersion());
             checkVersion();
+            logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", compatibleVersion(), getVersion());
         } catch (Exception e) {
             logger.warn("failed to create elasticsearch client, disabling crawler...");
             throw e;

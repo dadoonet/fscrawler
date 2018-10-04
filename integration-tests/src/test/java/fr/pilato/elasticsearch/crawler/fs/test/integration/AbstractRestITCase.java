@@ -36,8 +36,6 @@ public abstract class AbstractRestITCase extends AbstractITCase {
 
     @Before
     public void startRestServer() throws Exception {
-        logger.fatal("Working ON {}", getCrawlerName());
-
         FsSettings fsSettings = FsSettings.builder(getCrawlerName())
                 .setRest(Rest.builder().setPort(testRestPort).build())
                 .setElasticsearch(elasticsearchWithSecurity)
