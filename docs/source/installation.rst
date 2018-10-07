@@ -3,7 +3,12 @@ Download FSCrawler
 
 .. ifconfig:: release.endswith('-SNAPSHOT')
 
-    You can download FSCrawler |version| from this link: |Download_URL|_.
+    Depending on your Elasticsearch cluster version, you can download
+    FSCrawler |version| using the following links:
+
+    * |Download_URL_V6|_ for Elasticsearch V6.
+    * |Download_URL_V5|_ for Elasticsearch V5.
+
     The filename ends with ``.zip``.
 
     .. warning::
@@ -13,7 +18,11 @@ Download FSCrawler
 
 .. ifconfig:: release == version
 
-    You can download FSCrawler |version| from this link: |Download_URL|_.
+    Depending on your Elasticsearch cluster version, you can download
+    FSCrawler |version| using the following links:
+
+    * |Download_URL_V6|_ for Elasticsearch V6.
+    * |Download_URL_V5|_ for Elasticsearch V5.
 
     .. tip::
 
@@ -285,4 +294,10 @@ Upgrade to 2.5
 
 - For new indices, FSCrawler now uses ``_doc`` as the default type name for clusters
   running elasticsearch 6.x or superior.
+
+Upgrade to 2.6
+~~~~~~~~~~~~~~
+
+-   FSCrawler comes now with multiple distributions, depending on the elasticsearch
+    cluster you're targeting to run.
 
