@@ -122,11 +122,13 @@ public class UploadApi extends RestApi {
                     settings.getElasticsearch().getPipeline());
             // Elasticsearch entity coordinates (we use the first node address)
             Elasticsearch.Node node = settings.getElasticsearch().getNodes().get(0);
+            String nodeUrl;
             if (node.getCloudId() != null) {
-                node = decodeCloudId(node.getCloudId());
+                nodeUrl = decodeCloudId(node.getCloudId());
+            } else {
+                nodeUrl = node.getScheme().toLowerCase() + "://" + node.getHost() + ":" + node.getPort();
             }
-            url = buildUrl(
-                    node.getScheme().toLowerCase(), node.getHost(), node.getPort()) + "/" +
+            url = nodeUrl + "/" +
                     settings.getElasticsearch().getIndex() + "/" +
                     esClient.getDefaultTypeName() + "/" +
                     id;

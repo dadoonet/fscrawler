@@ -415,15 +415,15 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
         settings.getNodes().forEach(node -> {
             if (node.getCloudId() != null) {
                 // We have a cloud id which simplifies all
-                node = decodeCloudId(node.getCloudId());
+                hosts.add(HttpHost.create(decodeCloudId(node.getCloudId())));
+            } else {
+                Node.Scheme scheme = node.getScheme();
+                if (scheme == null) {
+                    // Default to HTTP. In case we are reading an old configuration
+                    scheme = Node.Scheme.HTTP;
+                }
+                hosts.add(new HttpHost(node.getHost(), node.getPort(), scheme.toLowerCase()));
             }
-
-            Node.Scheme scheme = node.getScheme();
-            if (scheme == null) {
-                // Default to HTTP. In case we are reading an old configuration
-                scheme = Node.Scheme.HTTP;
-            }
-            hosts.add(new HttpHost(node.getHost(), node.getPort(), scheme.toLowerCase()));
         });
 
         RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));

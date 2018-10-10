@@ -58,13 +58,8 @@ promptyn () {
 }
 
 test_against_version () {
-    if [ -z "$1" ]; then
-        echo "Building and testing the release..."
-        mvn clean install -Prelease ${MAVEN_OPTION} >> /tmp/fscrawler-${RELEASE_VERSION}.log
-    else
-        echo "Building and testing against elasticsearch $1.x..."
-        mvn clean verify -Pes-$1x ${MAVEN_OPTION} >> /tmp/fscrawler-${RELEASE_VERSION}.log
-    fi
+    echo "Building and testing the release..."
+    mvn clean install -Prelease ${MAVEN_OPTION} >> /tmp/fscrawler-${RELEASE_VERSION}.log
 
     if [ $? -ne 0 ]
     then
@@ -131,9 +126,6 @@ mvn clean generate-sources >> /tmp/fscrawler-${RELEASE_VERSION}.log
 
 # Git commit release
 git commit -q -a -m "prepare release fscrawler-$RELEASE_VERSION"
-
-# Testing against different elasticsearch versions
-test_against_version 5
 
 # The actual build is made against latest version
 test_against_version

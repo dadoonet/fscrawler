@@ -353,7 +353,7 @@
                             <remove>remove</remove>
                         </issueTypes>
                         <onlyCurrentVersion>true</onlyCurrentVersion>
-                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/${project.version}</urlDownload>
+                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es6/${project.version}</urlDownload>
                         <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
                     </configuration>
                 </plugin>
@@ -391,6 +391,11 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-test-documents</artifactId>
+                <version>2.6-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-it-common</artifactId>
                 <version>2.6-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -726,16 +731,10 @@
 
     <profiles>
         <profile>
-            <id>es-5x</id>
-        </profile>
-        <profile>
-            <id>es-6x</id>
-        </profile>
-        <profile>
             <id>skip-fabric8</id>
             <activation>
                 <property>
-                    <name>tests.cluster.host</name>
+                    <name>tests.cluster.url</name>
                 </property>
             </activation>
         </profile>
@@ -743,7 +742,7 @@
             <id>run-fabric8</id>
             <activation>
                 <property>
-                    <name>!tests.cluster.host</name>
+                    <name>!tests.cluster.url</name>
                 </property>
             </activation>
         </profile>

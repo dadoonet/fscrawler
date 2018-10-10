@@ -42,7 +42,7 @@ public abstract class ElasticsearchClientUtil {
      * @param cloudId The cloud ID to decode.
      * @return A Node running on https://address:443
      */
-    public static Node decodeCloudId(String cloudId) {
+    public static String decodeCloudId(String cloudId) {
         // 1. Ignore anything before `:`.
         String id = cloudId.substring(cloudId.indexOf(':') + 1);
 
@@ -53,7 +53,7 @@ public abstract class ElasticsearchClientUtil {
         String[] words = decoded.split("\\$");
 
         // 4. form the URLs
-        return Node.builder().setHost(words[1] + "." + words[0]).setPort(443).setScheme(Node.Scheme.HTTPS).build();
+        return "https://" + words[1] + "." + words[0] + ":443";
     }
 
     /**

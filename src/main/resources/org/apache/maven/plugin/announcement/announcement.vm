@@ -22,10 +22,10 @@ ${introduction}
 
 <h2>Usage</h2>
 
-Download [FSCrawler ${project.version}]($urlDownload/fscrawler-${project.version}.zip):
+Download [FSCrawler ${project.version}]($urlDownload/fscrawler-es6-${project.version}.zip):
 
 ```sh
-wget $urlDownload/fscrawler-${project.version}.zip
+wget $urlDownload/fscrawler-es6-${project.version}.zip
 ```
 
 Start FS crawler with:

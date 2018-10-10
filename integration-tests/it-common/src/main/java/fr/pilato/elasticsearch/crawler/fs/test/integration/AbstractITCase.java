@@ -36,6 +36,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
+import org.apache.http.HttpHost;
 import org.apache.logging.log4j.Level;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -74,29 +75,20 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeThat;
 
 /**
- * Integration tests are using Docker behind the scene to start an elasticsearch instance
- * running by default locally on 127.0.0.1:9200
+ * Integration tests expect to have an elasticsearch instance running on http://127.0.0.1:9200.
  *
  * Note that all existing data in this cluster might be removed
  *
  * If you want to run tests against a remote cluster, please launch tests using
- * tests.cluster.host and tests.cluster.port properties:
+ * tests.cluster.url property:
  *
- * mvn clean install -Dtests.cluster.host=127.0.0.1 -Dtests.cluster.port=9400
+ * mvn clean install -Dtests.cluster.url=http://127.0.0.1:9200
  *
- * When tests.cluster.host is set, the internal Docker container is not ran anymore.
- *
- * You can choose running against http or https with tests.cluster.scheme (defaults to HTTP):
- *
- * mvn clean install -Dtests.cluster.scheme=HTTPS
- *
- * If the cluster is running with x-pack and using the default username and passwords
- * of x-pack, tests can be run as well. You can overwrite default username and password
- * with tests.cluster.user and tests.cluster.password
+ * If the cluster is running with security you may want to overwrite the username and password
+ * with tests.cluster.user and tests.cluster.password:
  *
  * mvn clean install -Dtests.cluster.user=elastic -Dtests.cluster.pass=changeme
  *
@@ -168,7 +160,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
     }
 
-    private final static Integer DEFAULT_TEST_CLUSTER_PORT = 9200;
+    private final static String DEFAULT_TEST_CLUSTER_URL = "http://127.0.0.1:9200";
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
@@ -176,9 +168,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     static ElasticsearchClient esClient;
 
     private static String testClusterCloudId;
-    private static String testClusterHost;
-    private static int testClusterPort;
-    private static Elasticsearch.Node.Scheme testClusterScheme;
+    private static String testClusterUrl;
     private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
     private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
@@ -254,46 +244,18 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     public static void startElasticsearchRestClient() throws IOException {
         testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
         if (testClusterCloudId != null) {
-            Elasticsearch.Node node = decodeCloudId(testClusterCloudId);
-            testClusterHost = node.getHost();
-            testClusterPort = node.getPort();
-            testClusterScheme = node.getScheme();
-            staticLogger.debug("Using cloud id [{}]", testClusterCloudId);
+            testClusterUrl = decodeCloudId(testClusterCloudId);
+            staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
         } else {
-            testClusterHost = System.getProperty("tests.cluster.host");
-            testClusterPort = Integer.parseInt(System.getProperty("tests.cluster.port", DEFAULT_TEST_CLUSTER_PORT.toString()));
-            testClusterScheme = Elasticsearch.Node.Scheme.parse(System.getProperty("tests.cluster.scheme", Elasticsearch.Node.Scheme.HTTP.toString()));
+            testClusterUrl = System.getProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
         }
 
-        if (testClusterHost == null) {
-            ElasticsearchClient esClientTemporary = null;
-            try {
-                testClusterHost = "localhost";
-                // We test if we have already something running at the testClusterHost address
-                FsSettings fsSettings = FsSettings.builder("esClientTmp").setElasticsearch(Elasticsearch.builder()
-                        .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
-                        .setUsername(testClusterUser)
-                        .setPassword(testClusterPass)
-                        .build()).build();
-                esClientTemporary = ElasticsearchClientUtil.getInstance(null, fsSettings);
-                esClientTemporary.start();
-                staticLogger.debug("A node is already running locally. No need to start a Docker instance.");
-            } catch (IOException e) {
-                staticLogger.fatal("No local node running. We can't run our test suite.");
-                assumeNoException(e);
-            } finally {
-                // We need to close the temporary client
-                if (esClientTemporary != null) {
-                    esClientTemporary.close();
-                }
-            }
-        }
-
-        staticLogger.info("Starting a client against [{}://{}@{}:{}]", testClusterScheme.toLowerCase(), testClusterUser, testClusterHost, testClusterPort);
+        staticLogger.info("Starting a client against [{}]", testClusterUrl);
         // We build the elasticsearch High Level Client based on the parameters
+        HttpHost host = HttpHost.create(testClusterUrl);
         elasticsearchWithSecurity = Elasticsearch.builder()
                 .addNode(Elasticsearch.Node.builder()
-                        .setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
+                        .setHost(host.getHostName()).setPort(host.getPort()).setScheme(Elasticsearch.Node.Scheme.parse(host.getSchemeName())).build())
                 .setUsername(testClusterUser)
                 .setPassword(testClusterPass)
                 .build();
@@ -357,8 +319,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
                                                      TimeValue timeValue, ByteSizeValue byteSize) {
+        HttpHost host = HttpHost.create(testClusterUrl);
         Elasticsearch.Builder builder = Elasticsearch.builder()
-                .addNode(Elasticsearch.Node.builder().setHost(testClusterHost).setPort(testClusterPort).setScheme(testClusterScheme).build())
+                .addNode(Elasticsearch.Node.builder().setHost(host.getHostName()).setPort(host.getPort()).setScheme(Elasticsearch.Node.Scheme.parse(host.getSchemeName())).build())
                 .setBulkSize(bulkSize);
 
         if (indexName != null) {

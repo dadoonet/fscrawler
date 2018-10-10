@@ -40,11 +40,9 @@ public class ElasticsearchClientTest extends AbstractFSCrawlerTestCase {
     public void testCloudId() {
 
         String cloudId = "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==";
-        Elasticsearch.Node httpHost = decodeCloudId(cloudId);
+        String httpHost = decodeCloudId(cloudId);
 
-        assertThat(httpHost.getHost(), is("1d1ea996887745a6a2b7cb79315348a3.europe-west1.gcp.cloud.es.io"));
-        assertThat(httpHost.getPort(), is(443));
-        assertThat(httpHost.getScheme(), is(Elasticsearch.Node.Scheme.HTTPS));
+        assertThat(httpHost, is("https://1d1ea996887745a6a2b7cb79315348a3.europe-west1.gcp.cloud.es.io:443"));
     }
 
     @Test
