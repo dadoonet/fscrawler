@@ -62,8 +62,6 @@ public class FsCrawlerCli {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerCli.class);
 
-    private static FsCrawlerImpl fsCrawler;
-
     @SuppressWarnings("CanBeFinal")
     public static class FsCrawlerCommand {
         @Parameter(description = "job_name")
@@ -108,7 +106,8 @@ public class FsCrawlerCli {
         Scanner scanner = new Scanner(System.in);
 
         FsCrawlerCommand commands = new FsCrawlerCommand();
-        JCommander jCommander = new JCommander(commands, args);
+        JCommander jCommander = new JCommander(commands);
+        jCommander.parse(args);
 
         // Change debug level if needed
         if (commands.debug || commands.trace || commands.silent) {
@@ -151,7 +150,7 @@ public class FsCrawlerCli {
         // We move the legacy stuff which might come from version 2.0
         moveLegacyResources(configDir);
 
-        FsSettings fsSettings = null;
+        FsSettings fsSettings;
         FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(configDir);
 
         String jobName;
@@ -163,7 +162,7 @@ public class FsCrawlerCli {
 
             List<String> files = FsCrawlerJobsUtil.listExistingJobs(configDir);
 
-            if (files.size() > 0) {
+            if (!files.isEmpty()) {
                 for (int i = 0; i < files.size(); i++) {
                     logger.info("[{}] - {}", i+1, files.get(i));
                 }
@@ -176,7 +175,6 @@ public class FsCrawlerCli {
             } else {
                 logger.info("No job exists in [{}].", configDir);
                 logger.info("To create your first job, run 'fscrawler job_name' with 'job_name' you want");
-                jobName = null;
                 return;
             }
 
@@ -243,7 +241,7 @@ public class FsCrawlerCli {
             return;
         }
 
-        fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest);
+        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest);
         Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
 
         try {
@@ -259,7 +257,7 @@ public class FsCrawlerCli {
             } else {
                 try {
                     fsCrawler.getEsClient().start();
-                } catch (Throwable t) {
+                } catch (Exception t) {
                     logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
                     return;
                 }
@@ -285,7 +283,7 @@ public class FsCrawlerCli {
         }
     }
 
-    public static void moveLegacyResources(Path root) {
+    static void moveLegacyResources(Path root) {
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(root)) {
             for (Path path : directoryStream) {
                 String fileName = path.getFileName().toString();
