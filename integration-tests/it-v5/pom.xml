@@ -122,4 +122,43 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <!-- There is no OSS specific version in 5.x as it's packaged with x-pack by default -->
+            <id>oss</id>
+            <properties>
+                <integ.elasticsearch.image>docker.elastic.co/elasticsearch/elasticsearch-oss</integ.elasticsearch.image>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>start-elasticsearch</id>
+                                <phase>none</phase>
+                            </execution>
+                            <execution>
+                                <id>stop-elasticsearch</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.carrotsearch.randomizedtesting</groupId>
+                        <artifactId>junit4-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <!-- We can skip that IT execution -->
+                                <id>integration-tests</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
