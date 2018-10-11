@@ -94,7 +94,6 @@ public class Elasticsearch {
         }
 
         private String cloudId;
-        private String url;
         @Deprecated
         private String host;
         @Deprecated

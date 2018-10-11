@@ -151,12 +151,10 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
             throw e;
         }
 
-        if (settings.getElasticsearch().getPipeline() != null) {
-            // Check that the pipeline exists
-            if (!isExistingPipeline(settings.getElasticsearch().getPipeline())) {
-                throw new RuntimeException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
-                        ", but it does not exist.");
-            }
+        if (settings.getElasticsearch().getPipeline() != null &&
+                !isExistingPipeline(settings.getElasticsearch().getPipeline())) {
+            throw new RuntimeException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
+                    ", but it does not exist.");
         }
 
         BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
@@ -340,7 +338,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
         Map<String, Object> response = asMap(restResponse);
         logger.debug("reindex response: {}", response);
 
-        return (int) response.get("total");
+        return (response == null ? -1 : (int) response.get("total"));
     }
 
     /**

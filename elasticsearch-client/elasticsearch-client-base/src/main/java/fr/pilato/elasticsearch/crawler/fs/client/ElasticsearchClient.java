@@ -144,7 +144,8 @@ public interface ElasticsearchClient extends Closeable {
      * @throws Exception in case of error
      * @deprecated replace with an index template
      */
-    public void createIndices() throws Exception;
+    @Deprecated
+    void createIndices() throws Exception;
 
     /**
      * Run a search

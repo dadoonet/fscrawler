@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.Node;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +32,10 @@ import java.util.Objects;
 public abstract class ElasticsearchClientUtil {
 
     protected static final Logger logger = LogManager.getLogger(ElasticsearchClientUtil.class);
+
+    private ElasticsearchClientUtil() {
+
+    }
 
     /**
      * Decode a cloudId to a Node representation. This helps when using

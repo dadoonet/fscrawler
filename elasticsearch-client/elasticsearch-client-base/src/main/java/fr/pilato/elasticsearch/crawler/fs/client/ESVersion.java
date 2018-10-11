@@ -24,8 +24,8 @@ public class ESVersion implements Comparable<ESVersion> {
      * Returns the version given its string representation, current version if the argument is null or empty
      */
     public static ESVersion fromString(String version) {
-        final boolean snapshot; // this is some BWC for 2.x and before indices
-        if (snapshot = version.endsWith("-SNAPSHOT")) {
+        final boolean snapshot = version.endsWith("-SNAPSHOT");
+        if (snapshot) {
             version = version.substring(0, version.length() - 9);
         }
         String[] parts = version.split("[.-]");

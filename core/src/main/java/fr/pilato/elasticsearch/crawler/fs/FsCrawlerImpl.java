@@ -96,7 +96,7 @@ public class FsCrawlerImpl {
         // We need to start a client so we can send requests to elasticsearch
         try {
             esClient.start();
-        } catch (Throwable t) {
+        } catch (Exception t) {
             logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
             return false;
         }
