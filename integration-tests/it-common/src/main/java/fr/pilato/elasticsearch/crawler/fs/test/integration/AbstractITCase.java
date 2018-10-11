@@ -107,6 +107,21 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     Path currentTestResourceDir;
 
     private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
+    private final static String DEFAULT_TEST_CLUSTER_URL = "http://127.0.0.1:9200";
+    private final static String DEFAULT_USERNAME = "elastic";
+    private final static String DEFAULT_PASSWORD = "changeme";
+    private final static Integer DEFAULT_TEST_REST_PORT = 8080;
+
+    static ElasticsearchClient esClient;
+
+    private static String testClusterUrl;
+    private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
+    private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
+    static Elasticsearch elasticsearchWithSecurity;
+
+    static WebTarget target;
+    static Client client;
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -159,23 +174,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             Files.list(metadataDir).forEach(path -> staticLogger.debug("{}", path));
         }
     }
-
-    private final static String DEFAULT_TEST_CLUSTER_URL = "http://127.0.0.1:9200";
-    private final static String DEFAULT_USERNAME = "elastic";
-    private final static String DEFAULT_PASSWORD = "changeme";
-    private final static Integer DEFAULT_TEST_REST_PORT = 8080;
-
-    static ElasticsearchClient esClient;
-
-    private static String testClusterCloudId;
-    private static String testClusterUrl;
-    private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
-    private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
-    final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
-    static Elasticsearch elasticsearchWithSecurity;
-
-    static WebTarget target;
-    static Client client;
 
     @BeforeClass
     public static void copyResourcesToTestDir() throws IOException {
@@ -242,7 +240,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startElasticsearchRestClient() throws IOException {
-        testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
+        String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
         if (testClusterCloudId != null) {
             testClusterUrl = decodeCloudId(testClusterCloudId);
             staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);

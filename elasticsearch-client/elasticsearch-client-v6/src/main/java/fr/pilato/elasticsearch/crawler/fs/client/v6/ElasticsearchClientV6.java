@@ -50,7 +50,6 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
@@ -193,7 +192,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
                         failures[0]++;
                         logger.debug("Error caught for [{}]/[{}]/[{}]: {}", bir.getIndex(),
                                 bir.getType(), bir.getId(), bir.getFailureMessage());
-                    };
+                    }
                 });
                 logger.warn("Got [{}] failures of [{}] requests", failures[0], request.numberOfActions());
             }

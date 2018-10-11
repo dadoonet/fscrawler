@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.client.v0.ElasticsearchClientV0;
 import fr.pilato.elasticsearch.crawler.fs.client.v1.ElasticsearchClientV1;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
@@ -32,7 +31,6 @@ import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
 
 public class ElasticsearchClientTest extends AbstractFSCrawlerTestCase {
 

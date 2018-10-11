@@ -28,7 +28,6 @@ import java.nio.file.Path;
 public class ElasticsearchClientV1 extends ElasticsearchClientDummyBase {
 
     public ElasticsearchClientV1(Path path, FsSettings settings) {
-
     }
 
     @Override

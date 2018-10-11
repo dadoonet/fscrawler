@@ -194,7 +194,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
                         failures[0]++;
                         logger.debug("Error caught for [{}]/[{}]/[{}]: {}", bir.getIndex(),
                                 bir.getType(), bir.getId(), bir.getFailureMessage());
-                    };
+                    }
                 });
                 logger.warn("Got [{}] failures of [{}] requests", failures[0], request.numberOfActions());
             }

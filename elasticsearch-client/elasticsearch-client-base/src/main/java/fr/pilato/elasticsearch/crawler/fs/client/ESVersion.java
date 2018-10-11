@@ -20,27 +20,34 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 public class ESVersion implements Comparable<ESVersion> {
-   /**
+    public final int id;
+    public final byte major;
+    public final byte minor;
+    public final byte revision;
+    public final byte build;
+
+    /**
      * Returns the version given its string representation, current version if the argument is null or empty
      */
     public static ESVersion fromString(String version) {
-        final boolean snapshot = version.endsWith("-SNAPSHOT");
+        String lVersion = version;
+        final boolean snapshot = lVersion.endsWith("-SNAPSHOT");
         if (snapshot) {
-            version = version.substring(0, version.length() - 9);
+            lVersion = lVersion.substring(0, lVersion.length() - 9);
         }
-        String[] parts = version.split("[.-]");
+        String[] parts = lVersion.split("[.-]");
         if (parts.length < 3 || parts.length > 4) {
             throw new IllegalArgumentException(
-                    "the version needs to contain major, minor, and revision, and optionally the build: " + version);
+                    "the lVersion needs to contain major, minor, and revision, and optionally the build: " + lVersion);
         }
 
         try {
             final int rawMajor = Integer.parseInt(parts[0]);
-            if (rawMajor >= 5 && snapshot) { // we don't support snapshot as part of the version here anymore
-                throw new IllegalArgumentException("illegal version format - snapshots are only supported until version 2.x");
+            if (rawMajor >= 5 && snapshot) { // we don't support snapshot as part of the lVersion here anymore
+                throw new IllegalArgumentException("illegal lVersion format - snapshots are only supported until lVersion 2.x");
             }
             final int betaOffset = rawMajor < 5 ? 0 : 25;
-            //we reverse the version id calculation based on some assumption as we can't reliably reverse the modulo
+            //we reverse the lVersion id calculation based on some assumption as we can't reliably reverse the modulo
             final int major = rawMajor * 1000000;
             final int minor = Integer.parseInt(parts[1]) * 10000;
             final int revision = Integer.parseInt(parts[2]) * 100;
@@ -59,22 +66,16 @@ public class ESVersion implements Comparable<ESVersion> {
                 } else if (buildStr.startsWith("RC") || buildStr.startsWith("rc")) {
                     build = Integer.parseInt(buildStr.substring(2)) + 50;
                 } else {
-                    throw new IllegalArgumentException("unable to parse version " + version);
+                    throw new IllegalArgumentException("unable to parse lVersion " + lVersion);
                 }
             }
 
             return new ESVersion(major + minor + revision + build);
 
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("unable to parse version " + version, e);
+            throw new IllegalArgumentException("unable to parse lVersion " + lVersion, e);
         }
     }
-
-    public final int id;
-    public final byte major;
-    public final byte minor;
-    public final byte revision;
-    public final byte build;
 
     ESVersion(int id) {
         this.id = id;
@@ -121,11 +122,7 @@ public class ESVersion implements Comparable<ESVersion> {
 
         ESVersion version = (ESVersion) o;
 
-        if (id != version.id) {
-            return false;
-        }
-
-        return true;
+        return id == version.id;
     }
 
     @Override

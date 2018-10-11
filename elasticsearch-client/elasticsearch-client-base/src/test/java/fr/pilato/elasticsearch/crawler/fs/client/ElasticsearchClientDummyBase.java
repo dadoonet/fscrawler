@@ -19,12 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-
 public abstract class ElasticsearchClientDummyBase implements ElasticsearchClient {
 
     @Override
@@ -34,7 +28,7 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
 
     @Override
     public void start() {
-
+        // Testing purpose only
     }
 
     @Override
@@ -44,7 +38,7 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
 
     @Override
     public void createIndex(String index, boolean ignoreErrors, String indexSettings) {
-
+        // Testing purpose only
     }
 
     @Override
@@ -59,12 +53,12 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
 
     @Override
     public void refresh(String index) {
-
+        // Testing purpose only
     }
 
     @Override
     public void waitForHealthyIndex(String index) {
-
+        // Testing purpose only
     }
 
     @Override
@@ -74,7 +68,7 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
 
     @Override
     public void deleteByQuery(String index, String type) {
-
+        // Testing purpose only
     }
 
     @Override
@@ -89,22 +83,22 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
 
     @Override
     public void index(String index, String type, String id, String json, String pipeline) {
-
+        // Testing purpose only
     }
 
     @Override
     public void indexSingle(String index, String type, String id, String json) {
-
+        // Testing purpose only
     }
 
     @Override
     public void delete(String index, String type, String id) {
-
+        // Testing purpose only
     }
 
     @Override
     public void createIndices() {
-
+        // Testing purpose only
     }
 
     @Override
@@ -114,17 +108,17 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
 
     @Override
     public void deleteIndex(String index) {
-
+        // Testing purpose only
     }
 
     @Override
     public void flush() {
-
+        // Testing purpose only
     }
 
     @Override
     public void performLowLevelRequest(String method, String endpoint, String jsonEntity) {
-
+        // Testing purpose only
     }
 
     @Override
@@ -139,6 +133,6 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
 
     @Override
     public void close() {
-
+        // Testing purpose only
     }
 }
