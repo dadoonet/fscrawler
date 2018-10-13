@@ -42,6 +42,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
@@ -84,7 +85,7 @@ public class UploadApi extends RestApi {
         // Create the Doc object
         Doc doc = new Doc();
 
-        String filename = new String(d.getFileName().getBytes("ISO-8859-1"), "UTF-8");
+        String filename = new String(d.getFileName().getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
         long filesize = d.getSize();
 
         // File

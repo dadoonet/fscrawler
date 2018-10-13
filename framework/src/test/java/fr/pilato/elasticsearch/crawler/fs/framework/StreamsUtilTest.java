@@ -25,7 +25,7 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiLettersOfLengthBetween;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,11 +36,11 @@ public class StreamsUtilTest extends AbstractFSCrawlerTestCase {
     @Test
     public void copyStream() throws IOException {
         String text = randomAsciiLettersOfLengthBetween(10, 1000);
-        ByteArrayInputStream bis = new ByteArrayInputStream(text.getBytes(Charset.forName("UTF-8")));
+        ByteArrayInputStream bis = new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         StreamsUtil.copy(bis, bos);
 
-        String copiedText = bos.toString("UTF-8");
+        String copiedText = bos.toString(StandardCharsets.UTF_8.name());
         assertThat(copiedText, is(text));
     }
 }

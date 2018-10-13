@@ -22,6 +22,8 @@ package fr.pilato.elasticsearch.crawler.fs.cli;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * This class checks at startup if everything is correctly set.
  * We are using a class for it so it's easier to track checks within a single place
@@ -36,8 +38,8 @@ public class BootstrapChecks {
 
     private static void checkUTF8() {
         String encoding = System.getProperty("file.encoding");
-        if (!encoding.equals("UTF-8")) {
-            logger.warn("[file.encoding] should be [{}] but is [{}]", "UTF-8", encoding);
+        if (!encoding.equals(StandardCharsets.UTF_8.name())) {
+            logger.warn("[file.encoding] should be [{}] but is [{}]", StandardCharsets.UTF_8.name(), encoding);
         }
     }
 
