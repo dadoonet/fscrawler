@@ -98,7 +98,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testFrom2_0Version() {
+    public void testFrom20Version() {
         FsCrawlerCli.moveLegacyResources(metadataDir);
 
         // We should have now our files in david dir
