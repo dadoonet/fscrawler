@@ -51,7 +51,7 @@ import static org.hamcrest.Matchers.iterableWithSize;
 public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void testSubdirs() throws Exception {
+    public void test_subdirs() throws Exception {
         startCrawler();
 
         // We expect to have two files
@@ -70,7 +70,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void testSubdirsDeepTree() throws Exception {
+    public void test_subdirs_deep_tree() throws Exception {
         startCrawler();
 
         // We expect to have 7 files
@@ -119,7 +119,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void testSubdirsVeryDeepTree() throws Exception {
+    public void test_subdirs_very_deep_tree() throws Exception {
 
         long subdirs = randomLongBetween(30, 100);
 
