@@ -94,9 +94,12 @@ public class Elasticsearch {
         }
 
         private String cloudId;
+        @Deprecated
         private String host;
+        @Deprecated
         private Integer port;
         private boolean active;
+        @Deprecated
         private Scheme scheme;
 
         public String getHost() {

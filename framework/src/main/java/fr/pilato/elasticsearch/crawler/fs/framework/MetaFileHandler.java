@@ -51,7 +51,7 @@ public class MetaFileHandler {
         if (subdir != null) {
             dir = dir.resolve(subdir);
         }
-        return new String(Files.readAllBytes(dir.resolve(filename)), "UTF-8");
+        return new String(Files.readAllBytes(dir.resolve(filename)), StandardCharsets.UTF_8);
     }
 
     /**

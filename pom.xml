@@ -35,7 +35,9 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch.version>6.4.1</elasticsearch.version>
+        <elasticsearch.version>6.4.2</elasticsearch.version>
+        <elasticsearch6.version>${elasticsearch.version}</elasticsearch6.version>
+        <elasticsearch5.version>5.6.11</elasticsearch5.version>
 
         <tika.version>1.19</tika.version>
         <jackson.version>2.9.7</jackson.version>
@@ -48,8 +50,7 @@
         <tiff.version>1.4.0</tiff.version>
         <jpeg.version>1.3.0</jpeg.version>
 
-        <!-- Only Lucene test framework is used here -->
-        <lucene.version>7.4.0</lucene.version>
+        <!-- To skip Tests -->
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
@@ -261,7 +262,6 @@
                                 </run>
                             </image>
                         </images>
-                        <skip>${skipIntegTests}</skip>
                     </configuration>
                     <executions>
                         <execution>
@@ -353,7 +353,7 @@
                             <remove>remove</remove>
                         </issueTypes>
                         <onlyCurrentVersion>true</onlyCurrentVersion>
-                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/${project.version}</urlDownload>
+                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es6/${project.version}</urlDownload>
                         <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
                     </configuration>
                 </plugin>
@@ -395,6 +395,11 @@
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-it-common</artifactId>
+                <version>2.6-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-core</artifactId>
                 <version>2.6-SNAPSHOT</version>
             </dependency>
@@ -406,6 +411,21 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-elasticsearch-client</artifactId>
+                <version>2.6-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-elasticsearch-client-base</artifactId>
+                <version>2.6-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-elasticsearch-client-v5</artifactId>
+                <version>2.6-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-elasticsearch-client-v6</artifactId>
                 <version>2.6-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -449,16 +469,6 @@
                 <version>2.6-SNAPSHOT</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.elasticsearch.client</groupId>
-                <artifactId>elasticsearch-rest-client</artifactId>
-                <version>${elasticsearch.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.elasticsearch.client</groupId>
-                <artifactId>elasticsearch-rest-high-level-client</artifactId>
-                <version>${elasticsearch.version}</version>
-            </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
@@ -665,11 +675,6 @@
 
             <!-- Test dependencies -->
             <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-test-framework</artifactId>
-                <version>${lucene.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-all</artifactId>
                 <version>1.3</version>
@@ -683,11 +688,6 @@
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
                 <artifactId>randomizedtesting-runner</artifactId>
                 <version>2.6.3</version>
-            </dependency>
-            <dependency>
-                <groupId>fr.pilato.elasticsearch.testcontainers</groupId>
-                <artifactId>testcontainers-elasticsearch</artifactId>
-                <version>0.1</version>
             </dependency>
 
             <!-- CVE Temporary Fix -->
@@ -731,15 +731,25 @@
 
     <profiles>
         <profile>
+            <id>skip-fabric8</id>
+            <activation>
+                <property>
+                    <name>tests.cluster.url</name>
+                </property>
+            </activation>
+        </profile>
+        <profile>
+            <id>run-fabric8</id>
+            <activation>
+                <property>
+                    <name>!tests.cluster.url</name>
+                </property>
+            </activation>
+        </profile>
+        <profile>
             <id>oss</id>
             <properties>
                 <integ.elasticsearch.image>docker.elastic.co/elasticsearch/elasticsearch-oss</integ.elasticsearch.image>
-            </properties>
-        </profile>
-        <profile>
-            <id>es-5x</id>
-            <properties>
-                <integ.elasticsearch.version>5.6.5</integ.elasticsearch.version>
             </properties>
         </profile>
         <profile>

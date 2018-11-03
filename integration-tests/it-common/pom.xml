@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>fr.pilato.elasticsearch.crawler</groupId>
+        <artifactId>fscrawler-it</artifactId>
+        <version>2.6-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>fscrawler-it-common</artifactId>
+    <name>FSCrawler Integration Common Tests</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-rest</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-test-framework</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-test-documents</artifactId>
+        </dependency>
+
+        <!--
+        For legal reasons (incompatible license), these dependencies are to marked as optional so users who might want
+        to use them have to provided them manually in the lib dir.
+        -->
+        <dependency>
+            <groupId>com.levigo.jbig2</groupId>
+            <artifactId>levigo-jbig2-imageio</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jai-imageio</groupId>
+            <artifactId>jai-imageio-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jai-imageio</groupId>
+            <artifactId>jai-imageio-jpeg2000</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <!-- No need to start Fabric8 in the it-common module as tests are not ran from here with the CLI -->
+        <plugins>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+        <testResources>
+            <testResource>
+                <directory>src/main/resources-binary</directory>
+                <filtering>false</filtering>
+            </testResource>
+            <testResource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+    </build>
+
+    <profiles>
+        <!-- We are building a profile that can be activated from the IDE -->
+        <profile>
+            <id>es-6x</id>
+            <properties>
+                <integ.elasticsearch.version>${elasticsearch6.version}</integ.elasticsearch.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                    <artifactId>fscrawler-elasticsearch-client-v6</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <!-- We are building a profile that can be activated from the IDE -->
+        <profile>
+            <id>es-5x</id>
+            <properties>
+                <integ.elasticsearch.version>${elasticsearch5.version}</integ.elasticsearch.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                    <artifactId>fscrawler-elasticsearch-client-v5</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
+</project>

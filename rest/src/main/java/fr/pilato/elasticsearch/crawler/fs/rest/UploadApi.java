@@ -22,7 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaParser;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
@@ -30,33 +30,38 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import org.apache.commons.io.FilenameUtils;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import javax.ws.rs.*;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
-import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.decodeCloudId;
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.buildUrl;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 
 @Path("/_upload")
 public class UploadApi extends RestApi {
 
-    private final ElasticsearchClientManager elasticsearchClientManager;
+    private final ElasticsearchClient esClient;
     private final FsSettings settings;
     private final MessageDigest messageDigest;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
 
-    UploadApi(FsSettings settings, ElasticsearchClientManager elasticsearchClientManager) {
+    UploadApi(FsSettings settings, ElasticsearchClient esClient) {
         this.settings = settings;
-        this.elasticsearchClientManager = elasticsearchClientManager;
+        this.esClient = esClient;
         // Create MessageDigest instance
         try {
             messageDigest = settings.getFs().getChecksum() == null ?
@@ -80,7 +85,7 @@ public class UploadApi extends RestApi {
         // Create the Doc object
         Doc doc = new Doc();
 
-        String filename = new String(d.getFileName().getBytes("ISO-8859-1"), "UTF-8");
+        String filename = new String(d.getFileName().getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
         long filesize = d.getSize();
 
         // File
@@ -110,22 +115,23 @@ public class UploadApi extends RestApi {
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
             doc = this.getMergedJsonDoc(doc, tags);
-            elasticsearchClientManager.bulkProcessorDoc().add(
-                    new org.elasticsearch.action.index.IndexRequest(
-                            settings.getElasticsearch().getIndex(),
-                            elasticsearchClientManager.client().getDefaultTypeName(),
-                            id)
-                            .setPipeline(settings.getElasticsearch().getPipeline())
-                            .source(DocParser.toJson(doc), XContentType.JSON));
+            esClient.index(
+                    settings.getElasticsearch().getIndex(),
+                    esClient.getDefaultTypeName(),
+                    id,
+                    DocParser.toJson(doc),
+                    settings.getElasticsearch().getPipeline());
             // Elasticsearch entity coordinates (we use the first node address)
             Elasticsearch.Node node = settings.getElasticsearch().getNodes().get(0);
+            String nodeUrl;
             if (node.getCloudId() != null) {
-                node = decodeCloudId(node.getCloudId());
+                nodeUrl = decodeCloudId(node.getCloudId());
+            } else {
+                nodeUrl = node.getScheme().toLowerCase() + "://" + node.getHost() + ":" + node.getPort();
             }
-            url = buildUrl(
-                    node.getScheme().toLowerCase(), node.getHost(), node.getPort()) + "/" +
+            url = nodeUrl + "/" +
                     settings.getElasticsearch().getIndex() + "/" +
-                    elasticsearchClientManager.client().getDefaultTypeName() + "/" +
+                    esClient.getDefaultTypeName() + "/" +
                     id;
         }
 

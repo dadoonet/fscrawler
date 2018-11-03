@@ -73,7 +73,7 @@
         <!-- Our Elasticsearch Client -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-elasticsearch-client</artifactId>
+            <artifactId>fscrawler-elasticsearch-client-base</artifactId>
         </dependency>
 
         <!-- For REST Server -->
@@ -103,11 +103,6 @@
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-test-documents</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.testcontainers</groupId>
-            <artifactId>testcontainers-elasticsearch</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

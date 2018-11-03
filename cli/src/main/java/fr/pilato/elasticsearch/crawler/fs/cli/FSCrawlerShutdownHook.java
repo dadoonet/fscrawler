@@ -20,6 +20,8 @@ package fr.pilato.elasticsearch.crawler.fs.cli;/*
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 
+import java.io.IOException;
+
 /**
  * Shutdown hook so we make sure we close everything
  */
@@ -37,7 +39,7 @@ class FSCrawlerShutdownHook extends Thread implements Runnable {
             fsCrawler.close();
             // Stop the REST Server if needed
             RestServer.close();
-        } catch (InterruptedException ignored) {
+        } catch (InterruptedException | IOException e) {
             Thread.currentThread().interrupt();
         }
     }

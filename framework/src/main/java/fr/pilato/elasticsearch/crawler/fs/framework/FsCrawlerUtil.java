@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
@@ -98,7 +99,7 @@ public class FsCrawlerUtil {
      */
     private static String readJsonVersionedFile(Path dir, String version, String type) throws IOException {
         Path file = dir.resolve(version).resolve(type + ".json");
-        return new String(Files.readAllBytes(file), "UTF-8");
+        return new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
     }
 
     /**

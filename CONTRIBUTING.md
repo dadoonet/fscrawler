@@ -24,29 +24,16 @@ mvn clean install -DskipTests
 
 ## Testing
 
-Tests are now separated between unit tests and integration tests:
-
-* Unit tests are defined in [fr.pilato.elasticsearch.crawler.fs.test.unit](src/test/java/fr/pilato/elasticsearch/crawler/fs/test/unit)
-package.
-* Integration tests are defined in [fr.pilato.elasticsearch.crawler.fs.test.integration](src/test/java/fr/pilato/elasticsearch/crawler/fs/test/integration)
-package.
-
 ### Integration tests
 
 Unless a node is already running at this address, integration tests use by default a Docker configuration
 which starts a local node running at [127.0.0.1:9200](http://127.0.0.1:9200).
 The elasticsearch version used is defined in the `pom.xml` file.
 
-You can also tell maven to run integration tests by deploying another version of elasticsearch:
+By default, it will run integration tests against elasticsearch 6.x series cluster running under
+an elastic basic license and agains 5.x series with X-Pack plugin.
 
-```sh
-# For elasticsearch 5.x series
-mvn install -Pes-5x
-```
-
-By default, it will run integration tests against elasticsearch 6.x series cluster protected with X-Pack.
-
-You can also run test without X-Pack by using the `oss` maven profile:
+You can also run test against the OSS version by using the `oss` maven profile:
 
 ```sh
 mvn install -Poss
@@ -54,32 +41,24 @@ mvn install -Poss
 
 ### Running tests against an external cluster
 
-By default, FS Crawler will run tests against a cluster running at `127.0.0.1` on port `9200`.
-If nothing is yet running, FS Crawler will start an instance using Docker behind the scene
-with the help of [testcontainers-java-module-elasticsearch project](https://github.com/dadoonet/testcontainers-java-module-elasticsearch).
+By default, FS Crawler will run tests against a cluster running at `127.0.0.1` on port `9200`
+which is started by the maven plugin.
 
-If you started manually an elasticsearch cluster locally, integration tests will first try to use it.
+If you started manually an elasticsearch cluster locally, integration tests can use it if you
+define the `tests.cluster.url` setting.
 This could speed up dramatically running the integration while developing on FSCrawler.
 
-But, if you want to run the test suite against another cluster, using other credentials, you can use the following
+If you want to run the test suite against an external cluster, using other credentials, you can use the following
 system parameters:
 
-* `tests.cluster.host`: hostname or IP (if set, local Docker instance won't be started)
-* `tests.cluster.port`: port (defaults to `9200`)
-* `tests.cluster.scheme`: `HTTP` or `HTTPS` (defaults to `HTTP`)
+* `tests.cluster.url`: http://127.0.0.1:9200 (if set, local Docker instance won't be started)
 * `tests.cluster.user`: username (defaults to `elastic`)
 * `tests.cluster.pass`: password (defaults to `changeme`)
 
 For example, if you have a cluster running on [Elastic Cloud](https://cloud.elastic.co/), you can use:
 
 ```sh
-mvn clean install -Dtests.cluster.host=CLUSTERID.eu-west-1.aws.found.io -Dtests.cluster.port=9200 -Dtests.cluster.user=elastic -Dtests.cluster.pass=GENERATEDPASSWORD
-```
-
-or better:
-
-```sh
-mvn clean install -Dtests.cluster.host=CLUSTERID.eu-west-1.aws.found.io -Dtests.cluster.port=9243 -Dtests.cluster.scheme=HTTPS -Dtests.cluster.user=elastic -Dtests.cluster.pass=GENERATEDPASSWORD
+mvn clean install -Dtests.cluster.url=https://CLUSTERID.eu-west-1.aws.found.io:9243 -Dtests.cluster.user=elastic -Dtests.cluster.pass=GENERATEDPASSWORD
 ```
 
 ### Running REST tests using another port
@@ -165,8 +144,7 @@ The release script will:
 * Create a release branch
 * Replace SNAPSHOT version by the final version number
 * Commit the change
-* Run tests against elasticsearch 5.x series
-* Run tests against elasticsearch 6.x series
+* Run tests against all supported elasticsearch series
 * Build the final artifacts using release profile (signing artifacts and generating all needed files)
 * Tag the version
 * Prepare the announcement email

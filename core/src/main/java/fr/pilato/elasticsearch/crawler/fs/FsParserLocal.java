@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientManager;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FileAbstractorFile;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -28,8 +28,8 @@ import java.nio.file.Path;
 
 public class FsParserLocal extends FsParserAbstract {
 
-    public FsParserLocal(FsSettings fsSettings, Path config, ElasticsearchClientManager esClientManager, Integer loop) {
-        super(fsSettings, config, esClientManager, loop);
+    public FsParserLocal(FsSettings fsSettings, Path config, ElasticsearchClient esClient, Integer loop) {
+        super(fsSettings, config, esClient, loop);
     }
 
     protected FileAbstractor buildFileAbstractor() {

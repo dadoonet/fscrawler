@@ -50,10 +50,12 @@ version = read_version(full_version=False)
 # The full version, including alpha/beta/rc tags.
 release = read_version()
 
-downloadUrl = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/%s/fscrawler-%s.zip" % (version, version)
+downloadUrlV5 = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es5/%s/fscrawler-es5-%s.zip" % (version, version)
+downloadUrlV6 = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es6/%s/fscrawler-es6-%s.zip" % (version, version)
 
 if release.endswith('-SNAPSHOT'):
-    downloadUrl = "https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/%s/" % release
+    downloadUrlV5 = "https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es5/%s/" % release
+    downloadUrlV6 = "https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es6/%s/" % release
 
 # -- General configuration ---------------------------------------------------
 
@@ -232,7 +234,8 @@ rst_prolog = rst_prolog + """
 .. |Levigo_version| replace:: levigo-jbig2-imageio:{fmt_levigo_version}
 .. |Tiff_version| replace:: jai-imageio-core:{fmt_tiff_version}
 .. |JPEG2000_version| replace:: jai-imageio-jpeg2000:{fmt_jpeg_version}
-.. |Download_URL| replace:: fscrawler-{fmt_release}
+.. |Download_URL_V5| replace:: fscrawler-es5-{fmt_release}
+.. |Download_URL_V6| replace:: fscrawler-es6-{fmt_release}
 .. |Maven_Central| replace:: Maven Central
 .. |Sonatype| replace:: Sonatype
 
@@ -245,7 +248,8 @@ rst_prolog = rst_prolog + """
 .. _Levigo_version: http://repo1.maven.org/maven2/com/levigo/jbig2/levigo-jbig2-imageio/{fmt_levigo_version}/
 .. _Tiff_version: http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/{fmt_tiff_version}/
 .. _JPEG2000_version: http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{fmt_jpeg_version}/
-.. _Download_URL: {fmt_downloadUrl}
+.. _Download_URL_V5: {fmt_downloadUrl_V5}
+.. _Download_URL_V6: {fmt_downloadUrl_V6}
 .. _Maven_Central: https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler/
 .. _Sonatype: https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler/
 """.format(
@@ -254,6 +258,7 @@ fmt_es_version=config.get('3rdParty', 'ElasticsearchVersion'),
 fmt_levigo_version=config.get('3rdParty', 'LevigoVersion'),
 fmt_tiff_version=config.get('3rdParty', 'TiffVersion'),
 fmt_jpeg_version=config.get('3rdParty', 'JpegVersion'),
-fmt_downloadUrl=downloadUrl,
+fmt_downloadUrl_V5=downloadUrlV5,
+fmt_downloadUrl_V6=downloadUrlV6,
 fmt_release=release
 )

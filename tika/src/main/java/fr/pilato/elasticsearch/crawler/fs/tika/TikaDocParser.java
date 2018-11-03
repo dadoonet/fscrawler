@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import com.google.common.io.ByteStreams;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -42,6 +41,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.StreamsUtil.copy;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.extractText;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
 
@@ -185,7 +185,7 @@ public class TikaDocParser {
         } else if (fsSettings.getFs().isStoreSource()) {
             // We don't extract content but just store the binary file
             // We need to create the ByteArrayOutputStream which has not been created then
-            ByteStreams.copy(inputStream, bos);
+            copy(inputStream, bos);
         }
 
         // Doc as binary attachment
