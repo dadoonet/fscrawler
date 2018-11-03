@@ -31,28 +31,31 @@ elasticsearch major version target.
 Integration tests
 ^^^^^^^^^^^^^^^^^
 
-To run integration tests, you need to specify the Maven profile to use,
-which means the elasticsearch major version you want to use.
+When running from the command line with ``mvn`` integration tests are ran against all supported versions.
+This is done by running a Docker instance of elasticsearch using the expected version.
+
+Run tests from your IDE
+"""""""""""""""""""""""
+
+To run integration tests from your IDE, you need to start tests in ``fscrawler-it-common`` module.
+But you need first to specify the Maven profile to use and rebuild the project.
 
 * ``es-6x`` for Elasticsearch 6.x
 * ``es-5x`` for Elasticsearch 5.x
 
-For example::
-
-    mvn verify -Pes-6x
 
 Run tests with an external cluster
 """"""""""""""""""""""""""""""""""
 
 To run the test suite against an elasticsearch instance running locally, just run::
 
-    mvn verify
+    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6
 
 .. tip::
 
-    If you don't want to rebuild everything (ie. you just touch test classes), run::
+    If you want to run against a version 5, run::
 
-        mvn -pl fr.pilato.elasticsearch.crawler:fscrawler-it verify -Pes-6x
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v5
 
 If elasticsearch is not running yet on ``http://localhost:9200``, FSCrawler project will run a Docker instance before
 the tests start.
@@ -61,7 +64,7 @@ the tests start.
 
     If you are using a secured instance, use ``tests.cluster.user``, ``tests.cluster.pass`` and ``tests.cluster.scheme``::
 
-        mvn verify -Pes-6x \
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6 \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
             -Dtests.cluster.scheme=HTTPS \
@@ -73,7 +76,7 @@ the tests start.
     you can also use ``tests.cluster.host`` and ``tests.cluster.port`` to set where elasticsearch
     is running::
 
-        mvn verify -Pes-6x \
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6 \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
             -Dtests.cluster.scheme=HTTPS \
@@ -82,7 +85,7 @@ the tests start.
 
     Or even easier, you can use the ``Cloud ID`` available on you Cloud Console::
 
-        mvn verify -Pes-6x \
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6 \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
             -Dtests.cluster.cloud_id=fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==
