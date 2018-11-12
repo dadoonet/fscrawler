@@ -97,6 +97,22 @@ parsing your documents by setting ``fs.ocr.language`` property in your
      }
    }
 
+.. note::
+
+    You can define multiple languages by using ``+`` sign as a separator:
+
+    .. code:: json
+
+       {
+         "name" : "test",
+         "fs" : {
+           "url" : "/path/to/data/dir",
+           "ocr" : {
+             "language": "eng+fas+fra"
+           }
+         }
+       }
+
 OCR Path
 ^^^^^^^^
 
