@@ -176,6 +176,10 @@ If you define the following ``fs.excludes`` property in your
 Then all files but the ones in ``/folderB/subfolderA``, ``/folderB/subfolderB`` and
 ``/folderB/subfolderC`` will be indexed.
 
+.. versionadded:: 2.6
+
+If a folder contains a file named ``.fscrawlerignore``, this folder and its subfolders will be entirely skipped.
+
 Filter content
 ^^^^^^^^^^^^^^
 

@@ -69,6 +69,8 @@ public abstract class FsParserAbstract extends FsParser {
     private static final String PATH_ROOT = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT;
     private static final String FILE_FILENAME = Doc.FIELD_NAMES.FILE + "." + fr.pilato.elasticsearch.crawler.fs.beans.File.FIELD_NAMES.FILENAME;
 
+    private static final String FSCRAWLER_IGNORE_FILENAME = ".fscrawlerignore";
+
     private static final int REQUEST_SIZE = 10000;
 
     final FsSettings fsSettings;
@@ -234,54 +236,67 @@ public abstract class FsParserAbstract extends FsParser {
         Collection<String> fsFolders = new ArrayList<>();
 
         if (children != null) {
+            boolean ignoreFolder = false;
             for (FileAbstractModel child : children) {
-                String filename = child.getName();
+                // We check if we have a .fscrawlerignore file within this folder in which case
+                // we want to ignore all files and subdirs
+                if (child.getName().equalsIgnoreCase(FSCRAWLER_IGNORE_FILENAME)) {
+                    logger.debug("We found a [{}] file in folder: [{}]. Let's skip it.", FSCRAWLER_IGNORE_FILENAME, filepath);
+                    ignoreFolder = true;
+                    break;
+                }
+            }
 
-                String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, filename).toString());
+            if (!ignoreFolder) {
+                for (FileAbstractModel child : children) {
+                    String filename = child.getName();
 
-                // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
-                boolean isIndexable = isIndexable(child.isDirectory(), virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
+                    String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, filename).toString());
 
-                logger.debug("[{}] can be indexed: [{}]", virtualFileName, isIndexable);
-                if (isIndexable) {
-                    if (child.isFile()) {
-                        logger.debug("  - file: {}", virtualFileName);
-                        fsFiles.add(filename);
-                        if (child.getLastModifiedDate().isAfter(lastScanDate) ||
-                                (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
-                            if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
-                                try {
-                                    indexFile(child, stats, filepath,
-                                            fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
-                                    stats.addFile();
-                                } catch (java.io.FileNotFoundException e) {
-                                    if (fsSettings.getFs().isContinueOnError()) {
-                                        logger.warn("Unable to open Input Stream for {}, skipping...: {}", filename, e.getMessage());
-                                    } else {
-                                        throw e;
+                    // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
+                    boolean isIndexable = isIndexable(child.isDirectory(), virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
+
+                    logger.debug("[{}] can be indexed: [{}]", virtualFileName, isIndexable);
+                    if (isIndexable) {
+                        if (child.isFile()) {
+                            logger.debug("  - file: {}", virtualFileName);
+                            fsFiles.add(filename);
+                            if (child.getLastModifiedDate().isAfter(lastScanDate) ||
+                                    (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
+                                if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
+                                    try {
+                                        indexFile(child, stats, filepath,
+                                                fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
+                                        stats.addFile();
+                                    } catch (java.io.FileNotFoundException e) {
+                                        if (fsSettings.getFs().isContinueOnError()) {
+                                            logger.warn("Unable to open Input Stream for {}, skipping...: {}", filename, e.getMessage());
+                                        } else {
+                                            throw e;
+                                        }
                                     }
+                                } else {
+                                    logger.debug("file [{}] has a size [{}] above the limit [{}]. We skip it.", filename,
+                                            new ByteSizeValue(child.getSize()), fsSettings.getFs().getIgnoreAbove());
                                 }
                             } else {
-                                logger.debug("file [{}] has a size [{}] above the limit [{}]. We skip it.", filename,
-                                        new ByteSizeValue(child.getSize()), fsSettings.getFs().getIgnoreAbove());
+                                logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
+                                        child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
                             }
+                        } else if (child.isDirectory()) {
+                            logger.debug("  - folder: {}", filename);
+                            if (fsSettings.getFs().isIndexFolders()) {
+                                fsFolders.add(child.getFullpath());
+                                indexDirectory(child.getFullpath());
+                            }
+                            addFilesRecursively(path, child.getFullpath(), lastScanDate);
                         } else {
-                            logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
-                                    child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
+                            logger.debug("  - other: {}", filename);
+                            logger.debug("Not a file nor a dir. Skipping {}", child.getFullpath());
                         }
-                    } else if (child.isDirectory()) {
-                        logger.debug("  - folder: {}", filename);
-                        if (fsSettings.getFs().isIndexFolders()) {
-                            fsFolders.add(child.getFullpath());
-                            indexDirectory(child.getFullpath());
-                        }
-                        addFilesRecursively(path, child.getFullpath(), lastScanDate);
                     } else {
-                        logger.debug("  - other: {}", filename);
-                        logger.debug("Not a file nor a dir. Skipping {}", child.getFullpath());
+                        logger.debug("  - ignored file/dir: {}", filename);
                     }
-                } else {
-                    logger.debug("  - ignored file/dir: {}", filename);
                 }
             }
         }

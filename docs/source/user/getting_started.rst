@@ -79,3 +79,10 @@ something! ;-)
 
 See :ref:`search-examples` for more examples.
 
+Ignoring folders
+^^^^^^^^^^^^^^^^
+
+If you would like to ignore some folders to be scanned, just add a ``.fscrawlerignore`` file in it.
+The folder content and all sub folders will be ignored.
+
+For more information, read :ref:`includes_excludes`.
