@@ -60,6 +60,6 @@ FOR /F "usebackq tokens=1* delims= " %%A IN (!params!) DO (
 	)
 )
 
-%JAVA% %JAVA_OPTS% -cp "%FS_CLASSPATH%" -jar "%FS_HOME%/lib/fscrawler-cli-${project.version}.jar" !newparams!
+%JAVA% %JAVA_OPTS% -cp "%FS_CLASSPATH%" -jar "%FS_HOME%/lib/${project.build.finalName}.jar" !newparams!
 
 ENDLOCAL
