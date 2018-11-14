@@ -47,3 +47,7 @@ The guide has been moved to [ReadTheDocs](https://fscrawler.readthedocs.io/en/la
 # License
 
 Read more about the [License](https://fscrawler.readthedocs.io/en/latest/index.html#license).
+
+# Thanks
+
+Thanks to [JetBrains](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!

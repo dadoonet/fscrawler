@@ -3,6 +3,12 @@ Building the project
 
 This project is built with `Maven <https://maven.apache.org/>`_.
 Source code is available on `GitHub <https://github.com/dadoonet/fscrawler/>`_.
+Thanks to `JetBrains <https://www.jetbrains.com/?from=FSCrawler>`_ for the IntelliJ IDEA License!
+
+.. image:: /_static/jetbrains.png
+    :scale: 10
+    :alt: Jet Brains
+    :target: https://www.jetbrains.com/?from=FSCrawler
 
 Clone the project
 ^^^^^^^^^^^^^^^^^

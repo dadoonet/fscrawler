@@ -100,3 +100,12 @@ See
 `pdfbox documentation <https://pdfbox.apache.org/2.0/dependencies.html#jai-image-io>`__
 for more details.
 
+Special thanks
+==============
+
+Thanks to `JetBrains <https://www.jetbrains.com/?from=FSCrawler>`_ for the IntelliJ IDEA License!
+
+.. image:: /_static/jetbrains.png
+   :scale: 10
+   :alt: Jet Brains
+   :target: https://www.jetbrains.com/?from=FSCrawler
