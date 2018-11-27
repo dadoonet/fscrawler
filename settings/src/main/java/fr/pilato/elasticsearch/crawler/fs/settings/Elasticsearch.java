@@ -85,7 +85,6 @@ public class Elasticsearch {
         private Node(String host, int port, Scheme scheme) {
             this.host = host;
             this.port = port;
-            this.active = false;
             this.scheme = scheme;
         }
 
@@ -98,7 +97,6 @@ public class Elasticsearch {
         private String host;
         @Deprecated
         private Integer port;
-        private boolean active;
         @Deprecated
         private Scheme scheme;
 
@@ -116,14 +114,6 @@ public class Elasticsearch {
 
         public void setPort(Integer port) {
             this.port = port;
-        }
-
-        public boolean active() {
-            return active;
-        }
-
-        public void active(boolean active) {
-            this.active = active;
         }
 
         public Scheme getScheme() {
@@ -191,8 +181,7 @@ public class Elasticsearch {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Node node = (Node) o;
-            return active == node.active &&
-                    Objects.equals(cloudId, node.cloudId) &&
+            return Objects.equals(cloudId, node.cloudId) &&
                     Objects.equals(host, node.host) &&
                     Objects.equals(port, node.port) &&
                     scheme == node.scheme;
@@ -200,7 +189,7 @@ public class Elasticsearch {
 
         @Override
         public int hashCode() {
-            return Objects.hash(cloudId, host, port, active, scheme);
+            return Objects.hash(cloudId, host, port, scheme);
         }
 
         @Override
@@ -208,7 +197,6 @@ public class Elasticsearch {
             return "Node{" + "cloudId='" + cloudId + '\'' +
                     ", host='" + host + '\'' +
                     ", port=" + port +
-                    ", active=" + active +
                     ", scheme=" + scheme +
                     '}';
         }
