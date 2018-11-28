@@ -21,8 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import java.util.Locale;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.buildUrl;
-
 public class Rest {
 
     public enum Scheme {
@@ -93,7 +91,7 @@ public class Rest {
      * @return the server URL
      */
     public String url() {
-        return buildUrl(scheme.toLowerCase(), host, port) + "/" + endpoint;
+        return scheme.toLowerCase() + "://" + host + ":" + port + "/" + endpoint;
     }
 
     public static Builder builder() {

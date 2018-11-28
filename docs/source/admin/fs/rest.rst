@@ -45,9 +45,7 @@ It will give you a response similar to:
        },
        "elasticsearch" : {
          "nodes" : [ {
-           "host" : "127.0.0.1",
-           "port" : 9200,
-           "scheme" : "HTTP"
+           "url" : "http://127.0.0.1:9200"
          } ],
          "index" : "fscrawler-rest-tests_doc",
          "index_folder" : "fscrawler-rest-tests_folder",

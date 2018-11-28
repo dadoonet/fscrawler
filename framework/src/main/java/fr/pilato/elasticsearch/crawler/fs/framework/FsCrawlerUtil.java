@@ -579,10 +579,6 @@ public class FsCrawlerUtil {
         }
     }
 
-    public static String buildUrl(String scheme, String host, int port) {
-        return scheme + "://" + host + ":" + port;
-    }
-
     public static boolean isNullOrEmpty(String string) {
         return string == null || string.isEmpty();
     }

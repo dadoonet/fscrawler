@@ -467,9 +467,8 @@ Node settings
 ^^^^^^^^^^^^^
 
 FSCrawler is using elasticsearch REST layer to send data to your
-running cluster. By default, it connects to ``127.0.0.1`` on port
-``9200`` which are the default settings when running a local node on
-your machine.
+running cluster. By default, it connects to ``http://127.0.0.1:9200``
+which is the default when running a local node on your machine.
 
 Of course, in production, you would probably change this and connect to
 a production cluster:
@@ -480,7 +479,7 @@ a production cluster:
      "name" : "test",
      "elasticsearch" : {
        "nodes" : [
-         { "host" : "mynode1.mycompany.com", "port" : 9200, "scheme" : "HTTP" }
+         { "url" : "http://mynode1.mycompany.com:9200" }
        ]
      }
    }
@@ -514,9 +513,9 @@ You can define multiple nodes:
      "name" : "test",
      "elasticsearch" : {
        "nodes" : [
-         { "host" : "mynode1.mycompany.com", "port" : 9200, "scheme" : "HTTP" },
-         { "host" : "mynode2.mycompany.com", "port" : 9200, "scheme" : "HTTP" },
-         { "host" : "mynode3.mycompany.com", "port" : 9200, "scheme" : "HTTP" }
+         { "url" : "http://mynode1.mycompany.com:9200" },
+         { "url" : "http://mynode2.mycompany.com:9200" },
+         { "url" : "http://mynode3.mycompany.com:9200" }
        ]
      }
    }
@@ -530,7 +529,7 @@ You can define multiple nodes:
          "name" : "test",
          "elasticsearch" : {
            "nodes" : [
-             { "host" : "CLUSTERID.eu-west-1.aws.found.io", "port" : 9243, "scheme" : "HTTPS" }
+             { "url" : "https://CLUSTERID.eu-west-1.aws.found.io:9243" }
            ]
          }
        }
@@ -601,7 +600,7 @@ It will prompt you for the password. Enter the certificate password like ``chang
       "name" : "test",
       "elasticsearch" : {
         "nodes" : [
-          {"host" : "localhost", "port" : 9243, "scheme" : "HTTPS" }
+          { "url" : "https://localhost:9243" }
         ]
       }
     }

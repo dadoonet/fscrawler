@@ -298,6 +298,10 @@ Upgrade to 2.5
 Upgrade to 2.6
 ~~~~~~~~~~~~~~
 
--   FSCrawler comes now with multiple distributions, depending on the elasticsearch
-    cluster you're targeting to run.
+- FSCrawler comes now with multiple distributions, depending on the elasticsearch
+  cluster you're targeting to run.
+
+- ``elasticsearch.nodes`` settings using ``host``, ``port`` or ``scheme`` have been replaced by
+  an easier notation using ``url`` setting like ``http://127.0.0.1:9200``. You will need to modify
+  your existing settings and use the new notation if warned.
 

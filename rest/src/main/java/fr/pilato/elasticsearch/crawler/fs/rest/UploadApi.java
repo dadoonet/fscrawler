@@ -48,7 +48,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.buildUrl;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 
 @Path("/_upload")
@@ -127,7 +126,7 @@ public class UploadApi extends RestApi {
             if (node.getCloudId() != null) {
                 nodeUrl = decodeCloudId(node.getCloudId());
             } else {
-                nodeUrl = node.getScheme().toLowerCase() + "://" + node.getHost() + ":" + node.getPort();
+                nodeUrl = node.getUrl();
             }
             url = nodeUrl + "/" +
                     settings.getElasticsearch().getIndex() + "/" +
