@@ -33,7 +33,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import org.apache.logging.log4j.Level;
@@ -273,7 +272,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 .register(JacksonFeature.class)
                 .build();
 
-        target = client.target(Rest.builder().setPort(testRestPort).build().url());
+        target = client.target("http://127.0.0.1:" + testRestPort + "/fscrawler");
     }
 
     @AfterClass

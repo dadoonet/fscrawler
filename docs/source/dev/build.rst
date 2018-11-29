@@ -68,26 +68,23 @@ the tests start.
 
 .. hint::
 
-    If you are using a secured instance, use ``tests.cluster.user``, ``tests.cluster.pass`` and ``tests.cluster.scheme``::
+    If you are using a secured instance, use ``tests.cluster.user``, ``tests.cluster.pass`` and ``tests.cluster.url``::
 
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6 \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
-            -Dtests.cluster.scheme=HTTPS \
+            -Dtests.cluster.url=https://127.0.0.1:9200 \
 
 .. hint::
 
     To run tests against another instance (ie. running on
     `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
-    you can also use ``tests.cluster.host`` and ``tests.cluster.port`` to set where elasticsearch
-    is running::
+    you can also use ``tests.cluster.url`` to set where elasticsearch is running::
 
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6 \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
-            -Dtests.cluster.scheme=HTTPS \
-            -Dtests.cluster.host=XYZ.es.io:9243 \
-            -Dtests.cluster.port=9243
+            -Dtests.cluster.url=https://XYZ.es.io:9243
 
     Or even easier, you can use the ``Cloud ID`` available on you Cloud Console::
 

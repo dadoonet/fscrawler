@@ -54,7 +54,7 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
                     .setElasticsearch(endCrawlerDefinition(getCrawlerName()))
                     .setFs(startCrawlerDefinition().build())
                     .setServer(null)
-                    .setRest(Rest.builder().setPort(testRestPort+1).build()).build();
+                    .setRest(new Rest("http://127.0.0.1:" + (testRestPort+1) + "/fscrawler")).build();
             crawler = new FsCrawlerImpl(
                     metadataDir,
                     fsSettings,
@@ -69,7 +69,7 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
                 throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
             }
 
-            WebTarget target = client.target(Rest.builder().setPort(testRestPort + 1).build().url());
+            WebTarget target = client.target("http://127.0.0.1:" + (testRestPort+1) + "/fscrawler");
             Files.walk(from)
                     .filter(path -> Files.isRegularFile(path))
                     .forEach(path -> {

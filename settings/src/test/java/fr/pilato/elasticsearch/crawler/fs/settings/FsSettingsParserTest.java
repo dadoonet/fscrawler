@@ -77,12 +77,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setProtocol("SSH")
             .setPemPath("/path/to/pemfile")
             .build();
-    private static final Rest REST_FULL = Rest.builder()
-            .setHost("127.0.0.1")
-            .setPort(8080)
-            .setScheme(Rest.Scheme.HTTP)
-            .setEndpoint("fscrawler")
-            .build();
+    private static final Rest REST_FULL = new Rest("http://127.0.0.1:8080/fscrawler");
 
     private void settingsTester(FsSettings source) throws IOException {
         String json = FsSettingsParser.toJson(source);
@@ -292,7 +287,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testDeprecatedSettings() throws IOException {
+    public void testDeprecatedElasticsearchSettings() throws IOException {
         String json = "   {\n" +
                 "     \"name\" : \"test\",\n" +
                 "     \"elasticsearch\" : {\n" +
@@ -306,5 +301,22 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         FsSettings generated = FsSettingsParser.fromJson(json);
         assertThat(generated.getElasticsearch().getNodes().get(0).getCloudId(), is(nullValue()));
         assertThat(generated.getElasticsearch().getNodes().get(0).getUrl(), is("http://127.0.0.1:9200"));
+    }
+
+    @Test
+    public void testDeprecatedRestSettings() throws IOException {
+        String json = "   {\n" +
+                "     \"name\" : \"test\",\n" +
+                "     \"rest\" : {\n" +
+                "       \"scheme\" : \"HTTP\",\n" +
+                "       \"host\" : \"192.168.0.1\",\n" +
+                "       \"port\" : 8180,\n" +
+                "       \"endpoint\" : \"my_fscrawler\"\n" +
+                "     }\n" +
+                "   }\n";
+
+        logger.info("-> testing settings: [{}]", json);
+        FsSettings generated = FsSettingsParser.fromJson(json);
+        assertThat(generated.getRest().getUrl(), is("http://192.168.0.1:8180/my_fscrawler"));
     }
 }
