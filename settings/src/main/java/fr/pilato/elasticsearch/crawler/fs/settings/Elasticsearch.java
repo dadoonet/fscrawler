@@ -112,7 +112,7 @@ public class Elasticsearch {
         @Deprecated
         private Integer port;
         @Deprecated
-        private Scheme scheme;
+        private Scheme scheme = Scheme.HTTP;
 
         public void setHost(String host) {
             this.host = host;
@@ -136,7 +136,7 @@ public class Elasticsearch {
 
         public String getUrl() {
             // If we are using deprecated settings, let's warn the user to move to url param
-            if (host != null || port != null || scheme != null) {
+            if (host != null || port != null) {
                 String tmpUrl = scheme.toLowerCase() + "://" + host + ":" + port;
                 logger.warn("elasticsearch.nodes.[scheme, host, port] has been deprecated and will be removed in a coming version. " +
                         "Use elasticsearch.nodes: [ { \"url\": \"{}\" } ] instead", tmpUrl);

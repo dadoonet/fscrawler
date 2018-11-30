@@ -65,7 +65,7 @@ public class Rest {
     @Deprecated
     private String endpoint;
     @Deprecated
-    private Scheme scheme;
+    private Scheme scheme = Scheme.HTTP;
     @Deprecated
     private String host;
     @Deprecated
@@ -93,7 +93,7 @@ public class Rest {
      */
     public String getUrl() {
         // If we are using deprecated settings, let's warn the user to move to url param
-        if (host != null || scheme != null || endpoint != null) {
+        if (host != null || endpoint != null) {
             String tmpUrl = scheme.toLowerCase() + "://" + host + ":" + port + "/" + endpoint;
             logger.warn("rest.[scheme, host, port, endpoint] has been deprecated and will be removed in a coming version. " +
                     "Use rest: { \"url\": \"{}\" } instead", tmpUrl);
