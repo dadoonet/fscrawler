@@ -46,10 +46,8 @@ The job file must comply to the following ``json`` specifications:
          // With Cloud ID
          "cloud_id" : "CLOUD_ID"
        }, {
-         // With scheme, host and port
-         "host" : "127.0.0.1",
-         "port" : 9200,
-         "scheme" : "HTTP"
+         // With URL
+         "url" : "http://127.0.0.1:9200"
        } ],
        "index" : "docs",
        "bulk_size" : 1000,

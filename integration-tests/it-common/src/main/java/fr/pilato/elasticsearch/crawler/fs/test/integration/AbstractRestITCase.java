@@ -37,7 +37,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     @Before
     public void startRestServer() throws Exception {
         FsSettings fsSettings = FsSettings.builder(getCrawlerName())
-                .setRest(Rest.builder().setPort(testRestPort).build())
+                .setRest(new Rest("http://127.0.0.1:" + testRestPort + "/fscrawler"))
                 .setElasticsearch(elasticsearchWithSecurity)
                 .build();
         fsSettings.getElasticsearch().setIndex(getCrawlerName());

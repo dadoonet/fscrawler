@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
@@ -46,6 +47,7 @@ import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
@@ -684,9 +686,9 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .setFs(Fs.builder().setOcr(Ocr.builder().setOutputType("hocr").build()).build())
                 .build();
         doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent(), stringContainsInOrder(Arrays.asList("This", "file", "contains", "some", "words.")));
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent(), stringContainsInOrder(Arrays.asList("This", "file", "contains", "some", "words.")));
     }
 
     @Test

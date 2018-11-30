@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,8 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class Elasticsearch {
+
+    protected static final Logger logger = LogManager.getLogger(Elasticsearch.class);
 
     public Elasticsearch() {
 
@@ -76,58 +80,46 @@ public class Elasticsearch {
             }
         }
 
-        public static final Node DEFAULT = Node.builder().setHost("127.0.0.1").setPort(9200).setScheme(Scheme.HTTP).build();
+        public static final Node DEFAULT = new Node("http://127.0.0.1:9200");
 
         public Node() {
 
         }
 
-        private Node(String host, int port, Scheme scheme) {
+        @Deprecated
+        public Node(String host, int port, Scheme scheme) {
             this.host = host;
             this.port = port;
-            this.active = false;
             this.scheme = scheme;
         }
 
-        private Node(String cloudId) {
-            this.cloudId = cloudId;
+        public Node(String urlOrCloudId) {
+            // We check if the String starts with https:// or http://
+            // In which case this is a URL, otherwise its a cloud id
+            String asLowerCase = urlOrCloudId.toLowerCase();
+            if (asLowerCase.startsWith("http://") || asLowerCase.startsWith("https://")) {
+                this.url = urlOrCloudId;
+            } else {
+                this.cloudId = urlOrCloudId;
+            }
         }
 
+        private String url;
         private String cloudId;
+
         @Deprecated
         private String host;
         @Deprecated
         private Integer port;
-        private boolean active;
         @Deprecated
-        private Scheme scheme;
-
-        public String getHost() {
-            return host;
-        }
+        private Scheme scheme = Scheme.HTTP;
 
         public void setHost(String host) {
             this.host = host;
         }
 
-        public Integer getPort() {
-            return port;
-        }
-
         public void setPort(Integer port) {
             this.port = port;
-        }
-
-        public boolean active() {
-            return active;
-        }
-
-        public void active(boolean active) {
-            this.active = active;
-        }
-
-        public Scheme getScheme() {
-            return scheme;
         }
 
         public void setScheme(Scheme scheme) {
@@ -142,48 +134,19 @@ public class Elasticsearch {
             this.cloudId = cloudId;
         }
 
-        public static Builder builder() {
-            return new Builder();
+        public String getUrl() {
+            // If we are using deprecated settings, let's warn the user to move to url param
+            if (host != null || port != null) {
+                String tmpUrl = scheme.toLowerCase() + "://" + host + ":" + port;
+                logger.warn("elasticsearch.nodes.[scheme, host, port] has been deprecated and will be removed in a coming version. " +
+                        "Use elasticsearch.nodes: [ { \"url\": \"{}\" } ] instead", tmpUrl);
+                return tmpUrl;
+            }
+            return url;
         }
 
-        public static class Builder {
-            private String host;
-            private int port;
-            private Scheme scheme = Scheme.HTTP;
-            private String cloudId = null;
-
-            /**
-             * This can be used in the context of Elasticsearch service by elastic
-             * @param cloudId The cloud id as given on cloud console
-             * @return self
-             */
-            public Builder setCloudId(String cloudId) {
-                this.cloudId = cloudId;
-                return this;
-            }
-
-            public Builder setHost(String host) {
-                this.host = host;
-                return this;
-            }
-
-            public Builder setPort(int port) {
-                this.port = port;
-                return this;
-            }
-
-            public Builder setScheme(Scheme scheme) {
-                this.scheme = scheme;
-                return this;
-            }
-
-            public Node build() {
-                if (cloudId != null) {
-                    return new Node(cloudId);
-                } else {
-                    return new Node(host, port, scheme);
-                }
-            }
+        public void setUrl(String url) {
+            this.url = url;
         }
 
         @Override
@@ -191,25 +154,19 @@ public class Elasticsearch {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Node node = (Node) o;
-            return active == node.active &&
-                    Objects.equals(cloudId, node.cloudId) &&
-                    Objects.equals(host, node.host) &&
-                    Objects.equals(port, node.port) &&
-                    scheme == node.scheme;
+            return Objects.equals(cloudId, node.cloudId) &&
+                    Objects.equals(url, node.url);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(cloudId, host, port, active, scheme);
+            return Objects.hash(cloudId, url);
         }
 
         @Override
         public String toString() {
             return "Node{" + "cloudId='" + cloudId + '\'' +
-                    ", host='" + host + '\'' +
-                    ", port=" + port +
-                    ", active=" + active +
-                    ", scheme=" + scheme +
+                    ", url=" + url +
                     '}';
         }
     }

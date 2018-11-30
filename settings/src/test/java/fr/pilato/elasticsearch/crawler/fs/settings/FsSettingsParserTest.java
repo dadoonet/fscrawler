@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.Node;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
@@ -59,10 +60,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .build();
     private static final Elasticsearch ELASTICSEARCH_EMPTY = Elasticsearch.builder().build();
     private static final Elasticsearch ELASTICSEARCH_FULL = Elasticsearch.builder()
-            .addNode(Elasticsearch.Node.builder()
-                    .setHost("127.0.0.1")
-                    .setPort(9200)
-                    .build())
+            .addNode(new Node("http://127.0.0.1"))
             .setUsername("elastic")
             .setPassword("changeme")
             .setBulkSize(1000)
@@ -79,12 +77,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setProtocol("SSH")
             .setPemPath("/path/to/pemfile")
             .build();
-    private static final Rest REST_FULL = Rest.builder()
-            .setHost("127.0.0.1")
-            .setPort(8080)
-            .setScheme(Rest.Scheme.HTTP)
-            .setEndpoint("fscrawler")
-            .build();
+    private static final Rest REST_FULL = new Rest("http://127.0.0.1:8080/fscrawler");
 
     private void settingsTester(FsSettings source) throws IOException {
         String json = FsSettingsParser.toJson(source);
@@ -116,9 +109,8 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getElasticsearch().getIndex(), is("test"));
         assertThat(settings.getElasticsearch().getIndexFolder(), is("test_folder"));
         assertThat(settings.getElasticsearch().getNodes(), iterableWithSize(1));
-        assertThat(settings.getElasticsearch().getNodes().get(0).getHost(), is("127.0.0.1"));
-        assertThat(settings.getElasticsearch().getNodes().get(0).getPort(), is(9200));
-        assertThat(settings.getElasticsearch().getNodes().get(0).getScheme(), is(Elasticsearch.Node.Scheme.HTTP));
+        assertThat(settings.getElasticsearch().getNodes().get(0).getUrl(), is("http://127.0.0.1:9200"));
+        assertThat(settings.getElasticsearch().getNodes().get(0).getCloudId(), is(nullValue()));
 
         assertThat(settings.getElasticsearch().getUsername(), is(nullValue()));
         assertThat(settings.getElasticsearch().getPassword(), is(nullValue()));
@@ -185,10 +177,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
                         .setElasticsearch(Elasticsearch.builder()
-                                .addNode(Elasticsearch.Node.builder()
-                                        .setHost("127.0.0.1")
-                                        .setPort(9200)
-                                        .build())
+                                .addNode(new Node("http://127.0.0.1:9200"))
                                 .build())
                         .build()
         );
@@ -199,14 +188,8 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
                         .setElasticsearch(Elasticsearch.builder()
-                                .addNode(Elasticsearch.Node.builder()
-                                        .setHost("127.0.0.1")
-                                        .setPort(9200)
-                                        .build())
-                                .addNode(Elasticsearch.Node.builder()
-                                        .setHost("localhost")
-                                        .setPort(9201)
-                                        .build())
+                                .addNode(new Node("http://127.0.0.1:9200"))
+                                .addNode(new Node("http://127.0.0.1:9201"))
                                 .build())
                         .build()
         );
@@ -217,15 +200,8 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
                         .setElasticsearch(Elasticsearch.builder()
-                                .addNode(Elasticsearch.Node.builder()
-                                        .setHost("127.0.0.1")
-                                        .setPort(9200)
-                                        .build())
-                                .addNode(Elasticsearch.Node.builder()
-                                        .setHost("localhost")
-                                        .setPort(9243)
-                                        .setScheme(Elasticsearch.Node.Scheme.HTTPS)
-                                        .build())
+                                .addNode(new Node("http://127.0.0.1:9200"))
+                                .addNode(new Node("https://localhost:9243"))
                                 .build())
                         .build()
         );
@@ -237,9 +213,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
                         .setElasticsearch(Elasticsearch.builder()
-                                .addNode(Elasticsearch.Node.builder()
-                                        .setCloudId(cloudId)
-                                        .build())
+                                .addNode(new Node(cloudId))
                                 .build())
                         .build()
         );
@@ -310,5 +284,39 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         String filteredJson = FsSettingsParser.toJson(generated);
         assertThat(filteredJson, not(containsString(ELASTICSEARCH_FULL.getPassword())));
         assertThat(filteredJson, not(containsString(SERVER_FULL.getPassword())));
+    }
+
+    @Test
+    public void testDeprecatedElasticsearchSettings() throws IOException {
+        String json = "   {\n" +
+                "     \"name\" : \"test\",\n" +
+                "     \"elasticsearch\" : {\n" +
+                "       \"nodes\" : [\n" +
+                "         { \"host\" : \"127.0.0.1\", \"port\" : 9200, \"scheme\" : \"HTTP\" }\n" +
+                "       ]\n" +
+                "     }\n" +
+                "   }\n";
+
+        logger.info("-> testing settings: [{}]", json);
+        FsSettings generated = FsSettingsParser.fromJson(json);
+        assertThat(generated.getElasticsearch().getNodes().get(0).getCloudId(), is(nullValue()));
+        assertThat(generated.getElasticsearch().getNodes().get(0).getUrl(), is("http://127.0.0.1:9200"));
+    }
+
+    @Test
+    public void testDeprecatedRestSettings() throws IOException {
+        String json = "   {\n" +
+                "     \"name\" : \"test\",\n" +
+                "     \"rest\" : {\n" +
+                "       \"scheme\" : \"HTTP\",\n" +
+                "       \"host\" : \"192.168.0.1\",\n" +
+                "       \"port\" : 8180,\n" +
+                "       \"endpoint\" : \"my_fscrawler\"\n" +
+                "     }\n" +
+                "   }\n";
+
+        logger.info("-> testing settings: [{}]", json);
+        FsSettings generated = FsSettingsParser.fromJson(json);
+        assertThat(generated.getRest().getUrl(), is("http://192.168.0.1:8180/my_fscrawler"));
     }
 }

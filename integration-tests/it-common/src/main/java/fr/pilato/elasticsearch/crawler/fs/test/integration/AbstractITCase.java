@@ -33,10 +33,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
-import org.apache.http.HttpHost;
 import org.apache.logging.log4j.Level;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -250,10 +248,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         staticLogger.info("Starting a client against [{}]", testClusterUrl);
         // We build the elasticsearch High Level Client based on the parameters
-        HttpHost host = HttpHost.create(testClusterUrl);
         elasticsearchWithSecurity = Elasticsearch.builder()
-                .addNode(Elasticsearch.Node.builder()
-                        .setHost(host.getHostName()).setPort(host.getPort()).setScheme(Elasticsearch.Node.Scheme.parse(host.getSchemeName())).build())
+                .addNode(new Elasticsearch.Node(testClusterUrl))
                 .setUsername(testClusterUser)
                 .setPassword(testClusterPass)
                 .build();
@@ -276,7 +272,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 .register(JacksonFeature.class)
                 .build();
 
-        target = client.target(Rest.builder().setPort(testRestPort).build().url());
+        target = client.target("http://127.0.0.1:" + testRestPort + "/fscrawler");
     }
 
     @AfterClass
@@ -317,9 +313,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
                                                      TimeValue timeValue, ByteSizeValue byteSize) {
-        HttpHost host = HttpHost.create(testClusterUrl);
         Elasticsearch.Builder builder = Elasticsearch.builder()
-                .addNode(Elasticsearch.Node.builder().setHost(host.getHostName()).setPort(host.getPort()).setScheme(Elasticsearch.Node.Scheme.parse(host.getSchemeName())).build())
+                .addNode(new Elasticsearch.Node(testClusterUrl))
                 .setBulkSize(bulkSize);
 
         if (indexName != null) {

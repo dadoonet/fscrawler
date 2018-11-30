@@ -99,7 +99,6 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_S
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
-import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.Node;
 import static org.elasticsearch.action.support.IndicesOptions.LENIENT_EXPAND_OPEN;
 
 /**
@@ -389,12 +388,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
                 // We have a cloud id which simplifies all
                 hosts.add(HttpHost.create(decodeCloudId(node.getCloudId())));
             } else {
-                Node.Scheme scheme = node.getScheme();
-                if (scheme == null) {
-                    // Default to HTTP. In case we are reading an old configuration
-                    scheme = Node.Scheme.HTTP;
-                }
-                hosts.add(new HttpHost(node.getHost(), node.getPort(), scheme.toLowerCase()));
+                hosts.add(HttpHost.create(node.getUrl()));
             }
         });
 

@@ -45,9 +45,7 @@ It will give you a response similar to:
        },
        "elasticsearch" : {
          "nodes" : [ {
-           "host" : "127.0.0.1",
-           "port" : 9200,
-           "scheme" : "HTTP"
+           "url" : "http://127.0.0.1:9200"
          } ],
          "index" : "fscrawler-rest-tests_doc",
          "index_folder" : "fscrawler-rest-tests_folder",
@@ -57,10 +55,7 @@ It will give you a response similar to:
          "username" : "elastic"
        },
        "rest" : {
-         "scheme" : "HTTP",
-         "host" : "127.0.0.1",
-         "port" : 8080,
-         "endpoint" : "fscrawler"
+         "url" : "http://127.0.0.1:8080/fscrawler"
        }
      }
    }
@@ -260,18 +255,11 @@ REST settings
 
 Here is a list of REST service settings (under ``rest.`` prefix)`:
 
-+-----------------------+-----------------------+-----------------------+
-| Name                  | Default value         | Documentation         |
-+=======================+=======================+=======================+
-| ``rest.scheme``       | ``http``              | Scheme. Can be either |
-|                       |                       | ``http`` or ``https`` |
-+-----------------------+-----------------------+-----------------------+
-| ``rest.host``         | ``127.0.0.1``         | Bound host            |
-+-----------------------+-----------------------+-----------------------+
-| ``rest.port``         | ``8080``              | Bound port            |
-+-----------------------+-----------------------+-----------------------+
-| ``rest.endpoint``     | ``fscrawler``         | Endpoint              |
-+-----------------------+-----------------------+-----------------------+
++--------------+-------------------------------------+-----------------------+
+| Name         | Default value                       | Documentation         |
++==============+=====================================+=======================+
+| ``rest.url`` | ``http://127.0.0.1:8080/fscrawler`` | Rest Service URL      |
++--------------+-------------------------------------+-----------------------+
 
 .. tip::
 
@@ -289,12 +277,9 @@ You can change it using ``rest`` settings:
    {
      "name" : "test",
      "rest" : {
-       "scheme" : "HTTP",
-       "host" : "192.168.0.1",
-       "port" : 8180,
-       "endpoint" : "my_fscrawler"
+       "url" : "http://192.168.0.1:8180/my_fscrawler"
      }
    }
 
 It also means that if you are running more than one instance of FS
-crawler locally, you can (must) change the ``port``.
+crawler locally, you can (must) change the port as it will conflict.
