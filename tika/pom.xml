@@ -99,6 +99,11 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-langdetect</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>27.0.1-jre</version>
+        </dependency>
         <!--Dependency for parsing remote ssh directory [http://www.jcraft.com/jsch/]-->
         <dependency>
             <groupId>com.jcraft</groupId>
