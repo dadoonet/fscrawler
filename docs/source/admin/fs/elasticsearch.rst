@@ -128,6 +128,7 @@ The following example uses a ``french`` analyzer to index the
 
     {
       "settings": {
+        "number_of_shards": 1,
         "index.mapping.total_fields.limit": 2000,
         "analysis": {
           "analyzer": {
