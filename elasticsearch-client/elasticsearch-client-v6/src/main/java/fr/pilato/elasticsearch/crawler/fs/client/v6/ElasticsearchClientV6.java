@@ -171,6 +171,25 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         return ESVersion.fromString(version.toString());
     }
 
+    /**
+     * For Elasticsearch 6, we need to make sure we are running at least Elasticsearch 6.4
+     * @throws IOException when something is wrong while asking the version of the node.
+     */
+    @Override
+    public void checkVersion() throws IOException {
+        ESVersion esVersion = getVersion();
+        if (esVersion.major != compatibleVersion()) {
+            throw new RuntimeException("The Elasticsearch client version [" +
+                    compatibleVersion() + "] is not compatible with the Elasticsearch cluster version [" +
+                    esVersion.toString() + "].");
+        }
+        if (esVersion.minor < 4) {
+            throw new RuntimeException("This version of FSCrawler is not compatible with " +
+                    "Elasticsearch version [" +
+                    esVersion.toString() + "]. Please upgrade Elasticsearch to at least a 6.4.x version.");
+        }
+    }
+
     class DebugListener implements BulkProcessor.Listener {
         private final Logger logger;
 
