@@ -613,6 +613,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
         logger.info("Settings used for doc index v6 : " + settings);
         assertThat(settings, is("{\n" +
                 "  \"settings\": {\n" +
+                "    \"number_of_shards\": 1,\n" +
                 "    \"index.mapping.total_fields.limit\": 2000,\n" +
                 "    \"analysis\": {\n" +
                 "      \"analyzer\": {\n" +
