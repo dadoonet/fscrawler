@@ -47,6 +47,20 @@ The distribution contains:
        ├── ... All needed jars
 
 
+Running as a Service on Windows
+-------------------------------
+
+Create a ``fscrawlerRunner.bat`` as:
+
+.. code:: sh
+
+   set JAVA_HOME=c:\Program Files\Java\jdk1.8.0_144
+   set FS_JAVA_OPTS=-Xmx2g -Xms2g
+   /Elastic/fscrawler/bin/fscrawler.bat --config_dir /Elastic/fscrawler data >> /Elastic/logs/fscrawler.log 2>&1
+
+Then use ``fscrawlerRunner.bat`` to create your windows service.
+
+
 Upgrade FSCrawler
 -----------------
 
