@@ -116,6 +116,11 @@ public class FsCrawlerCli {
             LoggerConfig loggerConfig = config.getLoggerConfig(FsCrawlerCli.class.getPackage().getName());
 
             if (commands.silent) {
+                // Check if the user also asked for --debug or --trace which is contradictory
+                if (commands.debug || commands.trace) {
+                    logger.warn("--debug or --trace can't be used when --silent is set. Only silent mode will be activated.");
+                }
+
                 // We change the full rootLogger level
                 LoggerConfig rootLogger = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
                 loggerConfig.setLevel(Level.OFF);
