@@ -120,7 +120,12 @@ public class FsCrawlerCli {
                 if (commands.debug || commands.trace) {
                     logger.warn("--debug or --trace can't be used when --silent is set. Only silent mode will be activated.");
                 }
-
+                // If the user did not enter any job name, nothing will be displayed
+                if (commands.jobName == null) {
+                    logger.warn("--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
+                    jCommander.usage();
+                    return;
+                }
                 // We change the full rootLogger level
                 LoggerConfig rootLogger = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
                 loggerConfig.setLevel(Level.OFF);
