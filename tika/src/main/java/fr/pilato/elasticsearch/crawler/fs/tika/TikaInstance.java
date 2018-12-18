@@ -87,8 +87,8 @@ public class TikaInstance {
 
     private static Parser initParser(Fs fs) {
         if (fs.isPdfOcr()) {
-            Parser[] PARSERS = new Parser[2];
-            PARSERS[0] = new DefaultParser();
+            Parser[] parsers = new Parser[2];
+            parsers[0] = new DefaultParser();
             PDFParser pdfParser = new PDFParser();
             logger.debug("OCR is activated for PDF documents");
             if (ExternalParser.check("tesseract")) {
@@ -96,9 +96,9 @@ public class TikaInstance {
             } else {
                 logger.debug("But Tesseract is not installed so we won't run OCR.");
             }
-            PARSERS[1] = pdfParser;
+            parsers[1] = pdfParser;
 
-            return new AutoDetectParser(PARSERS);
+            return new AutoDetectParser(parsers);
         }
 
         logger.debug("OCR is disabled. Even though it's detected, it must be disabled explicitly");
@@ -115,11 +115,11 @@ public class TikaInstance {
                 new ServiceLoader(),
                 Collections.singletonList(TesseractOCRParser.class));
 
-        Parser[] PARSERS = new Parser[2];
-        PARSERS[0] = defaultParser;
-        PARSERS[1] = pdfParser;
+        Parser[] parsers = new Parser[2];
+        parsers[0] = defaultParser;
+        parsers[1] = pdfParser;
 
-        return new AutoDetectParser(PARSERS);
+        return new AutoDetectParser(parsers);
     }
 
     private static ParseContext initContextWithOcr(Fs fs, Parser parser) {
