@@ -670,6 +670,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), is("\n\n"));
         doc = extractFromFile("test.txt", fsSettings);
         assertThat(doc.getContent(), is("This file contains some words.\n"));
+        doc = extractFromFile("test-ocr-with-text.pdf", fsSettings);
+        assertThat(doc.getContent(), not(containsString("This file contains some words.")));
+        assertThat(doc.getContent(), containsString("This documents contains also some text in addition to images."));
 
         // Test with OCR On (default) but a wrong path to tesseract
         fsSettings = FsSettings.builder(getCurrentTestName())
@@ -691,6 +694,19 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), stringContainsInOrder(Arrays.asList("This", "file", "contains", "some", "words.")));
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent(), stringContainsInOrder(Arrays.asList("This", "file", "contains", "some", "words.")));
+
+        // Test with OCR forced to on
+        fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setOcr(Ocr.builder().setAlwaysUseOcr(true).build()).build())
+                .build();
+        doc = extractFromFile("test-ocr.png", fsSettings);
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        doc = extractFromFile("test-ocr.pdf", fsSettings);
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        doc = extractFromFile("test-ocr-with-text.pdf", fsSettings);
+        // TODO check why this text is not generated from images.
+        // assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent(), containsString("This documents contains also some text in addition to images."));
     }
 
     @Test

@@ -65,17 +65,19 @@ OCR settings
 
 Here is a list of OCR settings (under ``fs.ocr`` prefix)`:
 
-+------------------------+---------------+------------------------------------+
-| Name                   | Default value | Documentation                      |
-+========================+===============+====================================+
-| ``fs.ocr.language``    | ``"eng"``     | `OCR Language`_                    |
-+------------------------+---------------+------------------------------------+
-| ``fs.ocr.path``        | ``null``      | `OCR Path`_                        |
-+------------------------+---------------+------------------------------------+
-| ``fs.ocr.data_path``   | ``null``      | `OCR Data Path`_                   |
-+------------------------+---------------+------------------------------------+
-| ``fs.ocr.output_type`` | ``txt``       | `OCR Output Type`_                 |
-+------------------------+---------------+------------------------------------+
++---------------------------+---------------+------------------------------------+
+| Name                      | Default value | Documentation                      |
++============================+===============+====================================+
+| ``fs.ocr.language``       | ``"eng"``     | `OCR Language`_                    |
++---------------------------+---------------+------------------------------------+
+| ``fs.ocr.path``           | ``null``      | `OCR Path`_                        |
++---------------------------+---------------+------------------------------------+
+| ``fs.ocr.data_path``      | ``null``      | `OCR Data Path`_                   |
++---------------------------+---------------+------------------------------------+
+| ``fs.ocr.output_type``    | ``txt``       | `OCR Output Type`_                 |
++---------------------------+---------------+------------------------------------+
+| ``fs.ocr.always_use_ocr`` | ``false``     | `Force OCR Parsing`_               |
++---------------------------+---------------+------------------------------------+
 
 OCR Language
 ^^^^^^^^^^^^
@@ -176,6 +178,32 @@ Set the output type from ocr process. ``fs.ocr.output_type`` property can be def
    }
 
 .. note:: When omitted, ``txt`` value is used.
+
+Force OCR Parsing
+^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.6
+
+By default, FSCrawler will try to extract text from any document and if unsuccessful it
+will try to rewind the stream and apply OCR. This 2 phases process will help to deal efficiently when
+you have only a few documents which require using OCR.
+On the other end, if you know that the majority of your documents needs to be processed by
+OCR, it's a waste of resources to first apply a Text only parser. In which case you can force
+FSCrawler to systematically apply the OCR parser by setting ``fs.ocr.always_use_ocr`` property in
+your ``~/.fscrawler/test/_settings.json`` file:
+
+.. code:: json
+
+   {
+     "name" : "test",
+     "fs" : {
+       "url" : "/path/to/data/dir",
+       "ocr" : {
+         "always_use_ocr": true
+       }
+     }
+   }
+
 
 Using docker
 ------------

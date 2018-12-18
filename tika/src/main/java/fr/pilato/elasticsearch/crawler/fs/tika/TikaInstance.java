@@ -76,7 +76,7 @@ public class TikaInstance {
      */
     private static void initTika(Fs fs) {
         if (fs.isPdfOcr() && parserWithOcr == null) {
-            parserWithOcr = initParser(fs);
+            parserWithOcr = initParserWithOcr(fs);
             contextWithOcr = initContextWithOcr(fs, parserWithOcr);
         }
         if (parserWithoutOcr == null) {
@@ -85,8 +85,8 @@ public class TikaInstance {
         }
     }
 
-    private static Parser initParser(Fs fs) {
-        if (fs.isPdfOcr()) {
+    private static Parser initParserWithOcr(Fs fs) {
+        if (fs.isPdfOcr() || fs.getOcr().isAlwaysUseOcr()) {
             Parser[] parsers = new Parser[2];
             parsers[0] = new DefaultParser();
             PDFParser pdfParser = new PDFParser();
@@ -102,7 +102,7 @@ public class TikaInstance {
         }
 
         logger.debug("OCR is disabled. Even though it's detected, it must be disabled explicitly");
-        return initParserWithoutOcr();
+        return null;
     }
 
     private static Parser initParserWithoutOcr() {
@@ -123,8 +123,7 @@ public class TikaInstance {
     }
 
     private static ParseContext initContextWithOcr(Fs fs, Parser parser) {
-        ParseContext context = initContextWithoutOcr(parser);
-        if (fs.isPdfOcr()) {
+        if (fs.isPdfOcr() || fs.getOcr().isAlwaysUseOcr()) {
             logger.debug("OCR is activated");
             TesseractOCRConfig config = new TesseractOCRConfig();
             if (fs.getOcr().getPath() != null) {
@@ -137,9 +136,11 @@ public class TikaInstance {
             if (fs.getOcr().getOutputType() != null) {
                 config.setOutputType(fs.getOcr().getOutputType());
             }
+            ParseContext context = initContextWithoutOcr(parser);
             context.set(TesseractOCRConfig.class, config);
+            return context;
         }
-        return context;
+        return null;
     }
 
     private static ParseContext initContextWithoutOcr(Parser parser) {

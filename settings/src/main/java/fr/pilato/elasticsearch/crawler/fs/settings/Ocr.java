@@ -30,6 +30,8 @@ public class Ocr {
     private String dataPath = null;
     // Output Type. Can be txt (default) or hocr. null means the default value.
     private String outputType = null;
+    // Always use OCR. Instead of trying to use a Text only parser first.
+    private boolean alwaysUseOcr = false;
 
     public static Builder builder() {
         return new Builder();
@@ -41,6 +43,7 @@ public class Ocr {
         private String path = null;
         private String dataPath = null;
         private String outputType = null;
+        private boolean alwaysUseOcr = false;
 
         public Builder setLanguage(String language) {
             this.language = language;
@@ -62,8 +65,13 @@ public class Ocr {
             return this;
         }
 
+        public Builder setAlwaysUseOcr(boolean alwaysUseOcr) {
+            this.alwaysUseOcr = alwaysUseOcr;
+            return this;
+        }
+
         public Ocr build() {
-            return new Ocr(language, path, dataPath, outputType);
+            return new Ocr(language, path, dataPath, outputType, alwaysUseOcr);
         }
 
     }
@@ -72,11 +80,12 @@ public class Ocr {
 
     }
 
-    private Ocr(String language, String path, String dataPath, String outputType) {
+    private Ocr(String language, String path, String dataPath, String outputType, boolean alwaysUseOcr) {
         this.language = language;
         this.path = path;
         this.dataPath = dataPath;
         this.outputType = outputType;
+        this.alwaysUseOcr = alwaysUseOcr;
     }
 
     public String getLanguage() {
@@ -111,12 +120,21 @@ public class Ocr {
         this.outputType = outputType;
     }
 
+    public void setAlwaysUseOcr(boolean alwaysUseOcr) {
+        this.alwaysUseOcr = alwaysUseOcr;
+    }
+
+    public boolean isAlwaysUseOcr() {
+        return alwaysUseOcr;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Ocr ocr = (Ocr) o;
-        return Objects.equals(language, ocr.language) &&
+        return  alwaysUseOcr == ocr.alwaysUseOcr &&
+                Objects.equals(language, ocr.language) &&
                 Objects.equals(path, ocr.path) &&
                 Objects.equals(dataPath, ocr.dataPath) &&
                 Objects.equals(outputType, ocr.outputType);
@@ -124,7 +142,7 @@ public class Ocr {
 
     @Override
     public int hashCode() {
-        return Objects.hash(language, path, dataPath, outputType);
+        return Objects.hash(language, path, dataPath, outputType, alwaysUseOcr);
     }
 
     @Override
@@ -133,6 +151,7 @@ public class Ocr {
                 ", path='" + path + '\'' +
                 ", dataPath='" + dataPath + '\'' +
                 ", outputType='" + outputType + '\'' +
+                ", alwaysUseOcr=" + alwaysUseOcr +
                 '}';
     }
 }
