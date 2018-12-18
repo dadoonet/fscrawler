@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
@@ -54,75 +55,97 @@ public class TikaInstance {
 
     private static final Logger logger = LogManager.getLogger(TikaInstance.class);
 
-    private static Parser parser;
-    private static ParseContext context;
+    private static Parser parserWithOcr;
+    private static ParseContext contextWithOcr;
+    private static Parser parserWithoutOcr;
+    private static ParseContext contextWithoutOcr;
     private static LanguageDetector detector;
 
     /* For tests only */
-    public static void reloadTika() {
-        parser = null;
-        context = null;
+    static void reloadTika() {
+        parserWithOcr = null;
+        contextWithOcr = null;
+        parserWithoutOcr = null;
+        contextWithoutOcr = null;
     }
 
     /**
      * This initialize if needed a parser and a parse context for tika
+     * and another one which will never run OCR
      * @param fs fs settings
      */
     private static void initTika(Fs fs) {
-        initParser(fs);
-        initContext(fs);
+        if (fs.isPdfOcr() && parserWithOcr == null) {
+            parserWithOcr = initParser(fs);
+            contextWithOcr = initContextWithOcr(fs, parserWithOcr);
+        }
+        if (parserWithoutOcr == null) {
+            parserWithoutOcr = initParserWithoutOcr();
+            contextWithoutOcr = initContextWithoutOcr(parserWithoutOcr);
+        }
     }
 
-    private static void initParser(Fs fs) {
-        if (parser == null) {
+    private static Parser initParser(Fs fs) {
+        if (fs.isPdfOcr()) {
+            Parser[] PARSERS = new Parser[2];
+            PARSERS[0] = new DefaultParser();
             PDFParser pdfParser = new PDFParser();
-            DefaultParser defaultParser;
-
-            if (fs.isPdfOcr()) {
-                logger.debug("OCR is activated for PDF documents");
-                if (ExternalParser.check("tesseract")) {
-                    pdfParser.setOcrStrategy("ocr_and_text");
-                } else {
-                    logger.debug("But Tesseract is not installed so we won't run OCR.");
-                }
-                defaultParser = new DefaultParser();
+            logger.debug("OCR is activated for PDF documents");
+            if (ExternalParser.check("tesseract")) {
+                pdfParser.setOcrStrategy("ocr_and_text");
             } else {
-                logger.debug("OCR is disabled. Even though it's detected, it must be disabled explicitly");
-                defaultParser = new DefaultParser(
-                        MediaTypeRegistry.getDefaultRegistry(),
-                        new ServiceLoader(),
-                        Collections.singletonList(TesseractOCRParser.class));
+                logger.debug("But Tesseract is not installed so we won't run OCR.");
             }
-
-            Parser PARSERS[] = new Parser[2];
-            PARSERS[0] = defaultParser;
             PARSERS[1] = pdfParser;
 
-            parser = new AutoDetectParser(PARSERS);
+            return new AutoDetectParser(PARSERS);
         }
 
+        logger.debug("OCR is disabled. Even though it's detected, it must be disabled explicitly");
+        return initParserWithoutOcr();
     }
 
-    private static void initContext(Fs fs) {
-        if (context == null) {
-            context = new ParseContext();
-            context.set(Parser.class, parser);
-            if (fs.isPdfOcr()) {
-                logger.debug("OCR is activated");
-                TesseractOCRConfig config = new TesseractOCRConfig();
-                if (fs.getOcr().getPath() != null) {
-                    config.setTesseractPath(fs.getOcr().getPath());
-                }
-                if (fs.getOcr().getDataPath() != null) {
-                    config.setTessdataPath(fs.getOcr().getDataPath());
-                }
-                config.setLanguage(fs.getOcr().getLanguage());
-                if (fs.getOcr().getOutputType() != null) {
-                    config.setOutputType(fs.getOcr().getOutputType());
-                }
-                context.set(TesseractOCRConfig.class, config);
+    private static Parser initParserWithoutOcr() {
+        PDFParser pdfParser = new PDFParser();
+        DefaultParser defaultParser;
+
+        logger.debug("Starting a text only parser.");
+        defaultParser = new DefaultParser(
+                MediaTypeRegistry.getDefaultRegistry(),
+                new ServiceLoader(),
+                Collections.singletonList(TesseractOCRParser.class));
+
+        Parser[] PARSERS = new Parser[2];
+        PARSERS[0] = defaultParser;
+        PARSERS[1] = pdfParser;
+
+        return new AutoDetectParser(PARSERS);
+    }
+
+    private static ParseContext initContextWithOcr(Fs fs, Parser parser) {
+        ParseContext context = initContextWithoutOcr(parser);
+        if (fs.isPdfOcr()) {
+            logger.debug("OCR is activated");
+            TesseractOCRConfig config = new TesseractOCRConfig();
+            if (fs.getOcr().getPath() != null) {
+                config.setTesseractPath(fs.getOcr().getPath());
             }
+            if (fs.getOcr().getDataPath() != null) {
+                config.setTessdataPath(fs.getOcr().getDataPath());
+            }
+            config.setLanguage(fs.getOcr().getLanguage());
+            if (fs.getOcr().getOutputType() != null) {
+                config.setOutputType(fs.getOcr().getOutputType());
+            }
+            context.set(TesseractOCRConfig.class, config);
         }
+        return context;
+    }
+
+    private static ParseContext initContextWithoutOcr(Parser parser) {
+        ParseContext context = new ParseContext();
+        context.set(Parser.class, parser);
+        return context;
     }
 
     static String extractText(FsSettings fsSettings, int indexedChars, InputStream stream, Metadata metadata) throws IOException,
@@ -130,7 +153,28 @@ public class TikaInstance {
         initTika(fsSettings.getFs());
         WriteOutContentHandler handler = new WriteOutContentHandler(indexedChars);
         try {
-            parser.parse(stream, new BodyContentHandler(handler), metadata, context);
+            if (parserWithOcr != null) {
+                if (stream.markSupported()) {
+                    logger.debug("Trying both implementations OCR and TXT.");
+                    // We first try pure text extraction as this is faster than OCR
+                    parserWithoutOcr.parse(stream, new BodyContentHandler(handler), metadata, contextWithoutOcr);
+                    if (FsCrawlerUtil.isNullOrEmpty(handler.toString())) {
+                        logger.debug("Found no text so trying now OCR.");
+                        // If we did not get any text, we try again with OCR
+                        stream.reset();
+                        handler = new WriteOutContentHandler(indexedChars);
+                        parserWithOcr.parse(stream, new BodyContentHandler(handler), metadata, contextWithOcr);
+                    }
+                } else {
+                    logger.debug("Trying OCR implementation only as we can't rewind the stream.");
+                    // We try only the OCR implementation
+                    parserWithOcr.parse(stream, new BodyContentHandler(handler), metadata, contextWithOcr);
+                }
+            } else {
+                logger.debug("Trying TXT only implementation as OCR is disabled.");
+                // We try the text only implementation
+                parserWithoutOcr.parse(stream, new BodyContentHandler(handler), metadata, contextWithoutOcr);
+            }
         } catch (SAXException e) {
             if (!handler.isWriteLimitReached(e)) {
                 // This should never happen with BodyContentHandler...

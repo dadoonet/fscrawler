@@ -668,6 +668,8 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), isEmptyString());
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent(), is("\n\n"));
+        doc = extractFromFile("test.txt", fsSettings);
+        assertThat(doc.getContent(), is("This file contains some words.\n"));
 
         // Test with OCR On (default) but a wrong path to tesseract
         fsSettings = FsSettings.builder(getCurrentTestName())

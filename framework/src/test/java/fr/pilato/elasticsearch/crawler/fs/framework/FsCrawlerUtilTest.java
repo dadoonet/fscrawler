@@ -37,6 +37,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFile
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
@@ -82,5 +83,16 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         assertThat(isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576), is(true));
         assertThat(isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"),
                 new ByteSizeValue(randomIntBetween(2, 100), ByteSizeUnit.MB).getBytes()), is(false));
+    }
+
+    @Test
+    public void testIsNullOrEmpty() {
+        assertThat(isNullOrEmpty(""), is(true));
+        assertThat(isNullOrEmpty("   "), is(true));
+        assertThat(isNullOrEmpty("foo"), is(false));
+        assertThat(isNullOrEmpty("   foo   "), is(false));
+        assertThat(isNullOrEmpty("   foo \n\n"), is(false));
+        assertThat(isNullOrEmpty("\n\n"), is(true));
+        assertThat(isNullOrEmpty("    \n\n"), is(true));
     }
 }

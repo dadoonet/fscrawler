@@ -579,8 +579,14 @@ public class FsCrawlerUtil {
         }
     }
 
+    /**
+     * Test if a String is null or does not contain any valid text. ie. Text like \n
+     * or spaces is not considered as valid text.
+     * @param string text to check
+     * @return true if empty text
+     */
     public static boolean isNullOrEmpty(String string) {
-        return string == null || string.isEmpty();
+        return string == null || string.isEmpty() || string.trim().isEmpty() || string.trim().replace("\n", "").isEmpty();
     }
 
     public static void createDirIfMissing(Path root) {
