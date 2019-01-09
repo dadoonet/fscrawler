@@ -184,9 +184,11 @@ public abstract class FsParserAbstract extends FsParser {
                 // The problem here is that there is no wait to close the thread while we are sleeping.
                 // Which leads to Zombie threads in our tests
 
-                synchronized (semaphore) {
-                    semaphore.wait(fsSettings.getFs().getUpdateRate().millis());
-                    logger.debug("Fs crawler is now waking up again...");
+                if (!closed) {
+                    synchronized (semaphore) {
+                        semaphore.wait(fsSettings.getFs().getUpdateRate().millis());
+                        logger.debug("Fs crawler is now waking up again...");
+                    }
                 }
             } catch (InterruptedException e) {
                 logger.debug("Fs crawler thread has been interrupted: [{}]", e.getMessage());
@@ -230,6 +232,11 @@ public abstract class FsParserAbstract extends FsParser {
             throws Exception {
 
         logger.debug("indexing [{}] content", filepath);
+
+        if (closed) {
+            logger.debug("FS crawler thread [{}] is now marked as closed...", fsSettings.getName());
+            return;
+        }
 
         final Collection<FileAbstractModel> children = path.getFiles(filepath);
         Collection<String> fsFiles = new ArrayList<>();
