@@ -704,8 +704,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent(), containsString("This file contains some words."));
         doc = extractFromFile("test-ocr-with-text.pdf", fsSettings);
-        // TODO check why this text is not generated from images.
-        // assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent(), containsString("This file contains some words."));
         assertThat(doc.getContent(), containsString("This documents contains also some text in addition to images."));
     }
 
