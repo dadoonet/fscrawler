@@ -13,7 +13,7 @@ categories:
     label: doc
   - title: 🚦 Tests
     label: test
-change-template: - $TITLE thanks to @$AUTHOR (#$NUMBER)
+change-template: - #$NUMBER: $TITLE (thanks to @$AUTHOR)
 template: |
   ## What's Changed
 
