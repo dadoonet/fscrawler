@@ -6,7 +6,7 @@
     <parent>
         <groupId>fr.pilato.elasticsearch.crawler</groupId>
         <artifactId>fscrawler-it</artifactId>
-        <version>2.6</version>
+        <version>2.7-SNAPSHOT</version>
     </parent>
 
     <artifactId>fscrawler-it-common</artifactId>
