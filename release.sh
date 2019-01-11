@@ -122,7 +122,7 @@ echo "Changing maven version to $RELEASE_VERSION..."
 mvn versions:set -DnewVersion=${RELEASE_VERSION} >> /tmp/fscrawler-${RELEASE_VERSION}.log
 
 # We need to also commit files that changed for documentation
-mvn clean generate-sources >> /tmp/fscrawler-${RELEASE_VERSION}.log
+mvn clean process-resources >> /tmp/fscrawler-${RELEASE_VERSION}.log
 
 # Git commit release
 git commit -q -a -m "prepare release fscrawler-$RELEASE_VERSION"
@@ -179,7 +179,7 @@ fi
 echo "Changing maven version to $NEXT_VERSION..."
 mvn versions:set -DnewVersion=${NEXT_VERSION} >> /tmp/fscrawler-${RELEASE_VERSION}.log
 # We need to also commit files that changed for documentation
-mvn clean generate-sources >> /tmp/fscrawler-${RELEASE_VERSION}.log
+mvn clean process-resources >> /tmp/fscrawler-${RELEASE_VERSION}.log
 git commit -q -a -m "prepare for next development iteration"
 
 # git checkout branch we started from
