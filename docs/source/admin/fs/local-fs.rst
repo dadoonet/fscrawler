@@ -14,7 +14,7 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.includes``            | ``null``              | `Includes and excludes`_        |
 +----------------------------+-----------------------+---------------------------------+
-| ``fs.excludes``            | ``["~*"]``            | `Includes and excludes`_        |
+| ``fs.excludes``            | ``["*/~*"]``          | `Includes and excludes`_        |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.filters``             | ``null``              | `Filter content`_               |
 +----------------------------+-----------------------+---------------------------------+
@@ -175,6 +175,18 @@ If you define the following ``fs.excludes`` property in your
 
 Then all files but the ones in ``/folderB/subfolderA``, ``/folderB/subfolderB`` and
 ``/folderB/subfolderC`` will be indexed.
+
+Since the includes and excludes work on the entire *path of the file* you must consider that when using wildcards. Below are some includes and excludes pattern to help convey the idea better.
+
++--------------------+------------------------------------------------+------------------------------------------------+
+| Pattern            | Includes                                       | Excludes                                       |
++====================+================================================+================================================+
+| ``*.jpg``          | Include all jpg files                          | exclude all jpg files                          |
++--------------------+------------------------------------------------+------------------------------------------------+
+| ``/images/*.jpg``  | Include all jpg files in the images directory  | Exclude all jpg files in the images directory  |
++--------------------+------------------------------------------------+------------------------------------------------+
+| ``*/old-*.jpg``    | Include all jpg files that start with ``old-`` | Exclude all jpg files that start with ``old-`` |
++--------------------+------------------------------------------------+------------------------------------------------+
 
 .. versionadded:: 2.6
 
