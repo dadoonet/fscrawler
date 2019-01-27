@@ -25,7 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
+import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import org.junit.Test;
 
 import javax.ws.rs.client.WebTarget;
@@ -54,7 +54,7 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
                     .setElasticsearch(endCrawlerDefinition(getCrawlerName()))
                     .setFs(startCrawlerDefinition().build())
                     .setServer(null)
-                    .setRest(new Rest("http://127.0.0.1:" + (testRestPort+1) + "/fscrawler")).build();
+                    .setRest(new ServerUrl("http://127.0.0.1:" + (testRestPort+1) + "/fscrawler")).build();
             crawler = new FsCrawlerImpl(
                     metadataDir,
                     fsSettings,

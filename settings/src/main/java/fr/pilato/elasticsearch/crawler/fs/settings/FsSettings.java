@@ -19,20 +19,23 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import java.util.Objects;
+
 @SuppressWarnings("SameParameterValue")
 public class FsSettings {
 
+    public static final ServerUrl REST_DEFAULT = new ServerUrl("http://127.0.0.1:8080/fscrawler");
     private String name;
     private Fs fs;
     private Server server;
     private Elasticsearch elasticsearch;
-    private Rest rest;
+    private ServerUrl rest;
 
     public FsSettings() {
 
     }
 
-    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch, Rest rest) {
+    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch, ServerUrl rest) {
         this.name = name;
         this.fs = fs;
         this.server = server;
@@ -49,7 +52,7 @@ public class FsSettings {
         private Fs fs = Fs.DEFAULT;
         private Server server = null;
         private Elasticsearch elasticsearch = Elasticsearch.DEFAULT();
-        private Rest rest = Rest.DEFAULT;
+        private ServerUrl rest = REST_DEFAULT;
 
         private Builder setName(String name) {
             this.name = name;
@@ -71,7 +74,7 @@ public class FsSettings {
             return this;
         }
 
-        public Builder setRest(Rest rest) {
+        public Builder setRest(ServerUrl rest) {
             this.rest = rest;
             return this;
         }
@@ -113,11 +116,11 @@ public class FsSettings {
         this.elasticsearch = elasticsearch;
     }
 
-    public Rest getRest() {
+    public ServerUrl getRest() {
         return rest;
     }
 
-    public void setRest(Rest rest) {
+    public void setRest(ServerUrl rest) {
         this.rest = rest;
     }
 
@@ -128,11 +131,11 @@ public class FsSettings {
 
         FsSettings that = (FsSettings) o;
 
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (fs != null ? !fs.equals(that.fs) : that.fs != null) return false;
-        if (server != null ? !server.equals(that.server) : that.server != null) return false;
-        if (rest != null ? !rest.equals(that.rest) : that.rest != null) return false;
-        return !(elasticsearch != null ? !elasticsearch.equals(that.elasticsearch) : that.elasticsearch != null);
+        if (!Objects.equals(name, that.name)) return false;
+        if (!Objects.equals(fs, that.fs)) return false;
+        if (!Objects.equals(server, that.server)) return false;
+        if (!Objects.equals(rest, that.rest)) return false;
+        return Objects.equals(elasticsearch, that.elasticsearch);
 
     }
 

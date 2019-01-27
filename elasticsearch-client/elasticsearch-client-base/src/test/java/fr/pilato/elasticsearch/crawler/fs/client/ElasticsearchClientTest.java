@@ -27,21 +27,11 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
 public class ElasticsearchClientTest extends AbstractFSCrawlerTestCase {
-
-    @Test
-    public void testCloudId() {
-
-        String cloudId = "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==";
-        String httpHost = decodeCloudId(cloudId);
-
-        assertThat(httpHost, is("https://1d1ea996887745a6a2b7cb79315348a3.europe-west1.gcp.cloud.es.io:443"));
-    }
 
     @Test
     public void testGetInstanceWithNullSettings() {

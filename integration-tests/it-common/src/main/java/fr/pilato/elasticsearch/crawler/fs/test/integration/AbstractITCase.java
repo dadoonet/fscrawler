@@ -33,6 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import org.apache.logging.log4j.Level;
@@ -63,10 +64,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.unzip;
+import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -249,7 +250,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         staticLogger.info("Starting a client against [{}]", testClusterUrl);
         // We build the elasticsearch High Level Client based on the parameters
         elasticsearchWithSecurity = Elasticsearch.builder()
-                .addNode(new Elasticsearch.Node(testClusterUrl))
+                .addNode(new ServerUrl(testClusterUrl))
                 .setUsername(testClusterUser)
                 .setPassword(testClusterPass)
                 .build();
@@ -314,7 +315,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
                                                      TimeValue timeValue, ByteSizeValue byteSize) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
-                .addNode(new Elasticsearch.Node(testClusterUrl))
+                .addNode(new ServerUrl(testClusterUrl))
                 .setBulkSize(bulkSize);
 
         if (indexName != null) {

@@ -26,7 +26,6 @@ import org.apache.logging.log4j.Logger;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.util.Base64;
 import java.util.Objects;
 
 public abstract class ElasticsearchClientUtil {
@@ -35,28 +34,6 @@ public abstract class ElasticsearchClientUtil {
 
     private ElasticsearchClientUtil() {
 
-    }
-
-    /**
-     * Decode a cloudId to a Node representation. This helps when using
-     * official elasticsearch as a service: https://cloud.elastic.co
-     * The cloudId can be found from the cloud console.
-     *
-     * @param cloudId The cloud ID to decode.
-     * @return A Node running on https://address:443
-     */
-    public static String decodeCloudId(String cloudId) {
-        // 1. Ignore anything before `:`.
-        String id = cloudId.substring(cloudId.indexOf(':') + 1);
-
-        // 2. base64 decode
-        String decoded = new String(Base64.getDecoder().decode(id));
-
-        // 3. separate based on `$`
-        String[] words = decoded.split("\\$");
-
-        // 4. form the URLs
-        return "https://" + words[1] + "." + words[0] + ":443";
     }
 
     /**
