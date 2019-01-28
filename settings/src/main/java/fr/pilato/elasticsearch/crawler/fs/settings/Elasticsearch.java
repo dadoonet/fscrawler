@@ -33,8 +33,19 @@ import java.util.Objects;
 
 public class Elasticsearch {
 
-    public static final ServerUrl NODE_DEFAULT = new ServerUrl("http://127.0.0.1:9200");
     protected static final Logger logger = LogManager.getLogger(Elasticsearch.class);
+    public static final ServerUrl NODE_DEFAULT = new ServerUrl("http://127.0.0.1:9200");
+
+    private List<ServerUrl> nodes;
+    private String index;
+    private String indexFolder;
+    private int bulkSize = 100;
+    private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
+    private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
+    private String username;
+    @JsonIgnore
+    private String password;
+    private String pipeline;
 
     public Elasticsearch() {
 
@@ -64,17 +75,6 @@ public class Elasticsearch {
                 .addNode(NODE_DEFAULT)
                 .build();
     }
-
-    private List<ServerUrl> nodes;
-    private String index;
-    private String indexFolder;
-    private int bulkSize = 100;
-    private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
-    private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
-    private String username;
-    @JsonIgnore
-    private String password;
-    private String pipeline;
 
     public List<ServerUrl> getNodes() {
         return nodes;

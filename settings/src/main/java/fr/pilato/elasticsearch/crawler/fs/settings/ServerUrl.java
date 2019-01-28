@@ -34,6 +34,9 @@ public class ServerUrl {
 
     protected static final Logger logger = LogManager.getLogger(ServerUrl.class);
 
+    private String url;
+    private String cloudId;
+
     public ServerUrl() {
 
     }
@@ -48,9 +51,6 @@ public class ServerUrl {
             this.cloudId = urlOrCloudId;
         }
     }
-
-    private String url;
-    private String cloudId;
 
     /**
      * Decode a cloudId to a Node representation. This helps when using
