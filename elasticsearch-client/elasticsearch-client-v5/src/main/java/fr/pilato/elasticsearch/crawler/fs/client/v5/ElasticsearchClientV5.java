@@ -92,7 +92,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
@@ -409,14 +408,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
 
     private static RestClientBuilder buildRestClient(Elasticsearch settings) {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
-        settings.getNodes().forEach(node -> {
-            if (node.getCloudId() != null) {
-                // We have a cloud id which simplifies all
-                hosts.add(HttpHost.create(decodeCloudId(node.getCloudId())));
-            } else {
-                hosts.add(HttpHost.create(node.getUrl()));
-            }
-        });
+        settings.getNodes().forEach(node -> hosts.add(HttpHost.create(node.getDecodedUrl())));
 
         RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
 

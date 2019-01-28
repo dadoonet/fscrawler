@@ -29,18 +29,29 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 public class Elasticsearch {
 
     protected static final Logger logger = LogManager.getLogger(Elasticsearch.class);
+    public static final ServerUrl NODE_DEFAULT = new ServerUrl("http://127.0.0.1:9200");
+
+    private List<ServerUrl> nodes;
+    private String index;
+    private String indexFolder;
+    private int bulkSize = 100;
+    private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
+    private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
+    private String username;
+    @JsonIgnore
+    private String password;
+    private String pipeline;
 
     public Elasticsearch() {
 
     }
 
-    private Elasticsearch(List<Node> nodes, String index, String indexFolder, int bulkSize,
+    private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
                           TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline) {
         this.nodes = nodes;
         this.index = index;
@@ -61,128 +72,11 @@ public class Elasticsearch {
     // TODO fix that: a validator should not modify the original object but return a modified copy
     public static Elasticsearch DEFAULT() {
         return Elasticsearch.builder()
-                .addNode(Node.DEFAULT)
+                .addNode(NODE_DEFAULT)
                 .build();
     }
 
-    public static class Node {
-
-        public enum Scheme {
-            HTTP,
-            HTTPS;
-
-            public static Scheme parse(String value) {
-                return valueOf(value.toUpperCase(Locale.ROOT));
-            }
-
-            public String toLowerCase() {
-                return this.toString().toLowerCase(Locale.ROOT);
-            }
-        }
-
-        public static final Node DEFAULT = new Node("http://127.0.0.1:9200");
-
-        public Node() {
-
-        }
-
-        @Deprecated
-        public Node(String host, int port, Scheme scheme) {
-            this.host = host;
-            this.port = port;
-            this.scheme = scheme;
-        }
-
-        public Node(String urlOrCloudId) {
-            // We check if the String starts with https:// or http://
-            // In which case this is a URL, otherwise its a cloud id
-            String asLowerCase = urlOrCloudId.toLowerCase();
-            if (asLowerCase.startsWith("http://") || asLowerCase.startsWith("https://")) {
-                this.url = urlOrCloudId;
-            } else {
-                this.cloudId = urlOrCloudId;
-            }
-        }
-
-        private String url;
-        private String cloudId;
-
-        @Deprecated
-        private String host;
-        @Deprecated
-        private Integer port;
-        @Deprecated
-        private Scheme scheme = Scheme.HTTP;
-
-        public void setHost(String host) {
-            this.host = host;
-        }
-
-        public void setPort(Integer port) {
-            this.port = port;
-        }
-
-        public void setScheme(Scheme scheme) {
-            this.scheme = scheme;
-        }
-
-        public String getCloudId() {
-            return cloudId;
-        }
-
-        public void setCloudId(String cloudId) {
-            this.cloudId = cloudId;
-        }
-
-        public String getUrl() {
-            // If we are using deprecated settings, let's warn the user to move to url param
-            if (host != null || port != null) {
-                String tmpUrl = scheme.toLowerCase() + "://" + host + ":" + port;
-                logger.warn("elasticsearch.nodes.[scheme, host, port] has been deprecated and will be removed in a coming version. " +
-                        "Use elasticsearch.nodes: [ { \"url\": \"{}\" } ] instead", tmpUrl);
-                return tmpUrl;
-            }
-            return url;
-        }
-
-        public void setUrl(String url) {
-            this.url = url;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Node node = (Node) o;
-            return Objects.equals(cloudId, node.cloudId) &&
-                    Objects.equals(url, node.url);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(cloudId, url);
-        }
-
-        @Override
-        public String toString() {
-            return "Node{" + "cloudId='" + cloudId + '\'' +
-                    ", url=" + url +
-                    '}';
-        }
-    }
-
-    private List<Node> nodes;
-    private String index;
-    private String indexFolder;
-    private int bulkSize = 100;
-    private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
-    private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
-    private String username;
-    @JsonIgnore
-    private String password;
-    private String pipeline;
-
-    public List<Node> getNodes() {
+    public List<ServerUrl> getNodes() {
         return nodes;
     }
 
@@ -241,7 +135,7 @@ public class Elasticsearch {
     }
 
     public static class Builder {
-        private List<Node> nodes;
+        private List<ServerUrl> nodes;
         private String index;
         private String indexFolder;
         private int bulkSize = 100;
@@ -251,12 +145,12 @@ public class Elasticsearch {
         private String password = null;
         private String pipeline = null;
 
-        public Builder setNodes(List<Node> nodes) {
+        public Builder setNodes(List<ServerUrl> nodes) {
             this.nodes = nodes;
             return this;
         }
 
-        public Builder addNode(Node node) {
+        public Builder addNode(ServerUrl node) {
             if (this.nodes == null) {
                 this.nodes = new ArrayList<>();
             }
@@ -317,13 +211,13 @@ public class Elasticsearch {
         Elasticsearch that = (Elasticsearch) o;
 
         if (bulkSize != that.bulkSize) return false;
-        if (nodes != null ? !nodes.equals(that.nodes) : that.nodes != null) return false;
-        if (index != null ? !index.equals(that.index) : that.index != null) return false;
-        if (indexFolder != null ? !indexFolder.equals(that.indexFolder) : that.indexFolder != null) return false;
-        if (username != null ? !username.equals(that.username) : that.username != null) return false;
+        if (!Objects.equals(nodes, that.nodes)) return false;
+        if (!Objects.equals(index, that.index)) return false;
+        if (!Objects.equals(indexFolder, that.indexFolder)) return false;
+        if (!Objects.equals(username, that.username)) return false;
         // We can't really test the password as it may be obfuscated
-        if (pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null) return false;
-        return !(flushInterval != null ? !flushInterval.equals(that.flushInterval) : that.flushInterval != null);
+        if (!Objects.equals(pipeline, that.pipeline)) return false;
+        return Objects.equals(flushInterval, that.flushInterval);
 
     }
 

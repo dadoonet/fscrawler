@@ -26,8 +26,8 @@ import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaParser;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import org.apache.commons.io.FilenameUtils;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -47,7 +47,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
-import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil.decodeCloudId;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 
 @Path("/_upload")
@@ -121,14 +120,8 @@ public class UploadApi extends RestApi {
                     DocParser.toJson(doc),
                     settings.getElasticsearch().getPipeline());
             // Elasticsearch entity coordinates (we use the first node address)
-            Elasticsearch.Node node = settings.getElasticsearch().getNodes().get(0);
-            String nodeUrl;
-            if (node.getCloudId() != null) {
-                nodeUrl = decodeCloudId(node.getCloudId());
-            } else {
-                nodeUrl = node.getUrl();
-            }
-            url = nodeUrl + "/" +
+            ServerUrl node = settings.getElasticsearch().getNodes().get(0);
+            url = node.getUrl() + "/" +
                     settings.getElasticsearch().getIndex() + "/" +
                     esClient.getDefaultTypeName() + "/" +
                     id;
