@@ -52,16 +52,6 @@
     </dependencies>
 
     <build>
-        <!-- No need to start Fabric8 in the it-common module as tests are not ran from here with the CLI -->
-        <plugins>
-            <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-        </plugins>
         <testResources>
             <testResource>
                 <directory>src/main/resources-binary</directory>
