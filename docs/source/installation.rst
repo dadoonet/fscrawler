@@ -14,7 +14,10 @@ Download FSCrawler
     .. warning::
 
         This is a **SNAPSHOT** version.
-        You can also download a **stable** version from |Maven_Central|_.
+        You can also download a **stable** version from Maven Central:
+
+        * |Maven_Central_V6|_ for Elasticsearch V6.
+        * |Maven_Central_V5|_ for Elasticsearch V5.
 
 .. ifconfig:: release == version
 
@@ -27,9 +30,15 @@ Download FSCrawler
     .. tip::
 
         This is a **stable** version.
-        You can choose another version than |version| in |Maven_Central|_.
+        You can choose another version than |version| from Maven Central:
 
-        You can also download a **SNAPSHOT** version from |Sonatype|_.
+        * |Maven_Central_V6|_ for Elasticsearch V6.
+        * |Maven_Central_V5|_ for Elasticsearch V5.
+
+        You can also download a **SNAPSHOT** version from Sonatype:
+
+        * |Sonatype_V6|_ for Elasticsearch V6.
+        * |Sonatype_V5|_ for Elasticsearch V5.
 
 The distribution contains:
 
