@@ -52,10 +52,12 @@ release = read_version()
 
 downloadUrlV5 = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es5/%s/fscrawler-es5-%s.zip" % (version, version)
 downloadUrlV6 = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es6/%s/fscrawler-es6-%s.zip" % (version, version)
+downloadUrlV7 = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es7/%s/fscrawler-es7-%s.zip" % (version, version)
 
 if release.endswith('-SNAPSHOT'):
     downloadUrlV5 = "https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es5/%s/" % release
     downloadUrlV6 = "https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es6/%s/" % release
+    downloadUrlV7 = "https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es7/%s/" % release
 
 # -- General configuration ---------------------------------------------------
 
