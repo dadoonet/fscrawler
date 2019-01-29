@@ -232,7 +232,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         for (ESSearchHit hit : response.getHits()) {
             // Read the document. This is needed since 5.0 as search does not return the _version field
             try {
-                ESSearchHit getHit = esClient.get(hit.getIndex(), typeName, hit.getId());
+                ESSearchHit getHit = esClient.get(hit.getIndex(), hit.getId());
                 assertThat(getHit.getVersion(), lessThanOrEqualTo(maxVersion));
             } catch (IOException e) {
                 fail("We got an IOException: " + e.getMessage());

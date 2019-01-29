@@ -50,10 +50,10 @@ public class FsCrawlerTestUpgradeVersionIT extends AbstractFsCrawlerITCase {
 
         // Create fake data
         for (int i = 0; i < nbDocs; i++) {
-            esClient.index(getCrawlerName(), "doc", "id" + i, "{\"foo\":\"bar\"}", null);
+            esClient.performLowLevelRequest("PUT", "/" + getCrawlerName() + "/doc/id" + i, "{\"foo\":\"bar\"}");
         }
         for (int i = 0; i < nbFolders; i++) {
-            esClient.index(getCrawlerName(), "folder", "id" + i, "{\"foo\":\"bar\"}", null);
+            esClient.performLowLevelRequest("PUT", "/" + getCrawlerName() + "/folder/id" + i, "{\"foo\":\"bar\"}");
         }
         esClient.flush();
 

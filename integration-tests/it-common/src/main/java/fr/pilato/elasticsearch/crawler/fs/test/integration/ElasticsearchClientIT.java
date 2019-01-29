@@ -96,8 +96,8 @@ public class ElasticsearchClientIT extends AbstractITCase {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
 
-        esClient.indexSingle(getCrawlerName(), "doc", "1", "{ \"foo\": { \"bar\": \"bar\" } }");
-        esClient.indexSingle(getCrawlerName(), "doc", "2", "{ \"foo\": { \"bar\": \"baz\" } }");
+        esClient.indexSingle(getCrawlerName(), "1", "{ \"foo\": { \"bar\": \"bar\" } }");
+        esClient.indexSingle(getCrawlerName(), "2", "{ \"foo\": { \"bar\": \"baz\" } }");
 
         esClient.refresh(getCrawlerName());
 

@@ -79,12 +79,6 @@ public abstract class FsParserAbstract extends FsParser {
     private final Integer loop;
     private final MessageDigest messageDigest;
 
-    /**
-     * This is a temporary value we need to support both v5 and newer versions.
-     * V5 does not allow a type named _doc but V6 recommends using it.
-     */
-    private final String typeName;
-
     private ScanStatistic stats;
 
     FsParserAbstract(FsSettings fsSettings, Path config, ElasticsearchClient esClient, Integer loop) {
@@ -106,8 +100,6 @@ public abstract class FsParserAbstract extends FsParser {
         } else {
             messageDigest = null;
         }
-
-        typeName = esClient.getDefaultTypeName();
     }
 
     protected abstract FileAbstractor buildFileAbstractor();
@@ -197,7 +189,6 @@ public abstract class FsParserAbstract extends FsParser {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private LocalDateTime getLastDateFromMeta(String jobName) throws IOException {
         try {
             FsJob fsJob = fsJobFileHandler.read(jobName);
@@ -577,26 +568,26 @@ public abstract class FsParserAbstract extends FsParser {
     /**
      * Add to bulk an IndexRequest in JSon format
      */
-    void esIndex(String index, String id, String json, String pipeline) {
-        logger.debug("Indexing {}/{}/{}?pipeline={}", index, typeName, id, pipeline);
+    private void esIndex(String index, String id, String json, String pipeline) {
+        logger.debug("Indexing {}/{}?pipeline={}", index, id, pipeline);
         logger.trace("JSon indexed : {}", json);
 
         if (!closed) {
-            esClient.index(index, typeName, id, json, pipeline);
+            esClient.index(index, id, json, pipeline);
         } else {
-            logger.warn("trying to add new file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, typeName, id);
+            logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }
     }
 
     /**
      * Add to bulk a DeleteRequest
      */
-    void esDelete(String index, String id) {
-        logger.debug("Deleting {}/{}/{}", index, typeName, id);
+    private void esDelete(String index, String id) {
+        logger.debug("Deleting {}/{}", index, id);
         if (!closed) {
-            esClient.delete(index, typeName, id);
+            esClient.delete(index, id);
         } else {
-            logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}]/[{}] has been ignored", index, typeName, id);
+            logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }
     }
 

@@ -115,29 +115,26 @@ public interface ElasticsearchClient extends Closeable {
     /**
      * Index a document using a BulkProcessor behind the scenes
      * @param index     Index name
-     * @param type      Type name
      * @param id        Document ID
      * @param json      JSON
      * @param pipeline  Pipeline (can be null)
      */
-    void index(String index, String type, String id, String json, String pipeline);
+    void index(String index, String id, String json, String pipeline);
 
     /**
      * Index a document (for test purposes only)
      * @param index     Index name
-     * @param type      Type name
      * @param id        Document ID
      * @param json      JSON
      */
-    void indexSingle(String index, String type, String id, String json) throws IOException;
+    void indexSingle(String index, String id, String json) throws IOException;
 
     /**
      * Delete a document using a BulkProcessor behind the scenes
      * @param index     Index name
-     * @param type      Type name
      * @param id        Document ID
      */
-    void delete(String index, String type, String id);
+    void delete(String index, String id);
 
     /**
      * Create all needed indices
@@ -181,22 +178,20 @@ public interface ElasticsearchClient extends Closeable {
     /**
      * Get a document by its ID
      * @param index Index name
-     * @param type  Type
      * @param id    Document id
      * @return A Search Hit
      * @throws IOException In case of error
      */
-    ESSearchHit get(String index, String type, String id) throws IOException;
+    ESSearchHit get(String index, String id) throws IOException;
 
     /**
      * Check that a document exists
      * @param index Index name
-     * @param type  Type
      * @param id    Document id
      * @return true if it exists, false otherwise
      * @throws IOException In case of error
      */
-    boolean exists(String index, String type, String id) throws IOException;
+    boolean exists(String index, String id) throws IOException;
 
     default void checkVersion() throws IOException {
         ESVersion esVersion = getVersion();
