@@ -46,6 +46,7 @@ Run tests from your IDE
 To run integration tests from your IDE, you need to start tests in ``fscrawler-it-common`` module.
 But you need first to specify the Maven profile to use and rebuild the project.
 
+* ``es-7x`` for Elasticsearch 7.x
 * ``es-6x`` for Elasticsearch 6.x
 * ``es-5x`` for Elasticsearch 5.x
 
@@ -55,13 +56,14 @@ Run tests with an external cluster
 
 To run the test suite against an elasticsearch instance running locally, just run::
 
-    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6
+    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7
 
 .. tip::
 
-    If you want to run against a version 5, run::
+    If you want to run against a version 5 or 6, run::
 
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v5
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6
 
 If elasticsearch is not running yet on ``http://localhost:9200``, FSCrawler project will run a Docker instance before
 the tests start.
@@ -70,7 +72,7 @@ the tests start.
 
     If you are using a secured instance, use ``tests.cluster.user``, ``tests.cluster.pass`` and ``tests.cluster.url``::
 
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6 \
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
             -Dtests.cluster.url=https://127.0.0.1:9200 \
@@ -81,14 +83,14 @@ the tests start.
     `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
     you can also use ``tests.cluster.url`` to set where elasticsearch is running::
 
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6 \
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
             -Dtests.cluster.url=https://XYZ.es.io:9243
 
     Or even easier, you can use the ``Cloud ID`` available on you Cloud Console::
 
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6 \
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
             -Dtests.cluster.cloud_id=fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==
@@ -111,7 +113,7 @@ Some options are available from the command line when running the tests:
 
 For example::
 
-  mvn install -rf :fscrawler-it -Pes-6x -Dtests.output=always
+  mvn install -rf :fscrawler-it -Dtests.output=always
 
 Check for vulnerabilities (CVE)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

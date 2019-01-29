@@ -36,6 +36,7 @@
     <!--suppress CheckTagEmptyBody -->
     <properties>
         <elasticsearch.version>6.5.3</elasticsearch.version>
+        <elasticsearch7.version>7.0.0-alpha2</elasticsearch7.version>
         <elasticsearch6.version>${elasticsearch.version}</elasticsearch6.version>
         <elasticsearch5.version>5.6.11</elasticsearch5.version>
 
@@ -247,6 +248,9 @@
                                 <name>dadoonet/docker-elasticsearch:${project.version}</name>
                                 <build>
                                     <from>${integ.elasticsearch.image}:${integ.elasticsearch.version}</from>
+                                    <env>
+                                        <discovery.type>single-node</discovery.type>
+                                    </env>
                                 </build>
                                 <run>
                                     <ports>
@@ -426,6 +430,11 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-elasticsearch-client-v6</artifactId>
+                <version>2.7-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-elasticsearch-client-v7</artifactId>
                 <version>2.7-SNAPSHOT</version>
             </dependency>
             <dependency>

@@ -67,6 +67,19 @@
     <profiles>
         <!-- We are building a profile that can be activated from the IDE -->
         <profile>
+            <id>es-7x</id>
+            <properties>
+                <integ.elasticsearch.version>${elasticsearch7.version}</integ.elasticsearch.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                    <artifactId>fscrawler-elasticsearch-client-v7</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <!-- We are building a profile that can be activated from the IDE -->
+        <profile>
             <id>es-6x</id>
             <properties>
                 <integ.elasticsearch.version>${elasticsearch6.version}</integ.elasticsearch.version>

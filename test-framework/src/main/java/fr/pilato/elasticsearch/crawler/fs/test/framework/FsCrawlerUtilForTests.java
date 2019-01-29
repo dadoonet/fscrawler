@@ -33,7 +33,8 @@ class FsCrawlerUtilForTests {
     private static final String[] MAPPING_RESOURCES = {
             "2/_settings.json", "2/_settings_folder.json",
             "5/_settings.json", "5/_settings_folder.json",
-            "6/_settings.json", "6/_settings_folder.json"
+            "6/_settings.json", "6/_settings_folder.json",
+            "7/_settings.json", "7/_settings_folder.json"
     };
 
     private FsCrawlerUtilForTests() {

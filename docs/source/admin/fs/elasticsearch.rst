@@ -69,16 +69,16 @@ Mappings
 
 When FSCrawler needs to create the doc index, it applies some default
 settings and mappings which are read from
-``~/.fscrawler/_default/6/_settings.json``. You can read its content
+``~/.fscrawler/_default/7/_settings.json``. You can read its content
 from `the
-source <https://github.com/dadoonet/fscrawler/blob/master/settings/src/main/resources/fr/pilato/elasticsearch/crawler/fs/_default/6/_settings.json>`__.
+source <https://github.com/dadoonet/fscrawler/blob/master/settings/src/main/resources/fr/pilato/elasticsearch/crawler/fs/_default/7/_settings.json>`__.
 
 Settings define an analyzer named ``fscrawler_path`` which uses a `path
 hierarchy
 tokenizer <https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pathhierarchy-tokenizer.html>`__.
 
 FSCrawler applies as well a mapping automatically for the folders which can also be
-read from `the source <https://github.com/dadoonet/fscrawler/blob/master/settings/src/main/resources/fr/pilato/elasticsearch/crawler/fs/_default/6/_settings_folder.json>`__.
+read from `the source <https://github.com/dadoonet/fscrawler/blob/master/settings/src/main/resources/fr/pilato/elasticsearch/crawler/fs/_default/7/_settings_folder.json>`__.
 
 You can also display the index mapping being used with Kibana:
 
@@ -106,6 +106,8 @@ Or fall back to the command line:
     -  ``5/_settings_folder.json``: for elasticsearch 5.x series folder index settings
     -  ``6/_settings.json``: for elasticsearch 6.x series document index settings
     -  ``6/_settings_folder.json``: for elasticsearch 6.x series folder index settings
+    -  ``7/_settings.json``: for elasticsearch 7.x series document index settings
+    -  ``7/_settings_folder.json``: for elasticsearch 7.x series folder index settings
 
 .. note::
 
@@ -117,7 +119,7 @@ Creating your own mapping (analyzers)
 
 If you want to define your own index settings and mapping to set
 analyzers for example, you can either create the index and push the
-mapping or define a ``~/.fscrawler/_default/6/_settings.json`` document
+mapping or define a ``~/.fscrawler/_default/7/_settings.json`` document
 which contains the index settings and mappings you wish **before
 starting the FSCrawler**.
 
@@ -364,8 +366,8 @@ documents against an elasticsearch cluster running version ``6.x``.
 If you create the following files, they will be picked up at job start
 time instead of the :ref:`default ones <mappings>`:
 
--  ``~/.fscrawler/{job_name}/_mappings/6/_settings.json``
--  ``~/.fscrawler/{job_name}/_mappings/6/_settings_folder.json``
+-  ``~/.fscrawler/{job_name}/_mappings/7/_settings.json``
+-  ``~/.fscrawler/{job_name}/_mappings/7/_settings_folder.json``
 
 .. tip::
     You can do the same for other elasticsearch versions with:
@@ -374,6 +376,8 @@ time instead of the :ref:`default ones <mappings>`:
     -  ``~/.fscrawler/{job_name}/_mappings/2/_settings_folder.json`` for 2.x series (deprecated)
     -  ``~/.fscrawler/{job_name}/_mappings/5/_settings.json`` for 5.x series
     -  ``~/.fscrawler/{job_name}/_mappings/5/_settings_folder.json`` for 5.x series
+    -  ``~/.fscrawler/{job_name}/_mappings/6/_settings.json`` for 6.x series
+    -  ``~/.fscrawler/{job_name}/_mappings/6/_settings_folder.json`` for 6.x series
 
 Replace existing mapping
 """"""""""""""""""""""""

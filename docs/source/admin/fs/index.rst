@@ -57,10 +57,7 @@ The job file must comply to the following ``json`` specifications:
        "password" : "password"
      },
      "rest" : {
-       "scheme" : "HTTP",
-       "host" : "127.0.0.1",
-       "port" : 8080,
-       "endpoint" : "fscrawler"
+       "url" : "https://127.0.0.1:8080/fscrawler"
      }
    }
 
