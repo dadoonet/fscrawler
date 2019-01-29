@@ -20,7 +20,11 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 
 .. note::
 
-    FS Crawler |release| is using |Tika_version|_ and |ESHL_version|_.
+    FS Crawler |release| is using |Tika_version|_ and:
+
+    * |ESHL_version7|_ for Elasticsearch V7.
+    * |ESHL_version6|_ for Elasticsearch V6.
+    * |ESHL_version5|_ for Elasticsearch V5.
 
 .. toctree::
    :caption: Installation Guide
