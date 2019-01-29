@@ -57,9 +57,11 @@ public class ElasticsearchClientIT extends AbstractITCase {
     @Test
     public void testCreateIndexWithSettings() throws IOException {
         esClient.createIndex(getCrawlerName(), false, "{\n" +
-                "  \"number_of_shards\": 1,\n" +
-                "  \"number_of_replicas\": 1\n" +
-                "}");
+                "  \"settings\": {\n" +
+                "    \"number_of_shards\": 1,\n" +
+                "    \"number_of_replicas\": 1\n" +
+                "  }\n" +
+                "}\n");
         boolean exists = esClient.isExistingIndex(getCrawlerName());
         assertThat(exists, is(true));
     }
@@ -94,8 +96,8 @@ public class ElasticsearchClientIT extends AbstractITCase {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
 
-        esClient.indexSingle(getCrawlerName(), "doc", "1", "{ \"foo\": { \"bar\": \"bar\" } }");
-        esClient.indexSingle(getCrawlerName(), "doc", "2", "{ \"foo\": { \"bar\": \"baz\" } }");
+        esClient.indexSingle(getCrawlerName(), "1", "{ \"foo\": { \"bar\": \"bar\" } }");
+        esClient.indexSingle(getCrawlerName(), "2", "{ \"foo\": { \"bar\": \"baz\" } }");
 
         esClient.refresh(getCrawlerName());
 
@@ -113,11 +115,21 @@ public class ElasticsearchClientIT extends AbstractITCase {
         ESVersion version = esClient.getVersion();
         logger.info("Current elasticsearch version: [{}]", version);
 
-        // If we did not use an external URL but the docker instance we can test for sure that the version is the expected one
-        if (System.getProperty("tests.cluster.host") == null) {
-            Properties properties = readPropertiesFromClassLoader("elasticsearch.version.properties");
-            assertThat(version.toString(), is(properties.getProperty("version")));
+        // TODO Remove that code when final 7.0.0 is out
+        // For now a 7.0.0-alpha2 says it's a 7.0.0 version
+        if (version.major == 7) {
+            // If we did not use an external URL but the docker instance we can test for sure that the version is the expected one
+            if (System.getProperty("tests.cluster.url") == null) {
+                assertThat(version.toString(), is("7.0.0"));
+            }
+        } else {
+            // If we did not use an external URL but the docker instance we can test for sure that the version is the expected one
+            if (System.getProperty("tests.cluster.url") == null) {
+                Properties properties = readPropertiesFromClassLoader("elasticsearch.version.properties");
+                assertThat(version.toString(), is(properties.getProperty("version")));
+            }
         }
+
     }
 
     @Test

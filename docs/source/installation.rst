@@ -6,6 +6,7 @@ Download FSCrawler
     Depending on your Elasticsearch cluster version, you can download
     FSCrawler |version| using the following links:
 
+    * |Download_URL_V7|_ for Elasticsearch V7.
     * |Download_URL_V6|_ for Elasticsearch V6.
     * |Download_URL_V5|_ for Elasticsearch V5.
 
@@ -16,6 +17,7 @@ Download FSCrawler
         This is a **SNAPSHOT** version.
         You can also download a **stable** version from Maven Central:
 
+        * |Maven_Central_V7|_ for Elasticsearch V7.
         * |Maven_Central_V6|_ for Elasticsearch V6.
         * |Maven_Central_V5|_ for Elasticsearch V5.
 
@@ -24,6 +26,7 @@ Download FSCrawler
     Depending on your Elasticsearch cluster version, you can download
     FSCrawler |version| using the following links:
 
+    * |Download_URL_V7|_ for Elasticsearch V7.
     * |Download_URL_V6|_ for Elasticsearch V6.
     * |Download_URL_V5|_ for Elasticsearch V5.
 
@@ -32,11 +35,13 @@ Download FSCrawler
         This is a **stable** version.
         You can choose another version than |version| from Maven Central:
 
+        * |Maven_Central_V7|_ for Elasticsearch V7.
         * |Maven_Central_V6|_ for Elasticsearch V6.
         * |Maven_Central_V5|_ for Elasticsearch V5.
 
         You can also download a **SNAPSHOT** version from Sonatype:
 
+        * |Sonatype_V7|_ for Elasticsearch V7.
         * |Sonatype_V6|_ for Elasticsearch V6.
         * |Sonatype_V5|_ for Elasticsearch V5.
 
@@ -327,4 +332,9 @@ Upgrade to 2.6
 - ``elasticsearch.nodes`` settings using ``host``, ``port`` or ``scheme`` have been replaced by
   an easier notation using ``url`` setting like ``http://127.0.0.1:9200``. You will need to modify
   your existing settings and use the new notation if warned.
+
+Upgrade to 2.7
+~~~~~~~~~~~~~~
+
+- FSCrawler comes now with an elasticsearch 7.x implementation.
 

@@ -46,7 +46,7 @@ public abstract class ElasticsearchClientUtil {
 
         Objects.requireNonNull(settings, "settings can not be null");
 
-        for (int i = 6; i >= 1; i--) {
+        for (int i = 7; i >= 1; i--) {
             logger.debug("Trying to find a client version {}", i);
 
             try {

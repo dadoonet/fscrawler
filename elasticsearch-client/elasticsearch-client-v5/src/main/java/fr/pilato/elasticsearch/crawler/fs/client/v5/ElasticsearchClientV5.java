@@ -371,20 +371,20 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
     }
 
     @Override
-    public void index(String index, String type, String id, String json, String pipeline) {
-        bulkProcessor.add(new IndexRequest(index, type, id).setPipeline(pipeline).source(json, XContentType.JSON));
+    public void index(String index, String id, String json, String pipeline) {
+        bulkProcessor.add(new IndexRequest(index, getDefaultTypeName(), id).setPipeline(pipeline).source(json, XContentType.JSON));
     }
 
     @Override
-    public void indexSingle(String index, String type, String id, String json) throws IOException {
-        IndexRequest request = new IndexRequest(index, type, id);
+    public void indexSingle(String index, String id, String json) throws IOException {
+        IndexRequest request = new IndexRequest(index, getDefaultTypeName(), id);
         request.source(json, XContentType.JSON);
         client.index(request);
     }
 
     @Override
-    public void delete(String index, String type, String id) {
-        bulkProcessor.add(new DeleteRequest(index, type, id));
+    public void delete(String index, String id) {
+        bulkProcessor.add(new DeleteRequest(index, getDefaultTypeName(), id));
     }
 
     @Override
@@ -585,8 +585,8 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
     }
 
     @Override
-    public ESSearchHit get(String index, String type, String id) throws IOException {
-        GetRequest request = new GetRequest(index, type, id);
+    public ESSearchHit get(String index, String id) throws IOException {
+        GetRequest request = new GetRequest(index, getDefaultTypeName(), id);
         GetResponse response = client.get(request);
         ESSearchHit hit = new ESSearchHit();
         hit.setIndex(response.getIndex());
@@ -597,8 +597,8 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
     }
 
     @Override
-    public boolean exists(String index, String type, String id) throws IOException {
-        return client.exists(new GetRequest(index, type, id));
+    public boolean exists(String index, String id) throws IOException {
+        return client.exists(new GetRequest(index, getDefaultTypeName(), id));
     }
 
     private void createIndex(Path jobMappingDir, String elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {

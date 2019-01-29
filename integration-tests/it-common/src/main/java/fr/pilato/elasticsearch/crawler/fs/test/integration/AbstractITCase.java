@@ -100,8 +100,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     static Path metadataDir = null;
 
-    static String typeName;
-
     FsCrawlerImpl crawler = null;
     Path currentTestResourceDir;
 
@@ -260,8 +258,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         // We make sure the cluster is running
         testClusterRunning();
-
-        typeName = esClient.getDefaultTypeName();
     }
 
     @BeforeClass

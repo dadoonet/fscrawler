@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import java.io.IOException;
+
 public abstract class ElasticsearchClientDummyBase implements ElasticsearchClient {
 
     @Override
@@ -82,17 +84,17 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public void index(String index, String type, String id, String json, String pipeline) {
+    public void index(String index, String id, String json, String pipeline) {
         // Testing purpose only
     }
 
     @Override
-    public void indexSingle(String index, String type, String id, String json) {
+    public void indexSingle(String index, String id, String json) throws IOException {
         // Testing purpose only
     }
 
     @Override
-    public void delete(String index, String type, String id) {
+    public void delete(String index, String id) {
         // Testing purpose only
     }
 
@@ -122,12 +124,12 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public ESSearchHit get(String index, String type, String id) {
+    public ESSearchHit get(String index, String id) throws IOException {
         return null;
     }
 
     @Override
-    public boolean exists(String index, String type, String id) {
+    public boolean exists(String index, String id) throws IOException {
         return false;
     }
 

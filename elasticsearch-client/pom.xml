@@ -15,6 +15,7 @@
 
     <modules>
         <module>elasticsearch-client-base</module>
+        <module>elasticsearch-client-v7</module>
         <module>elasticsearch-client-v6</module>
         <module>elasticsearch-client-v5</module>
     </modules>

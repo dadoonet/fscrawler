@@ -115,7 +115,6 @@ public class UploadApi extends RestApi {
             doc = this.getMergedJsonDoc(doc, tags);
             esClient.index(
                     settings.getElasticsearch().getIndex(),
-                    esClient.getDefaultTypeName(),
                     id,
                     DocParser.toJson(doc),
                     settings.getElasticsearch().getPipeline());
