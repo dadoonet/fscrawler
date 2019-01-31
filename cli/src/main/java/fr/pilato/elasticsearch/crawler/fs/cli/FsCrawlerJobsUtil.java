@@ -41,12 +41,12 @@ public class FsCrawlerJobsUtil {
                 // This is a directory. Let's see if we have the _settings.json file in it
                 if (Files.isDirectory(path)) {
                     String jobName = path.getFileName().toString();
-                    Path jobSettingsFile = path.resolve(FsSettingsFileHandler.FILENAME);
+                    Path jobSettingsFile = path.resolve(FsSettingsFileHandler.FILENAME_JSON);
                     if (Files.exists(jobSettingsFile)) {
                         files.add(jobName);
-                        logger.debug("Adding job [{}]", jobName, FsSettingsFileHandler.FILENAME);
+                        logger.debug("Adding job [{}]", jobName, FsSettingsFileHandler.FILENAME_JSON);
                     } else {
-                        logger.debug("Ignoring [{}] dir as no [{}] has been found", jobName, FsSettingsFileHandler.FILENAME);
+                        logger.debug("Ignoring [{}] dir as no [{}] has been found", jobName, FsSettingsFileHandler.FILENAME_JSON);
                     }
                 }
             }

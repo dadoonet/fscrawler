@@ -51,14 +51,11 @@ documents and run OCR on them. This can be a CPU intensive operation. If
 you don’t mean to run OCR on PDF but only on images, you can set
 ``fs.pdf_ocr`` to ``false``:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "fs" : {
-       "pdf_ocr" : false
-     }
-   }
+   name: "test"
+   fs:
+     pdf_ocr: false
 
 OCR settings
 ^^^^^^^^^^^^
@@ -83,54 +80,42 @@ OCR Language
 If you have installed a `Tesseract Language
 pack <https://wiki.apache.org/tika/TikaOCR>`__, you can use it when
 parsing your documents by setting ``fs.ocr.language`` property in your
-``~/.fscrawler/test/_settings.json`` file:
+``~/.fscrawler/test/_settings.yaml`` file:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "fs" : {
-       "url" : "/path/to/data/dir",
-       "ocr" : {
-         "language": "eng"
-       }
-     }
-   }
+   name: "test"
+   fs:
+     url: "/path/to/data/dir"
+     ocr:
+       language: "eng"
 
 .. note::
 
     You can define multiple languages by using ``+`` sign as a separator:
 
-    .. code:: json
+    .. code:: yaml
 
-       {
-         "name" : "test",
-         "fs" : {
-           "url" : "/path/to/data/dir",
-           "ocr" : {
-             "language": "eng+fas+fra"
-           }
-         }
-       }
+       name: "test"
+       fs:
+         url: "/path/to/data/dir"
+         ocr:
+           language: "eng+fas+fra"
 
 OCR Path
 ^^^^^^^^
 
 If your Tesseract application is not available in default system PATH,
 you can define the path to use by setting ``fs.ocr.path`` property in
-your ``~/.fscrawler/test/_settings.json`` file:
+your ``~/.fscrawler/test/_settings.yaml`` file:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "fs" : {
-       "url" : "/path/to/data/dir",
-       "ocr" : {
-         "path": "/path/to/tesseract/executable"
-       }
-     }
-   }
+   name: "test"
+   fs:
+     url: "/path/to/data/dir"
+     ocr:
+       path: "/path/to/tesseract/executable"
 
 When you set it, it’s highly recommended to set the `OCR Data Path`_.
 
@@ -140,20 +125,16 @@ OCR Data Path
 Set the path to the ‘tessdata’ folder, which contains language files and
 config files if Tesseract can not be automatically detected. You can
 define the path to use by setting ``fs.ocr.data_path`` property in your
-``~/.fscrawler/test/_settings.json`` file:
+``~/.fscrawler/test/_settings.yaml`` file:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "fs" : {
-       "url" : "/path/to/data/dir",
-       "ocr" : {
-         "path": "/path/to/tesseract/executable",
-         "data_path": "/path/to/tesseract/tessdata"
-       }
-     }
-   }
+   name: "test"
+   fs:
+     url: "/path/to/data/dir"
+     ocr:
+       path: "/path/to/tesseract/executable"
+       data_path: "/path/to/tesseract/tessdata"
 
 OCR Output Type
 ^^^^^^^^^^^^^^^
@@ -161,19 +142,15 @@ OCR Output Type
 .. versionadded:: 2.5
 
 Set the output type from ocr process. ``fs.ocr.output_type`` property can be defined to
-``txt`` or ``hocr`` in your ``~/.fscrawler/test/_settings.json`` file:
+``txt`` or ``hocr`` in your ``~/.fscrawler/test/_settings.yaml`` file:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "fs" : {
-       "url" : "/path/to/data/dir",
-       "ocr" : {
-         "output_type": "hocr"
-       }
-     }
-   }
+   name: "test"
+   fs:
+     url: "/path/to/data/dir"
+     ocr:
+       output_type: "hocr"
 
 .. note:: When omitted, ``txt`` value is used.
 

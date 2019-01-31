@@ -451,20 +451,6 @@ public class FsCrawlerUtil {
     }
 
     /**
-     * Move a Legacy resource to another destination if needed
-     * @param legacy Legacy file
-     * @param destinationFile New file name (directory must exist)
-     * @throws IOException In case moving file did not work
-     */
-    public static void moveLegacyResource(Path legacy, Path destinationFile) throws IOException {
-        if (Files.exists(legacy)) {
-            logger.debug("Found a legacy file at [{}]", legacy);
-            Files.move(legacy, destinationFile);
-            logger.info("Moved Legacy file from [{}] to [{}]", legacy, destinationFile);
-        }
-    }
-
-    /**
      * Copy a single resource file from the classpath or from a JAR.
      * @param target The target
      * @throws IOException If copying does not work

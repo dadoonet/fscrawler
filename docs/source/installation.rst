@@ -337,4 +337,5 @@ Upgrade to 2.7
 ~~~~~~~~~~~~~~
 
 - FSCrawler comes now with an elasticsearch 7.x implementation.
+- FSCrawler also supports YAML format for jobs (default).
 

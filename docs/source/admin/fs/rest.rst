@@ -272,14 +272,11 @@ REST service is running at http://127.0.0.1:8080/fscrawler by default.
 
 You can change it using ``rest`` settings:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "rest" : {
-       "url" : "http://192.168.0.1:8180/my_fscrawler"
-     }
-   }
+   name: "test"
+   rest:
+     url: "http://192.168.0.1:8180/my_fscrawler"
 
 It also means that if you are running more than one instance of FS
 crawler locally, you can (must) change the port as it will conflict.

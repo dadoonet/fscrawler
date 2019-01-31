@@ -4,13 +4,11 @@ The most simple crawler
 -----------------------
 
 You can define the most simple crawler job by writing a
-``~/.fscrawler/test/_settings.json`` file as follow:
+``~/.fscrawler/test/_settings.yaml`` file as follow:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test"
-   }
+   name: "test"
 
 This will scan every 15 minutes all documents available in ``/tmp/es``
 dir and will index them into ``test_doc`` index. It will connect to an

@@ -3,18 +3,15 @@ Crawler options
 
 By default, FSCrawler will read your file from ``/tmp/es`` every 15
 minutes. You can change those settings by modifying
-``~/.fscrawler/{job_name}/_settings.json`` file where ``{job_name}`` is
+``~/.fscrawler/{job_name}/_settings.yaml`` file where ``{job_name}`` is
 the name of the job you just created.
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "job_name",
-     "fs" : {
-       "url" : "/path/to/data/dir",
-       "update_rate" : "15m"
-     }
-   }
+   name: "job_name"
+   fs:
+     url: "/path/to/data/dir"
+     update_rate: "15m"
 
 You can change also ``update_rate`` to watch more or less frequently for
 changes.

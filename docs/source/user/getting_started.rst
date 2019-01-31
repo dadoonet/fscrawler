@@ -20,7 +20,7 @@ Start FSCrawler with:
    bin/fscrawler job_name
 
 FSCrawler will read a local file (default to
-``~/.fscrawler/{job_name}/_settings.json``). If the file does not exist,
+``~/.fscrawler/{job_name}/_settings.yaml``). If the file does not exist,
 FSCrawler will propose to create your first job.
 
 .. code:: sh
@@ -29,7 +29,7 @@ FSCrawler will propose to create your first job.
    18:28:58,174 WARN  [f.p.e.c.f.FsCrawler] job [job_name] does not exist
    18:28:58,177 INFO  [f.p.e.c.f.FsCrawler] Do you want to create it (Y/N)?
    y
-   18:29:05,711 INFO  [f.p.e.c.f.FsCrawler] Settings have been created in [~/.fscrawler/job_name/_settings.json]. Please review and edit before relaunch
+   18:29:05,711 INFO  [f.p.e.c.f.FsCrawler] Settings have been created in [~/.fscrawler/job_name/_settings.yaml]. Please review and edit before relaunch
 
 Create a directory named ``/tmp/es`` or ``c:\tmp\es``, add some files
 you want to index in it and start again:
