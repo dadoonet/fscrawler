@@ -30,7 +30,7 @@ import java.nio.file.Path;
 public class FsSettingsFileHandler extends MetaFileHandler {
 
     public static final String FILENAME_JSON = "_settings.json";
-    public static final String FILENAME_YML = "_settings.yml";
+    public static final String FILENAME_YML = "_settings.yaml";
 
     public FsSettingsFileHandler(Path root) {
         super(root);
@@ -63,7 +63,7 @@ public class FsSettingsFileHandler extends MetaFileHandler {
     }
 
     /**
-     * We read settings in ~/.fscrawler/{job_name}/_settings.yml
+     * We read settings in ~/.fscrawler/{job_name}/_settings.yaml
      * @param jobname is the job_name
      * @return Settings settings
      * @throws IOException in case of error while reading
@@ -73,7 +73,7 @@ public class FsSettingsFileHandler extends MetaFileHandler {
     }
 
     /**
-     * We write settings to ~/.fscrawler/{job_name}/_settings.yml
+     * We write settings to ~/.fscrawler/{job_name}/_settings.yaml
      * @param settings Settings to write (settings.getName() contains the job name)
      * @throws IOException in case of error while reading
      */

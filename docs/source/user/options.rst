@@ -3,7 +3,7 @@ Crawler options
 
 By default, FSCrawler will read your file from ``/tmp/es`` every 15
 minutes. You can change those settings by modifying
-``~/.fscrawler/{job_name}/_settings.yml`` file where ``{job_name}`` is
+``~/.fscrawler/{job_name}/_settings.yaml`` file where ``{job_name}`` is
 the name of the job you just created.
 
 .. code:: yaml

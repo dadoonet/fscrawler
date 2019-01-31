@@ -4,7 +4,7 @@ The most simple crawler
 -----------------------
 
 You can define the most simple crawler job by writing a
-``~/.fscrawler/test/_settings.yml`` file as follow:
+``~/.fscrawler/test/_settings.yaml`` file as follow:
 
 .. code:: yaml
 

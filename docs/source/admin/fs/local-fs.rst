@@ -58,7 +58,7 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 Root directory
 ^^^^^^^^^^^^^^
 
-Define ``fs.url`` property in your ``~/.fscrawler/test/_settings.yml``
+Define ``fs.url`` property in your ``~/.fscrawler/test/_settings.yaml``
 file:
 
 .. code:: yaml
@@ -106,7 +106,7 @@ Let’s say you want to index only docs like ``*.doc`` and ``*.pdf`` but
 ``resume*``. So ``resume_david.pdf`` won’t be indexed.
 
 Define ``fs.includes`` and ``fs.excludes`` properties in your
-``~/.fscrawler/test/_settings.yml`` file:
+``~/.fscrawler/test/_settings.yaml`` file:
 
 .. code:: yaml
 
@@ -145,7 +145,7 @@ Let's take the following example with the ``root`` dir as ``/tmp``:
         └── subfolderC
 
 If you define the following ``fs.excludes`` property in your
-``~/.fscrawler/test/_settings.yml`` file:
+``~/.fscrawler/test/_settings.yaml`` file:
 
 .. code:: yaml
 
@@ -183,7 +183,7 @@ regular expression that match the extracted content.
 Documents which are not matching will be simply ignored and not indexed.
 
 If you define the following ``fs.filters`` property in your
-``~/.fscrawler/test/_settings.yml`` file:
+``~/.fscrawler/test/_settings.yaml`` file:
 
 .. code:: yaml
 
@@ -280,7 +280,7 @@ Dealing with multiple types and multiple dirs
 
 If you have more than one type, create as many crawlers as types:
 
-``~/.fscrawler/test_type1/_settings.yml``:
+``~/.fscrawler/test_type1/_settings.yaml``:
 
 .. code:: yaml
 
@@ -292,7 +292,7 @@ If you have more than one type, create as many crawlers as types:
      index: "mydocs1"
      index_folder: "myfolders1"
 
-``~/.fscrawler/test_type2/_settings.yml``:
+``~/.fscrawler/test_type2/_settings.yaml``:
 
 .. code:: yaml
 
@@ -304,7 +304,7 @@ If you have more than one type, create as many crawlers as types:
      index: "mydocs2"
      index_folder: "myfolders2"
 
-``~/.fscrawler/test_type3/_settings.yml``:
+``~/.fscrawler/test_type3/_settings.yaml``:
 
 .. code:: yaml
 
@@ -322,7 +322,7 @@ Dealing with multiple types within the same dir
 You can also index many types from one single dir using two crawlers
 scanning the same dir and by setting ``includes`` parameter:
 
-``~/.fscrawler/test_type1.yml``:
+``~/.fscrawler/test_type1.yaml``:
 
 .. code:: yaml
 
@@ -336,7 +336,7 @@ scanning the same dir and by setting ``includes`` parameter:
      index: "mydocs1"
      index_folder: "myfolders1"
 
-``~/.fscrawler/test_type2.yml``:
+``~/.fscrawler/test_type2.yaml``:
 
 .. code:: yaml
 
@@ -350,7 +350,7 @@ scanning the same dir and by setting ``includes`` parameter:
      index: "mydocs2"
      index_folder: "myfolders2"
 
-``~/.fscrawler/test_type3.yml``:
+``~/.fscrawler/test_type3.yaml``:
 
 .. code:: yaml
 

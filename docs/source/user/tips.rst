@@ -80,7 +80,7 @@ OCR Language
 If you have installed a `Tesseract Language
 pack <https://wiki.apache.org/tika/TikaOCR>`__, you can use it when
 parsing your documents by setting ``fs.ocr.language`` property in your
-``~/.fscrawler/test/_settings.yml`` file:
+``~/.fscrawler/test/_settings.yaml`` file:
 
 .. code:: yaml
 
@@ -107,7 +107,7 @@ OCR Path
 
 If your Tesseract application is not available in default system PATH,
 you can define the path to use by setting ``fs.ocr.path`` property in
-your ``~/.fscrawler/test/_settings.yml`` file:
+your ``~/.fscrawler/test/_settings.yaml`` file:
 
 .. code:: yaml
 
@@ -125,7 +125,7 @@ OCR Data Path
 Set the path to the ‘tessdata’ folder, which contains language files and
 config files if Tesseract can not be automatically detected. You can
 define the path to use by setting ``fs.ocr.data_path`` property in your
-``~/.fscrawler/test/_settings.yml`` file:
+``~/.fscrawler/test/_settings.yaml`` file:
 
 .. code:: yaml
 
@@ -142,7 +142,7 @@ OCR Output Type
 .. versionadded:: 2.5
 
 Set the output type from ocr process. ``fs.ocr.output_type`` property can be defined to
-``txt`` or ``hocr`` in your ``~/.fscrawler/test/_settings.yml`` file:
+``txt`` or ``hocr`` in your ``~/.fscrawler/test/_settings.yaml`` file:
 
 .. code:: yaml
 
