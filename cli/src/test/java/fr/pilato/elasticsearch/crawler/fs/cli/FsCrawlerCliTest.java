@@ -43,15 +43,10 @@ import static org.hamcrest.Matchers.is;
  */
 public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
 
-    private static final String CLASSPATH_RESOURCES_ROOT = "/legacy/2_0/";
-    private static final String[] LEGACY_RESOURCES = {
-            "david.json", "david_status.json"
-    };
-
     private static Path metadataDir;
 
     @BeforeClass
-    public static void createFsCrawlerJobDir() throws IOException, URISyntaxException {
+    public static void createFsCrawlerJobDir() throws IOException {
         // We also need to create default mapping files
         metadataDir = rootTmpDir.resolve(".fscrawler");
         if (Files.notExists(metadataDir)) {
@@ -59,18 +54,24 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         }
         copyDefaultResources(metadataDir);
         staticLogger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
-
-        for (String filename : LEGACY_RESOURCES) {
-            AbstractFSCrawlerTestCase.staticLogger.debug("Copying [{}]...", filename);
-            Path target = metadataDir.resolve(filename);
-            copyResourceFile(CLASSPATH_RESOURCES_ROOT + filename, target);
-        }
     }
 
     @AfterClass
     public static void printMetadataDirContent() throws IOException {
-        staticLogger.debug("ls -l {}", metadataDir);
-        Files.list(metadataDir).forEach(path -> staticLogger.debug("{}", path));
+        printLs(metadataDir);
+    }
+
+    private static void printLs(Path dir) throws IOException {
+        staticLogger.debug("ls -l {}", dir);
+        Files.list(dir).forEach(path -> {
+            if (Files.isDirectory(path)) {
+                try {
+                    printLs(path);
+                } catch (IOException ignored) { }
+            } else {
+                staticLogger.debug("{}", path);
+            }
+        });
     }
 
     @Test
@@ -95,18 +96,5 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         FsCrawlerCli.main(args);
 
         assertThat(Files.exists(jobDir.resolve(FsJobFileHandler.FILENAME)), is(false));
-    }
-
-    @Test
-    public void testFrom20Version() {
-        FsCrawlerCli.moveLegacyResources(metadataDir);
-
-        // We should have now our files in david dir
-        Path david = metadataDir.resolve("david");
-        assertThat(Files.isDirectory(david), is(true));
-        Path jobSettings = david.resolve(FsSettingsFileHandler.FILENAME);
-        assertThat(Files.exists(jobSettings), is(true));
-        Path jobStatus = david.resolve(FsJobFileHandler.FILENAME);
-        assertThat(Files.exists(jobStatus), is(true));
     }
 }

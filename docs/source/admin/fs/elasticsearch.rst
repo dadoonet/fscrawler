@@ -37,14 +37,11 @@ By default, FSCrawler will index your data in an index which name is
 the same as the crawler name (``name`` property) plus ``_doc`` suffix,
 like ``test_doc``. You can change it by setting ``index`` field:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "elasticsearch" : {
-       "index" : "docs"
-     }
-   }
+   name: "test"
+   elasticsearch:
+     index: "docs"
 
 Index settings for folders
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,14 +50,11 @@ FSCrawler will also index folders in an index which name is the same as
 the crawler name (``name`` property) plus ``_folder`` suffix, like
 ``test_folder``. You can change it by setting ``index_folder`` field:
 
-.. code:: json
+.. code:: yaml
 
-   {
-    "name" : "test",
-    "elasticsearch" : {
-      "index_folder" : "folders"
-    }
-   }
+  name: "test"
+  elasticsearch:
+    index_folder: "folders"
 
 .. _mappings:
 
@@ -398,16 +392,13 @@ FSCrawler is using bulks to send data to elasticsearch. By default the
 bulk is executed every 100 operations or every 5 seconds or every 10 megabytes. You can change
 default settings using ``bulk_size``, ``byte_size`` and ``flush_interval``:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "elasticsearch" : {
-       "bulk_size" : 1000,
-       "byte_size" : "500kb",
-       "flush_interval" : "2s"
-     }
-   }
+  name: "test"
+  elasticsearch:
+    bulk_size: 1000
+    byte_size: "500kb"
+    flush_interval: "2s"
 
 .. tip::
 
@@ -455,14 +446,11 @@ For example, if you have the following pipeline:
 
 In FSCrawler settings, set the ``elasticsearch.pipeline`` option:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "elasticsearch" : {
-       "pipeline" : "fscrawler"
-     }
-   }
+   name: "test"
+   elasticsearch:
+     pipeline: "fscrawler"
 
 .. note::
     Folder objects are not sent through the pipeline as they are more
@@ -478,30 +466,22 @@ which is the default when running a local node on your machine.
 Of course, in production, you would probably change this and connect to
 a production cluster:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "elasticsearch" : {
-       "nodes" : [
-         { "url" : "http://mynode1.mycompany.com:9200" }
-       ]
-     }
-   }
+   name: "test"
+   elasticsearch:
+     nodes:
+     - url: "http://mynode1.mycompany.com:9200"
 
 If you are using `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
 you can just use the ``Cloud ID`` which is available in the Cloud Console and paste it:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "elasticsearch" : {
-       "nodes" : [
-         { "cloud_id" : "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==" }
-       ]
-     }
-   }
+   name: "test"
+   elasticsearch:
+     nodes:
+     - cloud_id: "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw=="
 
 This ID will be used to automatically generate the right host, port and scheme.
 
@@ -512,32 +492,24 @@ This ID will be used to automatically generate the right host, port and scheme.
 
 You can define multiple nodes:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "elasticsearch" : {
-       "nodes" : [
-         { "url" : "http://mynode1.mycompany.com:9200" },
-         { "url" : "http://mynode2.mycompany.com:9200" },
-         { "url" : "http://mynode3.mycompany.com:9200" }
-       ]
-     }
-   }
+   name: "test"
+   elasticsearch:
+     nodes:
+     - url: "http://mynode1.mycompany.com:9200"
+     - url: "http://mynode2.mycompany.com:9200"
+     - url: "http://mynode3.mycompany.com:9200"
 
 .. note::
     .. versionadded:: 2.2 you can use HTTPS instead of default HTTP.
 
-    .. code:: json
+    .. code:: yaml
 
-       {
-         "name" : "test",
-         "elasticsearch" : {
-           "nodes" : [
-             { "url" : "https://CLUSTERID.eu-west-1.aws.found.io:9243" }
-           ]
-         }
-       }
+       name: "test"
+       elasticsearch:
+         nodes:
+         - url: "https://CLUSTERID.eu-west-1.aws.found.io:9243"
 
     For more information, read :ref:`ssl`.
 
@@ -552,15 +524,12 @@ If you secured your elasticsearch cluster with
 `X-Pack <https://www.elastic.co/downloads/x-pack>`__, you can provide
 ``username`` and ``password`` to FSCrawler:
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "elasticsearch" : {
-       "username" : "elastic",
-       "password" : "changeme"
-     }
-   }
+   name: "test"
+   elasticsearch:
+     username: "elastic"
+     password: "changeme"
 
 .. warning::
     For the current version, the elasticsearch password is stored in
@@ -599,16 +568,12 @@ It will prompt you for the password. Enter the certificate password like ``chang
 
 3. Make changes to FSCrawler ``_settings.json`` file to connect to your Elasticsearch server over HTTPS:
 
-.. code:: json
+.. code:: yaml
 
-    {
-      "name" : "test",
-      "elasticsearch" : {
-        "nodes" : [
-          { "url" : "https://localhost:9243" }
-        ]
-      }
-    }
+    name: "test"
+    elasticsearch:
+      nodes:
+      - url: "https://localhost:9243"
 
 .. tip::
 

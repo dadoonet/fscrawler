@@ -37,21 +37,17 @@ Let’s say you want to index from a remote server using SSH:
 -  Protocol: ``ssh`` (default to ``local``)
 -  Port: ``22`` (default to ``22``)
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "fs" : {
-       "url" : "/path/to/data/dir/on/server"
-     },
-     "server" : {
-       "hostname" : "mynode.mydomain.com",
-       "port" : 22,
-       "username" : "username",
-       "password" : "password",
-       "protocol" : "ssh"
-     }
-   }
+   name: "test"
+   fs:
+     url: "/path/to/data/dir/on/server"
+   server:
+     hostname: "mynode.mydomain.com"
+     port: 22
+     username: "username"
+     password: "password"
+     protocol: "ssh"
 
 .. _ssh_pem:
 
@@ -67,19 +63,15 @@ Let’s say you want to index from a remote server using SSH:
 -  Protocol: ``ssh`` (default to ``local``)
 -  Port: ``22`` (default to ``22``)
 
-.. code:: json
+.. code:: yaml
 
-   {
-     "name" : "test",
-     "fs" : {
-       "url" : "/path/to/data/dir/on/server"
-     },
-     "server" : {
-       "hostname" : "mynode.mydomain.com",
-       "port" : 22,
-       "username" : "username",
-       "protocol" : "ssh",
-       "pem_path": "/path/to/private_key.pem"
-     }
-   }
-
+   name: "test"
+   fs:
+     url: "/path/to/data/dir/on/server"
+   server:
+     hostname: "mynode.mydomain.com"
+     port: 22
+     username: "username"
+     password: "password"
+     protocol: "ssh"
+     pem_path: "/path/to/private_key.pem"

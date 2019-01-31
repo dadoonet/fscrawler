@@ -25,7 +25,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.apache.logging.log4j.core.config.yaml.YamlConfiguration;
 
 /**
  * Helper to parse from and to Json
@@ -34,6 +37,7 @@ public class MetaParser {
 
     public static final ObjectMapper prettyMapper;
     public static final ObjectMapper mapper;
+    public static final ObjectMapper ymlMapper;
 
     static {
         SimpleModule fscrawler = new SimpleModule("FsCrawler", new Version(2, 0, 0, null,
@@ -55,7 +59,6 @@ public class MetaParser {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
-
         prettyMapper = new ObjectMapper();
         prettyMapper.registerModule(new JavaTimeModule());
         prettyMapper.registerModule(fscrawler);
@@ -66,6 +69,18 @@ public class MetaParser {
         prettyMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         prettyMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         prettyMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+
+        YAMLFactory yamlFactory = new YAMLFactory();
+        ymlMapper = new ObjectMapper(yamlFactory);
+        ymlMapper.registerModule(new JavaTimeModule());
+        ymlMapper.registerModule(fscrawler);
+        ymlMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        ymlMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        ymlMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        ymlMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        ymlMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        ymlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ymlMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
     }
 
 }

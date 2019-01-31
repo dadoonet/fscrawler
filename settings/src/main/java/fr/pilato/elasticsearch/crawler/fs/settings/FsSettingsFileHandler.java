@@ -29,12 +29,27 @@ import java.nio.file.Path;
  */
 public class FsSettingsFileHandler extends MetaFileHandler {
 
-    @Deprecated
-    public static final String LEGACY_EXTENSION = ".json";
-    public static final String FILENAME = "_settings.json";
+    public static final String FILENAME_JSON = "_settings.json";
+    public static final String FILENAME_YML = "_settings.yml";
 
     public FsSettingsFileHandler(Path root) {
         super(root);
+    }
+
+    /**
+     * We read settings in ~/.fscrawler/{job_name}/_settings.[json|yml]
+     * @param jobname is the job_name
+     * @return Settings settings
+     * @throws IOException in case of error while reading
+     */
+    public FsSettings read(String jobname) throws IOException {
+        try {
+            // We try the yml first
+            return readAsYaml(jobname);
+        } catch (IOException e) {
+            // Then we try json
+            return readAsJson(jobname);
+        }
     }
 
     /**
@@ -43,16 +58,26 @@ public class FsSettingsFileHandler extends MetaFileHandler {
      * @return Settings settings
      * @throws IOException in case of error while reading
      */
-    public FsSettings read(String jobname) throws IOException {
-        return FsSettingsParser.fromJson(readFile(jobname, FILENAME));
+    public FsSettings readAsJson(String jobname) throws IOException {
+        return FsSettingsParser.fromJson(readFile(jobname, FILENAME_JSON));
     }
 
     /**
-     * We write settings to ~/.fscrawler/{job_name}/_settings.json
+     * We read settings in ~/.fscrawler/{job_name}/_settings.yml
+     * @param jobname is the job_name
+     * @return Settings settings
+     * @throws IOException in case of error while reading
+     */
+    public FsSettings readAsYaml(String jobname) throws IOException {
+        return FsSettingsParser.fromYaml(readFile(jobname, FILENAME_YML));
+    }
+
+    /**
+     * We write settings to ~/.fscrawler/{job_name}/_settings.yml
      * @param settings Settings to write (settings.getName() contains the job name)
      * @throws IOException in case of error while reading
      */
     public void write(FsSettings settings) throws IOException {
-        writeFile(settings.getName(), FILENAME, FsSettingsParser.toJson(settings));
+        writeFile(settings.getName(), FILENAME_YML, FsSettingsParser.toYaml(settings));
     }
 }

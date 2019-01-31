@@ -408,7 +408,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
 
     private static RestClientBuilder buildRestClient(Elasticsearch settings) {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
-        settings.getNodes().forEach(node -> hosts.add(HttpHost.create(node.getDecodedUrl())));
+        settings.getNodes().forEach(node -> hosts.add(HttpHost.create(node.decodedUrl())));
 
         RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
 

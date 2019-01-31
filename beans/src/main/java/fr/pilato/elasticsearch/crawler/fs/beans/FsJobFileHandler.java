@@ -29,8 +29,6 @@ import java.nio.file.Path;
  */
 public class FsJobFileHandler extends MetaFileHandler {
 
-    @Deprecated
-    public static final String LEGACY_EXTENSION = "_status.json";
     public static final String FILENAME = "_status.json";
 
     public FsJobFileHandler(Path root) {

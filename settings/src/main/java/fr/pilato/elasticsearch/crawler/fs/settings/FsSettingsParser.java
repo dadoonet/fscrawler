@@ -24,14 +24,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;
+import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.ymlMapper;
 
 public class FsSettingsParser {
 
-    public static String toJson(FsSettings settings) throws JsonProcessingException {
-        return prettyMapper.writeValueAsString(settings);
+    public static String toYaml(FsSettings settings) throws JsonProcessingException {
+        return ymlMapper.writeValueAsString(settings);
     }
 
     public static FsSettings fromJson(String json) throws IOException {
         return prettyMapper.readValue(json, FsSettings.class);
+    }
+
+    public static FsSettings fromYaml(String yaml) throws IOException {
+        return ymlMapper.readValue(yaml, FsSettings.class);
     }
 }

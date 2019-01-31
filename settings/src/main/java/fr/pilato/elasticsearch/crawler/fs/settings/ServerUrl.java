@@ -99,7 +99,7 @@ public class ServerUrl {
      * if it was provided.
      * @return a url (decoded from a cloud id or not)
      */
-    public String getDecodedUrl() {
+    public String decodedUrl() {
         if (cloudId != null) {
             return decodeCloudId(cloudId);
         }
