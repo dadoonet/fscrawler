@@ -232,7 +232,7 @@ public class FsCrawlerCli {
                         .build();
                 fsSettingsFileHandler.write(fsSettings);
 
-                Path config = configDir.resolve(jobName).resolve(FsSettingsFileHandler.FILENAME_JSON);
+                Path config = configDir.resolve(jobName).resolve(FsSettingsFileHandler.SETTINGS_YAML);
                 logger.info("Settings have been created in [{}]. Please review and edit before relaunch", config);
             }
 

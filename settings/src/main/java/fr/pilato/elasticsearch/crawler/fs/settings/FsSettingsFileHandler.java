@@ -30,7 +30,7 @@ import java.nio.file.Path;
 public class FsSettingsFileHandler extends MetaFileHandler {
 
     public static final String FILENAME_JSON = "_settings.json";
-    public static final String FILENAME_YML = "_settings.yaml";
+    public static final String SETTINGS_YAML = "_settings.yaml";
 
     public FsSettingsFileHandler(Path root) {
         super(root);
@@ -69,7 +69,7 @@ public class FsSettingsFileHandler extends MetaFileHandler {
      * @throws IOException in case of error while reading
      */
     public FsSettings readAsYaml(String jobname) throws IOException {
-        return FsSettingsParser.fromYaml(readFile(jobname, FILENAME_YML));
+        return FsSettingsParser.fromYaml(readFile(jobname, SETTINGS_YAML));
     }
 
     /**
@@ -78,6 +78,6 @@ public class FsSettingsFileHandler extends MetaFileHandler {
      * @throws IOException in case of error while reading
      */
     public void write(FsSettings settings) throws IOException {
-        writeFile(settings.getName(), FILENAME_YML, FsSettingsParser.toYaml(settings));
+        writeFile(settings.getName(), SETTINGS_YAML, FsSettingsParser.toYaml(settings));
     }
 }
