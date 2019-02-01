@@ -697,8 +697,17 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), not(isEmptyOrNullString()));
     }
 
+    /**
+     * Test protected document
+     */
+    @Test
+    public void testProtectedDocument() throws IOException {
+        FsSettings fsSettings = FsSettings.builder(getCurrentTestName()).build();
+        Doc doc = extractFromFile("test-protected.docx", fsSettings);
+        assertThat(doc.getFile().getContentType(), is("application/x-tika-ooxml-protected"));
+    }
+
     private Doc extractFromFileExtension(String extension) throws IOException {
-        logger.info("Test extraction of [{}] file", extension);
         return extractFromFile("test." + extension);
     }
 
@@ -707,6 +716,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     private Doc extractFromFile(String filename, FsSettings fsSettings) throws IOException {
+        logger.info("Test extraction of [{}]", filename);
         InputStream data = getBinaryContent(filename);
         Doc doc = new Doc();
         MessageDigest messageDigest = null;

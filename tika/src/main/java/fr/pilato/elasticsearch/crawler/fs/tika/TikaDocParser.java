@@ -93,6 +93,16 @@ public class TikaDocParser {
                 parsedContent = extractText(fsSettings, indexedChars, inputStream, metadata);
                 logger.trace("End of Tika extraction");
             } catch (Throwable e) {
+                // Build a message from embedded errors
+                Throwable current = e;
+                StringBuilder sb = new StringBuilder();
+                while (current != null) {
+                    sb.append(" -> ");
+                    sb.append(current.getMessage());
+                    current = current.getCause();
+                }
+
+                logger.warn("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "] {}", sb.toString());
                 logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "]", e);
             }
 
