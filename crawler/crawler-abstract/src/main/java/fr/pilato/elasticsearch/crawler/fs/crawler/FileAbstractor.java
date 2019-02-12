@@ -20,8 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.crawler;
 
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
 import java.util.Collection;
