@@ -22,6 +22,8 @@ package fr.pilato.elasticsearch.crawler.fs.crawler.fs;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,6 +41,8 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getModi
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
 
 public class FileAbstractorFile extends FileAbstractor<File> {
+    private final Logger logger = LogManager.getLogger(FileAbstractorFile.class);
+
     public FileAbstractorFile(FsSettings fsSettings) {
         super(fsSettings);
     }

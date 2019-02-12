@@ -336,6 +336,9 @@ public class FsCrawlerUtil {
     }
 
     public static Date localDateTimeToDate(LocalDateTime ldt) {
+        if (ldt == null) {
+            return null;
+        }
         return Date.from(ldt.atZone(TimeZone.getDefault().toZoneId()).toInstant());
     }
 
