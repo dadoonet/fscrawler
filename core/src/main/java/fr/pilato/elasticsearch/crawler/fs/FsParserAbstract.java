@@ -247,6 +247,7 @@ public abstract class FsParserAbstract extends FsParser {
 
             if (!ignoreFolder) {
                 for (FileAbstractModel child : children) {
+                    logger.trace("FileAbstractModel = {}", child);
                     String filename = child.getName();
 
                     String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, filename).toString());

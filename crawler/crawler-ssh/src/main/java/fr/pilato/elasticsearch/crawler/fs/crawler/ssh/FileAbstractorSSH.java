@@ -28,6 +28,8 @@ import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
 import java.time.Instant;
@@ -39,6 +41,7 @@ import java.util.Vector;
 import java.util.stream.Collectors;
 
 public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
+    private final Logger logger = LogManager.getLogger(FileAbstractorSSH.class);
 
     private ChannelSftp sftp;
 
@@ -50,7 +53,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
     public FileAbstractModel toFileAbstractModel(String path, ChannelSftp.LsEntry file) {
         return new FileAbstractModel(
                 file.getFilename(),
-                file.getAttrs().isDir(),
+                !file.getAttrs().isDir(),
                 // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()*1000L), ZoneId.systemDefault()),
                 // We don't have the creation date
