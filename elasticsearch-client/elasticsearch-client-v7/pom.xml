@@ -16,7 +16,7 @@
         <repository>
             <id>elastic-lucene-snapshots</id>
             <name>Elastic Lucene Snapshots</name>
-            <url>http://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/774e9aefbc</url>
+            <url>http://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/83f9835</url>
             <releases><enabled>true</enabled></releases>
             <snapshots><enabled>false</enabled></snapshots>
         </repository>
