@@ -220,8 +220,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
             logger.trace("create index response: {}", asMap(response));
         } catch (ResponseException e) {
             if (e.getResponse().getStatusLine().getStatusCode() == 400 &&
-                    (e.getMessage().contains("index_already_exists_exception") || // ES 5.x
-                            e.getMessage().contains("IndexAlreadyExistsException") )) { // ES 1.x and 2.x
+                    (e.getMessage().contains("index_already_exists_exception"))) {
                 if (!ignoreErrors) {
                     throw new RuntimeException("index already exists");
                 }
@@ -230,6 +229,7 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
             }
             throw e;
         }
+        waitForHealthyIndex(index);
     }
 
     /**
