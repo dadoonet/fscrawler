@@ -239,7 +239,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
                 throw e;
             }
         }
-        client.cluster().health(new ClusterHealthRequest(index).waitForYellowStatus(), RequestOptions.DEFAULT);
+        waitForHealthyIndex(index);
     }
 
     /**
