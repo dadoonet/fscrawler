@@ -235,7 +235,11 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
             if (e.getMessage().contains("resource_already_exists_exception") && !ignoreErrors) {
                 throw new RuntimeException("index already exists");
             }
+            if (!e.getMessage().contains("resource_already_exists_exception")) {
+                throw e;
+            }
         }
+        client.cluster().health(new ClusterHealthRequest(index).waitForYellowStatus(), RequestOptions.DEFAULT);
     }
 
     /**
