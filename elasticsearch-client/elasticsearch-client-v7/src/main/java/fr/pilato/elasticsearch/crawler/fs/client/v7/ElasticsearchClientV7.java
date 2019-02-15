@@ -49,9 +49,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -70,6 +68,8 @@ import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -246,9 +246,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
      */
     public boolean isExistingIndex(String index) throws IOException {
         logger.debug("is existing index [{}]", index);
-        GetIndexRequest gir = new GetIndexRequest();
-        gir.indices(index);
-        return client.indices().exists(gir, RequestOptions.DEFAULT);
+        return client.indices().exists(new GetIndexRequest(index), RequestOptions.DEFAULT);
     }
 
     /**
@@ -363,14 +361,12 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
 
     @Override
     public void index(String index, String id, String json, String pipeline) {
-        bulkProcessor.add(new IndexRequest(index, getDefaultTypeName(), id).setPipeline(pipeline).source(json, XContentType.JSON));
+        bulkProcessor.add(new IndexRequest(index).id(id).setPipeline(pipeline).source(json, XContentType.JSON));
     }
 
     @Override
     public void indexSingle(String index, String id, String json) throws IOException {
-        IndexRequest request = new IndexRequest(index, getDefaultTypeName(), id);
-        request.source(json, XContentType.JSON);
-        client.index(request, RequestOptions.DEFAULT);
+        client.index(new IndexRequest(index).id(id).source(json, XContentType.JSON), RequestOptions.DEFAULT);
     }
 
     @Override
