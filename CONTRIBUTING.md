@@ -30,13 +30,12 @@ Unless a node is already running at this address, integration tests use by defau
 which starts a local node running at [127.0.0.1:9200](http://127.0.0.1:9200).
 The elasticsearch version used is defined in the `pom.xml` file.
 
-By default, it will run integration tests against elasticsearch 6.x series cluster running under
-an elastic basic license and agains 5.x series with X-Pack plugin.
+By default, it will run integration tests against elasticsearch 7.x, 6.x and 5.x series.
 
-You can also run test against the OSS version by using the `oss` maven profile:
+You can also run test using security feature by using the `security` maven profile:
 
 ```sh
-mvn install -Poss
+mvn install -Psecurity
 ```
 
 ### Running tests against an external cluster

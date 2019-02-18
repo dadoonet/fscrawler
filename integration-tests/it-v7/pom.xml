@@ -162,5 +162,45 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>security</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <alias>elasticsearch-it</alias>
+                                    <name>dadoonet/docker-elasticsearch:${project.version}</name>
+                                    <build>
+                                        <from>${integ.elasticsearch.image}:${integ.elasticsearch.version}</from>
+                                        <env>
+                                            <discovery.type>single-node</discovery.type>
+                                            <xpack.license.self_generated.type>trial</xpack.license.self_generated.type>
+                                            <xpack.security.enabled>true</xpack.security.enabled>
+                                            <ELASTIC_PASSWORD>${integ.security.password}</ELASTIC_PASSWORD>
+                                        </env>
+                                    </build>
+                                    <run>
+                                        <ports>
+                                            <port>integ.elasticsearch.port:9200</port>
+                                        </ports>
+                                        <wait>
+                                            <http>
+                                                <url>http://localhost:${integ.elasticsearch.port}/</url>
+                                                <status>200..499</status>
+                                            </http>
+                                            <time>60000</time>
+                                        </wait>
+                                    </run>
+                                </image>
+                            </images>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>

@@ -762,12 +762,6 @@
             </activation>
         </profile>
         <profile>
-            <id>oss</id>
-            <properties>
-                <integ.elasticsearch.image>docker.elastic.co/elasticsearch/elasticsearch-oss</integ.elasticsearch.image>
-            </properties>
-        </profile>
-        <profile>
             <id>check_cve_anonymous</id>
             <activation>
                 <property>
