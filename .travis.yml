@@ -18,7 +18,7 @@ before_script:
   - sudo sysctl -w vm.max_map_count=262144
 script:
   - mvn --batch-mode clean verify
-  - mvn --batch-mode clean verify -Poss
+  - mvn --batch-mode clean verify -Psecurity
 after_success:
   - ./travis.sh
 cache:

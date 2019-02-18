@@ -95,6 +95,24 @@ the tests start.
             -Dtests.cluster.pass=changeme \
             -Dtests.cluster.cloud_id=fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==
 
+Using security feature
+""""""""""""""""""""""
+
+Integration tests are run by default against a standard Elasticsearch cluster, which means
+with no security feature activated.
+
+.. versionadded:: 2.7
+
+You can run all the integration tests against a secured cluster by using the ``security`` profile::
+
+    mvn verify -Psecurity
+
+Note that secured tests are using by default ``changeme`` as the password.
+You can change this by using ``tests.cluster.pass`` option::
+
+    mvn verify -Psecurity -Dtests.cluster.pass=mystrongpassword
+
+
 Tests options
 """""""""""""
 
