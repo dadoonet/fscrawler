@@ -78,20 +78,26 @@ public class TikaInstance {
             PDFParser pdfParser = new PDFParser();
             DefaultParser defaultParser;
 
-            if (fs.isPdfOcr()) {
-                logger.debug("OCR is activated for PDF documents");
-                if (ExternalParser.check("tesseract")) {
-                    pdfParser.setOcrStrategy("ocr_and_text");
-                } else {
-                    logger.debug("But Tesseract is not installed so we won't run OCR.");
-                }
-                defaultParser = new DefaultParser();
-            } else {
+            if (!fs.getOcr().isEnabled()) {
                 logger.debug("OCR is disabled. Even though it's detected, it must be disabled explicitly");
                 defaultParser = new DefaultParser(
                         MediaTypeRegistry.getDefaultRegistry(),
                         new ServiceLoader(),
                         Collections.singletonList(TesseractOCRParser.class));
+            } else {
+                if (fs.isPdfOcr()) {
+                    logger.debug("OCR is activated for PDF documents");
+                    if (ExternalParser.check("tesseract")) {
+                        pdfParser.setOcrStrategy("ocr_and_text");
+                    } else {
+                        logger.debug("But Tesseract is not installed so we won't run OCR.");
+                    }
+                    defaultParser = new DefaultParser();
+                } else {
+                    logger.debug("OCR is activated but disabled for PDF documents");
+                    pdfParser.setOcrStrategy("no_ocr");
+                    defaultParser = new DefaultParser();
+                }
             }
 
             Parser PARSERS[] = new Parser[2];
@@ -107,7 +113,7 @@ public class TikaInstance {
         if (context == null) {
             context = new ParseContext();
             context.set(Parser.class, parser);
-            if (fs.isPdfOcr()) {
+            if (fs.getOcr().isEnabled()) {
                 logger.debug("OCR is activated");
                 TesseractOCRConfig config = new TesseractOCRConfig();
                 if (fs.getOcr().getPath() != null) {

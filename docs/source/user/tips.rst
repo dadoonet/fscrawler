@@ -65,6 +65,8 @@ Here is a list of OCR settings (under ``fs.ocr`` prefix)`:
 +------------------------+---------------+------------------------------------+
 | Name                   | Default value | Documentation                      |
 +========================+===============+====================================+
+| ``fs.ocr.enabled``     | ``true``      | `Disable/Enable OCR`_              |
++------------------------+---------------+------------------------------------+
 | ``fs.ocr.language``    | ``"eng"``     | `OCR Language`_                    |
 +------------------------+---------------+------------------------------------+
 | ``fs.ocr.path``        | ``null``      | `OCR Path`_                        |
@@ -73,6 +75,25 @@ Here is a list of OCR settings (under ``fs.ocr`` prefix)`:
 +------------------------+---------------+------------------------------------+
 | ``fs.ocr.output_type`` | ``txt``       | `OCR Output Type`_                 |
 +------------------------+---------------+------------------------------------+
+
+Disable/Enable OCR
+^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.7
+
+You can completely disable using OCR by setting ``fs.ocr.enabled`` property in your
+``~/.fscrawler/test/_settings.yaml`` file:
+
+.. code:: yaml
+
+   name: "test"
+   fs:
+     url: "/path/to/data/dir"
+     ocr:
+       enabled: false
+
+By default, OCR is activated if tesseract can be found on your system.
+
 
 OCR Language
 ^^^^^^^^^^^^
