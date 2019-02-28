@@ -30,6 +30,8 @@ public class Ocr {
     private String dataPath = null;
     // Output Type. Can be txt (default) or hocr. null means the default value.
     private String outputType = null;
+    // Is OCR enabled or disabled in general
+    private boolean enabled = true;
 
     public static Builder builder() {
         return new Builder();
@@ -41,6 +43,7 @@ public class Ocr {
         private String path = null;
         private String dataPath = null;
         private String outputType = null;
+        private boolean enabled = true;
 
         public Builder setLanguage(String language) {
             this.language = language;
@@ -62,8 +65,13 @@ public class Ocr {
             return this;
         }
 
+        public Builder setEnabled(boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
         public Ocr build() {
-            return new Ocr(language, path, dataPath, outputType);
+            return new Ocr(language, path, dataPath, outputType, enabled);
         }
 
     }
@@ -72,11 +80,12 @@ public class Ocr {
 
     }
 
-    private Ocr(String language, String path, String dataPath, String outputType) {
+    private Ocr(String language, String path, String dataPath, String outputType, boolean enabled) {
         this.language = language;
         this.path = path;
         this.dataPath = dataPath;
         this.outputType = outputType;
+        this.enabled = enabled;
     }
 
     public String getLanguage() {
@@ -111,12 +120,21 @@ public class Ocr {
         this.outputType = outputType;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Ocr ocr = (Ocr) o;
-        return Objects.equals(language, ocr.language) &&
+        return enabled == ocr.enabled &&
+                Objects.equals(language, ocr.language) &&
                 Objects.equals(path, ocr.path) &&
                 Objects.equals(dataPath, ocr.dataPath) &&
                 Objects.equals(outputType, ocr.outputType);
@@ -124,7 +142,7 @@ public class Ocr {
 
     @Override
     public int hashCode() {
-        return Objects.hash(language, path, dataPath, outputType);
+        return Objects.hash(language, path, dataPath, outputType, enabled);
     }
 
     @Override
@@ -133,6 +151,7 @@ public class Ocr {
                 ", path='" + path + '\'' +
                 ", dataPath='" + dataPath + '\'' +
                 ", outputType='" + outputType + '\'' +
+                ", enabled=" + enabled +
                 '}';
     }
 }
