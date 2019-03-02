@@ -32,6 +32,8 @@ public class Ocr {
     private String outputType = null;
     // Is OCR enabled or disabled in general
     private boolean enabled = true;
+    // Pdf OCR Strategy
+    private String pdfStrategy = "ocr_and_text";
 
     public static Builder builder() {
         return new Builder();
@@ -44,6 +46,7 @@ public class Ocr {
         private String dataPath = null;
         private String outputType = null;
         private boolean enabled = true;
+        private String pdfStrategy = "ocr_and_text";
 
         public Builder setLanguage(String language) {
             this.language = language;
@@ -70,8 +73,17 @@ public class Ocr {
             return this;
         }
 
+        /**
+         * Set the PDF Strategy.
+         * @param pdfStrategy the PDF Strategy. Could be "no_ocr", "ocr_only" or "ocr_and_text"
+         */
+        public Builder setPdfStrategy(String pdfStrategy) {
+            this.pdfStrategy = pdfStrategy;
+            return this;
+        }
+
         public Ocr build() {
-            return new Ocr(language, path, dataPath, outputType, enabled);
+            return new Ocr(language, path, dataPath, outputType, pdfStrategy, enabled);
         }
 
     }
@@ -80,11 +92,12 @@ public class Ocr {
 
     }
 
-    private Ocr(String language, String path, String dataPath, String outputType, boolean enabled) {
+    private Ocr(String language, String path, String dataPath, String outputType, String pdfStrategy, boolean enabled) {
         this.language = language;
         this.path = path;
         this.dataPath = dataPath;
         this.outputType = outputType;
+        this.pdfStrategy = pdfStrategy;
         this.enabled = enabled;
     }
 
@@ -128,6 +141,22 @@ public class Ocr {
         this.enabled = enabled;
     }
 
+    /**
+     * Get the PDF Strategy. Could be "no_ocr", "ocr_only" or "ocr_and_text" (default)
+     * @return the PDF Strategy
+     */
+    public String getPdfStrategy() {
+        return pdfStrategy;
+    }
+
+    /**
+     * Set the PDF Strategy.
+     * @param pdfStrategy the PDF Strategy. Could be "no_ocr", "ocr_only" or "ocr_and_text"
+     */
+    public void setPdfStrategy(String pdfStrategy) {
+        this.pdfStrategy = pdfStrategy;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -137,12 +166,13 @@ public class Ocr {
                 Objects.equals(language, ocr.language) &&
                 Objects.equals(path, ocr.path) &&
                 Objects.equals(dataPath, ocr.dataPath) &&
-                Objects.equals(outputType, ocr.outputType);
+                Objects.equals(outputType, ocr.outputType) &&
+                Objects.equals(pdfStrategy, ocr.pdfStrategy);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(language, path, dataPath, outputType, enabled);
+        return Objects.hash(language, path, dataPath, outputType, enabled, pdfStrategy);
     }
 
     @Override
@@ -152,6 +182,7 @@ public class Ocr {
                 ", dataPath='" + dataPath + '\'' +
                 ", outputType='" + outputType + '\'' +
                 ", enabled=" + enabled +
+                ", pdfStrategy='" + pdfStrategy + '\'' +
                 '}';
     }
 }

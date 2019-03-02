@@ -38,6 +38,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 
    user/getting_started
    user/options
+   user/ocr
    user/rest
    user/formats
    user/tips
