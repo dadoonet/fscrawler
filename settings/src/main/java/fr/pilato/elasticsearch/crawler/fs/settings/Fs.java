@@ -22,6 +22,8 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -31,6 +33,8 @@ import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
 public class Fs {
+    protected static final Logger logger = LogManager.getLogger(Fs.class);
+
     private String url;
     private TimeValue updateRate = TimeValue.timeValueMinutes(15);
     private List<String> includes = null;
@@ -51,7 +55,6 @@ public class Fs {
     private boolean indexFolders = true;
     private boolean langDetect = false;
     private boolean continueOnError = false;
-    private boolean pdfOcr = true;
     private Ocr ocr = new Ocr();
     private ByteSizeValue ignoreAbove = null;
 
@@ -84,7 +87,6 @@ public class Fs {
         private boolean indexFolders = true;
         private boolean langDetect = false;
         private boolean continueOnError = false;
-        private boolean pdfOcr = true;
         private Ocr ocr = new Ocr();
         private ByteSizeValue ignoreAbove = null;
 
@@ -227,11 +229,6 @@ public class Fs {
             return this;
         }
 
-        public Builder setPdfOcr(boolean pdfOcr) {
-            this.pdfOcr = pdfOcr;
-            return this;
-        }
-
         public Builder setOcr(Ocr ocr) {
             this.ocr = ocr;
             return this;
@@ -245,7 +242,7 @@ public class Fs {
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, pdfOcr, ocr, ignoreAbove);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove);
         }
     }
 
@@ -256,7 +253,7 @@ public class Fs {
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, List<String> filters, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError, boolean pdfOcr, Ocr ocr, ByteSizeValue ignoreAbove) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -277,7 +274,6 @@ public class Fs {
         this.indexFolders = indexFolders;
         this.langDetect = langDetect;
         this.continueOnError = continueOnError;
-        this.pdfOcr = pdfOcr;
         this.ocr = ocr;
         this.ignoreAbove = ignoreAbove;
     }
@@ -442,12 +438,20 @@ public class Fs {
         this.continueOnError = continueOnError;
     }
 
-    public boolean isPdfOcr() {
-        return pdfOcr;
-    }
-
+    @Deprecated
     public void setPdfOcr(boolean pdfOcr) {
-        this.pdfOcr = pdfOcr;
+        String strategy;
+        if (pdfOcr) {
+            strategy = "ocr_and_text";
+        } else {
+            strategy = "no_ocr";
+        }
+        logger.warn("pdf_ocr setting has been deprecated and is replaced by ocr.pdf_strategy: {}.", strategy);
+        if (this.ocr == null) {
+            this.ocr = new Ocr();
+        }
+
+        this.ocr.setPdfStrategy(strategy);
     }
 
     public Ocr getOcr() {
@@ -484,7 +488,6 @@ public class Fs {
                 indexFolders == fs.indexFolders &&
                 langDetect == fs.langDetect &&
                 continueOnError == fs.continueOnError &&
-                pdfOcr == fs.pdfOcr &&
                 Objects.equals(url, fs.url) &&
                 Objects.equals(updateRate, fs.updateRate) &&
                 Objects.equals(includes, fs.includes) &&
@@ -499,7 +502,7 @@ public class Fs {
     @Override
     public int hashCode() {
         return Objects.hash(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
-                removeDeleted, addAsInnerObject, storeSource, indexContent, indexedChars, attributesSupport, rawMetadata, xmlSupport, checksum, indexFolders, langDetect, continueOnError, pdfOcr, ocr, ignoreAbove);
+                removeDeleted, addAsInnerObject, storeSource, indexContent, indexedChars, attributesSupport, rawMetadata, xmlSupport, checksum, indexFolders, langDetect, continueOnError, ocr, ignoreAbove);
     }
 
     @Override
@@ -524,7 +527,6 @@ public class Fs {
                 ", indexFolders=" + indexFolders +
                 ", langDetect=" + langDetect +
                 ", continueOnError=" + continueOnError +
-                ", pdfOcr=" + pdfOcr +
                 ", ocr=" + ocr +
                 ", ignoreAbove=" + ignoreAbove +
                 '}';

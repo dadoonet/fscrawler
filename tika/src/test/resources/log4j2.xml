@@ -12,37 +12,10 @@
       <Logger name="fr.pilato.elasticsearch.crawler.fs" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.FsCrawler" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.rest" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.tika" level="info" additivity="false">
          <AppenderRef ref="CONSOLE_NO_DECORATOR"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.util" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.test" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.test.integration" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.test.unit" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="org.elasticsearch" level="error" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="org.glassfish" level="error" additivity="false">
+      <Logger name="org.apache.tika" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">

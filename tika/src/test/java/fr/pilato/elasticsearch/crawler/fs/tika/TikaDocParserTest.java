@@ -659,15 +659,41 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), containsString("This file contains some words."));
         doc = extractFromFile("test-ocr.pdf");
         assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent(), containsString("This file also contains text."));
+        doc = extractFromFile("test-ocr.docx");
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent(), containsString("This file also contains text."));
 
-        // Test with PDF OCR Off but OCR On
+        // Test with OCR On and PDF Strategy set to no_ocr (meaning that PDF are not OCRed)
         FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setPdfOcr(false).build())
+                .setFs(Fs.builder().setOcr(Ocr.builder()
+                        .setPdfStrategy("no_ocr")
+                        .build()).build())
                 .build();
         doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent(), containsString("This file contains some words."));
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent(), is("\n\n"));
+        assertThat(doc.getContent(), containsString("This file also contains text."));
+        assertThat(doc.getContent(), not(containsString("This file contains some words.")));
+        doc = extractFromFile("test-ocr.docx", fsSettings);
+        assertThat(doc.getContent(), containsString("This file also contains text."));
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+
+        // Test with OCR On and PDF Strategy set to ocr_only (meaning that PDF only OCRed and no text is extracted)
+        fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setOcr(Ocr.builder()
+                        .setPdfStrategy("ocr_only")
+                        .build()).build())
+                .build();
+        doc = extractFromFile("test-ocr.png", fsSettings);
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        doc = extractFromFile("test-ocr.pdf", fsSettings);
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        // TODO: for a strange reason ocr_only also extracts text.
+        // assertThat(doc.getContent(), not(containsString("This file also contains text.")));
+        doc = extractFromFile("test-ocr.docx", fsSettings);
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent(), containsString("This file also contains text."));
 
         // Test with OCR Off
         fsSettings = FsSettings.builder(getCurrentTestName())
@@ -678,7 +704,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent(), isEmptyString());
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent(), is("\n\n"));
+        assertThat(doc.getContent(), not(containsString("This file contains some words.")));
+        doc = extractFromFile("test-ocr.docx", fsSettings);
+        assertThat(doc.getContent(), not(containsString("This file contains some words.")));
 
         // Test with OCR On (default) but a wrong path to tesseract
         fsSettings = FsSettings.builder(getCurrentTestName())
