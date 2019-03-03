@@ -52,9 +52,9 @@ public class TikaDocParser {
 
     private final static Logger logger = LogManager.getLogger(TikaDocParser.class);
 
-    public static void generate(FsSettings fsSettings, InputStream inputStream, String filename, Doc doc, MessageDigest messageDigest,
-                                long filesize) throws IOException {
-        logger.trace("Generating document [{}]", filename);
+    public static void generate(FsSettings fsSettings, InputStream inputStream, String filename, String fullFilename, Doc doc,
+                                MessageDigest messageDigest, long filesize) throws IOException {
+        logger.trace("Generating document [{}]", fullFilename);
         // Extracting content with Tika
         // See #38: https://github.com/dadoonet/fscrawler/issues/38
         int indexedChars = 100000;
@@ -102,8 +102,8 @@ public class TikaDocParser {
                     current = current.getCause();
                 }
 
-                logger.warn("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "] {}", sb.toString());
-                logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + filename + "]", e);
+                logger.warn("Failed to extract [{}] characters of text for [{}] {}", indexedChars, fullFilename, sb.toString());
+                logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + fullFilename + "]", e);
             }
 
             // Adding what we found to the document we want to index
@@ -134,18 +134,18 @@ public class TikaDocParser {
             // File
 
             // Standard Meta
-            setMeta(filename, metadata, TikaCoreProperties.CREATOR, doc.getMeta()::setAuthor, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.TITLE, doc.getMeta()::setTitle, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.MODIFIED, doc.getMeta()::setDate, FsCrawlerUtil::localDateTimeToDate);
-            setMeta(filename, metadata, TikaCoreProperties.KEYWORDS, doc.getMeta()::setKeywords, TikaDocParser::commaDelimitedListToStringArray);
-            setMeta(filename, metadata, TikaCoreProperties.FORMAT, doc.getMeta()::setFormat, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.IDENTIFIER, doc.getMeta()::setIdentifier, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.CONTRIBUTOR, doc.getMeta()::setContributor, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.COVERAGE, doc.getMeta()::setCoverage, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.MODIFIER, doc.getMeta()::setModifier, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.CREATOR_TOOL, doc.getMeta()::setCreatorTool, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.CREATOR, doc.getMeta()::setAuthor, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.TITLE, doc.getMeta()::setTitle, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.MODIFIED, doc.getMeta()::setDate, FsCrawlerUtil::localDateTimeToDate);
+            setMeta(fullFilename, metadata, TikaCoreProperties.KEYWORDS, doc.getMeta()::setKeywords, TikaDocParser::commaDelimitedListToStringArray);
+            setMeta(fullFilename, metadata, TikaCoreProperties.FORMAT, doc.getMeta()::setFormat, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.IDENTIFIER, doc.getMeta()::setIdentifier, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.CONTRIBUTOR, doc.getMeta()::setContributor, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.COVERAGE, doc.getMeta()::setCoverage, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.MODIFIER, doc.getMeta()::setModifier, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.CREATOR_TOOL, doc.getMeta()::setCreatorTool, Function.identity());
             String finalParsedContent = parsedContent;
-            setMeta(filename, metadata, TikaCoreProperties.LANGUAGE, doc.getMeta()::setLanguage, (lang) -> {
+            setMeta(fullFilename, metadata, TikaCoreProperties.LANGUAGE, doc.getMeta()::setLanguage, (lang) -> {
                 if (lang != null) {
                     return lang;
                 } else if (fsSettings.getFs().isLangDetect() && finalParsedContent != null) {
@@ -158,20 +158,20 @@ public class TikaDocParser {
                 }
                 return null;
             });
-            setMeta(filename, metadata, TikaCoreProperties.PUBLISHER, doc.getMeta()::setPublisher, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.RELATION, doc.getMeta()::setRelation, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.RIGHTS, doc.getMeta()::setRights, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.SOURCE, doc.getMeta()::setSource, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.TYPE, doc.getMeta()::setType, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.DESCRIPTION, doc.getMeta()::setDescription, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.CREATED, doc.getMeta()::setCreated, FsCrawlerUtil::localDateTimeToDate);
-            setMeta(filename, metadata, TikaCoreProperties.PRINT_DATE, doc.getMeta()::setPrintDate, FsCrawlerUtil::localDateTimeToDate);
-            setMeta(filename, metadata, TikaCoreProperties.METADATA_DATE, doc.getMeta()::setMetadataDate, FsCrawlerUtil::localDateTimeToDate);
-            setMeta(filename, metadata, TikaCoreProperties.LATITUDE, doc.getMeta()::setLatitude, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.LONGITUDE, doc.getMeta()::setLongitude, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.ALTITUDE, doc.getMeta()::setAltitude, Function.identity());
-            setMeta(filename, metadata, TikaCoreProperties.RATING, doc.getMeta()::setRating, (value) -> value == null ? null : Integer.parseInt(value));
-            setMeta(filename, metadata, TikaCoreProperties.COMMENTS, doc.getMeta()::setComments, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.PUBLISHER, doc.getMeta()::setPublisher, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.RELATION, doc.getMeta()::setRelation, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.RIGHTS, doc.getMeta()::setRights, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.SOURCE, doc.getMeta()::setSource, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.TYPE, doc.getMeta()::setType, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.DESCRIPTION, doc.getMeta()::setDescription, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.CREATED, doc.getMeta()::setCreated, FsCrawlerUtil::localDateTimeToDate);
+            setMeta(fullFilename, metadata, TikaCoreProperties.PRINT_DATE, doc.getMeta()::setPrintDate, FsCrawlerUtil::localDateTimeToDate);
+            setMeta(fullFilename, metadata, TikaCoreProperties.METADATA_DATE, doc.getMeta()::setMetadataDate, FsCrawlerUtil::localDateTimeToDate);
+            setMeta(fullFilename, metadata, TikaCoreProperties.LATITUDE, doc.getMeta()::setLatitude, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.LONGITUDE, doc.getMeta()::setLongitude, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.ALTITUDE, doc.getMeta()::setAltitude, Function.identity());
+            setMeta(fullFilename, metadata, TikaCoreProperties.RATING, doc.getMeta()::setRating, (value) -> value == null ? null : Integer.parseInt(value));
+            setMeta(fullFilename, metadata, TikaCoreProperties.COMMENTS, doc.getMeta()::setComments, Function.identity());
 
             // Add support for more OOTB standard metadata
 

@@ -36,6 +36,7 @@ import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,7 +62,6 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.compute
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-import static fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser.generate;
 
 public abstract class FsParserAbstract extends FsParser {
     private static final Logger logger = LogManager.getLogger(FsParserAbstract.class);
@@ -471,7 +471,7 @@ public abstract class FsParserAbstract extends FsParser {
                     doc.setObject(XmlDocParser.generateMap(inputStream));
                 } else {
                     // Extracting content with Tika
-                    generate(fsSettings, inputStream, filename, doc, messageDigest, filesize);
+                    TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
                 }
 
                 // We index the data structure

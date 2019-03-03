@@ -105,7 +105,7 @@ public class UploadApi extends RestApi {
         // Path
 
         // Read the file content
-        TikaDocParser.generate(settings, filecontent, filename, doc, messageDigest, filesize);
+        TikaDocParser.generate(settings, filecontent, filename, filename, doc, messageDigest, filesize);
 
         String url = null;
         if (Boolean.parseBoolean(simulate)) {

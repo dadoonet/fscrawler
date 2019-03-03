@@ -773,6 +773,7 @@ public class TikaDocParserTest extends DocParserTestCase {
                 fsSettings,
                 data,
                 filename,
+                "/documents/" + filename,
                 doc,
                 messageDigest,
                 0);
