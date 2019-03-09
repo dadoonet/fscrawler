@@ -93,14 +93,13 @@ public class TikaInstance {
                     logger.debug("But Tesseract is not installed so we won't run OCR.");
                     pdfParser.setOcrStrategy("no_ocr");
                 }
-                defaultParser = new DefaultParser();
+                defaultParser = new DefaultParser(
+                        MediaTypeRegistry.getDefaultRegistry(),
+                        new ServiceLoader(),
+                        Collections.singletonList(PDFParser.class));
             }
 
-            Parser PARSERS[] = new Parser[2];
-            PARSERS[0] = defaultParser;
-            PARSERS[1] = pdfParser;
-
-            parser = new AutoDetectParser(PARSERS);
+            parser = new AutoDetectParser(defaultParser, pdfParser);
         }
 
     }
