@@ -33,6 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
@@ -116,6 +117,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
     static Elasticsearch elasticsearchWithSecurity;
+
+    static Rest restConfig;
 
     static WebTarget target;
     static Client client;

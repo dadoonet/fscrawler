@@ -42,6 +42,7 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getElasticsearch().getIndex(), is(getCurrentTestName()));
         assertThat(settings.getElasticsearch().getIndexFolder(), is(getCurrentTestName() + INDEX_SUFFIX_FOLDER));
         assertThat(settings.getServer(), nullValue());
+        assertThat(settings.getRest(), nullValue());
 
         // Checking default values
         settings = buildSettings(null, null, null, null);
@@ -51,6 +52,7 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getElasticsearch().getIndex(), is(getCurrentTestName()));
         assertThat(settings.getElasticsearch().getIndexFolder(), is(getCurrentTestName() + INDEX_SUFFIX_FOLDER));
         assertThat(settings.getServer(), nullValue());
+        assertThat(settings.getRest(), nullValue());
 
         // Checking Checksum Algorithm
         settings = buildSettings(Fs.builder().setChecksum("FSCRAWLER").build(), null, null, null);
@@ -82,7 +84,7 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getRest(), notNullValue());
     }
 
-    private FsSettings buildSettings(Fs fs, Elasticsearch elasticsearch, Server server, ServerUrl rest) {
+    private FsSettings buildSettings(Fs fs, Elasticsearch elasticsearch, Server server, Rest rest) {
         FsSettings.Builder settingsBuilder = FsSettings.builder(getCurrentTestName());
         settingsBuilder.setFs(fs == null ? Fs.DEFAULT : fs);
         settingsBuilder.setElasticsearch(elasticsearch == null ? Elasticsearch.DEFAULT() : elasticsearch);

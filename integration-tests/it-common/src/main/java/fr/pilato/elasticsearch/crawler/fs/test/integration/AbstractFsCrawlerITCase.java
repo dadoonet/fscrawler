@@ -23,11 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
-import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
+import fr.pilato.elasticsearch.crawler.fs.settings.*;
 import org.junit.After;
 import org.junit.Before;
 
@@ -92,7 +88,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         return startCrawler(jobName, fs, elasticsearch, server, null, TimeValue.timeValueSeconds(10));
     }
 
-    FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, ServerUrl rest, TimeValue duration)
+    FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest, TimeValue duration)
             throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 

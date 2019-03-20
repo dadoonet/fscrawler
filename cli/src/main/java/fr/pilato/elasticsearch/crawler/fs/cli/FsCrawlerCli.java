@@ -27,12 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
+import fr.pilato.elasticsearch.crawler.fs.settings.*;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -229,6 +224,7 @@ public class FsCrawlerCli {
                 fsSettings = FsSettings.builder(commands.jobName.get(0))
                         .setFs(Fs.DEFAULT)
                         .setElasticsearch(Elasticsearch.DEFAULT())
+                        .setRest(Rest.DEFAULT)
                         .build();
                 fsSettingsFileHandler.write(fsSettings);
 

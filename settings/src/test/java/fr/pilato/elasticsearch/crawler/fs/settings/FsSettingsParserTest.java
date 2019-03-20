@@ -77,7 +77,11 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setProtocol("SSH")
             .setPemPath("/path/to/pemfile")
             .build();
-    private static final ServerUrl REST_FULL = new ServerUrl("http://127.0.0.1:8080/fscrawler");
+    private static final Rest REST_EMPTY = Rest.builder().build();
+    private static final Rest REST_FULL = Rest.builder()
+            .setEnableCors(false)
+            .setUrl(Rest.URL_DEFAULT)
+            .build();
 
     private void settingsTester(FsSettings source) throws IOException {
         String yaml = FsSettingsParser.toYaml(source);

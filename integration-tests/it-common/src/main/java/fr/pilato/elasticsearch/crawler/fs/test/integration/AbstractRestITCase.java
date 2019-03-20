@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import org.junit.After;
 import org.junit.Before;
@@ -37,7 +38,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     @Before
     public void startRestServer() throws Exception {
         FsSettings fsSettings = FsSettings.builder(getCrawlerName())
-                .setRest(new ServerUrl("http://127.0.0.1:" + testRestPort + "/fscrawler"))
+                .setRest(new Rest("http://127.0.0.1:" + testRestPort + "/fscrawler"))
                 .setElasticsearch(elasticsearchWithSecurity)
                 .build();
         fsSettings.getElasticsearch().setIndex(getCrawlerName());

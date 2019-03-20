@@ -24,18 +24,17 @@ import java.util.Objects;
 @SuppressWarnings("SameParameterValue")
 public class FsSettings {
 
-    public static final ServerUrl REST_DEFAULT = new ServerUrl("http://127.0.0.1:8080/fscrawler");
     private String name;
     private Fs fs;
     private Server server;
     private Elasticsearch elasticsearch;
-    private ServerUrl rest;
+    private Rest rest;
 
     public FsSettings() {
 
     }
 
-    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch, ServerUrl rest) {
+    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch, Rest rest) {
         this.name = name;
         this.fs = fs;
         this.server = server;
@@ -52,7 +51,7 @@ public class FsSettings {
         private Fs fs = Fs.DEFAULT;
         private Server server = null;
         private Elasticsearch elasticsearch = Elasticsearch.DEFAULT();
-        private ServerUrl rest = REST_DEFAULT;
+        private Rest rest = null;
 
         private Builder setName(String name) {
             this.name = name;
@@ -74,7 +73,7 @@ public class FsSettings {
             return this;
         }
 
-        public Builder setRest(ServerUrl rest) {
+        public Builder setRest(Rest rest) {
             this.rest = rest;
             return this;
         }
@@ -116,11 +115,11 @@ public class FsSettings {
         this.elasticsearch = elasticsearch;
     }
 
-    public ServerUrl getRest() {
+    public Rest getRest() {
         return rest;
     }
 
-    public void setRest(ServerUrl rest) {
+    public void setRest(Rest rest) {
         this.rest = rest;
     }
 
