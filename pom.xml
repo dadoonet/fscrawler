@@ -44,6 +44,7 @@
         <tika.version>1.20</tika.version>
         <jackson.version>2.9.8</jackson.version>
         <log4j.version>2.11.1</log4j.version>
+        <slf4j.version>1.8.0-beta4</slf4j.version>
         <jansi.version>1.17.1</jansi.version>
         <jersey.version>2.27</jersey.version>
 
@@ -680,6 +681,21 @@
                 <artifactId>jansi</artifactId>
                 <version>${jansi.version}</version>
                 <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jul-to-slf4j</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
 
             <dependency>
