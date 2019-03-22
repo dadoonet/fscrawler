@@ -43,10 +43,17 @@
 
         <tika.version>1.20</tika.version>
         <jackson.version>2.9.8</jackson.version>
-        <log4j.version>2.11.1</log4j.version>
-        <slf4j.version>1.8.0-beta4</slf4j.version>
+        <log4j.version>2.11.2</log4j.version>
         <jansi.version>1.17.1</jansi.version>
-        <jersey.version>2.27</jersey.version>
+        <jersey.version>2.28</jersey.version>
+
+        <!--
+            Because elasticsearch is not using transitive dependencies, we need to be explicit here
+        -->
+        <commons-logging.version>1.2</commons-logging.version>
+        <commons-codec.version>1.11</commons-codec.version>
+        <snakeyaml.version>1.23</snakeyaml.version>
+        <httpclient.version>4.5.7</httpclient.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <levigo.version>2.0</levigo.version>
@@ -304,8 +311,20 @@
                             <requireJavaVersion>
                                 <version>${java.compiler.version}</version>
                             </requireJavaVersion>
+                            <dependencyConvergence/>
+                            <requireMavenVersion>
+                                <version>3.3</version>
+                            </requireMavenVersion>
                         </rules>
                     </configuration>
+                    <executions>
+                        <execution>
+                            <id>enforce</id>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -510,6 +529,19 @@
                 <artifactId>jackson-dataformat-yaml</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-module-jaxb-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <!--
+            Because elasticsearch is not using transitive dependencies, we need to be explicit here
+            -->
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.tika</groupId>
@@ -520,6 +552,11 @@
                     <exclusion>
                         <groupId>org.slf4j</groupId>
                         <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <!-- org.slf4j:slf4j-api:1.7.25 -->
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
                     </exclusion>
                     <!-- Not Apache2 License compatible -->
                     <exclusion>
@@ -607,6 +644,16 @@
                         <groupId>org.apache.cxf</groupId>
                         <artifactId>cxf-rt-rs-client</artifactId>
                     </exclusion>
+                    <!-- org.slf4j:slf4j-api:1.7.25 -->
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                    <!-- com.google.guava:guava:17.0 vs com.google.guava:guava:27.0.1-jre -->
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <!--Dependency for parsing remote ssh directory [http://www.jcraft.com/jsch/]-->
@@ -654,6 +701,12 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j.version}</version>
+                <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-1.2-api</artifactId>
                 <version>${log4j.version}</version>
                 <optional>true</optional>
@@ -682,26 +735,31 @@
                 <version>${jansi.version}</version>
                 <optional>true</optional>
             </dependency>
+            <!--
+                Because elasticsearch is not using transitive dependencies, we need to be explicit here
+            -->
             <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>jcl-over-slf4j</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>jul-to-slf4j</artifactId>
-                <version>${slf4j.version}</version>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${commons-logging.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>2.5</version>
+            </dependency>
+
+            <!-- Used by elasticsearch client and tika parsers -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons-codec.version}</version>
             </dependency>
 
             <!-- Test dependencies -->
