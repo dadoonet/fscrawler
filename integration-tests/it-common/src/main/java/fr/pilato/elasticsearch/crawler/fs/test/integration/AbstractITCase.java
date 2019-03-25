@@ -33,7 +33,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;

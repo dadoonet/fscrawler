@@ -26,7 +26,6 @@ import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
-import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import org.junit.Test;
 
 import javax.ws.rs.client.WebTarget;

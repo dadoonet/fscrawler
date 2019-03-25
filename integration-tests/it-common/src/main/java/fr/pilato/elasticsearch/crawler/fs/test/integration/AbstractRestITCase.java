@@ -25,7 +25,6 @@ import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
-import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import org.junit.After;
 import org.junit.Before;
 

@@ -33,7 +33,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
