@@ -23,7 +23,11 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.settings.*;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import org.junit.After;
 import org.junit.Before;
 

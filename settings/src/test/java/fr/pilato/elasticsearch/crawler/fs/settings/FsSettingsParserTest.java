@@ -77,7 +77,6 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setProtocol("SSH")
             .setPemPath("/path/to/pemfile")
             .build();
-    private static final Rest REST_EMPTY = Rest.builder().build();
     private static final Rest REST_FULL = Rest.builder()
             .setEnableCors(false)
             .setUrl(Rest.URL_DEFAULT)

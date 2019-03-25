@@ -28,7 +28,7 @@ import java.util.Objects;
 /**
  * This class represents a ServerUrl which is basically just a String which
  * can be either a url or a cloud id.
- * This is used in Rest and Elasticsearch.Node classes.
+ * This is used in the Elasticsearch.Node class.
  */
 public class ServerUrl {
 
