@@ -108,8 +108,8 @@ public class FsCrawlerValidator {
 
         // Check that REST settings are available when we start with rest option
         if (rest && settings.getRest() == null) {
-            logger.warn("`rest` settings are not defined. Falling back to default: [{}].", FsSettings.REST_DEFAULT);
-            settings.setRest(FsSettings.REST_DEFAULT);
+            logger.warn("`rest` settings are not defined. Falling back to default: [{}].", Rest.URL_DEFAULT);
+            settings.setRest(Rest.DEFAULT);
         }
 
         return false;

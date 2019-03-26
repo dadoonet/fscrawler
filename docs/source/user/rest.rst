@@ -44,4 +44,7 @@ elasticsearch URL for the created document, like:
      "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/doc/dd18bf3a8ea2a3e53e2661c7fb53534"
    }
 
+To enable CORS (Cross-Origin Request Sharing) functionality you will
+need to set ``enable_cors: true`` in your job settings.
+
 Read the :ref:`rest-service` chapter for more information.

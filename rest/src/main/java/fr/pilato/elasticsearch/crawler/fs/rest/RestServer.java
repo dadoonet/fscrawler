@@ -53,12 +53,13 @@ public class RestServer {
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)
                     .register(JacksonFeature.class)
+                    .register(new CORSFilter(settings.getRest()))
                     .packages("fr.pilato.elasticsearch.crawler.fs.rest");
 
             // create and start a new instance of grizzly http server
             // exposing the Jersey application at BASE_URI
-            httpServer = GrizzlyHttpServerFactory.createHttpServer(URI.create(settings.getRest().decodedUrl()), rc);
-            logger.info("FS crawler Rest service started on [{}]", settings.getRest().decodedUrl());
+            httpServer = GrizzlyHttpServerFactory.createHttpServer(URI.create(settings.getRest().getUrl()), rc);
+            logger.info("FS crawler Rest service started on [{}]", settings.getRest().getUrl());
         }
     }
 

@@ -115,8 +115,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
     private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
-    static Elasticsearch elasticsearchWithSecurity;
 
+    static Elasticsearch elasticsearchWithSecurity;
     static WebTarget target;
     static Client client;
 
