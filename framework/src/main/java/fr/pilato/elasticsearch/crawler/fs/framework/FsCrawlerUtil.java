@@ -256,8 +256,6 @@ public class FsCrawlerUtil {
      *                we consider it always matches.
      */
     public static boolean isIndexable(String content, List<String> filters) {
-        logger.debug("content = [{}], filters = {}", content, filters);
-
         if (isNullOrEmpty(content)) {
             logger.trace("Null or empty content always matches.");
             return true;
@@ -268,6 +266,7 @@ public class FsCrawlerUtil {
             return true;
         }
 
+        logger.trace("content = [{}], filters = {}", content, filters);
         for (String filter : filters) {
             Pattern pattern = Pattern.compile(filter, Pattern.MULTILINE | Pattern.UNIX_LINES);
             logger.trace("Testing filter [{}]", filter);
