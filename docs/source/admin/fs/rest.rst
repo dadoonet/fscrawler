@@ -264,8 +264,8 @@ You can check if CORS is enabled with:
    curl -I http://127.0.0.1:8080/fscrawler/
 
 The response header should contain ``Access-Control-Allow-*`` parameters like:
-
 ::
+
    Access-Control-Allow-Origin: *
    Access-Control-Allow-Headers: origin, content-type, accept, authorization
    Access-Control-Allow-Credentials: true
