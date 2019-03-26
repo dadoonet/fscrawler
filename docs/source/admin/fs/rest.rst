@@ -55,7 +55,8 @@ It will give you a response similar to:
          "username" : "elastic"
        },
        "rest" : {
-         "url" : "http://127.0.0.1:8080/fscrawler"
+         "url" : "http://127.0.0.1:8080/fscrawler",
+         "enable_cors": false
        }
      }
    }
@@ -250,16 +251,39 @@ The field ``external`` doesn't necessarily be a flat structure. This is a more a
 
 .. attention:: Only standard :ref:`FSCrawler fields <generated_fields>` can be set outside ``external`` field name.
 
+Enabling CORS
+~~~~~~~~~~~~~
+To enable Cross-Origin Request Sharing you will need to set ``enable_cors: true``
+under ``rest`` in your job settings. Doing so will enable the relevant access headers
+on all REST service resource responses (for example ``/fscrawler`` and ``/fscrawler/_upload``).
+
+You can check if CORS is enabled with:
+
+.. code:: sh
+
+   curl -I http://127.0.0.1:8080/fscrawler/
+
+The response header should contain ``Access-Control-Allow-*`` parameters like:
+
+::
+   Access-Control-Allow-Origin: *
+   Access-Control-Allow-Headers: origin, content-type, accept, authorization
+   Access-Control-Allow-Credentials: true
+   Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
+
 REST settings
 ~~~~~~~~~~~~~
 
 Here is a list of REST service settings (under ``rest.`` prefix)`:
 
-+--------------+-------------------------------------+-----------------------+
-| Name         | Default value                       | Documentation         |
-+==============+=====================================+=======================+
-| ``rest.url`` | ``http://127.0.0.1:8080/fscrawler`` | Rest Service URL      |
-+--------------+-------------------------------------+-----------------------+
++----------------------+-------------------------------------+-------------------------------------------------------+
+| Name                 | Default value                       | Documentation                                         |
++======================+=====================================+=======================================================+
+| ``rest.url``         | ``http://127.0.0.1:8080/fscrawler`` | Rest Service URL                                      |
++----------------------+-------------------------------------+-------------------------------------------------------+
+| ``rest.enable_cors`` | ``false``                           | Enables or disables Cross-Origin Resource Sharing     |
+|                      |                                     | globally for all resources                            |
++----------------------+-------------------------------------+-------------------------------------------------------+
 
 .. tip::
 
