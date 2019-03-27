@@ -131,7 +131,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat(hit.getSourceAsMap(), hasKey("file"));
             assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
             assertThat(hit.getSourceAsMap(), hasKey("meta"));
-            assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), hasKey("raw"));
+            assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), not(hasKey("raw")));
 
             assertThat(hit.getSourceAsMap(), hasKey("external"));
             Map<String, Object> external = (Map<String, Object>) hit.getSourceAsMap().get("external");
@@ -171,7 +171,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat(hit.getSourceAsMap(), hasKey("file"));
             assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
             assertThat(hit.getSourceAsMap(), hasKey("meta"));
-            assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), hasKey("raw"));
+            assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), not(hasKey("raw")));
 
             assertThat(hit.getSourceAsMap(), hasKey("external"));
             Map<String, Object> external = (Map<String, Object>) hit.getSourceAsMap().get("external");
@@ -211,7 +211,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat(hit.getSourceAsMap(), hasKey("file"));
             assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
             assertThat(hit.getSourceAsMap(), hasKey("meta"));
-            assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), hasKey("raw"));
+            assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), not(hasKey("raw")));
 
             assertThat(hit.getSourceAsMap(), not(hasKey("external")));
         });

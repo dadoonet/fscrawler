@@ -113,7 +113,10 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void testXmlIssue163() throws IOException {
-        Doc doc = extractFromFile("issue-163.xml");
+        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setRawMetadata(true).build())
+                .build();
+        Doc doc = extractFromFile("issue-163.xml", fsSettings);
 
         // Extracted content
         assertThat(doc.getContent(), is("   \n"));
@@ -747,7 +750,10 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     private Doc extractFromFileExtension(String extension) throws IOException {
-        return extractFromFile("test." + extension);
+        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setRawMetadata(true).build())
+                .build();
+        return extractFromFile("test." + extension, fsSettings);
     }
 
     private Doc extractFromFile(String filename) throws IOException {
