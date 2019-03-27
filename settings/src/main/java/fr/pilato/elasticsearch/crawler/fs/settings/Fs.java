@@ -81,7 +81,7 @@ public class Fs {
         private boolean indexContent = true;
         private Percentage indexedChars = null;
         private boolean attributesSupport = false;
-        private boolean rawMetadata = true;
+        private boolean rawMetadata = false;
         private String checksum = null;
         private boolean xmlSupport = false;
         private boolean indexFolders = true;

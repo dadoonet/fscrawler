@@ -74,10 +74,12 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_disable_raw() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setRawMetadata(false)
-                .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        Fs.Builder builder = startCrawlerDefinition();
+        if (rarely()) {
+            // Sometimes we explicitly disable it but this is also the default value
+            builder.setRawMetadata(false);
+        }
+        startCrawler(getCrawlerName(), builder.build(), endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get("raw"), nullValue());
@@ -86,12 +88,10 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_enable_raw() throws Exception {
-        Fs.Builder builder = startCrawlerDefinition();
-        if (rarely()) {
-            // Sometimes we explicitly set it but this is also the default value
-            builder.setRawMetadata(true);
-        }
-        startCrawler(getCrawlerName(), builder.build(), endCrawlerDefinition(getCrawlerName()), null);
+        Fs fs = startCrawlerDefinition()
+                .setRawMetadata(true)
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get("raw"), notNullValue());

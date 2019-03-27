@@ -401,15 +401,15 @@ and ``attributes.permissions``, you can set ``attributes_support`` to ``true``.
 Disabling raw metadata
 ^^^^^^^^^^^^^^^^^^^^^^
 
-By default, FSCrawler will extract all found metadata within
-``meta.raw`` object. If you want to disable this feature, you can set
-``raw_metadata`` to ``false``.
+FSCrawler can extract all found metadata within a ``meta.raw`` object in addition
+to the standard metadata fields.
+If you want to enable this feature, you can set ``raw_metadata`` to ``true``.
 
 .. code:: yaml
 
    name: "test"
    fs:
-     raw_metadata: false
+     raw_metadata: true
 
 Generated raw metadata depends on the file format itself.
 
@@ -508,6 +508,13 @@ Where a MP3 file would generate:
 .. note::
     Note that dots in metadata names will be replaced by a ``:``. For
     example ``PTEX.Fullbanner`` will be indexed as ``PTEX:Fullbanner``.
+
+.. note::
+    Note that if you have a lot of different type of files, that can generate a lot of
+    raw metadata which can make you hit the total number of field limit in elasticsearch
+    mappings. In which case you will need to change the index settings ``foo``.
+
+    See `elasticsearch documentation <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html#mapping-limit-settings>`__
 
 Disabling file size field
 ^^^^^^^^^^^^^^^^^^^^^^^^^

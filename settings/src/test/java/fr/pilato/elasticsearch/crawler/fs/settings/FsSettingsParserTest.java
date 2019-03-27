@@ -144,7 +144,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getFs().isIndexFolders(), is(true));
         assertThat(settings.getFs().isJsonSupport(), is(false));
         assertThat(settings.getFs().isLangDetect(), is(false));
-        assertThat(settings.getFs().isRawMetadata(), is(true));
+        assertThat(settings.getFs().isRawMetadata(), is(false));
         assertThat(settings.getFs().isRemoveDeleted(), is(true));
         assertThat(settings.getFs().isStoreSource(), is(false));
         assertThat(settings.getFs().isXmlSupport(), is(false));
