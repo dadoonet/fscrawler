@@ -254,7 +254,8 @@ The field ``external`` doesn't necessarily be a flat structure. This is a more a
 
 Specifying an elasticsearch index
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-By default, fscrawler creates document in the index defined in the _settings.yaml (or json) file.
+
+By default, fscrawler creates document in the index defined in the ``_settings.yaml`` file.
 However, using the REST service, it is possible to require fscrawler to use different indexes, by adding ``index=YOUR_INDEX`` in the form data:
 
 .. code:: sh
