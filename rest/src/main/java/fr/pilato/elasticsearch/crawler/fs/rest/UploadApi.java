@@ -76,6 +76,7 @@ public class UploadApi extends RestApi {
             @QueryParam("debug") String debug,
             @QueryParam("simulate") String simulate,
             @FormDataParam("id") String id,
+            @FormDataParam("index") String index,
             @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
@@ -100,6 +101,11 @@ public class UploadApi extends RestApi {
             id = TIME_UUID_GENERATOR.getBase64UUID();
         }
 
+        //index
+        if (index == null) {
+            index = settings.getElasticsearch().getIndex();
+        }
+
         doc.getPath().setVirtual(filename);
         doc.getPath().setReal(filename);
         // Path
@@ -114,14 +120,14 @@ public class UploadApi extends RestApi {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
             doc = this.getMergedJsonDoc(doc, tags);
             esClient.index(
-                    settings.getElasticsearch().getIndex(),
+                    index,
                     id,
                     DocParser.toJson(doc),
                     settings.getElasticsearch().getPipeline());
             // Elasticsearch entity coordinates (we use the first node address)
             ServerUrl node = settings.getElasticsearch().getNodes().get(0);
             url = node.getUrl() + "/" +
-                    settings.getElasticsearch().getIndex() + "/" +
+                    index + "/" +
                     esClient.getDefaultTypeName() + "/" +
                     id;
         }
