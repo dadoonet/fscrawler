@@ -107,6 +107,30 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
+    public void testAllDocumentsWithRestExternalIndex() throws Exception {
+        Path from = rootTmpDir.resolve("resources").resolve("documents");
+        if (Files.notExists(from)) {
+            staticLogger.error("directory [{}] should exist before wa start tests", from);
+            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        String index = "fscrawler_fs_custom";
+        Files.walk(from)
+                .filter(path -> Files.isRegularFile(path))
+                .forEach(path -> {
+                    UploadResponse response = uploadFileOnIndex(target, path, index);
+                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+                });
+
+        // We wait until we have all docs
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(index), Files.list(from).count(), null, TimeValue
+                .timeValueMinutes(2));
+        for (ESSearchHit hit : response.getHits()) {
+            assertThat(hit.getSourceAsMap(), hasKey("file"));
+            assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
+        }
+    }
+
+    @Test
     public void testDocumentWithExternalTags() throws Exception {
         // We iterate over all sample files and we try to locate any existing tag file
         // which can overwrite the data we extracted
@@ -116,7 +140,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 .forEach(path -> {
                     Path tagsFilePath = currentTestTagDir.resolve(path.getFileName().toString() + ".json");
                     logger.debug("Upload file #[{}]: [{}] with tags [{}]", numFiles.incrementAndGet(), path.getFileName(), tagsFilePath.getFileName());
-                    UploadResponse response = uploadFile(target, path, tagsFilePath);
+                    UploadResponse response = uploadFile(target, path, tagsFilePath, null);
                     assertThat(response.getFilename(), is(path.getFileName().toString()));
                 });
 
@@ -254,16 +278,25 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     public static UploadResponse uploadFile(WebTarget target, Path file) {
-        return uploadFile(target, file, null);
+        return uploadFile(target, file, null, null);
     }
 
-    public static UploadResponse uploadFile(WebTarget target, Path file, Path tagsFile) {
+    public static UploadResponse uploadFileOnIndex(WebTarget target, Path file, String index) {
+        return uploadFile(target, file, null, index);
+    }
+
+    public static UploadResponse uploadFile(WebTarget target, Path file, Path tagsFile, String index) {
         assertThat(Files.exists(file), is(true));
 
         // MediaType of the body part will be derived from the file.
         FileDataBodyPart filePart = new FileDataBodyPart("file", file.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         FormDataMultiPart mp = new FormDataMultiPart();
         mp.bodyPart(filePart);
+
+        if (index != null) {
+            staticLogger.info("Using index {}", index);
+            mp.field("index", index);
+        }
 
         if (tagsFile != null) {
             FileDataBodyPart tagsFilePart = new FileDataBodyPart("tags", tagsFile.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
