@@ -251,6 +251,17 @@ The field ``external`` doesn't necessarily be a flat structure. This is a more a
 
 .. attention:: Only standard :ref:`FSCrawler fields <generated_fields>` can be set outside ``external`` field name.
 
+Specifying an elasticsearch index
+~~~~~~~~~~~~~
+By default, fscrawler creates document in the index defined in the _settings.yaml (or json) file.
+However, using the REST service, it is possible to require fscrawler to use different indexes, by adding ``index=YOUR_INDEXD`` in the form data:
+
+.. code:: sh
+
+   echo "This is my text" > test.txt
+   curl -F "file=@test.txt" -F "index=my-index" "http://127.0.0.1:8080/fscrawler/_upload"
+
+
 Enabling CORS
 ~~~~~~~~~~~~~
 To enable Cross-Origin Request Sharing you will need to set ``enable_cors: true``
