@@ -40,6 +40,8 @@ Integration tests
 When running from the command line with ``mvn`` integration tests are ran against all supported versions.
 This is done by running a Docker instance of elasticsearch using the expected version.
 
+A HTTP server is also started on port 8080 during the integration tests.
+
 Run tests from your IDE
 """""""""""""""""""""""
 
