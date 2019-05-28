@@ -172,8 +172,8 @@
                         <configuration>
                             <images>
                                 <image>
-                                    <alias>elasticsearch-it</alias>
-                                    <name>dadoonet/docker-elasticsearch:${project.version}</name>
+                                    <alias>fscrawler</alias>
+                                    <name>dadoonet/fscrawler:${project.version}</name>
                                     <build>
                                         <from>${integ.elasticsearch.image}:${integ.elasticsearch.version}</from>
                                         <env>
