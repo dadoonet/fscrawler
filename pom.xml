@@ -334,7 +334,7 @@
                 <plugin>
                     <groupId>org.sonatype.ossindex.maven</groupId>
                     <artifactId>ossindex-maven-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.0.4</version>
                     <executions>
                         <execution>
                             <id>audit-dependencies</id>
