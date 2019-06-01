@@ -42,7 +42,7 @@
         <elasticsearch5.version>5.6.15</elasticsearch5.version>
 
         <tika.version>1.20</tika.version>
-        <jackson.version>2.9.8</jackson.version>
+        <jackson.version>2.9.9</jackson.version>
         <log4j.version>2.11.2</log4j.version>
         <jansi.version>1.18</jansi.version>
         <jersey.version>2.28</jersey.version>
@@ -542,6 +542,14 @@
                 <artifactId>snakeyaml</artifactId>
                 <version>${snakeyaml.version}</version>
             </dependency>
+            <!--
+              Will need to be removed in the future. Workaround for https://github.com/FasterXML/jackson-dataformat-xml/issues/340
+            -->
+            <dependency>
+                <groupId>org.codehaus.woodstox</groupId>
+                <artifactId>stax2-api</artifactId>
+                <version>4.1</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.tika</groupId>
@@ -680,6 +688,12 @@
                 <groupId>org.glassfish.jersey.media</groupId>
                 <artifactId>jersey-media-json-jackson</artifactId>
                 <version>${jersey.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.module</groupId>
+                        <artifactId>jackson-module-jaxb-annotations</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.glassfish.jersey.media</groupId>
