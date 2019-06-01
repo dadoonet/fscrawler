@@ -444,8 +444,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(46));
+        assertThat(raw.entrySet(), iterableWithSize(48));
         assertThat(raw, hasEntry("date", "2016-07-07T08:37:42Z"));
+        assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:title", "Test Tika title"));
         assertThat(raw, hasEntry("xmp:CreatorTool", "Microsoft Word"));
@@ -485,6 +486,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("xmpTPg:NPages", "2"));
         assertThat(raw, hasEntry("Creation-Date", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("resourceName", "test.pdf"));
+        assertThat(raw, hasEntry("pdf:charsPerPage", "42"));
         assertThat(raw, hasEntry("access_permission:extract_content", "true"));
         assertThat(raw, hasEntry("access_permission:can_print", "true"));
         assertThat(raw, hasEntry("meta:keyword", "keyword1, keyword2"));
