@@ -52,6 +52,8 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.checksum``            | ``null``              | `File Checksum`_                |
 +----------------------------+-----------------------+---------------------------------+
+| ``fs.follow_symlinks``     | ``false``             | `Follow Symlinks`_              |
++----------------------------+-----------------------+---------------------------------+
 
 .. _root-directory:
 
@@ -731,3 +733,17 @@ such as ``MD5`` or ``SHA-1``.
    name: "test"
    fs:
      checksum: "MD5"
+
+Follow Symlinks
+^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.7
+
+If you want FSCrawler to follow the symbolic links, you need to be explicit about it and set
+``follow_symlink`` to ``true``. Starting from version 2.7, symbolic links are not followed anymore.
+
+.. code:: yaml
+
+   name: "test"
+   fs:
+     follow_symlink: true

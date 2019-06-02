@@ -57,6 +57,7 @@ public class Fs {
     private boolean continueOnError = false;
     private Ocr ocr = new Ocr();
     private ByteSizeValue ignoreAbove = null;
+    private boolean followSymlinks = false;
 
     public static Builder builder() {
         return new Builder();
@@ -89,6 +90,7 @@ public class Fs {
         private boolean continueOnError = false;
         private Ocr ocr = new Ocr();
         private ByteSizeValue ignoreAbove = null;
+        private boolean followSymlinks = false;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -239,10 +241,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setFollowSymlinks(boolean followSymlinks) {
+            this.followSymlinks = followSymlinks;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks);
         }
     }
 
@@ -253,7 +260,7 @@ public class Fs {
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, List<String> filters, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove, boolean followSymlinks) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -276,6 +283,7 @@ public class Fs {
         this.continueOnError = continueOnError;
         this.ocr = ocr;
         this.ignoreAbove = ignoreAbove;
+        this.followSymlinks = followSymlinks;
     }
 
     public String getUrl() {
@@ -470,6 +478,14 @@ public class Fs {
         this.ignoreAbove = ignoreAbove;
     }
 
+    public boolean isFollowSymlinks() {
+        return followSymlinks;
+    }
+
+    public void setFollowSymlinks(boolean followSymlinks) {
+        this.followSymlinks = followSymlinks;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -488,6 +504,7 @@ public class Fs {
                 indexFolders == fs.indexFolders &&
                 langDetect == fs.langDetect &&
                 continueOnError == fs.continueOnError &&
+                followSymlinks == fs.followSymlinks &&
                 Objects.equals(url, fs.url) &&
                 Objects.equals(updateRate, fs.updateRate) &&
                 Objects.equals(includes, fs.includes) &&
@@ -502,7 +519,8 @@ public class Fs {
     @Override
     public int hashCode() {
         return Objects.hash(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
-                removeDeleted, addAsInnerObject, storeSource, indexContent, indexedChars, attributesSupport, rawMetadata, xmlSupport, checksum, indexFolders, langDetect, continueOnError, ocr, ignoreAbove);
+                removeDeleted, addAsInnerObject, storeSource, indexContent, indexedChars, attributesSupport, rawMetadata, xmlSupport,
+                checksum, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks);
     }
 
     @Override
@@ -529,6 +547,7 @@ public class Fs {
                 ", continueOnError=" + continueOnError +
                 ", ocr=" + ocr +
                 ", ignoreAbove=" + ignoreAbove +
+                ", followSymlinks=" + followSymlinks +
                 '}';
     }
 }
