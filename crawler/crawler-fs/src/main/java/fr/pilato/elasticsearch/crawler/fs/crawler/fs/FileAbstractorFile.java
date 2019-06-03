@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -72,7 +73,11 @@ public class FileAbstractorFile extends FileAbstractor<File> {
     @Override
     public Collection<FileAbstractModel> getFiles(String dir) {
         logger.debug("Listing local files from {}", dir);
-        File[] files = new File(dir).listFiles();
+
+        File[] files = new File(dir).listFiles(file -> {
+            if (fsSettings.getFs().isFollowSymlinks()) return true;
+            return !Files.isSymbolicLink(file.toPath());
+        });
         Collection<FileAbstractModel> result;
 
         if (files != null) {

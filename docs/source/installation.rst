@@ -341,4 +341,5 @@ Upgrade to 2.7
 - The elasticsearch 6.x implementation does not support elasticsearch versions prior to 6.7.
 If you are using an older version, it's better to upgrade or you need to "hack" the distribution
 and replace all elasticsearch/lucene jars to the 6.6 version.
-
+- FSCrawler does not follow symbolic links anymore. You need to set explicitly ``fs.follow_symlink``
+to ``true`` if you wish revert to the previous behavior.
