@@ -180,7 +180,7 @@
                                             <discovery.type>single-node</discovery.type>
                                             <xpack.license.self_generated.type>trial</xpack.license.self_generated.type>
                                             <xpack.security.enabled>true</xpack.security.enabled>
-                                            <ELASTIC_PASSWORD>${integ.security.password}</ELASTIC_PASSWORD>
+                                            <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
                                         </env>
                                     </build>
                                     <run>

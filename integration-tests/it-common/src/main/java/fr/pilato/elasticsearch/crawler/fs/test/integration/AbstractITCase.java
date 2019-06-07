@@ -238,7 +238,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     @BeforeClass
     public static void startElasticsearchRestClient() throws IOException {
         String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
-        if (testClusterCloudId != null) {
+        if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
             testClusterUrl = decodeCloudId(testClusterCloudId);
             staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
         } else {
