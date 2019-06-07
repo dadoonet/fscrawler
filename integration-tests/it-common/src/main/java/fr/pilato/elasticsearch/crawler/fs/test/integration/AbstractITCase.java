@@ -243,6 +243,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
         } else {
             testClusterUrl = System.getProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
+            if (testClusterUrl.isEmpty()) {
+                // When running from Maven CLI, tests.cluster.url is empty and not null...
+                testClusterUrl = DEFAULT_TEST_CLUSTER_URL;
+            }
         }
 
         staticLogger.info("Starting a client against [{}]", testClusterUrl);
