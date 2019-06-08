@@ -238,11 +238,15 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     @BeforeClass
     public static void startElasticsearchRestClient() throws IOException {
         String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
-        if (testClusterCloudId != null) {
+        if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
             testClusterUrl = decodeCloudId(testClusterCloudId);
             staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
         } else {
             testClusterUrl = System.getProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
+            if (testClusterUrl.isEmpty()) {
+                // When running from Maven CLI, tests.cluster.url is empty and not null...
+                testClusterUrl = DEFAULT_TEST_CLUSTER_URL;
+            }
         }
 
         staticLogger.info("Starting a client against [{}]", testClusterUrl);

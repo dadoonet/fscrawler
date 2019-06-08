@@ -68,9 +68,12 @@
         <!-- For integration tests using Docker or external cluster -->
         <integ.elasticsearch.image>docker.elastic.co/elasticsearch/elasticsearch</integ.elasticsearch.image>
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
-        <integ.security.username>elastic</integ.security.username>
-        <integ.security.password>changeme</integ.security.password>
         <integ.elasticsearch.port>9200</integ.elasticsearch.port>
+        <tests.cluster.url></tests.cluster.url>
+        <tests.cluster.cloud_id></tests.cluster.cloud_id>
+        <tests.cluster.user>elastic</tests.cluster.user>
+        <tests.cluster.pass>changeme</tests.cluster.pass>
+        <tests.rest.port>8080</tests.rest.port>
 
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
@@ -192,6 +195,11 @@
                             <tests.timezone>${tests.timezone}</tests.timezone>
                             <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                             <java.awt.headless>true</java.awt.headless>
+                            <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
+                            <tests.cluster.cloud_id>${tests.cluster.cloud_id}</tests.cluster.cloud_id>
+                            <tests.cluster.user>${tests.cluster.user}</tests.cluster.user>
+                            <tests.cluster.pass>${tests.cluster.pass}</tests.cluster.pass>
+                            <tests.rest.port>${tests.rest.port}</tests.rest.port>
                         </systemProperties>
                     </configuration>
 
