@@ -617,6 +617,11 @@
                         <groupId>org.apache.cxf</groupId>
                         <artifactId>cxf-rt-rs-client</artifactId>
                     </exclusion>
+                    <!-- com.google.guava:guava:27.0.1-jre vs com.google.guava:guava:28.0-jre -->
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <!-- Add some optional dependencies -->
@@ -665,7 +670,7 @@
                         <groupId>org.slf4j</groupId>
                         <artifactId>slf4j-api</artifactId>
                     </exclusion>
-                    <!-- com.google.guava:guava:17.0 vs com.google.guava:guava:27.0.1-jre -->
+                    <!-- com.google.guava:guava:27.0.1-jre vs com.google.guava:guava:28.0-jre -->
                     <exclusion>
                         <groupId>com.google.guava</groupId>
                         <artifactId>guava</artifactId>
