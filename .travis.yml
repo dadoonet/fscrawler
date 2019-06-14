@@ -1,7 +1,7 @@
 language: java
 sudo: true
 jdk:
-  - oraclejdk8
+  - openjdk8
 install: true
 services:
   - docker
