@@ -23,6 +23,8 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import java.io.Closeable;
 import java.io.IOException;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
+
 /**
  * Simple Elasticsearch client over HTTP or HTTPS.
  * Only needed methods are exposed.
@@ -35,7 +37,7 @@ public interface ElasticsearchClient extends Closeable {
      * won't work with a cluster 5.x.y or 7.x.y.
      * @return The major digit of the compatible elasticsearch version
      */
-    byte compatibleVersion();
+    String compatibleVersion();
 
     /**
      * Start the client and its internal resources. This must be called before any operation can be performed.
@@ -47,7 +49,7 @@ public interface ElasticsearchClient extends Closeable {
      * Get version about the node it's connected to
      * @throws IOException in case of communication error with the cluster
      */
-    ESVersion getVersion() throws IOException;
+    String getVersion() throws IOException;
 
     /**
      * Create an index
@@ -194,11 +196,11 @@ public interface ElasticsearchClient extends Closeable {
     boolean exists(String index, String id) throws IOException;
 
     default void checkVersion() throws IOException {
-        ESVersion esVersion = getVersion();
-        if (esVersion.major != compatibleVersion()) {
+        String esVersion = getVersion();
+        if (!extractMajorVersion(esVersion).equals(compatibleVersion())) {
             throw new RuntimeException("The Elasticsearch client version [" +
                     compatibleVersion() + "] is not compatible with the Elasticsearch cluster version [" +
-                    esVersion.toString() + "].");
+                    esVersion + "].");
         }
     }
 }

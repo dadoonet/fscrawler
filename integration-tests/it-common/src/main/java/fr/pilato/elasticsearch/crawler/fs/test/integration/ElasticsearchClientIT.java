@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -112,13 +111,13 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
     @Test
     public void testFindVersion() throws IOException {
-        ESVersion version = esClient.getVersion();
+        String version = esClient.getVersion();
         logger.info("Current elasticsearch version: [{}]", version);
 
         // If we did not use an external URL but the docker instance we can test for sure that the version is the expected one
         if (System.getProperty("tests.cluster.url") == null) {
             Properties properties = readPropertiesFromClassLoader("elasticsearch.version.properties");
-            assertThat(version.toString(), is(properties.getProperty("version")));
+            assertThat(version, is(properties.getProperty("version")));
         }
     }
 

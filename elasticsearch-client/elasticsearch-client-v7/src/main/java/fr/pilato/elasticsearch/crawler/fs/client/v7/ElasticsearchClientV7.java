@@ -32,7 +32,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
-import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
@@ -126,8 +125,8 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     }
 
     @Override
-    public byte compatibleVersion() {
-        return 7;
+    public String compatibleVersion() {
+        return "7";
     }
 
     @Override
@@ -166,23 +165,9 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     }
 
     @Override
-    public ESVersion getVersion() throws IOException {
+    public String getVersion() throws IOException {
         MainResponse.Version version = client.info(RequestOptions.DEFAULT).getVersion();
-        return ESVersion.fromString(version.toString());
-    }
-
-    /**
-     * For Elasticsearch 6, we need to make sure we are running at least Elasticsearch 6.4
-     * @throws IOException when something is wrong while asking the version of the node.
-     */
-    @Override
-    public void checkVersion() throws IOException {
-        ESVersion esVersion = getVersion();
-        if (esVersion.major != compatibleVersion()) {
-            throw new RuntimeException("The Elasticsearch client version [" +
-                    compatibleVersion() + "] is not compatible with the Elasticsearch cluster version [" +
-                    esVersion.toString() + "].");
-        }
+        return version.getNumber();
     }
 
     class DebugListener implements BulkProcessor.Listener {

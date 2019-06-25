@@ -24,8 +24,8 @@ import java.io.IOException;
 public abstract class ElasticsearchClientDummyBase implements ElasticsearchClient {
 
     @Override
-    public byte compatibleVersion() {
-        return 0;
+    public String compatibleVersion() {
+        return "0";
     }
 
     @Override
@@ -34,7 +34,7 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public ESVersion getVersion() {
+    public String getVersion() {
         return null;
     }
 

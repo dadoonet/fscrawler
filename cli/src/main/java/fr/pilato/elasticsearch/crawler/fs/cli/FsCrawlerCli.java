@@ -23,7 +23,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
@@ -48,6 +47,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readDefaultJsonVersionedFile;
 
 /**
@@ -265,7 +265,7 @@ public class FsCrawlerCli {
                     logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
                     return;
                 }
-                ESVersion elasticsearchVersion = fsCrawler.getEsClient().getVersion();
+                String elasticsearchVersion = fsCrawler.getEsClient().getVersion();
                 checkForDeprecatedResources(configDir, elasticsearchVersion);
                 fsCrawler.start();
 
@@ -287,17 +287,17 @@ public class FsCrawlerCli {
         }
     }
 
-    private static void checkForDeprecatedResources(Path configDir, ESVersion elasticsearchVersion) throws IOException {
+    private static void checkForDeprecatedResources(Path configDir, String elasticsearchVersion) throws IOException {
         try {
             // If we are able to read an old configuration file, we should tell the user to check the documentation
-            readDefaultJsonVersionedFile(configDir, Byte.toString(elasticsearchVersion.major), "doc");
+            readDefaultJsonVersionedFile(configDir, extractMajorVersion(elasticsearchVersion), "doc");
             logger.warn("We found old configuration index settings: [{}/_default/doc.json]. You should look at the documentation" +
                     " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
                     configDir);
         } catch (IllegalArgumentException ignored) { }
         try {
             // If we are able to read an old configuration file, we should tell the user to check the documentation
-            readDefaultJsonVersionedFile(configDir, Byte.toString(elasticsearchVersion.major), "folder");
+            readDefaultJsonVersionedFile(configDir, extractMajorVersion(elasticsearchVersion), "folder");
             logger.warn("We found old configuration index settings: [{}/_default/folder.json]. You should look at the documentation" +
                     " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
                     configDir);

@@ -25,7 +25,6 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
@@ -291,7 +290,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static void testClusterRunning() throws IOException {
         try {
-            ESVersion version = esClient.getVersion();
+            String version = esClient.getVersion();
             staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
         } catch (ConnectException e) {
             // If we have an exception here, let's ignore the test

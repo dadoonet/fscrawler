@@ -626,4 +626,8 @@ public class FsCrawlerUtil {
     public static String extractMajorVersion(String version) {
         return version.split("\\.")[0];
     }
+
+    public static String extractMinorVersion(String version) {
+        return version.split("\\.")[1];
+    }
 }

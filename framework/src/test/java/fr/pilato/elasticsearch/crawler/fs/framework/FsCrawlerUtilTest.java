@@ -34,6 +34,7 @@ import java.util.Set;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMinorVersion;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFilePermissions;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
@@ -89,5 +90,11 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     public void testExtractMajorVersion() {
         assertThat(extractMajorVersion("7.2.0"), is("7"));
         assertThat(extractMajorVersion("10.1.0"), is("10"));
+    }
+
+    @Test
+    public void testExtractMinorVersion() {
+        assertThat(extractMinorVersion("7.2.0"), is("2"));
+        assertThat(extractMinorVersion("10.1.0"), is("1"));
     }
 }

@@ -32,7 +32,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
-import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
@@ -124,8 +123,8 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
     }
 
     @Override
-    public byte compatibleVersion() {
-        return 5;
+    public String compatibleVersion() {
+        return "5";
     }
 
     @Override
@@ -167,9 +166,9 @@ public class ElasticsearchClientV5 implements ElasticsearchClient {
     }
 
     @Override
-    public ESVersion getVersion() throws IOException {
+    public String getVersion() throws IOException {
         Version version = client.info().getVersion();
-        return ESVersion.fromString(version.toString());
+        return version.toString();
     }
 
     class DebugListener implements BulkProcessor.Listener {

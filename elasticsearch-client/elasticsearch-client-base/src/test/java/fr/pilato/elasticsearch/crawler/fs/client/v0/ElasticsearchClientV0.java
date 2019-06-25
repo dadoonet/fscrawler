@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client.v0;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientDummyBase;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
@@ -31,12 +30,12 @@ public class ElasticsearchClientV0 extends ElasticsearchClientDummyBase {
     }
 
     @Override
-    public byte compatibleVersion() {
-        return 0;
+    public String compatibleVersion() {
+        return "0";
     }
 
     @Override
-    public ESVersion getVersion() {
-        return ESVersion.fromString("0.1.0");
+    public String getVersion() {
+        return "0.1.0";
     }
 }
