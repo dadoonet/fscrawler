@@ -49,11 +49,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-// TODO replace with import org.elasticsearch.client.indices.CreateIndexRequest;
-// When https://github.com/elastic/elasticsearch/issues/40897 is fixed
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -72,6 +68,8 @@ import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -257,9 +255,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
      */
     public boolean isExistingIndex(String index) throws IOException {
         logger.debug("is existing index [{}]", index);
-        GetIndexRequest gir = new GetIndexRequest();
-        gir.indices(index);
-        return client.indices().exists(gir, RequestOptions.DEFAULT);
+        return client.indices().exists(new GetIndexRequest(index), RequestOptions.DEFAULT);
     }
 
     /**
