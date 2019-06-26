@@ -32,7 +32,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
-import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
@@ -45,7 +44,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
@@ -68,6 +66,7 @@ import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.core.MainResponse;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.document.DocumentField;
@@ -96,6 +95,7 @@ import java.util.function.BiConsumer;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
 import static org.elasticsearch.action.support.IndicesOptions.LENIENT_EXPAND_OPEN;
@@ -125,8 +125,8 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     }
 
     @Override
-    public byte compatibleVersion() {
-        return 7;
+    public String compatibleVersion() {
+        return "7";
     }
 
     @Override
@@ -165,23 +165,9 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     }
 
     @Override
-    public ESVersion getVersion() throws IOException {
-        Version version = client.info(RequestOptions.DEFAULT).getVersion();
-        return ESVersion.fromString(version.toString());
-    }
-
-    /**
-     * For Elasticsearch 6, we need to make sure we are running at least Elasticsearch 6.4
-     * @throws IOException when something is wrong while asking the version of the node.
-     */
-    @Override
-    public void checkVersion() throws IOException {
-        ESVersion esVersion = getVersion();
-        if (esVersion.major != compatibleVersion()) {
-            throw new RuntimeException("The Elasticsearch client version [" +
-                    compatibleVersion() + "] is not compatible with the Elasticsearch cluster version [" +
-                    esVersion.toString() + "].");
-        }
+    public String getVersion() throws IOException {
+        MainResponse.Version version = client.info(RequestOptions.DEFAULT).getVersion();
+        return version.getNumber();
     }
 
     class DebugListener implements BulkProcessor.Listener {
@@ -415,10 +401,10 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
 
         // Let's read the current version of elasticsearch cluster
-        Version version = client.info(RequestOptions.DEFAULT).getVersion();
+        MainResponse.Version version = client.info(RequestOptions.DEFAULT).getVersion();
         logger.debug("FS crawler connected to an elasticsearch [{}] node.", version.toString());
 
-        elasticsearchVersion = Byte.toString(version.major);
+        elasticsearchVersion = extractMajorVersion(version.getNumber());
 
         // If needed, we create the new settings for this files index
         if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {

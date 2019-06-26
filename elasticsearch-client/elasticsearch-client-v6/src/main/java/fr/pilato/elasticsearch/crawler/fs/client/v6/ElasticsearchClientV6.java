@@ -32,7 +32,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
-import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
@@ -49,11 +48,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-// TODO replace with import org.elasticsearch.client.indices.CreateIndexRequest;
-// When https://github.com/elastic/elasticsearch/issues/40897 is fixed
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -72,6 +67,8 @@ import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -98,6 +95,8 @@ import java.util.function.BiConsumer;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMinorVersion;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
 import static org.elasticsearch.action.support.IndicesOptions.LENIENT_EXPAND_OPEN;
@@ -127,8 +126,8 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
     }
 
     @Override
-    public byte compatibleVersion() {
-        return 6;
+    public String compatibleVersion() {
+        return "6";
     }
 
     @Override
@@ -167,9 +166,9 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
     }
 
     @Override
-    public ESVersion getVersion() throws IOException {
+    public String getVersion() throws IOException {
         Version version = client.info(RequestOptions.DEFAULT).getVersion();
-        return ESVersion.fromString(version.toString());
+        return version.toString();
     }
 
     /**
@@ -178,13 +177,13 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
      */
     @Override
     public void checkVersion() throws IOException {
-        ESVersion esVersion = getVersion();
-        if (esVersion.major != compatibleVersion()) {
+        String esVersion = getVersion();
+        if (!extractMajorVersion(esVersion).equals(compatibleVersion())) {
             throw new RuntimeException("The Elasticsearch client version [" +
                     compatibleVersion() + "] is not compatible with the Elasticsearch cluster version [" +
-                    esVersion.toString() + "].");
+                    esVersion + "].");
         }
-        if (esVersion.minor < 4) {
+        if (Integer.parseInt(extractMinorVersion(esVersion)) < 4) {
             throw new RuntimeException("This version of FSCrawler is not compatible with " +
                     "Elasticsearch version [" +
                     esVersion.toString() + "]. Please upgrade Elasticsearch to at least a 6.4.x version.");
@@ -257,9 +256,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
      */
     public boolean isExistingIndex(String index) throws IOException {
         logger.debug("is existing index [{}]", index);
-        GetIndexRequest gir = new GetIndexRequest();
-        gir.indices(index);
-        return client.indices().exists(gir, RequestOptions.DEFAULT);
+        return client.indices().exists(new GetIndexRequest(index), RequestOptions.DEFAULT);
     }
 
     /**

@@ -33,6 +33,8 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMinorVersion;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFilePermissions;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
@@ -82,5 +84,17 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         assertThat(isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576), is(true));
         assertThat(isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"),
                 new ByteSizeValue(randomIntBetween(2, 100), ByteSizeUnit.MB).getBytes()), is(false));
+    }
+
+    @Test
+    public void testExtractMajorVersion() {
+        assertThat(extractMajorVersion("7.2.0"), is("7"));
+        assertThat(extractMajorVersion("10.1.0"), is("10"));
+    }
+
+    @Test
+    public void testExtractMinorVersion() {
+        assertThat(extractMinorVersion("7.2.0"), is("2"));
+        assertThat(extractMinorVersion("10.1.0"), is("1"));
     }
 }

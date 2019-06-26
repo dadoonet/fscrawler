@@ -21,12 +21,13 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESVersion;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMinorVersion;
 import static org.junit.Assume.assumeFalse;
 
 /**
@@ -38,9 +39,11 @@ public class FsCrawlerTestUpgradeVersionIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_upgrade_version() throws Exception {
         // We can only run this test if elasticsearch version is >= 2.3 and < 6.0
-        ESVersion version = esClient.getVersion();
+        String version = esClient.getVersion();
+        int major = Integer.parseInt(extractMajorVersion(version));
+        int minor = Integer.parseInt(extractMinorVersion(version));
         assumeFalse("We can only run the upgrade process on version between >= 2.3 and < 6.0",
-                version.major < 2 || (version.major == 2 && version.minor < 4) || version.major >= 6);
+                major < 2 || (major == 2 && minor < 4) || major >= 6);
 
         // Let's create some deprecated indices
         long nbDocs = randomLongBetween(10, 100);
@@ -71,7 +74,7 @@ public class FsCrawlerTestUpgradeVersionIT extends AbstractFsCrawlerITCase {
 
         // Test that we have all needed docs in old index and new indices
         long expectedDocs = nbDocs;
-        if (esClient.getVersion().major < 5) {
+        if (Integer.parseInt(extractMajorVersion(esClient.getVersion())) < 5) {
             // If we ran our tests against a 2.x cluster, _delete_by_query is skipped (as it does not exist).
             // Which means that folders are still there
             expectedDocs += nbFolders;
