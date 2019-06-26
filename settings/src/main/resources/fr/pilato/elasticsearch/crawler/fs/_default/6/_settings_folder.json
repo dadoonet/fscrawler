@@ -14,20 +14,18 @@
     }
   },
   "mappings": {
-    "_doc": {
-      "properties" : {
-        "real" : {
-          "type" : "keyword",
-          "store" : true
-        },
-        "root" : {
-          "type" : "keyword",
-          "store" : true
-        },
-        "virtual" : {
-          "type" : "keyword",
-          "store" : true
-        }
+    "properties" : {
+      "real" : {
+        "type" : "keyword",
+        "store" : true
+      },
+      "root" : {
+        "type" : "keyword",
+        "store" : true
+      },
+      "virtual" : {
+        "type" : "keyword",
+        "store" : true
       }
     }
   }

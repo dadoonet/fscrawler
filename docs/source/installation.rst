@@ -343,3 +343,5 @@ If you are using an older version, it's better to upgrade or you need to "hack" 
 and replace all elasticsearch/lucene jars to the 6.6 version.
 - FSCrawler does not follow symbolic links anymore. You need to set explicitly ``fs.follow_symlink``
 to ``true`` if you wish revert to the previous behavior.
+- The mapping for elasticsearch 6.x can not contain anymore the type name.
+
