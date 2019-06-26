@@ -629,196 +629,194 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "    }\n" +
                 "  },\n" +
                 "  \"mappings\": {\n" +
-                "    \"_doc\": {\n" +
-                "      \"dynamic_templates\": [\n" +
-                "        {\n" +
-                "          \"raw_as_text\": {\n" +
-                "            \"path_match\": \"meta.raw.*\",\n" +
-                "            \"mapping\": {\n" +
-                "              \"type\": \"text\",\n" +
-                "              \"fields\": {\n" +
-                "                \"keyword\": {\n" +
-                "                  \"type\": \"keyword\",\n" +
-                "                  \"ignore_above\": 256\n" +
-                "                }\n" +
+                "    \"dynamic_templates\": [\n" +
+                "      {\n" +
+                "        \"raw_as_text\": {\n" +
+                "          \"path_match\": \"meta.raw.*\",\n" +
+                "          \"mapping\": {\n" +
+                "            \"type\": \"text\",\n" +
+                "            \"fields\": {\n" +
+                "              \"keyword\": {\n" +
+                "                \"type\": \"keyword\",\n" +
+                "                \"ignore_above\": 256\n" +
                 "              }\n" +
                 "            }\n" +
                 "          }\n" +
                 "        }\n" +
-                "      ],\n" +
-                "      \"properties\": {\n" +
-                "        \"attachment\": {\n" +
-                "          \"type\": \"binary\",\n" +
-                "          \"doc_values\": false\n" +
-                "        },\n" +
-                "        \"attributes\": {\n" +
-                "          \"properties\": {\n" +
-                "            \"group\": {\n" +
-                "              \"type\": \"keyword\"\n" +
-                "            },\n" +
-                "            \"owner\": {\n" +
-                "              \"type\": \"keyword\"\n" +
-                "            }\n" +
+                "      }\n" +
+                "    ],\n" +
+                "    \"properties\": {\n" +
+                "      \"attachment\": {\n" +
+                "        \"type\": \"binary\",\n" +
+                "        \"doc_values\": false\n" +
+                "      },\n" +
+                "      \"attributes\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"group\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"owner\": {\n" +
+                "            \"type\": \"keyword\"\n" +
                 "          }\n" +
-                "        },\n" +
-                "        \"content\": {\n" +
-                "          \"type\": \"text\"\n" +
-                "        },\n" +
-                "        \"file\": {\n" +
-                "          \"properties\": {\n" +
-                "            \"content_type\": {\n" +
-                "              \"type\": \"keyword\"\n" +
-                "            },\n" +
-                "            \"filename\": {\n" +
-                "              \"type\": \"keyword\",\n" +
-                "              \"store\": true\n" +
-                "            },\n" +
-                "            \"extension\": {\n" +
-                "              \"type\": \"keyword\"\n" +
-                "            },\n" +
-                "            \"filesize\": {\n" +
-                "              \"type\": \"long\"\n" +
-                "            },\n" +
-                "            \"indexed_chars\": {\n" +
-                "              \"type\": \"long\"\n" +
-                "            },\n" +
-                "            \"indexing_date\": {\n" +
-                "              \"type\": \"date\",\n" +
-                "              \"format\": \"dateOptionalTime\"\n" +
-                "            },\n" +
-                "            \"created\": {\n" +
-                "              \"type\": \"date\",\n" +
-                "              \"format\": \"dateOptionalTime\"\n" +
-                "            },\n" +
-                "            \"last_modified\": {\n" +
-                "              \"type\": \"date\",\n" +
-                "              \"format\": \"dateOptionalTime\"\n" +
-                "            },\n" +
-                "            \"last_accessed\": {\n" +
-                "              \"type\": \"date\",\n" +
-                "              \"format\": \"dateOptionalTime\"\n" +
-                "            },\n" +
-                "            \"checksum\": {\n" +
-                "              \"type\": \"keyword\"\n" +
-                "            },\n" +
-                "            \"url\": {\n" +
-                "              \"type\": \"keyword\",\n" +
-                "              \"index\": false\n" +
-                "            }\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"content\": {\n" +
+                "        \"type\": \"text\"\n" +
+                "      },\n" +
+                "      \"file\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"content_type\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"filename\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"store\": true\n" +
+                "          },\n" +
+                "          \"extension\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"filesize\": {\n" +
+                "            \"type\": \"long\"\n" +
+                "          },\n" +
+                "          \"indexed_chars\": {\n" +
+                "            \"type\": \"long\"\n" +
+                "          },\n" +
+                "          \"indexing_date\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"dateOptionalTime\"\n" +
+                "          },\n" +
+                "          \"created\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"dateOptionalTime\"\n" +
+                "          },\n" +
+                "          \"last_modified\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"dateOptionalTime\"\n" +
+                "          },\n" +
+                "          \"last_accessed\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"dateOptionalTime\"\n" +
+                "          },\n" +
+                "          \"checksum\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"url\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"index\": false\n" +
                 "          }\n" +
-                "        },\n" +
-                "        \"meta\": {\n" +
-                "          \"properties\": {\n" +
-                "            \"author\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"date\": {\n" +
-                "              \"type\": \"date\",\n" +
-                "              \"format\": \"dateOptionalTime\"\n" +
-                "            },\n" +
-                "            \"keywords\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"title\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"language\": {\n" +
-                "              \"type\": \"keyword\"\n" +
-                "            },\n" +
-                "            \"format\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"identifier\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"contributor\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"coverage\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"modifier\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"creator_tool\": {\n" +
-                "              \"type\": \"keyword\"\n" +
-                "            },\n" +
-                "            \"publisher\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"relation\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"rights\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"source\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"type\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"description\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"created\": {\n" +
-                "              \"type\": \"date\",\n" +
-                "              \"format\": \"dateOptionalTime\"\n" +
-                "            },\n" +
-                "            \"print_date\": {\n" +
-                "              \"type\": \"date\",\n" +
-                "              \"format\": \"dateOptionalTime\"\n" +
-                "            },\n" +
-                "            \"metadata_date\": {\n" +
-                "              \"type\": \"date\",\n" +
-                "              \"format\": \"dateOptionalTime\"\n" +
-                "            },\n" +
-                "            \"latitude\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"longitude\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"altitude\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            },\n" +
-                "            \"rating\": {\n" +
-                "              \"type\": \"byte\"\n" +
-                "            },\n" +
-                "            \"comments\": {\n" +
-                "              \"type\": \"text\"\n" +
-                "            }\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"meta\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"author\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"date\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"dateOptionalTime\"\n" +
+                "          },\n" +
+                "          \"keywords\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"title\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"language\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"format\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"identifier\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"contributor\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"coverage\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"modifier\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"creator_tool\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"publisher\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"relation\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"rights\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"source\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"type\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"description\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"created\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"dateOptionalTime\"\n" +
+                "          },\n" +
+                "          \"print_date\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"dateOptionalTime\"\n" +
+                "          },\n" +
+                "          \"metadata_date\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"dateOptionalTime\"\n" +
+                "          },\n" +
+                "          \"latitude\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"longitude\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"altitude\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"rating\": {\n" +
+                "            \"type\": \"byte\"\n" +
+                "          },\n" +
+                "          \"comments\": {\n" +
+                "            \"type\": \"text\"\n" +
                 "          }\n" +
-                "        },\n" +
-                "        \"path\": {\n" +
-                "          \"properties\": {\n" +
-                "            \"real\": {\n" +
-                "              \"type\": \"keyword\",\n" +
-                "              \"fields\": {\n" +
-                "                \"tree\": {\n" +
-                "                  \"type\": \"text\",\n" +
-                "                  \"analyzer\": \"fscrawler_path\",\n" +
-                "                  \"fielddata\": true\n" +
-                "                },\n" +
-                "                \"fulltext\": {\n" +
-                "                  \"type\": \"text\"\n" +
-                "                }\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"path\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"real\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"fields\": {\n" +
+                "              \"tree\": {\n" +
+                "                \"type\": \"text\",\n" +
+                "                \"analyzer\": \"fscrawler_path\",\n" +
+                "                \"fielddata\": true\n" +
+                "              },\n" +
+                "              \"fulltext\": {\n" +
+                "                \"type\": \"text\"\n" +
                 "              }\n" +
-                "            },\n" +
-                "            \"root\": {\n" +
-                "              \"type\": \"keyword\"\n" +
-                "            },\n" +
-                "            \"virtual\": {\n" +
-                "              \"type\": \"keyword\",\n" +
-                "              \"fields\": {\n" +
-                "                \"tree\": {\n" +
-                "                  \"type\": \"text\",\n" +
-                "                  \"analyzer\": \"fscrawler_path\",\n" +
-                "                  \"fielddata\": true\n" +
-                "                },\n" +
-                "                \"fulltext\": {\n" +
-                "                  \"type\": \"text\"\n" +
-                "                }\n" +
+                "            }\n" +
+                "          },\n" +
+                "          \"root\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"virtual\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"fields\": {\n" +
+                "              \"tree\": {\n" +
+                "                \"type\": \"text\",\n" +
+                "                \"analyzer\": \"fscrawler_path\",\n" +
+                "                \"fielddata\": true\n" +
+                "              },\n" +
+                "              \"fulltext\": {\n" +
+                "                \"type\": \"text\"\n" +
                 "              }\n" +
                 "            }\n" +
                 "          }\n" +
@@ -849,20 +847,18 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "    }\n" +
                 "  },\n" +
                 "  \"mappings\": {\n" +
-                "    \"_doc\": {\n" +
-                "      \"properties\" : {\n" +
-                "        \"real\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
-                "        },\n" +
-                "        \"root\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
-                "        },\n" +
-                "        \"virtual\" : {\n" +
-                "          \"type\" : \"keyword\",\n" +
-                "          \"store\" : true\n" +
-                "        }\n" +
+                "    \"properties\" : {\n" +
+                "      \"real\" : {\n" +
+                "        \"type\" : \"keyword\",\n" +
+                "        \"store\" : true\n" +
+                "      },\n" +
+                "      \"root\" : {\n" +
+                "        \"type\" : \"keyword\",\n" +
+                "        \"store\" : true\n" +
+                "      },\n" +
+                "      \"virtual\" : {\n" +
+                "        \"type\" : \"keyword\",\n" +
+                "        \"store\" : true\n" +
                 "      }\n" +
                 "    }\n" +
                 "  }\n" +
