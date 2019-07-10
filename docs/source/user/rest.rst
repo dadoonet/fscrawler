@@ -26,7 +26,7 @@ Check the service is working with:
 
 It will give you back a JSON document.
 
-The you can start uploading your binary files:
+Then you can start uploading your binary files:
 
 .. code:: sh
 
