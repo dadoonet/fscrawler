@@ -28,7 +28,7 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.attributes_support``  | ``false``             | `Adding file attributes`_       |
 +----------------------------+-----------------------+---------------------------------+
-| ``fs.raw_metadata``        | ``true``              | `Disabling raw metadata`_       |
+| ``fs.raw_metadata``        | ``false``             | `Disabling raw metadata`_       |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.filename_as_id``      | ``false``             | :ref:`filename-as-id`           |
 +----------------------------+-----------------------+---------------------------------+
