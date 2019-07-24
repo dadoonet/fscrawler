@@ -51,7 +51,7 @@
             Because elasticsearch is not using transitive dependencies, we need to be explicit here
         -->
         <commons-logging.version>1.2</commons-logging.version>
-        <commons-codec.version>1.12</commons-codec.version>
+        <commons-codec.version>1.13</commons-codec.version>
         <snakeyaml.version>1.24</snakeyaml.version>
         <httpclient.version>4.5.9</httpclient.version>
 
