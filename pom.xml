@@ -688,7 +688,7 @@
             <dependency>
                 <groupId>com.beust</groupId>
                 <artifactId>jcommander</artifactId>
-                <version>1.72</version>
+                <version>1.75</version>
             </dependency>
 
             <!-- For REST Server -->
