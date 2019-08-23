@@ -120,6 +120,23 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Elasticsearch v5 is not maintained anymore but this CVE
+            https://ossindex.sonatype.org/vuln/d2175c7c-c652-480c-9b90-7239dd5bfc3e
+            is still there.
+            We need to remove the v5 compatibility but in the mean time let disable the analysis
+            -->
+            <plugin>
+                <groupId>org.sonatype.ossindex.maven</groupId>
+                <artifactId>ossindex-maven-plugin</artifactId>
+                <version>3.0.4</version>
+                <executions>
+                    <execution>
+                        <id>audit-dependencies</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
