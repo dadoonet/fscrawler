@@ -52,7 +52,7 @@
         -->
         <commons-logging.version>1.2</commons-logging.version>
         <commons-codec.version>1.13</commons-codec.version>
-        <snakeyaml.version>1.24</snakeyaml.version>
+        <snakeyaml.version>1.25</snakeyaml.version>
         <httpclient.version>4.5.9</httpclient.version>
 
         <!-- Non Apache2 Compatible licenses -->
