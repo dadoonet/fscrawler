@@ -12,6 +12,13 @@
     <artifactId>fscrawler-es7</artifactId>
     <name>FSCrawler ZIP Distribution for Elasticsearch 7.x</name>
 
+    <properties>
+        <module.name>es7</module.name>
+
+        <docker.eng.tags.0>latest</docker.eng.tags.0>
+        <docker.eng.tags.1>${project.version}</docker.eng.tags.1>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
@@ -24,6 +31,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

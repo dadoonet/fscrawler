@@ -12,6 +12,10 @@
     <artifactId>fscrawler-es5</artifactId>
     <name>FSCrawler ZIP Distribution for Elasticsearch 5.x</name>
 
+    <properties>
+        <module.name>es5</module.name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
@@ -41,6 +45,11 @@
                         <phase>none</phase>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
