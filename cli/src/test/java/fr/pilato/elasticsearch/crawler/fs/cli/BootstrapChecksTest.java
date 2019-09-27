@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
@@ -29,6 +30,10 @@ public class BootstrapChecksTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testBootstrapChecks() {
+        // Test all checks (this test depends on the platform we are running)
         BootstrapChecks.check();
+
+        // Some platforms report 0 sometimes. Let's check that it does not fail.
+        BootstrapChecks.computePercentage(ByteSizeValue.parseBytesSizeValue("0b"), ByteSizeValue.parseBytesSizeValue("0b"));
     }
 }
