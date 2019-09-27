@@ -49,15 +49,16 @@ public class BootstrapChecks {
         ByteSizeValue heapTotalSize = new ByteSizeValue(Runtime.getRuntime().maxMemory());
         ByteSizeValue heapFreeSize = new ByteSizeValue(Runtime.getRuntime().freeMemory());
 
-        new Percentage((new BigDecimal(((double) heapFreeSize.getBytes())/(double) heapTotalSize.getBytes()*100)).setScale(2, BigDecimal.ROUND_HALF_EVEN).doubleValue(), true);
-
         logger.info("Memory [Free/Total=Percent]: HEAP [{}/{}={}], RAM [{}/{}={}], Swap [{}/{}={}].",
                 heapFreeSize, heapTotalSize, computePercentage(heapFreeSize, heapTotalSize),
                 ramFreeSize, ramTotalSize, computePercentage(ramFreeSize, ramTotalSize),
                 swapFreeSize, swapTotalSize, computePercentage(swapFreeSize, swapTotalSize));
     }
 
-    private static Percentage computePercentage(ByteSizeValue current, ByteSizeValue max) {
+    static Percentage computePercentage(ByteSizeValue current, ByteSizeValue max) {
+        if (max.getBytes() <= 0) {
+            return new Percentage();
+        }
         return new Percentage((new BigDecimal(((double) current.getBytes())/(double) max.getBytes()*100)).setScale(2, BigDecimal.ROUND_HALF_EVEN).doubleValue(), true);
     }
 
