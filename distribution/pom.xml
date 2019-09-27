@@ -18,6 +18,49 @@
         <module>es6</module>
     </modules>
 
+    <properties>
+        <docker.verbose>build</docker.verbose>
+        <docker.username>dadoonet</docker.username>
+        <!-- The following assumes that each submodule will be overwritten. -->
+        <module.name>es7</module.name>
+
+        <!-- Docker Image Definitions -->
+        <!-- no install tesseract-ocr and data files for any languages -->
+        <docker.nolang.alias>${project.artifactId}-nolang</docker.nolang.alias>
+        <docker.nolang.name>${docker.username}/fscrawler:${project.version}-${module.name}-nolang</docker.nolang.name>
+        <docker.nolang.cacheFrom>${docker.nolang.name}</docker.nolang.cacheFrom>
+        <docker.nolang.dockerFile>${project.basedir}/../src/main/docker/Dockerfile</docker.nolang.dockerFile>
+        <docker.nolang.assembly.descriptor>${project.basedir}/../src/main/assembly/assembly.xml</docker.nolang.assembly.descriptor>
+        <docker.nolang.assembly.mode>tgz</docker.nolang.assembly.mode>
+
+        <!-- install tesseract-ocr and data files for English -->
+        <docker.eng.alias>${project.artifactId}-eng</docker.eng.alias>
+        <docker.eng.name>${docker.username}/fscrawler:${project.version}-${module.name}-eng</docker.eng.name>
+        <docker.eng.cacheFrom>${docker.eng.name}</docker.eng.cacheFrom>
+        <docker.eng.dockerFile>${docker.nolang.dockerFile}</docker.eng.dockerFile>
+        <docker.eng.assembly.descriptor>${docker.nolang.assembly.descriptor}</docker.eng.assembly.descriptor>
+        <docker.eng.assembly.mode>${docker.nolang.assembly.mode}</docker.eng.assembly.mode>
+        <docker.eng.args.langsPkg>tesseract-ocr tesseract-ocr-eng</docker.eng.args.langsPkg>
+
+        <!-- install tesseract-ocr and data files for Franch -->
+        <docker.fra.alias>${project.artifactId}-fra</docker.fra.alias>
+        <docker.fra.name>${docker.username}/fscrawler:${project.version}-${module.name}-fra</docker.fra.name>
+        <docker.fra.cacheFrom>${docker.fra.name}</docker.fra.cacheFrom>
+        <docker.fra.dockerFile>${docker.nolang.dockerFile}</docker.fra.dockerFile>
+        <docker.fra.assembly.descriptor>${docker.nolang.assembly.descriptor}</docker.fra.assembly.descriptor>
+        <docker.fra.assembly.mode>${docker.nolang.assembly.mode}</docker.fra.assembly.mode>
+        <docker.fra.args.langsPkg>tesseract-ocr tesseract-ocr-fra</docker.fra.args.langsPkg>
+
+        <!-- install tesseract-ocr and  data files for Japanese -->
+        <docker.jpn.alias>${project.artifactId}-jpn</docker.jpn.alias>
+        <docker.jpn.name>${docker.username}/fscrawler:${project.version}-${module.name}-jpn</docker.jpn.name>
+        <docker.jpn.cacheFrom>${docker.jpn.name}</docker.jpn.cacheFrom>
+        <docker.jpn.dockerFile>${docker.nolang.dockerFile}</docker.jpn.dockerFile>
+        <docker.jpn.assembly.descriptor>${docker.nolang.assembly.descriptor}</docker.jpn.assembly.descriptor>
+        <docker.jpn.assembly.mode>${docker.nolang.assembly.mode}</docker.jpn.assembly.mode>
+        <docker.jpn.args.langsPkg>tesseract-ocr tesseract-ocr-jpn</docker.jpn.args.langsPkg>
+    </properties>
+    
     <dependencies>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
@@ -105,6 +148,49 @@
                             <phase>package</phase>
                             <goals>
                                 <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <!-- Generate the docker images (run during package step) -->
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <configuration>
+                        <!-- Disable configuration for IT -->
+                        <images combine.self="override">
+                            <image>
+                                <external>
+                                    <type>properties</type>
+                                    <prefix>docker.nolang</prefix>
+                                </external>
+                            </image>
+                            <image>
+                                <external>
+                                    <type>properties</type>
+                                    <prefix>docker.eng</prefix>
+                                </external>
+                            </image>
+                            <image>
+                                <external>
+                                    <type>properties</type>
+                                    <prefix>docker.fra</prefix>
+                                </external>
+                            </image>
+                            <image>
+                                <external>
+                                    <type>properties</type>
+                                    <prefix>docker.jpn</prefix>
+                                </external>
+                            </image>
+                        </images>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>docker-build</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>build</goal>
                             </goals>
                         </execution>
                     </executions>
