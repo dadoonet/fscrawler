@@ -195,6 +195,16 @@
                                 <goal>build</goal>
                             </goals>
                         </execution>
+                        <execution>
+                            <!-- There is no integration test so we can skip that execution -->
+                            <id>start-elasticsearch</id>
+                            <phase>none</phase>
+                        </execution>
+                        <execution>
+                            <!-- There is no integration test so we can skip that execution -->
+                            <id>stop-elasticsearch</id>
+                            <phase>none</phase>
+                        </execution>
                     </executions>
                 </plugin>
             </plugins>
