@@ -2,11 +2,11 @@ FROM openjdk:8-jdk
 
 ARG langsPkg
 RUN set -ex \
-    && apt-get update \
-    && apt-get install -y \
-        gettext-base \
+    && apt update \
+    && apt install -y --no-install-recommends \
+        "gettext-base=0.19.*" \
         ${langsPkg} \
-    && apt-get clean \
+    && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
 COPY maven /usr/share/fscrawler
