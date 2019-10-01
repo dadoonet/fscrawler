@@ -21,6 +21,10 @@
 
     <properties>
         <tesseract.version>3.04.*</tesseract.version>
+
+        <!-- Global configuration parameters for docker -->
+        <!-- By default, build docker images on each modules. -->
+        <docker.skip>${env.DOCKER_SKIP}</docker.skip>
         <docker.verbose>build</docker.verbose>
         <docker.username>dadoonet</docker.username>
         <!-- The following assumes that each submodule will be overwritten. -->
