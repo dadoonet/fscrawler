@@ -86,3 +86,119 @@ If you would like to ignore some folders to be scanned, just add a ``.fscrawleri
 The folder content and all sub folders will be ignored.
 
 For more information, read :ref:`includes_excludes`.
+
+Using docker
+^^^^^^^^^^^^^
+
+You can also run FSCrawler using docker. `The docker image is here <https://hub.docker.com/r/toto1310/fscrawler>`__.
+
+The following command let FSCrawler read its configuration files from ``/root/.fscrawler`` (i.e. ``--config_dir``) and its target files from ``/tmp/es`` (i.e. ``fs.url``).
+
+.. code:: sh
+
+  docker run -it --rm -v ${PWD}/config:/root/.fscrawler -v ${PWD}/data:/tmp/es:ro toto1310/fscrawler fscrawler job_name
+
+Using with Elasticsearch installed by Docker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you `installing Elasticsearch with docker <https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html>`__, you need to communicate between each container.
+
+In the following, the following directory arrangement is assumed.
+
+.. code-block:: none
+
+  .
+  ├── config
+  │   └── job_name
+  │       └── _settings.yaml
+  ├── data
+  │   └── <your files>
+  └── docker-compose.yml
+
+For example, to connect to a docker container named ``elasticsearch``, modify your ``_settings.yaml`` (or ``_settings.json``).
+
+.. code:: yaml
+
+  name: "test"
+  elasticsearch:
+    nodes:
+    - url: "http://elasticsearch:9200"
+
+And, prepare the following ``docker-compose.yml``.
+
+.. code:: yaml
+
+  version: '2.2'
+  services:
+    # FSCrawler 
+    fscrawler:
+      image: toto1310/fscrawler
+      container_name: fscrawler
+      volumes:
+        - ${PWD}/config:/root/.fscrawler
+        - ${PWD}/data:/tmp/es
+      networks: 
+        - esnet
+      command: fscrawler job_name
+
+    # Elasticsearch Cluster
+    elasticsearch:
+      image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
+      container_name: elasticsearch
+      environment:
+        - node.name=elasticsearch
+        - discovery.seed_hosts=elasticsearch2
+        - cluster.initial_master_nodes=elasticsearch,elasticsearch2
+        - cluster.name=docker-cluster
+        - bootstrap.memory_lock=true
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+      volumes:
+        - esdata01:/usr/share/elasticsearch/data
+      ports:
+        - 9200:9200
+      networks:
+        - esnet
+    elasticsearch2:
+      image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
+      container_name: elasticsearch2
+      environment:
+        - node.name=elasticsearch2
+        - discovery.seed_hosts=elasticsearch
+        - cluster.initial_master_nodes=elasticsearch,elasticsearch2
+        - cluster.name=docker-cluster
+        - bootstrap.memory_lock=true
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+      volumes:
+        - esdata02:/usr/share/elasticsearch/data
+      networks:
+        - esnet
+
+  volumes:
+    esdata01:
+      driver: local
+    esdata02:
+      driver: local
+
+  networks:
+    esnet:
+
+Then, you can run Elasticsearch.
+
+.. code:: sh
+
+  docker-compose up -d elasticsearch elasticsearch2
+
+After starting Elasticsearch, you can run FSCrawler.
+
+.. code:: sh
+
+  docker-compose up fscrawler
+
