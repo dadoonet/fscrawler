@@ -36,7 +36,7 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch.version>7.4.0</elasticsearch.version>
+        <elasticsearch.version>7.4.1</elasticsearch.version>
         <elasticsearch7.version>${elasticsearch.version}</elasticsearch7.version>
         <elasticsearch6.version>6.8.2</elasticsearch6.version>
         <elasticsearch5.version>5.6.15</elasticsearch5.version>
