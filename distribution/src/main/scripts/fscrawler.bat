@@ -21,6 +21,7 @@ set JAVA_OPTS=%JAVA_OPTS% -Djava.awt.headless=true
 
 REM Ensure UTF-8 encoding by default (e.g. filenames)
 set JAVA_OPTS=%JAVA_OPTS% -Dfile.encoding=UTF-8
+set JAVA_OPTS=%JAVA_OPTS% -Dsun.jnu.encoding=UTF-8
 
 REM Use LOG4J2 instead of java.util.logging
 set JAVA_OPTS=%JAVA_OPTS% -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
