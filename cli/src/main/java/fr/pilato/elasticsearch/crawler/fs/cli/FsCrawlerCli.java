@@ -224,7 +224,7 @@ public class FsCrawlerCli {
 
             String yesno = null;
 
-            if (!commands.yes) {
+            if (commands.yes) {
                 yesno = "y";
             }
 
