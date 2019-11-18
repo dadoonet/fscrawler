@@ -92,6 +92,9 @@ public class FsCrawlerCli {
         @Parameter(names = "--silent", description = "Silent mode")
         private boolean silent = false;
 
+        @Parameter(names = "--yes", description = "Assume the answer \"yes\" to prompt while starting or creating a job")
+        private boolean yes = false;
+
         @Parameter(names = "--help", description = "display current help", help = true)
         boolean help;
     }
@@ -220,6 +223,11 @@ public class FsCrawlerCli {
             logger.warn("job [{}] does not exist", jobName);
 
             String yesno = null;
+
+            if (!commands.yes) {
+                yesno = "y";
+            }
+
             while (!"y".equalsIgnoreCase(yesno) && !"n".equalsIgnoreCase(yesno)) {
                 logger.info("Do you want to create it (Y/N)?");
                 yesno = scanner.next();
