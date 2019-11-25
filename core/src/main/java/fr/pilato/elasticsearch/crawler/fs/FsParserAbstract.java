@@ -469,6 +469,9 @@ public abstract class FsParserAbstract extends FsParser {
                 } else if (fsSettings.getFs().isXmlSupport()) {
                     // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
                     doc.setObject(XmlDocParser.generateMap(inputStream));
+                } else if (fsSettings.getFs().isSkipTika()) {
+                    // https://github.com/dadoonet/fscrawler/issues/846 : Skip Tika parser
+                    doc.setContent(inputStreamToString(inputStream));
                 } else {
                     // Extracting content with Tika
                     TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
@@ -592,4 +595,28 @@ public abstract class FsParserAbstract extends FsParser {
         }
     }
 
+    /**
+     * Read the stream and get the raw string
+     *
+     * @param inputStream
+     * @return
+     */
+    private String inputStreamToString(InputStream inputStream){
+        InputStreamReader isReader = new InputStreamReader(inputStream);
+        BufferedReader reader = new BufferedReader(isReader);
+        StringBuilder sb = new StringBuilder();
+        String str;
+        try{
+            while((str = reader.readLine())!= null){
+                sb.append(str);
+            }
+
+            return sb.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.trace("Failed to read InputStreap." + e.getMessage().toString() );
+        }
+
+        return "";
+    }
 }
