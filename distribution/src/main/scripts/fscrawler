@@ -38,6 +38,7 @@ JAVA_OPTS="$JAVA_OPTS -Djava.awt.headless=true"
 
 # Ensure UTF-8 encoding by default (e.g. filenames)
 JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF-8"
+JAVA_OPTS="$JAVA_OPTS -Dsun.jnu.encoding=UTF-8
 
 # Use LOG4J2 instead of java.util.logging
 JAVA_OPTS="$JAVA_OPTS -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"
