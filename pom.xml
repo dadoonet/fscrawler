@@ -36,10 +36,10 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch.version>7.4.1</elasticsearch.version>
-        <elasticsearch7.version>7.4.2</elasticsearch7.version>
-        <elasticsearch6.version>7.4.2</elasticsearch6.version>
-        <elasticsearch5.version>7.4.2</elasticsearch5.version>
+        <elasticsearch.version>7.4.2</elasticsearch.version>
+        <elasticsearch7.version>${elasticsearch.version}</elasticsearch7.version>
+        <elasticsearch6.version>6.8.5</elasticsearch6.version>
+        <elasticsearch5.version>5.6.15</elasticsearch5.version>
 
         <tika.version>1.22</tika.version>
         <jackson.version>2.10.0</jackson.version>
