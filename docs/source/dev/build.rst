@@ -58,17 +58,14 @@ Run tests with an external cluster
 
 To run the test suite against an elasticsearch instance running locally, just run::
 
-    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7
+    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 -Dtests.cluster.url=http://localhost:9200
 
 .. tip::
 
     If you want to run against a version 5 or 6, run::
 
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v5
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6
-
-If elasticsearch is not running yet on ``http://localhost:9200``, FSCrawler project will run a Docker instance before
-the tests start.
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v5 -Dtests.cluster.url=http://localhost:9200
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6 -Dtests.cluster.url=http://localhost:9200
 
 .. hint::
 
