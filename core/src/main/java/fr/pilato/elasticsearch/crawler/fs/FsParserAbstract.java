@@ -601,22 +601,20 @@ public abstract class FsParserAbstract extends FsParser {
      * @param inputStream
      * @return
      */
-    private String inputStreamToString(InputStream inputStream){
+    private String inputStreamToString(InputStream inputStream) {
         InputStreamReader isReader = new InputStreamReader(inputStream);
         BufferedReader reader = new BufferedReader(isReader);
         StringBuilder sb = new StringBuilder();
         String str;
-        try{
-            while((str = reader.readLine())!= null){
+        try {
+            while ((str = reader.readLine()) != null) {
                 sb.append(str);
             }
-
-            return sb.toString();
         } catch (IOException e) {
-            e.printStackTrace();
-            logger.trace("Failed to read InputStreap." + e.getMessage().toString() );
+            logger.error("Failed to read InputStream: {}", e.getMessage());
+            logger.trace("Failed to read InputStream.", e);
         }
 
-        return "";
+        return sb.toString();
     }
 }
