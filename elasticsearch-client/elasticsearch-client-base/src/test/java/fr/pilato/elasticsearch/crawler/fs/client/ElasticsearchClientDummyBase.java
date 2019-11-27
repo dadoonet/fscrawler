@@ -64,16 +64,6 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public int reindex(String sourceIndex, String sourceType, String targetIndex) {
-        return 0;
-    }
-
-    @Override
-    public void deleteByQuery(String index, String type) {
-        // Testing purpose only
-    }
-
-    @Override
     public boolean isIngestSupported() {
         return false;
     }

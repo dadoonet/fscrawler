@@ -39,7 +39,6 @@
         <elasticsearch.version>7.4.2</elasticsearch.version>
         <elasticsearch7.version>${elasticsearch.version}</elasticsearch7.version>
         <elasticsearch6.version>6.8.5</elasticsearch6.version>
-        <elasticsearch5.version>5.6.15</elasticsearch5.version>
 
         <tika.version>1.22</tika.version>
         <jackson.version>2.10.1</jackson.version>
@@ -449,11 +448,6 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-elasticsearch-client-base</artifactId>
-                <version>2.7-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>fr.pilato.elasticsearch.crawler</groupId>
-                <artifactId>fscrawler-elasticsearch-client-v5</artifactId>
                 <version>2.7-SNAPSHOT</version>
             </dependency>
             <dependency>

@@ -425,8 +425,6 @@ public class FsCrawlerUtil {
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
     public static final String[] MAPPING_RESOURCES = {
-            "2/_settings.json", "2/_settings_folder.json",
-            "5/_settings.json", "5/_settings_folder.json",
             "6/_settings.json", "6/_settings_folder.json",
             "7/_settings.json", "7/_settings_folder.json"
     };

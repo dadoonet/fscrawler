@@ -8,7 +8,6 @@ Download FSCrawler
 
     * |Download_URL_V7|_ for Elasticsearch V7.
     * |Download_URL_V6|_ for Elasticsearch V6.
-    * |Download_URL_V5|_ for Elasticsearch V5.
 
     The filename ends with ``.zip``.
 
@@ -19,7 +18,6 @@ Download FSCrawler
 
         * |Maven_Central_V7|_ for Elasticsearch V7.
         * |Maven_Central_V6|_ for Elasticsearch V6.
-        * |Maven_Central_V5|_ for Elasticsearch V5.
 
 .. ifconfig:: release == version
 
@@ -28,7 +26,6 @@ Download FSCrawler
 
     * |Download_URL_V7|_ for Elasticsearch V7.
     * |Download_URL_V6|_ for Elasticsearch V6.
-    * |Download_URL_V5|_ for Elasticsearch V5.
 
     .. tip::
 
@@ -37,13 +34,11 @@ Download FSCrawler
 
         * |Maven_Central_V7|_ for Elasticsearch V7.
         * |Maven_Central_V6|_ for Elasticsearch V6.
-        * |Maven_Central_V5|_ for Elasticsearch V5.
 
         You can also download a **SNAPSHOT** version from Sonatype:
 
         * |Sonatype_V7|_ for Elasticsearch V7.
         * |Sonatype_V6|_ for Elasticsearch V6.
-        * |Sonatype_V5|_ for Elasticsearch V5.
 
 The distribution contains:
 
@@ -344,4 +339,5 @@ and replace all elasticsearch/lucene jars to the 6.6 version.
 - FSCrawler does not follow symbolic links anymore. You need to set explicitly ``fs.follow_symlink``
 to ``true`` if you wish revert to the previous behavior.
 - The mapping for elasticsearch 6.x can not contain anymore the type name.
+- We removed the Elasticsearch V5 compatibility as it's not maintained anymore by elastic.
 

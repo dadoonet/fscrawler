@@ -91,19 +91,6 @@
                 </dependency>
             </dependencies>
         </profile>
-        <!-- We are building a profile that can be activated from the IDE -->
-        <profile>
-            <id>es-5x</id>
-            <properties>
-                <integ.elasticsearch.version>${elasticsearch5.version}</integ.elasticsearch.version>
-            </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>fr.pilato.elasticsearch.crawler</groupId>
-                    <artifactId>fscrawler-elasticsearch-client-v5</artifactId>
-                </dependency>
-            </dependencies>
-        </profile>
     </profiles>
 
 </project>

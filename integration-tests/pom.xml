@@ -17,7 +17,6 @@
         <module>it-common</module>
         <module>it-v7</module>
         <module>it-v6</module>
-        <module>it-v5</module>
     </modules>
 
 </project>
