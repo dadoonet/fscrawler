@@ -90,24 +90,6 @@ public interface ElasticsearchClient extends Closeable {
      */
     void waitForHealthyIndex(String index) throws IOException;
 
-    /**
-     * Reindex data from one index/type to another index
-     * @param sourceIndex source index name
-     * @param sourceType source type name
-     * @param targetIndex target index name
-     * @return The number of documents that have been reindexed
-     * @throws IOException In case of error
-     */
-    int reindex(String sourceIndex, String sourceType, String targetIndex) throws IOException;
-
-    /**
-     * Fully removes a type from an index (removes data)
-     * @param index index name
-     * @param type type
-     * @throws IOException In case of error
-     */
-    void deleteByQuery(String index, String type) throws IOException;
-
     // Utility methods
 
     boolean isIngestSupported();

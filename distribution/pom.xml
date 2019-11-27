@@ -16,7 +16,6 @@
     <modules>
         <module>es7</module>
         <module>es6</module>
-        <module>es5</module>
     </modules>
 
     <dependencies>

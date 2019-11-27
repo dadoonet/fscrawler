@@ -251,13 +251,7 @@ public class FsCrawlerCli {
         try {
             // Let see if we want to upgrade an existing cluster to latest version
             if (commands.upgrade) {
-                logger.info("Upgrading job [{}]", jobName);
-                boolean success = fsCrawler.upgrade();
-                if (success) {
-                    // We can rewrite the fscrawler setting file (we now have a elasticsearch.index_folder property)
-                    logger.info("Updating fscrawler setting file");
-                    fsSettingsFileHandler.write(fsSettings);
-                }
+                logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
             } else {
                 try {
                     fsCrawler.getEsClient().start();

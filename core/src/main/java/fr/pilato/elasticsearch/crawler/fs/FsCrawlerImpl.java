@@ -19,8 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -84,66 +82,6 @@ public class FsCrawlerImpl {
 
     public ElasticsearchClient getEsClient() {
         return esClient;
-    }
-
-    /**
-     * Upgrade FSCrawler indices
-     * @return true if done successfully
-     * @throws Exception In case of error
-     */
-    @SuppressWarnings("deprecation")
-    public boolean upgrade() throws Exception {
-        // We need to start a client so we can send requests to elasticsearch
-        try {
-            esClient.start();
-        } catch (Exception t) {
-            logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
-            return false;
-        }
-
-        // The upgrade script is for now a bit dumb. It assumes that you had an old version of FSCrawler (< 2.3) and it will
-        // simply move data from index/folder to index_folder
-        String index = settings.getElasticsearch().getIndex();
-
-        // Check that the old index actually exists
-        if (esClient.isExistingIndex(index)) {
-            // We check that the new indices don't exist yet or are empty
-            String indexFolder = settings.getElasticsearch().getIndexFolder();
-            boolean indexExists = esClient.isExistingIndex(indexFolder);
-            long numberOfDocs = 0;
-            if (indexExists) {
-                ESSearchResponse responseFolder = esClient.search(new ESSearchRequest().withIndex(indexFolder));
-                numberOfDocs = responseFolder.getTotalHits();
-            }
-            if (numberOfDocs > 0) {
-                logger.warn("[{}] already exists and is not empty. No upgrade needed.", indexFolder);
-            } else {
-                logger.debug("[{}] can be upgraded.", index);
-
-                // Create the new indices with the right mappings (well, we don't read existing user configuration)
-                if (!indexExists) {
-                    esClient.createIndices();
-                    logger.info("[{}] has been created.", indexFolder);
-                }
-
-                // Run reindex task for folders
-                logger.info("Starting reindex folders...");
-                int folders = esClient.reindex(index, INDEX_TYPE_FOLDER, indexFolder);
-                logger.info("Done reindexing [{}] folders...", folders);
-
-                // Run delete by query task for folders
-                logger.info("Starting removing folders from [{}]...", index);
-                esClient.deleteByQuery(index, INDEX_TYPE_FOLDER);
-                logger.info("Done removing folders from [{}]", index);
-
-                logger.info("You can now upgrade your elasticsearch cluster to >=6.0.0!");
-                return true;
-            }
-        } else {
-            logger.info("[{}] does not exist. No upgrade needed.", index);
-        }
-
-        return false;
     }
 
     public void start() throws Exception {
