@@ -113,9 +113,14 @@ public class UploadApi extends RestApi {
         // Read the file content
         TikaDocParser.generate(settings, filecontent, filename, filename, doc, messageDigest, filesize);
 
-        String url = null;
+        // Elasticsearch entity coordinates (we use the first node address)
+        ServerUrl node = settings.getElasticsearch().getNodes().get(0);
+        String url = node.getUrl() + "/" +
+                index + "/" +
+                esClient.getDefaultTypeName() + "/" +
+                id;
         if (Boolean.parseBoolean(simulate)) {
-            logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch.", filename);
+            logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].", filename, url);
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
             doc = this.getMergedJsonDoc(doc, tags);
@@ -124,12 +129,6 @@ public class UploadApi extends RestApi {
                     id,
                     DocParser.toJson(doc),
                     settings.getElasticsearch().getPipeline());
-            // Elasticsearch entity coordinates (we use the first node address)
-            ServerUrl node = settings.getElasticsearch().getNodes().get(0);
-            url = node.getUrl() + "/" +
-                    index + "/" +
-                    esClient.getDefaultTypeName() + "/" +
-                    id;
         }
 
         UploadResponse response = new UploadResponse();
@@ -156,8 +155,7 @@ public class UploadApi extends RestApi {
 
             JsonNode mergedNode = FsCrawlerUtil.merge(tagsNode, docNode);
 
-            Doc mergedDoc = MetaParser.mapper.treeToValue(mergedNode, Doc.class);
-            return mergedDoc;
+            return MetaParser.mapper.treeToValue(mergedNode, Doc.class);
         } catch (Exception e) {
             logger.error("Error parsing tags", e);
             throw new BadRequestException("Error parsing tags", e);
