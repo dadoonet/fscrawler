@@ -402,7 +402,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
 
         // Let's read the current version of elasticsearch cluster
         MainResponse.Version version = client.info(RequestOptions.DEFAULT).getVersion();
-        logger.debug("FS crawler connected to an elasticsearch [{}] node.", version.toString());
+        logger.debug("FS crawler connected to an elasticsearch [{}] node.", version.getNumber());
 
         elasticsearchVersion = extractMajorVersion(version.getNumber());
 
