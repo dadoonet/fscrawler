@@ -52,7 +52,7 @@
         <commons-logging.version>1.2</commons-logging.version>
         <commons-codec.version>1.14</commons-codec.version>
         <snakeyaml.version>1.25</snakeyaml.version>
-        <httpclient.version>4.5.10</httpclient.version>
+        <httpclient.version>4.5.11</httpclient.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <levigo.version>2.0</levigo.version>
