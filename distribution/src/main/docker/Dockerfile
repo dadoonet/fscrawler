@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk
+FROM openjdk:8u222-jdk
 
 ARG langsPkg
 RUN set -ex \
