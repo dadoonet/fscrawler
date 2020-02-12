@@ -36,7 +36,7 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch.version>7.5.2</elasticsearch.version>
+        <elasticsearch.version>7.6.0</elasticsearch.version>
         <elasticsearch7.version>${elasticsearch.version}</elasticsearch7.version>
         <elasticsearch6.version>6.8.5</elasticsearch6.version>
 
@@ -53,6 +53,8 @@
         <commons-codec.version>1.14</commons-codec.version>
         <snakeyaml.version>1.25</snakeyaml.version>
         <httpclient.version>4.5.11</httpclient.version>
+        <httpasyncclient.version>4.1.4</httpasyncclient.version>
+        <httpcore.version>4.4.13</httpcore.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <levigo.version>2.0</levigo.version>
@@ -803,6 +805,21 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpasyncclient</artifactId>
+                <version>${httpasyncclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>${httpcore.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore-nio</artifactId>
+                <version>${httpcore.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-codec</groupId>
