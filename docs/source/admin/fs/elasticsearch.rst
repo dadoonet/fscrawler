@@ -22,6 +22,8 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.nodes``          | ``http://127.0.0.1:9200`` | `Node settings`_                |
 +----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.path_prefix``    | ``null``                  | `Path prefix`_                  |
++----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.username``       | ``null``                  | :ref:`credentials`              |
 +----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.password``       | ``null``                  | :ref:`credentials`              |
@@ -512,6 +514,24 @@ You can define multiple nodes:
          - url: "https://CLUSTERID.eu-west-1.aws.found.io:9243"
 
     For more information, read :ref:`ssl`.
+
+Path prefix
+^^^^^^^^^^^
+
+.. versionadded:: 2.7 If your elasticsearch is running behind a proxy with url rewriting,
+you might have to specify a path prefix. This can be done with ``path_prefix`` setting:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     nodes:
+     - url: "http://mynode1.mycompany.com:9200"
+     path_prefix: "/path/to/elasticsearch"
+
+.. note::
+
+    The same ``path_prefix`` applies to all nodes.
 
 .. _credentials:
 
