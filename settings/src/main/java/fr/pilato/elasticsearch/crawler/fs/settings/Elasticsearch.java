@@ -46,13 +46,15 @@ public class Elasticsearch {
     @JsonIgnore
     private String password;
     private String pipeline;
+    private String pathPrefix;
 
     public Elasticsearch() {
 
     }
 
     private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
-                          TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline) {
+                          TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline,
+                          String pathPrefix) {
         this.nodes = nodes;
         this.index = index;
         this.indexFolder = indexFolder;
@@ -62,6 +64,7 @@ public class Elasticsearch {
         this.username = username;
         this.password = password;
         this.pipeline = pipeline;
+        this.pathPrefix = pathPrefix;
     }
 
     public static Builder builder() {
@@ -134,6 +137,14 @@ public class Elasticsearch {
         this.pipeline = pipeline;
     }
 
+    public String getPathPrefix() {
+        return pathPrefix;
+    }
+
+    public void setPathPrefix(String pathPrefix) {
+        this.pathPrefix = pathPrefix;
+    }
+
     public static class Builder {
         private List<ServerUrl> nodes;
         private String index;
@@ -144,6 +155,7 @@ public class Elasticsearch {
         private String username = null;
         private String password = null;
         private String pipeline = null;
+        private String pathPrefix = null;
 
         public Builder setNodes(List<ServerUrl> nodes) {
             this.nodes = nodes;
@@ -198,8 +210,13 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setPathPrefix(String pathPrefix) {
+            this.pathPrefix = pathPrefix;
+            return this;
+        }
+
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password, pipeline);
+            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password, pipeline, pathPrefix);
         }
     }
 
@@ -217,6 +234,7 @@ public class Elasticsearch {
         if (!Objects.equals(username, that.username)) return false;
         // We can't really test the password as it may be obfuscated
         if (!Objects.equals(pipeline, that.pipeline)) return false;
+        if (!Objects.equals(pathPrefix, that.pathPrefix)) return false;
         return Objects.equals(flushInterval, that.flushInterval);
 
     }
@@ -228,6 +246,7 @@ public class Elasticsearch {
         result = 31 * result + (indexFolder != null ? indexFolder.hashCode() : 0);
         result = 31 * result + (username != null ? username.hashCode() : 0);
         result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
+        result = 31 * result + (pathPrefix != null ? pathPrefix.hashCode() : 0);
         result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
         return result;
@@ -243,6 +262,7 @@ public class Elasticsearch {
                 ", byteSize=" + byteSize +
                 ", username='" + username + '\'' +
                 ", pipeline='" + pipeline + '\'' +
+                ", pathPrefix='" + pathPrefix + '\'' +
                 '}';
     }
 }
