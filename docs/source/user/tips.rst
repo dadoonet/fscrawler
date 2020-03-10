@@ -38,3 +38,6 @@ To use FSCrawler with `docker <https://www.docker.com/>`__, check
 `docker-fscrawler <https://github.com/shadiakiki1986/docker-fscrawler>`__
 recipe.
 
+TODO: replace with the docker documentation as we are now building all this from
+this repository.
+

@@ -201,6 +201,19 @@ then
     fi
 fi
 
+if [ ${DRY_RUN} -eq 0 ]
+then
+    echo "Inspect DockerHub"
+    open https://hub.docker.com/r/dadoonet/fscrawler/tags
+    if promptyn "Is the DockerHub repository ok?"
+    then
+        echo "We can continue the release process."
+    else
+        echo "We cancel the release process."
+        RELEASE=0
+    fi
+fi
+
 # We are releasing, so let's merge into the original branch
 if [ ${RELEASE} -eq 1 ]
 then
