@@ -162,6 +162,12 @@
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
                     <configuration>
+                        <authConfig>
+                            <push>
+                                <username>${docker.push.username}</username>
+                                <password>${docker.push.password}</password>
+                            </push>
+                        </authConfig>
                         <!-- Disable configuration for IT -->
                         <images combine.self="override">
                             <image>
@@ -196,6 +202,13 @@
                             <phase>package</phase>
                             <goals>
                                 <goal>build</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>docker-push</id>
+                            <phase>deploy</phase>
+                            <goals>
+                                <goal>push</goal>
                             </goals>
                         </execution>
                         <execution>
