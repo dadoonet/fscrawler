@@ -91,3 +91,21 @@ Then expose the docker container you've created by changing the IP of the REST U
       url: "http://fscrawler:8080"
 
 
+Pull the Docker image:
+
+.. code:: sh
+
+   docker pull dadoonet/fscrawler
+
+Run it:
+
+.. code:: sh
+
+   docker run dadoonet/fscrawler job
+
+Using docker compose
+--------------------
+
+TODO fill this with docker compose instructions
+
+
