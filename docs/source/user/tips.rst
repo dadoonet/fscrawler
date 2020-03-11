@@ -41,3 +41,21 @@ recipe.
 TODO: replace with the docker documentation as we are now building all this from
 this repository.
 
+Pull the Docker image:
+
+.. code:: sh
+
+   docker pull dadoonet/fscrawler
+
+Run it:
+
+.. code:: sh
+
+   docker run dadoonet/fscrawler job
+
+Using docker compose
+--------------------
+
+TODO fill this with docker compose instructions
+
+
