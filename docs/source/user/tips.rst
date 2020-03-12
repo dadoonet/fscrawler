@@ -103,9 +103,4 @@ Run it:
 
    docker run dadoonet/fscrawler job
 
-Using docker compose
---------------------
-
-TODO fill this with docker compose instructions
-
 
