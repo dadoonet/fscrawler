@@ -40,7 +40,7 @@
         <elasticsearch6.version>6.8.5</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
-        <tika.version>1.22</tika.version>
+        <tika.version>1.24</tika.version>
         <jackson.version>2.10.3</jackson.version>
         <log4j.version>2.13.1</log4j.version>
         <jansi.version>1.18</jansi.version>
@@ -576,7 +576,7 @@
                 <artifactId>commons-compress</artifactId>
                 <version>1.19</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.apache.tika</groupId>
                 <artifactId>tika-parsers</artifactId>
