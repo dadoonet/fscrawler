@@ -75,3 +75,21 @@ Let’s say you want to index from a remote server using SSH:
      password: "password"
      protocol: "ssh"
      pem_path: "/path/to/private_key.pem"
+
+Windows drives
+~~~~~~~~~~~~~~
+
+When using Windows, you might want to index documents coming from another drive than ``C:``.
+To specify the drive, you need to use the following format:
+
+.. code:: yaml
+
+   name: "test"
+   fs:
+     url: "/D:/path/to/data/dir/on/server"
+   server:
+     hostname: "mynode.mydomain.com"
+     port: 22
+     username: "username"
+     password: "password"
+     protocol: "ssh"
