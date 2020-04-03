@@ -58,7 +58,7 @@
         <httpcore.version>4.4.14</httpcore.version>
 
         <!-- Non Apache2 Compatible licenses -->
-        <levigo.version>2.0</levigo.version>
+        <imageio.version>3.0.3</imageio.version>
         <tiff.version>1.4.0</tiff.version>
         <jpeg.version>1.4.0</jpeg.version>
 
@@ -715,9 +715,9 @@
             to use them have to provided them manually in the lib dir.
             -->
             <dependency>
-                <groupId>com.levigo.jbig2</groupId>
-                <artifactId>levigo-jbig2-imageio</artifactId>
-                <version>${levigo.version}</version>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>jbig2-imageio</artifactId>
+                <version>${imageio.version}</version>
                 <optional>true</optional>
             </dependency>
             <dependency>
