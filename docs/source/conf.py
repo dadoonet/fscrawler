@@ -241,15 +241,15 @@ rst_prolog = rst_prolog + """
 .. |Sonatype_V6| replace:: fscrawler-es6-*
 .. |Sonatype_V7| replace:: fscrawler-es7-*
 
-.. _Tika: http://tika.apache.org/{fmt_tika_version}/
+.. _Tika: https://tika.apache.org/{fmt_tika_version}/
 .. _ES: https://www.elastic.co/products/elasticsearch
-.. _Tika_format: http://tika.apache.org/{fmt_tika_version}/formats.html#Supported_Document_Formats
-.. _Tika_version: http://tika.apache.org/{fmt_tika_version}/
+.. _Tika_format: https://tika.apache.org/{fmt_tika_version}/formats.html#Supported_Document_Formats
+.. _Tika_version: https://tika.apache.org/{fmt_tika_version}/
 .. _ESHL_version6: https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/index.html
 .. _ESHL_version7: https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/index.html
-.. _Levigo_version: http://repo1.maven.org/maven2/com/levigo/jbig2/levigo-jbig2-imageio/{fmt_levigo_version}/
-.. _Tiff_version: http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/{fmt_tiff_version}/
-.. _JPEG2000_version: http://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{fmt_jpeg_version}/
+.. _Levigo_version: https://repo1.maven.org/maven2/com/levigo/jbig2/levigo-jbig2-imageio/{fmt_levigo_version}/
+.. _Tiff_version: https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/{fmt_tiff_version}/
+.. _JPEG2000_version: https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{fmt_jpeg_version}/
 .. _Download_URL_V6: {fmt_downloadUrl_V6}
 .. _Download_URL_V7: {fmt_downloadUrl_V7}
 .. _Maven_Central_V6: https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es6/

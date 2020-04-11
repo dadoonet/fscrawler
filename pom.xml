@@ -36,8 +36,8 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch7.version>7.6.1</elasticsearch7.version>
-        <elasticsearch6.version>6.8.5</elasticsearch6.version>
+        <elasticsearch7.version>7.6.2</elasticsearch7.version>
+        <elasticsearch6.version>6.8.8</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
         <tika.version>1.24</tika.version>
@@ -854,7 +854,7 @@
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk15on</artifactId>
-                <version>1.64</version>
+                <version>1.65</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
