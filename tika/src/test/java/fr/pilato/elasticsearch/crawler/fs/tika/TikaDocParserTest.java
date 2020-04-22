@@ -224,7 +224,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(59));
+        assertThat(raw.entrySet(), iterableWithSize(60));
         assertThat(raw, hasEntry("date", "2016-07-07T08:36:00Z"));
         assertThat(raw, hasEntry("Total-Time", "6"));
         assertThat(raw, hasEntry("extended-properties:AppVersion", "15.0000"));
@@ -281,6 +281,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("meta:last-author", "David Pilato"));
         assertThat(raw, hasEntry("xmpTPg:NPages", "2"));
         assertThat(raw, hasEntry("Revision-Number", "4"));
+        assertThat(raw, hasEntry("extended-properties:DocSecurityString", "None"));
         assertThat(raw, hasEntry("meta:keyword", "keyword1, keyword2"));
         assertThat(raw, hasEntry("cp:category", "test"));
         assertThat(raw, hasEntry("dc:publisher", "elastic"));
