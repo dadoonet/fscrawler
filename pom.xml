@@ -40,7 +40,7 @@
         <elasticsearch6.version>6.8.8</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
-        <tika.version>1.24</tika.version>
+        <tika.version>1.24.1</tika.version>
         <jackson.version>2.10.3</jackson.version>
         <log4j.version>2.13.1</log4j.version>
         <jansi.version>1.18</jansi.version>
@@ -881,6 +881,17 @@
             <releases><enabled>false</enabled></releases>
             <snapshots><enabled>true</enabled></snapshots>
         </repository>
+
+        <!-- Only used for Tika release candidates -->
+        <!--
+        <repository>
+            <id>tika-rc</id>
+            <name>Tika Release Candidates</name>
+            <url>https://repository.apache.org/content/repositories/orgapachetika-1061/</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        -->
     </repositories>
 
     <profiles>
