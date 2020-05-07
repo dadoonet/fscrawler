@@ -1,23 +1,24 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-
+labels: "check_for_bug"
 ---
-
-<!-- Please format any piece of code you are pasting to make it readable -->
 
 **Describe the bug**
 
 A clear and concise description of what the bug is.
 
-**To Reproduce**
+**Job Settings**
 
-Steps to reproduce the behavior:
+```yml
+FULL FSCrawler Job Settings HERE
+```
 
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**Logs**
+
+```
+FULL FSCrawler LOGS HERE
+```
 
 **Expected behavior**
 
@@ -27,6 +28,8 @@ A clear and concise description of what you expected to happen.
  - OS: [e.g. MacOS]
  - Version [e.g. 2.5]
 
-**Screenshots**
+**Attachment**
 
-If applicable, add screenshots to help explain your problem.
+If the bug is related to a given file, please share this file so we can reuse it in tests
+to reproduce the problem and may be use it in our integration tests.
+
