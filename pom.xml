@@ -552,7 +552,7 @@
             <dependency>
                 <groupId>org.codehaus.woodstox</groupId>
                 <artifactId>stax2-api</artifactId>
-                <version>4.2</version>
+                <version>4.2.1</version>
             </dependency>
 
             <!-- We manually update until we have a Tika 1.23 version available -->
