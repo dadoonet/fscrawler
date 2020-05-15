@@ -142,6 +142,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
     }
 
     @Test
+    public void testExtractFromEml() throws IOException {
+        ESSearchResponse response = runSearch("test.eml", "test");
+        for (ESSearchHit hit : response.getHits()) {
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.TITLE), is("Test"));
+            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.AUTHOR), is("鲨掉 <2428617664@qq.com>"));
+        }
+    }
+
+    @Test
     public void testExtractFromHtml() throws IOException {
         runSearch("test.html", "sample");
     }

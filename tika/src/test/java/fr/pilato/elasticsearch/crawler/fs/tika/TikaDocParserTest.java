@@ -755,6 +755,58 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getFile().getContentType(), is("application/x-tika-ooxml-protected"));
     }
 
+    @Test
+    public void testExtractFromEml() throws IOException {
+        Doc doc = extractFromFileExtension("eml");
+
+        // Extracted content
+        assertThat(doc.getContent(), containsString("test"));
+
+        // Content Type
+        assertThat(doc.getFile().getContentType(), is("message/rfc822"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), is("鲨掉 <2428617664@qq.com>"));
+        assertThat(doc.getMeta().getCreated(), is(localDateTimeToDate(LocalDateTime.of(2020, 5, 7, 12, 30, 44))));
+        assertThat(doc.getMeta().getTitle(), is("Test"));
+
+        Map<String, String> raw = doc.getMeta().getRaw();
+        assertThat(raw.entrySet(), iterableWithSize(33));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-QQ-XMAILINFO", "Na/7hYqAgZHnwE6NBGOaFx4Ph8LoIgfMjPtcuElAXe5orgl65aMrGbzfQXlCeA	 +rCMGjbxwua38mglkeeeXAjACCi/E7hQqhw0cbWjcmxB0sCQ8yjX/zXr4AhlBQNH7muyt4qYMfHgg	 l4cN4fHmLYIbRiZNMGEesgbvnFvQKMLUX5SJQ/d2gvHVO6PlizhYKpGp0fvJDTuu6Xe2dgt05g60x	 SCdfsl2+dg8+ALjaiBotdYDT+gr04YQyQAixx/vOTfSoQJJyaM1V4+PFK2HVW36O3+o0eGa2GsHeW	 EU+KaJGCnFgxFiyCZC9oDLzLL5X4pGdb9Nk2Oj8PodwwfCwrQnuRQbKEqaJdNmoTVb/PMLpUFXUy4	 EnS+hz1liezKJSnUWD0JBh8r7JRU2+tRedKHswUn2xuP+RavdM2uMtP89RbyiOrwbdChud0Xc7Aoh	 0JRYY2IUXyMdTOS42p4ZZpUadAzOzx8RZ59WRdLOJozsSGxVb8vNun0TSDF8FUfzZT2JVY2wbNLit	 BgV8Ynqy6PdxJifnKe1fa3ITsY6YKNDLFrJt812FykUSJbZY04fgeuoGwjz6YWf/"));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-HAS-ATTACH", "no"));
+        assertThat(raw, hasEntry("subject", "Test"));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-QQ-FEAT", "nUNo11GR11/U6FbQCNwFDxz5RuSvMVGNGxEpRmUP0pnRiHfxyHH7wUwrzQh5W	yDUdu10znc8GTwdaOmkwH3K60FN/W0BBh7hsvcBhqJe4YBQoD33uPGiCLqB/EXQQgHZsKt6	F/ZsbisizWEwZJV1mD7Y8yAHp4B6Uw/x4ne/29C3xVwMcLktqPia9gI/Lrl2vJzr4w9VBg+	b/Sii+gxtjajGZDA+GFWTSe8dXOd/N0RVfP3vXfZoP0nlcDU1S7ZckP8SKTeQV3c="));
+        assertThat(raw, hasEntry("dc:creator", "鲨掉 <2428617664@qq.com>"));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-QQ-SSF", "000000000000000000000000000000A"));
+        assertThat(raw, hasEntry("Message:From-Email", "2428617664@qq.com"));
+        assertThat(raw, hasEntry("dcterms:created", "2020-05-07T12:30:44Z"));
+        assertThat(raw, hasEntry("Message-To", "鲸落 <2428617664@qq.com>"));
+        assertThat(raw, hasEntry("Multipart-Boundary", "----=_NextPart_5EB3FF74_109736B8_0C149CAD"));
+        assertThat(raw, hasEntry("dc:title", "Test"));
+        assertThat(raw, hasEntry("Message:Raw-Header:Message-ID", "<tencent_F217E96C466FD59B4036DAE92B809ACFE306@qq.com>"));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-QQ-STYLE", " "));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-QQ-BUSINESS-ORIGIN", "2"));
+        assertThat(raw, hasEntry("Content-Type", "message/rfc822"));
+        assertThat(raw, hasEntry("X-Parsed-By", "org.apache.tika.parser.DefaultParser"));
+        assertThat(raw, hasEntry("creator", "鲨掉 <2428617664@qq.com>"));
+        assertThat(raw, hasEntry("meta:author", "鲨掉 <2428617664@qq.com>"));
+        assertThat(raw, hasEntry("meta:creation-date", "2020-05-07T12:30:44Z"));
+        assertThat(raw, hasEntry("Message:Raw-Header:Mime-Version", "1.0"));
+        assertThat(raw, hasEntry("Message:Raw-Header:Content-Transfer-Encoding", "8Bit"));
+        assertThat(raw, hasEntry("Creation-Date", "2020-05-07T12:30:44Z"));
+        assertThat(raw, hasEntry("resourceName", "test.eml"));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-QQ-mid", "webmail824t1588854644t1277638"));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-Priority", "3"));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-QQ-Mailer", "QQMail 2.x"));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-QQ-MIME", "TCMime 1.0 by Tencent"));
+        assertThat(raw, hasEntry("Message:From-Name", "鲨掉"));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-Originating-IP", "36.5.123.158"));
+        assertThat(raw, hasEntry("Author", "鲨掉 <2428617664@qq.com>"));
+        assertThat(raw, hasEntry("Multipart-Subtype", "mixed"));
+        assertThat(raw, hasEntry("Message:Raw-Header:X-Mailer", "QQMail 2.x"));
+        assertThat(raw, hasEntry("Message-From", "鲨掉 <2428617664@qq.com>"));
+    }
+
     private Doc extractFromFileExtension(String extension) throws IOException {
         FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
                 .setFs(Fs.builder().setRawMetadata(true).build())
