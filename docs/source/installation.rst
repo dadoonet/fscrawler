@@ -1,3 +1,5 @@
+.. _installation:
+
 Download FSCrawler
 ------------------
 
@@ -54,6 +56,150 @@ The distribution contains:
    │   └── fscrawler.bat
    └── lib
        ├── ... All needed jars
+
+
+Using docker
+------------
+
+Pull the Docker image:
+
+.. code:: sh
+
+   docker pull dadoonet/fscrawler
+
+Let say your documents are located in ``~/tmp`` dir and you want to store your fscrawler jobs in ``~/.fscrawler``.
+You can run FSCrawler with:
+
+.. code:: sh
+
+   docker run -it --rm -v ~/.fscrawler:/root/.fscrawler -v ~/tmp:/tmp/es:ro dadoonet/fscrawler fscrawler job_name
+
+On the first run, if the job does not exist yet in ``~/.fscrawler``, FSCrawler will ask you if you want to create it:
+
+::
+
+    10:16:53,880 INFO  [f.p.e.c.f.c.BootstrapChecks] Memory [Free/Total=Percent]: HEAP [67.3mb/876.5mb=7.69%], RAM [2.1gb/3.8gb=55.43%], Swap [1023.9mb/1023.9mb=100.0%].
+    10:16:53,899 WARN  [f.p.e.c.f.c.FsCrawlerCli] job [job_name] does not exist
+    10:16:53,900 INFO  [f.p.e.c.f.c.FsCrawlerCli] Do you want to create it (Y/N)?
+    y
+    10:16:56,745 INFO  [f.p.e.c.f.c.FsCrawlerCli] Settings have been created in [/root/.fscrawler/job_name/_settings.yaml]. Please review and edit before relaunch
+
+.. note::
+
+    The configuration file is actually stored on your machine in ``~/.fscrawler/job_name/_settings.yaml``.
+    Remember to change the URL of your elasticsearch instance as the container won't be able to see it
+    running under the default ``127.0.0.1``. You will need to use the actual IP address of the host.
+
+
+Using docker compose
+--------------------
+
+In this section, the following directory layout is assumed:
+
+.. code-block:: none
+
+  .
+  ├── config
+  │   └── job
+  │       └── _settings.yaml
+  ├── data
+  │   └── <your files>
+  └── docker-compose.yml
+
+For example, to connect to a docker container named ``elasticsearch``, modify your ``_settings.yaml``.
+
+.. code:: yaml
+
+  name: "test"
+  elasticsearch:
+    nodes:
+    - url: "http://elasticsearch:9200"
+
+And, prepare the following ``docker-compose.yml``.
+
+.. code:: yaml
+
+  version: '2.2'
+  services:
+    # FSCrawler
+    fscrawler:
+      image: toto1310/fscrawler
+      container_name: fscrawler
+      volumes:
+        - ${PWD}/config:/root/.fscrawler
+        - ${PWD}/data:/tmp/es
+      networks:
+        - esnet
+      command: fscrawler job_name
+
+    # Elasticsearch Cluster
+    elasticsearch:
+      image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
+      container_name: elasticsearch
+      environment:
+        - node.name=elasticsearch
+        - discovery.seed_hosts=elasticsearch2
+        - cluster.initial_master_nodes=elasticsearch,elasticsearch2
+        - cluster.name=docker-cluster
+        - bootstrap.memory_lock=true
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+      volumes:
+        - esdata01:/usr/share/elasticsearch/data
+      ports:
+        - 9200:9200
+      networks:
+        - esnet
+    elasticsearch2:
+      image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
+      container_name: elasticsearch2
+      environment:
+        - node.name=elasticsearch2
+        - discovery.seed_hosts=elasticsearch
+        - cluster.initial_master_nodes=elasticsearch,elasticsearch2
+        - cluster.name=docker-cluster
+        - bootstrap.memory_lock=true
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+      volumes:
+        - esdata02:/usr/share/elasticsearch/data
+      networks:
+        - esnet
+
+  volumes:
+    esdata01:
+      driver: local
+    esdata02:
+      driver: local
+
+  networks:
+    esnet:
+
+Then, you can run Elasticsearch.
+
+.. code:: sh
+
+    docker-compose up -d elasticsearch
+    docker-compose logs -f elasticsearch
+
+Wait for elasticsearch to be started:
+
+::
+
+
+
+After starting Elasticsearch, you can run FSCrawler.
+
+.. code:: sh
+
+  docker-compose up fscrawler
+
 
 
 Running as a Service on Windows
@@ -334,10 +480,9 @@ Upgrade to 2.7
 - FSCrawler comes now with an elasticsearch 7.x implementation.
 - FSCrawler also supports YAML format for jobs (default).
 - The elasticsearch 6.x implementation does not support elasticsearch versions prior to 6.7.
-If you are using an older version, it's better to upgrade or you need to "hack" the distribution
-and replace all elasticsearch/lucene jars to the 6.6 version.
+  If you are using an older version, it's better to upgrade or you need to "hack" the distribution
+  and replace all elasticsearch/lucene jars to the 6.6 version.
 - FSCrawler does not follow symbolic links anymore. You need to set explicitly ``fs.follow_symlink``
-to ``true`` if you wish revert to the previous behavior.
+  to ``true`` if you wish revert to the previous behavior.
 - The mapping for elasticsearch 6.x can not contain anymore the type name.
 - We removed the Elasticsearch V5 compatibility as it's not maintained anymore by elastic.
-

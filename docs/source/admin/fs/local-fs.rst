@@ -71,6 +71,8 @@ file:
 
 For Windows users, use a form like ``c:/tmp`` or ``c:\\tmp``.
 
+.. _local-fs-update_rate:
+
 Update rate
 ^^^^^^^^^^^
 

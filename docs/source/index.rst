@@ -36,6 +36,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
    :maxdepth: 3
 
    user/getting_started
+   user/tutorial
    user/options
    user/ocr
    user/rest

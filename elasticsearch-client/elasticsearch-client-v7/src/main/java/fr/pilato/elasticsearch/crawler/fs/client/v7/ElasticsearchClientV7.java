@@ -386,6 +386,10 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
 
         RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
 
+        if (settings.getPathPrefix() != null) {
+            builder.setPathPrefix(settings.getPathPrefix());
+        }
+
         if (settings.getUsername() != null) {
             CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
             credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(settings.getUsername(), settings.getPassword()));

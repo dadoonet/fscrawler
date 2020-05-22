@@ -444,7 +444,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(48));
+        assertThat(raw.entrySet(), iterableWithSize(51));
         assertThat(raw, hasEntry("date", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
@@ -452,6 +452,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("xmp:CreatorTool", "Microsoft Word"));
         assertThat(raw, hasEntry("Keywords", "keyword1, keyword2"));
         assertThat(raw, hasEntry("access_permission:modify_annotations", "true"));
+        assertThat(raw, hasEntry("pdf:hasXFA", "false"));
         assertThat(raw, hasEntry("access_permission:can_print_degraded", "true"));
         assertThat(raw, hasEntry("subject", "Test Tika Object"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
@@ -473,6 +474,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("cp:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("pdf:docinfo:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
+        assertThat(raw, hasEntry("pdf:hasMarkedContent", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:creator", "David Pilato"));
         assertThat(raw, hasEntry("X-Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("creator", "David Pilato"));
@@ -486,6 +488,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("xmpTPg:NPages", "2"));
         assertThat(raw, hasEntry("Creation-Date", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("resourceName", "test.pdf"));
+        assertThat(raw, hasEntry("pdf:hasXMP", "false"));
         assertThat(raw, hasEntry("pdf:charsPerPage", "42"));
         assertThat(raw, hasEntry("access_permission:extract_content", "true"));
         assertThat(raw, hasEntry("access_permission:can_print", "true"));
