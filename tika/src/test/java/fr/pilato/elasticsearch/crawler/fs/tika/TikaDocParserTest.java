@@ -737,6 +737,18 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), stringContainsInOrder(Arrays.asList("This", "file", "contains", "some", "words.")));
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent(), stringContainsInOrder(Arrays.asList("This", "file", "contains", "some", "words.")));
+
+        // Test with heb language
+        fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setOcr(Ocr.builder().setLanguage("heb").build()).build())
+                .build();
+        doc = extractFromFile("test-ocr-heb.pdf", fsSettings);
+        try {
+            // This test requires to have the hebrew language pack so we don't fail the test but just log
+            assertThat(doc.getContent(), containsString("המבודדים מתקבלים"));
+        } catch (AssertionError e) {
+            logger.info("We were not able to get the Hebrew content with OCR. May be the language pack was not installed?");
+        }
     }
 
     @Test
