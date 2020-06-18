@@ -142,7 +142,7 @@ public class Ocr {
     }
 
     /**
-     * Get the PDF Strategy. Could be "no_ocr", "ocr_only" or "ocr_and_text" (default)
+     * Get the PDF Strategy. Could be "no_ocr", "auto", "ocr_only" or "ocr_and_text" (default)
      * @return the PDF Strategy
      */
     public String getPdfStrategy() {
@@ -151,7 +151,7 @@ public class Ocr {
 
     /**
      * Set the PDF Strategy.
-     * @param pdfStrategy the PDF Strategy. Could be "no_ocr", "ocr_only" or "ocr_and_text"
+     * @param pdfStrategy the PDF Strategy. Could be "no_ocr", "auto", "ocr_only" or "ocr_and_text"
      */
     public void setPdfStrategy(String pdfStrategy) {
         this.pdfStrategy = pdfStrategy;

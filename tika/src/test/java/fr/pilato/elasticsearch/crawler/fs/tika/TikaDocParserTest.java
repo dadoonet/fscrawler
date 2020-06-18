@@ -704,6 +704,18 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), containsString("This file contains some words."));
         assertThat(doc.getContent(), containsString("This file also contains text."));
 
+        // Test with OCR On and PDF Strategy set to auto (meaning that PDF will be only OCRed if less than 10 characters are found)
+        fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setOcr(Ocr.builder()
+                        .setPdfStrategy("auto")
+                        .build()).build())
+                .build();
+        doc = extractFromFile("test-ocr.pdf", fsSettings);
+        assertThat(doc.getContent(), not(containsString("This file contains some words.")));
+        assertThat(doc.getContent(), containsString("This file also contains text."));
+        doc = extractFromFile("test-ocr-notext.pdf", fsSettings);
+        assertThat(doc.getContent(), containsString("This file contains some words."));
+
         // Test with OCR Off
         fsSettings = FsSettings.builder(getCurrentTestName())
                 .setFs(Fs.builder().setOcr(Ocr.builder()
