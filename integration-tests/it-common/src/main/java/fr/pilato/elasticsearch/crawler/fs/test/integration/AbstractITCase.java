@@ -377,7 +377,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             // Let's search for entries
             try {
                 response[0] = esClient.search(request);
-            } catch (IOException e) {
+            } catch (RuntimeException|IOException e) {
                 staticLogger.warn("error caught", e);
                 return -1;
             }
