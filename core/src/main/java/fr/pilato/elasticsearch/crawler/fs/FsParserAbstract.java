@@ -26,14 +26,15 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.PathParser;
 import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
@@ -78,6 +79,7 @@ public abstract class FsParserAbstract extends FsParser {
     private final ElasticsearchClient esClient;
     private final Integer loop;
     private final MessageDigest messageDigest;
+    private final String pathSeparator;
 
     private ScanStatistic stats;
 
@@ -99,6 +101,14 @@ public abstract class FsParserAbstract extends FsParser {
             }
         } else {
             messageDigest = null;
+        }
+
+        // On Windows, when using SSH server, we need to force the "Linux" separator
+        if (OsValidator.WINDOWS && fsSettings.getServer() != null) {
+            logger.debug("We are running on Windows with SSH Server settings so we need to force the Linux separator.");
+            pathSeparator = "/";
+        } else {
+            pathSeparator = File.separator;
         }
     }
 
@@ -538,7 +548,7 @@ public abstract class FsParserAbstract extends FsParser {
         fr.pilato.elasticsearch.crawler.fs.beans.Path pathObject = new fr.pilato.elasticsearch.crawler.fs.beans.Path();
         // The real and complete path
         pathObject.setReal(path);
-        String rootdir = path.substring(0, path.lastIndexOf(File.separator));
+        String rootdir = path.substring(0, path.lastIndexOf(pathSeparator));
         // Encoded version of the parent dir
         pathObject.setRoot(SignTool.sign(rootdir));
         // The virtual URL (not including the initial root dir)
@@ -555,7 +565,7 @@ public abstract class FsParserAbstract extends FsParser {
         Collection<String> listFile = getFileDirectory(path);
 
         for (String esfile : listFile) {
-            esDelete(fsSettings.getElasticsearch().getIndex(), SignTool.sign(path.concat(File.separator).concat(esfile)));
+            esDelete(fsSettings.getElasticsearch().getIndex(), SignTool.sign(path.concat(pathSeparator).concat(esfile)));
         }
 
         Collection<String> listFolder = getFolderDirectory(path);
