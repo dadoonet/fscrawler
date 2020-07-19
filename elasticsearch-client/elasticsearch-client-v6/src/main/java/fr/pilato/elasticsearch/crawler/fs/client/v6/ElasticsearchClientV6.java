@@ -186,7 +186,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         if (Integer.parseInt(extractMinorVersion(esVersion)) < 4) {
             throw new RuntimeException("This version of FSCrawler is not compatible with " +
                     "Elasticsearch version [" +
-                    esVersion.toString() + "]. Please upgrade Elasticsearch to at least a 6.4.x version.");
+                    esVersion + "]. Please upgrade Elasticsearch to at least a 6.4.x version.");
         }
     }
 
@@ -333,8 +333,9 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         Response restResponse = client.getLowLevelClient().performRequest(request);
         Map<String, Object> response = asMap(restResponse);
         logger.debug("reindex response: {}", response);
-
-        return (int) response.get("total");
+        if (response != null)
+            return (int) response.get("total");
+        return 0;
     }
 
     /**
