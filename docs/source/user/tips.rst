@@ -70,7 +70,7 @@ Using docker-compose with FSCrawler REST
 ----------------------------------------
 
 To use the REST service available from 2.2 you can add the `--rest` command to the FSCrawler docker container. Note that you must expose the same ports that the REST service opens on in the docker container. For example, if your REST service starts on `127.0.0.1:8080` then expose the same ports in your FSCrawler docker-compose image::
-  fscrawler:
+    fscrawler:
       context: ${PWD}
       dockerfile: Dockerfile-fscrawler
     container_name: fscrawler
@@ -79,9 +79,8 @@ To use the REST service available from 2.2 you can add the `--rest` command to t
     ports:
       - "8080:8080"
     ...
-
 Then expose the docker container you've created by changing the IP of the REST URL in your settings.yaml to the docker-compose container name::
-rest :
-  url: "http://fscrawler:8080"
+    rest :
+      url: "http://fscrawler:8080"
 
 
