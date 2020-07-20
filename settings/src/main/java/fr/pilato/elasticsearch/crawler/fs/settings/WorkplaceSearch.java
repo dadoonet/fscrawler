@@ -24,20 +24,20 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Objects;
 
-public class EnterpriseSearch {
+public class WorkplaceSearch {
 
-    protected static final Logger logger = LogManager.getLogger(EnterpriseSearch.class);
+    protected static final Logger logger = LogManager.getLogger(WorkplaceSearch.class);
     public static final ServerUrl SERVER_DEFAULT = new ServerUrl("http://localhost:3002");
 
     private ServerUrl server = SERVER_DEFAULT;
     private String contentSourceKey;
     private String accessToken;
 
-    public EnterpriseSearch() {
+    public WorkplaceSearch() {
 
     }
 
-    public EnterpriseSearch(ServerUrl server, String contentSourceKey, String accessToken) {
+    public WorkplaceSearch(ServerUrl server, String contentSourceKey, String accessToken) {
         this.server = server;
         this.contentSourceKey = contentSourceKey;
         this.accessToken = accessToken;
@@ -91,8 +91,8 @@ public class EnterpriseSearch {
             return this;
         }
 
-        public EnterpriseSearch build() {
-            return new EnterpriseSearch(server, contentSourceKey, accessToken);
+        public WorkplaceSearch build() {
+            return new WorkplaceSearch(server, contentSourceKey, accessToken);
         }
     }
 
@@ -100,7 +100,7 @@ public class EnterpriseSearch {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        EnterpriseSearch that = (EnterpriseSearch) o;
+        WorkplaceSearch that = (WorkplaceSearch) o;
         return Objects.equals(server, that.server) &&
                 Objects.equals(contentSourceKey, that.contentSourceKey) &&
                 Objects.equals(accessToken, that.accessToken);
