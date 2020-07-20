@@ -94,13 +94,19 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
 
     FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest, TimeValue duration)
             throws Exception {
+        startCrawler(jobName, FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(), duration);
+        return crawler;
+    }
+
+    FsCrawlerImpl startCrawler(final String jobName, FsSettings fsSettings, TimeValue duration)
+            throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
         crawler = new FsCrawlerImpl(
                 metadataDir,
-                FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(),
+                fsSettings,
                 LOOP_INFINITE,
-                rest != null);
+                fsSettings.getRest() != null);
         crawler.start();
 
         // We wait up to X seconds before considering a failing test

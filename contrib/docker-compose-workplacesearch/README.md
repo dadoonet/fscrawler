@@ -26,8 +26,43 @@ You will be able to retrieve your Access Token and the Key.
 * `0bbc4c1c20ad6088e719154d8ebef41b4302677fe93710f9b06295a139b10d1e`
 * `5f15a47dd26b57eaa88fb196`
 
+## Build FSCrawler
+
+```sh
+mvn clean install -DskipTests
+cd distribution/es7/target/
+unzip fscrawler-es7-2.7-SNAPSHOT.zip
+```
+
+
 ## Configure FSCrawler
 
-Create a config file for fscrawler.
+```sh
+fscrawler-es7-2.7-SNAPSHOT/bin/fscrawler workplace --config_dir ./config
+```
 
-TODO continue from here
+Type `Y` to create the default config file `./config/workplace/_settings.yaml` and edit it as is:
+
+```yml
+---
+name: "workplace"
+fs:
+  url: "/tmp/es"
+  update_rate: "15m"
+elasticsearch:
+  nodes:
+  - url: "http://127.0.0.1:9200"
+  username: "elastic"
+  password: "changeme"
+workplace_search:
+  content_source_key: "0bbc4c1c20ad6088e719154d8ebef41b4302677fe93710f9b06295a139b10d1e"
+  access_token: "5f15a47dd26b57eaa88fb196"
+```
+
+## Launch FSCrawler
+
+```sh
+fscrawler-es7-2.7-SNAPSHOT/bin/fscrawler workplace --config_dir ./config
+```
+
+
