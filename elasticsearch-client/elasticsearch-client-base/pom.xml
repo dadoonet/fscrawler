@@ -12,4 +12,11 @@
     <artifactId>fscrawler-elasticsearch-client-base</artifactId>
     <name>FSCrawler Elasticsearch Client Base</name>
 
+    <dependencies>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-beans</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>

@@ -19,12 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
@@ -32,23 +28,23 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.NODE_DEFAULT;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeThat;
 
 /**
  * Test workplace search
  */
 public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
 
-    // TODO We will run it only if Workplace Search is running
+    private final static String testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token", "88add3d24c354fd515d3089c4d11eabb174039c08f17df43481d2d478d37d529");
+    private final static String testWorkplaceKey = System.getProperty("tests.workplace.key", "5f21820383e069eb4c00829d");
 
     @Test
     public void testWorkplaceSearch() throws Exception {
+        assumeFalse("Workplace Search credentials not defined. Launch with -Dtests.workplace.access_token=XYZ -Dtests.workplace.key=XYZ",
+                testWorkplaceAccessToken == null || testWorkplaceKey == null);
+
         Fs fs = startCrawlerDefinition().build();
         FsSettings fsSettings = FsSettings.builder(getCrawlerName())
                 .setFs(fs)
@@ -56,8 +52,8 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
                         .addNode(NODE_DEFAULT)
                         .setUsername("elastic").setPassword("changeme").build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
-                        .setAccessToken("5f15afdb6056c1d98c45bacd")
-                        .setContentSourceKey("9e27917499d055fe3955c1b9e997a53ce3f1d9dcfb650358dcc7fc6e4e5b75d7")
+                        .setAccessToken(testWorkplaceAccessToken)
+                        .setContentSourceKey(testWorkplaceKey)
                         .build())
                 .build();
 

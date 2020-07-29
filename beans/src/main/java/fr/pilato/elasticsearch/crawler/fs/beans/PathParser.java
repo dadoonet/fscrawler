@@ -27,8 +27,13 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapp
 
 public class PathParser {
 
-    public static String toJson(Path path) throws JsonProcessingException {
-        return prettyMapper.writeValueAsString(path);
+    public static String toJson(Path path) {
+        try {
+            return prettyMapper.writeValueAsString(path);
+        } catch (IOException e) {
+            // TODO Fix that code. We should log here and return null.
+            throw new RuntimeException(e);
+        }
     }
 
     public static Path fromJson(String json) throws IOException {

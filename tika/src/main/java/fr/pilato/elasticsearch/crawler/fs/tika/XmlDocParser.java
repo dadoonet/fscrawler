@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,7 +53,7 @@ public class XmlDocParser {
                 .addDeserializer(Object.class, new FixedUntypedObjectDeserializer()));
     }
 
-    public static String generate(InputStream inputStream) throws IOException {
+    public static String generate(InputStream inputStream) {
         logger.trace("Converting XML document [{}]");
         // Extracting XML content
         // See #185: https://github.com/dadoonet/fscrawler/issues/185
@@ -60,10 +61,14 @@ public class XmlDocParser {
         Map<String, Object> map = generateMap(inputStream);
 
         // Serialize to JSON
-        String json = mapper.writeValueAsString(map);
-
-        logger.trace("Generated JSON: {}", json);
-        return json;
+        try {
+            String json = mapper.writeValueAsString(map);
+            logger.trace("Generated JSON: {}", json);
+            return json;
+        } catch (JsonProcessingException e) {
+            // TODO Fix that code. We should log here and return null.
+            throw new RuntimeException(e);
+        }
     }
 
     /**

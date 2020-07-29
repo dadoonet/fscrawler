@@ -28,8 +28,13 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapp
 
 public class DocParser {
 
-    public static String toJson(Doc doc) throws JsonProcessingException {
-        return prettyMapper.writeValueAsString(doc);
+    public static String toJson(Doc doc) {
+        try {
+            return prettyMapper.writeValueAsString(doc);
+        } catch (IOException e) {
+            // TODO Fix that code. We should log here and return null.
+            throw new RuntimeException(e);
+        }
     }
 
     public static Doc fromJson(String json) throws IOException {

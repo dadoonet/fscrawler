@@ -21,6 +21,8 @@ package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
+import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
@@ -54,6 +56,7 @@ public class FsCrawlerImpl {
     private Thread fsCrawlerThread;
 
     private final ElasticsearchClient esClient;
+    private final WorkplaceSearchClient wpClient;
     private FsParser fsParser;
 
     public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
@@ -64,6 +67,7 @@ public class FsCrawlerImpl {
         this.loop = loop;
         this.rest = rest;
         this.esClient = ElasticsearchClientUtil.getInstance(config, settings);
+        this.wpClient = WorkplaceSearchClientUtil.getInstance(config, settings);
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
@@ -97,16 +101,17 @@ public class FsCrawlerImpl {
 
         esClient.start();
         esClient.createIndices();
+        wpClient.start();
 
         // Start the crawler thread - but not if only in rest mode
         if (loop != 0) {
             // What is the protocol used?
             if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
                 // Local FS
-                fsParser = new FsParserLocal(settings, config, esClient, loop);
+                fsParser = new FsParserLocal(settings, config, esClient, wpClient, loop);
             } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
                 // Remote SSH FS
-                fsParser = new FsParserSsh(settings, config, esClient, loop);
+                fsParser = new FsParserSsh(settings, config, esClient, wpClient, loop);
             } else {
                 // Non supported protocol
                 throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +

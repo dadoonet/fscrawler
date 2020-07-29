@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
@@ -57,6 +58,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
@@ -76,17 +78,31 @@ public abstract class FsParserAbstract extends FsParser {
 
     final FsSettings fsSettings;
     private final FsJobFileHandler fsJobFileHandler;
+
+    private final ElasticsearchClient documentIndexer;
+
     private final ElasticsearchClient esClient;
+    private final WorkplaceSearchClient wpClient;
     private final Integer loop;
     private final MessageDigest messageDigest;
     private final String pathSeparator;
 
     private ScanStatistic stats;
 
-    FsParserAbstract(FsSettings fsSettings, Path config, ElasticsearchClient esClient, Integer loop) {
+    FsParserAbstract(FsSettings fsSettings, Path config, ElasticsearchClient esClient, WorkplaceSearchClient wpClient, Integer loop) {
         this.fsSettings = fsSettings;
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.esClient = esClient;
+        this.wpClient = wpClient;
+
+        if (wpClient != null) {
+            logger.info("Using Workplace Search implementation to index documents");
+            documentIndexer = wpClient;
+        } else {
+            logger.info("Using Elasticsearch implementation to index documents");
+            documentIndexer = esClient;
+        }
+
         this.loop = loop;
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
@@ -160,7 +176,7 @@ public abstract class FsParserAbstract extends FsParser {
 
                 updateFsJob(fsSettings.getName(), scanDatenew);
             } catch (Exception e) {
-                logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage());
+                logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
                 if (logger.isDebugEnabled()) {
                     logger.warn("Full stacktrace", e);
                 }
@@ -488,7 +504,7 @@ public abstract class FsParserAbstract extends FsParser {
                 if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
                     esIndex(fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
-                            DocParser.toJson(doc),
+                            doc,
                             fsSettings.getElasticsearch().getPipeline());
                 } else {
                     logger.debug("We ignore file [{}] because it does not match all the patterns {}", filename,
@@ -499,13 +515,15 @@ public abstract class FsParserAbstract extends FsParser {
                     // We index the json content directly
                     esIndex(fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
-                            read(inputStream),
+                            new Doc(read(inputStream)),
                             fsSettings.getElasticsearch().getPipeline());
                 } else if (fsSettings.getFs().isXmlSupport()) {
                     // We index the xml content directly
+                    Doc doc = new Doc();
+                    doc.setContent(XmlDocParser.generate(inputStream));
                     esIndex(fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
-                            XmlDocParser.generate(inputStream),
+                            new Doc(XmlDocParser.generate(inputStream)),
                             fsSettings.getElasticsearch().getPipeline());
                 }
             }
@@ -531,12 +549,11 @@ public abstract class FsParserAbstract extends FsParser {
      * Index a Path object (AKA a folder) in elasticsearch
      * @param id    id of the path
      * @param path  path object
-     * @throws Exception in case of error
      */
-    private void indexDirectory(String id, fr.pilato.elasticsearch.crawler.fs.beans.Path path) throws Exception {
+    private void indexDirectory(String id, fr.pilato.elasticsearch.crawler.fs.beans.Path path) {
         esIndex(fsSettings.getElasticsearch().getIndexFolder(),
                 id,
-                PathParser.toJson(path),
+                new Doc(PathParser.toJson(path)),
                 null);
     }
 
@@ -579,12 +596,11 @@ public abstract class FsParserAbstract extends FsParser {
     /**
      * Add to bulk an IndexRequest in JSon format
      */
-    private void esIndex(String index, String id, String json, String pipeline) {
+    private void esIndex(String index, String id, Doc doc, String pipeline) {
         logger.debug("Indexing {}/{}?pipeline={}", index, id, pipeline);
-        logger.trace("JSon indexed : {}", json);
 
         if (!closed) {
-            esClient.index(index, id, json, pipeline);
+            documentIndexer.index(index, id, doc, pipeline);
         } else {
             logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }
@@ -596,7 +612,7 @@ public abstract class FsParserAbstract extends FsParser {
     private void esDelete(String index, String id) {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed) {
-            esClient.delete(index, id);
+            documentIndexer.delete(index, id);
         } else {
             logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }

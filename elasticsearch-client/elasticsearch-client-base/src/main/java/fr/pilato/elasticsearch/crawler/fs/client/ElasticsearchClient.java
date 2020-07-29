@@ -20,8 +20,11 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.function.Supplier;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 
@@ -97,21 +100,21 @@ public interface ElasticsearchClient extends Closeable {
     String getDefaultTypeName();
 
     /**
-     * Index a document using a BulkProcessor behind the scenes
+     * Index a document (might use a BulkProcessor behind the scenes)
      * @param index     Index name
      * @param id        Document ID
-     * @param json      JSON
+     * @param doc       Document to index
      * @param pipeline  Pipeline (can be null)
      */
-    void index(String index, String id, String json, String pipeline);
+    void index(String index, String id, Doc doc, String pipeline);
 
     /**
      * Index a document (for test purposes only)
      * @param index     Index name
      * @param id        Document ID
-     * @param json      JSON
+     * @param doc       Document to index
      */
-    void indexSingle(String index, String id, String json) throws IOException;
+    void indexSingle(String index, String id, Doc doc) throws IOException;
 
     /**
      * Delete a document using a BulkProcessor behind the scenes

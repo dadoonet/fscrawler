@@ -20,6 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.client.v6;
 
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESDocumentField;
 import fr.pilato.elasticsearch.crawler.fs.client.ESHighlightField;
@@ -92,6 +94,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
@@ -370,12 +373,16 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
     }
 
     @Override
-    public void index(String index, String id, String json, String pipeline) {
+    public void index(String index, String id, Doc doc, String pipeline) {
+        String json = DocParser.toJson(doc);
+        logger.trace("JSon indexed : {}", json);
         bulkProcessor.add(new IndexRequest(index, getDefaultTypeName(), id).setPipeline(pipeline).source(json, XContentType.JSON));
     }
 
     @Override
-    public void indexSingle(String index, String id, String json) throws IOException {
+    public void indexSingle(String index, String id, Doc doc) throws IOException {
+        String json = DocParser.toJson(doc);
+        logger.trace("JSon indexed : {}", json);
         IndexRequest request = new IndexRequest(index, getDefaultTypeName(), id);
         request.source(json, XContentType.JSON);
         client.index(request, RequestOptions.DEFAULT);

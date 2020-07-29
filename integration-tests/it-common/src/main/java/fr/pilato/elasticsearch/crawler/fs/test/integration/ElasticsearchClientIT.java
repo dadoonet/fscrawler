@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
@@ -95,8 +96,8 @@ public class ElasticsearchClientIT extends AbstractITCase {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
 
-        esClient.indexSingle(getCrawlerName(), "1", "{ \"foo\": { \"bar\": \"bar\" } }");
-        esClient.indexSingle(getCrawlerName(), "2", "{ \"foo\": { \"bar\": \"baz\" } }");
+        esClient.indexSingle(getCrawlerName(), "1", new Doc("{ \"foo\": { \"bar\": \"bar\" } }"));
+        esClient.indexSingle(getCrawlerName(), "2", new Doc("{ \"foo\": { \"bar\": \"baz\" } }"));
 
         esClient.refresh(getCrawlerName());
 

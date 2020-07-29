@@ -20,6 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.client.v7;
 
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESDocumentField;
 import fr.pilato.elasticsearch.crawler.fs.client.ESHighlightField;
@@ -83,6 +85,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -92,6 +95,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
@@ -350,12 +354,16 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     }
 
     @Override
-    public void index(String index, String id, String json, String pipeline) {
+    public void index(String index, String id, Doc doc, String pipeline) {
+        String json = DocParser.toJson(doc);
+        logger.trace("JSon indexed : {}", json);
         bulkProcessor.add(new IndexRequest(index).id(id).setPipeline(pipeline).source(json, XContentType.JSON));
     }
 
     @Override
-    public void indexSingle(String index, String id, String json) throws IOException {
+    public void indexSingle(String index, String id, Doc doc) throws IOException {
+        String json = DocParser.toJson(doc);
+        logger.trace("JSon indexed : {}", json);
         client.index(new IndexRequest(index).id(id).source(json, XContentType.JSON), RequestOptions.DEFAULT);
     }
 

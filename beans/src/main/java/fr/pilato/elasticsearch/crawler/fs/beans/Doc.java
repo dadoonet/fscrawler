@@ -55,6 +55,11 @@ public class Doc {
         external = null;
     }
 
+    public Doc(String content) {
+        this();
+        this.content = content;
+    }
+
     public Map getObject() {
         return object;
     }
