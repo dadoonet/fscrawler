@@ -116,6 +116,10 @@ Testing Workplace Search connector
 To test the Workplace Search connector, some manual steps needs to be performed as you need to start
 Enterprise Search and create manually the custom source as there is no API yet to do that.
 
+    .. warning::
+
+    Running the integration tests **will remove everything** you have indexed so far in the workplace local instance.
+
 .. versionadded:: 2.7
 
 * Run the following steps::
