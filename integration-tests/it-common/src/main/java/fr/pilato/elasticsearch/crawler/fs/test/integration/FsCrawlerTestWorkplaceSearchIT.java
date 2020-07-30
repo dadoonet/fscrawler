@@ -37,9 +37,6 @@ import static org.junit.Assume.assumeThat;
  */
 public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
 
-    private final static String testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token", "88add3d24c354fd515d3089c4d11eabb174039c08f17df43481d2d478d37d529");
-    private final static String testWorkplaceKey = System.getProperty("tests.workplace.key", "5f21820383e069eb4c00829d");
-
     @Test
     public void testWorkplaceSearch() throws Exception {
         assumeFalse("Workplace Search credentials not defined. Launch with -Dtests.workplace.access_token=XYZ -Dtests.workplace.key=XYZ",

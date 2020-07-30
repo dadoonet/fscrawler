@@ -30,13 +30,12 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
@@ -58,7 +57,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
@@ -79,29 +77,19 @@ public abstract class FsParserAbstract extends FsParser {
     final FsSettings fsSettings;
     private final FsJobFileHandler fsJobFileHandler;
 
-    private final ElasticsearchClient documentIndexer;
-
-    private final ElasticsearchClient esClient;
-    private final WorkplaceSearchClient wpClient;
+    private final FsCrawlerService managementService;
+    private final FsCrawlerService documentService;
     private final Integer loop;
     private final MessageDigest messageDigest;
     private final String pathSeparator;
 
     private ScanStatistic stats;
 
-    FsParserAbstract(FsSettings fsSettings, Path config, ElasticsearchClient esClient, WorkplaceSearchClient wpClient, Integer loop) {
+    FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerService managementService, FsCrawlerService documentService, Integer loop) {
         this.fsSettings = fsSettings;
         this.fsJobFileHandler = new FsJobFileHandler(config);
-        this.esClient = esClient;
-        this.wpClient = wpClient;
-
-        if (wpClient != null) {
-            logger.info("Using Workplace Search implementation to index documents");
-            documentIndexer = wpClient;
-        } else {
-            logger.info("Using Elasticsearch implementation to index documents");
-            documentIndexer = esClient;
-        }
+        this.managementService = managementService;
+        this.documentService = documentService;
 
         this.loop = loop;
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
@@ -341,8 +329,8 @@ public abstract class FsParserAbstract extends FsParser {
                 String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, esfile).toString());
                 if (isIndexable(false, virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
                         && !fsFiles.contains(esfile)) {
-                    logger.trace("Removing file [{}] in elasticsearch", esfile);
-                    esDelete(fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, filepath));
+                    logger.trace("Removing file [{}] in elasticsearch/workplace", esfile);
+                    esDelete(documentService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, filepath));
                     stats.removeFile();
                 }
             }
@@ -378,7 +366,7 @@ public abstract class FsParserAbstract extends FsParser {
 
         logger.trace("Querying elasticsearch for files in dir [{}:{}]", PATH_ROOT, SignTool.sign(path));
         Collection<String> files = new ArrayList<>();
-        ESSearchResponse response = esClient.search(
+        ESSearchResponse response = managementService.getClient().search(
                 new ESSearchRequest()
                         .withIndex(fsSettings.getElasticsearch().getIndex())
                         .withSize(REQUEST_SIZE)
@@ -417,7 +405,7 @@ public abstract class FsParserAbstract extends FsParser {
             return files;
         }
 
-        ESSearchResponse response = esClient.search(
+        ESSearchResponse response = managementService.getClient().search(
                 new ESSearchRequest()
                         .withIndex(fsSettings.getElasticsearch().getIndexFolder())
                         .withSize(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
@@ -502,7 +490,7 @@ public abstract class FsParserAbstract extends FsParser {
 
                 // We index the data structure
                 if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
-                    esIndex(fsSettings.getElasticsearch().getIndex(),
+                    esIndex(documentService, fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
                             doc,
                             fsSettings.getElasticsearch().getPipeline());
@@ -513,7 +501,7 @@ public abstract class FsParserAbstract extends FsParser {
             } else {
                 if (fsSettings.getFs().isJsonSupport()) {
                     // We index the json content directly
-                    esIndex(fsSettings.getElasticsearch().getIndex(),
+                    esIndex(documentService, fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
                             new Doc(read(inputStream)),
                             fsSettings.getElasticsearch().getPipeline());
@@ -521,7 +509,7 @@ public abstract class FsParserAbstract extends FsParser {
                     // We index the xml content directly
                     Doc doc = new Doc();
                     doc.setContent(XmlDocParser.generate(inputStream));
-                    esIndex(fsSettings.getElasticsearch().getIndex(),
+                    esIndex(documentService, fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
                             new Doc(XmlDocParser.generate(inputStream)),
                             fsSettings.getElasticsearch().getPipeline());
@@ -551,7 +539,7 @@ public abstract class FsParserAbstract extends FsParser {
      * @param path  path object
      */
     private void indexDirectory(String id, fr.pilato.elasticsearch.crawler.fs.beans.Path path) {
-        esIndex(fsSettings.getElasticsearch().getIndexFolder(),
+        esIndex(managementService, fsSettings.getElasticsearch().getIndexFolder(),
                 id,
                 new Doc(PathParser.toJson(path)),
                 null);
@@ -582,7 +570,7 @@ public abstract class FsParserAbstract extends FsParser {
         Collection<String> listFile = getFileDirectory(path);
 
         for (String esfile : listFile) {
-            esDelete(fsSettings.getElasticsearch().getIndex(), SignTool.sign(path.concat(pathSeparator).concat(esfile)));
+            esDelete(managementService, fsSettings.getElasticsearch().getIndex(), SignTool.sign(path.concat(pathSeparator).concat(esfile)));
         }
 
         Collection<String> listFolder = getFolderDirectory(path);
@@ -590,17 +578,17 @@ public abstract class FsParserAbstract extends FsParser {
             removeEsDirectoryRecursively(esfolder);
         }
 
-        esDelete(fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path));
+        esDelete(managementService, fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path));
     }
 
     /**
      * Add to bulk an IndexRequest in JSon format
      */
-    private void esIndex(String index, String id, Doc doc, String pipeline) {
+    private void esIndex(FsCrawlerService service, String index, String id, Doc doc, String pipeline) {
         logger.debug("Indexing {}/{}?pipeline={}", index, id, pipeline);
 
         if (!closed) {
-            documentIndexer.index(index, id, doc, pipeline);
+            service.getClient().index(index, id, doc, pipeline);
         } else {
             logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }
@@ -609,10 +597,10 @@ public abstract class FsParserAbstract extends FsParser {
     /**
      * Add to bulk a DeleteRequest
      */
-    private void esDelete(String index, String id) {
+    private void esDelete(FsCrawlerService service, String index, String id) {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed) {
-            documentIndexer.delete(index, id);
+            service.getClient().delete(index, id);
         } else {
             logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }

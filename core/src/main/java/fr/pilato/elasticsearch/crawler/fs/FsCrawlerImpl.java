@@ -22,9 +22,12 @@ package fr.pilato.elasticsearch.crawler.fs;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientNoOp;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
@@ -57,6 +60,10 @@ public class FsCrawlerImpl {
 
     private final ElasticsearchClient esClient;
     private final WorkplaceSearchClient wpClient;
+
+    private final FsCrawlerDocumentService documentService;
+    private final FsCrawlerManagementService managementService;
+
     private FsParser fsParser;
 
     public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
@@ -68,6 +75,15 @@ public class FsCrawlerImpl {
         this.rest = rest;
         this.esClient = ElasticsearchClientUtil.getInstance(config, settings);
         this.wpClient = WorkplaceSearchClientUtil.getInstance(config, settings);
+
+        this.managementService = new FsCrawlerManagementService(this.esClient);
+        if (wpClient instanceof WorkplaceSearchClientNoOp) {
+            // The documentService is using the esSearch instance
+            this.documentService = new FsCrawlerDocumentService(this.esClient);
+        } else {
+            // The documentService is using the wpSearch instance
+            this.documentService = new FsCrawlerDocumentService(this.wpClient);
+        }
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
@@ -99,19 +115,19 @@ public class FsCrawlerImpl {
             return;
         }
 
-        esClient.start();
+        managementService.start();
         esClient.createIndices();
-        wpClient.start();
+        documentService.start();
 
         // Start the crawler thread - but not if only in rest mode
         if (loop != 0) {
             // What is the protocol used?
             if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
                 // Local FS
-                fsParser = new FsParserLocal(settings, config, esClient, wpClient, loop);
+                fsParser = new FsParserLocal(settings, config, managementService, documentService, loop);
             } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
                 // Remote SSH FS
-                fsParser = new FsParserSsh(settings, config, esClient, wpClient, loop);
+                fsParser = new FsParserSsh(settings, config, managementService, documentService, loop);
             } else {
                 // Non supported protocol
                 throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +
@@ -149,7 +165,8 @@ public class FsCrawlerImpl {
             logger.debug("FS crawler thread is now stopped");
         }
 
-        esClient.close();
+        managementService.close();
+        documentService.close();
         logger.debug("ES Client Manager stopped");
 
         logger.info("FS crawler [{}] stopped", settings.getName());

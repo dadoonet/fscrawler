@@ -21,6 +21,17 @@ services:
     ports: ['9200:9200']
     networks: ['stack']
 
+  kibana:
+    image: docker.elastic.co/kibana/kibana:$ELASTIC_VERSION
+    environment:
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=$ELASTIC_PASSWORD
+    ports: ['5601:5601']
+    networks: ['stack']
+    links: ['elasticsearch']
+    restart: always
+    depends_on: ['elasticsearch']
+
   enterprisesearch:
     image: docker.elastic.co/enterprise-search/enterprise-search:$ELASTIC_VERSION
     environment:

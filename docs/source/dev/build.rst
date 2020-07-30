@@ -110,6 +110,49 @@ You can change this by using ``tests.cluster.pass`` option::
     mvn verify -Psecurity -Dtests.cluster.pass=mystrongpassword
 
 
+Testing Workplace Search connector
+""""""""""""""""""""""""""""""""""
+
+To test the Workplace Search connector, some manual steps needs to be performed as you need to start
+Enterprise Search and create manually the custom source as there is no API yet to do that.
+
+.. versionadded:: 2.7
+
+* Run the following steps::
+
+    cd contrib/docker-compose-workplacesearch
+    docker-compose up
+
+* Wait for it to start and open http://localhost:3002/ws.
+* Enter ``enterprise_search`` as the login and ``changeme`` as the password.
+* Click on "Add sources" button and choose `Custom API <http://localhost:3002/ws/org/sources#/add/custom>`_.
+* Name it ``fscrawler`` and click on "Create Custom API Source" button.
+* Copy the "Access Token" value. We will mention it as ``ACCESS_TOKEN`` for the rest of this documentation.
+* Copy the "Key" value. We will mention it as ``KEY`` for the rest of this documentation.
+
+.. image:: /_static/wpsearch/fscrawler-custom-source.png
+
+* You can now run in another terminal::
+
+    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
+        -Dtests.workplace.access_token=ACCESS_TOKEN \
+        -Dtests.workplace.key=KEY
+
+* Then you should be able to see the documents in http://localhost:3002/ws/search
+
+.. hint::
+
+    If you want to modify the look, go to the source and choose "Display Settings".
+    Adapt the settings accordingly.
+
+    .. image:: /_static/wpsearch/fscrawler-display-settings-1.png
+
+    In "Result Detail" tab, add the missing fields. And click on "Save".
+
+    .. image:: /_static/wpsearch/fscrawler-display-settings-2.png
+
+
+
 Tests options
 """""""""""""
 
