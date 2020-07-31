@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * Workplace Search Client for Clusters running v7.
@@ -181,7 +180,6 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public ESSearchResponse search(ESSearchRequest request) throws IOException {
-
         throw new RuntimeException("Not implemented yet");
         // return esClient.search(request);
     }

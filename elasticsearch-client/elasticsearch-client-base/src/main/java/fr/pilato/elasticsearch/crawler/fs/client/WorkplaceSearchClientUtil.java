@@ -55,7 +55,7 @@ public abstract class WorkplaceSearchClientUtil {
             }
         }
 
-        return new WorkplaceSearchClientNoOp();
+        return null;
     }
 
     /**
@@ -69,7 +69,7 @@ public abstract class WorkplaceSearchClientUtil {
         Objects.requireNonNull(settings, "settings can not be null");
 
         if (settings.getWorkplaceSearch() == null) {
-            return new WorkplaceSearchClientNoOp();
+            return null;
         }
 
         Class<WorkplaceSearchClient> clazz = null;

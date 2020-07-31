@@ -38,6 +38,11 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
 
     public FsCrawlerDocumentServiceWorkplaceSearchImpl(Path config, FsSettings settings) {
         this.client = WorkplaceSearchClientUtil.getInstance(config, settings);
+
+        if (client == null) {
+            throw new RuntimeException("As we can not find an existing Workplace Search client for elastic stack before 7.8," +
+                    " you can't define workplace settings in your configuration. FSCrawler will refuse to start.");
+        }
     }
 
     @Override
