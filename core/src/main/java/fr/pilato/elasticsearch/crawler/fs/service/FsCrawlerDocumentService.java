@@ -19,36 +19,32 @@
 
 package fr.pilato.elasticsearch.crawler.fs.service;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
 import java.io.IOException;
 
-public class FsCrawlerDocumentService implements FsCrawlerService {
+public interface FsCrawlerDocumentService extends FsCrawlerService {
+    /**
+     * Create a schema for the dataset. This is called when the service starts
+     * @throws Exception in case of error
+     */
+    void createSchema() throws Exception;
 
-    private static final Logger logger = LogManager.getLogger(FsCrawlerDocumentService.class);
+    /**
+     * Send a document to the target service
+     * @param index     Index name
+     * @param id        Document id
+     * @param doc       Document to index
+     * @param pipeline  Pipeline (can be null)
+     */
+    void index(String index, String id, Doc doc, String pipeline);
 
-    private final ElasticsearchClient client;
-
-    public FsCrawlerDocumentService(ElasticsearchClient client) {
-        this.client = client;
-    }
-
-    @Override
-    public void start() throws IOException {
-        client.start();
-        logger.debug("Document Service started");
-    }
-
-    @Override
-    public ElasticsearchClient getClient() {
-        return client;
-    }
-
-    @Override
-    public void close() throws IOException {
-        client.close();
-        logger.debug("Document Service stopped");
-    }
+    /**
+     * Send a Raw Json to the target service
+     * @param index     Index name
+     * @param id        Document ID
+     * @param json      Document to index
+     * @param pipeline  Pipeline (can be null)
+     */
+    void indexRawJson(String index, String id, String json, String pipeline);
 }

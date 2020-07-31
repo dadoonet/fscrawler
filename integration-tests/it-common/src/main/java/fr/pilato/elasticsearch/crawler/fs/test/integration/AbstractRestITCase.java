@@ -19,9 +19,12 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
@@ -32,7 +35,8 @@ import java.io.IOException;
 
 public abstract class AbstractRestITCase extends AbstractITCase {
 
-    private ElasticsearchClient esTmpClient;
+    private FsCrawlerManagementService managementService;
+    private FsCrawlerDocumentService documentService;
 
     @Before
     public void startRestServer() throws Exception {
@@ -42,12 +46,24 @@ public abstract class AbstractRestITCase extends AbstractITCase {
                 .build();
         fsSettings.getElasticsearch().setIndex(getCrawlerName());
         FsCrawlerValidator.validateSettings(logger, fsSettings, true);
-        esTmpClient = ElasticsearchClientUtil.getInstance(metadataDir, fsSettings);
-        esTmpClient.start();
-        RestServer.start(fsSettings, esTmpClient);
+
+        this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
+
+        if (fsSettings.getWorkplaceSearch() == null) {
+            // The documentService is using the esSearch instance
+            this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
+        } else {
+            // The documentService is using the wpSearch instance
+            this.documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
+        }
+
+        managementService.start();
+        documentService.start();
+
+        RestServer.start(fsSettings, managementService, documentService);
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
-        esTmpClient.deleteIndex(getCrawlerName() + "*");
+        managementService.getClient().deleteIndex(getCrawlerName() + "*");
 
         logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
     }
@@ -55,9 +71,13 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     @After
     public void stopRestServer() throws IOException {
         RestServer.close();
-        if (esTmpClient != null) {
-            esTmpClient.close();
-            esTmpClient = null;
+        if (managementService != null) {
+            managementService.close();
+            managementService = null;
+        }
+        if (documentService != null) {
+            documentService.close();
+            documentService = null;
         }
     }
 }

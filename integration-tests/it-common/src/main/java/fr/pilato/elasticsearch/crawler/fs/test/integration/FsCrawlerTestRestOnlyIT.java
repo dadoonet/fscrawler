@@ -61,7 +61,7 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
                     0,
                     true);
             crawler.start();
-            RestServer.start(fsSettings, crawler.getEsClient());
+            RestServer.start(fsSettings, crawler.getManagementService(), crawler.getDocumentService());
 
             Path from = rootTmpDir.resolve("resources").resolve("documents");
             if (Files.notExists(from)) {

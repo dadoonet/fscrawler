@@ -23,7 +23,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
 import java.io.IOException;
-import java.util.function.Supplier;
 
 /**
  * Workplace Search Client when we don't need at all any Workplace feature.
@@ -36,11 +35,11 @@ public class WorkplaceSearchClientNoOp implements WorkplaceSearchClient {
     }
 
     @Override
-    public void start() throws IOException {
+    public void start() {
     }
 
     @Override
-    public String getVersion() throws IOException {
+    public String getVersion() {
         return "NoOp";
     }
 
@@ -49,9 +48,9 @@ public class WorkplaceSearchClientNoOp implements WorkplaceSearchClient {
      * @param index index name
      * @param ignoreErrors don't fail if the index already exists
      * @param indexSettings index settings if any
-     * @throws IOException In case of error
      */
-    public void createIndex(String index, boolean ignoreErrors, String indexSettings) throws IOException {
+    @Override
+    public void createIndex(String index, boolean ignoreErrors, String indexSettings) {
     }
 
     /**
@@ -60,6 +59,7 @@ public class WorkplaceSearchClientNoOp implements WorkplaceSearchClient {
      * @return true if the index exists, false otherwise
      * @throws IOException In case of error
      */
+    @Override
     public boolean isExistingIndex(String index) throws IOException {
         throw new IOException("NoOp");
     }
@@ -68,9 +68,9 @@ public class WorkplaceSearchClientNoOp implements WorkplaceSearchClient {
      * Check if a pipeline exists
      * @param pipelineName pipeline name
      * @return true if the pipeline exists, false otherwise
-     * @throws IOException In case of error
      */
-    public boolean isExistingPipeline(String pipelineName) throws IOException {
+    @Override
+    public boolean isExistingPipeline(String pipelineName) {
         return false;
     }
 
@@ -79,6 +79,7 @@ public class WorkplaceSearchClientNoOp implements WorkplaceSearchClient {
      * @param index index name
      * @throws IOException In case of error
      */
+    @Override
     public void refresh(String index) throws IOException {
         throw new IOException("NoOp");
     }
@@ -86,23 +87,29 @@ public class WorkplaceSearchClientNoOp implements WorkplaceSearchClient {
     /**
      * Wait for an index to become at least yellow (all primaries assigned)
      * @param index index name
-     * @throws IOException In case of error
      */
-    public void waitForHealthyIndex(String index) throws IOException {
+    @Override
+    public void waitForHealthyIndex(String index) {
     }
 
     // Utility methods
 
+    @Override
     public boolean isIngestSupported() {
         return false;
     }
 
+    @Override
     public String getDefaultTypeName() {
         return "NoOp";
     }
 
     @Override
     public void index(String index, String id, Doc doc, String pipeline) {
+    }
+
+    @Override
+    public void indexRawJson(String index, String id, String json, String pipeline) {
     }
 
     @Override
@@ -114,20 +121,20 @@ public class WorkplaceSearchClientNoOp implements WorkplaceSearchClient {
     }
 
     @Override
-    public void close() throws IOException {
-    }
-
-    public void createIndices() throws Exception {
+    public void close() {
     }
 
     @Override
-    public ESSearchResponse search(ESSearchRequest request) throws IOException {
+    public void createIndices() {
+    }
+
+    @Override
+    public ESSearchResponse search(ESSearchRequest request) {
         return new ESSearchResponse();
     }
 
     @Override
-    public void deleteIndex(String index) throws IOException {
-        throw new IOException("NoOp");
+    public void deleteIndex(String index) {
     }
 
     @Override
@@ -135,8 +142,7 @@ public class WorkplaceSearchClientNoOp implements WorkplaceSearchClient {
     }
 
     @Override
-    public void performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException {
-        throw new IOException("NoOp");
+    public void performLowLevelRequest(String method, String endpoint, String jsonEntity) {
     }
 
     @Override

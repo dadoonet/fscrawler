@@ -19,15 +19,13 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
-import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientNoOp;
-import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
@@ -58,9 +56,6 @@ public class FsCrawlerImpl {
 
     private Thread fsCrawlerThread;
 
-    private final ElasticsearchClient esClient;
-    private final WorkplaceSearchClient wpClient;
-
     private final FsCrawlerDocumentService documentService;
     private final FsCrawlerManagementService managementService;
 
@@ -73,16 +68,15 @@ public class FsCrawlerImpl {
         this.settings = settings;
         this.loop = loop;
         this.rest = rest;
-        this.esClient = ElasticsearchClientUtil.getInstance(config, settings);
-        this.wpClient = WorkplaceSearchClientUtil.getInstance(config, settings);
 
-        this.managementService = new FsCrawlerManagementService(this.esClient);
-        if (wpClient instanceof WorkplaceSearchClientNoOp) {
+        this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(config, settings);
+
+        if (settings.getWorkplaceSearch() == null) {
             // The documentService is using the esSearch instance
-            this.documentService = new FsCrawlerDocumentService(this.esClient);
+            this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(config, settings);
         } else {
             // The documentService is using the wpSearch instance
-            this.documentService = new FsCrawlerDocumentService(this.wpClient);
+            this.documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(config, settings);
         }
 
         // We don't go further as we have critical errors
@@ -100,8 +94,12 @@ public class FsCrawlerImpl {
         }
     }
 
-    public ElasticsearchClient getEsClient() {
-        return esClient;
+    public FsCrawlerDocumentService getDocumentService() {
+        return documentService;
+    }
+
+    public FsCrawlerManagementService getManagementService() {
+        return managementService;
     }
 
     public void start() throws Exception {
@@ -116,8 +114,8 @@ public class FsCrawlerImpl {
         }
 
         managementService.start();
-        esClient.createIndices();
         documentService.start();
+        documentService.createSchema();
 
         // Start the crawler thread - but not if only in rest mode
         if (loop != 0) {

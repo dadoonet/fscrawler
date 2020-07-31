@@ -375,6 +375,11 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
     @Override
     public void index(String index, String id, Doc doc, String pipeline) {
         String json = DocParser.toJson(doc);
+        indexRawJson(index, id, json, pipeline);
+    }
+
+    @Override
+    public void indexRawJson(String index, String id, String json, String pipeline) {
         logger.trace("JSon indexed : {}", json);
         bulkProcessor.add(new IndexRequest(index, getDefaultTypeName(), id).setPipeline(pipeline).source(json, XContentType.JSON));
     }

@@ -46,34 +46,10 @@
     </build>
 
     <dependencies>
-        <!-- Our framework -->
+        <!-- Our core -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-framework</artifactId>
-        </dependency>
-
-        <!-- Our Settings -->
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-settings</artifactId>
-        </dependency>
-
-        <!-- Our Beans -->
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-beans</artifactId>
-        </dependency>
-
-        <!-- Tika Implementation -->
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-tika</artifactId>
-        </dependency>
-
-        <!-- Our Elasticsearch Client -->
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-elasticsearch-client-base</artifactId>
+            <artifactId>fscrawler-core</artifactId>
         </dependency>
 
         <!-- For REST Server -->

@@ -136,11 +136,6 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public void index(String index, String id, Doc doc, String pipeline) {
-        indexSingle(index, id, doc);
-    }
-
-    @Override
-    public void indexSingle(String index, String id, Doc doc) {
         Map<String, Object> document = new HashMap<>();
         document.put("body", doc.getContent()); // to content,
         document.put("name", doc.getFile().getFilename()); // to file.name,
@@ -156,6 +151,16 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
         List<Map<String, Object>> documents = Collections.singletonList(document);
 
         client.indexDocuments(settings.getWorkplaceSearch().getContentSourceKey(), documents);
+    }
+
+    @Override
+    public void indexRawJson(String index, String id, String json, String pipeline) {
+        throw new RuntimeException("Not supported by the workplace search client. Should not be called.");
+    }
+
+    @Override
+    public void indexSingle(String index, String id, Doc doc) {
+        throw new RuntimeException("Not supported by the workplace search client. Should not be called.");
     }
 
     @Override
@@ -176,6 +181,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public ESSearchResponse search(ESSearchRequest request) throws IOException {
+
         throw new RuntimeException("Not implemented yet");
         // return esClient.search(request);
     }

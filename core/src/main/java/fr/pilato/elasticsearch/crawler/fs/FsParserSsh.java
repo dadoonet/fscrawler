@@ -21,15 +21,17 @@ package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.crawler.ssh.FileAbstractorSSH;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 import java.nio.file.Path;
 
 public class FsParserSsh extends FsParserAbstract {
 
-    public FsParserSsh(FsSettings fsSettings, Path config, FsCrawlerService esClient, FsCrawlerService wpClient, Integer loop) {
-        super(fsSettings, config, esClient, wpClient, loop);
+    public FsParserSsh(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
+                         FsCrawlerDocumentService documentService, Integer loop) {
+        super(fsSettings, config, managementService, documentService, loop);
     }
 
     protected FileAbstractor buildFileAbstractor() {

@@ -24,7 +24,6 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.function.Supplier;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 
@@ -107,6 +106,15 @@ public interface ElasticsearchClient extends Closeable {
      * @param pipeline  Pipeline (can be null)
      */
     void index(String index, String id, Doc doc, String pipeline);
+
+    /**
+     * Index a Raw Json in Elasticsearch
+     * @param index     Index name
+     * @param id        Document ID
+     * @param json      Document to index
+     * @param pipeline  Pipeline (can be null)
+     */
+    void indexRawJson(String index, String id, String json, String pipeline);
 
     /**
      * Index a document (for test purposes only)

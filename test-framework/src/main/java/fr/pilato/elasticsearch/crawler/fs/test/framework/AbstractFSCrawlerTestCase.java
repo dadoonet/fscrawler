@@ -146,14 +146,19 @@ public abstract class AbstractFSCrawlerTestCase {
         long sum = 0;
 
         while (sum + timeInMillis < maxTimeInMillis) {
-            long current = breakSupplier.getAsLong();
-            if (current < 0) {
-                return current;
-            }
-            if (expected == null && current >= 1) {
-                return current;
-            } else if (expected != null && current == expected) {
-                return expected;
+            try {
+                long current = breakSupplier.getAsLong();
+                if (current < 0) {
+                    return current;
+                }
+                if (expected == null && current >= 1) {
+                    return current;
+                } else if (expected != null && current == expected) {
+                    return expected;
+                }
+            } catch (RuntimeException ignored) {
+                // If we have a Runtime error, it might indicates that shards are no all ready
+                // Let's wait for the next cycle and fail only when we have the timeout.
             }
             Thread.sleep(timeInMillis);
             sum += timeInMillis;

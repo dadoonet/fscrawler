@@ -254,18 +254,18 @@ public class FsCrawlerCli {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
             } else {
                 try {
-                    fsCrawler.getEsClient().start();
+                    fsCrawler.start();
                 } catch (Exception t) {
                     logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
                     return;
                 }
-                String elasticsearchVersion = fsCrawler.getEsClient().getVersion();
+                String elasticsearchVersion = fsCrawler.getManagementService().getClient().getVersion();
                 checkForDeprecatedResources(configDir, elasticsearchVersion);
                 fsCrawler.start();
 
                 // Start the REST Server if needed
                 if (commands.rest) {
-                    RestServer.start(fsSettings, fsCrawler.getEsClient());
+                    RestServer.start(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService());
                 }
 
                 // We just have to wait until the process is stopped

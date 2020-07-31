@@ -82,6 +82,11 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
+    public void indexRawJson(String index, String id, String json, String pipeline) {
+        // Testing purpose only
+    }
+
+    @Override
     public void indexSingle(String index, String id, Doc doc) {
         // Testing purpose only
     }

@@ -379,6 +379,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
             // Let's search for entries
             try {
+                // Make sure we refresh indexed docs before counting
+                refresh();
                 response[0] = esClient.search(request);
             } catch (RuntimeException|IOException e) {
                 staticLogger.warn("error caught", e);
