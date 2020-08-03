@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +42,8 @@ import static org.junit.Assume.assumeThat;
  * Test elasticsearch HTTP client
  */
 public class ElasticsearchClientIT extends AbstractITCase {
+
+    private ElasticsearchClient esClient = documentService.getClient();
 
     @Before
     public void cleanExistingIndex() throws IOException {

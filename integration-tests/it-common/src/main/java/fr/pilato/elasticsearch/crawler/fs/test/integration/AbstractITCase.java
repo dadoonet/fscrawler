@@ -25,30 +25,22 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import org.apache.logging.log4j.Level;
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -59,7 +51,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -108,8 +99,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
-    protected static ElasticsearchClient esClient;
-
     private static String testClusterUrl;
     private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
     private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
@@ -118,9 +107,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected final static String testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token", "8ac946cb85f81b281255cddb5af266fe64b5c154a5c468692e005e165daab198");
     protected final static String testWorkplaceKey = System.getProperty("tests.workplace.key", "5f228f0d98503e16e8db596c");
 
-    static Elasticsearch elasticsearchWithSecurity;
-    protected static WebTarget target;
-    protected static Client client;
+    protected static Elasticsearch elasticsearchWithSecurity;
+    protected static FsCrawlerManagementService managementService;
+    protected static FsCrawlerDocumentService documentService;
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -238,7 +227,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @BeforeClass
-    public static void startElasticsearchRestClient() throws IOException {
+    public static void startDocumentService() throws IOException {
         String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
         if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
             testClusterUrl = decodeCloudId(testClusterCloudId);
@@ -259,41 +248,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 .setPassword(testClusterPass)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
-        esClient = ElasticsearchClientUtil.getInstance(null, fsSettings);
-        esClient.start();
+
+        documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
+        documentService.start();
 
         // We make sure the cluster is running
-        testClusterRunning();
-    }
-
-    @BeforeClass
-    public static void startRestClient() {
-        // create the client
-        client = ClientBuilder.newBuilder()
-                .register(MultiPartFeature.class)
-                .register(RestJsonProvider.class)
-                .register(JacksonFeature.class)
-                .build();
-
-        target = client.target("http://127.0.0.1:" + testRestPort + "/fscrawler");
-    }
-
-    @AfterClass
-    public static void stopRestClient() throws IOException {
-        if (client != null) {
-            client.close();
-            client = null;
-        }
-
-        if (esClient != null) {
-            esClient.close();
-            esClient = null;
-        }
-    }
-
-    private static void testClusterRunning() throws IOException {
         try {
-            String version = esClient.getVersion();
+            String version = documentService.getClient().getVersion();
             staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
         } catch (ConnectException e) {
             // If we have an exception here, let's ignore the test
@@ -303,11 +264,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @AfterClass
-    public static void stopElasticsearchClient() throws IOException {
+    public static void stopDocumentService() throws IOException {
         staticLogger.info("Stopping integration tests against an external cluster");
-        if (esClient != null) {
-            esClient.close();
-            esClient = null;
+        if (documentService != null) {
+            documentService.close();
+            documentService = null;
             staticLogger.info("Elasticsearch client stopped");
         }
     }
@@ -341,7 +302,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     protected static void refresh() throws IOException {
-        esClient.refresh(null);
+        documentService.getClient().refresh(null);
     }
 
     /**
@@ -381,7 +342,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             try {
                 // Make sure we refresh indexed docs before counting
                 refresh();
-                response[0] = esClient.search(request);
+                response[0] = documentService.getClient().search(request);
             } catch (RuntimeException|IOException e) {
                 staticLogger.warn("error caught", e);
                 return -1;
@@ -467,27 +428,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         String beforeDelimiter = toSplit.substring(0, offset);
         String afterDelimiter = toSplit.substring(offset + delimiter.length());
         return new String[]{beforeDelimiter, afterDelimiter};
-    }
-
-    public static <T> T restCall(String path, Class<T> clazz) {
-        if (staticLogger.isDebugEnabled()) {
-            String response = target.path(path).request().get(String.class);
-            staticLogger.debug("Rest response: {}", response);
-        }
-        return target.path(path).request().get(clazz);
-    }
-
-    public static <T> T restCall(String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
-        return restCall(target, path, mp, clazz, params);
-    }
-
-    public static <T> T restCall(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
-        WebTarget targetPath = target.path(path);
-        params.forEach(targetPath::queryParam);
-
-        return targetPath.request(MediaType.MULTIPART_FORM_DATA)
-                .accept(MediaType.APPLICATION_JSON)
-                .post(Entity.entity(mp, mp.getMediaType()), clazz);
     }
 
     public static void deleteRecursively(Path root) throws IOException {

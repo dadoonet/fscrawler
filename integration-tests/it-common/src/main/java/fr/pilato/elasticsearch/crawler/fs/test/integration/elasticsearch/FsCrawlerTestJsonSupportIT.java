@@ -48,7 +48,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                ESSearchResponse response = esClient.search(new ESSearchRequest()
+                ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
                         .withIndex(getCrawlerName())
                         .withESQuery(new ESMatchQuery("text", "tweet")));
                 return response.getTotalHits() == 2;
@@ -71,7 +71,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
             try {
-                ESSearchResponse response = esClient.search(new ESSearchRequest()
+                ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
                         .withIndex(getCrawlerName())
                         .withESQuery(new ESMatchQuery("text", "tweet")));
                 return response.getTotalHits() == 0;
@@ -83,7 +83,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat("We should have 2 docs for tweet in content field...", awaitBusy(() -> {
             try {
-                ESSearchResponse response = esClient.search(new ESSearchRequest()
+                ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
                         .withIndex(getCrawlerName())
                         .withESQuery(new ESMatchQuery("content", "tweet")));
                 return response.getTotalHits() == 2;
@@ -107,7 +107,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat("We should have 2 doc for tweet in object.text field...", awaitBusy(() -> {
             try {
-                ESSearchResponse response = esClient.search(new ESSearchRequest()
+                ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
                         .withIndex(getCrawlerName())
                         .withESQuery(new ESMatchQuery("object.text", "tweet")));
                 return response.getTotalHits() == 2;
@@ -130,7 +130,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat("We should have 2 docs only...", awaitBusy(() -> {
             try {
-                ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+                ESSearchResponse response = documentService.getClient().search(new ESSearchRequest().withIndex(getCrawlerName()));
                 return response.getTotalHits() == 2;
             } catch (IOException e) {
                 logger.warn("Caught exception while running the test", e);

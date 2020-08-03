@@ -30,11 +30,12 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
-import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
+import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.tika.parser.external.ExternalParser;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -47,7 +48,6 @@ import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
-import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.NODE_DEFAULT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -57,9 +57,10 @@ import static org.junit.Assume.assumeTrue;
 /**
  * Test all type of documents we have with workplace search
  */
-public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractITCase {
+public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractFsCrawlerITCase {
 
     private static FsCrawlerImpl crawler = null;
+    private static FsCrawlerDocumentService oldDocumentService;
 
     @BeforeClass
     public static void startCrawling() throws Exception {
@@ -83,25 +84,31 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractITCase {
             throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
 
+        oldDocumentService = documentService;
+
+        FsSettings fsSettings = FsSettings.builder("fscrawler_workplacesearch_test_all_documents")
+                .setElasticsearch(generateElasticsearchConfig("fscrawler_workplacesearch_test_all_documents",
+                        "fscrawler_workplacesearch_test_all_documents_folder",
+                        5, TimeValue.timeValueSeconds(1), null))
+                .setFs(Fs.builder()
+                        .setUrl(testResourceTarget.toString())
+                        .setLangDetect(true)
+                        .build())
+                .setWorkplaceSearch(WorkplaceSearch.builder()
+                        .setAccessToken(testWorkplaceAccessToken)
+                        .setContentSourceKey(testWorkplaceKey)
+                        .build())
+                .build();
+
+        documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
+        documentService.start();
+
         staticLogger.info(" -> Removing existing index [.ent-search-engine-*]");
-        esClient.deleteIndex(".ent-search-engine-*");
+        documentService.getClient().deleteIndex(".ent-search-engine-*");
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
-        crawler = new FsCrawlerImpl(metadataDir,
-                FsSettings.builder("fscrawler_workplacesearch_test_all_documents")
-                        .setElasticsearch(generateElasticsearchConfig("fscrawler_workplacesearch_test_all_documents", "fscrawler_workplacesearch_test_all_documents_folder",
-                                5, TimeValue.timeValueSeconds(1), null))
-                        .setFs(Fs.builder()
-                                .setUrl(testResourceTarget.toString())
-                                .setLangDetect(true)
-                                .build())
-                        .setWorkplaceSearch(WorkplaceSearch.builder()
-                                .setAccessToken(testWorkplaceAccessToken)
-                                .setContentSourceKey(testWorkplaceKey)
-                                .build())
-                        .build(), LOOP_INFINITE, false);
-
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
         crawler.start();
 
         // We wait until we have all docs
@@ -115,6 +122,8 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractITCase {
             crawler.close();
             crawler = null;
         }
+        documentService.close();
+        documentService = oldDocumentService;
     }
 
     /**
@@ -263,7 +272,7 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractITCase {
         if (content != null) {
             query.addMust(new ESMatchQuery("content", content));
         }
-        ESSearchResponse response = esClient.search(new ESSearchRequest()
+        ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
                         .withIndex(".ent-search-engine-*")
                         .withESQuery(query));
         assertThat(response.getTotalHits(), is(1L));

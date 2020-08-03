@@ -30,6 +30,8 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
@@ -56,6 +58,7 @@ import static org.junit.Assume.assumeTrue;
 public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
 
     private static FsCrawlerImpl crawler = null;
+    private static FsCrawlerDocumentService documentService = null;
 
     @BeforeClass
     public static void startCrawling() throws Exception {
@@ -77,7 +80,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         }
 
         staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents*]");
-        esClient.deleteIndex("fscrawler_test_all_documents*");
+        documentService.getClient().deleteIndex("fscrawler_test_all_documents*");
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
@@ -252,7 +255,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
         if (content != null) {
             query.addMust(new ESMatchQuery("content", content));
         }
-        ESSearchResponse response = esClient.search(new ESSearchRequest()
+        ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
                         .withIndex("fscrawler_test_all_documents")
                         .withESQuery(query));
         assertThat(response.getTotalHits(), is(1L));

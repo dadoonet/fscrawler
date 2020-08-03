@@ -25,11 +25,21 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
+import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -56,6 +66,8 @@ import static org.hamcrest.Matchers.not;
 public class FsCrawlerRestIT extends AbstractRestITCase {
 
     private Path currentTestTagDir;
+    private FsCrawlerManagementService managementService;
+    private FsCrawlerDocumentService documentService;
 
     @Before
     public void copyTags() throws IOException {
@@ -74,6 +86,49 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             staticLogger.debug("  --> Copying test resources from [{}]", from);
             copyDirs(from, currentTestTagDir);
             staticLogger.debug("  --> Tags ready in [{}]", currentTestTagDir);
+        }
+    }
+
+    @Before
+    public void startRestServer() throws Exception {
+        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
+                .setRest(new Rest("http://127.0.0.1:" + testRestPort + "/fscrawler"))
+                .setElasticsearch(elasticsearchWithSecurity)
+                .build();
+        fsSettings.getElasticsearch().setIndex(getCrawlerName());
+        FsCrawlerValidator.validateSettings(logger, fsSettings, true);
+
+        this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
+
+        if (fsSettings.getWorkplaceSearch() == null) {
+            // The documentService is using the esSearch instance
+            this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
+        } else {
+            // The documentService is using the wpSearch instance
+            this.documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
+        }
+
+        managementService.start();
+        documentService.start();
+
+        RestServer.start(fsSettings, managementService, documentService);
+
+        logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
+        managementService.getClient().deleteIndex(getCrawlerName() + "*");
+
+        logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
+    }
+
+    @After
+    public void stopRestServer() throws IOException {
+        RestServer.close();
+        if (managementService != null) {
+            managementService.close();
+            managementService = null;
+        }
+        if (documentService != null) {
+            documentService.close();
+            documentService = null;
         }
     }
 
@@ -256,7 +311,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     private void checkDocument(String filename, HitChecker checker) throws IOException {
-        ESSearchResponse response = esClient.search(new ESSearchRequest()
+        ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
                 .withIndex(getCrawlerName())
                 .withESQuery(new ESTermQuery("file.filename", filename)));
 

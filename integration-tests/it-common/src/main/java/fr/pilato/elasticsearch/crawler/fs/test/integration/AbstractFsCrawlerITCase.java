@@ -39,12 +39,12 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_S
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
+public abstract class AbstractFsCrawlerITCase extends AbstractRestITCase {
 
     @Before
     public void cleanExistingIndex() throws IOException {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        esClient.deleteIndex(getCrawlerName() + "*");
+        documentService.getClient().deleteIndex(getCrawlerName() + "*");
     }
 
     @After

@@ -19,65 +19,57 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
-import org.junit.After;
-import org.junit.Before;
+import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
-import java.io.IOException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import java.util.Map;
 
 public abstract class AbstractRestITCase extends AbstractITCase {
 
-    private FsCrawlerManagementService managementService;
-    private FsCrawlerDocumentService documentService;
+    protected static WebTarget target;
+    protected static Client client;
 
-    @Before
-    public void startRestServer() throws Exception {
-        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
-                .setRest(new Rest("http://127.0.0.1:" + testRestPort + "/fscrawler"))
-                .setElasticsearch(elasticsearchWithSecurity)
-                .build();
-        fsSettings.getElasticsearch().setIndex(getCrawlerName());
-        FsCrawlerValidator.validateSettings(logger, fsSettings, true);
-
-        this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-
-        if (fsSettings.getWorkplaceSearch() == null) {
-            // The documentService is using the esSearch instance
-            this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
-        } else {
-            // The documentService is using the wpSearch instance
-            this.documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
+    public static <T> T restCall(String path, Class<T> clazz) {
+        if (staticLogger.isDebugEnabled()) {
+            String response = target.path(path).request().get(String.class);
+            staticLogger.debug("Rest response: {}", response);
         }
-
-        managementService.start();
-        documentService.start();
-
-        RestServer.start(fsSettings, managementService, documentService);
-
-        logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
-        managementService.getClient().deleteIndex(getCrawlerName() + "*");
-
-        logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
+        return target.path(path).request().get(clazz);
     }
 
-    @After
-    public void stopRestServer() throws IOException {
-        RestServer.close();
-        if (managementService != null) {
-            managementService.close();
-            managementService = null;
-        }
-        if (documentService != null) {
-            documentService.close();
-            documentService = null;
+    public static <T> T restCall(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
+        WebTarget targetPath = target.path(path);
+        params.forEach(targetPath::queryParam);
+
+        return targetPath.request(MediaType.MULTIPART_FORM_DATA)
+                .accept(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(mp, mp.getMediaType()), clazz);
+    }
+
+    @BeforeClass
+    public static void startRestClient() {
+        // create the client
+        client = ClientBuilder.newBuilder()
+                .register(MultiPartFeature.class)
+                .register(RestJsonProvider.class)
+                .register(JacksonFeature.class)
+                .build();
+    }
+
+    @AfterClass
+    public static void stopRestClient() {
+        if (client != null) {
+            client.close();
+            client = null;
         }
     }
 }
