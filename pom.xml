@@ -41,7 +41,7 @@
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
         <tika.version>1.24.1</tika.version>
-        <jackson.version>2.11.1</jackson.version>
+        <jackson.version>2.11.2</jackson.version>
         <log4j.version>2.13.3</log4j.version>
         <jansi.version>1.18</jansi.version>
         <jersey.version>2.31</jersey.version>
