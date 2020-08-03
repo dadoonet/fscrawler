@@ -183,10 +183,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
         // For now we are going to run a dummy search in elasticsearch directly
         // and ignore the request in most times
         request.withIndex(".ent-search-engine-*");
-        esClient.search(request);
-
-        throw new RuntimeException("Not implemented yet");
-        // return esClient.search(request);
+        return esClient.search(request);
     }
 
     @Override

@@ -97,10 +97,10 @@ import static org.junit.Assume.assumeThat;
 @ThreadLeakLingering(linger = 5000) // 5 sec lingering
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
-    static Path metadataDir = null;
+    protected static Path metadataDir = null;
 
-    FsCrawlerImpl crawler = null;
-    Path currentTestResourceDir;
+    protected FsCrawlerImpl crawler = null;
+    protected Path currentTestResourceDir;
 
     private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
     private final static String DEFAULT_TEST_CLUSTER_URL = "http://127.0.0.1:9200";
@@ -108,19 +108,19 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
-    static ElasticsearchClient esClient;
+    protected static ElasticsearchClient esClient;
 
     private static String testClusterUrl;
     private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
     private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
-    final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
+    protected final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
 
-    final static String testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token", "8ac946cb85f81b281255cddb5af266fe64b5c154a5c468692e005e165daab198");
-    final static String testWorkplaceKey = System.getProperty("tests.workplace.key", "5f228f0d98503e16e8db596c");
+    protected final static String testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token", "8ac946cb85f81b281255cddb5af266fe64b5c154a5c468692e005e165daab198");
+    protected final static String testWorkplaceKey = System.getProperty("tests.workplace.key", "5f228f0d98503e16e8db596c");
 
     static Elasticsearch elasticsearchWithSecurity;
-    static WebTarget target;
-    static Client client;
+    protected static WebTarget target;
+    protected static Client client;
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -314,8 +314,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static final String testCrawlerPrefix = "fscrawler_";
 
-    static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
-                                                     TimeValue timeValue, ByteSizeValue byteSize) {
+    protected static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
+                                                               TimeValue timeValue, ByteSizeValue byteSize) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
                 .addNode(new ServerUrl(testClusterUrl))
                 .setBulkSize(bulkSize);
@@ -340,7 +340,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         return builder.build();
     }
 
-    static void refresh() throws IOException {
+    protected static void refresh() throws IOException {
         esClient.refresh(null);
     }
 
@@ -413,7 +413,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         return response[0];
     }
 
-    static void logContentOfDir(Path path, Level level) {
+    protected static void logContentOfDir(Path path, Level level) {
         if (path != null) {
             try (Stream<Path> stream = Files.walk(path)) {
                 stream.forEach(file -> {
@@ -447,7 +447,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         return dir.getAbsoluteFile().getAbsolutePath();
     }
 
-    String getCrawlerName() {
+    protected String getCrawlerName() {
         String testName = testCrawlerPrefix.concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
         return testName.contains(" ") ? split(testName, " ")[0] : testName;
     }

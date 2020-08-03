@@ -17,40 +17,39 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.integration;
+package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
- * Test various crawler settings
+ * Test index_folders crawler setting
  */
-public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
+public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test for #83: https://github.com/dadoonet/fscrawler/issues/83
+     * Test case for #155: https://github.com/dadoonet/fscrawler/issues/155 : New option: do not index folders
      */
     @Test
-    public void test_time_value() throws Exception {
-        Fs fs = startCrawlerDefinition(TimeValue.timeValueHours(1)).build();
+    public void test_ignore_folders() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setIndexFolders(false)
+                .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
-        // We expect to have one file
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-    }
+        // We expect to have two files
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
 
-    @Test
-    public void test_bulk_flush() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-        startCrawler(getCrawlerName(), fs,
-                generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
-                        100, TimeValue.timeValueSeconds(2), ByteSizeValue.parseBytesSizeValue("100b")), null);
-
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        // We expect having no folders
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
+        staticLogger.trace("result {}", response.toString());
+        assertThat(response.getTotalHits(), is(0L));
     }
 }

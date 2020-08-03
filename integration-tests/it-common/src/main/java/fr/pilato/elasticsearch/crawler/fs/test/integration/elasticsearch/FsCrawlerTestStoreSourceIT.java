@@ -17,64 +17,64 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.integration;
+package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.File;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assume.assumeNoException;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
- * Test checksum crawler settings
+ * Test store_source crawler setting
  */
-public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
+public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void test_checksum_md5() throws Exception {
-        try {
-            MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            assumeNoException(e);
-        }
-
+    public void test_store_source() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .setChecksum("MD5")
+                .setStoreSource(true)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object checksum = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
-            assertThat(checksum, is("caa71e1914ecbcf5ae4f46cf85de8648"));
+            // We check that the field is in _source
+            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
         }
     }
 
     @Test
-    public void test_checksum_sha1() throws Exception {
-        try {
-            MessageDigest.getInstance("SHA-1");
-        } catch (NoSuchAlgorithmException e) {
-            assumeNoException(e);
-        }
+    public void test_do_not_store_source() throws Exception {
+        startCrawler();
 
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+
+        ESSearchResponse searchResponse = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+        for (ESSearchHit hit : searchResponse.getHits()) {
+            // We check that the field is not part of _source
+            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
+        }
+    }
+
+    @Test
+    public void test_store_source_no_index_content() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .setChecksum("SHA-1")
+                .setStoreSource(true)
+                .setIndexContent(false)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object checksum = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
-            assertThat(checksum, is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
+            // We check that the field is in _source
+            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
         }
     }
 }

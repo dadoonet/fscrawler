@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDefaultResources;
 
-public class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawlerTestCase {
+public abstract class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawlerTestCase {
 
     protected static Path metadataDir;
 

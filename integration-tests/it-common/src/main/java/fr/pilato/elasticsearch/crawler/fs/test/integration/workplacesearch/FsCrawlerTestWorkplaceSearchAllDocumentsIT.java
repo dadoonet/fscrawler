@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.integration;
+package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
@@ -30,8 +30,11 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
+import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
 import org.apache.tika.parser.external.ExternalParser;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -44,20 +47,25 @@ import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.NODE_DEFAULT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 /**
- * Test all type of documents we have
+ * Test all type of documents we have with workplace search
  */
-public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
+public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractITCase {
 
     private static FsCrawlerImpl crawler = null;
 
     @BeforeClass
     public static void startCrawling() throws Exception {
+        assumeFalse("Workplace Search credentials not defined. Launch with -Dtests.workplace.access_token=XYZ -Dtests.workplace.key=XYZ",
+                testWorkplaceAccessToken == null || testWorkplaceKey == null);
+
         Path testResourceTarget = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(testResourceTarget)) {
             copyResourcesToTestDir();
@@ -75,25 +83,29 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
             throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents*]");
-        esClient.deleteIndex("fscrawler_test_all_documents*");
+        staticLogger.info(" -> Removing existing index [.ent-search-engine-*]");
+        esClient.deleteIndex(".ent-search-engine-*");
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
         crawler = new FsCrawlerImpl(metadataDir,
-                FsSettings.builder("fscrawler_test_all_documents")
-                        .setElasticsearch(generateElasticsearchConfig("fscrawler_test_all_documents", "fscrawler_test_all_documents_folder",
+                FsSettings.builder("fscrawler_workplacesearch_test_all_documents")
+                        .setElasticsearch(generateElasticsearchConfig("fscrawler_workplacesearch_test_all_documents", "fscrawler_workplacesearch_test_all_documents_folder",
                                 5, TimeValue.timeValueSeconds(1), null))
                         .setFs(Fs.builder()
                                 .setUrl(testResourceTarget.toString())
                                 .setLangDetect(true)
+                                .build())
+                        .setWorkplaceSearch(WorkplaceSearch.builder()
+                                .setAccessToken(testWorkplaceAccessToken)
+                                .setContentSourceKey(testWorkplaceKey)
                                 .build())
                         .build(), LOOP_INFINITE, false);
 
         crawler.start();
 
         // We wait until we have all docs
-        countTestHelper(new ESSearchRequest().withIndex("fscrawler_test_all_documents"), numFiles, null, TimeValue.timeValueMinutes(1));
+        countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-*"), numFiles, null, TimeValue.timeValueMinutes(5));
     }
 
     @AfterClass
@@ -252,7 +264,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
             query.addMust(new ESMatchQuery("content", content));
         }
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                        .withIndex("fscrawler_test_all_documents")
+                        .withIndex(".ent-search-engine-*")
                         .withESQuery(query));
         assertThat(response.getTotalHits(), is(1L));
         return response;

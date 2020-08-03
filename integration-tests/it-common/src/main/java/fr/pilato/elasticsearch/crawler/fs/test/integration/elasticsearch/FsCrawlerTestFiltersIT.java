@@ -17,38 +17,42 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.integration;
+package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
 /**
- * Test index_folders crawler setting
+ * Test filters crawler settings
  */
-public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
-
-    /**
-     * Test case for #155: https://github.com/dadoonet/fscrawler/issues/155 : New option: do not index folders
-     */
+public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     @Test
-    public void test_ignore_folders() throws Exception {
+    public void test_filter_one_term() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .setIndexFolders(false)
+                .addFilter(".*foo.*")
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
-
-        // We expect to have two files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+    }
 
-        // We expect having no folders
-        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
-        staticLogger.trace("result {}", response.toString());
-        assertThat(response.getTotalHits(), is(0L));
+    @Test
+    public void test_filter_visa_pattern() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .addFilter("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$")
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+    }
+
+    @Test
+    public void test_filter_visa_pattern_plus_foo() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .addFilter("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$")
+                .addFilter(".*foo.*")
+                .build();
+        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 }
