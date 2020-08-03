@@ -34,7 +34,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +50,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     private static final Logger logger = LogManager.getLogger(WorkplaceSearchClientV7.class);
     private final Path config;
     private final FsSettings settings;
+    private static final SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZZZZZ");
 
     private ElasticsearchClient esClient = null;
     private Client client = null;
@@ -55,6 +58,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     public WorkplaceSearchClientV7(Path config, FsSettings settings) {
         this.config = config;
         this.settings = settings;
+
     }
 
     @Override
@@ -136,16 +140,30 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     @Override
     public void index(String index, String id, Doc doc, String pipeline) {
         Map<String, Object> document = new HashMap<>();
-        document.put("body", doc.getContent()); // to content,
-        document.put("name", doc.getFile().getFilename()); // to file.name,
-        document.put("mime_type", doc.getFile().getContentType()); // to tikaResult.metadata.mimeType,
-        document.put("extension", doc.getFile().getExtension()); // to tikaResult.metadata.extension,
-        document.put("size", doc.getFile().getFilesize()); // to tikaResult.metadata.origSize,
-        document.put("text_size", doc.getFile().getIndexedChars()); // to tikaResult.metadata.textSize,
-        document.put("url", "file://" + doc.getPath().getVirtual()); // to file.toURI().toURL().toString().replace("file:", "file://"),
-        document.put("path", doc.getPath().getReal()); // to file.absolutePath,
-        document.put("last_modified", doc.getFile().getLastModified()); // to Instant.ofEpochMilli(file.lastModified()).atZone(ZoneId.systemDefault()).format(format),
-        document.put("created_at", doc.getFile().getCreated()); // to attributes.creationTime().toInstant().atZone(ZoneId.systemDefault()).format(format),
+        // Index content
+        document.put("body", doc.getContent());
+
+        // Index main meta data
+        document.put("title", doc.getMeta().getTitle());
+        document.put("author", doc.getMeta().getAuthor());
+        document.put("keywords", doc.getMeta().getKeywords());
+        document.put("language", doc.getMeta().getLanguage());
+        document.put("comments", doc.getMeta().getComments());
+
+        // Index main file attributes
+        document.put("name", doc.getFile().getFilename());
+        document.put("mime_type", doc.getFile().getContentType());
+        document.put("extension", doc.getFile().getExtension());
+        document.put("size", doc.getFile().getFilesize());
+        document.put("text_size", doc.getFile().getIndexedChars());
+        document.put("last_modified", toRFC3339(doc.getFile().getLastModified()));
+        document.put("created_at", toRFC3339(doc.getFile().getCreated()));
+
+        // Index main path attributes
+        // document.put("url", "file://" + doc.getPath().getVirtual());
+        document.put("url", "file://" + doc.getPath().getReal());
+        document.put("path", doc.getPath().getReal());
+
 
         List<Map<String, Object>> documents = Collections.singletonList(document);
 
@@ -210,5 +228,10 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     public boolean exists(String index, String id) throws IOException {
         throw new RuntimeException("Not implemented yet");
         // return esClient.exists(index, id);
+    }
+
+    static String toRFC3339(Date d)
+    {
+        return rfc3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
     }
 }
