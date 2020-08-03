@@ -159,12 +159,12 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public void indexSingle(String index, String id, Doc doc) {
-        throw new RuntimeException("Not supported by the workplace search client. Should not be called.");
+        index(index, id, doc, null);
     }
 
     @Override
     public void delete(String index, String id) {
-        throw new RuntimeException("Not implemented yet");
+        client.destroyDocuments(settings.getWorkplaceSearch().getContentSourceKey(), Collections.singletonList(id));
     }
 
     @Override
@@ -180,6 +180,11 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public ESSearchResponse search(ESSearchRequest request) throws IOException {
+        // For now we are going to run a dummy search in elasticsearch directly
+        // and ignore the request in most times
+        request.withIndex(".ent-search-engine-*");
+        esClient.search(request);
+
         throw new RuntimeException("Not implemented yet");
         // return esClient.search(request);
     }
