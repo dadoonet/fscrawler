@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.client.v7;
 
 
-import com.sstory.workplace.search.client.Client;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
@@ -29,16 +28,15 @@ import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,12 +51,11 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     private static final SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZZZZZ");
 
     private ElasticsearchClient esClient = null;
-    private Client client = null;
+    private WPSearchClient wpSearchClient = null;
 
     public WorkplaceSearchClientV7(Path config, FsSettings settings) {
         this.config = config;
         this.settings = settings;
-
     }
 
     @Override
@@ -68,7 +65,9 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public void start() throws IOException {
-        client = new Client(settings.getWorkplaceSearch().getAccessToken());
+        wpSearchClient = new WPSearchClient(
+                settings.getWorkplaceSearch().getAccessToken(),
+                settings.getWorkplaceSearch().getContentSourceKey());
         esClient = ElasticsearchClientUtil.getInstance(config, settings);
         esClient.start();
     }
@@ -140,6 +139,9 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     @Override
     public void index(String index, String id, Doc doc, String pipeline) {
         Map<String, Object> document = new HashMap<>();
+        // Id
+        document.put("id", id);
+
         // Index content
         document.put("body", doc.getContent());
 
@@ -164,10 +166,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
         document.put("url", "file://" + doc.getPath().getReal());
         document.put("path", doc.getPath().getReal());
 
-
-        List<Map<String, Object>> documents = Collections.singletonList(document);
-
-        client.indexDocuments(settings.getWorkplaceSearch().getContentSourceKey(), documents);
+        wpSearchClient.indexDocument(settings.getWorkplaceSearch().getContentSourceKey(), document);
     }
 
     @Override
@@ -182,7 +181,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public void delete(String index, String id) {
-        client.destroyDocuments(settings.getWorkplaceSearch().getContentSourceKey(), Collections.singletonList(id));
+        wpSearchClient.destroyDocument(settings.getWorkplaceSearch().getContentSourceKey(), id);
     }
 
     @Override

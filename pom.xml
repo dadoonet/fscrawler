@@ -11,13 +11,14 @@
         <module>test-framework</module>
         <module>settings</module>
         <module>test-documents</module>
+        <module>beans</module>
+        <module>3rdparty</module>
         <module>elasticsearch-client</module>
         <module>core</module>
         <module>integration-tests</module>
         <module>distribution</module>
         <module>cli</module>
         <module>tika</module>
-        <module>beans</module>
         <module>crawler</module>
         <module>rest</module>
         <module>docs</module>
@@ -39,7 +40,6 @@
         <elasticsearch7.version>7.8.0</elasticsearch7.version>
         <elasticsearch6.version>6.8.10</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
-        <workplace.version>${elasticsearch7.version}-SNAPSHOT</workplace.version>
 
         <tika.version>1.24.1</tika.version>
         <jackson.version>2.11.1</jackson.version>
@@ -465,6 +465,11 @@
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-workplacesearch-client</artifactId>
+                <version>2.7-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-cli</artifactId>
                 <version>2.7-SNAPSHOT</version>
             </dependency>
@@ -502,37 +507,6 @@
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-rest</artifactId>
                 <version>2.7-SNAPSHOT</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.sstory.workplace.search</groupId>
-                <artifactId>workplace-search-sdk</artifactId>
-                <version>${workplace.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>ch.qos.logback</groupId>
-                        <artifactId>logback-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>ch.qos.logback</groupId>
-                        <artifactId>logback-classic</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>com.sstory.workplace.search</groupId>
-                <artifactId>workplace-search-client</artifactId>
-                <version>${workplace.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>ch.qos.logback</groupId>
-                        <artifactId>logback-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>ch.qos.logback</groupId>
-                        <artifactId>logback-classic</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
             <dependency>
