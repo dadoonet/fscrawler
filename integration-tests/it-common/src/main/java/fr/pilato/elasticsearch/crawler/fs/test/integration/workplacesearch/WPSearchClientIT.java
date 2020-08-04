@@ -19,13 +19,13 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,10 +44,11 @@ public class WPSearchClientIT extends AbstractITCase {
                 testWorkplaceAccessToken == null || testWorkplaceKey == null);
 
         client = new WPSearchClient(testWorkplaceAccessToken, testWorkplaceKey);
+        client.start();
     }
 
     @AfterClass
-    public static void stopClient() throws IOException {
+    public static void stopClient() {
         if (client != null) {
             client.close();
         }
@@ -56,8 +57,17 @@ public class WPSearchClientIT extends AbstractITCase {
     @Test
     public void testSendADocument() {
         Map<String, Object> document = new HashMap<>();
-        document.put("id", "foo");
+        document.put("id", "testSendADocument");
         document.put("body", "Foo Bar Baz");
-        client.indexDocument(null, document);
+        client.indexDocument(document);
+    }
+
+    @Test
+    public void testSendAndRemoveADocument() throws InterruptedException {
+        Map<String, Object> document = new HashMap<>();
+        document.put("id", "testSendAndRemoveADocument");
+        document.put("title", "To be deleted " + RandomizedTest.randomAsciiLettersOfLength(10));
+        client.indexDocument(document);
+        client.destroyDocument("testSendAndRemoveADocument");
     }
 }

@@ -67,7 +67,8 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     public void start() throws IOException {
         wpSearchClient = new WPSearchClient(
                 settings.getWorkplaceSearch().getAccessToken(),
-                settings.getWorkplaceSearch().getContentSourceKey());
+                settings.getWorkplaceSearch().getContentSourceKey())
+            .withHost(settings.getWorkplaceSearch().getServer().decodedUrl());
         esClient = ElasticsearchClientUtil.getInstance(config, settings);
         esClient.start();
     }
@@ -166,7 +167,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
         document.put("url", "file://" + doc.getPath().getReal());
         document.put("path", doc.getPath().getReal());
 
-        wpSearchClient.indexDocument(settings.getWorkplaceSearch().getContentSourceKey(), document);
+        wpSearchClient.indexDocument(document);
     }
 
     @Override
@@ -181,7 +182,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public void delete(String index, String id) {
-        wpSearchClient.destroyDocument(settings.getWorkplaceSearch().getContentSourceKey(), id);
+        wpSearchClient.destroyDocument(id);
     }
 
     @Override
