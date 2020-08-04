@@ -63,6 +63,17 @@ public class WPSearchClientIT extends AbstractITCase {
     }
 
     @Test
+    public void testSearch() {
+        Map<String, Object> document = new HashMap<>();
+        String uniqueId = RandomizedTest.randomAsciiLettersOfLength(10);
+        document.put("id", "testSearch");
+        document.put("title", "To be searched " + uniqueId);
+        document.put("body", "Foo Bar Baz " + uniqueId);
+        client.indexDocument(document);
+        client.search(uniqueId);
+    }
+
+    @Test
     public void testSendAndRemoveADocument() throws InterruptedException {
         Map<String, Object> document = new HashMap<>();
         document.put("id", "testSendAndRemoveADocument");

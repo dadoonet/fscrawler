@@ -32,6 +32,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.io.Closeable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -60,6 +61,7 @@ public class WPSearchClient implements Closeable {
     private String urlForBulkCreate;
     private String urlForBulkDestroy;
     private String urlForApi;
+    private String urlForSearch;
 
     /**
      * Create a client
@@ -112,6 +114,7 @@ public class WPSearchClient implements Closeable {
         client = ClientBuilder.newClient(config);
         urlForBulkCreate = "sources/" + key + "/documents/bulk_create";
         urlForBulkDestroy = "sources/" + key + "/documents/bulk_destroy";
+        urlForSearch = "search";
         urlForApi = host + endpoint;
     }
 
@@ -156,6 +159,18 @@ public class WPSearchClient implements Closeable {
         destroyDocuments(Collections.singletonList(id));
     }
 
+    public String search(String query) {
+        logger.debug("Searching for {}", query);
+        Map<String, Object> request = new HashMap<>();
+        request.put("query", query);
+
+        // TODO Fix this. It needs a OAuth access apparently and we can't just use the existing credentials
+        // String response = post(urlForSearch, request, String.class);
+        String response = "Needs to be implemented...";
+        logger.warn("Searching response: {}", response);
+        return response;
+    }
+
     @Override
     public void close() {
         logger.debug("Closing the WPSearchClient");
@@ -164,26 +179,16 @@ public class WPSearchClient implements Closeable {
         }
     }
 
-    public <T> T post(String path, Object data, Class<T> clazz) {
-        WebTarget target = client
-                .target(urlForApi)
-                .path(path);
-
-        Invocation.Builder builder = target
-                .request(MediaType.APPLICATION_JSON)
-                .header("Content-Type", "application/json")
-                .header("X-Swiftype-Client", CLIENT_NAME)
-                .header("X-Swiftype-Client-Version", CLIENT_VERSION)
-                .header("Authorization", "Bearer " + accessToken);
-
-        if (userAgent != null) {
-            builder.header("User-Agent", userAgent);
-        }
-
-        return builder.post(Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
+    private <T> T post(String path, Object data, Class<T> clazz) {
+        return prepareHttpCall(path).post(Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
     }
 
-    public <T> T delete(String path, Object data, Class<T> clazz) {
+    private <T> T delete(String path, Object data, Class<T> clazz) {
+        // TODO This does not remove the entity. Something to fix in the future...
+        return prepareHttpCall(path).method("DELETE", Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
+    }
+
+    private Invocation.Builder prepareHttpCall(String path) {
         WebTarget target = client
                 .target(urlForApi)
                 .path(path);
@@ -199,7 +204,6 @@ public class WPSearchClient implements Closeable {
             builder.header("User-Agent", userAgent);
         }
 
-        // TODO This does not remove the entity. Something to fix in the future...
-        return builder.method("DELETE", Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
+        return builder;
     }
 }
