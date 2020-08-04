@@ -199,6 +199,7 @@ public class WPSearchClient implements Closeable {
             builder.header("User-Agent", userAgent);
         }
 
+        // TODO This does not remove the entity. Something to fix in the future...
         return builder.method("DELETE", Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
     }
 }
