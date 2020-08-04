@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
@@ -34,6 +35,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.tika.parser.external.ExternalParser;
 import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -97,19 +99,24 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractFsCrawle
                         .build())
                 .build();
 
-        documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
-        documentService.start();
+        try {
+            documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
+            documentService.start();
 
-        staticLogger.info(" -> Removing existing index [.ent-search-engine-*]");
-        documentService.getClient().deleteIndex(".ent-search-engine-*");
+            staticLogger.info(" -> Removing existing index [.ent-search-engine-*]");
+            documentService.getClient().deleteIndex(".ent-search-engine-*");
 
-        staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
+            staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
-        crawler.start();
+            crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
+            crawler.start();
 
-        // We wait until we have all docs
-        countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-*"), numFiles, null, TimeValue.timeValueMinutes(5));
+            // We wait until we have all docs
+            countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-*"), numFiles, null, TimeValue.timeValueMinutes(5));
+        } catch (FsCrawlerIllegalConfigurationException e) {
+            documentService = oldDocumentService;
+            Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
+        }
     }
 
     @AfterClass

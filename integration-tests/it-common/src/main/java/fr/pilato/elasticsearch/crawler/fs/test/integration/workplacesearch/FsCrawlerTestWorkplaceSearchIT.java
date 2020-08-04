@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
@@ -30,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -64,11 +66,16 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
                         .setKey(testWorkplaceKey)
                         .build())
                 .build();
-        documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
-        documentService.start();
+        try {
+            documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
+            documentService.start();
 
-        logger.info(" -> Removing existing index [.ent-search-engine-*]");
-        documentService.getClient().deleteIndex(".ent-search-engine-*");
+            logger.info(" -> Removing existing index [.ent-search-engine-*]");
+            documentService.getClient().deleteIndex(".ent-search-engine-*");
+        } catch (FsCrawlerIllegalConfigurationException e) {
+            documentService = oldDocumentService;
+            Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
+        }
     }
 
     @After
