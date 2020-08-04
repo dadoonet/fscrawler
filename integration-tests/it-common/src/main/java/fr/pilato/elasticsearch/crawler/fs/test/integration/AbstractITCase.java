@@ -104,8 +104,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     protected final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
 
-    protected final static String testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token", "8ac946cb85f81b281255cddb5af266fe64b5c154a5c468692e005e165daab198");
-    protected final static String testWorkplaceKey = System.getProperty("tests.workplace.key", "5f284ee198503ef853db67a8");
+    protected final static String testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token");
+            // , "8ac946cb85f81b281255cddb5af266fe64b5c154a5c468692e005e165daab198");
+    protected final static String testWorkplaceKey = System.getProperty("tests.workplace.key");
+            // , "5f284ee198503ef853db67a8");
 
     protected static Elasticsearch elasticsearchWithSecurity;
     protected static FsCrawlerManagementService managementService;
