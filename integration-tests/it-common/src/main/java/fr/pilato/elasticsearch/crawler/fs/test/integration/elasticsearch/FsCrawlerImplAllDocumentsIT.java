@@ -33,6 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
 import org.apache.tika.parser.external.ExternalParser;
 import org.junit.AfterClass;
@@ -54,10 +55,9 @@ import static org.junit.Assume.assumeTrue;
 /**
  * Test all type of documents we have
  */
-public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
+public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
 
     private static FsCrawlerImpl crawler = null;
-    private static FsCrawlerDocumentService documentService = null;
 
     @BeforeClass
     public static void startCrawling() throws Exception {
