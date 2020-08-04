@@ -191,6 +191,9 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
         if (esClient != null) {
             esClient.close();
         }
+        if (wpSearchClient != null) {
+            wpSearchClient.close();
+        }
     }
 
     public void createIndices() throws Exception {
