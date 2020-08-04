@@ -371,9 +371,9 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     }
 
     @Override
-    public void indexSingle(String index, String id, Doc doc) throws IOException {
-        logger.trace("JSon indexed : {}", doc.getContent());
-        client.index(new IndexRequest(index).id(id).source(doc.getContent(), XContentType.JSON), RequestOptions.DEFAULT);
+    public void indexSingle(String index, String id, String json) throws IOException {
+        logger.trace("JSon indexed : {}", json);
+        client.index(new IndexRequest(index).id(id).source(json, XContentType.JSON), RequestOptions.DEFAULT);
     }
 
     @Override

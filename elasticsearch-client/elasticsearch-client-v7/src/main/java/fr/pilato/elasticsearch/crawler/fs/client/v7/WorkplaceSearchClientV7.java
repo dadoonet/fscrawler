@@ -176,8 +176,8 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     }
 
     @Override
-    public void indexSingle(String index, String id, Doc doc) {
-        index(index, id, doc, null);
+    public void indexSingle(String index, String id, String json) {
+        throw new RuntimeException("Not supported by the workplace search client. Should not be called.");
     }
 
     @Override

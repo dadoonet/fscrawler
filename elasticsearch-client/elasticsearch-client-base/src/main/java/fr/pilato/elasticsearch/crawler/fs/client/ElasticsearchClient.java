@@ -120,9 +120,9 @@ public interface ElasticsearchClient extends Closeable {
      * Index a document (for test purposes only)
      * @param index     Index name
      * @param id        Document ID
-     * @param doc       Document to index
+     * @param json      Document to index
      */
-    void indexSingle(String index, String id, Doc doc) throws IOException;
+    void indexSingle(String index, String id, String json) throws IOException;
 
     /**
      * Delete a document using a BulkProcessor behind the scenes
