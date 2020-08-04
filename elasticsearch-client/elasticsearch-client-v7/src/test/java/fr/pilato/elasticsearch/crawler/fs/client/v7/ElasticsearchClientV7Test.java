@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
@@ -45,7 +46,10 @@ public class ElasticsearchClientV7Test extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testGetWorkplaceSearchInstance() {
-        WorkplaceSearchClient instance = WorkplaceSearchClientUtil.getInstance(null, FsSettings.builder("foo").build());
+        WorkplaceSearchClient instance = WorkplaceSearchClientUtil.getInstance(null,
+                FsSettings.builder("foo")
+                        .setWorkplaceSearch(WorkplaceSearch.builder().build())
+                        .build());
         assertThat(instance, instanceOf(WorkplaceSearchClientV7.class));
     }
 }
