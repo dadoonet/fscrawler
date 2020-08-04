@@ -63,6 +63,8 @@ public abstract class AbstractRestITCase extends AbstractITCase {
                 .register(RestJsonProvider.class)
                 .register(JacksonFeature.class)
                 .build();
+
+        target = client.target("http://127.0.0.1:" + testRestPort + "/fscrawler");
     }
 
     @AfterClass
