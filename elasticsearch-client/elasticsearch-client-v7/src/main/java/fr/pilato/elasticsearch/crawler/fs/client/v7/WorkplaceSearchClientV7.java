@@ -69,6 +69,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
                 settings.getWorkplaceSearch().getAccessToken(),
                 settings.getWorkplaceSearch().getKey())
             .withHost(settings.getWorkplaceSearch().getServer().decodedUrl());
+        wpSearchClient.start();
         esClient = ElasticsearchClientUtil.getInstance(config, settings);
         esClient.start();
     }
