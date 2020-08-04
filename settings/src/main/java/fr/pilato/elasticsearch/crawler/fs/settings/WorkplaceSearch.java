@@ -27,19 +27,19 @@ import java.util.Objects;
 public class WorkplaceSearch {
 
     protected static final Logger logger = LogManager.getLogger(WorkplaceSearch.class);
-    public static final ServerUrl SERVER_DEFAULT = new ServerUrl("http://localhost:3002");
+    public static final ServerUrl SERVER_DEFAULT = new ServerUrl("http://127.0.0.1:3002");
 
     private ServerUrl server = SERVER_DEFAULT;
-    private String contentSourceKey;
+    private String key;
     private String accessToken;
 
     public WorkplaceSearch() {
 
     }
 
-    public WorkplaceSearch(ServerUrl server, String contentSourceKey, String accessToken) {
+    public WorkplaceSearch(ServerUrl server, String key, String accessToken) {
         this.server = server;
-        this.contentSourceKey = contentSourceKey;
+        this.key = key;
         this.accessToken = accessToken;
     }
 
@@ -55,12 +55,12 @@ public class WorkplaceSearch {
         this.server = server;
     }
 
-    public String getContentSourceKey() {
-        return contentSourceKey;
+    public String getKey() {
+        return key;
     }
 
-    public void setContentSourceKey(String contentSourceKey) {
-        this.contentSourceKey = contentSourceKey;
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public String getAccessToken() {
@@ -73,7 +73,7 @@ public class WorkplaceSearch {
 
     public static class Builder {
         private ServerUrl server = SERVER_DEFAULT;
-        private String contentSourceKey;
+        private String key;
         private String accessToken;
 
         public Builder setServer(ServerUrl server) {
@@ -81,8 +81,8 @@ public class WorkplaceSearch {
             return this;
         }
 
-        public Builder setContentSourceKey(String contentSourceKey) {
-            this.contentSourceKey = contentSourceKey;
+        public Builder setKey(String key) {
+            this.key = key;
             return this;
         }
 
@@ -92,7 +92,7 @@ public class WorkplaceSearch {
         }
 
         public WorkplaceSearch build() {
-            return new WorkplaceSearch(server, contentSourceKey, accessToken);
+            return new WorkplaceSearch(server, key, accessToken);
         }
     }
 
@@ -102,19 +102,19 @@ public class WorkplaceSearch {
         if (o == null || getClass() != o.getClass()) return false;
         WorkplaceSearch that = (WorkplaceSearch) o;
         return Objects.equals(server, that.server) &&
-                Objects.equals(contentSourceKey, that.contentSourceKey) &&
+                Objects.equals(key, that.key) &&
                 Objects.equals(accessToken, that.accessToken);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(server, contentSourceKey, accessToken);
+        return Objects.hash(server, key, accessToken);
     }
 
     @Override
     public String toString() {
-        return "EnterpriseSearch{" + "server=" + server +
-                ", contentSourceKey='" + contentSourceKey + '\'' +
+        return "WorkplaceSearch{" + "server=" + server +
+                ", key='" + key + '\'' +
                 ", accessToken='" + accessToken + '\'' +
                 '}';
     }

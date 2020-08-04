@@ -67,7 +67,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     public void start() throws IOException {
         wpSearchClient = new WPSearchClient(
                 settings.getWorkplaceSearch().getAccessToken(),
-                settings.getWorkplaceSearch().getContentSourceKey())
+                settings.getWorkplaceSearch().getKey())
             .withHost(settings.getWorkplaceSearch().getServer().decodedUrl());
         esClient = ElasticsearchClientUtil.getInstance(config, settings);
         esClient.start();

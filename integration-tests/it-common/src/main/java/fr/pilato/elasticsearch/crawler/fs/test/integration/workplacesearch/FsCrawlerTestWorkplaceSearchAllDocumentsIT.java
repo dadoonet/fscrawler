@@ -93,7 +93,7 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractFsCrawle
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setAccessToken(testWorkplaceAccessToken)
-                        .setContentSourceKey(testWorkplaceKey)
+                        .setKey(testWorkplaceKey)
                         .build())
                 .build();
 
