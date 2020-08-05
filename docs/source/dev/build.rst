@@ -155,7 +155,14 @@ Enterprise Search and create manually the custom source as there is no API yet t
 
     .. image:: /_static/wpsearch/fscrawler-display-settings-2.png
 
+To run Workplace Search tests against another instance (ie. running on
+`Enterprise Search service by Elastic <https://www.elastic.co/workplace-search>`_,
+you can also use ``tests.workplace.url`` to set where Enterprise Search is running::
 
+    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
+        -Dtests.workplace.url=https://XYZ.ent-search.ZONE.CLOUD_PROVIDER.elastic-cloud.com \
+        -Dtests.workplace.access_token=ACCESS_TOKEN \
+        -Dtests.workplace.key=KEY
 
 Tests options
 """""""""""""

@@ -15,7 +15,7 @@ FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/wo
 
 .. hint::
 
-    To easily start with Workplace Search, follow the steps:
+    To easily start locally with Workplace Search, follow the steps:
 
     * Check-out the source code on `GitHub <https://github.com/dadoonet/fscrawler/>`_::
 
@@ -77,4 +77,31 @@ a production cluster:
      access_token: "ACCESS_TOKEN"
      key: "KEY"
      server: "http://wpsearch.mycompany.com:3002"
+
+Running on Cloud
+^^^^^^^^^^^^^^^^
+
+The easiest way to get started is to deploy Enterprise Search on
+`Elastic Cloud Service <https://www.elastic.co/workplace-search>`_.
+
+Then you can define the following:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     username: "elastic"
+     password: "PASSWORD"
+     nodes:
+     - cloud_id: "CLOUD_ID"
+   workplace_search:
+     access_token: "ACCESS_TOKEN"
+     key: "KEY"
+     server: "https://XYZ.ent-search.ZONE.CLOUD_PROVIDER.elastic-cloud.com"
+
+.. note::
+
+    Change the ``PASSWORD``, ``CLOUD_ID`` by values coming from the `Elastic Console <https://cloud.elastic.co/deployments/>`_.
+    And get the ``ACCESS_TOKEN`` and ``KEY`` from your Enterprise Search deployment once you have created the
+    Custom API source as seen previously.
 

@@ -75,6 +75,9 @@
         <tests.cluster.cloud_id></tests.cluster.cloud_id>
         <tests.cluster.user>elastic</tests.cluster.user>
         <tests.cluster.pass>changeme</tests.cluster.pass>
+        <tests.workplace.url></tests.workplace.url>
+        <tests.workplace.access_token></tests.workplace.access_token>
+        <tests.workplace.key></tests.workplace.key>
         <tests.rest.port>8080</tests.rest.port>
 
         <!-- Randomized testing framework -->
@@ -201,6 +204,9 @@
                             <tests.cluster.cloud_id>${tests.cluster.cloud_id}</tests.cluster.cloud_id>
                             <tests.cluster.user>${tests.cluster.user}</tests.cluster.user>
                             <tests.cluster.pass>${tests.cluster.pass}</tests.cluster.pass>
+                            <tests.workplace.url>${tests.workplace.url}</tests.workplace.url>
+                            <tests.workplace.access_token>${tests.workplace.access_token}</tests.workplace.access_token>
+                            <tests.workplace.key>${tests.workplace.key}</tests.workplace.key>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
                         </systemProperties>
                     </configuration>

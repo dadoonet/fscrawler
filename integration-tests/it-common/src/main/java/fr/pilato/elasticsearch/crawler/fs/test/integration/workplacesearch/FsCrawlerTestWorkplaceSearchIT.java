@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkpl
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.After;
@@ -62,6 +63,7 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
                         .addNode(NODE_DEFAULT)
                         .setUsername("elastic").setPassword("changeme").build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
+                        .setServer(new ServerUrl(testWorkplaceUrl))
                         .setAccessToken(testWorkplaceAccessToken)
                         .setKey(testWorkplaceKey)
                         .build())

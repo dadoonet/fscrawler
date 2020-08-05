@@ -95,6 +95,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
     private final static String DEFAULT_TEST_CLUSTER_URL = "http://127.0.0.1:9200";
+    private final static String DEFAULT_TEST_WPSEARCH_URL = "http://127.0.0.1:3002";
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
@@ -105,9 +106,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
 
     protected final static String testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token");
-            // , "8ac946cb85f81b281255cddb5af266fe64b5c154a5c468692e005e165daab198");
     protected final static String testWorkplaceKey = System.getProperty("tests.workplace.key");
-            // , "5f284ee198503ef853db67a8");
+    protected final static String testWorkplaceUrl = System.getProperty("tests.workplace.url", DEFAULT_TEST_WPSEARCH_URL);
 
     protected static Elasticsearch elasticsearchWithSecurity;
     protected static FsCrawlerManagementService managementService;

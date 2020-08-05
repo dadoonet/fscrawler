@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.tika.parser.external.ExternalParser;
@@ -94,6 +95,7 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractFsCrawle
                         .setLangDetect(true)
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
+                        .setServer(new ServerUrl(testWorkplaceUrl))
                         .setAccessToken(testWorkplaceAccessToken)
                         .setKey(testWorkplaceKey)
                         .build())
