@@ -147,7 +147,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
         // Index content
         document.put("body", doc.getContent());
 
-        // Index main meta data
+        // Index main metadata
         document.put("title", doc.getMeta().getTitle());
         document.put("author", doc.getMeta().getAuthor());
         document.put("keywords", doc.getMeta().getKeywords());
