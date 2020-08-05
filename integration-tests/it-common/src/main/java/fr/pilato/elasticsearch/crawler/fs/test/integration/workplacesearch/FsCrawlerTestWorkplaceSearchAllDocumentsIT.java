@@ -64,8 +64,7 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractFsCrawle
 
     @BeforeClass
     public static void startCrawling() throws Exception {
-        assumeFalse("Workplace Search credentials not defined. Launch with -Dtests.workplace.access_token=XYZ -Dtests.workplace.key=XYZ",
-                testWorkplaceAccessToken == null || testWorkplaceKey == null);
+        checkWorkplaceSettings();
 
         Path testResourceTarget = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(testResourceTarget)) {

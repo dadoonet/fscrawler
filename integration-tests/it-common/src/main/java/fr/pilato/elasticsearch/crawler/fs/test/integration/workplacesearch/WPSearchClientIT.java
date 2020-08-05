@@ -40,8 +40,7 @@ public class WPSearchClientIT extends AbstractITCase {
 
     @BeforeClass
     public static void startClient() {
-        assumeFalse("Workplace Search credentials not defined. Launch with -Dtests.workplace.access_token=XYZ -Dtests.workplace.key=XYZ",
-                testWorkplaceAccessToken == null || testWorkplaceKey == null);
+        checkWorkplaceSettings();
 
         client = new WPSearchClient(testWorkplaceAccessToken, testWorkplaceKey)
                 .withHost(testWorkplaceUrl);

@@ -65,6 +65,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Integration tests expect to have an elasticsearch instance running on http://127.0.0.1:9200.
@@ -446,5 +447,15 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 return FileVisitResult.CONTINUE;
             }
         });
+    }
+
+    /**
+     * This method will ignore tests if Workplace Settings are not set.
+     */
+    protected static void checkWorkplaceSettings() {
+        boolean isWorkplaceAccessTokenSet = testWorkplaceAccessToken != null && !testWorkplaceAccessToken.isEmpty();
+        boolean isWorkplaceKeySet = testWorkplaceKey != null && !testWorkplaceKey.isEmpty();
+        assumeTrue("Workplace Search credentials not defined. Launch with -Dtests.workplace.access_token=XYZ -Dtests.workplace.key=XYZ",
+                isWorkplaceAccessTokenSet && isWorkplaceKeySet);
     }
 }

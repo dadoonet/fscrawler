@@ -55,8 +55,7 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
 
     @Before
     public void overrideDocumentService() throws IOException {
-        assumeFalse("Workplace Search credentials not defined. Launch with -Dtests.workplace.access_token=XYZ -Dtests.workplace.key=XYZ",
-                testWorkplaceAccessToken == null || testWorkplaceKey == null);
+        checkWorkplaceSettings();
 
         oldDocumentService = documentService;
         Fs fs = startCrawlerDefinition().build();
