@@ -29,8 +29,6 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assume.assumeFalse;
-
 /**
  * Test Workplace Search HTTP client
  */

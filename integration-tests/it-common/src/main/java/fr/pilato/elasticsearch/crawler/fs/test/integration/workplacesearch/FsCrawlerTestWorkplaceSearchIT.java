@@ -42,8 +42,6 @@ import java.util.Map;
 import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.NODE_DEFAULT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeThat;
 
 /**
  * Test workplace search
