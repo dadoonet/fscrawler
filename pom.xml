@@ -75,7 +75,7 @@
         <tests.cluster.cloud_id></tests.cluster.cloud_id>
         <tests.cluster.user>elastic</tests.cluster.user>
         <tests.cluster.pass>changeme</tests.cluster.pass>
-        <tests.workplace.url></tests.workplace.url>
+        <tests.workplace.url>http://127.0.0.1:3002</tests.workplace.url>
         <tests.workplace.access_token></tests.workplace.access_token>
         <tests.workplace.key></tests.workplace.key>
         <tests.rest.port>8080</tests.rest.port>
