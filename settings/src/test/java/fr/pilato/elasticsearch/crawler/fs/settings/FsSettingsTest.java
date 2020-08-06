@@ -31,10 +31,10 @@ public class FsSettingsTest extends AbstractFSCrawlerTestCase {
     @Test
     public void testCloudId() {
 
-        String cloudId = "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==";
+        String cloudId = "wpsearch:ZXUtd2VzdC0zLmF3cy5lbGFzdGljLWNsb3VkLmNvbTo5MjQzJDg4NTYwNTJmNDBkNjQ4YjE5Mzk1ZDQ5YTViZjgwNTA4JDJhYjJmYTU5N2RiNDQwNjJhMGZmMjY2ZTBkZTEwY2Fm";
         String httpHost = decodeCloudId(cloudId);
 
-        assertThat(httpHost, is("https://1d1ea996887745a6a2b7cb79315348a3.europe-west1.gcp.cloud.es.io:443"));
+        assertThat(httpHost, is("https://8856052f40d648b19395d49a5bf80508.eu-west-3.aws.elastic-cloud.com:9243"));
     }
 
 }
