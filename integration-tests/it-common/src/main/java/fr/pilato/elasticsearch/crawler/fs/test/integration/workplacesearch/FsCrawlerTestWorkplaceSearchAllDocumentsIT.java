@@ -48,9 +48,8 @@ import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -126,8 +125,10 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractFsCrawle
             crawler.close();
             crawler = null;
         }
-        documentService.close();
-        documentService = oldDocumentService;
+        if (oldDocumentService != documentService) {
+            documentService.close();
+            documentService = oldDocumentService;
+        }
     }
 
     /**
@@ -156,7 +157,7 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractFsCrawle
             assertThat(source, hasEntry(is("name$string"), notNullValue()));
             assertThat(source, hasEntry(is("mime_type$string"), notNullValue()));
             assertThat(source, hasEntry(is("url$string"), notNullValue()));
-            assertThat(source, hasEntry(is("size$float"), notNullValue()));
+            assertThat(source, hasKey(startsWith("size")));
             assertThat(source, hasEntry(is("last_modified$string"), notNullValue()));
             assertThat(source, hasEntry(is("path$string"), notNullValue()));
             assertThat(source, hasEntry(is("created_at$string"), notNullValue()));

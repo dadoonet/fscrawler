@@ -20,19 +20,22 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
-import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Test Workplace Search HTTP client
  */
-public class WPSearchClientIT extends AbstractITCase {
+public class WPSearchClientIT extends AbstractFsCrawlerITCase {
 
     private static WPSearchClient client;
 
@@ -52,27 +55,28 @@ public class WPSearchClientIT extends AbstractITCase {
         }
     }
 
-    @Test
-    public void testSendADocument() {
-        Map<String, Object> document = new HashMap<>();
-        document.put("id", "testSendADocument");
-        document.put("body", "Foo Bar Baz");
-        client.indexDocument(document);
+    @Before
+    public void cleanExistingIndex() throws IOException {
+        logger.info(" -> Removing existing index [.ent-search-engine-*]");
+        documentService.getClient().deleteIndex(".ent-search-engine-*");
     }
 
     @Test
-    public void testSearch() {
+    public void testSearch() throws Exception {
         Map<String, Object> document = new HashMap<>();
         String uniqueId = RandomizedTest.randomAsciiLettersOfLength(10);
         document.put("id", "testSearch");
         document.put("title", "To be searched " + uniqueId);
         document.put("body", "Foo Bar Baz " + uniqueId);
         client.indexDocument(document);
+
+        // We need to wait until it's done
+        countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-*"), 1L, null);
         client.search(uniqueId);
     }
 
     @Test
-    public void testSendAndRemoveADocument() throws InterruptedException {
+    public void testSendAndRemoveADocument() {
         Map<String, Object> document = new HashMap<>();
         document.put("id", "testSendAndRemoveADocument");
         document.put("title", "To be deleted " + RandomizedTest.randomAsciiLettersOfLength(10));

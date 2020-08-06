@@ -101,9 +101,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
-    private static String testClusterUrl;
-    private final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
-    private final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    protected static String testClusterUrl;
+    protected final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
+    protected final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     protected final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
 
     protected final static String testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token");

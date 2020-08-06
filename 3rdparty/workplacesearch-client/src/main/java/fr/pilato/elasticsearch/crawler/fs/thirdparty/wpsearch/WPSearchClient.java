@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
@@ -41,7 +42,6 @@ import java.util.Map;
  * Workplace Search Java client
  * We make it as dumb as possible as it should be replaced in the future by
  * an official implementation.
- * TODO add a bulk mechanism
  */
 public class WPSearchClient implements Closeable {
 
@@ -57,12 +57,12 @@ public class WPSearchClient implements Closeable {
     private String endpoint = DEFAULT_ENDPOINT;
     private String host = DEFAULT_HOST;
     private final String accessToken;
-    private final String key;
+    final String urlForBulkCreate;
+    final String urlForBulkDestroy;
+    String urlForApi;
+    final String urlForSearch;
 
-    private String urlForBulkCreate;
-    private String urlForBulkDestroy;
-    private String urlForApi;
-    private String urlForSearch;
+    private FsCrawlerBulkProcessor<WPSearchOperation, WPSearchBulkRequest, WPSearchBulkResponse> bulkProcessor;
 
     /**
      * Create a client
@@ -71,7 +71,10 @@ public class WPSearchClient implements Closeable {
      */
     public WPSearchClient(String accessToken, String key) {
         this.accessToken = accessToken;
-        this.key = key;
+        this.urlForBulkCreate = "sources/" + key + "/documents/bulk_create";
+        this.urlForBulkDestroy = "sources/" + key + "/documents/bulk_destroy";
+        this.urlForSearch = "search";
+        this.urlForApi = host + endpoint;
     }
 
     /**
@@ -91,6 +94,7 @@ public class WPSearchClient implements Closeable {
      */
     public WPSearchClient withEndpoint(String endpoint) {
         this.endpoint = endpoint;
+        this.urlForApi = host + endpoint;
         return this;
     }
 
@@ -101,6 +105,7 @@ public class WPSearchClient implements Closeable {
      */
     public WPSearchClient withHost(String host) {
         this.host = host;
+        this.urlForApi = host + endpoint;
         return this;
     }
 
@@ -113,20 +118,15 @@ public class WPSearchClient implements Closeable {
         // We need to suppress this so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
         client = ClientBuilder.newClient(config);
-        urlForBulkCreate = "sources/" + key + "/documents/bulk_create";
-        urlForBulkDestroy = "sources/" + key + "/documents/bulk_destroy";
-        urlForSearch = "search";
-        urlForApi = host + endpoint;
-    }
 
-    /**
-     * Index multiple documents
-     * @param documents Documents to index
-     */
-    public void indexDocuments(List<Map<String, Object>> documents) {
-        logger.debug("Adding documents {}", documents);
-        String response = post(urlForBulkCreate, documents, String.class);
-        logger.debug("Adding documents response: {}", response);
+        // Create the BulkProcessor instance
+        bulkProcessor = new FsCrawlerBulkProcessor.Builder<>(
+                new WPSearchEngine(this),
+                new FsCrawlerRetryBulkProcessorListener<>(),
+                WPSearchBulkRequest::new)
+                .setBulkActions(100)
+                .setFlushInterval(TimeValue.timeValueSeconds(5))
+        .build();
     }
 
     /**
@@ -134,7 +134,8 @@ public class WPSearchClient implements Closeable {
      * @param document Document to index
      */
     public void indexDocument(Map<String, Object> document) {
-        indexDocuments(Collections.singletonList(document));
+        logger.debug("Adding document {}", document);
+        bulkProcessor.add(new WPSearchOperation(document));
     }
 
     /**
@@ -148,7 +149,7 @@ public class WPSearchClient implements Closeable {
             logger.debug("Removing documents response: {}", response);
             // TODO parse the response to check for errors
         } catch (NotFoundException e) {
-            logger.warn("We did not find the ressources: {}", ids);
+            logger.warn("We did not find the resources: {}", ids);
         }
     }
 
@@ -180,7 +181,7 @@ public class WPSearchClient implements Closeable {
         }
     }
 
-    private <T> T post(String path, Object data, Class<T> clazz) {
+    <T> T post(String path, Object data, Class<T> clazz) {
         return prepareHttpCall(path).post(Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
     }
 
@@ -206,5 +207,18 @@ public class WPSearchClient implements Closeable {
         }
 
         return builder;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("WPSearchClient{");
+        sb.append("endpoint='").append(endpoint).append('\'');
+        sb.append(", host='").append(host).append('\'');
+        sb.append(", urlForBulkCreate='").append(urlForBulkCreate).append('\'');
+        sb.append(", urlForBulkDestroy='").append(urlForBulkDestroy).append('\'');
+        sb.append(", urlForApi='").append(urlForApi).append('\'');
+        sb.append(", urlForSearch='").append(urlForSearch).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

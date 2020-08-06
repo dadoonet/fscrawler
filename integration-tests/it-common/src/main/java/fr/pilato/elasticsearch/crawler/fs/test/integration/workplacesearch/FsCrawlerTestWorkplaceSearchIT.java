@@ -60,8 +60,10 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
         fsSettings = FsSettings.builder(getCrawlerName())
                 .setFs(fs)
                 .setElasticsearch(Elasticsearch.builder()
-                        .addNode(NODE_DEFAULT)
-                        .setUsername("elastic").setPassword("changeme").build())
+                        .addNode(new ServerUrl(testClusterUrl))
+                        .setUsername(testClusterUser)
+                        .setPassword(testClusterPass)
+                        .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
                         .setAccessToken(testWorkplaceAccessToken)
@@ -82,8 +84,10 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
 
     @After
     public void resetDocumentService() throws IOException {
-        documentService.close();
-        documentService = oldDocumentService;
+        if (oldDocumentService != documentService) {
+            documentService.close();
+            documentService = oldDocumentService;
+        }
     }
 
     @Test
@@ -94,13 +98,13 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
         Map<String, Object> source = searchResponse.getHits().get(0).getSourceAsMap();
         assertThat(source, hasEntry(is("path$string"), notNullValue()));
         assertThat(source, hasEntry("extension$string", "txt"));
-        assertThat(source, hasEntry("size$float", 12230.0));
-        assertThat(source, hasEntry(is("text_size$float"), nullValue()));
+        assertThat(source, hasKey(startsWith("size")));
+        assertThat(source, hasKey(startsWith("text_size")));
         assertThat(source, hasEntry(is("mime_type$string"), notNullValue()));
         assertThat(source, hasEntry("name$string", "roottxtfile.txt"));
         assertThat(source, hasEntry(is("created_at$string"), notNullValue()));
         assertThat(source, hasEntry(is("body$string"), notNullValue()));
         assertThat(source, hasEntry(is("last_modified$string"), notNullValue()));
-        assertThat(source, hasEntry("url$string", "file:///roottxtfile.txt"));
+        assertThat(source, hasEntry("url$string", "http://fscrawler-repository/roottxtfile.txt"));
     }
 }

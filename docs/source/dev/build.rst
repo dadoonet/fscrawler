@@ -160,6 +160,9 @@ To run Workplace Search tests against another instance (ie. running on
 you can also use ``tests.workplace.url`` to set where Enterprise Search is running::
 
     mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
+        -Dtests.cluster.user=elastic \
+        -Dtests.cluster.pass=changeme \
+        -Dtests.cluster.cloud_id=CLOUD_ID
         -Dtests.workplace.url=https://XYZ.ent-search.ZONE.CLOUD_PROVIDER.elastic-cloud.com \
         -Dtests.workplace.access_token=ACCESS_TOKEN \
         -Dtests.workplace.key=KEY

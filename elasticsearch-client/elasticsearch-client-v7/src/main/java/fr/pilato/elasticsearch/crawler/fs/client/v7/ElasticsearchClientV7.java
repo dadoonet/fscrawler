@@ -144,7 +144,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
             checkVersion();
             logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", compatibleVersion(), getVersion());
         } catch (Exception e) {
-            logger.warn("failed to create elasticsearch client, disabling crawler...");
+            logger.warn("failed to create elasticsearch client on {}, disabling crawler...", settings.getElasticsearch().toString());
             throw e;
         }
 
