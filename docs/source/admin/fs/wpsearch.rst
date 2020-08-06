@@ -46,6 +46,8 @@ Here is a list of Workplace Search settings (under ``workplace_search.`` prefix)
 +----------------------------------+---------------------------+---------------------------------+
 | ``workplace_search.server``      | ``http://127.0.0.1:3002`` | `Server`_                       |
 +----------------------------------+---------------------------+---------------------------------+
+| ``workplace_search.url_prefix``  | ``http://127.0.0.1``      | `Documents Repository URL`_     |
++----------------------------------+---------------------------+---------------------------------+
 
 
 Keys
@@ -105,3 +107,30 @@ Then you can define the following:
     And get the ``ACCESS_TOKEN`` and ``KEY`` from your Enterprise Search deployment once you have created the
     Custom API source as seen previously.
 
+Documents Repository URL
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The URL that will be used to give access to your users to the source document is
+prefixed by default with ``http://127.0.0.1``. That means that if you are able to run
+a Web Server locally which can serve the directory you defined in ``fs.url`` setting
+(see :ref:`root-directory`), your users will be able to click in the Workplace Search interface
+to have access to the documents.
+
+Of course, in production, you would probably change this and connect to
+another url. This can be done by changing the ``workplace_search.url_prefix`` setting:
+
+.. code:: yaml
+
+   name: "test"
+   workplace_search:
+     access_token: "ACCESS_TOKEN"
+     key: "KEY"
+     url_prefix: "https://repository.mycompany.com/docs"
+
+.. note::
+
+    If ``fs.url`` is set to ``/tmp/es`` and you have indexed a document named
+    ``/tmp/es/path/to/foobar.txt``, the default url will be ``http://127.0.0.1/path/to/foobar.txt``.
+
+    If you change ``workplace_search.url_prefix`` to ``https://repository.mycompany.com/docs``, the
+    same document will be served as ``https://repository.mycompany.com/docs/path/to/foobar.txt``.
