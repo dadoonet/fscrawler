@@ -27,20 +27,23 @@ import java.util.Objects;
 public class WorkplaceSearch {
 
     protected static final Logger logger = LogManager.getLogger(WorkplaceSearch.class);
-    public static final ServerUrl SERVER_DEFAULT = new ServerUrl("http://127.0.0.1:3002");
+    public static final ServerUrl DEFAULT_SERVER = new ServerUrl("http://127.0.0.1:3002");
+    public static final String DEFAULT_URL_PREFIX = "http://127.0.0.1";
 
-    private ServerUrl server = SERVER_DEFAULT;
+    private ServerUrl server = DEFAULT_SERVER;
     private String key;
     private String accessToken;
+    private String urlPrefix = DEFAULT_URL_PREFIX;
 
     public WorkplaceSearch() {
 
     }
 
-    public WorkplaceSearch(ServerUrl server, String key, String accessToken) {
+    public WorkplaceSearch(ServerUrl server, String key, String accessToken, String urlPrefix) {
         this.server = server;
         this.key = key;
         this.accessToken = accessToken;
+        this.urlPrefix = urlPrefix;
     }
 
     public static Builder builder() {
@@ -71,10 +74,19 @@ public class WorkplaceSearch {
         this.accessToken = accessToken;
     }
 
+    public String getUrlPrefix() {
+        return urlPrefix;
+    }
+
+    public void setUrlPrefix(String urlPrefix) {
+        this.urlPrefix = urlPrefix;
+    }
+
     public static class Builder {
-        private ServerUrl server = SERVER_DEFAULT;
+        private ServerUrl server = DEFAULT_SERVER;
         private String key;
         private String accessToken;
+        private String urlPrefix = DEFAULT_URL_PREFIX;
 
         public Builder setServer(ServerUrl server) {
             this.server = server;
@@ -91,8 +103,13 @@ public class WorkplaceSearch {
             return this;
         }
 
+        public Builder setUrlPrefix(String urlPrefix) {
+            this.urlPrefix = urlPrefix;
+            return this;
+        }
+
         public WorkplaceSearch build() {
-            return new WorkplaceSearch(server, key, accessToken);
+            return new WorkplaceSearch(server, key, accessToken, urlPrefix);
         }
     }
 
@@ -103,12 +120,13 @@ public class WorkplaceSearch {
         WorkplaceSearch that = (WorkplaceSearch) o;
         return Objects.equals(server, that.server) &&
                 Objects.equals(key, that.key) &&
-                Objects.equals(accessToken, that.accessToken);
+                Objects.equals(accessToken, that.accessToken) &&
+                Objects.equals(urlPrefix, that.urlPrefix);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(server, key, accessToken);
+        return Objects.hash(server, key, accessToken, urlPrefix);
     }
 
     @Override
@@ -116,6 +134,7 @@ public class WorkplaceSearch {
         return "WorkplaceSearch{" + "server=" + server +
                 ", key='" + key + '\'' +
                 ", accessToken='" + accessToken + '\'' +
+                ", urlPrefix='" + urlPrefix + '\'' +
                 '}';
     }
 }

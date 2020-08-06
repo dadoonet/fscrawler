@@ -38,3 +38,4 @@ public class FsSettingsTest extends AbstractFSCrawlerTestCase {
     }
 
 }
+

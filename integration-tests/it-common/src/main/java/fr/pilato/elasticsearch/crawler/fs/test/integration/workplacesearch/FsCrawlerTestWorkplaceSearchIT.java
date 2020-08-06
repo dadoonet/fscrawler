@@ -105,6 +105,6 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
         assertThat(source, hasEntry(is("created_at$string"), notNullValue()));
         assertThat(source, hasEntry(is("body$string"), notNullValue()));
         assertThat(source, hasEntry(is("last_modified$string"), notNullValue()));
-        assertThat(source, hasEntry("url$string", "http://fscrawler-repository/roottxtfile.txt"));
+        assertThat(source, hasEntry("url$string", "http://127.0.0.1/roottxtfile.txt"));
     }
 }

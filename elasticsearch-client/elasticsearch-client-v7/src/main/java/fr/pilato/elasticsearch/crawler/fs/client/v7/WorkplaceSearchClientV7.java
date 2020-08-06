@@ -164,8 +164,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
         document.put("created_at", toRFC3339(doc.getFile().getCreated()));
 
         // Index main path attributes
-        // TODO make the URL prefix configurable.
-        document.put("url", "http://fscrawler-repository" + doc.getPath().getVirtual());
+        document.put("url", settings.getWorkplaceSearch().getUrlPrefix() + doc.getPath().getVirtual());
         document.put("path", doc.getPath().getReal());
 
         wpSearchClient.indexDocument(document);
