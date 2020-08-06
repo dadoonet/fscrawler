@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
+package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
 /**
  * Defines an Engine which is responsible to execute a bulk operation

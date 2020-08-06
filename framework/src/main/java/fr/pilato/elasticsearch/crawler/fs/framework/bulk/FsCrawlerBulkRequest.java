@@ -17,7 +17,24 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
+package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
-interface FsCrawlerOperation<T extends FsCrawlerOperation<T>> extends Comparable<T> {
+import java.util.ArrayList;
+import java.util.List;
+
+abstract public class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
+
+    private final List<T> operations = new ArrayList<>();
+
+    public int numberOfActions() {
+        return operations.size();
+    }
+
+    public void add(T request) {
+        operations.add(request);
+    }
+
+    public List<T> getOperations() {
+        return operations;
+    }
 }

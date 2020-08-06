@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.bulk.Engine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

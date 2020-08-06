@@ -19,5 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkRequest;
+
 public class WPSearchBulkRequest extends FsCrawlerBulkRequest<WPSearchOperation> {
 }

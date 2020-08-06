@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerOperation;
+
 import java.util.Map;
 
 public class WPSearchOperation implements FsCrawlerOperation<WPSearchOperation> {
