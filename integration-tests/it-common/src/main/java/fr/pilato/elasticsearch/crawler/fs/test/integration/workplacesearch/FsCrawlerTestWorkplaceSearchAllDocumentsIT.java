@@ -95,6 +95,8 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractFsCrawle
                         .setServer(new ServerUrl(testWorkplaceUrl))
                         .setAccessToken(testWorkplaceAccessToken)
                         .setKey(testWorkplaceKey)
+                        .setBulkSize(5)
+                        .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
 

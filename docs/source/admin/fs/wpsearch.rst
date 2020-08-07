@@ -37,17 +37,21 @@ FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/wo
 
 Here is a list of Workplace Search settings (under ``workplace_search.`` prefix)`:
 
-+----------------------------------+---------------------------+---------------------------------+
-| Name                             | Default value             | Documentation                   |
-+==================================+===========================+=================================+
-| ``workplace_search.access_token``| None (Must be set)        | `Keys`_                         |
-+----------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.key``         | None (Must be set)        | `Keys`_                         |
-+----------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.server``      | ``http://127.0.0.1:3002`` | `Server`_                       |
-+----------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.url_prefix``  | ``http://127.0.0.1``      | `Documents Repository URL`_     |
-+----------------------------------+---------------------------+---------------------------------+
++-------------------------------------+---------------------------+---------------------------------+
+| Name                                | Default value             | Documentation                   |
++=====================================+===========================+=================================+
+| ``workplace_search.access_token``   | None (Must be set)        | `Keys`_                         |
++-------------------------------------+---------------------------+---------------------------------+
+| ``workplace_search.key``            | None (Must be set)        | `Keys`_                         |
++-------------------------------------+---------------------------+---------------------------------+
+| ``workplace_search.server``         | ``http://127.0.0.1:3002`` | `Server`_                       |
++-------------------------------------+---------------------------+---------------------------------+
+| ``workplace_search.bulk_size``      | ``100``                   | `Bulk settings`_                |
++-------------------------------------+---------------------------+---------------------------------+
+| ``workplace_search.flush_interval`` | ``"5s"``                  | `Bulk settings`_                |
++-------------------------------------+---------------------------+---------------------------------+
+| ``workplace_search.url_prefix``     | ``http://127.0.0.1``      | `Documents Repository URL`_     |
++-------------------------------------+---------------------------+---------------------------------+
 
 
 Keys
@@ -107,6 +111,21 @@ Then you can define the following:
     And get the ``ACCESS_TOKEN`` and ``KEY`` from your Enterprise Search deployment once you have created the
     Custom API source as seen previously.
 
+Bulk settings
+^^^^^^^^^^^^^
+
+FSCrawler is using bulks to send data to Workplace Search. By default the
+bulk is executed every 100 operations or every 5 seconds. You can change
+default settings using ``workplace_search.bulk_size`` and ``workplace_search.flush_interval``:
+
+.. code:: yaml
+
+  name: "test"
+  workplace_search:
+    bulk_size: 1000
+    flush_interval: "2s"
+
+
 Documents Repository URL
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -129,7 +148,7 @@ another url. This can be done by changing the ``workplace_search.url_prefix`` se
 
 .. note::
 
-    If ``fs.url`` is set to ``/tmp/es`` and you have indexed a document named
+    If ``workplace_search.fs.url`` is set to ``/tmp/es`` and you have indexed a document named
     ``/tmp/es/path/to/foobar.txt``, the default url will be ``http://127.0.0.1/path/to/foobar.txt``.
 
     If you change ``workplace_search.url_prefix`` to ``https://repository.mycompany.com/docs``, the

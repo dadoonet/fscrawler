@@ -68,6 +68,8 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
                         .setServer(new ServerUrl(testWorkplaceUrl))
                         .setAccessToken(testWorkplaceAccessToken)
                         .setKey(testWorkplaceKey)
+                        .setBulkSize(1)
+                        .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
         try {

@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,16 +35,21 @@ public class WorkplaceSearch {
     private String key;
     private String accessToken;
     private String urlPrefix = DEFAULT_URL_PREFIX;
+    private int bulkSize = 100;
+    private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
 
     public WorkplaceSearch() {
 
     }
 
-    public WorkplaceSearch(ServerUrl server, String key, String accessToken, String urlPrefix) {
+    public WorkplaceSearch(ServerUrl server, String key, String accessToken, String urlPrefix,
+                           int bulkSize, TimeValue flushInterval) {
         this.server = server;
         this.key = key;
         this.accessToken = accessToken;
         this.urlPrefix = urlPrefix;
+        this.bulkSize = bulkSize;
+        this.flushInterval = flushInterval;
     }
 
     public static Builder builder() {
@@ -82,11 +88,29 @@ public class WorkplaceSearch {
         this.urlPrefix = urlPrefix;
     }
 
+    public int getBulkSize() {
+        return bulkSize;
+    }
+
+    public void setBulkSize(int bulkSize) {
+        this.bulkSize = bulkSize;
+    }
+
+    public TimeValue getFlushInterval() {
+        return flushInterval;
+    }
+
+    public void setFlushInterval(TimeValue flushInterval) {
+        this.flushInterval = flushInterval;
+    }
+
     public static class Builder {
         private ServerUrl server = DEFAULT_SERVER;
         private String key;
         private String accessToken;
         private String urlPrefix = DEFAULT_URL_PREFIX;
+        private int bulkSize = 100;
+        private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
 
         public Builder setServer(ServerUrl server) {
             this.server = server;
@@ -108,8 +132,18 @@ public class WorkplaceSearch {
             return this;
         }
 
+        public Builder setBulkSize(int bulkSize) {
+            this.bulkSize = bulkSize;
+            return this;
+        }
+
+        public Builder setFlushInterval(TimeValue flushInterval) {
+            this.flushInterval = flushInterval;
+            return this;
+        }
+
         public WorkplaceSearch build() {
-            return new WorkplaceSearch(server, key, accessToken, urlPrefix);
+            return new WorkplaceSearch(server, key, accessToken, urlPrefix, bulkSize, flushInterval);
         }
     }
 

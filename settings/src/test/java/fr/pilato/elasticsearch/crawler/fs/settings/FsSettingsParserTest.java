@@ -29,15 +29,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.iterableWithSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
@@ -65,6 +58,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setUsername("elastic")
             .setPassword("changeme")
             .setBulkSize(1000)
+            .setByteSize(ByteSizeValue.parseBytesSizeValue("10mb"))
             .setFlushInterval(TimeValue.timeValueSeconds(5))
             .setIndex("docs")
             .setPipeline("pipeline-id-if-any")
@@ -75,6 +69,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setKey("KEY")
             .setAccessToken("ACCESS_TOKEN")
             .setUrlPrefix("https://127.0.0.1")
+            .setBulkSize(100)
             .build();
     private static final Server SERVER_EMPTY = Server.builder().build();
     private static final Server SERVER_FULL = Server.builder()

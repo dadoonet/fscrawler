@@ -61,6 +61,8 @@ public class WPSearchClient implements Closeable {
     private final String accessToken;
     final String urlForBulkCreate;
     final String urlForBulkDestroy;
+    private int bulkSize;
+    private TimeValue flushInterval;
     String urlForApi;
     final String urlForSearch;
 
@@ -112,6 +114,31 @@ public class WPSearchClient implements Closeable {
     }
 
     /**
+     * Defines the bulk size, which is the number of expected operations added to the bulk
+     * processor before actually sending the bulk request over the network.
+     * @param bulkSize  Number of documents
+     * @return the current instance
+     * @see #withFlushInterval(TimeValue) for setting the flush interval
+     */
+    public WPSearchClient withBulkSize(int bulkSize) {
+        this.bulkSize = bulkSize;
+        return this;
+    }
+
+    /**
+     * Interval to use to flush the existing operations within the bulk processor whatever
+     * the number of documents. Which means that event you did not reach {@link #withBulkSize(int)}
+     * number of elements, the content will be flushed after the flushInterval period.
+     * @param flushInterval A duration.
+     * @return the current instance
+     * @see #withBulkSize(int) to set the maximum number of items in a bulk
+     */
+    public WPSearchClient withFlushInterval(TimeValue flushInterval) {
+        this.flushInterval = flushInterval;
+        return this;
+    }
+
+    /**
      * Start the client
      */
     public void start() {
@@ -126,8 +153,8 @@ public class WPSearchClient implements Closeable {
                 new WPSearchEngine(this),
                 new FsCrawlerRetryBulkProcessorListener<>(),
                 WPSearchBulkRequest::new)
-                .setBulkActions(100)
-                .setFlushInterval(TimeValue.timeValueSeconds(5))
+                .setBulkActions(bulkSize)
+                .setFlushInterval(flushInterval)
         .build();
     }
 

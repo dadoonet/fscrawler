@@ -44,7 +44,8 @@ public class WPSearchClientIT extends AbstractFsCrawlerITCase {
         checkWorkplaceSettings();
 
         client = new WPSearchClient(testWorkplaceAccessToken, testWorkplaceKey)
-                .withHost(testWorkplaceUrl);
+                .withHost(testWorkplaceUrl)
+                .withBulkSize(1);
         client.start();
     }
 
