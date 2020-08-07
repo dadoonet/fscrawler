@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -283,18 +284,14 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractFsCrawle
     private ESSearchResponse runSearch(String filename, String content) throws IOException {
         logger.info(" -> Testing if file [{}] has been indexed correctly{}.", filename,
                 content == null ? "" : " and contains [" + content + "]");
-        ESBoolQuery query = new ESBoolQuery().addMust(new ESMatchQuery("name$string", filename));
+        ESBoolQuery query = new ESBoolQuery().addMust(new ESTermQuery("name$string.enum", filename));
         if (content != null) {
             query.addMust(new ESMatchQuery("body$string", content));
         }
         ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
                         .withIndex(".ent-search-engine-*")
                         .withESQuery(query));
-        // assertThat(response.getTotalHits(), is(1L));
-        if (response.getTotalHits() != 1) {
-            logger.warn("With workplace search we can't search for exact filenames so we have {} hits instead " +
-                    "of 1 when looking for [{}].", response.getTotalHits(), filename);
-        }
+        assertThat(response.getTotalHits(), is(1L));
         return response;
     }
 }
