@@ -29,7 +29,6 @@ public class FsSettings {
     private Server server;
     private Elasticsearch elasticsearch;
     private Rest rest;
-    private Pipeline pipeline;
 
     public FsSettings() {
 
@@ -47,17 +46,12 @@ public class FsSettings {
         return new Builder().setName(name);
     }
 
-    public Pipeline getPipeline() {
-        return pipeline;
-    }
-
     public static class Builder {
         private String name;
         private Fs fs = Fs.DEFAULT;
         private Server server = null;
         private Elasticsearch elasticsearch = Elasticsearch.DEFAULT();
         private Rest rest = null;
-        private Pipeline pipeline = Pipeline.DEFAULT();
 
         private Builder setName(String name) {
             this.name = name;
@@ -86,10 +80,6 @@ public class FsSettings {
 
         public FsSettings build() {
             return new FsSettings(name, fs, server, elasticsearch, rest);
-        }
-
-        public Pipeline getPipeline() {
-            return pipeline;
         }
     }
 
@@ -144,7 +134,6 @@ public class FsSettings {
         if (!Objects.equals(fs, that.fs)) return false;
         if (!Objects.equals(server, that.server)) return false;
         if (!Objects.equals(rest, that.rest)) return false;
-        if (!Objects.equals(pipeline, that.pipeline)) return false;
         return Objects.equals(elasticsearch, that.elasticsearch);
 
     }
@@ -156,7 +145,6 @@ public class FsSettings {
         result = 31 * result + (server != null ? server.hashCode() : 0);
         result = 31 * result + (rest != null ? rest.hashCode() : 0);
         result = 31 * result + (elasticsearch != null ? elasticsearch.hashCode() : 0);
-        result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
         return result;
     }
 
@@ -167,7 +155,6 @@ public class FsSettings {
                 ", server=" + server +
                 ", elasticsearch=" + elasticsearch +
                 ", rest=" + rest +
-                ", pipeline=" + pipeline +
                 '}';
     }
 }

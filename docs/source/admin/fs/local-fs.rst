@@ -54,6 +54,8 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.follow_symlinks``     | ``false``             | `Follow Symlinks`_              |
 +----------------------------+-----------------------+---------------------------------+
+| ``fs.pipeline.class_name`` | ``DefaultProcessingPipeline`` | :ref:`pipeline_class    |
++----------------------------+-----------------------+---------------------------------+
 
 .. _root-directory:
 
@@ -575,6 +577,28 @@ continue with the rest of the directory tree you can set
    name: "test"
    fs:
      continue_on_error: true
+
+.. _pipeline_class:
+
+Pipeline Class
+^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.8
+
+By default FSCrawler will parse binary documents with Apache Tika,
+and then index to Elasticsearch. If you require custom processing,
+implement the `ProcessingPipeline` interface, place the jar file in
+FSCrawler's classpath, and configure the class name of your custom
+pipeline class in the job config file. Your custom pipeline class
+could extend the `DefaultProcessingPipeline` class to reuse the tika
+and indexing processors:
+
+.. code:: yaml
+
+   name: "test"
+   fs:
+     pipeline:
+       class_name: com.example.CustomProcessingPipeline
 
 Language detection
 ^^^^^^^^^^^^^^^^^^

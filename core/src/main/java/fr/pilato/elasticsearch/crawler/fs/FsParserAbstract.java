@@ -76,7 +76,7 @@ public abstract class FsParserAbstract extends FsParser {
         this.esClient = esClient;
         this.loop = loop;
         try {
-            Class<?> clazz = FsParserAbstract.class.getClassLoader().loadClass(Pipeline.DEFAULT().getClassName());
+            Class<?> clazz = FsParserAbstract.class.getClassLoader().loadClass(fsSettings.getFs().getPipeline().getClassName());
             this.pipeline = (ProcessingPipeline) clazz.getDeclaredConstructor().newInstance();
             logger.info("Created processing pipeline {}", this.pipeline.getClass().getName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
