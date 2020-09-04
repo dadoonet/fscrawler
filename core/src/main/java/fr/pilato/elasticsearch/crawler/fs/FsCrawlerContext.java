@@ -25,6 +25,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A class that keeps necessary context for the processing pipeline.
@@ -37,7 +39,9 @@ public class FsCrawlerContext {
     private final ElasticsearchClient esClient;
     private final InputStream inputStream;
     private final String fullFilename;
+    private final Map<String, Object> extraDoc;
     private Doc doc;
+
     private final MessageDigest messageDigest;
 
     public FsCrawlerContext(Builder builder) {
@@ -49,6 +53,7 @@ public class FsCrawlerContext {
         this.inputStream = builder.inputStream;
         this.fullFilename = builder.fullFilename;
         this.doc = builder.doc;
+        this.extraDoc = builder.extraDoc;
     }
 
     public FileAbstractModel getFile() {
@@ -87,6 +92,10 @@ public class FsCrawlerContext {
         return fullFilename;
     }
 
+    public Map<String, Object> getExtraDoc() {
+        return extraDoc;
+    }
+
 
     public static class Builder {
         private FileAbstractModel file;
@@ -97,6 +106,7 @@ public class FsCrawlerContext {
         private InputStream inputStream;
         private String fullFilename;
         private Doc doc = new Doc();
+        private Map<String,Object> extraDoc = new HashMap<>();
 
         public Builder withFileModel(FileAbstractModel file) {
             this.file = file;
@@ -135,6 +145,11 @@ public class FsCrawlerContext {
 
         public Builder withDoc(Doc doc) {
             this.doc = doc;
+            return this;
+        }
+
+        public Builder withExtraDoc(Map<String,Object> extraDoc) {
+            this.extraDoc = extraDoc;
             return this;
         }
 
