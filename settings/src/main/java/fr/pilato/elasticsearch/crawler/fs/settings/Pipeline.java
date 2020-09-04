@@ -22,6 +22,10 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
  * Makes it possible to provide your own pipeline
  */
 public class Pipeline {
+    public static final Pipeline DEFAULT = Pipeline.builder()
+            .addClass("fr.pilato.elasticsearch.crawler.fs.DefaultProcessingPipeline")
+            .build();
+
     private String className = "fr.pilato.elasticsearch.crawler.fs.DefaultProcessingPipeline";
 
     public Pipeline() { }
@@ -29,10 +33,6 @@ public class Pipeline {
     private Pipeline(String className) {
         this.className = className;
     }
-
-    public static final Pipeline DEFAULT = Pipeline.builder()
-            .addClass("fr.pilato.elasticsearch.crawler.fs.DefaultProcessingPipeline")
-            .build();
 
     private static Builder builder() {
         return new Builder();

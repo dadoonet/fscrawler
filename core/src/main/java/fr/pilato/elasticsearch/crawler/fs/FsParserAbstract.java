@@ -19,15 +19,24 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.*;
-import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.beans.PathParser;
+import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Pipeline;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
