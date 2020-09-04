@@ -33,7 +33,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 /**
- * Pulls {@link fr.pilato.elasticsearch.crawler.fs.beans.Doc} from context and indexes it to Elasticsearch
+ * Pulls {@link fr.pilato.elasticsearch.crawler.fs.beans.Doc} from context,
+ * merges it with 'extraDoc' if it exists and then indexes it to Elasticsearch
  */
 public class EsIndexProcessor implements Processor {
     private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -65,13 +66,13 @@ public class EsIndexProcessor implements Processor {
         return new Gson().toJson(doc);
     }
 
-    String generateId(FsCrawlerContext ctx) {
+    protected String generateId(FsCrawlerContext ctx) {
         try {
             return ctx.getFsSettings().getFs().isFilenameAsId() ?
                     ctx.getFile().getName() :
                     SignTool.sign((new File(ctx.getFile().getName(), ctx.getFilepath())).toString());
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            throw new ProcessingException(e);
         }
     }
 }

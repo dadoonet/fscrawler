@@ -30,11 +30,9 @@ public class Pipeline {
         this.className = className;
     }
 
-    public static Pipeline DEFAULT() {
-        return Pipeline.builder()
-                .addClass("fr.pilato.elasticsearch.crawler.fs.DefaultProcessingPipeline")
-                .build();
-    }
+    public static final Pipeline DEFAULT = Pipeline.builder()
+            .addClass("fr.pilato.elasticsearch.crawler.fs.DefaultProcessingPipeline")
+            .build();
 
     private static Builder builder() {
         return new Builder();

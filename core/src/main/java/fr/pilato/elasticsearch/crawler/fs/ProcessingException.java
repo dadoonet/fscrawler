@@ -18,13 +18,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs;
 
-import java.io.IOException;
-
 /**
  * Thrown by processor plugins
  */
 public class ProcessingException extends RuntimeException {
-    public ProcessingException(IOException e) {
+    public ProcessingException(Throwable e) {
         super(e);
     }
 }

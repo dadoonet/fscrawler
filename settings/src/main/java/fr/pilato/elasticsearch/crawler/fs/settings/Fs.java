@@ -92,7 +92,7 @@ public class Fs {
         private Ocr ocr = new Ocr();
         private ByteSizeValue ignoreAbove = null;
         private boolean followSymlinks = false;
-        private Pipeline pipeline = Pipeline.DEFAULT();
+        private Pipeline pipeline = Pipeline.DEFAULT;
 
         public Builder setUrl(String url) {
             this.url = url;
