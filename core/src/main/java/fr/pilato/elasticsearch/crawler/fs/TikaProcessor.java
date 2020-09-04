@@ -24,21 +24,26 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 
 /**
- * Tikaprocessor will parse full text and update the Doc instance on context
+ * Tikaprocessor will parse full text and update the Doc instance on context.
+ * <ul>
+ *     <li>Input: raw file input stream</li>
+ *     <li>Output: Doc with the parsed text and metadata</li>
+ * </ul>
  */
 public class TikaProcessor implements Processor {
     private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
     @Override
     public void process(FsCrawlerContext ctx) throws ProcessingException {
-        try {
+        try(InputStream stream = ctx.getInputStream()) {
             long startTime = System.currentTimeMillis();
             TikaDocParser.generate(
                     ctx.getFsSettings(),
-                    ctx.getInputStream(),
+                    stream,
                     ctx.getFile().getName(),
                     ctx.getFullFilename(),
                     ctx.getDoc(),
