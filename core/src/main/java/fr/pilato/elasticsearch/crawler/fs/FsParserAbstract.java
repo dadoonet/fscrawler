@@ -19,34 +19,22 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.beans.PathParser;
-import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.beans.*;
+import fr.pilato.elasticsearch.crawler.fs.client.*;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
+import fr.pilato.elasticsearch.crawler.fs.settings.Pipeline;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -57,12 +45,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 
 public abstract class FsParserAbstract extends FsParser {
     private static final Logger logger = LogManager.getLogger(FsParserAbstract.class);
@@ -80,6 +66,7 @@ public abstract class FsParserAbstract extends FsParser {
     private final Integer loop;
     private final MessageDigest messageDigest;
     private final String pathSeparator;
+    private ProcessingPipeline pipeline;
 
     private ScanStatistic stats;
 
@@ -88,6 +75,14 @@ public abstract class FsParserAbstract extends FsParser {
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.esClient = esClient;
         this.loop = loop;
+        try {
+            Class<?> clazz = FsParserAbstract.class.getClassLoader().loadClass(Pipeline.DEFAULT().getClassName());
+            this.pipeline = (ProcessingPipeline) clazz.getDeclaredConstructor().newInstance();
+            logger.info("Created processing pipeline {}", this.pipeline.getClass().getName());
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            logger.error("Could not create processing pipeline");
+            e.printStackTrace();
+        }
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
@@ -229,7 +224,7 @@ public abstract class FsParserAbstract extends FsParser {
         fsJobFileHandler.write(jobName, fsJob);
     }
 
-    private void addFilesRecursively(FileAbstractor<?> path, String filepath, LocalDateTime lastScanDate)
+    private void addFilesRecursively(FileAbstractor<?> abstractor, String filepath, LocalDateTime lastScanDate)
             throws Exception {
 
         logger.debug("indexing [{}] content", filepath);
@@ -239,9 +234,9 @@ public abstract class FsParserAbstract extends FsParser {
             return;
         }
 
-        final Collection<FileAbstractModel> children = path.getFiles(filepath);
-        Collection<String> fsFiles = new ArrayList<>();
-        Collection<String> fsFolders = new ArrayList<>();
+        final Collection<FileAbstractModel> children = abstractor.getFiles(filepath);
+        final Collection<String> fsFolders = new HashSet<>();
+        final Collection<String> fsFiles = new HashSet<>();
 
         if (children != null) {
             boolean ignoreFolder = false;
@@ -260,22 +255,22 @@ public abstract class FsParserAbstract extends FsParser {
                     logger.trace("FileAbstractModel = {}", child);
                     String filename = child.getName();
 
-                    String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, filename).toString());
+                String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, filename).toString());
 
-                    // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
-                    boolean isIndexable = isIndexable(child.isDirectory(), virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
+                // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
+                boolean isIndexable = isIndexable(child.isDirectory(), virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
 
-                    logger.debug("[{}] can be indexed: [{}]", virtualFileName, isIndexable);
+                logger.debug("[{}] can be indexed: [{}]", virtualFileName, isIndexable);
                     if (isIndexable) {
                         if (child.isFile()) {
-                            logger.debug("  - file: {}", virtualFileName);
-                            fsFiles.add(filename);
+                logger.debug("  - file: {}", virtualFileName);
+                fsFiles.add(filename);
                             if (child.getLastModifiedDate().isAfter(lastScanDate) ||
                                     (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
                                 if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
                                     try {
                                         indexFile(child, stats, filepath,
-                                                fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
+                                                fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? abstractor.getInputStream(child) : null, child.getSize());
                                         stats.addFile();
                                     } catch (java.io.FileNotFoundException e) {
                                         if (fsSettings.getFs().isContinueOnError()) {
@@ -283,13 +278,19 @@ public abstract class FsParserAbstract extends FsParser {
                                         } else {
                                             throw e;
                                         }
+                                    } catch (ProcessingException pe) {
+                                        if (fsSettings.getFs().isContinueOnError()) {
+                                            logger.warn("Processing error for {}, skipping...: {}", filename, pe.getMessage());
+                                        } else {
+                                            throw pe;
+                                        }
                                     }
-                                } else {
-                                    logger.debug("file [{}] has a size [{}] above the limit [{}]. We skip it.", filename,
+                    } else {
+                        logger.debug("file [{}] has a size [{}] above the limit [{}]. We skip it.", filename,
                                             new ByteSizeValue(child.getSize()), fsSettings.getFs().getIgnoreAbove());
-                                }
-                            } else {
-                                logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
+                    }
+                } else {
+                    logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
                                         child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
                             }
                         } else if (child.isDirectory()) {
@@ -298,7 +299,7 @@ public abstract class FsParserAbstract extends FsParser {
                                 fsFolders.add(child.getFullpath());
                                 indexDirectory(child.getFullpath());
                             }
-                            addFilesRecursively(path, child.getFullpath(), lastScanDate);
+                            addFilesRecursively(abstractor, child.getFullpath(), lastScanDate);
                         } else {
                             logger.debug("  - other: {}", filename);
                             logger.debug("Not a file nor a dir. Skipping {}", child.getFullpath());
@@ -480,19 +481,20 @@ public abstract class FsParserAbstract extends FsParser {
                     // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
                     doc.setObject(XmlDocParser.generateMap(inputStream));
                 } else {
-                    // Extracting content with Tika
-                    TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
-                }
+                    FsCrawlerContext context = new FsCrawlerContext.Builder()
+                            .withFileModel(fileAbstractModel)
+                            .withFullFilename(fullFilename)
+                            .withFilePath(dirname)
+                            .withFsSettings(fsSettings)
+                            .withMessageDigest(messageDigest)
+                            .withEsClient(esClient)
+                            .withInputStream(inputStream)
+                            .withDoc(doc)
+                            .build();
 
-                // We index the data structure
-                if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
-                    esIndex(fsSettings.getElasticsearch().getIndex(),
-                            generateIdFromFilename(filename, dirname),
-                            DocParser.toJson(doc),
-                            fsSettings.getElasticsearch().getPipeline());
-                } else {
-                    logger.debug("We ignore file [{}] because it does not match all the patterns {}", filename,
-                            fsSettings.getFs().getFilters());
+                    // Do various parsing such as Tika etc.
+                    // The last thing the pipeline will do is index to ES
+                    pipeline.processFile(context);
                 }
             } else {
                 if (fsSettings.getFs().isJsonSupport()) {
