@@ -41,8 +41,11 @@ import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
@@ -57,7 +60,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 
 public abstract class FsParserAbstract extends FsParser {
     private static final Logger logger = LogManager.getLogger(FsParserAbstract.class);
