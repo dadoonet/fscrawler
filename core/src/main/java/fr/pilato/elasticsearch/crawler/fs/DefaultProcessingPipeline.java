@@ -21,6 +21,8 @@ package fr.pilato.elasticsearch.crawler.fs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.invoke.MethodHandles;
+
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 
 /**
@@ -28,7 +30,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndex
  *
  */
 public class DefaultProcessingPipeline implements ProcessingPipeline {
-    private static final Logger logger = LogManager.getLogger(DefaultProcessingPipeline.class);
+    private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
     private final TikaProcessor tika;
     private final EsIndexProcessor es;
 

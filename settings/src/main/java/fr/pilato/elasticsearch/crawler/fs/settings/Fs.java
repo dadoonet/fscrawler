@@ -58,7 +58,7 @@ public class Fs {
     private Ocr ocr = new Ocr();
     private ByteSizeValue ignoreAbove = null;
     private boolean followSymlinks = false;
-    private Pipeline pipeline;
+    private Pipeline pipeline = Pipeline.DEFAULT;
 
     public static Builder builder() {
         return new Builder();
@@ -92,7 +92,7 @@ public class Fs {
         private Ocr ocr = new Ocr();
         private ByteSizeValue ignoreAbove = null;
         private boolean followSymlinks = false;
-        private Pipeline pipeline = Pipeline.DEFAULT;
+        private Pipeline pipeline;
 
         public Builder setUrl(String url) {
             this.url = url;
