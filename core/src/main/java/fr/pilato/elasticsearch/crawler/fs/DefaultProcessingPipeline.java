@@ -31,24 +31,39 @@ import java.lang.invoke.MethodHandles;
 public class DefaultProcessingPipeline implements ProcessingPipeline {
     private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
+    protected Config config;
     protected TikaProcessor tika;
     protected EsIndexProcessor es;
-    protected Config config;
 
+    /**
+     * Parse the file with Tika and index to ES.
+     * Sub classes can override this method to define their own custom processing.
+     * @param ctx the context in which to find the file inputstream as well as
+     */
     @Override
     public void processFile(FsCrawlerContext ctx) {
         logger.debug("Starting processing of file {}", ctx.getFullFilename());
+        extractTextWithTika(ctx);
+        indexToEs(ctx);
+    }
 
-        // Extracting content with Tika
-        tika.process(ctx);
-
-        // Index to es
+    /**
+     * Indexes document using {@link EsIndexProcessor}
+     */
+    protected void indexToEs(FsCrawlerContext ctx) {
         if (FsCrawlerUtil.isIndexable(ctx.getDoc().getContent(), config.getFsSettings().getFs().getFilters())) {
             es.process(ctx);
         } else {
             logger.debug("We ignore file [{}] because it does not match all the patterns {}", ctx.getFile().getName(),
                     config.getFsSettings().getFs().getFilters());
         }
+    }
+
+    /**
+     * Parse text and metadata from document using {@link TikaProcessor}
+     */
+    protected void extractTextWithTika(FsCrawlerContext ctx) {
+        tika.process(ctx);
     }
 
     @Override

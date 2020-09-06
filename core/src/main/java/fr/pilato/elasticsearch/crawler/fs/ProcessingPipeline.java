@@ -32,7 +32,7 @@ import java.util.Map;
  */
 public interface ProcessingPipeline {
     /**
-     * Process one file
+     * Process one file.
      * @param ctx the context in which to find the file inputstream as well as
      *            other details about the file
      */
@@ -43,7 +43,11 @@ public interface ProcessingPipeline {
      */
     void init(Config config);
 
-    public static class Config {
+    /**
+     * This class holds configurations and the ES client for a processing pipeline.
+     * The configMap supports sending arbitrary configuration to a pipeline.
+     */
+    class Config {
         private final FsSettings fsSettings;
         private final ElasticsearchClient esClient;
         private MessageDigest messageDigest;
