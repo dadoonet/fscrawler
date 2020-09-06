@@ -19,6 +19,7 @@
 package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
+import java.security.MessageDigest;
 
 /**
  * Tikaprocessor will parse full text and update the Doc instance on context.
@@ -36,18 +38,25 @@ import java.lang.invoke.MethodHandles;
  */
 public class TikaProcessor implements Processor {
     private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+    private FsSettings fsSettings;
+    private MessageDigest messageDigest;
+
+    public TikaProcessor(FsSettings fsSettings, MessageDigest messageDigest) {
+        this.fsSettings = fsSettings;
+        this.messageDigest = messageDigest;
+    }
 
     @Override
     public void process(FsCrawlerContext ctx) throws ProcessingException {
         try(InputStream stream = ctx.getInputStream()) {
             long startTime = System.currentTimeMillis();
             TikaDocParser.generate(
-                    ctx.getFsSettings(),
+                    fsSettings,
                     stream,
                     ctx.getFile().getName(),
                     ctx.getFullFilename(),
                     ctx.getDoc(),
-                    ctx.getMessageDigest(),
+                    messageDigest,
                     ctx.getFile().getSize());
             logger.debug("Parsing document {} with Tika in {}ms", ctx.getFile().getName(),
                     System.currentTimeMillis() - startTime);

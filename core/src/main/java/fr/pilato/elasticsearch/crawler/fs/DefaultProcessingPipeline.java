@@ -18,12 +18,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandles;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 
 /**
  * The processing pipeline that will be used if not overridden.
@@ -31,13 +30,12 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndex
  */
 public class DefaultProcessingPipeline implements ProcessingPipeline {
     private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-    private final TikaProcessor tika;
-    private final EsIndexProcessor es;
 
-    public DefaultProcessingPipeline() {
-        tika = new TikaProcessor();
-        es = new EsIndexProcessor();
-    }
+    protected TikaProcessor tika;
+    protected EsIndexProcessor es;
+    protected Config config;
+
+    public DefaultProcessingPipeline() { }
 
     @Override
     public void processFile(FsCrawlerContext ctx) {
@@ -45,11 +43,18 @@ public class DefaultProcessingPipeline implements ProcessingPipeline {
         tika.process(ctx);
 
         // Index to es
-        if (isIndexable(ctx.getDoc().getContent(), ctx.getFsSettings().getFs().getFilters())) {
+        if (FsCrawlerUtil.isIndexable(ctx.getDoc().getContent(), config.getFsSettings().getFs().getFilters())) {
             es.process(ctx);
         } else {
             logger.debug("We ignore file [{}] because it does not match all the patterns {}", ctx.getFile().getName(),
-                    ctx.getFsSettings().getFs().getFilters());
+                    config.getFsSettings().getFs().getFilters());
         }
+    }
+
+    @Override
+    public void init(Config config) {
+        this.config = config;
+        tika = new TikaProcessor(config.getFsSettings(), config.getMessageDigest());
+        es = new EsIndexProcessor(config.getFsSettings(), config.getEsClient());
     }
 }

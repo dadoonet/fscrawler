@@ -18,6 +18,12 @@
  */
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+
+import java.security.MessageDigest;
+import java.util.Map;
+
 /**
  * Custom pipeline implementations will implement this interface.
  * A pipeline will find the document with basic metadata in the context,
@@ -25,5 +31,48 @@ package fr.pilato.elasticsearch.crawler.fs;
  * to Elasticsearch through the {@link EsIndexProcessor}
  */
 public interface ProcessingPipeline {
+    /**
+     * Process one file
+     * @param ctx the context in which to find the file inputstream as well as
+     *            other details about the file
+     */
     void processFile(FsCrawlerContext ctx);
+
+    /**
+     * Initialize the pipeline with settings and ES client objects
+     */
+    void init(Config config);
+
+    public static class Config {
+        private final FsSettings fsSettings;
+        private final ElasticsearchClient esClient;
+        private MessageDigest messageDigest;
+        private Map<String, Object> configMap;
+
+        public Config(FsSettings fsSettings,
+                      ElasticsearchClient esClient,
+                      MessageDigest messageDigest,
+                      Map<String,Object> configMap) {
+            this.fsSettings = fsSettings;
+            this.esClient = esClient;
+            this.messageDigest = messageDigest;
+            this.configMap = configMap;
+        }
+
+        public FsSettings getFsSettings() {
+            return fsSettings;
+        }
+
+        public ElasticsearchClient getEsClient() {
+            return esClient;
+        }
+
+        public Map<String, Object> getConfigMap() {
+            return configMap;
+        }
+
+        public MessageDigest getMessageDigest() {
+            return messageDigest;
+        }
+    }
 }

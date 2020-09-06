@@ -19,12 +19,9 @@
 package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 import java.io.InputStream;
-import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,22 +31,15 @@ import java.util.Map;
  */
 public class FsCrawlerContext {
     private final FileAbstractModel file;
-    private final FsSettings fsSettings;
     private final String filepath;
-    private final ElasticsearchClient esClient;
     private final InputStream inputStream;
     private final String fullFilename;
     private final Map<String, Object> extraDoc;
     private Doc doc;
 
-    private final MessageDigest messageDigest;
-
     public FsCrawlerContext(Builder builder) {
         this.file = builder.file;
-        this.fsSettings = builder.fsSettings;
         this.filepath = builder.filepath;
-        this.messageDigest = builder.messageDigest;
-        this.esClient = builder.esClient;
         this.inputStream = builder.inputStream;
         this.fullFilename = builder.fullFilename;
         this.doc = builder.doc;
@@ -58,10 +48,6 @@ public class FsCrawlerContext {
 
     public FileAbstractModel getFile() {
         return file;
-    }
-
-    public FsSettings getFsSettings() {
-        return fsSettings;
     }
 
     public String getFilepath() {
@@ -74,14 +60,6 @@ public class FsCrawlerContext {
 
     public Doc getDoc() {
         return doc;
-    }
-
-    public MessageDigest getMessageDigest() {
-        return messageDigest;
-    }
-
-    public ElasticsearchClient getEsClient() {
-        return esClient;
     }
 
     public InputStream getInputStream() {
@@ -99,10 +77,7 @@ public class FsCrawlerContext {
 
     public static class Builder {
         private FileAbstractModel file;
-        private FsSettings fsSettings;
         private String filepath;
-        private MessageDigest messageDigest;
-        private ElasticsearchClient esClient;
         private InputStream inputStream;
         private String fullFilename;
         private Doc doc = new Doc();
@@ -113,23 +88,8 @@ public class FsCrawlerContext {
             return this;
         }
 
-        public Builder withFsSettings(FsSettings fsSettings) {
-            this.fsSettings = fsSettings;
-            return this;
-        }
-
         public Builder withFilePath(String filepath) {
             this.filepath = filepath;
-            return this;
-        }
-
-        public Builder withMessageDigest(MessageDigest messageDigest) {
-            this.messageDigest = messageDigest;
-            return this;
-        }
-
-        public Builder withEsClient(ElasticsearchClient esClient) {
-            this.esClient = esClient;
             return this;
         }
 

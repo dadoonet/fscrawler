@@ -90,14 +90,6 @@ public abstract class FsParserAbstract extends FsParser {
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.esClient = esClient;
         this.loop = loop;
-        try {
-            Class<?> clazz = FsParserAbstract.class.getClassLoader().loadClass(fsSettings.getFs().getPipeline().getClassName());
-            this.pipeline = (ProcessingPipeline) clazz.getDeclaredConstructor().newInstance();
-            logger.info("Created processing pipeline {}", this.pipeline.getClass().getName());
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            logger.error("Could not create processing pipeline");
-            e.printStackTrace();
-        }
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
@@ -111,6 +103,16 @@ public abstract class FsParserAbstract extends FsParser {
             }
         } else {
             messageDigest = null;
+        }
+
+        try {
+            Class<?> clazz = FsParserAbstract.class.getClassLoader().loadClass(fsSettings.getFs().getPipeline().getClassName());
+            pipeline = (ProcessingPipeline) clazz.getDeclaredConstructor().newInstance();
+            pipeline.init(new ProcessingPipeline.Config(fsSettings, esClient, messageDigest, Collections.emptyMap()));
+            logger.info("Created processing pipeline {}", this.pipeline.getClass().getName());
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            logger.error("Could not create processing pipeline");
+            e.printStackTrace();
         }
 
         // On Windows, when using SSH server, we need to force the "Linux" separator
@@ -500,9 +502,6 @@ public abstract class FsParserAbstract extends FsParser {
                             .withFileModel(fileAbstractModel)
                             .withFullFilename(fullFilename)
                             .withFilePath(dirname)
-                            .withFsSettings(fsSettings)
-                            .withMessageDigest(messageDigest)
-                            .withEsClient(esClient)
                             .withInputStream(inputStream)
                             .withDoc(doc)
                             .build();

@@ -22,7 +22,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,19 +40,26 @@ import java.util.Map;
  */
 public class EsIndexProcessor implements Processor {
     private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+    private final FsSettings fsSettings;
+    private final ElasticsearchClient esClient;
+
+    public EsIndexProcessor(FsSettings fsSettings, ElasticsearchClient esClient) {
+        this.fsSettings = fsSettings;
+        this.esClient = esClient;
+    }
 
     @Override
     public void process(FsCrawlerContext ctx) throws ProcessingException {
         try {
             long startTime = System.currentTimeMillis();
-            String index = ctx.getFsSettings().getElasticsearch().getIndex();
+            String index = fsSettings.getElasticsearch().getIndex();
             String id = generateId(ctx);
-            String pipeline = ctx.getFsSettings().getElasticsearch().getPipeline();
+            String pipeline = fsSettings.getElasticsearch().getPipeline();
             String json = DocParser.toJson(ctx.getDoc());
             if (!ctx.getExtraDoc().isEmpty()) {
                 json = mergeExtraDoc(json, ctx.getExtraDoc());
             }
-            ctx.getEsClient().index(index, id, json, pipeline);
+            esClient.index(index, id, json, pipeline);
             logger.debug("Indexed {}/{}?pipeline={} in {}ms", index, id, pipeline,
                     System.currentTimeMillis() - startTime);
             logger.trace("JSon indexed : {}", json);
@@ -59,7 +68,7 @@ public class EsIndexProcessor implements Processor {
         }
     }
 
-    protected String mergeExtraDoc(String json, Map<String, Object> extraDoc) {
+    protected static String mergeExtraDoc(String json, Map<String, Object> extraDoc) {
         Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
         Map<String,Object> doc = new Gson().fromJson(json, mapType);
         doc.putAll(extraDoc);
@@ -68,7 +77,7 @@ public class EsIndexProcessor implements Processor {
 
     protected String generateId(FsCrawlerContext ctx) {
         try {
-            return ctx.getFsSettings().getFs().isFilenameAsId() ?
+            return fsSettings.getFs().isFilenameAsId() ?
                     ctx.getFile().getName() :
                     SignTool.sign((new File(ctx.getFile().getName(), ctx.getFilepath())).toString());
         } catch (NoSuchAlgorithmException e) {

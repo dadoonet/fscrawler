@@ -16,7 +16,7 @@ public class EsIndexProcessorTest {
         geo.put("hello", "world");
         extra.put("geo", geo);
         String json = "{\"file\" : {\"extension\" : \"pdf\"} }";
-        String modifiedJson = new EsIndexProcessor().mergeExtraDoc(json, extra);
+        String modifiedJson = EsIndexProcessor.mergeExtraDoc(json, extra);
         assertEquals("{\"file\":{\"extension\":\"pdf\"},\"geo\":{\"hello\":\"world\"}}", modifiedJson);
     }
 }
