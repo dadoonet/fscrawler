@@ -35,10 +35,10 @@ public class DefaultProcessingPipeline implements ProcessingPipeline {
     protected EsIndexProcessor es;
     protected Config config;
 
-    public DefaultProcessingPipeline() { }
-
     @Override
     public void processFile(FsCrawlerContext ctx) {
+        logger.debug("Starting processing of file {}", ctx.getFullFilename());
+
         // Extracting content with Tika
         tika.process(ctx);
 
