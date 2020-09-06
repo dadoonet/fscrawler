@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
@@ -49,7 +50,13 @@ public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase 
             String jobName = jobNamePrefix + "-" + i;
             Path jobDir = metadataDir.resolve(jobName);
             Files.createDirectories(jobDir);
-            fsSettingsFileHandler.write(FsSettings.builder(jobName).build());
+            if (randomBoolean()) {
+                // Yaml settings file
+                fsSettingsFileHandler.write(FsSettings.builder(jobName).build());
+            } else {
+                // Json settings (empty)
+                Files.createFile(jobDir.resolve(FsSettingsFileHandler.FILENAME_JSON));
+            }
         }
 
         // We test that we can actually see the jobs
