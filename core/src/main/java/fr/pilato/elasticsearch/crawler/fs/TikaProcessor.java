@@ -48,11 +48,11 @@ public class TikaProcessor implements Processor {
 
     @Override
     public void process(FsCrawlerContext ctx) throws ProcessingException {
-        try(InputStream stream = ctx.getInputStream()) {
+        try {
             long startTime = System.currentTimeMillis();
             TikaDocParser.generate(
                     fsSettings,
-                    stream,
+                    ctx.getInputStream(),
                     ctx.getFile().getName(),
                     ctx.getFullFilename(),
                     ctx.getDoc(),
