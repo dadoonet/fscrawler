@@ -241,7 +241,7 @@ public abstract class FsParserAbstract extends FsParser {
         fsJobFileHandler.write(jobName, fsJob);
     }
 
-    private void addFilesRecursively(FileAbstractor<?> abstractor, String filepath, LocalDateTime lastScanDate)
+    private void addFilesRecursively(FileAbstractor<?> path, String filepath, LocalDateTime lastScanDate)
             throws Exception {
 
         logger.debug("indexing [{}] content", filepath);
@@ -251,9 +251,9 @@ public abstract class FsParserAbstract extends FsParser {
             return;
         }
 
-        final Collection<FileAbstractModel> children = abstractor.getFiles(filepath);
-        final Collection<String> fsFolders = new HashSet<>();
-        final Collection<String> fsFiles = new HashSet<>();
+        final Collection<FileAbstractModel> children = path.getFiles(filepath);
+        Collection<String> fsFiles = new ArrayList<>();
+        Collection<String> fsFolders = new ArrayList<>();
 
         if (children != null) {
             boolean ignoreFolder = false;
@@ -287,7 +287,7 @@ public abstract class FsParserAbstract extends FsParser {
                                 if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
                                     try {
                                         indexFile(child, stats, filepath,
-                                                fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? abstractor.getInputStream(child) : null, child.getSize());
+                                                fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
                                         stats.addFile();
                                     } catch (java.io.FileNotFoundException e) {
                                         if (fsSettings.getFs().isContinueOnError()) {
@@ -316,7 +316,7 @@ public abstract class FsParserAbstract extends FsParser {
                                 fsFolders.add(child.getFullpath());
                                 indexDirectory(child.getFullpath());
                             }
-                            addFilesRecursively(abstractor, child.getFullpath(), lastScanDate);
+                            addFilesRecursively(path, child.getFullpath(), lastScanDate);
                         } else {
                             logger.debug("  - other: {}", filename);
                             logger.debug("Not a file nor a dir. Skipping {}", child.getFullpath());
