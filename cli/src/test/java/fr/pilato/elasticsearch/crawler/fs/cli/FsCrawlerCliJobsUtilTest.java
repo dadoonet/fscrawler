@@ -54,7 +54,7 @@ public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase 
                 // Yaml settings file
                 fsSettingsFileHandler.write(FsSettings.builder(jobName).build());
             } else {
-                // Json settings (empty)
+                // Json settings (empty dummy)
                 Files.createFile(jobDir.resolve(FsSettingsFileHandler.FILENAME_JSON));
             }
         }
