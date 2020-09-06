@@ -24,4 +24,4 @@ RUN unzip $FSCRAWLER_FNAME.zip && rm $FSCRAWLER_FNAME.zip \
 
 VOLUME [ "/usr/app/config", "/usr/app/data" ]
 
-ENTRYPOINT [ "$FSCRAWLER_FNAME/bin/fscrawler", "--config_dir", "/usr/app/config","idx", "--rest" ]
+ENTRYPOINT $FSCRAWLER_FNAME/bin/fscrawler --config_dir /usr/app/config idx --rest
