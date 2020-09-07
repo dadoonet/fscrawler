@@ -13,22 +13,22 @@ services:
       - xpack.security.enabled=true
       - xpack.security.authc.api_key.enabled=true
       - xpack.ml.enabled=false
-      - xpack.license.self_generated.type=trial
     ulimits:
       memlock:
         soft: -1
         hard: -1
     ports: ['9200:9200']
-    networks: ['stack']
+    networks: ['wpsearch']
 
   kibana:
     image: docker.elastic.co/kibana/kibana:$ELASTIC_VERSION
     environment:
       - ELASTICSEARCH_USERNAME=elastic
       - ELASTICSEARCH_PASSWORD=$ELASTIC_PASSWORD
+      - ENTERPRISESEARCH_HOST=http://enterprisesearch:3002
     ports: ['5601:5601']
-    networks: ['stack']
-    links: ['elasticsearch']
+    networks: ['wpsearch']
+    links: ['elasticsearch', 'enterprisesearch']
     restart: always
     depends_on: ['elasticsearch']
 
@@ -43,9 +43,9 @@ services:
       - "secret_management.encryption_keys=[XYZ]"
       - "ENT_SEARCH_DEFAULT_PASSWORD=$ELASTIC_PASSWORD"
     ports: ['3002:3002']
-    networks: ['stack']
+    networks: ['wpsearch']
     links: ['elasticsearch']
     depends_on: ['elasticsearch']
 
 networks:
-  stack: {}
+  wpsearch: {}
