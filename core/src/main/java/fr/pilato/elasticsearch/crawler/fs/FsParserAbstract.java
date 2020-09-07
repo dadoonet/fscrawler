@@ -109,7 +109,7 @@ public abstract class FsParserAbstract extends FsParser {
             pipeline = (ProcessingPipeline) clazz.getDeclaredConstructor().newInstance();
             pipeline.init(new ProcessingPipeline.Config(fsSettings, esClient, messageDigest, Collections.emptyMap()));
             logger.info("Created processing pipeline {}", this.pipeline.getClass().getName());
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+        } catch (Exception e) {
             logger.error("Could not create processing pipeline");
             e.printStackTrace();
         }
@@ -452,7 +452,7 @@ public abstract class FsParserAbstract extends FsParser {
             // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't index json or xml)
             if (fsSettings.getFs().isAddAsInnerObject() || (!fsSettings.getFs().isJsonSupport() && !fsSettings.getFs().isXmlSupport())) {
 
-                String fullFilename = new File(dirname, filename).toString();
+                String fullFilename = new File(dirname, filename).getAbsolutePath();
 
                 Doc doc = new Doc();
 

@@ -25,4 +25,12 @@ public class ProcessingException extends RuntimeException {
     public ProcessingException(Throwable e) {
         super(e);
     }
+
+    public ProcessingException(String reason) {
+        super(reason);
+    }
+
+    public ProcessingException(String reason, Throwable e) {
+        super(reason, e);
+    }
 }

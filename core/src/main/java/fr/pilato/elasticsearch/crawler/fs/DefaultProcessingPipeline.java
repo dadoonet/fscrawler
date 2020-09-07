@@ -22,7 +22,9 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.Collections;
 
 /**
  * The processing pipeline that will be used if not overridden.
@@ -67,9 +69,9 @@ public class DefaultProcessingPipeline implements ProcessingPipeline {
     }
 
     @Override
-    public void init(Config config) {
+    public void init(Config config) throws IOException {
         this.config = config;
-        tika = new TikaProcessor(config.getFsSettings(), config.getMessageDigest());
+        tika = new TikaProcessor(config.getFsSettings(), config.getMessageDigest(), Collections.emptyMap());
         es = new EsIndexProcessor(config.getFsSettings(), config.getEsClient());
     }
 }

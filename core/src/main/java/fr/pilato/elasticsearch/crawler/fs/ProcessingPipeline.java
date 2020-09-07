@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.Map;
 
@@ -41,7 +42,7 @@ public interface ProcessingPipeline {
     /**
      * Initialize the pipeline with settings and ES client objects
      */
-    void init(Config config);
+    void init(Config config) throws IOException;
 
     /**
      * This class holds configurations and the ES client for a processing pipeline.

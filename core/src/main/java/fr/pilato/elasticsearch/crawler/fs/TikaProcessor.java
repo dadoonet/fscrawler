@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.security.MessageDigest;
+import java.util.Map;
 
 /**
  * Tikaprocessor will parse full text and update the Doc instance on context.
@@ -39,10 +40,12 @@ public class TikaProcessor implements Processor {
     private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
     private FsSettings fsSettings;
     private MessageDigest messageDigest;
+    private Map<String, String> metadataMapping;
 
-    public TikaProcessor(FsSettings fsSettings, MessageDigest messageDigest) {
+    public TikaProcessor(FsSettings fsSettings, MessageDigest messageDigest, Map<String,String> metadataMapping) {
         this.fsSettings = fsSettings;
         this.messageDigest = messageDigest;
+        this.metadataMapping = metadataMapping;
     }
 
     @Override
@@ -56,7 +59,8 @@ public class TikaProcessor implements Processor {
                     ctx.getFullFilename(),
                     ctx.getDoc(),
                     messageDigest,
-                    ctx.getFile().getSize());
+                    ctx.getFile().getSize(),
+                    metadataMapping);
             logger.debug("Parsing document {} with Tika in {}ms", ctx.getFile().getName(),
                     System.currentTimeMillis() - startTime);
             logger.trace("Parsed doc={}", DocParser.toJson(ctx.getDoc()));
