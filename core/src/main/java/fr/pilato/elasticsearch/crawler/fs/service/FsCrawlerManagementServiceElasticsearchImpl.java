@@ -58,7 +58,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     @Override
     public void start() throws IOException {
         client.start();
-        logger.debug("Management Service started");
+        logger.debug("Elasticsearch Management Service started");
     }
 
     @Override
@@ -69,7 +69,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     @Override
     public void close() throws IOException {
         client.close();
-        logger.debug("Management Service stopped");
+        logger.debug("Elasticsearch Management Service stopped");
     }
 
     @Override

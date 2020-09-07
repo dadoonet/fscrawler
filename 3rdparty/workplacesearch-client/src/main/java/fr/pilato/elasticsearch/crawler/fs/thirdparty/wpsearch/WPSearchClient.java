@@ -35,6 +35,7 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -205,6 +206,13 @@ public class WPSearchClient implements Closeable {
     @Override
     public void close() {
         logger.debug("Closing the WPSearchClient");
+        if (bulkProcessor != null) {
+            try {
+                bulkProcessor.close();
+            } catch (IOException e) {
+                logger.warn("Error caught while trying to close the Bulk Processor for Workplace Search", e);
+            }
+        }
         if (client != null) {
             client.close();
         }

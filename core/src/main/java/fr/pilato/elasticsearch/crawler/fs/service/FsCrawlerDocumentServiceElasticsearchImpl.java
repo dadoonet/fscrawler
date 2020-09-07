@@ -54,7 +54,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     @Override
     public void close() throws IOException {
         client.close();
-        logger.debug("Elasticsearch Service stopped");
+        logger.debug("Elasticsearch Document Service stopped");
     }
 
     @Override
