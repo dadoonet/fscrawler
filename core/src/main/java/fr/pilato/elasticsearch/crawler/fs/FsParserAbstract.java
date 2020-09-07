@@ -104,14 +104,14 @@ public abstract class FsParserAbstract extends FsParser {
             messageDigest = null;
         }
 
+        // Look for a custom processing pipeline
         try {
             Class<?> clazz = FsParserAbstract.class.getClassLoader().loadClass(fsSettings.getFs().getPipeline().getClassName());
             pipeline = (ProcessingPipeline) clazz.getDeclaredConstructor().newInstance();
             pipeline.init(new ProcessingPipeline.Config(fsSettings, esClient, messageDigest, Collections.emptyMap()));
             logger.info("Created processing pipeline {}", this.pipeline.getClass().getName());
         } catch (Exception e) {
-            logger.error("Could not create processing pipeline");
-            e.printStackTrace();
+            throw new RuntimeException("Could not create processing pipeline " + fsSettings.getFs().getPipeline().getClassName() + ". giving up");
         }
 
         // On Windows, when using SSH server, we need to force the "Linux" separator
