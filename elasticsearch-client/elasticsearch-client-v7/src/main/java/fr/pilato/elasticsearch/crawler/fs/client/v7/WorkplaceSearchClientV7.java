@@ -27,6 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.apache.logging.log4j.LogManager;
@@ -150,7 +151,8 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
         document.put("body", doc.getContent());
 
         // Index main metadata
-        document.put("title", doc.getMeta().getTitle());
+        // We use the name of the file if no title has been found in the document metadata
+        document.put("title", FsCrawlerUtil.isNullOrEmpty(doc.getMeta().getTitle()) ? doc.getFile().getFilename() : doc.getMeta().getTitle());
         document.put("author", doc.getMeta().getAuthor());
         document.put("keywords", doc.getMeta().getKeywords());
         document.put("language", doc.getMeta().getLanguage());
