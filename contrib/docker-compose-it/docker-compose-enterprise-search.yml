@@ -1,0 +1,22 @@
+---
+version: '3'
+services:
+
+  enterprisesearch:
+    image: $IMG_ENTERPRISE_SEARCH:$ELASTIC_VERSION
+    environment:
+      - "ent_search.auth.source=standard"
+      - "elasticsearch.username=elastic"
+      - "elasticsearch.password=$ELASTIC_PASSWORD"
+      - "elasticsearch.host=http://elasticsearch:9200"
+      - "allow_es_settings_modification=true"
+      - "secret_management.encryption_keys=[XYZ]"
+      - "ENT_SEARCH_DEFAULT_PASSWORD=$ELASTIC_PASSWORD"
+    ports: ["$ENTERPRISE_SEARCH_PORT:$ENTERPRISE_SEARCH_PORT"]
+    networks: ['fscrawler_it']
+    links: ['elasticsearch']
+    depends_on: ['elasticsearch']
+    restart: always
+
+networks:
+  fscrawler_it: {}

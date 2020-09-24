@@ -72,7 +72,7 @@ To run the test suite against an elasticsearch instance running locally, just ru
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
-            -Dtests.cluster.url=https://127.0.0.1:9200 \
+            -Dtests.cluster.url=http://127.0.0.1:9200 \
 
 .. hint::
 
@@ -95,19 +95,14 @@ To run the test suite against an elasticsearch instance running locally, just ru
 Using security feature
 """"""""""""""""""""""
 
-Integration tests are run by default against a standard Elasticsearch cluster, which means
-with no security feature activated.
+Integration tests are run by default against a secured Elasticsearch cluster.
 
 .. versionadded:: 2.7
 
-You can run all the integration tests against a secured cluster by using the ``security`` profile::
-
-    mvn verify -Psecurity
-
-Note that secured tests are using by default ``changeme`` as the password.
+Secured tests are using by default ``changeme`` as the password.
 You can change this by using ``tests.cluster.pass`` option::
 
-    mvn verify -Psecurity -Dtests.cluster.pass=mystrongpassword
+    mvn verify -Dtests.cluster.pass=mystrongpassword
 
 
 Testing Workplace Search connector
@@ -124,10 +119,9 @@ Enterprise Search and create manually the custom source as there is no API yet t
 
 * Run the following steps::
 
-    cd contrib/docker-compose-workplacesearch
-    docker-compose up
+    mvn docker-compose:up waitfor:waitfor -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7
 
-* Wait for it to start and open http://localhost:3002/ws.
+* Wait for it to end and open http://localhost:3002/ws.
 * Enter ``enterprise_search`` as the login and ``changeme`` as the password.
 * Click on "Add sources" button and choose `Custom API <http://localhost:3002/ws/org/sources#/add/custom>`_.
 * Name it ``fscrawler`` and click on "Create Custom API Source" button.
@@ -139,10 +133,15 @@ Enterprise Search and create manually the custom source as there is no API yet t
 * You can now run in another terminal::
 
     mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
+        -Dtests.cluster.url=http://127.0.0.1:9200 \
         -Dtests.workplace.access_token=ACCESS_TOKEN \
         -Dtests.workplace.key=KEY
 
 * Then you should be able to see the documents in http://localhost:3002/ws/search
+
+* Once you're done and want to switch off the stack, run::
+
+    mvn docker-compose:down -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7
 
 .. hint::
 

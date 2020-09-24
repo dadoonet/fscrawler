@@ -2,12 +2,25 @@
 
 This documentation shows how to manually test the Workplace Search integration until we can make all that automatic.
 
-## Launch Workplace Search
+## Launch Elastic Stack
 
-Go to the `contrib/docker-compose-workplacesearch` dir and type:
+Go to the `contrib/docker-compose-it` dir and type:
 
 ```sh
-docker-compose up
+docker-compose \
+    -f docker-compose-elasticsearch.yml \
+    -f docker-compose-enterprise-search.yml \
+    up
+```
+
+If you want to also start the stack with Kibana, run instead:
+
+```sh
+docker-compose \
+    -f docker-compose-elasticsearch.yml \
+    -f docker-compose-kibana.yml \
+    -f docker-compose-enterprise-search.yml \
+    up
 ```
 
 Wait for everything to start. It could take several minutes:

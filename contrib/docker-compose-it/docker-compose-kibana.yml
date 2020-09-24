@@ -1,0 +1,18 @@
+---
+version: '3'
+services:
+
+  kibana:
+    image: $IMG_KIBANA:$ELASTIC_VERSION
+    environment:
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=$ELASTIC_PASSWORD
+      - ENTERPRISESEARCH_HOST=http://enterprisesearch:3002
+    ports: ['5601:5601']
+    networks: ['fscrawler_it']
+    links: ['elasticsearch', 'enterprisesearch']
+    restart: always
+    depends_on: ['elasticsearch']
+
+networks:
+  fscrawler_it: {}

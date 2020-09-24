@@ -37,7 +37,7 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch7.version>7.9.0</elasticsearch7.version>
+        <elasticsearch7.version>7.9.1</elasticsearch7.version>
         <elasticsearch6.version>6.8.12</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
@@ -67,7 +67,8 @@
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegTests>${skipTests}</skipIntegTests>
 
-        <!-- For integration tests using Docker or external cluster -->
+        <!-- For integration tests using Docker Compose or external cluster -->
+        <contrib.dir>${project.basedir}/contrib</contrib.dir>
         <integ.elasticsearch.image>docker.elastic.co/elasticsearch/elasticsearch</integ.elasticsearch.image>
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.elasticsearch.port>9200</integ.elasticsearch.port>
@@ -75,6 +76,8 @@
         <tests.cluster.cloud_id></tests.cluster.cloud_id>
         <tests.cluster.user>elastic</tests.cluster.user>
         <tests.cluster.pass>changeme</tests.cluster.pass>
+        <integ.workplace.image>docker.elastic.co/enterprise-search/enterprise-search</integ.workplace.image>
+        <integ.workplace.port>3002</integ.workplace.port>
         <tests.workplace.url>http://127.0.0.1:3002</tests.workplace.url>
         <tests.workplace.access_token></tests.workplace.access_token>
         <tests.workplace.key></tests.workplace.key>
@@ -261,52 +264,84 @@
                     </executions>
                 </plugin>
 
-                <!-- For IT using Docker -->
+                <!-- For IT using Docker Compose -->
                 <plugin>
-                    <groupId>io.fabric8</groupId>
-                    <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.34.0</version>
+                    <groupId>com.dkanejs.maven.plugins</groupId>
+                    <artifactId>docker-compose-maven-plugin</artifactId>
+                    <version>4.0.0</version>
                     <configuration>
-                        <images>
-                            <image>
-                                <alias>fscrawler</alias>
-                                <name>dadoonet/fscrawler:${project.version}</name>
-                                <build>
-                                    <from>${integ.elasticsearch.image}:${integ.elasticsearch.version}</from>
-                                    <env>
-                                        <discovery.type>single-node</discovery.type>
-                                    </env>
-                                </build>
-                                <run>
-                                    <ports>
-                                        <port>integ.elasticsearch.port:9200</port>
-                                    </ports>
-                                    <wait>
-                                        <http>
-                                            <url>http://localhost:${integ.elasticsearch.port}/</url>
-                                            <status>200..499</status>
-                                        </http>
-                                        <time>60000</time>
-                                    </wait>
-                                </run>
-                            </image>
-                        </images>
+                        <envFile>${contrib.dir}/docker-compose-it/.env</envFile>
+                        <envVars>
+                            <ELASTIC_VERSION>${integ.elasticsearch.version}</ELASTIC_VERSION>
+                            <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
+                            <IMG_ELASTICSEARCH>${integ.elasticsearch.image}</IMG_ELASTICSEARCH>
+                            <ELASTICSEARCH_PORT>${integ.elasticsearch.port}</ELASTICSEARCH_PORT>
+                            <IMG_ENTERPRISE_SEARCH>${integ.workplace.image}</IMG_ENTERPRISE_SEARCH>
+                            <ENTERPRISE_SEARCH_PORT>${integ.workplace.port}</ENTERPRISE_SEARCH_PORT>
+                        </envVars>
+                        <composeFiles>
+                            <composeFile>${contrib.dir}/docker-compose-it/docker-compose-elasticsearch.yml</composeFile>
+                            <composeFile>${contrib.dir}/docker-compose-it/docker-compose-enterprise-search.yml</composeFile>
+                        </composeFiles>
+                        <services>
+                            <service>elasticsearch</service>
+                            <service>enterprisesearch</service>
+                        </services>
+                        <ignorePullFailures>true</ignorePullFailures>
+                        <removeOrphans>true</removeOrphans>
+                        <removeVolumes>true</removeVolumes>
+<!--                        <awaitCmd>foo.sh</awaitCmd>-->
+<!--                        <awaitCmdArgs>foo,bar</awaitCmdArgs>-->
+<!--                        <awaitTimeout>60</awaitTimeout>-->
+                        <detachedMode>true</detachedMode>
                     </configuration>
                     <executions>
                         <execution>
-                            <id>start-elasticsearch</id>
+                            <id>up</id>
                             <phase>pre-integration-test</phase>
                             <goals>
-                                <goal>build</goal>
-                                <goal>stop</goal>
-                                <goal>start</goal>
+                                <goal>down</goal>
+                                <goal>up</goal>
                             </goals>
                         </execution>
                         <execution>
-                            <id>stop-elasticsearch</id>
+                            <id>down</id>
                             <phase>post-integration-test</phase>
                             <goals>
-                                <goal>stop</goal>
+                                <goal>down</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>com.simplaex</groupId>
+                    <artifactId>waitfor-maven-plugin</artifactId>
+                    <version>1.2</version>
+                    <configuration>
+                        <quiet>true</quiet>
+                        <chatty>false</chatty>
+                        <timeoutSeconds>120</timeoutSeconds>
+                        <checkEveryMillis>1000</checkEveryMillis>
+                        <!-- Each module should use its own checks like below -->
+                        <!--
+                        <checks>
+                            <check>
+                                <url>http://localhost:9200/</url>
+                                <statusCode>401</statusCode>
+                            </check>
+                            <check>
+                                <url>http://localhost:3002/</url>
+                                <statusCode>200</statusCode>
+                            </check>
+                        </checks>
+                        -->
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>wait-for-environment-to-be-up</id>
+                            <phase>pre-integration-test</phase>
+                            <goals>
+                                <goal>waitfor</goal>
                             </goals>
                         </execution>
                     </executions>
@@ -936,7 +971,7 @@
 
     <profiles>
         <profile>
-            <id>skip-fabric8</id>
+            <id>skip-docker-compose</id>
             <activation>
                 <property>
                     <name>tests.cluster.url</name>
@@ -944,7 +979,7 @@
             </activation>
         </profile>
         <profile>
-            <id>run-fabric8</id>
+            <id>run-docker-compose</id>
             <activation>
                 <property>
                     <name>!tests.cluster.url</name>
