@@ -116,7 +116,7 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>com.simplaex</groupId>
+                <groupId>de.scravy</groupId>
                 <artifactId>waitfor-maven-plugin</artifactId>
                 <configuration>
                     <checks>
@@ -164,7 +164,7 @@
                         </configuration>
                     </plugin>
                     <plugin>
-                        <groupId>com.simplaex</groupId>
+                        <groupId>de.scravy</groupId>
                         <artifactId>waitfor-maven-plugin</artifactId>
                         <configuration>
                             <skip>true</skip>
@@ -190,7 +190,7 @@
                         </configuration>
                     </plugin>
                     <plugin>
-                        <groupId>com.simplaex</groupId>
+                        <groupId>de.scravy</groupId>
                         <artifactId>waitfor-maven-plugin</artifactId>
                         <configuration>
                             <skip>${skipIntegTests}</skip>
