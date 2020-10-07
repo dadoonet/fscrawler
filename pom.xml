@@ -42,10 +42,10 @@
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
         <tika.version>1.24.1</tika.version>
-        <jackson.version>2.11.2</jackson.version>
+        <jackson.version>2.11.3</jackson.version>
         <log4j.version>2.13.3</log4j.version>
         <jansi.version>1.18</jansi.version>
-        <jersey.version>2.31</jersey.version>
+        <jersey.version>2.32</jersey.version>
 
         <!--
             Because elasticsearch is not using transitive dependencies, we need to be explicit here
@@ -53,7 +53,7 @@
         <commons-logging.version>1.2</commons-logging.version>
         <commons-codec.version>1.15</commons-codec.version>
         <snakeyaml.version>1.27</snakeyaml.version>
-        <httpclient.version>4.5.12</httpclient.version>
+        <httpclient.version>4.5.13</httpclient.version>
         <httpasyncclient.version>4.1.4</httpasyncclient.version>
         <httpcore.version>4.4.13</httpcore.version>
 
