@@ -34,7 +34,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
-import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.tika.parser.external.ExternalParser;
 import org.junit.AfterClass;
 import org.junit.Assume;
@@ -56,15 +55,13 @@ import static org.junit.Assume.assumeTrue;
 /**
  * Test all type of documents we have with workplace search
  */
-public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractFsCrawlerITCase {
+public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
 
     private static FsCrawlerImpl crawler = null;
     private static FsCrawlerDocumentService oldDocumentService;
 
     @BeforeClass
     public static void startCrawling() throws Exception {
-        checkWorkplaceSettings();
-
         Path testResourceTarget = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(testResourceTarget)) {
             copyResourcesToTestDir();

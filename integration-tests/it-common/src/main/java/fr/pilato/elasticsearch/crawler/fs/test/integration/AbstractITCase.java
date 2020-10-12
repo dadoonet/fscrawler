@@ -96,7 +96,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
     private final static String DEFAULT_TEST_CLUSTER_URL = "http://127.0.0.1:9200";
-    private final static String DEFAULT_TEST_WPSEARCH_URL = "http://127.0.0.1:3002";
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
@@ -105,10 +104,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
     protected final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     protected final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
-
-    protected final static String testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token");
-    protected final static String testWorkplaceKey = System.getProperty("tests.workplace.key");
-    protected final static String testWorkplaceUrl = System.getProperty("tests.workplace.url", DEFAULT_TEST_WPSEARCH_URL);
 
     protected static Elasticsearch elasticsearchWithSecurity;
     protected static FsCrawlerManagementService managementService;
@@ -449,13 +444,4 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         });
     }
 
-    /**
-     * This method will ignore tests if Workplace Settings are not set.
-     */
-    protected static void checkWorkplaceSettings() {
-        boolean isWorkplaceAccessTokenSet = testWorkplaceAccessToken != null && !testWorkplaceAccessToken.isEmpty();
-        boolean isWorkplaceKeySet = testWorkplaceKey != null && !testWorkplaceKey.isEmpty();
-        assumeTrue("Workplace Search credentials not defined. Launch with -Dtests.workplace.access_token=XYZ -Dtests.workplace.key=XYZ",
-                isWorkplaceAccessTokenSet && isWorkplaceKeySet);
-    }
 }

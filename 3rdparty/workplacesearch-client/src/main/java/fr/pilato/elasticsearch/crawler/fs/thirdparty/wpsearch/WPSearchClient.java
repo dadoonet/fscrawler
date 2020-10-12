@@ -53,7 +53,7 @@ public class WPSearchClient implements Closeable {
     private final static String CLIENT_NAME = "elastic-workplace-search-java";
     private final static String CLIENT_VERSION = "7.9.1";
     private final static String DEFAULT_ENDPOINT = "/api/ws/v1/";
-    private final static String DEFAULT_HOST = "http://127.0.0.1:3002";
+    public final static String DEFAULT_HOST = "http://127.0.0.1:3002";
 
     private Client client;
     private String userAgent;

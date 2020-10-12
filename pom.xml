@@ -320,7 +320,7 @@
                     <configuration>
                         <quiet>true</quiet>
                         <chatty>false</chatty>
-                        <timeoutSeconds>120</timeoutSeconds>
+                        <timeoutSeconds>600</timeoutSeconds>
                         <checkEveryMillis>1000</checkEveryMillis>
                         <!-- Each module should use its own checks like below -->
                         <!--

@@ -30,7 +30,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
-import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -39,22 +38,19 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Map;
 
-import static fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch.NODE_DEFAULT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 /**
  * Test workplace search
  */
-public class FsCrawlerTestWorkplaceSearchIT extends AbstractFsCrawlerITCase {
+public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCase {
 
     private FsCrawlerDocumentService oldDocumentService;
     private FsSettings fsSettings;
 
     @Before
     public void overrideDocumentService() throws IOException {
-        checkWorkplaceSettings();
-
         oldDocumentService = documentService;
         Fs fs = startCrawlerDefinition().build();
         fsSettings = FsSettings.builder(getCrawlerName())

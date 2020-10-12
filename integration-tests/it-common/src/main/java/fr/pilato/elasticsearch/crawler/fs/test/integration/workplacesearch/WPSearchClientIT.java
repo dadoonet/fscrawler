@@ -21,11 +21,9 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -35,22 +33,20 @@ import java.util.Map;
 /**
  * Test Workplace Search HTTP client
  */
-public class WPSearchClientIT extends AbstractFsCrawlerITCase {
+public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
 
-    private static WPSearchClient client;
+    private WPSearchClient client;
 
-    @BeforeClass
-    public static void startClient() {
-        checkWorkplaceSettings();
-
+    @Before
+    public void startClient() {
         client = new WPSearchClient(testWorkplaceAccessToken, testWorkplaceKey)
                 .withHost(testWorkplaceUrl)
                 .withBulkSize(1);
         client.start();
     }
 
-    @AfterClass
-    public static void stopClient() {
+    @After
+    public void stopClient() {
         if (client != null) {
             client.close();
         }
