@@ -33,6 +33,8 @@ The job file must comply to the following ``yaml`` specifications:
        language: "eng"
        path: "/path/to/tesseract/if/not/available/in/PATH"
        data_path: "/path/to/tesseract/tessdata/if/needed"
+     pipeline:
+       class_name: "com.example.MyCustomProcessingPipeline"
    server:
      hostname: "localhost"
      port: 22

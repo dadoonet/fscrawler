@@ -58,6 +58,7 @@ public class Fs {
     private Ocr ocr = new Ocr();
     private ByteSizeValue ignoreAbove = null;
     private boolean followSymlinks = false;
+    private Pipeline pipeline = Pipeline.DEFAULT;
 
     public static Builder builder() {
         return new Builder();
@@ -91,6 +92,7 @@ public class Fs {
         private Ocr ocr = new Ocr();
         private ByteSizeValue ignoreAbove = null;
         private boolean followSymlinks = false;
+        private Pipeline pipeline;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -246,10 +248,15 @@ public class Fs {
             return this;
         }
 
+        public Builder setPipeline(Pipeline pipeline) {
+            this.pipeline = pipeline;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks, pipeline);
         }
     }
 
@@ -260,7 +267,8 @@ public class Fs {
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, List<String> filters, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove, boolean followSymlinks) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove, boolean followSymlinks,
+               Pipeline pipeline) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -284,6 +292,7 @@ public class Fs {
         this.ocr = ocr;
         this.ignoreAbove = ignoreAbove;
         this.followSymlinks = followSymlinks;
+        this.pipeline = pipeline;
     }
 
     public String getUrl() {
@@ -445,6 +454,15 @@ public class Fs {
     public void setContinueOnError(boolean continueOnError) {
         this.continueOnError = continueOnError;
     }
+
+    public Pipeline getPipeline() {
+        return pipeline;
+    }
+
+    public void setPipeline(Pipeline pipeline) {
+        this.pipeline = pipeline;
+    }
+
 
     @Deprecated
     public void setPdfOcr(boolean pdfOcr) {

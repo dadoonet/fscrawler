@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.commons.io.input.TeeInputStream;
@@ -38,6 +39,10 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -54,6 +59,23 @@ public class TikaDocParser {
 
     public static void generate(FsSettings fsSettings, InputStream inputStream, String filename, String fullFilename, Doc doc,
                                 MessageDigest messageDigest, long filesize) throws IOException {
+        generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize, Collections.emptyMap());
+    }
+
+    /**
+     * Generate the document with metadata based on input stream
+     * @param fsSettings config
+     * @param inputStream stream of the file
+     * @param filename simple file name
+     * @param fullFilename full file name with path
+     * @param doc {@link Doc} which will end up as Elastic doc
+     * @param messageDigest digest to use for hash generation
+     * @param filesize size of the file
+     * @param metadataMappings mapping of TikaKey->ElasticField for what additional / custom metadata to extract
+     * @throws IOException
+     */
+    public static void generate(FsSettings fsSettings, InputStream inputStream, String filename, String fullFilename, Doc doc,
+                                MessageDigest messageDigest, long filesize, Map<String,String> metadataMappings) throws IOException {
         logger.trace("Generating document [{}]", fullFilename);
         // Extracting content with Tika
         // See #38: https://github.com/dadoonet/fscrawler/issues/38
@@ -133,6 +155,7 @@ public class TikaDocParser {
             }
             // File
 
+            Arrays.stream(metadata.names()).forEach(n -> logger.trace("Meta: {}={}", n, metadata.get(n)));
             // Standard Meta
             setMeta(fullFilename, metadata, TikaCoreProperties.CREATOR, doc.getMeta()::setAuthor, Function.identity());
             setMeta(fullFilename, metadata, TikaCoreProperties.TITLE, doc.getMeta()::setTitle, Function.identity());
@@ -172,6 +195,16 @@ public class TikaDocParser {
             setMeta(fullFilename, metadata, TikaCoreProperties.ALTITUDE, doc.getMeta()::setAltitude, Function.identity());
             setMeta(fullFilename, metadata, TikaCoreProperties.RATING, doc.getMeta()::setRating, (value) -> value == null ? null : Integer.parseInt(value));
             setMeta(fullFilename, metadata, TikaCoreProperties.COMMENTS, doc.getMeta()::setComments, Function.identity());
+
+            // Additional metadata is mapped into an ES field inside 'meta'
+            if (!metadataMappings.isEmpty()) {
+                Meta meta = doc.getMeta();
+                metadataMappings.entrySet().forEach(m -> {
+                    String metaValue = metadata.get(m.getKey());
+                    meta.addRaw(m.getValue(), metaValue);
+                    logger.debug("Mapped custom metadata {}={} from {}", m.getValue(), metaValue, m.getKey());
+                });
+            }
 
             // Add support for more OOTB standard metadata
 
