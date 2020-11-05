@@ -1,14 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="fatal">
+<Configuration status="fatal" monitorInterval="30">
+   <Properties>
+      <Property name="LOG_PATTERN">%d{ABSOLUTE} %highlight{%-5p} [%c{1.}] %m%n</Property>
+      <Property name="DOCS_PATTERN">%d [%highlight{%-5p}] %m%n</Property>
+      <Property name="LOG_DIR">logs</Property>
+   </Properties>
+
    <Appenders>
-      <Console name="CONSOLE" target="SYSTEM_OUT">
-         <PatternLayout pattern="%d{ABSOLUTE} %highlight{%-5p} [%c{1.}] %m%n"/>
+      <Console name="CONSOLE" target="SYSTEM_OUT" follow="true">
+         <PatternLayout pattern="${LOG_PATTERN}"/>
       </Console>
+
+      <RollingFile name="RollingFile" fileName="${sys:LOG_DIR}/fscrawler.log"
+                   filePattern="${sys:LOG_DIR}/fscrawler-%d{yyyy-MM-dd}-%i.log.gz">
+         <PatternLayout pattern="${LOG_PATTERN}"/>
+         <Policies>
+            <OnStartupTriggeringPolicy />
+            <SizeBasedTriggeringPolicy size="20 MB" />
+            <TimeBasedTriggeringPolicy />
+         </Policies>
+         <DefaultRolloverStrategy max="7"/>
+      </RollingFile>
+
+      <RollingFile name="Documents" fileName="${sys:LOG_DIR}/documents.log"
+                   filePattern="${sys:LOG_DIR}/documents-%d{yyyy-MM-dd}.log.gz">
+         <PatternLayout pattern="${DOCS_PATTERN}"/>
+         <Policies>
+            <TimeBasedTriggeringPolicy />
+         </Policies>
+         <DefaultRolloverStrategy max="7"/>
+      </RollingFile>
    </Appenders>
    <Loggers>
+      <!-- This logger is used to trace all information about documents -->
+      <Logger name="fscrawler.document" level="debug" additivity="false">
+         <AppenderRef ref="Documents" />
+      </Logger>
+
+      <!-- This logger is used to log FSCrawler code execution -->
       <Logger name="fr.pilato.elasticsearch.crawler.fs" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
+         <AppenderRef ref="RollingFile" />
       </Logger>
+
+      <!-- This logger is used to log 3rd party libs execution -->
       <Logger name="org.elasticsearch" level="warn" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
@@ -18,8 +53,9 @@
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
+
       <Root level="info">
-         <AppenderRef ref="CONSOLE"/>
+         <AppenderRef ref="RollingFile" />
       </Root>
    </Loggers>
 </Configuration>

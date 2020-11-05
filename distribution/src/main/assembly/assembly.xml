@@ -29,5 +29,12 @@
                 <include>README.md</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.parent.basedir}/../cli/src/main/resources</directory>
+            <outputDirectory>config</outputDirectory>
+            <includes>
+                <include>log4j2.xml</include>
+            </includes>
+        </fileSet>
     </fileSets>
 </assembly>

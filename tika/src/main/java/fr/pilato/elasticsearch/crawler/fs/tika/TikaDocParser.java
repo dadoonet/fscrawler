@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.commons.io.input.TeeInputStream;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.StreamsUtil.copy;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.extractText;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
@@ -97,12 +99,15 @@ public class TikaDocParser {
                 Throwable current = e;
                 StringBuilder sb = new StringBuilder();
                 while (current != null) {
-                    sb.append(" -> ");
                     sb.append(current.getMessage());
                     current = current.getCause();
+                    if (current != null) {
+                        sb.append(" -> ");
+                    }
                 }
 
-                logger.warn("Failed to extract [{}] characters of text for [{}] {}", indexedChars, fullFilename, sb.toString());
+                FSCrawlerLogger.documentError(computeVirtualPathName(fsSettings.getFs().getUrl(), fullFilename), sb.toString());
+                logger.warn("Failed to extract [{}] characters of text for [{}]: {}", indexedChars, fullFilename, sb.toString());
                 logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + fullFilename + "]", e);
             }
 
