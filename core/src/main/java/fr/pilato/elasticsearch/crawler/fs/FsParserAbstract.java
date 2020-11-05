@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -169,7 +170,7 @@ public abstract class FsParserAbstract extends FsParser {
                     try {
                         path.close();
                     } catch (Exception e) {
-                        logger.warn("Error while closing the connection: {}", e, e.getMessage());
+                        logger.warn("Error while closing the connection", e);
                     }
                 }
             }
@@ -486,6 +487,7 @@ public abstract class FsParserAbstract extends FsParser {
 
                 // We index the data structure
                 if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
+                    FSCrawlerLogger.documentDebug(computeVirtualPathName(stats.getRootPath(), fullFilename), "Indexing content");
                     esIndex(fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
                             DocParser.toJson(doc),

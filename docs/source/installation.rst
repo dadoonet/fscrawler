@@ -54,6 +54,8 @@ The distribution contains:
    ├── bin
    │   ├── fscrawler
    │   └── fscrawler.bat
+   ├── config
+   │   └── log4j2.xml
    └── lib
        ├── ... All needed jars
 
