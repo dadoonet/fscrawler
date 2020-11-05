@@ -831,6 +831,14 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("Message-From", "鲨掉 <2428617664@qq.com>"));
     }
 
+    @Test
+    public void testDocxWithEmbeddedBadPDF() throws IOException {
+        Doc doc = extractFromFile("issue-stackoverflow.docx");
+        // When we will update to the next Tika version, we will need to replace this line with:
+        // assertThat(doc.getContent(), not(isEmptyOrNullString()));
+        assertThat(doc.getContent(), isEmptyOrNullString());
+    }
+
     private Doc extractFromFileExtension(String extension) throws IOException {
         FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
                 .setFs(Fs.builder().setRawMetadata(true).build())
