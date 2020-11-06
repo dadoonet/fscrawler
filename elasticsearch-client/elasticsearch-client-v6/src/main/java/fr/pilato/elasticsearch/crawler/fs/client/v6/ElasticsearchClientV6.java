@@ -33,6 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -208,6 +209,10 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
                 response.iterator().forEachRemaining(bir -> {
                     if (bir.isFailed()) {
                         failures[0]++;
+                        FSCrawlerLogger.documentError(
+                                bir.getId(),
+                                null,
+                                bir.getFailureMessage());
                         logger.debug("Error caught for [{}]/[{}]/[{}]: {}", bir.getIndex(),
                                 bir.getType(), bir.getId(), bir.getFailureMessage());
                     }

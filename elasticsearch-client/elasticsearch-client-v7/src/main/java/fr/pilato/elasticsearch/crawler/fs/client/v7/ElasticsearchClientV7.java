@@ -33,7 +33,9 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.http.HttpHost;
@@ -93,11 +95,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static org.elasticsearch.action.support.IndicesOptions.LENIENT_EXPAND_OPEN;
 
 /**
@@ -188,6 +186,10 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
                 response.iterator().forEachRemaining(bir -> {
                     if (bir.isFailed()) {
                         failures[0]++;
+                        FSCrawlerLogger.documentError(
+                                bir.getId(),
+                                null,
+                                bir.getFailureMessage());
                         logger.debug("Error caught for [{}]/[{}]/[{}]: {}", bir.getIndex(),
                                 bir.getType(), bir.getId(), bir.getFailureMessage());
                     }

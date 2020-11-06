@@ -33,7 +33,7 @@
    </Appenders>
    <Loggers>
       <!-- This logger is used to trace all information about documents -->
-      <Logger name="fscrawler.document" level="debug" additivity="false">
+      <Logger name="fscrawler.document" level="info" additivity="false">
          <AppenderRef ref="Documents" />
       </Logger>
 
