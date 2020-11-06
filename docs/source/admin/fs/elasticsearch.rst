@@ -28,6 +28,8 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.password``       | ``null``                  | :ref:`credentials`              |
 +----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.ssl_verification``| ``true``                 | :ref:`credentials`              |
++----------------------------------+---------------------------+---------------------------------+
 
 Index settings
 ^^^^^^^^^^^^^^
@@ -575,7 +577,7 @@ steps:
 .. important::
 
     Prerequisite: you need to have root CA chain certificate or Elasticsearch server certificate
-    in DER format. DER format files have a ``.cer`` extension.
+    in DER format. DER format files have a ``.cer`` extension. Certificate verification can be disabled by option ``ssl_verification = false``
 
 1. Logon to server (or client machine) where FSCrawler is running
 2. Run:
