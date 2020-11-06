@@ -431,12 +431,12 @@ public abstract class FsParserAbstract extends FsParser {
         final long size = fileAbstractModel.getSize();
 
         logger.debug("fetching content from [{}],[{}]", dirname, filename);
+        String fullFilename = new File(dirname, filename).toString();
 
         try {
             // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't index json or xml)
             if (fsSettings.getFs().isAddAsInnerObject() || (!fsSettings.getFs().isJsonSupport() && !fsSettings.getFs().isXmlSupport())) {
 
-                String fullFilename = new File(dirname, filename).toString();
 
                 Doc doc = new Doc();
 
@@ -487,7 +487,9 @@ public abstract class FsParserAbstract extends FsParser {
 
                 // We index the data structure
                 if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
-                    FSCrawlerLogger.documentDebug(computeVirtualPathName(stats.getRootPath(), fullFilename), "Indexing content");
+                    FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
+                            computeVirtualPathName(stats.getRootPath(), fullFilename),
+                            "Indexing content");
                     esIndex(fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
                             DocParser.toJson(doc),
@@ -498,12 +500,18 @@ public abstract class FsParserAbstract extends FsParser {
                 }
             } else {
                 if (fsSettings.getFs().isJsonSupport()) {
+                    FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
+                            computeVirtualPathName(stats.getRootPath(), fullFilename),
+                            "Indexing json content");
                     // We index the json content directly
                     esIndex(fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),
                             read(inputStream),
                             fsSettings.getElasticsearch().getPipeline());
                 } else if (fsSettings.getFs().isXmlSupport()) {
+                    FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
+                            computeVirtualPathName(stats.getRootPath(), fullFilename),
+                            "Indexing xml content");
                     // We index the xml content directly
                     esIndex(fsSettings.getElasticsearch().getIndex(),
                             generateIdFromFilename(filename, dirname),

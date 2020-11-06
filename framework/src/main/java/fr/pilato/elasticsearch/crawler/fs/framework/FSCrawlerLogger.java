@@ -29,11 +29,11 @@ public class FSCrawlerLogger {
      */
     private final static Logger documentLogger = LogManager.getLogger("fscrawler.document");
 
-    public static void documentDebug(String path, String message) {
-        documentLogger.debug("[{}] {}", path, message);
+    public static void documentDebug(String id, String path, String message) {
+        documentLogger.debug("[{}][{}] {}", id, path, message);
     }
 
-    public static void documentError(String path, String error) {
-        documentLogger.error("[{}] {}", path, error);
+    public static void documentError(String id, String path, String error) {
+        documentLogger.error("[{}][{}] {}", id, path, error);
     }
 }

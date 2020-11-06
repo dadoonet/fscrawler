@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.tika;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.logging.log4j.LogManager;
@@ -32,10 +33,12 @@ import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -106,7 +109,12 @@ public class TikaDocParser {
                     }
                 }
 
-                FSCrawlerLogger.documentError(computeVirtualPathName(fsSettings.getFs().getUrl(), fullFilename), sb.toString());
+                try {
+                    FSCrawlerLogger.documentError(
+                            fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign(fullFilename),
+                            computeVirtualPathName(fsSettings.getFs().getUrl(), fullFilename),
+                            sb.toString());
+                } catch (NoSuchAlgorithmException ignored) { }
                 logger.warn("Failed to extract [{}] characters of text for [{}]: {}", indexedChars, fullFilename, sb.toString());
                 logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + fullFilename + "]", e);
             }
