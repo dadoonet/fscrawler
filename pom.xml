@@ -570,7 +570,7 @@
             <dependency>
                 <groupId>jakarta.xml.bind</groupId>
                 <artifactId>jakarta.xml.bind-api</artifactId>
-                <version>2.3.3</version>
+                <version>3.0.0</version>
             </dependency>
 
             <!-- We manually update until we have a Tika 1.23 version available -->
