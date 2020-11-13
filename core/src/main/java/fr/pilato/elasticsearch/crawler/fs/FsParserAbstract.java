@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -379,13 +380,13 @@ public abstract class FsParserAbstract extends FsParser {
         final long size = fileAbstractModel.getSize();
 
         logger.debug("fetching content from [{}],[{}]", dirname, filename);
+        String fullFilename = new File(dirname, filename).toString();
 
         try {
             // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't index json or xml)
             String id = generateIdFromFilename(filename, dirname);
             if (fsSettings.getFs().isAddAsInnerObject() || (!fsSettings.getFs().isJsonSupport() && !fsSettings.getFs().isXmlSupport())) {
 
-                String fullFilename = new File(dirname, filename).toString();
 
                 Doc doc = new Doc();
 
@@ -437,6 +438,9 @@ public abstract class FsParserAbstract extends FsParser {
                 // We index the data structure
                 if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
                     if (!closed) {
+                        FSCrawlerLogger.documentDebug(id,
+                                computeVirtualPathName(stats.getRootPath(), fullFilename),
+                                "Indexing content");
                         documentService.index(
                                 fsSettings.getElasticsearch().getIndex(),
                                 id,
@@ -452,6 +456,9 @@ public abstract class FsParserAbstract extends FsParser {
                 }
             } else {
                 if (fsSettings.getFs().isJsonSupport()) {
+                    FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
+                            computeVirtualPathName(stats.getRootPath(), fullFilename),
+                            "Indexing json content");
                     // We index the json content directly
                     if (!closed) {
                         documentService.indexRawJson(
@@ -464,6 +471,9 @@ public abstract class FsParserAbstract extends FsParser {
                                 fsSettings.getElasticsearch().getIndex(), id);
                     }
                 } else if (fsSettings.getFs().isXmlSupport()) {
+                    FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
+                            computeVirtualPathName(stats.getRootPath(), fullFilename),
+                            "Indexing xml content");
                     // We index the xml content directly (after transformation to json)
                     if (!closed) {
                         documentService.indexRawJson(

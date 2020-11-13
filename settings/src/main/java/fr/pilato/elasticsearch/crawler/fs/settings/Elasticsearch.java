@@ -47,6 +47,7 @@ public class Elasticsearch {
     private String password;
     private String pipeline;
     private String pathPrefix;
+    private boolean sslVerification = true;
 
     public Elasticsearch() {
 
@@ -54,7 +55,7 @@ public class Elasticsearch {
 
     private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
                           TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline,
-                          String pathPrefix) {
+                          String pathPrefix, boolean sslVerification) {
         this.nodes = nodes;
         this.index = index;
         this.indexFolder = indexFolder;
@@ -65,6 +66,7 @@ public class Elasticsearch {
         this.password = password;
         this.pipeline = pipeline;
         this.pathPrefix = pathPrefix;
+        this.sslVerification = sslVerification;
     }
 
     public static Builder builder() {
@@ -124,6 +126,10 @@ public class Elasticsearch {
         return password;
     }
 
+    public boolean getSslVerification() {
+        return sslVerification;
+    }
+
     @JsonProperty
     public void setPassword(String password) {
         this.password = password;
@@ -145,6 +151,10 @@ public class Elasticsearch {
         this.pathPrefix = pathPrefix;
     }
 
+    public void setSslVerification(boolean sslVerification) {
+        this.sslVerification = sslVerification;
+    }
+
     public static class Builder {
         private List<ServerUrl> nodes;
         private String index;
@@ -156,6 +166,7 @@ public class Elasticsearch {
         private String password = null;
         private String pipeline = null;
         private String pathPrefix = null;
+        private boolean sslVerification = true;
 
         public Builder setNodes(List<ServerUrl> nodes) {
             this.nodes = nodes;
@@ -215,8 +226,13 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setSslVerification(boolean sslVerification) {
+            this.sslVerification = sslVerification;
+            return this;
+        }
+
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password, pipeline, pathPrefix);
+            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password, pipeline, pathPrefix, sslVerification);
         }
     }
 
@@ -235,6 +251,7 @@ public class Elasticsearch {
         // We can't really test the password as it may be obfuscated
         if (!Objects.equals(pipeline, that.pipeline)) return false;
         if (!Objects.equals(pathPrefix, that.pathPrefix)) return false;
+        if (!Objects.equals(sslVerification, that.sslVerification)) return false;
         return Objects.equals(flushInterval, that.flushInterval);
 
     }
@@ -249,6 +266,7 @@ public class Elasticsearch {
         result = 31 * result + (pathPrefix != null ? pathPrefix.hashCode() : 0);
         result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
+        result = 31 * result + (sslVerification? 1: 0);
         return result;
     }
 
@@ -263,6 +281,7 @@ public class Elasticsearch {
                 ", username='" + username + '\'' +
                 ", pipeline='" + pipeline + '\'' +
                 ", pathPrefix='" + pathPrefix + '\'' +
+                ", sslVerification='" + sslVerification + '\'' +
                 '}';
     }
 }

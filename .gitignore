@@ -5,3 +5,4 @@ target
 .idea
 *.iml
 /.run
+/logs/

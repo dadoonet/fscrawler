@@ -1,7 +1,7 @@
 version: '3'
 services:
   es01:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:$ELASTIC_VERSION
     container_name: es01
     environment:
       - node.name=es01
@@ -23,7 +23,7 @@ services:
       - fscrawler_net
 
   es02:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:$ELASTIC_VERSION
     container_name: es02
     environment:
       - node.name=es02
@@ -45,7 +45,7 @@ services:
       - fscrawler_net
 
   kib01:
-    image: docker.elastic.co/kibana/kibana:7.8.0
+    image: docker.elastic.co/kibana/kibana:$ELASTIC_VERSION
     container_name: kib01
     ports:
       - 5601:5601

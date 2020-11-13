@@ -1,28 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="fatal">
+<Configuration status="fatal" monitorInterval="30">
+   <Properties>
+      <!-- If you want to change the log level for fscrawler.log file -->
+      <Property name="LOG_LEVEL">info</Property>
+      <!-- If you want to change the log level for documents.log file -->
+      <Property name="DOC_LEVEL">info</Property>
+      <!-- If you want to change the output dir for logs -->
+      <Property name="LOG_DIR">logs</Property>
+   </Properties>
+
    <Appenders>
-      <Console name="CONSOLE" target="SYSTEM_OUT">
-         <PatternLayout pattern="%d{ABSOLUTE} %highlight{%-5p} [%c{1.}] %m%n"/>
+      <Console name="Console" target="SYSTEM_OUT" follow="true">
+         <PatternLayout pattern="%m%n"/>
       </Console>
+
+      <RollingFile name="RollingFile" fileName="${sys:LOG_DIR}/fscrawler.log"
+                   filePattern="${sys:LOG_DIR}/fscrawler-%d{yyyy-MM-dd}-%i.log.gz">
+         <PatternLayout pattern="%d{ABSOLUTE} %highlight{%-5p} [%c{1.}] %m%n"/>
+         <Policies>
+            <OnStartupTriggeringPolicy />
+            <SizeBasedTriggeringPolicy size="20 MB" />
+            <TimeBasedTriggeringPolicy />
+         </Policies>
+         <DefaultRolloverStrategy max="7"/>
+      </RollingFile>
+
+      <RollingFile name="Documents" fileName="${sys:LOG_DIR}/documents.log"
+                   filePattern="${sys:LOG_DIR}/documents-%d{yyyy-MM-dd}.log.gz">
+         <PatternLayout pattern="%d [%highlight{%-5p}] %m%n"/>
+         <Policies>
+            <TimeBasedTriggeringPolicy />
+         </Policies>
+         <DefaultRolloverStrategy max="7"/>
+      </RollingFile>
    </Appenders>
    <Loggers>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
+      <!-- This logger is used for the console -->
+      <Logger name="fscrawler.console" level="info" additivity="false">
+         <AppenderRef ref="Console" />
       </Logger>
+
+      <!-- This logger is used to trace all information about documents -->
+      <Logger name="fscrawler.document" level="${sys:DOC_LEVEL}" additivity="false">
+         <AppenderRef ref="Documents" />
+      </Logger>
+
+      <!-- This logger is used to log FSCrawler code execution -->
+      <Logger name="fr.pilato.elasticsearch.crawler.fs" level="${sys:LOG_LEVEL}" additivity="false">
+         <AppenderRef ref="RollingFile" />
+      </Logger>
+
+      <!-- This logger is used to log 3rd party libs execution -->
       <Logger name="org.elasticsearch" level="warn" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
+         <AppenderRef ref="RollingFile" />
       </Logger>
       <Logger name="org.glassfish" level="warn" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
+         <AppenderRef ref="RollingFile" />
       </Logger>
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
+         <AppenderRef ref="RollingFile" />
       </Logger>
       <Logger name="com.gargoylesoftware" level="error" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
+         <AppenderRef ref="RollingFile"/>
       </Logger>
-      <Root level="info">
-         <AppenderRef ref="CONSOLE"/>
+
+      <Root level="warn">
+         <AppenderRef ref="RollingFile" />
       </Root>
    </Loggers>
 </Configuration>
