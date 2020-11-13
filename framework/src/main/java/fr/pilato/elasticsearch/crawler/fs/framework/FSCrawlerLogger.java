@@ -25,14 +25,35 @@ import org.apache.logging.log4j.Logger;
 public class FSCrawlerLogger {
 
     /**
+     * This logger is for the console
+     */
+    private final static Logger consoleLogger = LogManager.getLogger("fscrawler.console");
+
+    /**
      * This logger is used to log information related to documents
      */
     private final static Logger documentLogger = LogManager.getLogger("fscrawler.document");
 
+    public static void console(String message, Object... params) {
+        consoleLogger.info(message, params);
+    }
+
+    /**
+     * Log information in Debug Level about documents
+     * @param id        Document ID
+     * @param path      Virtual path to the document
+     * @param message   Message to display
+     */
     public static void documentDebug(String id, String path, String message) {
         documentLogger.debug("[{}][{}] {}", id, path, message);
     }
 
+    /**
+     * Log information in Error Level about documents
+     * @param id        Document ID
+     * @param path      Virtual path to the document
+     * @param error     Error to display
+     */
     public static void documentError(String id, String path, String error) {
         documentLogger.error("[{}][{}] {}", id, path, error);
     }
