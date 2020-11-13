@@ -939,6 +939,12 @@
                 <artifactId>bcprov-jdk15on</artifactId>
                 <version>1.67</version>
             </dependency>
+            <!-- CVE Temporary Fix -->
+            <dependency>
+                <groupId>org.eclipse.jetty.websocket</groupId>
+                <artifactId>websocket-client</artifactId>
+                <version>9.4.34.v20201102</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
