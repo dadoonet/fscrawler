@@ -35,7 +35,7 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
     public void testSettingsValidation() {
         // Checking default values
         FsSettings settings = buildSettings(Fs.builder().build(), null, null, null);
-        assertThat(settings.getFs().getUrl(), nullValue());
+        assertThat(settings.getFs().getUrl(), is(Fs.DEFAULT_DIR));
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(false));
         assertThat(settings.getFs().getUrl(), is(Fs.DEFAULT_DIR));
         assertThat(settings.getElasticsearch().getNodes(), hasItem(Elasticsearch.NODE_DEFAULT));

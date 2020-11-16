@@ -68,7 +68,7 @@ public class Fs {
     public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).setExcludes(DEFAULT_EXCLUDED).build();
 
     public static class Builder {
-        private String url;
+        private String url = DEFAULT_DIR;
         private TimeValue updateRate = TimeValue.timeValueMinutes(15);
         private List<String> includes = null;
         private List<String> excludes = null;
