@@ -94,7 +94,7 @@
         <sonatype.username>${env.SONATYPE_USER}</sonatype.username>
         <sonatype.password>${env.SONATYPE_PASS}</sonatype.password>
 
-        <java.compiler.version>1.8</java.compiler.version>
+        <java.compiler.version>14</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -128,8 +128,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.8.1</version>
                     <configuration>
-                        <source>${java.compiler.version}</source>
-                        <target>${java.compiler.version}</target>
+                        <release>${java.compiler.version}</release>
                         <encoding>UTF-8</encoding>
                         <optimize>true</optimize>
                         <showDeprecation>true</showDeprecation>
@@ -571,6 +570,11 @@
                 <groupId>jakarta.xml.bind</groupId>
                 <artifactId>jakarta.xml.bind-api</artifactId>
                 <version>3.0.0</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>2.3.1</version>
             </dependency>
 
             <!-- We manually update until we have a Tika 1.23 version available -->
