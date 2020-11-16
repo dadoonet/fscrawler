@@ -46,17 +46,17 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
     private static final Logger logger = LogManager.getLogger();
 
     @Override
-    public void testStarted(Description description) throws Exception {
+    public void testStarted(Description description) {
         logger.trace("Test {} started", description.getDisplayName());
     }
 
     @Override
-    public void testFinished(Description description) throws Exception {
+    public void testFinished(Description description) {
         logger.trace("Test {} finished", description.getDisplayName());
     }
 
     @Override
-    public void testFailure(Failure failure) throws Exception {
+    public void testFailure(Failure failure) {
         // Ignore assumptions.
         if (failure.getException() instanceof AssumptionViolatedException) {
             return;
@@ -99,7 +99,7 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
 
             List<String> properties = new ArrayList<>();
             scanProperties(description.getTestClass(), properties);
-            appendProperties(properties.toArray(new String[properties.size()]));
+            appendProperties(properties.toArray(new String[0]));
             return appendESProperties();
         }
 
@@ -109,7 +109,7 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
          * superclass to subclass.
          */
         private void scanProperties(Class<?> c, List<String> properties) {
-            if (Object.class.equals(c) == false) {
+            if (!Object.class.equals(c)) {
                 scanProperties(c.getSuperclass(), properties);
             }
             Properties extraParameterAnnotation = c.getAnnotation(Properties.class);

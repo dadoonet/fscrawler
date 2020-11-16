@@ -32,7 +32,7 @@ public class FsParserLocal extends FsParserAbstract {
         super(fsSettings, config, esClient, loop);
     }
 
-    protected FileAbstractor buildFileAbstractor() {
+    protected FileAbstractor<?> buildFileAbstractor() {
         return new FileAbstractorFile(fsSettings);
     }
 }

@@ -52,6 +52,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
+@SuppressWarnings("ALL")
 public class FsCrawlerRestIT extends AbstractRestITCase {
 
     private Path currentTestTagDir;
@@ -91,7 +92,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         Files.walk(from)
-                .filter(path -> Files.isRegularFile(path))
+                .filter(Files::isRegularFile)
                 .forEach(path -> {
                     UploadResponse response = uploadFile(target, path);
                     assertThat(response.getFilename(), is(path.getFileName().toString()));
@@ -115,7 +116,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
         String index = "fscrawler_fs_custom";
         Files.walk(from)
-                .filter(path -> Files.isRegularFile(path))
+                .filter(Files::isRegularFile)
                 .forEach(path -> {
                     UploadResponse response = uploadFileOnIndex(target, path, index);
                     assertThat(response.getFilename(), is(path.getFileName().toString()));
@@ -136,7 +137,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         // which can overwrite the data we extracted
         AtomicInteger numFiles = new AtomicInteger();
         Files.walk(currentTestResourceDir)
-                .filter(path -> Files.isRegularFile(path))
+                .filter(Files::isRegularFile)
                 .forEach(path -> {
                     Path tagsFilePath = currentTestTagDir.resolve(path.getFileName().toString() + ".json");
                     logger.debug("Upload file #[{}]: [{}] with tags [{}]", numFiles.incrementAndGet(), path.getFileName(), tagsFilePath.getFileName());

@@ -69,6 +69,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("path.real.fulltext", "subdir")), 1L, null);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void test_subdirs_deep_tree() throws Exception {
         startCrawler();
@@ -164,6 +165,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         assertThat(response.getTotalHits(), is(subdirs+1));
 
         for (int i = 0; i < subdirs; i++) {
+            //noinspection unchecked
             pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "sample.txt", endsWith("/" + "sample.txt"));
         }
 

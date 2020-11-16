@@ -26,6 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -59,7 +60,7 @@ public class BootstrapChecks {
         if (max.getBytes() <= 0) {
             return new Percentage();
         }
-        return new Percentage((new BigDecimal(((double) current.getBytes())/(double) max.getBytes()*100)).setScale(2, BigDecimal.ROUND_HALF_EVEN).doubleValue(), true);
+        return new Percentage((BigDecimal.valueOf(((double) current.getBytes()) / (double) max.getBytes() * 100)).setScale(2, RoundingMode.HALF_EVEN).doubleValue(), true);
     }
 
     private static void checkUTF8() {

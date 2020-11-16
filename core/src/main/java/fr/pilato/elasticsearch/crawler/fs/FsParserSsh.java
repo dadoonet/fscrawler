@@ -32,7 +32,7 @@ public class FsParserSsh extends FsParserAbstract {
         super(fsSettings, config, esClient, loop);
     }
 
-    protected FileAbstractor buildFileAbstractor() {
+    protected FileAbstractor<?> buildFileAbstractor() {
         return new FileAbstractorSSH(fsSettings);
     }
 }

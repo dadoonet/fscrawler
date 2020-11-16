@@ -51,7 +51,7 @@ public class MetaFileHandler {
         if (subdir != null) {
             dir = dir.resolve(subdir);
         }
-        return new String(Files.readAllBytes(dir.resolve(filename)), StandardCharsets.UTF_8);
+        return Files.readString(dir.resolve(filename));
     }
 
     /**
@@ -71,7 +71,7 @@ public class MetaFileHandler {
                 Files.createDirectory(dir);
             }
         }
-        Files.write(dir.resolve(filename), content.getBytes(StandardCharsets.UTF_8));
+        Files.writeString(dir.resolve(filename), content);
     }
 
     /**

@@ -35,7 +35,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.http.HttpHost;
@@ -87,18 +86,22 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
@@ -162,7 +165,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
                 (request, bulkListener) -> client.bulkAsync(request, RequestOptions.DEFAULT, bulkListener);
 
-        bulkProcessor = BulkProcessor.builder(bulkConsumer, new DebugListener(logger))
+        bulkProcessor = BulkProcessor.builder(bulkConsumer, new DebugListener())
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 .setBulkSize(new ByteSizeValue(settings.getElasticsearch().getByteSize().getBytes()))
@@ -175,13 +178,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         return version.getNumber();
     }
 
-    class DebugListener implements BulkProcessor.Listener {
-        private final Logger logger;
-
-        DebugListener(Logger logger) {
-            this.logger = logger;
-        }
-
+    static class DebugListener implements BulkProcessor.Listener {
         @Override public void beforeBulk(long executionId, BulkRequest request) {
             logger.trace("Sending a bulk request of [{}] requests", request.numberOfActions());
         }
@@ -323,7 +320,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         Map<String, Object> response = asMap(restResponse);
         logger.debug("reindex response: {}", response);
 
-        return (int) response.get("total");
+        return (int) Objects.requireNonNull(response).get("total");
     }
 
     /**
@@ -358,13 +355,13 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         return INDEX_TYPE_DOC;
     }
 
-    private static TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+    private static final TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
 
         @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {}
 
         @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {}
 
         @Override
         public X509Certificate[] getAcceptedIssuers() { return null; }
@@ -412,7 +409,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
         settings.getNodes().forEach(node -> hosts.add(HttpHost.create(node.decodedUrl())));
 
-        RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
+        RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[0]));
 
         if (settings.getPathPrefix() != null) {
             builder.setPathPrefix(settings.getPathPrefix());

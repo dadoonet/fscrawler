@@ -26,6 +26,7 @@ import static org.hamcrest.Matchers.is;
 
 public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void testExpectThrows() {
         NullPointerException npe = expectThrows(NullPointerException.class, () -> {

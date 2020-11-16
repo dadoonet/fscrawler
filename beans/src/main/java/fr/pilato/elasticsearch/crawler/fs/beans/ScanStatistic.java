@@ -25,8 +25,8 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
  * @author David Pilato (aka dadoonet)
  */
 public class ScanStatistic {
-    private int nbDocScan = 0;
-    private int nbDocDeleted = 0;
+    private int nbDocScan;
+    private int nbDocDeleted;
     private String rootPath;
     private String rootPathId;
 
