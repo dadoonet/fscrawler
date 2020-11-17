@@ -5,13 +5,14 @@ services:
   enterprisesearch:
     image: $IMG_ENTERPRISE_SEARCH:$ELASTIC_VERSION
     environment:
-      - "ent_search.auth.source=standard"
       - "elasticsearch.username=elastic"
       - "elasticsearch.password=$ELASTIC_PASSWORD"
       - "elasticsearch.host=http://elasticsearch:9200"
       - "allow_es_settings_modification=true"
+      - "ent_search.auth.native1.source=elasticsearch-native"
       - "secret_management.encryption_keys=[XYZ]"
       - "ENT_SEARCH_DEFAULT_PASSWORD=$ELASTIC_PASSWORD"
+      - "JAVA_OPTS=-Xms2g -Xmx2g"
     ports: ["$ENTERPRISE_SEARCH_PORT:$ENTERPRISE_SEARCH_PORT"]
     networks: ['fscrawler_it']
     links: ['elasticsearch']
