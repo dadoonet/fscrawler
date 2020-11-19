@@ -148,7 +148,7 @@ another url. This can be done by changing the ``workplace_search.url_prefix`` se
 
 .. note::
 
-    If ``workplace_search.fs.url`` is set to ``/tmp/es`` and you have indexed a document named
+    If ``fs.url`` is set to ``/tmp/es`` and you have indexed a document named
     ``/tmp/es/path/to/foobar.txt``, the default url will be ``http://127.0.0.1/path/to/foobar.txt``.
 
     If you change ``workplace_search.url_prefix`` to ``https://repository.mycompany.com/docs``, the
