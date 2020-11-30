@@ -41,7 +41,7 @@
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
         <tika.version>1.24.1</tika.version>
-        <jackson.version>2.11.3</jackson.version>
+        <jackson.version>2.12.0</jackson.version>
         <log4j.version>2.14.0</log4j.version>
         <jansi.version>2.0.1</jansi.version>
         <jersey.version>2.32</jersey.version>
@@ -545,14 +545,6 @@
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${snakeyaml.version}</version>
-            </dependency>
-            <!--
-              Will need to be removed in the future. Workaround for https://github.com/FasterXML/jackson-dataformat-xml/issues/340
-            -->
-            <dependency>
-                <groupId>org.codehaus.woodstox</groupId>
-                <artifactId>stax2-api</artifactId>
-                <version>4.2.1</version>
             </dependency>
 
             <!-- This is needed to compile on my machine :( -->
