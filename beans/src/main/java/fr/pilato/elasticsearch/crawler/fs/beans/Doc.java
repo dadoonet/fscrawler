@@ -44,7 +44,7 @@ public class Doc {
     private File file;
     private Path path;
     private Attributes attributes;
-    private Map<String, ?> object;
+    private Map<String, Object> object;
     private Map<String, Object> external;
 
     public Doc() {
@@ -54,11 +54,11 @@ public class Doc {
         external = null;
     }
 
-    public Map<String, ?> getObject() {
+    public Map<String, Object> getObject() {
         return object;
     }
 
-    public void setObject(Map<String, ?> newObject) {
+    public void setObject(Map<String, Object> newObject) {
         this.object = newObject;
     }
 
