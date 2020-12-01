@@ -3,3 +3,6 @@ extraction:
     python_setup:
       version: 3
       setup_py: false
+  java:
+    index:
+      java_version: "14"
