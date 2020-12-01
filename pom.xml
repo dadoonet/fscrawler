@@ -54,7 +54,7 @@
         <snakeyaml.version>1.27</snakeyaml.version>
         <httpclient.version>4.5.13</httpclient.version>
         <httpasyncclient.version>4.1.4</httpasyncclient.version>
-        <httpcore.version>4.4.13</httpcore.version>
+        <httpcore.version>4.4.14</httpcore.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <levigo.version>2.0</levigo.version>
