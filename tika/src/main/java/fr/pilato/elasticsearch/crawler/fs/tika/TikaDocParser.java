@@ -38,7 +38,7 @@ import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Consumer;
@@ -148,7 +148,7 @@ public class TikaDocParser {
             setMeta(fullFilename, metadata, TikaCoreProperties.CREATOR, doc.getMeta()::setAuthor, Function.identity());
             setMeta(fullFilename, metadata, TikaCoreProperties.TITLE, doc.getMeta()::setTitle, Function.identity());
             setMeta(fullFilename, metadata, TikaCoreProperties.MODIFIED, doc.getMeta()::setDate, FsCrawlerUtil::localDateTimeToDate);
-            setMeta(fullFilename, metadata, TikaCoreProperties.KEYWORDS, doc.getMeta()::setKeywords, s -> Arrays.asList(s.split("\\s*,\\s*")));
+            setMeta(fullFilename, metadata, TikaCoreProperties.KEYWORDS, doc.getMeta()::setKeywords, TikaDocParser::commaDelimitedListToStringArray);
             setMeta(fullFilename, metadata, TikaCoreProperties.FORMAT, doc.getMeta()::setFormat, Function.identity());
             setMeta(fullFilename, metadata, TikaCoreProperties.IDENTIFIER, doc.getMeta()::setIdentifier, Function.identity());
             setMeta(fullFilename, metadata, TikaCoreProperties.CONTRIBUTOR, doc.getMeta()::setContributor, Function.identity());
@@ -224,5 +224,23 @@ public class TikaDocParser {
         } catch (Exception e) {
             logger.warn("Can not parse meta [{}] for [{}]. Skipping [{}] field...", sMeta, filename, property.getName());
         }
+    }
+
+    private static List<String> commaDelimitedListToStringArray(String str) {
+        if (str == null) {
+            return null;
+        }
+        List<String> result = new ArrayList<>();
+        int pos = 0;
+        int delPos;
+        while ((delPos = str.indexOf(",", pos)) != -1) {
+            result.add(str.substring(pos, delPos));
+            pos = delPos + 1;
+        }
+        if (str.length() > 0 && pos <= str.length()) {
+            // Add rest of String, but not in case of empty input.
+            result.add(str.substring(pos));
+        }
+        return result;
     }
 }
