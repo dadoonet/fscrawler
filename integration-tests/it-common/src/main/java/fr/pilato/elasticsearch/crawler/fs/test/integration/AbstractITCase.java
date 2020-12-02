@@ -197,7 +197,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         URL resource = AbstractFSCrawlerTestCase.class.getResource(marker);
 
         switch (resource.getProtocol()) {
-            case "file": {
+            case "file" -> {
                 Path finalTarget = target.resolve(sourceDirName);
                 if (Files.notExists(finalTarget)) {
                     staticLogger.debug("  --> Creating test dir named [{}]", finalTarget);
@@ -212,9 +212,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
                 staticLogger.info("-> Copying test documents from [{}] to [{}]", source, finalTarget);
                 copyDirs(source, finalTarget);
-                break;
             }
-            case "jar": {
+            case "jar" -> {
                 if (Files.notExists(target)) {
                     staticLogger.debug("  --> Creating test dir named [{}]", target);
                     Files.createDirectory(target);
@@ -226,11 +225,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
                 staticLogger.info("-> Unzipping test documents from [{}] to [{}]", jarFile, target);
                 unzip(jarFile, target);
-                break;
             }
-            default:
-                fail("Unknown protocol for IT document sources: " + resource.getProtocol());
-                break;
+            default -> fail("Unknown protocol for IT document sources: " + resource.getProtocol());
         }
     }
 
@@ -486,7 +482,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     public static void deleteRecursively(Path root) throws IOException {
-        Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);

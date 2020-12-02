@@ -33,7 +33,6 @@ import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.DigestInputStream;
@@ -46,7 +45,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.StreamsUtil.copy;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.extractText;
 import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
 
@@ -208,12 +206,11 @@ public class TikaDocParser {
         } else if (fsSettings.getFs().isStoreSource()) {
             // We don't extract content but just store the binary file
             // We need to create the ByteArrayOutputStream which has not been created then
-            copy(inputStream, bos);
+            inputStream.transferTo(bos);
         }
 
         // Doc as binary attachment
         if (fsSettings.getFs().isStoreSource()) {
-            //noinspection ConstantConditions
             doc.setAttachment(Base64.getEncoder().encodeToString(bos.toByteArray()));
         }
         logger.trace("End document generation");

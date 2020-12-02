@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * Define a FS Job meta data
@@ -118,8 +119,8 @@ public class FsJob {
 
         if (indexed != fsJob.indexed) return false;
         if (deleted != fsJob.deleted) return false;
-        if (name != null ? !name.equals(fsJob.name) : fsJob.name != null) return false;
-        return !(lastrun != null ? !lastrun.equals(fsJob.lastrun) : fsJob.lastrun != null);
+        if (!Objects.equals(name, fsJob.name)) return false;
+        return Objects.equals(lastrun, fsJob.lastrun);
 
     }
 

@@ -67,7 +67,7 @@ Create a ``fscrawlerRunner.bat`` as:
 
 .. code:: sh
 
-   set JAVA_HOME=c:\Program Files\Java\jdk1.8.0_144
+   set JAVA_HOME=c:\Program Files\Java\jdk15.0.1
    set FS_JAVA_OPTS=-Xmx2g -Xms2g
    /Elastic/fscrawler/bin/fscrawler.bat --config_dir /Elastic/fscrawler data >> /Elastic/logs/fscrawler.log 2>&1
 
@@ -344,3 +344,4 @@ Upgrade to 2.7
   to ``true`` if you wish revert to the previous behavior.
 - The mapping for elasticsearch 6.x can not contain anymore the type name.
 - We removed the Elasticsearch V5 compatibility as it's not maintained anymore by elastic.
+- You need to use a recent JVM to run FSCrawler (Java 15+ recommended)

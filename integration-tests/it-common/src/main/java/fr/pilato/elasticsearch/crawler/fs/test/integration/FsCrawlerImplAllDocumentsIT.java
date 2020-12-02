@@ -63,11 +63,11 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractITCase {
             copyResourcesToTestDir();
         }
 
-        Long numFiles = 0L;
+        long numFiles;
 
         try {
             Files.walk(testResourceTarget)
-                    .filter(path -> Files.isRegularFile(path))
+                    .filter(Files::isRegularFile)
                     .forEach(path -> staticLogger.debug("    - [{}]", path));
             numFiles = Files.list(testResourceTarget).count();
         } catch (NoSuchFileException e) {

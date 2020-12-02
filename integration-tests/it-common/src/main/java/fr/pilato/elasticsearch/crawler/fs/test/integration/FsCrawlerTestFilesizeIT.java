@@ -109,7 +109,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
+            @SuppressWarnings("unchecked") Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
             assertThat(file, notNullValue());
             assertThat(file.get(File.FIELD_NAMES.FILESIZE), is(12230));
         }
@@ -124,7 +124,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
+            @SuppressWarnings("unchecked") Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
             assertThat(file, notNullValue());
             assertThat(file.get(File.FIELD_NAMES.FILESIZE), nullValue());
         }

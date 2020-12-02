@@ -48,7 +48,7 @@ public class JsonUtil {
 
     public static Map<String, Object> asMap(InputStream stream) {
         try {
-            return mapper.readValue(stream, new TypeReference<Map<String, Object>>(){});
+            return mapper.readValue(stream, new TypeReference<>() {});
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

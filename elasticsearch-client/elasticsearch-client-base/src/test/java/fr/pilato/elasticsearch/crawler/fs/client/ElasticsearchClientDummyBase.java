@@ -79,7 +79,7 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public void indexSingle(String index, String id, String json) throws IOException {
+    public void indexSingle(String index, String id, String json) {
         // Testing purpose only
     }
 
@@ -114,12 +114,12 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException {
+    public ESSearchHit get(String index, String id) {
         return null;
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException {
+    public boolean exists(String index, String id) {
         return false;
     }
 

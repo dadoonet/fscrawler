@@ -42,19 +42,19 @@ package fr.pilato.elasticsearch.crawler.fs.crawler;
 import java.time.LocalDateTime;
 
 public class FileAbstractModel {
-    private String name;
-    private boolean file;
-    private boolean directory;
-    private LocalDateTime lastModifiedDate;
-    private LocalDateTime creationDate;
-    private LocalDateTime accessDate;
-    private String path;
-    private String fullpath;
-    private long size;
-    private String owner;
-    private String group;
-    private int permissions;
-    private String extension;
+    private final String name;
+    private final boolean file;
+    private final boolean directory;
+    private final LocalDateTime lastModifiedDate;
+    private final LocalDateTime creationDate;
+    private final LocalDateTime accessDate;
+    private final String path;
+    private final String fullpath;
+    private final long size;
+    private final String owner;
+    private final String group;
+    private final int permissions;
+    private final String extension;
 
     public FileAbstractModel(String name, boolean file, LocalDateTime lastModifiedDate, LocalDateTime creationDate, LocalDateTime accessDate,
                              String extension, String path, String fullpath, long size, String owner, String group, int permissions) {

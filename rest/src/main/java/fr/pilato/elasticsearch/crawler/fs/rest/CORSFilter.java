@@ -9,7 +9,7 @@ import javax.ws.rs.ext.Provider;
 
 @Provider
 public class CORSFilter implements ContainerResponseFilter {
-    private Rest rest;
+    private final Rest rest;
 
     public CORSFilter(Rest rest) {
         this.rest = rest;

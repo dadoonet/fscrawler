@@ -31,7 +31,7 @@ public class OsValidator {
         OS = System.getProperty("os.name").toLowerCase();
         WINDOWS = (OS.contains("win"));
         MAC = (OS.contains("mac"));
-        UNIX = (OS.contains("nix") || OS.contains("nux") || OS.indexOf("aix") >= 0 );
+        UNIX = (OS.contains("nix") || OS.contains("nux") || OS.contains("aix"));
         SOLARIS = (OS.contains("sunos"));
     }
 }

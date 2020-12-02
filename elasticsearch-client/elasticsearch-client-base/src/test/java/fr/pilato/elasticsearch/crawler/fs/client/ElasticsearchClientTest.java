@@ -31,6 +31,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
+@SuppressWarnings("ConstantConditions")
 public class ElasticsearchClientTest extends AbstractFSCrawlerTestCase {
 
     @Test

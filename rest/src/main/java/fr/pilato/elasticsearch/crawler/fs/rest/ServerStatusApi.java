@@ -49,7 +49,7 @@ public class ServerStatusApi extends RestApi {
     public ServerStatusResponse getStatus() throws IOException {
         ServerStatusResponse status = new ServerStatusResponse();
         status.setVersion(Version.getVersion());
-        status.setElasticsearch(esClient.getVersion().toString());
+        status.setElasticsearch(esClient.getVersion());
         status.setOk(true);
         status.setSettings(settings);
         return status;

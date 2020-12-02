@@ -175,7 +175,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         }
 
         Path file = Files.createFile(tmpDir.resolve(filename));
-        Files.write(file, "Hello world".getBytes(Charsets.UTF_8));
+        Files.writeString(file, "Hello world", Charsets.UTF_8);
 
         // We should have 1 doc first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
