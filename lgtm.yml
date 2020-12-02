@@ -3,6 +3,8 @@ extraction:
     index:
       exclude:
         - test-documents
+        - contrib
+        - .github
   python:
     python_setup:
       version: 3
