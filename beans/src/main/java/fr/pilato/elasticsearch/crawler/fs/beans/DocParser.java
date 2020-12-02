@@ -41,7 +41,8 @@ public class DocParser {
         return prettyMapper.readValue(json, Doc.class);
     }
 
-    public static Map asMap(String json) throws IOException {
-        return prettyMapper.readValue(json, Map.class);
+    public static Map<String, Object> asMap(String json) throws IOException {
+        //noinspection unchecked
+        return (Map<String, Object>) prettyMapper.readValue(json, Map.class);
     }
 }

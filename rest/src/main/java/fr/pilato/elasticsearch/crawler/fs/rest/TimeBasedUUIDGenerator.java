@@ -38,15 +38,13 @@ public class TimeBasedUUIDGenerator {
 
     private static byte[] getMacAddress() throws SocketException {
         Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
-        if (en != null) {
-            while (en.hasMoreElements()) {
-                NetworkInterface nint = en.nextElement();
-                if (!nint.isLoopback()) {
-                    // Pick the first valid non loopback address we find
-                    byte[] address = nint.getHardwareAddress();
-                    if (isValidAddress(address)) {
-                        return address;
-                    }
+        while (en.hasMoreElements()) {
+            NetworkInterface nint = en.nextElement();
+            if (!nint.isLoopback()) {
+                // Pick the first valid non loopback address we find
+                byte[] address = nint.getHardwareAddress();
+                if (isValidAddress(address)) {
+                    return address;
                 }
             }
         }

@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -45,7 +44,7 @@ public class Doc {
     private File file;
     private Path path;
     private Attributes attributes;
-    private Map object;
+    private Map<String, Object> object;
     private Map<String, Object> external;
 
     public Doc() {
@@ -60,11 +59,11 @@ public class Doc {
         this.content = content;
     }
 
-    public Map getObject() {
+    public Map<String, Object> getObject() {
         return object;
     }
 
-    public void setObject(Map newObject) {
+    public void setObject(Map<String, Object> newObject) {
         this.object = newObject;
     }
 

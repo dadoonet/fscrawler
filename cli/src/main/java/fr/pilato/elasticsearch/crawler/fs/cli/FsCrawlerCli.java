@@ -102,7 +102,6 @@ public class FsCrawlerCli {
     }
 
 
-    @SuppressWarnings("deprecation")
     public static void main(String[] args) throws Exception {
         // create a scanner so we can read the command-line input
         Scanner scanner = new Scanner(System.in);

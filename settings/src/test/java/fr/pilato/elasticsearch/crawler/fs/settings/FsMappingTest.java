@@ -26,7 +26,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
@@ -337,8 +336,8 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
         try {
             readJsonFile(rootTmpDir, metadataDir, "0", INDEX_SETTINGS_FILE);
             fail("We should have thrown an exception for an unknown elasticsearch version");
-        } catch (IllegalArgumentException ignored) {
-            assertThat(ignored.getMessage(), containsString("does not exist for elasticsearch version"));
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), containsString("does not exist for elasticsearch version"));
         }
     }
 
@@ -621,8 +620,8 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
         try {
             readJsonFile(rootTmpDir, metadataDir, "0", INDEX_SETTINGS_FOLDER_FILE);
             fail("We should have thrown an exception for an unknown elasticsearch version");
-        } catch (IllegalArgumentException ignored) {
-            assertThat(ignored.getMessage(), containsString("does not exist for elasticsearch version"));
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), containsString("does not exist for elasticsearch version"));
         }
     }
 }

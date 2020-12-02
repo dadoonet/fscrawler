@@ -34,7 +34,7 @@ public class FsParserSsh extends FsParserAbstract {
         super(fsSettings, config, managementService, documentService, loop);
     }
 
-    protected FileAbstractor buildFileAbstractor() {
+    protected FileAbstractor<?> buildFileAbstractor() {
         return new FileAbstractorSSH(fsSettings);
     }
 }

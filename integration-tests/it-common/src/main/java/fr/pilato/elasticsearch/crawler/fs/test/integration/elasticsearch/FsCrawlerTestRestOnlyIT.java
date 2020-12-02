@@ -72,7 +72,7 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
 
             WebTarget target = client.target("http://127.0.0.1:" + (testRestPort+1) + "/fscrawler");
             Files.walk(from)
-                    .filter(path -> Files.isRegularFile(path))
+                    .filter(Files::isRegularFile)
                     .forEach(path -> {
                         UploadResponse response = uploadFile(target, path);
                         assertThat(response.getFilename(), is(path.getFileName().toString()));

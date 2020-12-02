@@ -35,7 +35,7 @@ public class SignTool {
         md.update(toSign.getBytes());
 
         StringBuilder key = new StringBuilder();
-        byte b[] = md.digest();
+        byte[] b = md.digest();
         for (byte aB : b) {
             long t = aB < 0 ? 256 + aB : aB;
             key.append(Long.toHexString(t));

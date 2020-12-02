@@ -146,19 +146,11 @@ public abstract class AbstractFSCrawlerTestCase {
         long sum = 0;
 
         while (sum + timeInMillis < maxTimeInMillis) {
-            try {
-                long current = breakSupplier.getAsLong();
-                if (current < 0) {
-                    return current;
-                }
-                if (expected == null && current >= 1) {
-                    return current;
-                } else if (expected != null && current == expected) {
-                    return expected;
-                }
-            } catch (RuntimeException ignored) {
-                // If we have a Runtime error, it might indicates that shards are no all ready
-                // Let's wait for the next cycle and fail only when we have the timeout.
+            long current = breakSupplier.getAsLong();
+            if (expected == null && current >= 1) {
+                return current;
+            } else if (expected != null && current == expected) {
+                return expected;
             }
             Thread.sleep(timeInMillis);
             sum += timeInMillis;
@@ -182,16 +174,13 @@ public abstract class AbstractFSCrawlerTestCase {
                         sb.append(value.charAt(j));
                     }
                     changed = true;
-                    if (i == 0) {
-                        sb.append(Character.toLowerCase(c));
-                    } else {
+                    if (i != 0) {
                         sb.append('_');
-                        sb.append(Character.toLowerCase(c));
                     }
                 } else {
                     sb.append('_');
-                    sb.append(Character.toLowerCase(c));
                 }
+                sb.append(Character.toLowerCase(c));
             } else {
                 if (changed) {
                     sb.append(c);
@@ -217,13 +206,14 @@ public abstract class AbstractFSCrawlerTestCase {
      * @param exceptionClass    Expected error
      * @param function          Function to be executed
      */
-    public static <T extends Throwable> T expectThrows(Class<T> exceptionClass, Supplier function) {
+    public static <T extends Throwable> T expectThrows(Class<T> exceptionClass, Supplier<?> function) {
         try {
             Object o = function.get();
             fail("We should have caught a " + exceptionClass.getName() + ". " +
                     "But we returned " + o + ".");
         } catch (Throwable t) {
             assertThat(t, instanceOf(exceptionClass));
+            //noinspection unchecked
             return (T) t;
         }
         return null;

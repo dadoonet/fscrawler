@@ -109,7 +109,7 @@ public abstract class FsParserAbstract extends FsParser {
         }
     }
 
-    protected abstract FileAbstractor buildFileAbstractor();
+    protected abstract FileAbstractor<?> buildFileAbstractor();
 
     @Override
     public void run() {
@@ -124,7 +124,7 @@ public abstract class FsParserAbstract extends FsParser {
             }
 
             int run = runNumber.incrementAndGet();
-            FileAbstractor path = null;
+            FileAbstractor<?> path = null;
 
             try {
                 logger.debug("Fs crawler thread [{}] is now running. Run #{}...", fsSettings.getName(), run);

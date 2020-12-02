@@ -34,7 +34,7 @@ public class FsParserLocal extends FsParserAbstract {
         super(fsSettings, config, managementService, documentService, loop);
     }
 
-    protected FileAbstractor buildFileAbstractor() {
+    protected FileAbstractor<?> buildFileAbstractor() {
         return new FileAbstractorFile(fsSettings);
     }
 }

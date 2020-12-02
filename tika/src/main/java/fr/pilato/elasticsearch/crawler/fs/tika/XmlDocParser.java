@@ -34,6 +34,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
 /**
  * Parse a XML document and generate a FSCrawler Doc
  */
+@SuppressWarnings("unchecked")
 public class XmlDocParser {
 
     private final static Logger logger = LogManager.getLogger(XmlDocParser.class);
@@ -44,7 +45,7 @@ public class XmlDocParser {
     }
 
     public static String generate(InputStream inputStream) {
-        logger.trace("Converting XML document [{}]");
+        logger.trace("Converting XML document");
         // Extracting XML content
         // See #185: https://github.com/dadoonet/fscrawler/issues/185
 
@@ -67,7 +68,7 @@ public class XmlDocParser {
      * @return The XML Content as a map
      */
     public static Map<String, Object> generateMap(InputStream inputStream) {
-        logger.trace("Converting XML document [{}]");
+        logger.trace("Converting XML document");
         Map<String, Object> map = asMap(inputStream);
 
         logger.trace("Generated JSON: {}", map);

@@ -99,7 +99,7 @@ public class FsCrawlerUtil {
      */
     private static String readJsonVersionedFile(Path dir, String version, String type) throws IOException {
         Path file = dir.resolve(version).resolve(type + ".json");
-        return new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+        return Files.readString(file);
     }
 
     /**
@@ -547,7 +547,7 @@ public class FsCrawlerUtil {
 
         try (FileSystem zipfs = FileSystems.newFileSystem(zipFile, zipProperties)) {
             Path rootPath = zipfs.getPath("/");
-            Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                     Path targetPath = destination.resolve(rootPath.relativize(dir).toString());

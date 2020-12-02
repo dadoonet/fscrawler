@@ -122,12 +122,12 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException {
+    public ESSearchHit get(String index, String id) {
         return null;
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException {
+    public boolean exists(String index, String id) {
         return false;
     }
 

@@ -155,6 +155,7 @@ public class Elasticsearch {
         this.sslVerification = sslVerification;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public static class Builder {
         private List<ServerUrl> nodes;
         private String index;
