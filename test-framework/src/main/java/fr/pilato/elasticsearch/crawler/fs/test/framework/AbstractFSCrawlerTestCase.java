@@ -147,9 +147,6 @@ public abstract class AbstractFSCrawlerTestCase {
 
         while (sum + timeInMillis < maxTimeInMillis) {
             long current = breakSupplier.getAsLong();
-            if (current < 0) {
-                return current;
-            }
             if (expected == null && current >= 1) {
                 return current;
             } else if (expected != null && current == expected) {
