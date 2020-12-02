@@ -18,7 +18,12 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -37,6 +42,23 @@ public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
             throw new RuntimeException("RTE");
         }));
         assertThat(assertionError.getMessage(), containsString("Expected: an instance of " + NullPointerException.class.getName()));
+    }
+
+    @Test
+    public void testSimulateElasticsearchException() throws InterruptedException {
+        AtomicLong l = new AtomicLong(-1);
+
+        long hits = awaitBusy(() -> {
+            // Let's search for entries
+            try {
+                throw new RuntimeException("foo bar");
+            } catch (RuntimeException e) {
+                staticLogger.warn("error caught", e);
+                return l.getAndIncrement();
+            }
+        }, null, 1, TimeUnit.SECONDS);
+
+        assertThat(hits, Matchers.greaterThan(-1L));
     }
 
 }
