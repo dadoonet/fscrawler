@@ -892,6 +892,12 @@
                 <artifactId>httpcore-nio</artifactId>
                 <version>${httpcore.version}</version>
             </dependency>
+            <!-- Used by htmlunit client and tika parsers -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpmime</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
             <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
