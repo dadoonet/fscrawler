@@ -1,4 +1,8 @@
 extraction:
+  javascript:
+    index:
+      exclude:
+        - .
   python:
     python_setup:
       version: 3
