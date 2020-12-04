@@ -135,11 +135,8 @@ Tests options
 Some options are available from the command line when running the tests:
 
 * ``tests.leaveTemporary`` leaves temporary files after tests. ``false`` by default.
-* ``tests.parallelism`` how many JVM to launch in parallel for tests. ``auto`` by default
-which means that it depends on the number of processors you have. It can be set to ``max`` if you want to
-use all the available processors, or a given value like ``1`` to use that exact number of JVMs.
-* ``tests.output`` what should be displayed to the console while running tests. By default it is set to
-``onError`` but can be set to ``always``
+* ``tests.parallelism`` how many JVM to launch in parallel for tests. ``auto`` by default which means that it depends on the number of processors you have. It can be set to ``max`` if you want to use all the available processors, or a given value like ``1`` to use that exact number of JVMs.
+* ``tests.output`` what should be displayed to the console while running tests. By default it is set to ``onError`` but can be set to ``always``
 * ``tests.verbose`` ``false`` by default
 * ``tests.seed`` if you need to reproduce a specific failure using the exact same random seed
 * ``tests.timeoutSuite`` how long a single can run. It's set by default to ``600000`` which means 5 minutes.
