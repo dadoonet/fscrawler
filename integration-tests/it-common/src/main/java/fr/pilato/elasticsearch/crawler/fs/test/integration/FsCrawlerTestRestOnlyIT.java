@@ -26,9 +26,9 @@ import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
+import jakarta.ws.rs.client.WebTarget;
 import org.junit.Test;
 
-import javax.ws.rs.client.WebTarget;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
