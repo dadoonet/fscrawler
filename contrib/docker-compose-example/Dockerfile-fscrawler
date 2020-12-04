@@ -1,4 +1,4 @@
-FROM openjdk:8-alpine AS builder
+FROM openjdk:14-alpine AS builder
 ENV LANG C.UTF-8
 ENV MAVEN_OPTS "-Xmx256m -Xms256m"
 RUN apk add --update --no-cache openssl wget maven
@@ -7,7 +7,7 @@ RUN wget https://github.com/dadoonet/fscrawler/archive/master.zip && unzip maste
 WORKDIR /usr/src/fscrawler-master
 RUN mvn clean package
 
-FROM openjdk:8-jre-alpine
+FROM openjdk:14-alpine
 
 ENV ES es7
 ENV VERSION 2.7-SNAPSHOT
