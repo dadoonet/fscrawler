@@ -36,7 +36,7 @@ import java.nio.file.Path;
 /**
  * @author dadoonet (David Pilato)
  */
-public class FsCrawlerImpl {
+public class FsCrawlerImpl implements AutoCloseable {
 
     @Deprecated
     public static final String INDEX_TYPE_FOLDER = "folder";
