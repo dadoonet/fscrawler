@@ -1,11 +1,10 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
-
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerResponseContext;
+import jakarta.ws.rs.container.ContainerResponseFilter;
+import jakarta.ws.rs.ext.Provider;
 
 @Provider
 public class CORSFilter implements ContainerResponseFilter {
