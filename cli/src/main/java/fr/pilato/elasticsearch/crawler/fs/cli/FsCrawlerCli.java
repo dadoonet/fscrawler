@@ -253,24 +253,21 @@ public class FsCrawlerCli {
             return;
         }
 
-        logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toYaml(fsSettings));
+        if (logger.isTraceEnabled()) {
+            logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toYaml(fsSettings));
+        }
         if (FsCrawlerValidator.validateSettings(logger, fsSettings, commands.rest)) {
             // We don't go further as we have critical errors
             return;
         }
 
-        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest);
-        Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
-
-        try {
+        try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest)) {
+            Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
             // Let see if we want to upgrade an existing cluster to latest version
             if (commands.upgrade) {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
             } else {
-                try {
-                    fsCrawler.getEsClient().start();
-                } catch (Exception t) {
-                    logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
+                if (!startEsClient(fsCrawler)) {
                     return;
                 }
                 String elasticsearchVersion = fsCrawler.getEsClient().getVersion();
@@ -290,17 +287,25 @@ public class FsCrawlerCli {
         } catch (Exception e) {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
             logger.debug("error caught", e);
-        } finally {
-            fsCrawler.close();
         }
     }
 
-    private final static int bannerLength = 100;
+    private static boolean startEsClient(FsCrawlerImpl fsCrawler) {
+        try {
+            fsCrawler.getEsClient().start();
+            return true;
+        } catch (Exception t) {
+            logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
+            return false;
+        }
+    }
+
+    private static final int BANNER_LENGTH = 100;
 
     /**
      * This is coming from: https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler
      */
-    private final static String asciiArt = "" +
+    private static final String ASCII_ART = "" +
             "    ,---,.  .--.--.     ,----..                                     ,--,                      \n" +
             "  ,'  .' | /  /    '.  /   /   \\                                  ,--.'|                      \n" +
             ",---.'   ||  :  /`. / |   :     :  __  ,-.                   .---.|  | :               __  ,-.\n" +
@@ -328,12 +333,12 @@ public class FsCrawlerCli {
     }
 
     private static String centerAsciiArt() {
-        String[] lines = StringUtils.split(asciiArt, '\n');
+        String[] lines = StringUtils.split(ASCII_ART, '\n');
 
         // Edit line 0 as we want to add the version
         String version = Version.getVersion();
-        String firstLine = StringUtils.stripEnd(StringUtils.center(lines[0], bannerLength), null);
-        String pad = StringUtils.rightPad(firstLine, bannerLength - version.length() - 1) + version;
+        String firstLine = StringUtils.stripEnd(StringUtils.center(lines[0], BANNER_LENGTH), null);
+        String pad = StringUtils.rightPad(firstLine, BANNER_LENGTH - version.length() - 1) + version;
         lines[0] = pad;
 
         StringBuilder content = new StringBuilder();
@@ -345,11 +350,11 @@ public class FsCrawlerCli {
     }
 
     private static String bannerLine(String text) {
-        return "|" + StringUtils.center(text, bannerLength) + "|\n";
+        return "|" + StringUtils.center(text, BANNER_LENGTH) + "|\n";
     }
 
     private static String separatorLine(String first, String last) {
-        return first + StringUtils.center("", bannerLength, "-") + last + "\n";
+        return first + StringUtils.center("", BANNER_LENGTH, "-") + last + "\n";
     }
 
     private static void checkForDeprecatedResources(Path configDir, String elasticsearchVersion) throws IOException {
@@ -359,14 +364,18 @@ public class FsCrawlerCli {
             logger.warn("We found old configuration index settings: [{}/_default/doc.json]. You should look at the documentation" +
                     " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
                     configDir);
-        } catch (IllegalArgumentException ignored) { }
+        } catch (IllegalArgumentException ignored) {
+            // If we can't find the deprecated resource, it will throw an exception which needs to be ignored.
+        }
         try {
             // If we are able to read an old configuration file, we should tell the user to check the documentation
             readDefaultJsonVersionedFile(configDir, extractMajorVersion(elasticsearchVersion), "folder");
             logger.warn("We found old configuration index settings: [{}/_default/folder.json]. You should look at the documentation" +
                     " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
                     configDir);
-        } catch (IllegalArgumentException ignored) { }
+        } catch (IllegalArgumentException ignored) {
+            // If we can't find the deprecated resource, it will throw an exception which needs to be ignored.
+        }
     }
 
     private static void sleep() {

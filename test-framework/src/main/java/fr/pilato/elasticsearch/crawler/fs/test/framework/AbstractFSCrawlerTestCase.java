@@ -64,7 +64,7 @@ public abstract class AbstractFSCrawlerTestCase {
     public TestName name = new TestName();
 
     @ClassRule
-    public static TemporaryFolder folder = new TemporaryFolder();
+    public static final TemporaryFolder folder = new TemporaryFolder();
     protected static Path rootTmpDir;
 
     @BeforeClass
