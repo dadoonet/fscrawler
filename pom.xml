@@ -59,7 +59,7 @@
         <!-- Non Apache2 Compatible licenses -->
         <levigo.version>2.0</levigo.version>
         <tiff.version>1.4.0</tiff.version>
-        <jpeg.version>1.3.0</jpeg.version>
+        <jpeg.version>1.4.0</jpeg.version>
 
         <!-- To skip Tests -->
         <skipTests>false</skipTests>
