@@ -304,7 +304,8 @@ public class FsCrawlerCli {
 
     private static boolean startEsClient(FsCrawlerImpl fsCrawler) {
         try {
-            fsCrawler.getEsClient().start();
+            fsCrawler.getManagementService().start();
+            fsCrawler.getDocumentService().start();
             return true;
         } catch (Exception t) {
             logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
