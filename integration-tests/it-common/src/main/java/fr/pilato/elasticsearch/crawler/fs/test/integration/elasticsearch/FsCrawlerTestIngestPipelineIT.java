@@ -118,7 +118,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
-                .withESQuery(new ESTermQuery("ip_addr", "10.21.23.123")), 1L, currentTestResourceDir);
+                .withESQuery(new ESTermQuery("ip_addr", "127.0.0.1")), 1L, currentTestResourceDir);
     }
 
     /**

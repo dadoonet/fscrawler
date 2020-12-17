@@ -1,7 +1,7 @@
 Building the project
 --------------------
 
-This project is built with `Maven <https://maven.apache.org/>`_.
+This project is built with `Maven <https://maven.apache.org/>`_. It needs Java >= 1.14.
 Source code is available on `GitHub <https://github.com/dadoonet/fscrawler/>`_.
 Thanks to `JetBrains <https://www.jetbrains.com/?from=FSCrawler>`_ for the IntelliJ IDEA License!
 
@@ -166,25 +166,48 @@ you can also use ``tests.workplace.url`` to set where Enterprise Search is runni
         -Dtests.workplace.access_token=ACCESS_TOKEN \
         -Dtests.workplace.key=KEY
 
+Changing the REST port
+""""""""""""""""""""""
+
+By default, FS crawler will run the integration tests using port ``8080`` for the REST service.
+You can change this by using ``tests.rest.port`` option::
+
+    mvn verify -Dtests.rest.port=8280
+
+Randomized testing
+""""""""""""""""""
+
+FS Crawler uses the `randomized testing framework <https://github.com/randomizedtesting/randomizedtesting>`_.
+In case of failure, it will print a line like::
+
+    REPRODUCE WITH:
+    mvn test -Dtests.seed=AC6992149EB4B547 -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.unit.tika.TikaDocParserTest -Dtests.method="testExtractFromRtf" -Dtests.locale=ga-IE -Dtests.timezone=Canada/Saskatchewan
+
+You can just run the test again using the same seed to make sure you always run the test in the same context as before.
+
 Tests options
 """""""""""""
 
 Some options are available from the command line when running the tests:
 
 * ``tests.leaveTemporary`` leaves temporary files after tests. ``false`` by default.
-* ``tests.parallelism`` how many JVM to launch in parallel for tests. Set to ``auto`` by default
-    which means that it depends on the number of processors you have.
-* ``tests.output`` what should be displayed to the console while running tests. By default it is set to
-    ``onError`` but can be set to ``always``
+* ``tests.parallelism`` how many JVM to launch in parallel for tests. ``auto`` by default which means that it depends on the number of processors you have. It can be set to ``max`` if you want to use all the available processors, or a given value like ``1`` to use that exact number of JVMs.
+* ``tests.output`` what should be displayed to the console while running tests. By default it is set to ``onError`` but can be set to ``always``
 * ``tests.verbose`` ``false`` by default
 * ``tests.seed`` if you need to reproduce a specific failure using the exact same random seed
 * ``tests.timeoutSuite`` how long a single can run. It's set by default to ``600000`` which means 5 minutes.
 * ``tests.locale`` by default it's set to ``random`` but you can force the locale to use.
-* ``tests.timezone`` by default it's set to ``random`` but you can force the timezone to use.
+* ``tests.timezone`` by default it's set to ``random`` but you can force the timezone to use, like ``CEST`` or ``-0200``.
 
 For example::
 
-  mvn install -rf :fscrawler-it -Dtests.output=always
+  mvn install -rf :fscrawler-it \
+    -Dtests.output=always \
+    -Dtests.locale=fr-FR \
+    -Dtests.timezone=CEST \
+    -Dtests.verbose \
+    -Dtests.leaveTemporary \
+    -Dtests.seed=E776CE45185A6E7A
 
 Check for vulnerabilities (CVE)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
