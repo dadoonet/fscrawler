@@ -72,7 +72,7 @@ To run the test suite against an elasticsearch instance running locally, just ru
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
-            -Dtests.cluster.url=https://127.0.0.1:9200 \
+            -Dtests.cluster.url=http://127.0.0.1:9200 \
 
 .. hint::
 
@@ -95,19 +95,76 @@ To run the test suite against an elasticsearch instance running locally, just ru
 Using security feature
 """"""""""""""""""""""
 
-Integration tests are run by default against a standard Elasticsearch cluster, which means
-with no security feature activated.
+Integration tests are run by default against a secured Elasticsearch cluster.
 
 .. versionadded:: 2.7
 
-You can run all the integration tests against a secured cluster by using the ``security`` profile::
-
-    mvn verify -Psecurity
-
-Note that secured tests are using by default ``changeme`` as the password.
+Secured tests are using by default ``changeme`` as the password.
 You can change this by using ``tests.cluster.pass`` option::
 
-    mvn verify -Psecurity -Dtests.cluster.pass=mystrongpassword
+    mvn verify -Dtests.cluster.pass=mystrongpassword
+
+
+Testing Workplace Search connector
+""""""""""""""""""""""""""""""""""
+
+To test the Workplace Search connector, some manual steps needs to be performed as you need to start
+Enterprise Search and create manually the custom source as there is no API yet to do that.
+
+    .. warning::
+
+    Running the integration tests **will remove everything** you have indexed so far in the workplace local instance.
+
+.. versionadded:: 2.7
+
+* Run the following steps::
+
+    mvn docker-compose:up waitfor:waitfor -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7
+
+* Wait for it to end and open http://localhost:3002/ws.
+* Enter ``enterprise_search`` as the login and ``changeme`` as the password.
+* Click on "Add sources" button and choose `Custom API <http://localhost:3002/ws/org/sources#/add/custom>`_.
+* Name it ``fscrawler`` and click on "Create Custom API Source" button.
+* Copy the "Access Token" value. We will mention it as ``ACCESS_TOKEN`` for the rest of this documentation.
+* Copy the "Key" value. We will mention it as ``KEY`` for the rest of this documentation.
+
+.. image:: /_static/wpsearch/fscrawler-custom-source.png
+
+* You can now run in another terminal::
+
+    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
+        -Dtests.cluster.url=http://127.0.0.1:9200 \
+        -Dtests.workplace.access_token=ACCESS_TOKEN \
+        -Dtests.workplace.key=KEY
+
+* Then you should be able to see the documents in http://localhost:3002/ws/search
+
+* Once you're done and want to switch off the stack, run::
+
+    mvn docker-compose:down -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7
+
+.. hint::
+
+    If you want to modify the look, go to the source and choose "Display Settings".
+    Adapt the settings accordingly.
+
+    .. image:: /_static/wpsearch/fscrawler-display-settings-1.png
+
+    In "Result Detail" tab, add the missing fields. And click on "Save".
+
+    .. image:: /_static/wpsearch/fscrawler-display-settings-2.png
+
+To run Workplace Search tests against another instance (ie. running on
+`Enterprise Search service by Elastic <https://www.elastic.co/workplace-search>`_,
+you can also use ``tests.workplace.url`` to set where Enterprise Search is running::
+
+    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
+        -Dtests.cluster.user=elastic \
+        -Dtests.cluster.pass=changeme \
+        -Dtests.cluster.cloud_id=CLOUD_ID
+        -Dtests.workplace.url=https://XYZ.ent-search.ZONE.CLOUD_PROVIDER.elastic-cloud.com \
+        -Dtests.workplace.access_token=ACCESS_TOKEN \
+        -Dtests.workplace.key=KEY
 
 Changing the REST port
 """"""""""""""""""""""
@@ -116,7 +173,6 @@ By default, FS crawler will run the integration tests using port ``8080`` for th
 You can change this by using ``tests.rest.port`` option::
 
     mvn verify -Dtests.rest.port=8280
-
 
 Randomized testing
 """"""""""""""""""

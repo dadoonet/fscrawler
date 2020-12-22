@@ -20,6 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.client.v7;
 
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESDocumentField;
 import fr.pilato.elasticsearch.crawler.fs.client.ESHighlightField;
@@ -150,7 +152,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
             checkVersion();
             logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", compatibleVersion(), getVersion());
         } catch (Exception e) {
-            logger.warn("failed to create elasticsearch client, disabling crawler...");
+            logger.warn("failed to create elasticsearch client on {}, disabling crawler...", settings.getElasticsearch().toString());
             throw e;
         }
 
@@ -214,6 +216,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
      * @param indexSettings index settings if any
      * @throws IOException In case of error
      */
+    @Override
     public void createIndex(String index, boolean ignoreErrors, String indexSettings) throws IOException {
         logger.debug("create index [{}]", index);
         logger.trace("index settings: [{}]", indexSettings);
@@ -240,6 +243,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
      * @return true if the index exists, false otherwise
      * @throws IOException In case of error
      */
+    @Override
     public boolean isExistingIndex(String index) throws IOException {
         logger.debug("is existing index [{}]", index);
         return client.indices().exists(new GetIndexRequest(index), RequestOptions.DEFAULT);
@@ -251,6 +255,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
      * @return true if the pipeline exists, false otherwise
      * @throws IOException In case of error
      */
+    @Override
     public boolean isExistingPipeline(String pipelineName) throws IOException {
         logger.debug("is existing pipeline [{}]", pipelineName);
         try {
@@ -268,6 +273,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
      * @param index index name
      * @throws IOException In case of error
      */
+    @Override
     public void refresh(String index) throws IOException {
         logger.debug("refresh index [{}]", index);
         RefreshRequest request = new RefreshRequest();
@@ -283,6 +289,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
      * @param index index name
      * @throws IOException In case of error
      */
+    @Override
     public void waitForHealthyIndex(String index) throws IOException {
         logger.debug("wait for yellow health on index [{}]", index);
         ClusterHealthResponse health = client.cluster().health(new ClusterHealthRequest(index).waitForYellowStatus(),
@@ -347,10 +354,12 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
 
     // Utility methods
 
+    @Override
     public boolean isIngestSupported() {
         return true;
     }
 
+    @Override
     public String getDefaultTypeName() {
         return INDEX_TYPE_DOC;
     }
@@ -375,12 +384,20 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     }
 
     @Override
-    public void index(String index, String id, String json, String pipeline) {
+    public void index(String index, String id, Doc doc, String pipeline) {
+        String json = DocParser.toJson(doc);
+        indexRawJson(index, id, json, pipeline);
+    }
+
+    @Override
+    public void indexRawJson(String index, String id, String json, String pipeline) {
+        logger.trace("JSon indexed : {}", json);
         bulkProcessor.add(new IndexRequest(index).id(id).setPipeline(pipeline).source(json, XContentType.JSON));
     }
 
     @Override
     public void indexSingle(String index, String id, String json) throws IOException {
+        logger.trace("JSon indexed : {}", json);
         client.index(new IndexRequest(index).id(id).source(json, XContentType.JSON), RequestOptions.DEFAULT);
     }
 
@@ -440,6 +457,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         return builder;
     }
 
+    @Override
     public void createIndices() throws Exception {
         String elasticsearchVersion;
         Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");

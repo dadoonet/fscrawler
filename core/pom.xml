@@ -80,6 +80,12 @@
             <artifactId>fscrawler-elasticsearch-client-base</artifactId>
         </dependency>
 
+        <!-- Our Workplace Search Client -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-workplacesearch-client</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>

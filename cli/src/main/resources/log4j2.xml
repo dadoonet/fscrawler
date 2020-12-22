@@ -60,6 +60,9 @@
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">
          <AppenderRef ref="RollingFile" />
       </Logger>
+      <Logger name="com.gargoylesoftware" level="error" additivity="false">
+         <AppenderRef ref="RollingFile"/>
+      </Logger>
 
       <Root level="warn">
          <AppenderRef ref="RollingFile" />

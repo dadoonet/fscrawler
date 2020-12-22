@@ -14,6 +14,7 @@
 
     <properties>
         <integ.elasticsearch.version>${elasticsearch7.version}</integ.elasticsearch.version>
+        <contrib.dir>${project.basedir}/../../contrib</contrib.dir>
     </properties>
 
     <dependencies>
@@ -103,10 +104,36 @@
                 </executions>
             </plugin>
 
-            <!-- To start Docker when running IT -->
+            <!-- To start Docker Compose when running IT -->
             <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
+                <groupId>com.dkanejs.maven.plugins</groupId>
+                <artifactId>docker-compose-maven-plugin</artifactId>
+                <configuration>
+                    <services>
+                        <service>elasticsearch</service>
+                        <!-- We are disabling enterprisesearch for now as we don't have an Admin API yet -->
+                        <!--service>enterprisesearch</service-->
+                    </services>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>de.scravy</groupId>
+                <artifactId>waitfor-maven-plugin</artifactId>
+                <configuration>
+                    <checks>
+                        <check>
+                            <url>http://localhost:9200/</url>
+                            <statusCode>401</statusCode>
+                        </check>
+                        <!-- We are disabling enterprisesearch for now as we don't have an Admin API yet -->
+                        <!--
+                        <check>
+                            <url>http://localhost:3002/</url>
+                            <statusCode>200</statusCode>
+                        </check>
+                        -->
+                    </checks>
+                </configuration>
             </plugin>
 
             <plugin>
@@ -125,7 +152,7 @@
 
     <profiles>
         <profile>
-            <id>skip-fabric8</id>
+            <id>skip-docker-compose</id>
             <activation>
                 <property>
                     <name>tests.cluster.url</name>
@@ -134,8 +161,15 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>io.fabric8</groupId>
-                        <artifactId>docker-maven-plugin</artifactId>
+                        <groupId>com.dkanejs.maven.plugins</groupId>
+                        <artifactId>docker-compose-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>de.scravy</groupId>
+                        <artifactId>waitfor-maven-plugin</artifactId>
                         <configuration>
                             <skip>true</skip>
                         </configuration>
@@ -144,7 +178,7 @@
             </build>
         </profile>
         <profile>
-            <id>run-fabric8</id>
+            <id>run-docker-compose</id>
             <activation>
                 <property>
                     <name>!tests.cluster.url</name>
@@ -153,50 +187,17 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>io.fabric8</groupId>
-                        <artifactId>docker-maven-plugin</artifactId>
+                        <groupId>com.dkanejs.maven.plugins</groupId>
+                        <artifactId>docker-compose-maven-plugin</artifactId>
                         <configuration>
                             <skip>${skipIntegTests}</skip>
                         </configuration>
                     </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>security</id>
-            <build>
-                <plugins>
                     <plugin>
-                        <groupId>io.fabric8</groupId>
-                        <artifactId>docker-maven-plugin</artifactId>
+                        <groupId>de.scravy</groupId>
+                        <artifactId>waitfor-maven-plugin</artifactId>
                         <configuration>
-                            <images>
-                                <image>
-                                    <alias>fscrawler</alias>
-                                    <name>dadoonet/fscrawler:${project.version}</name>
-                                    <build>
-                                        <from>${integ.elasticsearch.image}:${integ.elasticsearch.version}</from>
-                                        <env>
-                                            <discovery.type>single-node</discovery.type>
-                                            <xpack.license.self_generated.type>trial</xpack.license.self_generated.type>
-                                            <xpack.security.enabled>true</xpack.security.enabled>
-                                            <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
-                                        </env>
-                                    </build>
-                                    <run>
-                                        <ports>
-                                            <port>integ.elasticsearch.port:9200</port>
-                                        </ports>
-                                        <wait>
-                                            <http>
-                                                <url>http://localhost:${integ.elasticsearch.port}/</url>
-                                                <status>200..499</status>
-                                            </http>
-                                            <time>60000</time>
-                                        </wait>
-                                    </run>
-                                </image>
-                            </images>
+                            <skip>${skipIntegTests}</skip>
                         </configuration>
                     </plugin>
                 </plugins>

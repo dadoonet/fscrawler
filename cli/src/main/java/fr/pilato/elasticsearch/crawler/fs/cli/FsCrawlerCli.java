@@ -261,6 +261,19 @@ public class FsCrawlerCli {
             return;
         }
 
+        // We add a special case here in case someone tries to use workplace search
+        if (fsSettings.getWorkplaceSearch() != null) {
+            logger.info("Workplace Search integration is an experimental feature. " +
+                    "As is it is not fully implemented and settings might change in the future.");
+            if (commands.loop == -1 || commands.loop > 1) {
+                logger.warn("Workplace Search integration does not support yet watching a directory. " +
+                        "It will be able to run only once and exit. We manually force from --loop {} to --loop 1. " +
+                        "If you want to remove this message next time, please start FSCrawler with --loop 1",
+                        commands.loop);
+                commands.loop = 1;
+            }
+        }
+
         try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest)) {
             Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
             // Let see if we want to upgrade an existing cluster to latest version
@@ -270,13 +283,12 @@ public class FsCrawlerCli {
                 if (!startEsClient(fsCrawler)) {
                     return;
                 }
-                String elasticsearchVersion = fsCrawler.getEsClient().getVersion();
+                String elasticsearchVersion = fsCrawler.getManagementService().getClient().getVersion();
                 checkForDeprecatedResources(configDir, elasticsearchVersion);
-                fsCrawler.start();
 
                 // Start the REST Server if needed
                 if (commands.rest) {
-                    RestServer.start(fsSettings, fsCrawler.getEsClient());
+                    RestServer.start(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService());
                 }
 
                 // We just have to wait until the process is stopped
@@ -292,7 +304,8 @@ public class FsCrawlerCli {
 
     private static boolean startEsClient(FsCrawlerImpl fsCrawler) {
         try {
-            fsCrawler.getEsClient().start();
+            fsCrawler.getManagementService().start();
+            fsCrawler.getDocumentService().start();
             return true;
         } catch (Exception t) {
             logger.fatal("We can not start Elasticsearch Client. Exiting.", t);

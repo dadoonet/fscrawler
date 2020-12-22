@@ -39,12 +39,12 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_S
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
+public abstract class AbstractFsCrawlerITCase extends AbstractRestITCase {
 
     @Before
     public void cleanExistingIndex() throws IOException {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        esClient.deleteIndex(getCrawlerName() + "*");
+        documentService.getClient().deleteIndex(getCrawlerName() + "*");
     }
 
     @After
@@ -52,15 +52,15 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         stopCrawler();
     }
 
-    Fs.Builder startCrawlerDefinition() {
+    protected Fs.Builder startCrawlerDefinition() {
         return startCrawlerDefinition(currentTestResourceDir.toString(), TimeValue.timeValueSeconds(5));
     }
 
-    Fs.Builder startCrawlerDefinition(TimeValue updateRate) {
+    protected Fs.Builder startCrawlerDefinition(TimeValue updateRate) {
         return startCrawlerDefinition(currentTestResourceDir.toString(), updateRate);
     }
 
-    Fs.Builder startCrawlerDefinition(String dir) {
+    protected Fs.Builder startCrawlerDefinition(String dir) {
         return startCrawlerDefinition(dir, TimeValue.timeValueSeconds(5));
     }
 
@@ -72,7 +72,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
                 .setUpdateRate(updateRate);
     }
 
-    Elasticsearch endCrawlerDefinition(String indexName) {
+    protected Elasticsearch endCrawlerDefinition(String indexName) {
         return endCrawlerDefinition(indexName, indexName + INDEX_SUFFIX_FOLDER);
     }
 
@@ -80,7 +80,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         return generateElasticsearchConfig(indexDocName, indexFolderName, 1, null, null);
     }
 
-    void startCrawler() throws Exception {
+    protected void startCrawler() throws Exception {
         startCrawler(getCrawlerName());
     }
 
@@ -88,19 +88,26 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         startCrawler(jobName, startCrawlerDefinition().build(), endCrawlerDefinition(jobName), null);
     }
 
-    FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
+    protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
         return startCrawler(jobName, fs, elasticsearch, server, null, TimeValue.timeValueSeconds(10));
     }
 
-    FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest, TimeValue duration)
+    protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest,
+                                         TimeValue duration)
+            throws Exception {
+        startCrawler(jobName, FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(), duration);
+        return crawler;
+    }
+
+    protected FsCrawlerImpl startCrawler(final String jobName, FsSettings fsSettings, TimeValue duration)
             throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
         crawler = new FsCrawlerImpl(
                 metadataDir,
-                FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(),
+                fsSettings,
                 LOOP_INFINITE,
-                rest != null);
+                fsSettings.getRest() != null);
         crawler.start();
 
         // We wait up to X seconds before considering a failing test

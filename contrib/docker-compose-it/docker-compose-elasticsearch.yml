@@ -1,0 +1,24 @@
+---
+version: '3'
+services:
+
+  elasticsearch:
+    image: $IMG_ELASTICSEARCH:$ELASTIC_VERSION
+    environment:
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms3g -Xmx3g"
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - ELASTIC_PASSWORD=$ELASTIC_PASSWORD
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - xpack.ml.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports: ["$ELASTICSEARCH_PORT:$ELASTICSEARCH_PORT"]
+    networks: ['fscrawler_it']
+
+networks:
+  fscrawler_it: {}

@@ -123,11 +123,11 @@ public class UploadApi extends RestApi {
             logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].", filename, url);
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
-            doc = this.getMergedJsonDoc(doc, tags);
+            final Doc mergedDoc = this.getMergedJsonDoc(doc, tags);
             esClient.index(
                     index,
                     id,
-                    DocParser.toJson(doc),
+                    mergedDoc,
                     settings.getElasticsearch().getPipeline());
         }
 

@@ -19,45 +19,59 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
-import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
-import org.junit.After;
-import org.junit.Before;
+import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
-import java.io.IOException;
+import java.util.Map;
 
 public abstract class AbstractRestITCase extends AbstractITCase {
 
-    private ElasticsearchClient esTmpClient;
+    protected static WebTarget target;
+    protected static Client client;
 
-    @Before
-    public void startRestServer() throws Exception {
-        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
-                .setRest(new Rest("http://127.0.0.1:" + testRestPort + "/fscrawler"))
-                .setElasticsearch(elasticsearchWithSecurity)
-                .build();
-        fsSettings.getElasticsearch().setIndex(getCrawlerName());
-        FsCrawlerValidator.validateSettings(logger, fsSettings, true);
-        esTmpClient = ElasticsearchClientUtil.getInstance(metadataDir, fsSettings);
-        esTmpClient.start();
-        RestServer.start(fsSettings, esTmpClient);
-
-        logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
-        esTmpClient.deleteIndex(getCrawlerName() + "*");
-
-        logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
+    public static <T> T restCall(String path, Class<T> clazz) {
+        if (staticLogger.isDebugEnabled()) {
+            String response = target.path(path).request().get(String.class);
+            staticLogger.debug("Rest response: {}", response);
+        }
+        return target.path(path).request().get(clazz);
     }
 
-    @After
-    public void stopRestServer() throws IOException {
-        RestServer.close();
-        if (esTmpClient != null) {
-            esTmpClient.close();
-            esTmpClient = null;
+    public static <T> T restCall(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
+        WebTarget targetPath = target.path(path);
+        params.forEach(targetPath::queryParam);
+
+        return targetPath.request(MediaType.MULTIPART_FORM_DATA)
+                .accept(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(mp, mp.getMediaType()), clazz);
+    }
+
+    @BeforeClass
+    public static void startRestClient() {
+        // create the client
+        client = ClientBuilder.newBuilder()
+                .register(MultiPartFeature.class)
+                .register(RestJsonProvider.class)
+                .register(JacksonFeature.class)
+                .build();
+
+        target = client.target("http://127.0.0.1:" + testRestPort + "/fscrawler");
+    }
+
+    @AfterClass
+    public static void stopRestClient() {
+        if (client != null) {
+            client.close();
+            client = null;
         }
     }
 }

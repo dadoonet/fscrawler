@@ -30,13 +30,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.iterableWithSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
@@ -64,9 +58,18 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setUsername("elastic")
             .setPassword("changeme")
             .setBulkSize(1000)
+            .setByteSize(ByteSizeValue.parseBytesSizeValue("10mb"))
             .setFlushInterval(TimeValue.timeValueSeconds(5))
             .setIndex("docs")
             .setPipeline("pipeline-id-if-any")
+            .build();
+    private static final WorkplaceSearch WORKPLACE_SEARCH_EMPTY = WorkplaceSearch.builder().build();
+    private static final WorkplaceSearch WORKPLACE_SEARCH_FULL = WorkplaceSearch.builder()
+            .setServer(new ServerUrl("https://127.0.0.1:3002"))
+            .setKey("KEY")
+            .setAccessToken("ACCESS_TOKEN")
+            .setUrlPrefix("https://127.0.0.1")
+            .setBulkSize(100)
             .build();
     private static final Server SERVER_EMPTY = Server.builder().build();
     private static final Server SERVER_FULL = Server.builder()
@@ -233,7 +236,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testParseSettingsElasticsearchCloudId() throws IOException {
-        String cloudId = "fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==";
+        String cloudId = "wpsearch:ZXUtd2VzdC0zLmF3cy5lbGFzdGljLWNsb3VkLmNvbTo5MjQzJDg4NTYwNTJmNDBkNjQ4YjE5Mzk1ZDQ5YTViZjgwNTA4JDJhYjJmYTU5N2RiNDQwNjJhMGZmMjY2ZTBkZTEwY2Fm";
         FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
                 .setElasticsearch(Elasticsearch.builder()
                         .addNode(new ServerUrl(cloudId))
@@ -241,9 +244,9 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
                 .build();
         settingsTester(fsSettings);
 
-        assertThat(fsSettings.getElasticsearch().getNodes().get(0).getCloudId(), is("fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw=="));
+        assertThat(fsSettings.getElasticsearch().getNodes().get(0).getCloudId(), is("wpsearch:ZXUtd2VzdC0zLmF3cy5lbGFzdGljLWNsb3VkLmNvbTo5MjQzJDg4NTYwNTJmNDBkNjQ4YjE5Mzk1ZDQ5YTViZjgwNTA4JDJhYjJmYTU5N2RiNDQwNjJhMGZmMjY2ZTBkZTEwY2Fm"));
         assertThat(fsSettings.getElasticsearch().getNodes().get(0).getUrl(), is(nullValue()));
-        assertThat(fsSettings.getElasticsearch().getNodes().get(0).decodedUrl(), is("https://1d1ea996887745a6a2b7cb79315348a3.europe-west1.gcp.cloud.es.io:443"));
+        assertThat(fsSettings.getElasticsearch().getNodes().get(0).decodedUrl(), is("https://8856052f40d648b19395d49a5bf80508.eu-west-3.aws.elastic-cloud.com:9243"));
 
     }
 
@@ -252,6 +255,24 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
                         .setElasticsearch(ELASTICSEARCH_FULL)
+                        .build()
+        );
+    }
+
+    @Test
+    public void testParseSettingsEmptyWorkplaceSearch() throws IOException {
+        settingsTester(
+                FsSettings.builder(getCurrentTestName())
+                        .setWorkplaceSearch(WORKPLACE_SEARCH_EMPTY)
+                        .build()
+        );
+    }
+
+    @Test
+    public void testParseSettingsWorkplaceSearch() throws IOException {
+        settingsTester(
+                FsSettings.builder(getCurrentTestName())
+                        .setWorkplaceSearch(WORKPLACE_SEARCH_FULL)
                         .build()
         );
     }
@@ -279,6 +300,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
                         .setElasticsearch(ELASTICSEARCH_FULL)
+                        .setWorkplaceSearch(WORKPLACE_SEARCH_FULL)
                         .setServer(SERVER_FULL)
                         .setFs(FS_FULL)
                         .setRest(REST_FULL)
