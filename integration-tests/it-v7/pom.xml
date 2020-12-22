@@ -111,7 +111,8 @@
                 <configuration>
                     <services>
                         <service>elasticsearch</service>
-                        <service>enterprisesearch</service>
+                        <!-- We are disabling enterprisesearch for now as we don't have an Admin API yet -->
+                        <!--service>enterprisesearch</service-->
                     </services>
                 </configuration>
             </plugin>
@@ -124,10 +125,13 @@
                             <url>http://localhost:9200/</url>
                             <statusCode>401</statusCode>
                         </check>
+                        <!-- We are disabling enterprisesearch for now as we don't have an Admin API yet -->
+                        <!--
                         <check>
                             <url>http://localhost:3002/</url>
                             <statusCode>200</statusCode>
                         </check>
+                        -->
                     </checks>
                 </configuration>
             </plugin>

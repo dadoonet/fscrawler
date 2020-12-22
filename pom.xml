@@ -920,21 +920,6 @@
                 <artifactId>randomizedtesting-runner</artifactId>
                 <version>2.7.8</version>
             </dependency>
-            <!--
-                This is used to be able to automatically create a Custom Source API
-                in Workplace Search as we don't have an API for it yet.
-            -->
-            <dependency>
-                <groupId>net.sourceforge.htmlunit</groupId>
-                <artifactId>htmlunit</artifactId>
-                <version>2.43.0</version>
-            </dependency>
-            <!-- htmlunit (3.11) vs tika-parsers (3.10) conflict-->
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>3.11</version>
-            </dependency>
             <!-- CVE Temporary Fix -->
             <dependency>
                 <groupId>org.bouncycastle</groupId>

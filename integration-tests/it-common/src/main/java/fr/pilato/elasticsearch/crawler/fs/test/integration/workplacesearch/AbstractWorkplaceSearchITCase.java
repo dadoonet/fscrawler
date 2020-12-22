@@ -27,7 +27,7 @@ import org.junit.BeforeClass;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assume.assumeNoException;
 
 public class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
@@ -52,10 +52,15 @@ public class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
             testWorkplaceAccessToken = (String) customSource.get("accessToken");
             testWorkplaceKey = (String) customSource.get("key");
 
+            // Because we don't have an admin client yet for Workplace Search, we will be getting manually
+            // the custom source information from the command line as options.
+            testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token");
+            testWorkplaceKey = System.getProperty("tests.workplace.key");
+
             assertThat(customSourceId, notNullValue());
-            assertThat(testWorkplaceAccessToken, notNullValue());
-            assertThat(testWorkplaceKey, notNullValue());
-        } catch (Exception e) {
+            assertThat(testWorkplaceAccessToken, not(isEmptyOrNullString()));
+            assertThat(testWorkplaceKey, not(isEmptyOrNullString()));
+        } catch (AssertionError e) {
             assumeNoException("We are skipping the test as we were not able to create a Workplace Search client", e);
         }
     }
