@@ -79,8 +79,8 @@
         to use them have to provided them manually in the lib dir.
         -->
         <dependency>
-            <groupId>com.levigo.jbig2</groupId>
-            <artifactId>levigo-jbig2-imageio</artifactId>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>jbig2-imageio</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
