@@ -67,12 +67,12 @@ public class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
 
     @AfterClass
     public static void removeCustomSource() {
-        try {
-            adminClient.removeCustomSource(customSourceId);
-        } catch (Exception e) {
-            staticLogger.warn("We have not been able to remove {}: {}", customSourceId, e.getMessage());
-        }
         if (adminClient != null) {
+            try {
+                adminClient.removeCustomSource(customSourceId);
+            } catch (Exception e) {
+                staticLogger.warn("We have not been able to remove {}: {}", customSourceId, e.getMessage());
+            }
             adminClient.close();
             adminClient = null;
         }

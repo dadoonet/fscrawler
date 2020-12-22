@@ -49,7 +49,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     private static final Logger logger = LogManager.getLogger(WorkplaceSearchClientV7.class);
     private final Path config;
     private final FsSettings settings;
-    private static final SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZZZZZ");
+    private final SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZZZZZ");
 
     private ElasticsearchClient esClient = null;
     private WPSearchClient wpSearchClient = null;
@@ -66,6 +66,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public void start() throws IOException {
+        logger.debug("Starting Workplace Search V7 client");
         wpSearchClient = new WPSearchClient(
                 settings.getWorkplaceSearch().getAccessToken(),
                 settings.getWorkplaceSearch().getKey())
@@ -75,6 +76,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
         wpSearchClient.start();
         esClient = ElasticsearchClientUtil.getInstance(config, settings);
         esClient.start();
+        logger.debug("Workplace Search V7 client started");
     }
 
     @Override
@@ -191,12 +193,14 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public void close() throws IOException {
+        logger.debug("Closing Workplace Search V7 client");
         if (esClient != null) {
             esClient.close();
         }
         if (wpSearchClient != null) {
             wpSearchClient.close();
         }
+        logger.debug("Workplace Search V7 client closed");
     }
 
     public void createIndices() throws Exception {
@@ -227,17 +231,17 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException {
+    public ESSearchHit get(String index, String id) {
         throw new RuntimeException("Not implemented yet");
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException {
+    public boolean exists(String index, String id) {
         throw new RuntimeException("Not implemented yet");
         // return esClient.exists(index, id);
     }
 
-    static String toRFC3339(Date d)
+    private String toRFC3339(Date d)
     {
         return rfc3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
     }
