@@ -33,12 +33,12 @@ import static org.junit.Assume.assumeNoException;
 public class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
 
     private final static String DEFAULT_TEST_WPSEARCH_URL = "http://127.0.0.1:3002";
-    protected final static String testWorkplaceUrl = System.getProperty("tests.workplace.url", DEFAULT_TEST_WPSEARCH_URL);
+    protected static String testWorkplaceUrl = System.getProperty("tests.workplace.url", DEFAULT_TEST_WPSEARCH_URL);
+    protected static String testWorkplaceAccessToken;
+    protected static String testWorkplaceKey;
 
     protected static WPSearchAdminClient adminClient;
     private static String customSourceId;
-    protected static String testWorkplaceAccessToken;
-    protected static String testWorkplaceKey;
 
     @BeforeClass
     public static void createCustomSource() throws Exception {

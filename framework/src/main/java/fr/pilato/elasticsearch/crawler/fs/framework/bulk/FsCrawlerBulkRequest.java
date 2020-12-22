@@ -22,7 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 import java.util.ArrayList;
 import java.util.List;
 
-abstract public class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
+public abstract class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
 
     private final List<T> operations = new ArrayList<>();
 

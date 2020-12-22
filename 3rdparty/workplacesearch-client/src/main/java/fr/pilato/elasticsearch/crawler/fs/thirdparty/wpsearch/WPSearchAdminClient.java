@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient.DEFAULT_HOST;
@@ -37,8 +38,8 @@ import static fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchCli
 public class WPSearchAdminClient implements Closeable {
 
     private static final Logger logger = LogManager.getLogger(WPSearchAdminClient.class);
-    private final static String DEFAULT_USERNAME = "enterprise_search";
-    private final static String DEFAULT_PASSWORD = "changeme";
+    private static final String DEFAULT_USERNAME = "enterprise_search";
+    private static final String DEFAULT_PASSWORD = "changeme";
 
     private String host = DEFAULT_HOST;
     private String username = DEFAULT_USERNAME;
@@ -85,6 +86,7 @@ public class WPSearchAdminClient implements Closeable {
     }
 
     private void checkStarted() {
+        // This method is empty as we are waiting for an Admin API for Workplace Search
     }
 
     public Map<String, Object> createCustomSource(String sourceName) throws Exception {
@@ -114,24 +116,24 @@ public class WPSearchAdminClient implements Closeable {
         callApi(HttpMethod.DELETE, "/ws/org/sources/" + id, null);
     }
 
-    public void login(String username, String password) throws Exception {
-
+    public void login(String username, String password) {
+        logger.debug("login to Workplace Search as user {}", username);
     }
 
     private String callApi(String method, String url, String data)
             throws IOException {
         logger.debug("Calling {}", url);
 
+        logger.debug("Faking a {} call to {}", method, new URL(host + url));
+
         // Create a web request with
-//        WebRequest webRequest = new WebRequest(new URL(host + url));
-//        webRequest.setHttpMethod(method);
-//        if (data != null) {
-//            webRequest.setRequestBody(data);
-//            webRequest.setAdditionalHeader("Content-Type", "application/json;charset=UTF-8");
-//        }
-//        webRequest.setAdditionalHeader("Cookie", session.getName() + "=" + session.getValue());
-//        webRequest.setAdditionalHeader("x-csrf-token", csrfToken);
-//        webRequest.setAdditionalHeader("Accept", "application/json, text/plain, */*");
+//        url: host + url
+//        httpMethod: method;
+//        requestBody: data
+//        additionalHeader: Content-Type: application/json;charset=UTF-8
+//        additionalHeader: Cookie: session.getName()=session.getValue()
+//        additionalHeader: x-csrf-token: csrfToken
+//        additionalHeader: Accept: application/json, text/plain, */*
         return null;
     }
 }

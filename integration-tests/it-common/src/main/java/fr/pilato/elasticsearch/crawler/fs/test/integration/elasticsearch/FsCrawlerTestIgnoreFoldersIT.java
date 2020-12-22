@@ -49,7 +49,6 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
 
         // We expect having no folders
         ESSearchResponse response = documentService.getClient().search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
-        staticLogger.trace("result {}", response.toString());
         assertThat(response.getTotalHits(), is(0L));
     }
 }

@@ -32,9 +32,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class FsCrawlerAdvancedBulkProcessorListener<
         O extends FsCrawlerOperation<O>,
-        Req extends FsCrawlerBulkRequest<O>,
-        Res extends FsCrawlerBulkResponse<O>
-        > extends FsCrawlerSimpleBulkProcessorListener<O, Req, Res> {
+        REQ extends FsCrawlerBulkRequest<O>,
+        RES extends FsCrawlerBulkResponse<O>
+        > extends FsCrawlerSimpleBulkProcessorListener<O, REQ, RES> {
     private static final Logger logger = LogManager.getLogger(FsCrawlerAdvancedBulkProcessorListener.class);
 
     private final AtomicInteger successiveErrors = new AtomicInteger(0);
@@ -44,7 +44,7 @@ public class FsCrawlerAdvancedBulkProcessorListener<
     }
 
     @Override
-    public void afterBulk(long executionId, Req request, Res response) {
+    public void afterBulk(long executionId, REQ request, RES response) {
         super.afterBulk(executionId, request, response);
         if (response.hasFailures()) {
             int previousErrors = successiveErrors.getAndIncrement();

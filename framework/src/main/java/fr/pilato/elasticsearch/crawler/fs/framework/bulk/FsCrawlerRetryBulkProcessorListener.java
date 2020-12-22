@@ -28,17 +28,17 @@ import org.apache.logging.log4j.Logger;
  */
 public class FsCrawlerRetryBulkProcessorListener<
         O extends FsCrawlerOperation<O>,
-        Req extends FsCrawlerBulkRequest<O>,
-        Res extends FsCrawlerBulkResponse<O>
-        > extends FsCrawlerAdvancedBulkProcessorListener<O, Req, Res> {
+        REQ extends FsCrawlerBulkRequest<O>,
+        RES extends FsCrawlerBulkResponse<O>
+        > extends FsCrawlerAdvancedBulkProcessorListener<O, REQ, RES> {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerRetryBulkProcessorListener.class);
 
     @Override
-    public void afterBulk(long executionId, Req request, Res response) {
+    public void afterBulk(long executionId, REQ request, RES response) {
         super.afterBulk(executionId, request, response);
         if (response.hasFailures()) {
-            for (Res.BulkItemResponse<O> item : response.getItems()) {
+            for (RES.BulkItemResponse<O> item : response.getItems()) {
                 if (item.isFailed() && item.getFailureMessage().contains("es_rejected_execution_exception")) {
                     logger.debug("We are going to retry document [{}] because of [{}]",
                             item.getOperation(), item.getFailureMessage());

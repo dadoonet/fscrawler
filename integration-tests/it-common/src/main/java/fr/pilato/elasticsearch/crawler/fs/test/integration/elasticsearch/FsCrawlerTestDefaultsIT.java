@@ -103,7 +103,6 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
                 .withIndex(getCrawlerName())
                 .withESQuery(new ESMatchQuery("content", "exemplo"))
                 .addHighlighter("content"));
-        staticLogger.trace("result {}", response.toString());
         assertThat(response.getTotalHits(), is(1L));
 
         ESSearchHit hit = response.getHits().get(0);

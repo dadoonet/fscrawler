@@ -25,7 +25,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.Arrays;
 
 @SuppressWarnings("CanBeFinal")
-abstract public class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
+public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerBulkResponse.class);
 
@@ -124,19 +124,16 @@ abstract public class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
 
         @Override
         public String toString() {
-            String sb = "BulkItemResponse{" + "failed=" + failed +
+            return "BulkItemResponse{" + "failed=" + failed +
                     ", operation='" + operation + '\'' +
                     ", opType=" + opType +
                     ", failureMessage='" + failureMessage + '\'' +
                     '}';
-            return sb;
         }
     }
 
     @Override
     public String toString() {
-        String sb = "BulkResponse{" + "items=" + (items == null ? "null" : Arrays.asList(items).toString()) +
-                '}';
-        return sb;
+        return "BulkResponse{" + "items=" + (items == null ? "null" : Arrays.asList(items).toString()) + '}';
     }
 }

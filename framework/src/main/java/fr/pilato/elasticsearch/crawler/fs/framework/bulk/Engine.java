@@ -23,12 +23,12 @@ package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
  * Defines an Engine which is responsible to execute a bulk operation
  */
 public interface Engine<O extends FsCrawlerOperation<O>,
-        Req extends FsCrawlerBulkRequest<O>,
-        Res extends FsCrawlerBulkResponse<O>> {
+        REQ extends FsCrawlerBulkRequest<O>,
+        RES extends FsCrawlerBulkResponse<O>> {
     /**
      * Actually execute the Bulk Request behind the scene
      * @param request   The request to execute
      * @return          The outcome
      */
-    Res bulk(Req request);
+    RES bulk(REQ request);
 }

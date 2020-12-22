@@ -76,7 +76,10 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     public Collection<String> getFileDirectory(String path)
             throws Exception {
 
-        logger.trace("Querying elasticsearch for files in dir [{}:{}]", PATH_ROOT, SignTool.sign(path));
+        if (logger.isTraceEnabled()) {
+            logger.trace("Querying elasticsearch for files in dir [{}:{}]", PATH_ROOT, SignTool.sign(path));
+        }
+
         Collection<String> files = new ArrayList<>();
         ESSearchResponse response = client.search(
                 new ESSearchRequest()
@@ -85,7 +88,6 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                         .addField(FILE_FILENAME)
                         .withESQuery(new ESTermQuery(PATH_ROOT, SignTool.sign(path))));
 
-        logger.trace("Response [{}]", response.toString());
         if (response.getHits() != null) {
             for (ESSearchHit hit : response.getHits()) {
                 String name;

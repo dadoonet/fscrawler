@@ -19,8 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import java.io.IOException;
 import java.util.Map;
 

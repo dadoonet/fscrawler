@@ -21,8 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.service;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
-import java.io.IOException;
-
 public interface FsCrawlerDocumentService extends FsCrawlerService {
     /**
      * Create a schema for the dataset. This is called when the service starts
