@@ -40,6 +40,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 
 /**
  * Workplace Search Java client
@@ -50,8 +53,16 @@ public class WPSearchClient implements Closeable {
 
     private static final Logger logger = LogManager.getLogger(WPSearchClient.class);
 
+    private final static String WORKPLACESEARCH_PROPERTIES = "workplacesearch.properties";
+    private static final Properties properties;
+    private final static String CLIENT_VERSION;
+
+    static {
+        properties = readPropertiesFromClassLoader(WORKPLACESEARCH_PROPERTIES);
+        CLIENT_VERSION = properties.getProperty("workplacesearch.version");
+    }
+
     private final static String CLIENT_NAME = "elastic-workplace-search-java";
-    private final static String CLIENT_VERSION = "7.10.0";
     private final static String DEFAULT_ENDPOINT = "/api/ws/v1/";
     public final static String DEFAULT_HOST = "http://127.0.0.1:3002";
 

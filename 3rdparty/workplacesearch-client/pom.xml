@@ -12,6 +12,15 @@
     <artifactId>fscrawler-workplacesearch-client</artifactId>
     <name>FSCrawler Workplace Search Client</name>
 
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+
     <dependencies>
         <!-- Our framework -->
         <dependency>
