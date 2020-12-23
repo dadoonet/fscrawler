@@ -4,3 +4,5 @@ target
 /.project
 .idea
 *.iml
+/.run
+/logs/

@@ -20,10 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.ext.ContextResolver;
+import jakarta.ws.rs.ext.Provider;
 import org.apache.logging.log4j.LogManager;
-
-import javax.ws.rs.ext.ContextResolver;
-import javax.ws.rs.ext.Provider;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
 import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;

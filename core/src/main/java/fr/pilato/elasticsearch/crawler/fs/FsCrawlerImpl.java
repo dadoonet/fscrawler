@@ -19,10 +19,13 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
@@ -36,7 +39,7 @@ import java.nio.file.Path;
 /**
  * @author dadoonet (David Pilato)
  */
-public class FsCrawlerImpl {
+public class FsCrawlerImpl implements AutoCloseable {
 
     @Deprecated
     public static final String INDEX_TYPE_FOLDER = "folder";
@@ -53,7 +56,9 @@ public class FsCrawlerImpl {
 
     private Thread fsCrawlerThread;
 
-    private final ElasticsearchClient esClient;
+    private final FsCrawlerDocumentService documentService;
+    private final FsCrawlerManagementService managementService;
+
     private FsParser fsParser;
 
     public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
@@ -63,7 +68,16 @@ public class FsCrawlerImpl {
         this.settings = settings;
         this.loop = loop;
         this.rest = rest;
-        this.esClient = ElasticsearchClientUtil.getInstance(config, settings);
+
+        this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(config, settings);
+
+        if (settings.getWorkplaceSearch() == null) {
+            // The documentService is using the esSearch instance
+            this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(config, settings);
+        } else {
+            // The documentService is using the wpSearch instance
+            this.documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(config, settings);
+        }
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
@@ -80,8 +94,12 @@ public class FsCrawlerImpl {
         }
     }
 
-    public ElasticsearchClient getEsClient() {
-        return esClient;
+    public FsCrawlerDocumentService getDocumentService() {
+        return documentService;
+    }
+
+    public FsCrawlerManagementService getManagementService() {
+        return managementService;
     }
 
     public void start() throws Exception {
@@ -95,18 +113,19 @@ public class FsCrawlerImpl {
             return;
         }
 
-        esClient.start();
-        esClient.createIndices();
+        managementService.start();
+        documentService.start();
+        documentService.createSchema();
 
         // Start the crawler thread - but not if only in rest mode
         if (loop != 0) {
             // What is the protocol used?
             if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
                 // Local FS
-                fsParser = new FsParserLocal(settings, config, esClient, loop);
+                fsParser = new FsParserLocal(settings, config, managementService, documentService, loop);
             } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
                 // Remote SSH FS
-                fsParser = new FsParserSsh(settings, config, esClient, loop);
+                fsParser = new FsParserSsh(settings, config, managementService, documentService, loop);
             } else {
                 // Non supported protocol
                 throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +
@@ -144,7 +163,8 @@ public class FsCrawlerImpl {
             logger.debug("FS crawler thread is now stopped");
         }
 
-        esClient.close();
+        managementService.close();
+        documentService.close();
         logger.debug("ES Client Manager stopped");
 
         logger.info("FS crawler [{}] stopped", settings.getName());

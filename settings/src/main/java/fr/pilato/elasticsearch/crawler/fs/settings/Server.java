@@ -22,6 +22,8 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 public class Server {
 
     public static final class PROTOCOL {
@@ -156,11 +158,11 @@ public class Server {
         Server server = (Server) o;
 
         if (port != server.port) return false;
-        if (hostname != null ? !hostname.equals(server.hostname) : server.hostname != null) return false;
-        if (username != null ? !username.equals(server.username) : server.username != null) return false;
+        if (!Objects.equals(hostname, server.hostname)) return false;
+        if (!Objects.equals(username, server.username)) return false;
         // We can't really test the password as it may be obfuscated
-        if (protocol != null ? !protocol.equals(server.protocol) : server.protocol != null) return false;
-        return !(pemPath != null ? !pemPath.equals(server.pemPath) : server.pemPath != null);
+        if (!Objects.equals(protocol, server.protocol)) return false;
+        return Objects.equals(pemPath, server.pemPath);
 
     }
 

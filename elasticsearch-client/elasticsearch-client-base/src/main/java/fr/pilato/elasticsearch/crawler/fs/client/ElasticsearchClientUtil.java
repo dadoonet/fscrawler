@@ -97,6 +97,7 @@ public abstract class ElasticsearchClientUtil {
      * @param version Version number to use. It's only the major part of the version. Like 5 or 6.
      * @return The Client class
      */
+    @SuppressWarnings("unchecked")
     private static Class<ElasticsearchClient> findClass(int version) throws ClassNotFoundException {
         String className = "fr.pilato.elasticsearch.crawler.fs.client.v" + version + ".ElasticsearchClientV" + version;
         logger.trace("Trying to find a class named [{}]", className);

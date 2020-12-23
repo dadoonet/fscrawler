@@ -34,8 +34,8 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
     @Test
     public void testSettingsValidation() {
         // Checking default values
-        FsSettings settings = buildSettings(Fs.builder().build(), null, null, null);
-        assertThat(settings.getFs().getUrl(), nullValue());
+        FsSettings settings = buildSettings(Fs.builder().build(), null);
+        assertThat(settings.getFs().getUrl(), is(Fs.DEFAULT_DIR));
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(false));
         assertThat(settings.getFs().getUrl(), is(Fs.DEFAULT_DIR));
         assertThat(settings.getElasticsearch().getNodes(), hasItem(Elasticsearch.NODE_DEFAULT));
@@ -45,7 +45,7 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getRest(), nullValue());
 
         // Checking default values
-        settings = buildSettings(null, null, null, null);
+        settings = buildSettings(null, null);
         assertThat(settings.getFs().getUrl(), is(Fs.DEFAULT_DIR));
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(false));
         assertThat(settings.getElasticsearch().getNodes(), hasItem(Elasticsearch.NODE_DEFAULT));
@@ -55,41 +55,39 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getRest(), nullValue());
 
         // Checking Checksum Algorithm
-        settings = buildSettings(Fs.builder().setChecksum("FSCRAWLER").build(), null, null, null);
+        settings = buildSettings(Fs.builder().setChecksum("FSCRAWLER").build(), null);
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
 
         // Checking protocol
-        settings = buildSettings(null, null, Server.builder().setProtocol("FSCRAWLER").build(), null);
+        settings = buildSettings(null, Server.builder().setProtocol("FSCRAWLER").build());
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
 
         // Checking username / password when SSH
-        settings = buildSettings(null, null, Server.builder().setProtocol(Server.PROTOCOL.SSH).build(), null);
+        settings = buildSettings(null, Server.builder().setProtocol(Server.PROTOCOL.SSH).build());
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
 
         // Checking That we don't try to do both xml and json
-        settings = buildSettings(Fs.builder().setJsonSupport(true).setXmlSupport(true).build(), null, null, null);
+        settings = buildSettings(Fs.builder().setJsonSupport(true).setXmlSupport(true).build(), null);
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
 
         // Checking That we don't try to do index xml with not indexing the content
-        settings = buildSettings(Fs.builder().setIndexContent(false).setXmlSupport(true).build(), null, null, null);
+        settings = buildSettings(Fs.builder().setIndexContent(false).setXmlSupport(true).build(), null);
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
 
         // Checking That we don't try to do index json with not indexing the content
-        settings = buildSettings(Fs.builder().setIndexContent(false).setJsonSupport(true).build(), null, null, null);
+        settings = buildSettings(Fs.builder().setIndexContent(false).setJsonSupport(true).build(), null);
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
 
         // Checking with Rest but no Rest settings
-        settings = buildSettings(null, null, null, null);
+        settings = buildSettings(null, null);
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, true), is(false));
         assertThat(settings.getRest(), notNullValue());
     }
 
-    private FsSettings buildSettings(Fs fs, Elasticsearch elasticsearch, Server server, Rest rest) {
+    private FsSettings buildSettings(Fs fs, Server server) {
         FsSettings.Builder settingsBuilder = FsSettings.builder(getCurrentTestName());
         settingsBuilder.setFs(fs == null ? Fs.DEFAULT : fs);
-        settingsBuilder.setElasticsearch(elasticsearch == null ? Elasticsearch.DEFAULT() : elasticsearch);
         settingsBuilder.setServer(server);
-        settingsBuilder.setRest(rest);
 
         return settingsBuilder.build();
     }

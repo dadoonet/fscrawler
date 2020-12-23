@@ -19,8 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -28,15 +26,21 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapp
 
 public class DocParser {
 
-    public static String toJson(Doc doc) throws JsonProcessingException {
-        return prettyMapper.writeValueAsString(doc);
+    public static String toJson(Doc doc) {
+        try {
+            return prettyMapper.writeValueAsString(doc);
+        } catch (IOException e) {
+            // TODO Fix that code. We should log here and return null.
+            throw new RuntimeException(e);
+        }
     }
 
     public static Doc fromJson(String json) throws IOException {
         return prettyMapper.readValue(json, Doc.class);
     }
 
-    public static Map asMap(String json) throws IOException {
-        return prettyMapper.readValue(json, Map.class);
+    public static Map<String, Object> asMap(String json) throws IOException {
+        //noinspection unchecked
+        return (Map<String, Object>) prettyMapper.readValue(json, Map.class);
     }
 }

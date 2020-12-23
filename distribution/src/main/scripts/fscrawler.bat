@@ -26,6 +26,9 @@ set JAVA_OPTS=%JAVA_OPTS% -Dsun.jnu.encoding=UTF-8
 REM Use LOG4J2 instead of java.util.logging
 set JAVA_OPTS=%JAVA_OPTS% -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
 
+REM Define LOG4J2 config file
+set JAVA_OPTS=%JAVA_OPTS% -Dlog4j.configurationFile=config/log4j2.xml
+
 REM If the user defined FS_JAVA_OPTS, we will use it to start the crawler
 set JAVA_OPTS=%JAVA_OPTS% %FS_JAVA_OPTS%
 

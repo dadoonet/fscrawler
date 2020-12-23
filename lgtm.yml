@@ -6,3 +6,5 @@ extraction:
   java:
     before_index:
       export DOCKER_SKIP=true
+    index:
+      java_version: "14"

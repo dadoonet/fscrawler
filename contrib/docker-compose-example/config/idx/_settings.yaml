@@ -1,0 +1,30 @@
+---
+name: "idx"
+fs:
+  url: "/usr/app/data"
+  update_rate: "15m"
+  indexed_chars: 100%
+  json_support: false
+  filename_as_id: false
+  add_filesize: true
+  remove_deleted: true
+  add_as_inner_object: false
+  store_source: false
+  index_content: true
+  attributes_support: false
+  raw_metadata: false
+  xml_support: false
+  index_folders: true
+  lang_detect: true
+  continue_on_error: false
+  ocr:
+    language: "eng"
+    enabled: true
+    pdf_strategy: "ocr_and_text"
+  follow_symlinks: false
+elasticsearch:
+  nodes:
+    - url: "http://es01:9200"
+  bulk_size: 100
+  flush_interval: "5s"
+  byte_size: "10mb"

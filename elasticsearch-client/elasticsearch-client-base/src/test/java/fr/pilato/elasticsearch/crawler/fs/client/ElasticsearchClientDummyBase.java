@@ -19,7 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+
 import java.io.IOException;
+import java.util.function.Supplier;
 
 public abstract class ElasticsearchClientDummyBase implements ElasticsearchClient {
 
@@ -74,12 +77,17 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public void index(String index, String id, String json, String pipeline) {
+    public void index(String index, String id, Doc doc, String pipeline) {
         // Testing purpose only
     }
 
     @Override
-    public void indexSingle(String index, String id, String json) throws IOException {
+    public void indexRawJson(String index, String id, String json, String pipeline) {
+        // Testing purpose only
+    }
+
+    @Override
+    public void indexSingle(String index, String id, String json) {
         // Testing purpose only
     }
 
@@ -114,12 +122,12 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException {
+    public ESSearchHit get(String index, String id) {
         return null;
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException {
+    public boolean exists(String index, String id) {
         return false;
     }
 

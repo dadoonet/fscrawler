@@ -80,6 +80,12 @@
             <artifactId>fscrawler-elasticsearch-client-base</artifactId>
         </dependency>
 
+        <!-- Our Workplace Search Client -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-workplacesearch-client</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
@@ -95,8 +101,8 @@
         to use them have to provided them manually in the lib dir.
         -->
         <dependency>
-            <groupId>com.levigo.jbig2</groupId>
-            <artifactId>levigo-jbig2-imageio</artifactId>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>jbig2-imageio</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>

@@ -139,16 +139,18 @@ OCR PDF Strategy
 By default, FSCrawler will also try to extract also images from your PDF
 documents and run OCR on them. This can be a CPU intensive operation. If
 you don’t mean to run OCR on PDF but only on images, you can set
-``fs.ocr.pdf_strategy`` to ``"no_ocr"``:
+``fs.ocr.pdf_strategy`` to ``"no_ocr"`` or  to ``"auto"``:
 
 .. code:: yaml
 
    name: "test"
    fs:
      ocr:
-       pdf_strategy: "no_ocr"
+       pdf_strategy: "auto"
 
 Supported strategies are:
+
+* ``auto``: No OCR is performed on PDF documents if there is more than 10 characters extracted. See `PDFParser OCR Options <https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=109454066>`__.
 
 * ``no_ocr``: No OCR is performed on PDF documents. OCR might be performed on images though if OCR is not disabled. See `Disable/Enable OCR`_.
 
@@ -156,4 +158,5 @@ Supported strategies are:
 
 * ``ocr_and_text``: OCR and text extraction is performed.
 
-.. note:: When omitted, ``ocr_and_text`` value is used.
+.. note:: When omitted, ``ocr_and_text`` value is used. If you have performance issues, it's worth using the ``auto`` option
+instead as only documents with barely no text will go through the OCR process.

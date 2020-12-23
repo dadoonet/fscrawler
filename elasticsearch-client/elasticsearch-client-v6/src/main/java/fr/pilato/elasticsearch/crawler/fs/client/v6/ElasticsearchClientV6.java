@@ -20,6 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.client.v6;
 
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESDocumentField;
 import fr.pilato.elasticsearch.crawler.fs.client.ESHighlightField;
@@ -33,6 +35,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -41,6 +44,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchStatusException;
@@ -84,21 +88,26 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMinorVersion;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isNullOrEmpty;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static org.elasticsearch.action.support.IndicesOptions.LENIENT_EXPAND_OPEN;
 
 /**
@@ -143,7 +152,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
             checkVersion();
             logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", compatibleVersion(), getVersion());
         } catch (Exception e) {
-            logger.warn("failed to create elasticsearch client, disabling crawler...");
+            logger.warn("failed to create elasticsearch client on {}, disabling crawler...", settings.getElasticsearch().toString());
             throw e;
         }
 
@@ -158,7 +167,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
                 (request, bulkListener) -> client.bulkAsync(request, RequestOptions.DEFAULT, bulkListener);
 
-        bulkProcessor = BulkProcessor.builder(bulkConsumer, new DebugListener(logger))
+        bulkProcessor = BulkProcessor.builder(bulkConsumer, new DebugListener())
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 .setBulkSize(new ByteSizeValue(settings.getElasticsearch().getByteSize().getBytes()))
@@ -186,17 +195,11 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         if (Integer.parseInt(extractMinorVersion(esVersion)) < 4) {
             throw new RuntimeException("This version of FSCrawler is not compatible with " +
                     "Elasticsearch version [" +
-                    esVersion.toString() + "]. Please upgrade Elasticsearch to at least a 6.4.x version.");
+                    esVersion + "]. Please upgrade Elasticsearch to at least a 6.4.x version.");
         }
     }
 
-    class DebugListener implements BulkProcessor.Listener {
-        private final Logger logger;
-
-        DebugListener(Logger logger) {
-            this.logger = logger;
-        }
-
+    static class DebugListener implements BulkProcessor.Listener {
         @Override public void beforeBulk(long executionId, BulkRequest request) {
             logger.trace("Sending a bulk request of [{}] requests", request.numberOfActions());
         }
@@ -208,6 +211,10 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
                 response.iterator().forEachRemaining(bir -> {
                     if (bir.isFailed()) {
                         failures[0]++;
+                        FSCrawlerLogger.documentError(
+                                bir.getId(),
+                                null,
+                                bir.getFailureMessage());
                         logger.debug("Error caught for [{}]/[{}]/[{}]: {}", bir.getIndex(),
                                 bir.getType(), bir.getId(), bir.getFailureMessage());
                     }
@@ -334,7 +341,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         Map<String, Object> response = asMap(restResponse);
         logger.debug("reindex response: {}", response);
 
-        return (int) response.get("total");
+        return (int) Objects.requireNonNull(response).get("total");
     }
 
     /**
@@ -369,13 +376,40 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         return INDEX_TYPE_DOC;
     }
 
+    private static final TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() { return null; }
+    }};
+
+    public static class NullHostNameVerifier implements HostnameVerifier {
+
+        @Override
+        public boolean verify(String arg0, SSLSession arg1) { return true; }
+
+    }
+
     @Override
-    public void index(String index, String id, String json, String pipeline) {
+    public void index(String index, String id, Doc doc, String pipeline) {
+        String json = DocParser.toJson(doc);
+        indexRawJson(index, id, json, pipeline);
+    }
+
+    @Override
+    public void indexRawJson(String index, String id, String json, String pipeline) {
+        logger.trace("JSon indexed : {}", json);
         bulkProcessor.add(new IndexRequest(index, getDefaultTypeName(), id).setPipeline(pipeline).source(json, XContentType.JSON));
     }
 
     @Override
     public void indexSingle(String index, String id, String json) throws IOException {
+        logger.trace("JSon indexed : {}", json);
         IndexRequest request = new IndexRequest(index, getDefaultTypeName(), id);
         request.source(json, XContentType.JSON);
         client.index(request, RequestOptions.DEFAULT);
@@ -406,7 +440,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
         settings.getNodes().forEach(node -> hosts.add(HttpHost.create(node.decodedUrl())));
 
-        RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[hosts.size()]));
+        RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[0]));
 
         if (settings.getPathPrefix() != null) {
             builder.setPathPrefix(settings.getPathPrefix());
@@ -415,10 +449,24 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         if (settings.getUsername() != null) {
             CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
             credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(settings.getUsername(), settings.getPassword()));
-            builder.setHttpClientConfigCallback(httpClientBuilder ->
-                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+            if (settings.getSslVerification()) {
+                builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+            } else {
+                builder.setHttpClientConfigCallback(httpClientBuilder -> {
+                    SSLContext sc;
+                    try {
+                        sc = SSLContext.getInstance("SSL");
+                        sc.init(null, trustAllCerts, new SecureRandom());
+                    } catch (KeyManagementException | NoSuchAlgorithmException e) {
+                        logger.warn("Failed to get SSL Context", e);
+                        throw new RuntimeException(e);
+                    }
+                    httpClientBuilder.setSSLStrategy(new SSLIOSessionStrategy(sc, new NullHostNameVerifier()));
+                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                    return httpClientBuilder;
+                });
+            }
         }
-
         return builder;
     }
 

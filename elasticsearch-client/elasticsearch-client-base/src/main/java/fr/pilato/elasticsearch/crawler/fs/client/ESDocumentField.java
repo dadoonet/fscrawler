@@ -29,6 +29,7 @@ import java.util.Objects;
  *
  * @see ESSearchHit
  */
+@SuppressWarnings("unchecked")
 public class ESDocumentField implements Iterable<Object> {
 
     private String name;
@@ -56,7 +57,7 @@ public class ESDocumentField implements Iterable<Object> {
         if (values == null || values.isEmpty()) {
             return null;
         }
-        return (V)values.get(0);
+        return (V) values.get(0);
     }
 
     /**

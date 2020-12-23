@@ -5,29 +5,31 @@ Elasticsearch settings
 
 Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 
-+----------------------------------+---------------------------+---------------------------------+
-| Name                             | Default value             | Documentation                   |
-+==================================+===========================+=================================+
-| ``elasticsearch.index``          | job name                  | `Index settings for documents`_ |
-+----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.index_folder``   | job name + ``_folder``    | `Index settings for folders`_   |
-+----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.bulk_size``      | ``100``                   | `Bulk settings`_                |
-+----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.flush_interval`` | ``"5s"``                  | `Bulk settings`_                |
-+----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.byte_size``      | ``"10mb"``                | `Bulk settings`_                |
-+----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.pipeline``       | ``null``                  | :ref:`ingest_node`              |
-+----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.nodes``          | ``http://127.0.0.1:9200`` | `Node settings`_                |
-+----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.path_prefix``    | ``null``                  | `Path prefix`_                  |
-+----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.username``       | ``null``                  | :ref:`credentials`              |
-+----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.password``       | ``null``                  | :ref:`credentials`              |
-+----------------------------------+---------------------------+---------------------------------+
++-----------------------------------+---------------------------+---------------------------------+
+| Name                              | Default value             | Documentation                   |
++===================================+===========================+=================================+
+| ``elasticsearch.index``           | job name                  | `Index settings for documents`_ |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.index_folder``    | job name + ``_folder``    | `Index settings for folders`_   |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.bulk_size``       | ``100``                   | `Bulk settings`_                |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.flush_interval``  | ``"5s"``                  | `Bulk settings`_                |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.byte_size``       | ``"10mb"``                | `Bulk settings`_                |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.pipeline``        | ``null``                  | :ref:`ingest_node`              |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.nodes``           | ``http://127.0.0.1:9200`` | `Node settings`_                |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.path_prefix``     | ``null``                  | `Path prefix`_                  |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.username``        | ``null``                  | :ref:`credentials`              |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.password``        | ``null``                  | :ref:`credentials`              |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.ssl_verification``| ``true``                  | :ref:`credentials`              |
++-----------------------------------+---------------------------+---------------------------------+
 
 Index settings
 ^^^^^^^^^^^^^^
@@ -575,7 +577,7 @@ steps:
 .. important::
 
     Prerequisite: you need to have root CA chain certificate or Elasticsearch server certificate
-    in DER format. DER format files have a ``.cer`` extension.
+    in DER format. DER format files have a ``.cer`` extension. Certificate verification can be disabled by option ``ssl_verification: false``
 
 1. Logon to server (or client machine) where FSCrawler is running
 2. Run:

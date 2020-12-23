@@ -58,7 +58,7 @@ public class ServerUrl {
      * The cloudId can be found from the cloud console.
      *
      * @param cloudId The cloud ID to decode.
-     * @return A Node running on https://address:443
+     * @return A Node running on https://address
      */
     public static String decodeCloudId(String cloudId) {
         // 1. Ignore anything before `:`.
@@ -71,7 +71,7 @@ public class ServerUrl {
         String[] words = decoded.split("\\$");
 
         // 4. form the URLs
-        return "https://" + words[1] + "." + words[0] + ":443";
+        return "https://" + words[1] + "." + words[0];
     }
 
     /**

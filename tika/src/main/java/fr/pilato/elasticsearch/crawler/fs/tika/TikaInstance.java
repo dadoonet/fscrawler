@@ -134,15 +134,13 @@ public class TikaInstance {
             TikaException {
         initTika(fsSettings.getFs());
         WriteOutContentHandler handler = new WriteOutContentHandler(indexedChars);
-        try {
+        try (stream) {
             parser.parse(stream, new BodyContentHandler(handler), metadata, context);
         } catch (SAXException e) {
             if (!handler.isWriteLimitReached(e)) {
                 // This should never happen with BodyContentHandler...
                 throw new TikaException("Unexpected SAX processing failure", e);
             }
-        } finally {
-            stream.close();
         }
         return handler.toString();
     }

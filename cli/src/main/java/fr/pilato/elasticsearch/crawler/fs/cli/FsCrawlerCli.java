@@ -23,8 +23,10 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
@@ -32,12 +34,17 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.ConsoleAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.filter.LevelMatchFilter;
+import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
@@ -46,9 +53,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Scanner;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readDefaultJsonVersionedFile;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 
 /**
  * Main entry point to launch FsCrawler
@@ -97,7 +102,6 @@ public class FsCrawlerCli {
     }
 
 
-    @SuppressWarnings("deprecation")
     public static void main(String[] args) throws Exception {
         // create a scanner so we can read the command-line input
         Scanner scanner = new Scanner(System.in);
@@ -110,28 +114,32 @@ public class FsCrawlerCli {
         if (commands.debug || commands.trace || commands.silent) {
             LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
             Configuration config = ctx.getConfiguration();
-            LoggerConfig loggerConfig = config.getLoggerConfig(FsCrawlerCli.class.getPackage().getName());
+            LoggerConfig loggerConfig = config.getLoggerConfig("fr.pilato.elasticsearch.crawler.fs");
+            ConsoleAppender console = config.getAppender("Console");
 
             if (commands.silent) {
-                // Check if the user also asked for --debug or --trace which is contradictory
-                if (commands.debug || commands.trace) {
-                    logger.warn("--debug or --trace can't be used when --silent is set. Only silent mode will be activated.");
-                }
                 // If the user did not enter any job name, nothing will be displayed
                 if (commands.jobName == null) {
+                    banner();
                     logger.warn("--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
                     jCommander.usage();
                     return;
                 }
-                // We change the full rootLogger level
-                LoggerConfig rootLogger = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
-                loggerConfig.setLevel(Level.OFF);
-                rootLogger.setLevel(Level.OFF);
+                // We don't write anything on the console anymore
+                console.addFilter(LevelMatchFilter.newBuilder().setLevel(Level.ALL).setOnMatch(Filter.Result.DENY).build());
             } else {
-                loggerConfig.setLevel(commands.debug ? Level.DEBUG : Level.TRACE);
+                console.addFilter(LevelRangeFilter.createFilter(
+                        commands.debug ? Level.DEBUG : Level.TRACE,
+                        Level.ALL,
+                        Filter.Result.DENY,
+                        Filter.Result.ACCEPT));
             }
+
+            loggerConfig.setLevel(commands.debug ? Level.DEBUG : Level.TRACE);
             ctx.updateLoggers();
         }
+
+        banner();
 
         if (commands.help) {
             jCommander.usage();
@@ -162,23 +170,23 @@ public class FsCrawlerCli {
         if (commands.jobName == null) {
             // The user did not enter a job name.
             // We can list available jobs for him
-            logger.info("No job specified. Here is the list of existing jobs:");
+            FSCrawlerLogger.console("No job specified. Here is the list of existing jobs:");
 
             List<String> files = FsCrawlerJobsUtil.listExistingJobs(configDir);
 
             if (!files.isEmpty()) {
                 for (int i = 0; i < files.size(); i++) {
-                    logger.info("[{}] - {}", i+1, files.get(i));
+                    FSCrawlerLogger.console("[{}] - {}", i+1, files.get(i));
                 }
                 int chosenFile = 0;
                 while (chosenFile <= 0 || chosenFile > files.size()) {
-                    logger.info("Choose your job [1-{}]...", files.size());
+                    FSCrawlerLogger.console("Choose your job [1-{}]...", files.size());
                     chosenFile = scanner.nextInt();
                 }
                 jobName = files.get(chosenFile - 1);
             } else {
-                logger.info("No job exists in [{}].", configDir);
-                logger.info("To create your first job, run 'fscrawler job_name' with 'job_name' you want");
+                FSCrawlerLogger.console("No job exists in [{}].", configDir);
+                FSCrawlerLogger.console("To create your first job, run 'fscrawler job_name' with 'job_name' you want");
                 return;
             }
 
@@ -210,18 +218,24 @@ public class FsCrawlerCli {
             }
 
             if (username != null && fsSettings.getElasticsearch().getPassword() == null) {
-                logger.info("Password for " +  username + ":");
+                FSCrawlerLogger.console("Password for {}:", username);
                 String password = scanner.next();
                 fsSettings.getElasticsearch().setUsername(username);
                 fsSettings.getElasticsearch().setPassword(password);
             }
 
         } catch (NoSuchFileException e) {
-            logger.warn("job [{}] does not exist", jobName);
+            // We can only have a dialog with the end user if we are not silent
+            if (commands.silent) {
+                logger.error("job [{}] does not exist. Exiting as we are in silent mode.", jobName);
+                return;
+            }
+
+            FSCrawlerLogger.console("job [{}] does not exist", jobName);
 
             String yesno = null;
             while (!"y".equalsIgnoreCase(yesno) && !"n".equalsIgnoreCase(yesno)) {
-                logger.info("Do you want to create it (Y/N)?");
+                FSCrawlerLogger.console("Do you want to create it (Y/N)?");
                 yesno = scanner.next();
             }
 
@@ -233,39 +247,48 @@ public class FsCrawlerCli {
                 fsSettingsFileHandler.write(fsSettings);
 
                 Path config = configDir.resolve(jobName).resolve(FsSettingsFileHandler.SETTINGS_YAML);
-                logger.info("Settings have been created in [{}]. Please review and edit before relaunch", config);
+                FSCrawlerLogger.console("Settings have been created in [{}]. Please review and edit before relaunch", config);
             }
 
             return;
         }
 
-        logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toYaml(fsSettings));
+        if (logger.isTraceEnabled()) {
+            logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toYaml(fsSettings));
+        }
         if (FsCrawlerValidator.validateSettings(logger, fsSettings, commands.rest)) {
             // We don't go further as we have critical errors
             return;
         }
 
-        FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest);
-        Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
+        // We add a special case here in case someone tries to use workplace search
+        if (fsSettings.getWorkplaceSearch() != null) {
+            logger.info("Workplace Search integration is an experimental feature. " +
+                    "As is it is not fully implemented and settings might change in the future.");
+            if (commands.loop == -1 || commands.loop > 1) {
+                logger.warn("Workplace Search integration does not support yet watching a directory. " +
+                        "It will be able to run only once and exit. We manually force from --loop {} to --loop 1. " +
+                        "If you want to remove this message next time, please start FSCrawler with --loop 1",
+                        commands.loop);
+                commands.loop = 1;
+            }
+        }
 
-        try {
+        try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest)) {
+            Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
             // Let see if we want to upgrade an existing cluster to latest version
             if (commands.upgrade) {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
             } else {
-                try {
-                    fsCrawler.getEsClient().start();
-                } catch (Exception t) {
-                    logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
+                if (!startEsClient(fsCrawler)) {
                     return;
                 }
-                String elasticsearchVersion = fsCrawler.getEsClient().getVersion();
+                String elasticsearchVersion = fsCrawler.getManagementService().getClient().getVersion();
                 checkForDeprecatedResources(configDir, elasticsearchVersion);
-                fsCrawler.start();
 
                 // Start the REST Server if needed
                 if (commands.rest) {
-                    RestServer.start(fsSettings, fsCrawler.getEsClient());
+                    RestServer.start(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService());
                 }
 
                 // We just have to wait until the process is stopped
@@ -276,9 +299,75 @@ public class FsCrawlerCli {
         } catch (Exception e) {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
             logger.debug("error caught", e);
-        } finally {
-            fsCrawler.close();
         }
+    }
+
+    private static boolean startEsClient(FsCrawlerImpl fsCrawler) {
+        try {
+            fsCrawler.getManagementService().start();
+            fsCrawler.getDocumentService().start();
+            return true;
+        } catch (Exception t) {
+            logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
+            return false;
+        }
+    }
+
+    private static final int BANNER_LENGTH = 100;
+
+    /**
+     * This is coming from: https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler
+     */
+    private static final String ASCII_ART = "" +
+            "    ,---,.  .--.--.     ,----..                                     ,--,                      \n" +
+            "  ,'  .' | /  /    '.  /   /   \\                                  ,--.'|                      \n" +
+            ",---.'   ||  :  /`. / |   :     :  __  ,-.                   .---.|  | :               __  ,-.\n" +
+            "|   |   .';  |  |--`  .   |  ;. /,' ,'/ /|                  /. ./|:  : '             ,' ,'/ /|\n" +
+            ":   :  :  |  :  ;_    .   ; /--` '  | |' | ,--.--.       .-'-. ' ||  ' |      ,---.  '  | |' |\n" +
+            ":   |  |-, \\  \\    `. ;   | ;    |  |   ,'/       \\     /___/ \\: |'  | |     /     \\ |  |   ,'\n" +
+            "|   :  ;/|  `----.   \\|   : |    '  :  / .--.  .-. | .-'.. '   ' .|  | :    /    /  |'  :  /  \n" +
+            "|   |   .'  __ \\  \\  |.   | '___ |  | '   \\__\\/: . ./___/ \\:     ''  : |__ .    ' / ||  | '   \n" +
+            "'   :  '   /  /`--'  /'   ; : .'|;  : |   ,\" .--.; |.   \\  ' .\\   |  | '.'|'   ;   /|;  : |   \n" +
+            "|   |  |  '--'.     / '   | '/  :|  , ;  /  /  ,.  | \\   \\   ' \\ |;  :    ;'   |  / ||  , ;   \n" +
+            "|   :  \\    `--'---'  |   :    /  ---'  ;  :   .'   \\ \\   \\  |--\" |  ,   / |   :    | ---'    \n" +
+            "|   | ,'               \\   \\ .'         |  ,     .-./  \\   \\ |     ---`-'   \\   \\  /          \n" +
+            "`----'                  `---`            `--`---'       '---\"                `----'           \n";
+
+    private static void banner() {
+        FSCrawlerLogger.console(
+                separatorLine(",", ".") +
+                centerAsciiArt() +
+                separatorLine("+", "+") +
+                bannerLine("You know, for Files!") +
+                bannerLine("Made from France with Love") +
+                bannerLine("Source: https://github.com/dadoonet/fscrawler/") +
+                bannerLine("Documentation: https://fscrawler.readthedocs.io/") +
+                separatorLine("`", "'"));
+    }
+
+    private static String centerAsciiArt() {
+        String[] lines = StringUtils.split(ASCII_ART, '\n');
+
+        // Edit line 0 as we want to add the version
+        String version = Version.getVersion();
+        String firstLine = StringUtils.stripEnd(StringUtils.center(lines[0], BANNER_LENGTH), null);
+        String pad = StringUtils.rightPad(firstLine, BANNER_LENGTH - version.length() - 1) + version;
+        lines[0] = pad;
+
+        StringBuilder content = new StringBuilder();
+        for (String line : lines) {
+            content.append(bannerLine(line));
+        }
+
+        return content.toString();
+    }
+
+    private static String bannerLine(String text) {
+        return "|" + StringUtils.center(text, BANNER_LENGTH) + "|\n";
+    }
+
+    private static String separatorLine(String first, String last) {
+        return first + StringUtils.center("", BANNER_LENGTH, "-") + last + "\n";
     }
 
     private static void checkForDeprecatedResources(Path configDir, String elasticsearchVersion) throws IOException {
@@ -288,14 +377,18 @@ public class FsCrawlerCli {
             logger.warn("We found old configuration index settings: [{}/_default/doc.json]. You should look at the documentation" +
                     " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
                     configDir);
-        } catch (IllegalArgumentException ignored) { }
+        } catch (IllegalArgumentException ignored) {
+            // If we can't find the deprecated resource, it will throw an exception which needs to be ignored.
+        }
         try {
             // If we are able to read an old configuration file, we should tell the user to check the documentation
             readDefaultJsonVersionedFile(configDir, extractMajorVersion(elasticsearchVersion), "folder");
             logger.warn("We found old configuration index settings: [{}/_default/folder.json]. You should look at the documentation" +
                     " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
                     configDir);
-        } catch (IllegalArgumentException ignored) { }
+        } catch (IllegalArgumentException ignored) {
+            // If we can't find the deprecated resource, it will throw an exception which needs to be ignored.
+        }
     }
 
     private static void sleep() {

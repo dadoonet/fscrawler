@@ -19,7 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,17 +40,18 @@ public class RestServer {
     /**
      * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
      * @param settings FSCrawler settings
-     * @param esClient Elasticsearch client
+     * @param managementService The management service
+     * @param documentService The document service
      */
-    public static void start(FsSettings settings, ElasticsearchClient esClient) {
+    public static void start(FsSettings settings, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService) {
         // We create the service only one
         if (httpServer == null) {
             // create a resource config that scans for JAX-RS resources and providers
             // in fr.pilato.elasticsearch.crawler.fs.rest package
             final ResourceConfig rc = new ResourceConfig()
                     .registerInstances(
-                            new ServerStatusApi(esClient, settings),
-                            new UploadApi(settings, esClient))
+                            new ServerStatusApi(managementService.getClient(), settings),
+                            new UploadApi(settings, documentService.getClient()))
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)
                     .register(JacksonFeature.class)

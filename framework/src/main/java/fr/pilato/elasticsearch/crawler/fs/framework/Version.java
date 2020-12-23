@@ -25,7 +25,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPro
 
 public class Version {
     private final static String FSCRAWLER_PROPERTIES = "fscrawler.properties";
-    public static final Properties properties;
+    private static final Properties properties;
 
     static {
         properties = readPropertiesFromClassLoader(FSCRAWLER_PROPERTIES);
