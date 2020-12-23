@@ -64,6 +64,30 @@ Steps:
            custom container for fscrawler.
     7. After the containers are up and running, wait about 30 seconds for everything to start syncing.  You can now access Kibana and
            build your index (just need to do it once).  After that the search will be available via Kibana.
-
 TODO: Build a more robust link to a specific version in the Dockerfile so it's a little more specific about what it downloads and builds.0:w
+
+Using docker-compose with FSCrawler REST
+----------------------------------------
+
+To use the REST service available from 2.2 you can add the ``--rest`` flag to the FSCrawler docker container ``command:``. Note that you must expose the same ports that the REST service opens on in the docker container. For example, if your REST service starts on ``127.0.0.1:8080`` then expose the same ports in your FSCrawler docker-compose image:
+
+.. code:: yml
+
+    fscrawler:
+      context: ${PWD}
+      dockerfile: Dockerfile-fscrawler
+    container_name: fscrawler
+    restart: always
+    ...
+    ports:
+      - "8080:8080"
+    ...
+
+Then expose the docker container you've created by changing the IP of the REST URL in your ``settings.yaml`` to the docker-compose container name:
+
+.. code:: yml
+
+    rest :
+      url: "http://fscrawler:8080"
+
 
