@@ -98,7 +98,6 @@ Some libraries are not Apache2 compatible. Therefore they are not
 packaged with FSCrawler so you need to download and add manually them to
 the ``lib`` directory:
 
--  for JBIG2 images, you need to add |Levigo_version|_ library
 -  for TIFF images, you need to add |Tiff_version|_ library
 -  for JPEG 2000 (JPX) images, you need to add |JPEG2000_version|_ library
 

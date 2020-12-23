@@ -711,15 +711,18 @@
             </dependency>
 
             <!--
-            For legal reasons (incompatible license), these dependencies are to marked as optional so users who might want
-            to use them have to provided them manually in the lib dir.
+            For historical reasons (incompatible license), this dependency is not pulled by default although it is
+            now available under an Apache2 License. So we add it explicitly.
             -->
             <dependency>
                 <groupId>org.apache.pdfbox</groupId>
                 <artifactId>jbig2-imageio</artifactId>
                 <version>${imageio.version}</version>
-                <optional>true</optional>
             </dependency>
+            <!--
+            For legal reasons (incompatible license), these dependencies are to marked as optional so users who might want
+            to use them have to provided them manually in the lib dir.
+            -->
             <dependency>
                 <groupId>com.github.jai-imageio</groupId>
                 <artifactId>jai-imageio-core</artifactId>

@@ -231,7 +231,6 @@ rst_prolog = rst_prolog + """
 .. |Tika_version| replace:: Tika {fmt_tika_version}
 .. |ESHL_version6| replace:: Elasticsearch Rest Client {fmt_es_version6}
 .. |ESHL_version7| replace:: Elasticsearch Rest Client {fmt_es_version7}
-.. |Levigo_version| replace:: levigo-jbig2-imageio:{fmt_levigo_version}
 .. |Tiff_version| replace:: jai-imageio-core:{fmt_tiff_version}
 .. |JPEG2000_version| replace:: jai-imageio-jpeg2000:{fmt_jpeg_version}
 .. |Download_URL_V6| replace:: fscrawler-es6-{fmt_release}
@@ -247,7 +246,6 @@ rst_prolog = rst_prolog + """
 .. _Tika_version: https://tika.apache.org/{fmt_tika_version}/
 .. _ESHL_version6: https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/index.html
 .. _ESHL_version7: https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/index.html
-.. _Levigo_version: https://repo1.maven.org/maven2/com/levigo/jbig2/levigo-jbig2-imageio/{fmt_levigo_version}/
 .. _Tiff_version: https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/{fmt_tiff_version}/
 .. _JPEG2000_version: https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{fmt_jpeg_version}/
 .. _Download_URL_V6: {fmt_downloadUrl_V6}
@@ -260,7 +258,6 @@ rst_prolog = rst_prolog + """
 fmt_tika_version=config.get('3rdParty', 'TikaVersion'),
 fmt_es_version6=config.get('3rdParty', 'ElasticsearchVersion6'),
 fmt_es_version7=config.get('3rdParty', 'ElasticsearchVersion7'),
-fmt_levigo_version=config.get('3rdParty', 'LevigoVersion'),
 fmt_tiff_version=config.get('3rdParty', 'TiffVersion'),
 fmt_jpeg_version=config.get('3rdParty', 'JpegVersion'),
 fmt_downloadUrl_V6=downloadUrlV6,
