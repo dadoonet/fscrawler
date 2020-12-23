@@ -47,7 +47,7 @@
         <docker.eng.assembly.mode>${docker.nolang.assembly.mode}</docker.eng.assembly.mode>
         <docker.eng.args.langsPkg>tesseract-ocr=${tesseract.version} tesseract-ocr-eng=${tesseract.version}</docker.eng.args.langsPkg>
 
-        <!-- install tesseract-ocr and data files for Franch -->
+        <!-- install tesseract-ocr and data files for French -->
         <docker.fra.alias>${project.artifactId}-fra</docker.fra.alias>
         <docker.fra.name>${docker.username}/fscrawler:${project.version}-${module.name}-fra</docker.fra.name>
         <docker.fra.cacheFrom>${docker.fra.name}</docker.fra.cacheFrom>
