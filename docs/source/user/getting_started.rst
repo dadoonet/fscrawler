@@ -1,13 +1,13 @@
 Getting Started
 ---------------
 
-You need to have at least **Java 1.8.** and have properly configured
+You need to have at least **Java 14** and have properly configured
 ``JAVA_HOME`` to point to your Java installation directory. For example
-on MacOS you can define in your ``~/.bash_profile`` file:
+on MacOS if you are using sdkman you can define in your ``~/.bash_profile`` file:
 
 .. code:: sh
 
-   export JAVA_HOME=`/usr/libexec/java_home -v 1.8`
+   export JAVA_HOME="~/.sdkman/candidates/java/current"
 
 
 Start FSCrawler
