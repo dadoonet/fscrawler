@@ -125,7 +125,7 @@ And, prepare the following ``docker-compose.yml``.
   services:
     # FSCrawler
     fscrawler:
-      image: toto1310/fscrawler
+      image: dadoonet/fscrawler
       container_name: fscrawler
       volumes:
         - ${PWD}/config:/root/.fscrawler
