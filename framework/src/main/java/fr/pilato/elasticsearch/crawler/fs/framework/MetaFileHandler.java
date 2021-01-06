@@ -20,6 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +33,7 @@ import java.nio.file.Paths;
  */
 public class MetaFileHandler {
 
+    private static final Logger logger = LogManager.getLogger(MetaFileHandler.class);
     public final static Path DEFAULT_ROOT = Paths.get(System.getProperty("user.home"), ".fscrawler");
 
     private final Path root;
@@ -50,6 +54,7 @@ public class MetaFileHandler {
         if (subdir != null) {
             dir = dir.resolve(subdir);
         }
+        logger.trace("Reading file {} from {}", filename, dir);
         return Files.readString(dir.resolve(filename));
     }
 
@@ -70,6 +75,7 @@ public class MetaFileHandler {
                 Files.createDirectory(dir);
             }
         }
+        logger.trace("Writing file {} to {}", filename, dir);
         Files.writeString(dir.resolve(filename), content);
     }
 
@@ -84,6 +90,7 @@ public class MetaFileHandler {
         if (subdir != null) {
             dir = dir.resolve(subdir);
         }
+        logger.trace("Removing file {} from {} if exists", filename, dir);
         Files.deleteIfExists(dir.resolve(filename));
     }
 }
