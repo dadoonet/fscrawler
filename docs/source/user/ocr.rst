@@ -93,7 +93,7 @@ your ``~/.fscrawler/test/_settings.yaml`` file:
    fs:
      url: "/path/to/data/dir"
      ocr:
-       path: "/path/to/tesseract/executable"
+       path: "/path/to/tesseract/bin/"
 
 When you set it, it’s highly recommended to set the `OCR Data Path`_.
 
@@ -111,8 +111,8 @@ define the path to use by setting ``fs.ocr.data_path`` property in your
    fs:
      url: "/path/to/data/dir"
      ocr:
-       path: "/path/to/tesseract/executable"
-       data_path: "/path/to/tesseract/tessdata"
+       path: "/path/to/tesseract/bin/"
+       data_path: "/path/to/tesseract/share/tessdata/"
 
 OCR Output Type
 ---------------
