@@ -24,7 +24,6 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.beans.PathParser;
 import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
@@ -57,10 +56,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 
 public abstract class FsParserAbstract extends FsParser {
     private static final Logger logger = LogManager.getLogger(FsParserAbstract.class);
