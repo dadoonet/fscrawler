@@ -4,6 +4,7 @@ SETLOCAL enabledelayedexpansion
 TITLE FSCrawler ${project.version}
 
 set SCRIPT_DIR=%~dp0
+cd "%SCRIPT_DIR%\.."
 for %%I in ("%SCRIPT_DIR%..") do set FS_HOME=%%~dpfI
 
 IF DEFINED JAVA_HOME (
