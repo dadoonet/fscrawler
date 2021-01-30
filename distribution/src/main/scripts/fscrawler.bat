@@ -4,6 +4,8 @@ SETLOCAL enabledelayedexpansion
 TITLE FSCrawler ${project.version}
 
 set SCRIPT_DIR=%~dp0
+REM change into script directory
+PUSHD "%SCRIPT_DIR%\.."
 for %%I in ("%SCRIPT_DIR%..") do set FS_HOME=%%~dpfI
 
 IF DEFINED JAVA_HOME (
@@ -65,5 +67,6 @@ FOR /F "usebackq tokens=1* delims= " %%A IN (!params!) DO (
 )
 
 %JAVA% %JAVA_OPTS% -cp "%FS_CLASSPATH%" -jar "%FS_HOME%/lib/${project.build.finalName}.jar" !newparams!
-
+REM Return to original directory
+POPD
 ENDLOCAL
