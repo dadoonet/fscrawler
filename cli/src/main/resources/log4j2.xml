@@ -6,7 +6,7 @@
       <!-- If you want to change the log level for documents.log file -->
       <Property name="DOC_LEVEL">info</Property>
       <!-- If you want to change the output dir for logs -->
-      <Property name="LOG_DIR">logs</Property>
+      <Property name="LOG_DIR">$${log4j:configParentLocation}/../logs</Property>
    </Properties>
 
    <Appenders>
