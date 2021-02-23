@@ -52,7 +52,7 @@
         -->
         <commons-logging.version>1.2</commons-logging.version>
         <commons-codec.version>1.15</commons-codec.version>
-        <snakeyaml.version>1.27</snakeyaml.version>
+        <snakeyaml.version>1.28</snakeyaml.version>
         <httpclient.version>4.5.13</httpclient.version>
         <httpasyncclient.version>4.1.4</httpasyncclient.version>
         <httpcore.version>4.4.14</httpcore.version>
