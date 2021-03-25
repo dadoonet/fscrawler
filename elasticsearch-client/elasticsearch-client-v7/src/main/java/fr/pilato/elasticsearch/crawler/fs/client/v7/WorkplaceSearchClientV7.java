@@ -49,7 +49,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     private static final Logger logger = LogManager.getLogger(WorkplaceSearchClientV7.class);
     private final Path config;
     private final FsSettings settings;
-    private final SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZZZZZ");
+    private final SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ");
 
     private ElasticsearchClient esClient = null;
     private WPSearchClient wpSearchClient = null;
