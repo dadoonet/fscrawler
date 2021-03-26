@@ -537,13 +537,12 @@ you might have to specify a path prefix. This can be done with ``path_prefix`` s
 
 .. _credentials:
 
-Using Credentials (X-Pack)
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using Credentials (Security)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. versionadded:: 2.2
 
-If you secured your elasticsearch cluster with
-`X-Pack <https://www.elastic.co/downloads/x-pack>`__, you can provide
+If you secured your elasticsearch cluster, you can provide
 ``username`` and ``password`` to FSCrawler:
 
 .. code:: yaml
@@ -565,6 +564,33 @@ If you secured your elasticsearch cluster with
     ::
 
        22:46:42,528 INFO  [f.p.e.c.f.FsCrawler] Password for elastic:
+
+If you want to use another user than the default ``elastic``, you will need to give him some permissions:
+
+* ``cluster:monitor``
+* ``indices:fsc/all``
+* ``indices:fsc_folder/all``
+
+where ``fsc`` is the FSCrawler index name as defined in `Index settings for documents`_.
+
+This can be done by defining the following role:
+
+.. code:: sh
+
+    PUT /_security/role/fscrawler
+    {
+      "cluster" : [ "monitor" ],
+      "indices" : [ {
+          "names" : [ "fsc", "fsc_folder" ],
+          "privileges" : [ "all" ]
+      } ]
+    }
+
+This also can be done using the Kibana Stack Management Interface.
+
+.. image:: /_static/elasticsearch/fscrawler-roles.png
+
+Then, you can assign this role to the user who will be defined within the ``username`` setting.
 
 .. _ssl:
 
