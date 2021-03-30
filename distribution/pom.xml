@@ -19,7 +19,8 @@
     </modules>
 
     <properties>
-        <tesseract.version>3.04.*</tesseract.version>
+        <tesseract.version>4.0.0*</tesseract.version>
+        <tesseract.lang.version>1:4.00*</tesseract.lang.version>
 
         <!-- Global configuration parameters for docker -->
         <!-- By default, build docker images on each modules. -->
@@ -45,7 +46,7 @@
         <docker.eng.dockerFile>${docker.nolang.dockerFile}</docker.eng.dockerFile>
         <docker.eng.assembly.descriptor>${docker.nolang.assembly.descriptor}</docker.eng.assembly.descriptor>
         <docker.eng.assembly.mode>${docker.nolang.assembly.mode}</docker.eng.assembly.mode>
-        <docker.eng.args.langsPkg>tesseract-ocr=${tesseract.version} tesseract-ocr-eng=${tesseract.version}</docker.eng.args.langsPkg>
+        <docker.eng.args.langsPkg>tesseract-ocr=${tesseract.version} tesseract-ocr-eng=${tesseract.lang.version}</docker.eng.args.langsPkg>
 
         <!-- install tesseract-ocr and data files for French -->
         <docker.fra.alias>${project.artifactId}-fra</docker.fra.alias>
@@ -54,7 +55,7 @@
         <docker.fra.dockerFile>${docker.nolang.dockerFile}</docker.fra.dockerFile>
         <docker.fra.assembly.descriptor>${docker.nolang.assembly.descriptor}</docker.fra.assembly.descriptor>
         <docker.fra.assembly.mode>${docker.nolang.assembly.mode}</docker.fra.assembly.mode>
-        <docker.fra.args.langsPkg>tesseract-ocr=${tesseract.version} tesseract-ocr-fra=${tesseract.version}</docker.fra.args.langsPkg>
+        <docker.fra.args.langsPkg>tesseract-ocr=${tesseract.version} tesseract-ocr-fra=${tesseract.lang.version}</docker.fra.args.langsPkg>
 
         <!-- install tesseract-ocr and  data files for Japanese -->
         <docker.jpn.alias>${project.artifactId}-jpn</docker.jpn.alias>
@@ -63,7 +64,7 @@
         <docker.jpn.dockerFile>${docker.nolang.dockerFile}</docker.jpn.dockerFile>
         <docker.jpn.assembly.descriptor>${docker.nolang.assembly.descriptor}</docker.jpn.assembly.descriptor>
         <docker.jpn.assembly.mode>${docker.nolang.assembly.mode}</docker.jpn.assembly.mode>
-        <docker.jpn.args.langsPkg>tesseract-ocr=${tesseract.version} tesseract-ocr-jpn=${tesseract.version}</docker.jpn.args.langsPkg>
+        <docker.jpn.args.langsPkg>tesseract-ocr=${tesseract.version} tesseract-ocr-jpn=${tesseract.lang.version}</docker.jpn.args.langsPkg>
     </properties>
 
     <dependencies>
