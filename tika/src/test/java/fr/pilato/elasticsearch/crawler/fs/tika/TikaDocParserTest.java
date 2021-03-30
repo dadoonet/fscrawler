@@ -360,7 +360,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("channels", "2"));
         assertThat(raw, hasEntry("dc:title", "Test Tika"));
         assertThat(raw, hasEntry("Author", "David Pilato"));
-        assertThat(raw, hasEntry("xmpDM:duration", "1018.775146484375"));
+        assertThat(raw, hasEntry("xmpDM:duration", "1.0187751054763794"));
         assertThat(raw, hasEntry("Content-Type", "audio/mpeg"));
         assertThat(raw, hasEntry("samplerate", "44100"));
     }
