@@ -26,6 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.config.ServiceLoader;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.exception.ZeroByteFileException;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaTypeRegistry;
@@ -141,6 +142,9 @@ public class TikaInstance {
                 // This should never happen with BodyContentHandler...
                 throw new TikaException("Unexpected SAX processing failure", e);
             }
+        } catch (ZeroByteFileException e) {
+            String resourceName = metadata.get("resourceName");
+            logger.debug("Got an empty file for {}, so we are just skipping it.", resourceName);
         }
         return handler.toString();
     }

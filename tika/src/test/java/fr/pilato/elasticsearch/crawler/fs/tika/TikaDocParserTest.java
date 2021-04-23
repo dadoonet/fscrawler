@@ -36,18 +36,7 @@ import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.emptyIterable;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static org.hamcrest.Matchers.isEmptyString;
-import static org.hamcrest.Matchers.iterableWithSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.stringContainsInOrder;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
@@ -782,7 +771,10 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("issue-1097.pdf", fsSettings);
         // TODO This test is now passing but should be failing when
         // https://issues.apache.org/jira/browse/TIKA-3364 is solved
-        assertThat(doc.getContent(), is("\nDummy PDF file\n\nDummy PDF file\n\n\n\tDummy PDF file\n\n"));
+        assertThat(doc.getContent(), isOneOf(
+                "\nDummy PDF file\n\nDummy PDF file\n\n\n\tDummy PDF file\n\n", // When OCR
+                "\nDummy PDF file\n\n\n\tDummy PDF file\n\n") // When NO OCR
+        );
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), not(nullValue()));
@@ -826,6 +818,25 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:producer", "OpenOffice.org 2.1"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z"));
+    }
+
+    /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/834.
+     * @throws IOException In case something goes wrong
+     */
+    @Test
+    public void testEmptyFileIssue834() throws IOException {
+        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setRawMetadata(true).build())
+                .build();
+        Doc doc = extractFromFile("issue-834.txt", fsSettings);
+        assertThat(doc.getContent(), isEmptyString());
+
+        // Meta data
+        Map<String, String> raw = doc.getMeta().getRaw();
+        assertThat(raw.entrySet(), iterableWithSize(2));
+        assertThat(raw, hasEntry("Content-Type", "text/plain"));
+        assertThat(raw, hasEntry("resourceName", "issue-834.txt"));
     }
 
     /**
