@@ -58,7 +58,7 @@ Start FSCrawler
      # On Linux
      url: "/path/to/resumes"
      # On Windows
-     url: "c:\path\to\resumes"
+     url: "c:\\path\\to\\resumes"
 
 * Start again FSCrawler:
 
