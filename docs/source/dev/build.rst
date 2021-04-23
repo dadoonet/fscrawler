@@ -229,3 +229,24 @@ If you want to skip the check, you can run with ``-Dossindex.fail=false``::
 
         mvn clean install -Dossindex.fail=false
 
+DockerHub publication
+^^^^^^^^^^^^^^^^^^^^^
+
+To publish the latest build to `DockerHub <https://hub.docker.com/r/dadoonet/fscrawler/>`_ you can manually
+call ``docker:push`` maven task and provide credentials ``docker.push.username`` and ``docker.push.password``::
+
+        mvn -f distribution/pom.xml docker:push \
+            -Ddocker.push.username=yourdockerhubaccount \
+            -Ddocker.push.password=yourverysecuredpassword
+
+Otherwise, if you call the maven ``deploy`` phase, it will be done automatically.
+Note that it will still require that you provide the credentials ``docker.push.username`` and ``docker.push.password``::
+
+        mvn deploy \
+            -Ddocker.push.username=yourdockerhubaccount \
+            -Ddocker.push.password=yourverysecuredpassword
+
+You can also provide the settings as environment variables:
+
+*  ``env.DOCKER_USERNAME`` or ``DOCKER_USERNAME``
+*  ``env.DOCKER_PASSWORD`` or ``DOCKER_PASSWORD``

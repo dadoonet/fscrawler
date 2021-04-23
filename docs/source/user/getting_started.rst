@@ -86,3 +86,4 @@ If you would like to ignore some folders to be scanned, just add a ``.fscrawleri
 The folder content and all sub folders will be ignored.
 
 For more information, read :ref:`includes_excludes`.
+

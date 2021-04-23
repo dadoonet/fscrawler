@@ -101,6 +101,12 @@
         <sonatype.username>${env.SONATYPE_USER}</sonatype.username>
         <sonatype.password>${env.SONATYPE_PASS}</sonatype.password>
 
+        <!-- For DockerHub to push images -->
+        <env.DOCKER_USERNAME>${DOCKER_USERNAME}</env.DOCKER_USERNAME>
+        <env.DOCKER_PASSWORD>${DOCKER_PASSWORD}</env.DOCKER_PASSWORD>
+        <docker.push.username>${env.DOCKER_USERNAME}</docker.push.username>
+        <docker.push.password>${env.DOCKER_PASSWORD}</docker.push.password>
+
         <java.compiler.version>14</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
