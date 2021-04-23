@@ -36,18 +36,7 @@ import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.emptyIterable;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static org.hamcrest.Matchers.isEmptyString;
-import static org.hamcrest.Matchers.iterableWithSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.stringContainsInOrder;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
@@ -782,7 +771,10 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("issue-1097.pdf", fsSettings);
         // TODO This test is now passing but should be failing when
         // https://issues.apache.org/jira/browse/TIKA-3364 is solved
-        assertThat(doc.getContent(), is("\nDummy PDF file\n\nDummy PDF file\n\n\n\tDummy PDF file\n\n"));
+        assertThat(doc.getContent(), isOneOf(
+                "\nDummy PDF file\n\nDummy PDF file\n\n\n\tDummy PDF file\n\n", // When OCR
+                "\nDummy PDF file\n\n\n\tDummy PDF file\n\n") // When NO OCR
+        );
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), not(nullValue()));
