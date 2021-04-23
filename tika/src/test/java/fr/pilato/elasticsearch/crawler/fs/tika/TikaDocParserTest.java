@@ -770,6 +770,65 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/1097.
+     * Related to https://issues.apache.org/jira/browse/TIKA-3364.
+     * @throws IOException In case something goes wrong
+     */
+    @Test
+    public void testPdfIssue1097() throws IOException {
+        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setRawMetadata(true).build())
+                .build();
+        Doc doc = extractFromFile("issue-1097.pdf", fsSettings);
+        // TODO This test is now passing but should be failing when
+        // https://issues.apache.org/jira/browse/TIKA-3364 is solved
+        assertThat(doc.getContent(), is("\nDummy PDF file\n\nDummy PDF file\n\n\n\tDummy PDF file\n\n"));
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor(), not(nullValue()));
+        assertThat(doc.getMeta().getDate(), is(nullValue()));
+        assertThat(doc.getMeta().getKeywords(), nullValue());
+        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+
+        Map<String, String> raw = doc.getMeta().getRaw();
+        assertThat(raw.entrySet(), iterableWithSize(34));
+        assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
+        assertThat(raw, hasEntry("pdf:PDFVersion", "1.4"));
+        assertThat(raw, hasEntry("xmp:CreatorTool", "Writer"));
+        assertThat(raw, hasEntry("pdf:hasXFA", "false"));
+        assertThat(raw, hasEntry("access_permission:modify_annotations", "true"));
+        assertThat(raw, hasEntry("access_permission:can_print_degraded", "true"));
+        assertThat(raw, hasEntry("dc:creator", "Evangelos Vlachogiannis"));
+        assertThat(raw, hasEntry("dcterms:created", "2007-02-23T15:56:37Z"));
+        assertThat(raw, hasEntry("dc:format", "application/pdf; version=1.4"));
+        assertThat(raw, hasEntry("pdf:docinfo:creator_tool", "Writer"));
+        assertThat(raw, hasEntry("access_permission:fill_in_form", "true"));
+        assertThat(raw, hasEntry("pdf:encrypted", "false"));
+        assertThat(raw, hasEntry("pdf:hasMarkedContent", "false"));
+        assertThat(raw, hasEntry("Content-Type", "application/pdf"));
+        assertThat(raw, hasEntry("pdf:docinfo:creator", "Evangelos Vlachogiannis"));
+        assertThat(raw, hasEntry("X-Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
+        assertThat(raw, hasEntry("creator", "Evangelos Vlachogiannis"));
+        assertThat(raw, hasEntry("meta:author", "Evangelos Vlachogiannis"));
+        assertThat(raw, hasEntry("meta:creation-date", "2007-02-23T15:56:37Z"));
+        assertThat(raw, hasEntry("created", "2007-02-23T15:56:37Z"));
+        assertThat(raw, hasEntry("access_permission:extract_for_accessibility", "true"));
+        assertThat(raw, hasEntry("access_permission:assemble_document", "true"));
+        assertThat(raw, hasEntry("xmpTPg:NPages", "1"));
+        assertThat(raw, hasEntry("Creation-Date", "2007-02-23T15:56:37Z"));
+        assertThat(raw, hasEntry("resourceName", "issue-1097.pdf"));
+        assertThat(raw, hasEntry("pdf:hasXMP", "false"));
+        assertThat(raw, hasEntry("pdf:charsPerPage", "14"));
+        assertThat(raw, hasEntry("access_permission:extract_content", "true"));
+        assertThat(raw, hasEntry("access_permission:can_print", "true"));
+        assertThat(raw, hasEntry("Author", "Evangelos Vlachogiannis"));
+        assertThat(raw, hasEntry("producer", "OpenOffice.org 2.1"));
+        assertThat(raw, hasEntry("access_permission:can_modify", "true"));
+        assertThat(raw, hasEntry("pdf:docinfo:producer", "OpenOffice.org 2.1"));
+        assertThat(raw, hasEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z"));
+    }
+
+    /**
      * Test protected document
      */
     @Test
