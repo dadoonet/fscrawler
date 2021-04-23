@@ -829,6 +829,25 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
+     * Test case for https://github.com/dadoonet/fscrawler/issues/834.
+     * @throws IOException In case something goes wrong
+     */
+    @Test
+    public void testEmptyFileIssue834() throws IOException {
+        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
+                .setFs(Fs.builder().setRawMetadata(true).build())
+                .build();
+        Doc doc = extractFromFile("issue-834.txt", fsSettings);
+        assertThat(doc.getContent(), isEmptyString());
+
+        // Meta data
+        Map<String, String> raw = doc.getMeta().getRaw();
+        assertThat(raw.entrySet(), iterableWithSize(2));
+        assertThat(raw, hasEntry("Content-Type", "text/plain"));
+        assertThat(raw, hasEntry("resourceName", "issue-834.txt"));
+    }
+
+    /**
      * Test protected document
      */
     @Test
