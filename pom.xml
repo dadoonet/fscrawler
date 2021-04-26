@@ -269,6 +269,13 @@
                     </executions>
                 </plugin>
 
+                <!-- To build and publish our docker images -->
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>0.35.0</version>
+                </plugin>
+
                 <!-- For IT using Docker Compose -->
                 <plugin>
                     <groupId>com.dkanejs.maven.plugins</groupId>
