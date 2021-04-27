@@ -26,7 +26,7 @@ You need to install a version matching your Elasticsearch version:
 ## Build and Quality Status
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler-distribution/badge.svg?style=flat-square)](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler-distribution/)
-[![Build](https://github.com/dadoonet/fscrawler/workflows/maven/badge.svg)](https://github.com/dadoonet/fscrawler/actions/maven)
+[![Build](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml/badge.svg)](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml)
 [![Travis](https://secure.travis-ci.org/dadoonet/fscrawler.png)](http://travis-ci.org/dadoonet/fscrawler)
 [![Documentation Status](https://readthedocs.org/projects/fscrawler/badge/?version=latest)](https://fscrawler.readthedocs.io/en/latest/?badge=latest)
 [![Code Quality: Java](https://img.shields.io/lgtm/grade/java/g/dadoonet/fscrawler.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/dadoonet/fscrawler/context:java)
