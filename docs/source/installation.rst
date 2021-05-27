@@ -102,7 +102,7 @@ In this section, the following directory layout is assumed:
 
   .
   ├── config
-  │   └── job
+  │   └── job_name
   │       └── _settings.yaml
   ├── data
   │   └── <your files>
@@ -112,7 +112,7 @@ For example, to connect to a docker container named ``elasticsearch``, modify yo
 
 .. code:: yaml
 
-  name: "test"
+  name: "job_name"
   elasticsearch:
     nodes:
     - url: "http://elasticsearch:9200"
@@ -130,6 +130,7 @@ And, prepare the following ``docker-compose.yml``.
       volumes:
         - ${PWD}/config:/root/.fscrawler
         - ${PWD}/data:/tmp/es
+        - ${PWD}/logs:/usr/share/fscrawler/logs
       networks:
         - esnet
       command: fscrawler job_name
@@ -187,7 +188,7 @@ Then, you can run Elasticsearch.
 
 .. code:: sh
 
-    docker-compose up -d elasticsearch
+    docker-compose up -d elasticsearch elasticsearch2
     docker-compose logs -f elasticsearch
 
 Wait for elasticsearch to be started:
