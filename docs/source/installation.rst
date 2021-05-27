@@ -106,6 +106,8 @@ In this section, the following directory layout is assumed:
   │       └── _settings.yaml
   ├── data
   │   └── <your files>
+  ├── logs
+  │   └── <fscrawler logs>
   └── docker-compose.yml
 
 For example, to connect to a docker container named ``elasticsearch``, modify your ``_settings.yaml``.
