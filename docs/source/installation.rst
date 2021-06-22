@@ -123,68 +123,49 @@ And, prepare the following ``docker-compose.yml``.
 
 .. code:: yaml
 
-  version: '2.2'
-  services:
-    # FSCrawler
-    fscrawler:
-      image: dadoonet/fscrawler
-      container_name: fscrawler
-      volumes:
-        - ${PWD}/config:/root/.fscrawler
-        - ${PWD}/data:/tmp/es
-        - ${PWD}/logs:/usr/share/fscrawler/logs
-      networks:
-        - esnet
-      command: fscrawler job_name
+    version: '3'
+    services:
+      # Elasticsearch Cluster
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:$ELASTIC_VERSION
+        container_name: elasticsearch
+        environment:
+          - bootstrap.memory_lock=true
+          - discovery.type=single-node
+        restart: always
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
+        volumes:
+          - data:/usr/share/elasticsearch/data
+        ports:
+          - 9200:9200
+        networks:
+          - fscrawler_net
 
-    # Elasticsearch Cluster
-    elasticsearch:
-      image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
-      container_name: elasticsearch
-      environment:
-        - node.name=elasticsearch
-        - discovery.seed_hosts=elasticsearch2
-        - cluster.initial_master_nodes=elasticsearch,elasticsearch2
-        - cluster.name=docker-cluster
-        - bootstrap.memory_lock=true
-        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      ulimits:
-        memlock:
-          soft: -1
-          hard: -1
-      volumes:
-        - esdata01:/usr/share/elasticsearch/data
-      ports:
-        - 9200:9200
-      networks:
-        - esnet
-    elasticsearch2:
-      image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
-      container_name: elasticsearch2
-      environment:
-        - node.name=elasticsearch2
-        - discovery.seed_hosts=elasticsearch
-        - cluster.initial_master_nodes=elasticsearch,elasticsearch2
-        - cluster.name=docker-cluster
-        - bootstrap.memory_lock=true
-        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      ulimits:
-        memlock:
-          soft: -1
-          hard: -1
-      volumes:
-        - esdata02:/usr/share/elasticsearch/data
-      networks:
-        - esnet
+      # FSCrawler
+      fscrawler:
+        image: dadoonet/fscrawler:$FSCRAWLER_VERSION
+        container_name: fscrawler
+        restart: always
+        volumes:
+          - ${PWD}/config:/root/.fscrawler
+          - ${PWD}/logs:/usr/share/fscrawler/logs
+          - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
+        depends_on:
+          - elasticsearch
+        command: fscrawler --rest idx
+        networks:
+          - fscrawler_net
 
-  volumes:
-    esdata01:
-      driver: local
-    esdata02:
-      driver: local
+    volumes:
+      data:
+        driver: local
 
-  networks:
-    esnet:
+    networks:
+      fscrawler_net:
+        driver: bridge
 
 Then, you can run Elasticsearch.
 
