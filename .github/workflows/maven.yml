@@ -1,6 +1,8 @@
-name: Java CI with Maven
+name: Build and Deploy the master branch
 
-on: [ "push", "pull_request" ]
+on:
+  push:
+    branches: [ master ]
 
 jobs:
   build:
@@ -22,6 +24,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Build the project
         run: mvn --batch-mode verify -DskipTests
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Set up JDK 14 and Maven Central Repository
+        uses: actions/setup-java@v2
+        with:
+          java-version: '14'
+          distribution: 'adopt'
+          server-id: sonatype-nexus-snapshots
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+      - name: Deploy with Maven
+        run: mvn deploy -DskipTests
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
 
 #  build-security:
 #    runs-on: ubuntu-latest
