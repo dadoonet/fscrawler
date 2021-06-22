@@ -25,6 +25,7 @@ services:
     volumes:
       - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
       - ${PWD}/config:/root/.fscrawler
+      - ${PWD}/logs:/usr/share/fscrawler/logs
     depends_on:
       - elasticsearch
     command: fscrawler idx
