@@ -1,0 +1,3 @@
+# Say that ubuntu-latest is actually using a large image using 18.04 provided
+# by https://github.com/nektos/act-environments
+-P ubuntu-latest=nektos/act-environments-ubuntu:18.04

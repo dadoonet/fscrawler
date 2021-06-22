@@ -199,16 +199,10 @@
                     </configuration>
                     <executions>
                         <execution>
-                            <id>docker-build</id>
-                            <phase>package</phase>
-                            <goals>
-                                <goal>build</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>docker-push</id>
+                            <id>docker-build-push</id>
                             <phase>deploy</phase>
                             <goals>
+                                <goal>build</goal>
                                 <goal>push</goal>
                             </goals>
                         </execution>
