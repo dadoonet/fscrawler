@@ -13,6 +13,8 @@ services:
       - xpack.security.enabled=true
       - xpack.security.authc.api_key.enabled=true
       - xpack.ml.enabled=false
+      # This is needed for integration tests at it uses the search API which is under platinum license
+      - xpack.license.self_generated.type=trial
     ulimits:
       memlock:
         soft: -1

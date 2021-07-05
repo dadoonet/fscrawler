@@ -20,43 +20,29 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Test Workplace Search HTTP client
  */
 public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
-
-    private WPSearchClient client;
-
-    @Before
-    public void startClient() {
-        client = new WPSearchClient(testWorkplaceAccessToken, testWorkplaceKey)
-                .withHost(testWorkplaceUrl)
-                .withBulkSize(1);
-        client.start();
-    }
-
-    @After
-    public void stopClient() {
-        if (client != null) {
-            client.close();
-        }
-    }
-
-    @Before
-    public void cleanExistingIndex() throws IOException {
-        logger.info(" -> Removing existing index [.ent-search-engine-*]");
-        documentService.getClient().deleteIndex(".ent-search-engine-*");
-    }
 
     @Test
     public void testSearch() throws Exception {
@@ -69,7 +55,13 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
 
         // We need to wait until it's done
         countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-*"), 1L, null);
-        client.search(uniqueId);
+        String json = client.search(uniqueId);
+
+        Object response = Configuration.defaultConfiguration().jsonProvider().parse(json);
+        List<String> ids = JsonPath.read(response, "$.results[*].id.raw");
+
+        assertThat(ids, hasSize(1));
+        assertThat(ids.get(0), is("testSearch"));
     }
 
     @Test

@@ -67,9 +67,13 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     @Override
     public void start() throws IOException {
         logger.debug("Starting Workplace Search V7 client");
-        wpSearchClient = new WPSearchClient(
-                settings.getWorkplaceSearch().getAccessToken(),
-                settings.getWorkplaceSearch().getKey())
+        Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
+        wpSearchClient = new WPSearchClient(config, jobMappingDir)
+            .withSourceName(settings.getName())
+            .withSourceId(settings.getWorkplaceSearch().getId())
+            .withHost(settings.getWorkplaceSearch().getServer().decodedUrl())
+            .withUsername(settings.getWorkplaceSearch().getUsername())
+            .withPassword(settings.getWorkplaceSearch().getPassword())
             .withHost(settings.getWorkplaceSearch().getServer().decodedUrl())
             .withBulkSize(settings.getWorkplaceSearch().getBulkSize())
             .withFlushInterval(settings.getWorkplaceSearch().getFlushInterval());

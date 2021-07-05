@@ -91,8 +91,7 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplac
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
-                        .setAccessToken(testWorkplaceAccessToken)
-                        .setKey(testWorkplaceKey)
+                        .setId(customSourceId)
                         .setBulkSize(5)
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
@@ -102,15 +101,13 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplac
             documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
             documentService.start();
 
-            staticLogger.info(" -> Removing existing index [.ent-search-engine-*]");
-            documentService.getClient().deleteIndex(".ent-search-engine-*");
-
             staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
             crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
             crawler.start();
 
             // We wait until we have all docs
+            // TODO Replace with the real search API
             countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-*"), numFiles, null, TimeValue.timeValueMinutes(5));
         } catch (FsCrawlerIllegalConfigurationException e) {
             documentService = oldDocumentService;

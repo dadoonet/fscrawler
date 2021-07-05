@@ -19,6 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
 
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
@@ -33,15 +36,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 
 /**
@@ -62,35 +68,81 @@ public class WPSearchClient implements Closeable {
         CLIENT_VERSION = properties.getProperty("workplacesearch.version");
     }
 
-    private final static String CLIENT_NAME = "elastic-workplace-search-java";
     private final static String DEFAULT_ENDPOINT = "/api/ws/v1/";
-    public final static String DEFAULT_HOST = "http://127.0.0.1:3002";
+    private final static String DEFAULT_HOST = "http://127.0.0.1:3002";
+    private static final String DEFAULT_USERNAME = "elastic";
+    private static final String DEFAULT_PASSWORD = "changeme";
+
 
     private Client client;
     private String userAgent;
     private String endpoint = DEFAULT_ENDPOINT;
     private String host = DEFAULT_HOST;
-    private final String accessToken;
-    final String urlForBulkCreate;
-    final String urlForBulkDestroy;
+    private String username = DEFAULT_USERNAME;
+    private String password = DEFAULT_PASSWORD;
+    String urlForBulkCreate;
+    private String urlForBulkDestroy;
+    private String urlForApi;
+    private final String urlForSearch = "search";
     private int bulkSize;
     private TimeValue flushInterval;
-    String urlForApi;
-    final String urlForSearch;
 
     private FsCrawlerBulkProcessor<WPSearchOperation, WPSearchBulkRequest, WPSearchBulkResponse> bulkProcessor;
+    private boolean started = false;
+    private String sourceId;
+    private String sourceName;
+    private final Path rootDir;
+    private final Path jobMappingDir;
 
     /**
      * Create a client
-     * @param accessToken   Access Token to use (get it from the Custom API interface)
-     * @param key           Key to use (get it from the Custom API interface)
      */
-    public WPSearchClient(String accessToken, String key) {
-        this.accessToken = accessToken;
-        this.urlForBulkCreate = "sources/" + key + "/documents/bulk_create";
-        this.urlForBulkDestroy = "sources/" + key + "/documents/bulk_destroy";
-        this.urlForSearch = "search";
+    public WPSearchClient(Path rootDir, Path jobMappingDir) {
+        this.rootDir = rootDir;
+        this.jobMappingDir = jobMappingDir;
         this.urlForApi = host + endpoint;
+    }
+
+    /**
+     * The source sourceName.
+     * @param sourceName source sourceName to use if the source id is not provided
+     * @return the current instance
+     */
+    public WPSearchClient withSourceName(String sourceName) {
+        this.sourceName = sourceName;
+        return this;
+    }
+
+    /**
+     * Provide the sourceId to be used for every operation.
+     * @param sourceId Key to use (get it from the Custom API interface or from {@link #createCustomSource(String)})
+     * @return the current instance
+     */
+    public WPSearchClient withSourceId(String sourceId) {
+        this.sourceId = sourceId;
+        this.urlForBulkCreate = "sources/" + sourceId + "/documents/bulk_create";
+        this.urlForBulkDestroy = "sources/" + sourceId + "/documents/bulk_destroy";
+        return this;
+    }
+
+    /**
+     * If needed we can allow passing a specific username. Defaults to "enterprise_search".
+     * @param username Username
+     * @return the current instance
+     */
+    public WPSearchClient withUsername(String username) {
+        this.username = username;
+        return this;
+    }
+
+    /**
+     * If needed we can allow passing a specific password. Defaults to "changeme".
+     * @param password Password
+     * @return the current instance
+     */
+    public WPSearchClient withPassword(String password) {
+        this.password = password;
+        return this;
     }
 
     /**
@@ -155,10 +207,14 @@ public class WPSearchClient implements Closeable {
      */
     public void start() {
         logger.debug("Starting the WPSearchClient");
+
+        // Create the client
         ClientConfig config = new ClientConfig();
         // We need to suppress this so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
+        HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(username, password);
         client = ClientBuilder.newClient(config);
+        client.register(feature);
 
         // Create the BulkProcessor instance
         bulkProcessor = new FsCrawlerBulkProcessor.Builder<>(
@@ -168,6 +224,8 @@ public class WPSearchClient implements Closeable {
                 .setBulkActions(bulkSize)
                 .setFlushInterval(flushInterval)
         .build();
+
+        started = true;
     }
 
     /**
@@ -175,6 +233,7 @@ public class WPSearchClient implements Closeable {
      * @param document Document to index
      */
     public void indexDocument(Map<String, Object> document) {
+        checkStarted();
         logger.debug("Adding document {}", document);
         bulkProcessor.add(new WPSearchOperation(document));
     }
@@ -184,9 +243,10 @@ public class WPSearchClient implements Closeable {
      * @param ids List of document ids to delete
      */
     public void destroyDocuments(List<String> ids) {
+        checkStarted();
         logger.debug("Removing documents {}", ids);
         try {
-            String response = delete(urlForBulkDestroy, ids, String.class);
+            String response = post(urlForBulkDestroy, ids, String.class);
             logger.debug("Removing documents response: {}", response);
             // TODO parse the response to check for errors
         } catch (NotFoundException e) {
@@ -202,17 +262,120 @@ public class WPSearchClient implements Closeable {
         destroyDocuments(Collections.singletonList(id));
     }
 
+    /**
+     * This method needs to have a trial or platinum license.
+     * It's only used in integration tests.
+     * @param query Text we are searching for
+     * @return the json response
+     */
     public String search(String query) {
+        checkStarted();
         logger.debug("Searching for {}", query);
         Map<String, Object> request = new HashMap<>();
         request.put("query", query);
 
-        // TODO Fix this. It needs a OAuth access apparently and we can't just use the existing credentials
-        // String response = post(urlForSearch, request, String.class);
-        String response = "Needs to be implemented...";
-        logger.warn("Searching response: {}", response);
+        String json = post(urlForSearch, request, String.class);
+
+        logger.debug("Search response: {}", json);
+        return json;
+    }
+
+    public String getCustomSource() throws Exception {
+        logger.debug("get the custom source. We know [{}] as the id and [{}] as the name", sourceId, sourceName);
+
+        String sourceId = this.sourceId;
+
+        if (sourceId == null) {
+            // We check if a source name already exists with the job name
+            sourceId = findCustomSourceByName(this.sourceName);
+            if (sourceId == null) {
+                // We need to create the custom source
+                String json = createCustomSource(sourceName);
+                // We parse the json
+                Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
+                sourceId = JsonPath.read(document, "$.id");
+            }
+        }
+
+        // We try to check if the custom source id exists
+        String source = getContentSource(sourceId);
+        if (source == null || source.isEmpty()) {
+            throw new Exception("We can not read the source " + sourceId + " or create a source " +
+                    "with the name " + sourceName +". Check your settings or the custom source list " +
+                    "in Workplace Search admin UI.");
+        }
+
+        // Overwrite the urls
+        withSourceId(sourceId);
+
+        logger.debug("get the custom source. We got [{}] as the id for the source named [{}]", sourceId, sourceName);
+
+        return sourceId;
+    }
+
+    private String getContentSource(String sourceId) {
+        return get("sources/" + sourceId, String.class);
+    }
+
+    private String findCustomSourceByName(String sourceName) {
+        int currentPage = 0;
+        int totalPages = Integer.MAX_VALUE;
+        String id = null;
+
+        while(id == null && currentPage < totalPages) {
+            currentPage++;
+            String json = listAllContentSources(currentPage);
+
+            // We parse the json
+            Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
+            totalPages = JsonPath.read(document, "$.meta.page.total_pages");
+
+            // We compare every source
+            List<Map<String, Object>> sources = JsonPath.read(document, "$.results[*]");
+
+            for (Map<String, Object> source : sources) {
+                if (sourceName.equals(source.get("name"))) {
+                    id = (String) source.get("id");
+                    break;
+                }
+            }
+        }
+
+        logger.debug("Source found for name [{}]: [{}]", sourceName, id);
+        return id;
+    }
+
+    // TODO add pagination
+    private String listAllContentSources(int page) {
+        return get("sources", String.class);
+    }
+
+    private String createCustomSource(String sourceName) throws Exception {
+        checkStarted();
+
+        // If needed, we create the new settings for this files index
+        String worplaceSearchVersion = FsCrawlerUtil.extractMajorVersion(CLIENT_VERSION);
+        String json = readJsonFile(jobMappingDir, rootDir, worplaceSearchVersion, "_wpsearch_settings");
+
+        // We need to replace the place holder values
+        json = json.replaceAll("SOURCE_NAME", sourceName);
+
+        String response = post("sources/", json, String.class);
+
+        logger.debug("Source [{}] created.", sourceName);
+        logger.trace("Source [{}] created. {}", sourceName, response);
+
         return response;
     }
+
+    public void removeCustomSource(String id) {
+        checkStarted();
+
+        // Delete the source
+        String response = delete("sources/" + id, null, String.class);
+        logger.debug("removeCustomSource({}): {}", id, response);
+    }
+
 
     @Override
     public void close() {
@@ -227,6 +390,17 @@ public class WPSearchClient implements Closeable {
         if (client != null) {
             client.close();
         }
+        started = false;
+    }
+
+    private void checkStarted() {
+        if (!started) {
+            throw new RuntimeException("Bug in code. You must call start() before calling any WPSearch API");
+        }
+    }
+
+    <T> T get(String path, Class<T> clazz) {
+        return prepareHttpCall(path).get(clazz);
     }
 
     <T> T post(String path, Object data, Class<T> clazz) {
@@ -245,10 +419,7 @@ public class WPSearchClient implements Closeable {
 
         Invocation.Builder builder = target
                 .request(MediaType.APPLICATION_JSON)
-                .header("Content-Type", "application/json")
-                .header("X-Swiftype-Client", CLIENT_NAME)
-                .header("X-Swiftype-Client-Version", CLIENT_VERSION)
-                .header("Authorization", "Bearer " + accessToken);
+                .header("Content-Type", "application/json");
 
         if (userAgent != null) {
             builder.header("User-Agent", userAgent);

@@ -20,46 +20,37 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchAdminClient;
+import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.util.Map;
+import java.nio.file.Path;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assume.assumeNoException;
 
 public class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
 
     private final static String DEFAULT_TEST_WPSEARCH_URL = "http://127.0.0.1:3002";
     protected static String testWorkplaceUrl = System.getProperty("tests.workplace.url", DEFAULT_TEST_WPSEARCH_URL);
-    protected static String testWorkplaceAccessToken;
-    protected static String testWorkplaceKey;
 
-    protected static WPSearchAdminClient adminClient;
-    private static String customSourceId;
+    protected static WPSearchClient client;
+    protected static String customSourceId;
 
     @BeforeClass
     public static void createCustomSource() throws Exception {
-        adminClient = new WPSearchAdminClient()
+        Path jobMappingDir = rootTmpDir.resolve("wpsearch").resolve("_mappings");
+        client = new WPSearchClient(metadataDir, jobMappingDir)
                 .withHost(testWorkplaceUrl)
-                .withPassword(testClusterPass);
+                .withPassword(testClusterPass)
+                .withSourceName("fscrawler_integration_tests");
         try {
-            adminClient.start();
-            Map<String, Object> customSource = adminClient.createCustomSource("fscrawler_integration_tests");
-            customSourceId = (String) customSource.get("id");
-            testWorkplaceAccessToken = (String) customSource.get("accessToken");
-            testWorkplaceKey = (String) customSource.get("key");
+            client.start();
+            customSourceId = client.getCustomSource();
 
-            // Because we don't have an admin client yet for Workplace Search, we will be getting manually
-            // the custom source information from the command line as options.
-            testWorkplaceAccessToken = System.getProperty("tests.workplace.access_token");
-            testWorkplaceKey = System.getProperty("tests.workplace.key");
-
-            assertThat(customSourceId, notNullValue());
-            assertThat(testWorkplaceAccessToken, not(isEmptyOrNullString()));
-            assertThat(testWorkplaceKey, not(isEmptyOrNullString()));
+            assertThat(customSourceId, not(isEmptyOrNullString()));
         } catch (AssertionError e) {
             assumeNoException("We are skipping the test as we were not able to create a Workplace Search client", e);
         }
@@ -67,14 +58,16 @@ public class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
 
     @AfterClass
     public static void removeCustomSource() {
-        if (adminClient != null) {
-            try {
-                adminClient.removeCustomSource(customSourceId);
-            } catch (Exception e) {
-                staticLogger.warn("We have not been able to remove {}: {}", customSourceId, e.getMessage());
+        if (client != null) {
+            if (customSourceId != null) {
+                try {
+                    client.removeCustomSource(customSourceId);
+                } catch (Exception e) {
+                    staticLogger.warn("We have not been able to remove {}: {}", customSourceId, e.getMessage());
+                }
             }
-            adminClient.close();
-            adminClient = null;
+            client.close();
+            client = null;
         }
     }
 }

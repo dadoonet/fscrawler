@@ -62,8 +62,7 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCas
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
-                        .setAccessToken(testWorkplaceAccessToken)
-                        .setKey(testWorkplaceKey)
+                        .setId(customSourceId)
                         .setBulkSize(1)
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
@@ -71,9 +70,6 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCas
         try {
             documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
             documentService.start();
-
-            logger.info(" -> Removing existing index [.ent-search-engine-*]");
-            documentService.getClient().deleteIndex(".ent-search-engine-*");
         } catch (FsCrawlerIllegalConfigurationException e) {
             documentService = oldDocumentService;
             Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
