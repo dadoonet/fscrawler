@@ -233,8 +233,13 @@ public class WPSearchClient implements Closeable {
                 // Let's create a new source
                 sourceId = createCustomSource(name);
                 logger.debug("Custom source [{}] created with id [{}].", name, sourceId);
+            } else {
+                sourceId = customSourceIds.get(0);
             }
         }
+
+        // At the end, the sourceId can not be null
+        assert sourceId != null;
     }
 
     /**
@@ -329,6 +334,12 @@ public class WPSearchClient implements Closeable {
         }
 
         logger.debug("Sources found for name [{}]: {}", name, ids);
+
+        if (ids.size() > 1) {
+            logger.warn("We found [{}] custom sources with the same name [{}]: {}. " +
+                    "We will pick only the first one [{}]", ids.size(), name, ids, ids.get(0));
+        }
+
         return ids;
     }
 

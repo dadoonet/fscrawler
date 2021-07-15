@@ -30,15 +30,13 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
-import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -47,14 +45,59 @@ import static org.hamcrest.Matchers.*;
  */
 public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCase {
     private static final String SOURCE_NAME = "fscrawler-one-document";
+    private String sourceName = SOURCE_NAME;
 
     @After
-    public void cleanUpCustomSource() throws IOException {
-        cleanExistingCustomSources(SOURCE_NAME);
+    public void cleanUpCustomSource() {
+        cleanExistingCustomSources(sourceName);
     }
 
     @Test
     public void testWorkplaceSearch() throws Exception {
+        Fs fs = startCrawlerDefinition().build();
+        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
+                .setFs(fs)
+                .setElasticsearch(Elasticsearch.builder()
+                        .addNode(new ServerUrl(testClusterUrl))
+                        .setUsername(testClusterUser)
+                        .setPassword(testClusterPass)
+                        .build())
+                .setWorkplaceSearch(WorkplaceSearch.builder()
+                        .setServer(new ServerUrl(testWorkplaceUrl))
+                        .setBulkSize(1)
+                        .setFlushInterval(TimeValue.timeValueSeconds(1))
+                        .build())
+                .build();
+        sourceName = generateDefaultCustomSourceName(fsSettings.getName());
+
+        try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
+            documentService.start();
+
+            String customSourceId = getSourceIdFromSourceName(sourceName);
+            assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
+
+            startCrawler(documentService, getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
+            ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
+                    1L, null, TimeValue.timeValueSeconds(20));
+
+            Map<String, Object> source = searchResponse.getHits().get(0).getSourceAsMap();
+            assertThat(source, hasEntry(is("path"), notNullValue()));
+            assertThat(source, hasEntry("extension", "txt"));
+            assertThat(source, hasKey(startsWith("size")));
+            assertThat(source, hasKey(startsWith("text_size")));
+            assertThat(source, hasEntry(is("mime_type"), notNullValue()));
+            assertThat(source, hasEntry("name", "roottxtfile.txt"));
+            assertThat(source, hasEntry(is("created_at"), notNullValue()));
+            assertThat(source, hasEntry(is("body"), notNullValue()));
+            assertThat(source, hasEntry(is("last_modified"), notNullValue()));
+            assertThat(source, hasEntry("url", "http://127.0.0.1/roottxtfile.txt"));
+        } catch (FsCrawlerIllegalConfigurationException e) {
+            Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
+        }
+    }
+
+    @Test
+    public void testWorkplaceSearchWithCustomSourceId() throws Exception {
         String customSourceId = initSource(SOURCE_NAME);
 
         Fs fs = startCrawlerDefinition().build();
@@ -74,6 +117,49 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCas
                 .build();
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
+
+            startCrawler(documentService, getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
+            ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
+                    1L, null, TimeValue.timeValueSeconds(20));
+
+            Map<String, Object> source = searchResponse.getHits().get(0).getSourceAsMap();
+            assertThat(source, hasEntry(is("path"), notNullValue()));
+            assertThat(source, hasEntry("extension", "txt"));
+            assertThat(source, hasKey(startsWith("size")));
+            assertThat(source, hasKey(startsWith("text_size")));
+            assertThat(source, hasEntry(is("mime_type"), notNullValue()));
+            assertThat(source, hasEntry("name", "roottxtfile.txt"));
+            assertThat(source, hasEntry(is("created_at"), notNullValue()));
+            assertThat(source, hasEntry(is("body"), notNullValue()));
+            assertThat(source, hasEntry(is("last_modified"), notNullValue()));
+            assertThat(source, hasEntry("url", "http://127.0.0.1/roottxtfile.txt"));
+        } catch (FsCrawlerIllegalConfigurationException e) {
+            Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
+        }
+    }
+
+    @Test
+    public void testWorkplaceSearchWithCustomSourceName() throws Exception {
+        Fs fs = startCrawlerDefinition().build();
+        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
+                .setFs(fs)
+                .setElasticsearch(Elasticsearch.builder()
+                        .addNode(new ServerUrl(testClusterUrl))
+                        .setUsername(testClusterUser)
+                        .setPassword(testClusterPass)
+                        .build())
+                .setWorkplaceSearch(WorkplaceSearch.builder()
+                        .setServer(new ServerUrl(testWorkplaceUrl))
+                        .setName(SOURCE_NAME)
+                        .setBulkSize(1)
+                        .setFlushInterval(TimeValue.timeValueSeconds(1))
+                        .build())
+                .build();
+        try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
+            documentService.start();
+
+            String customSourceId = getSourceIdFromSourceName(SOURCE_NAME);
+            assertThat("Custom source id should be found for source " + SOURCE_NAME, customSourceId, notNullValue());
 
             startCrawler(documentService, getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
             ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),

@@ -29,23 +29,25 @@ FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/wo
 
 Here is a list of Workplace Search settings (under ``workplace_search.`` prefix)`:
 
-+-------------------------------------+---------------------------+---------------------------------+
-| Name                                | Default value             | Documentation                   |
-+=====================================+===========================+=================================+
-| ``workplace_search.id``             | None                      | `Custom Source Management`_     |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.username``       | same as for elasticsearch | `Secrets`_                      |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.password``       | same as for elasticsearch | `Secrets`_                      |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.server``         | ``http://127.0.0.1:3002`` | `Server`_                       |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.bulk_size``      | ``100``                   | `Bulk settings`_                |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.flush_interval`` | ``"5s"``                  | `Bulk settings`_                |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.url_prefix``     | ``http://127.0.0.1``      | `Documents Repository URL`_     |
-+-------------------------------------+---------------------------+---------------------------------+
++-------------------------------------+--------------------------------+---------------------------------+
+| Name                                | Default value                  | Documentation                   |
++=====================================+================================+=================================+
+| ``workplace_search.id``             | None                           | `Custom Source ID`_             |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.name``           | Local files for job + Job Name | `Custom Source Name`_           |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.username``       | same as for elasticsearch      | `Secrets`_                      |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.password``       | same as for elasticsearch      | `Secrets`_                      |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.server``         | ``http://127.0.0.1:3002``      | `Server`_                       |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.bulk_size``      | ``100``                        | `Bulk settings`_                |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.flush_interval`` | ``"5s"``                       | `Bulk settings`_                |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.url_prefix``     | ``http://127.0.0.1``           | `Documents Repository URL`_     |
++-------------------------------------+--------------------------------+---------------------------------+
 
 
 Secrets
@@ -101,12 +103,42 @@ FSCrawler configuration file:
     If you let FSCrawler creates the Custom Source for you, it is recommended to manually edit the job settings
     and provide the ``workplace_search.id``. So if you rename the Custom Source, FSCrawler won't try to create it again.
 
+Custom Source Name
+~~~~~~~~~~~~~~~~~~
+
+You can specify the custom source name you want to use when FSCrawler creates it automatically:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     username: "elastic"
+     password: "PASSWORD"
+   workplace_search:
+     name: "My fancy custom source name"
+
+.. tip::
+    By default, FSCrawler will use as the name ``Local files for JOB_NAME`` where ``JOB_NAME`` is
+    the FSCrawler ``name`` setting value. So the following job settings::
+
+    .. code:: yaml
+
+       name: "test"
+       elasticsearch:
+         username: "elastic"
+         password: "PASSWORD"
+       workplace_search:
+         username: "fscrawler"
+         password: "FSCRAWLER_PASSWORD"
+
+    will use ``Local files for test`` as the Custom Source name in Workplace Search.
+
 Automatic Custom Source Creation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the Custom Source id is not provided and no Custom Source exists with the same name as
-the FSCrawler job name (``name``), it will create automatically the Custom Source for you with all the default settings,
-which are read from ``~/.fscrawler/_default/7/_wpsearch_settings.json``. You can read its content from
+If the Custom Source id is not provided and no Custom Source exists with the same name, it will create automatically
+the Custom Source for you with all the default settings, which are read from
+``~/.fscrawler/_default/7/_wpsearch_settings.json``. You can read its content from
 `the source <https://github.com/dadoonet/fscrawler/blob/master/settings/src/main/resources/fr/pilato/elasticsearch/crawler/fs/_default/7/_wpsearch_settings.json>`__.
 
 If you want to define your own settings, you can either define your own Custom Source using the Workplace Search

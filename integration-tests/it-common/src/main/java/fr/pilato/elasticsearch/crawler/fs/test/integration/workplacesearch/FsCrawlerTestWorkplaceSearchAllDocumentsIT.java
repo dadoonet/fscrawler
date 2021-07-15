@@ -46,6 +46,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -53,17 +54,15 @@ import static org.hamcrest.Matchers.*;
  * Test all type of documents we have with workplace search
  */
 public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
-    private static final String SOURCE_NAME = "fscrawler-all-documents";
+    private String sourceName;
 
     @After
     public void cleanUpCustomSource() {
-        cleanExistingCustomSources(SOURCE_NAME);
+        cleanExistingCustomSources(sourceName);
     }
 
     @Test
     public void testAllDocuments() throws Exception {
-        String customSourceId = initSource(SOURCE_NAME);
-
         Path testResourceTarget = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(testResourceTarget)) {
             copyResourcesToTestDir();
@@ -91,14 +90,18 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplac
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
-                        .setId(customSourceId)
                         .setBulkSize(5)
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
 
+        sourceName = generateDefaultCustomSourceName(fsSettings.getName());
+
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
+
+            String customSourceId = getSourceIdFromSourceName(sourceName);
+            assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
 
             logger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 

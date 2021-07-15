@@ -40,15 +40,17 @@ public class WorkplaceSearch {
     private String urlPrefix = DEFAULT_URL_PREFIX;
     private int bulkSize = 100;
     private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
+    private String name;
 
     public WorkplaceSearch() {
 
     }
 
-    public WorkplaceSearch(ServerUrl server, String id, String username, String password, String urlPrefix,
+    public WorkplaceSearch(ServerUrl server, String id, String name, String username, String password, String urlPrefix,
                            int bulkSize, TimeValue flushInterval) {
         this.server = server;
         this.id = id;
+        this.name = name;
         this.username = username;
         this.password = password;
         this.urlPrefix = urlPrefix;
@@ -122,9 +124,18 @@ public class WorkplaceSearch {
         this.flushInterval = flushInterval;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public static class Builder {
         private ServerUrl server = DEFAULT_SERVER;
         private String id;
+        private String name;
         private String username;
         private String password;
         private String urlPrefix = DEFAULT_URL_PREFIX;
@@ -138,13 +149,24 @@ public class WorkplaceSearch {
 
         /**
          * The id of the source. If not provided, the id will be automatically set
-         * by fetching the first custom source which name is equal to the fscrawler job name.
+         * by fetching the first custom source which name is equal to source name.
          * If no custom source is found, a new one will be automatically created
          * @param id id of the source if known
          * @return the builder
          */
         public Builder setId(String id) {
             this.id = id;
+            return this;
+        }
+
+        /**
+         * Provide the custom source name. It will be used if the id is not provided.
+         * It defaults to "Local files from DIR" where DIR is the fs.url property.
+         * @param name The custom source name
+         * @return the builder
+         */
+        public Builder setName(String name) {
+            this.name = name;
             return this;
         }
 
@@ -174,7 +196,7 @@ public class WorkplaceSearch {
         }
 
         public WorkplaceSearch build() {
-            return new WorkplaceSearch(server, id, username, password, urlPrefix, bulkSize, flushInterval);
+            return new WorkplaceSearch(server, id, name, username, password, urlPrefix, bulkSize, flushInterval);
         }
     }
 

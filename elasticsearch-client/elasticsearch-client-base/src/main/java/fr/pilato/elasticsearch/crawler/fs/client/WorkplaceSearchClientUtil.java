@@ -111,4 +111,31 @@ public abstract class WorkplaceSearchClientUtil {
 
         return (Class<WorkplaceSearchClient>) aClass;
     }
+
+    /**
+     * Prefix to use when no name for a source is provided
+     */
+    private static final String DEFAULT_SOURCE_NAME_PREFIX = "Local files for ";
+
+    /**
+     * Generate the default custom source name to use. It will be something like:
+     * "Local files for job test". The name will be truncated to 64 characters.
+     * @param suffix the suffix to append to "Local files for job "
+     * @return the custom source name
+     */
+    public static String generateDefaultCustomSourceName(String suffix) {
+        String name = DEFAULT_SOURCE_NAME_PREFIX + suffix;
+
+        /*
+        The name may not be longer than 64 characters.
+        */
+        if (name.length() > 64) {
+            name = name.substring(0, 64);
+            logger.warn("The generated name for the job exceeds the Workplace Search limit of 64 characters. " +
+                    "It has been truncated to [{}]. You could manually force the name you want to use by setting " +
+                    "fs.", name);
+        }
+
+        return name;
+    }
 }
