@@ -30,12 +30,13 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
+import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.junit.After;
 import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,15 +46,19 @@ import static org.hamcrest.Matchers.*;
  * Test workplace search
  */
 public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCase {
+    private static final String SOURCE_NAME = "fscrawler-one-document";
 
-    private FsCrawlerDocumentService oldDocumentService;
-    private FsSettings fsSettings;
+    @After
+    public void cleanUpCustomSource() throws IOException {
+        cleanExistingCustomSources(SOURCE_NAME);
+    }
 
-    @Before
-    public void overrideDocumentService() throws IOException {
-        oldDocumentService = documentService;
+    @Test
+    public void testWorkplaceSearch() throws Exception {
+        String customSourceId = initSource(SOURCE_NAME);
+
         Fs fs = startCrawlerDefinition().build();
-        fsSettings = FsSettings.builder(getCrawlerName())
+        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
                 .setFs(fs)
                 .setElasticsearch(Elasticsearch.builder()
                         .addNode(new ServerUrl(testClusterUrl))
@@ -67,38 +72,26 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCas
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
-        try {
-            documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
+        try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
+
+            startCrawler(documentService, getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
+            ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
+                    1L, null, TimeValue.timeValueSeconds(20));
+
+            Map<String, Object> source = searchResponse.getHits().get(0).getSourceAsMap();
+            assertThat(source, hasEntry(is("path"), notNullValue()));
+            assertThat(source, hasEntry("extension", "txt"));
+            assertThat(source, hasKey(startsWith("size")));
+            assertThat(source, hasKey(startsWith("text_size")));
+            assertThat(source, hasEntry(is("mime_type"), notNullValue()));
+            assertThat(source, hasEntry("name", "roottxtfile.txt"));
+            assertThat(source, hasEntry(is("created_at"), notNullValue()));
+            assertThat(source, hasEntry(is("body"), notNullValue()));
+            assertThat(source, hasEntry(is("last_modified"), notNullValue()));
+            assertThat(source, hasEntry("url", "http://127.0.0.1/roottxtfile.txt"));
         } catch (FsCrawlerIllegalConfigurationException e) {
-            documentService = oldDocumentService;
             Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
         }
-    }
-
-    @After
-    public void resetDocumentService() throws IOException {
-        if (oldDocumentService != documentService) {
-            documentService.close();
-            documentService = oldDocumentService;
-        }
-    }
-
-    @Test
-    public void testWorkplaceSearch() throws Exception {
-        startCrawler(getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-
-        Map<String, Object> source = searchResponse.getHits().get(0).getSourceAsMap();
-        assertThat(source, hasEntry(is("path$string"), notNullValue()));
-        assertThat(source, hasEntry("extension$string", "txt"));
-        assertThat(source, hasKey(startsWith("size")));
-        assertThat(source, hasKey(startsWith("text_size")));
-        assertThat(source, hasEntry(is("mime_type$string"), notNullValue()));
-        assertThat(source, hasEntry("name$string", "roottxtfile.txt"));
-        assertThat(source, hasEntry(is("created_at$string"), notNullValue()));
-        assertThat(source, hasEntry(is("body$string"), notNullValue()));
-        assertThat(source, hasEntry(is("last_modified$string"), notNullValue()));
-        assertThat(source, hasEntry("url$string", "http://127.0.0.1/roottxtfile.txt"));
     }
 }

@@ -35,9 +35,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import org.apache.tika.parser.external.ExternalParser;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assume;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -49,19 +48,22 @@ import java.util.Map;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * Test all type of documents we have with workplace search
  */
 public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
+    private static final String SOURCE_NAME = "fscrawler-all-documents";
 
-    private static FsCrawlerImpl crawler = null;
-    private static FsCrawlerDocumentService oldDocumentService;
+    @After
+    public void cleanUpCustomSource() {
+        cleanExistingCustomSources(SOURCE_NAME);
+    }
 
-    @BeforeClass
-    public static void startCrawling() throws Exception {
+    @Test
+    public void testAllDocuments() throws Exception {
+        String customSourceId = initSource(SOURCE_NAME);
+
         Path testResourceTarget = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(testResourceTarget)) {
             copyResourcesToTestDir();
@@ -75,11 +77,9 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplac
                     .forEach(path -> staticLogger.debug("    - [{}]", path));
             numFiles = Files.list(testResourceTarget).count();
         } catch (NoSuchFileException e) {
-            staticLogger.error("directory [{}] should exist before we can start tests.", testResourceTarget);
+            logger.error("directory [{}] should exist before we can start tests.", testResourceTarget);
             throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
-
-        oldDocumentService = documentService;
 
         FsSettings fsSettings = FsSettings.builder("fscrawler_workplacesearch_test_all_documents")
                 .setElasticsearch(generateElasticsearchConfig("fscrawler_workplacesearch_test_all_documents",
@@ -97,178 +97,88 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplac
                         .build())
                 .build();
 
-        try {
-            documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
+        try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
+            logger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
             crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
             crawler.start();
 
             // We wait until we have all docs
             // TODO Replace with the real search API
-            countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-*"), numFiles, null, TimeValue.timeValueMinutes(5));
-        } catch (FsCrawlerIllegalConfigurationException e) {
-            documentService = oldDocumentService;
-            Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
-        }
-    }
+            countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId), numFiles, null, TimeValue.timeValueMinutes(5));
 
-    @AfterClass
-    public static void stopCrawling() throws Exception {
-        if (crawler != null) {
-            staticLogger.info("  --> Stopping crawler");
+            logger.info("  --> stopping crawler");
             crawler.close();
             crawler = null;
-        }
-        if (oldDocumentService != documentService) {
-            documentService.close();
-            documentService = oldDocumentService;
-        }
-    }
 
-    /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/163
-     */
-    @Test
-    public void testXmlIssue163() throws IOException {
-        runSearch("issue-163.xml");
-    }
+            logger.info("  --> checking that files have expected content");
 
-    @Test
-    public void testJson() throws IOException {
-        runSearch("test.json", "json");
-    }
+            runSearch("issue-163.xml");
+            runSearch("test.json", "json");
+            runSearch("test.doc", "sample");
 
-    @Test
-    public void testExtractFromDoc() throws IOException {
-        runSearch("test.doc", "sample");
-    }
-
-    @Test
-    public void testExtractFromDocx() throws IOException {
-        ESSearchResponse response = runSearch("test.docx", "sample");
-        for (ESSearchHit hit : response.getHits()) {
-            Map<String, Object> source = hit.getSourceAsMap();
-            assertThat(source, hasEntry(is("name$string"), notNullValue()));
-            assertThat(source, hasEntry(is("mime_type$string"), notNullValue()));
-            assertThat(source, hasEntry(is("url$string"), notNullValue()));
-            assertThat(source, hasKey(startsWith("size")));
-            assertThat(source, hasEntry(is("last_modified$string"), notNullValue()));
-            assertThat(source, hasEntry(is("path$string"), notNullValue()));
-            assertThat(source, hasEntry(is("created_at$string"), notNullValue()));
-            assertThat(source, hasEntry(is("title$string"), notNullValue()));
-            assertThat(source, hasEntry(is("keywords$string"), notNullValue()));
-            assertThat(source, hasEntry(is("body$string"), notNullValue()));
-        }
-    }
-
-    @Test
-    public void testExtractFromEml() throws IOException {
-        ESSearchResponse response = runSearch("test.eml", "test");
-        for (ESSearchHit hit : response.getHits()) {
-            Map<String, Object> source = hit.getSourceAsMap();
-            assertThat(source, hasEntry(is("title$string"), is("Test")));
-            assertThat(source, hasEntry(is("author$string"), is("鲨掉 <2428617664@qq.com>")));
-        }
-    }
-
-    @Test
-    public void testExtractFromHtml() throws IOException {
-        runSearch("test.html", "sample");
-    }
-
-    @Test
-    public void testExtractFromMp3() throws IOException {
-        runSearch("test.mp3", "tika");
-    }
-
-    @Test
-    public void testExtractFromOdt() throws IOException {
-        runSearch("test.odt", "sample");
-    }
-
-    @Test
-    public void testExtractFromPdf() throws IOException {
-        runSearch("test.pdf", "sample");
-    }
-
-    @Test
-    public void testExtractFromRtf() throws IOException {
-        runSearch("test.rtf", "sample");
-    }
-
-    @Test
-    public void testExtractFromTxt() throws IOException {
-        runSearch("test.txt", "contains");
-    }
-
-    @Test
-    public void testExtractFromWav() throws IOException {
-        runSearch("test.wav");
-    }
-
-    /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/229
-     */
-    @Test
-    public void testProtectedDocument229() throws IOException {
-        runSearch("test-protected.docx");
-    }
-
-    /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/221
-     */
-    @Test
-    public void testProtectedDocument221() throws IOException {
-        runSearch("issue-221-doc1.pdf", "Formations");
-        runSearch("issue-221-doc2.pdf", "FORMATIONS");
-    }
-
-    @Test
-    public void testLanguageDetection() throws IOException {
-        // TODO fix this hack. We can't make sure we are returning one single file
-        ESSearchResponse response = runSearch("test-fr.txt", "fichier");
-        for (ESSearchHit hit : response.getHits()) {
-            if (hit.getSourceAsMap().get("name$string").equals("test-fr.txt")) {
-                assertThat(hit.getSourceAsMap(), hasEntry("language$string", "fr"));
+            {
+                ESSearchResponse response = runSearch("test.docx", "sample");
+                for (ESSearchHit hit : response.getHits()) {
+                    Map<String, Object> source = hit.getSourceAsMap();
+                    assertThat(source, hasEntry(is("name"), notNullValue()));
+                    assertThat(source, hasEntry(is("mime_type"), notNullValue()));
+                    assertThat(source, hasEntry(is("url"), notNullValue()));
+                    assertThat(source, hasEntry(is("size"), notNullValue()));
+                    assertThat(source, hasEntry(is("last_modified"), notNullValue()));
+                    assertThat(source, hasEntry(is("path"), notNullValue()));
+                    assertThat(source, hasEntry(is("created_at"), notNullValue()));
+                    assertThat(source, hasEntry(is("title"), notNullValue()));
+                    assertThat(source, hasEntry(is("keywords"), notNullValue()));
+                    assertThat(source, hasEntry(is("body"), notNullValue()));
+                }
             }
-        }
-        response = runSearch("test-de.txt", "Datei");
-        for (ESSearchHit hit : response.getHits()) {
-            if (hit.getSourceAsMap().get("name$string").equals("test-de.txt")) {
-                assertThat(hit.getSourceAsMap(), hasEntry("language$string", "de"));
+            runSearch("test.html", "sample");
+            runSearch("test.mp3", "tika");
+            runSearch("test.odt", "sample");
+            runSearch("test.pdf", "sample");
+            runSearch("test.rtf", "sample");
+            runSearch("test.txt", "contains");
+            runSearch("test.wav");
+            runSearch("test-protected.docx");
+            runSearch("issue-221-doc1.pdf", "Formations");
+            runSearch("issue-221-doc2.pdf", "FORMATIONS");
+            {
+                // TODO fix this hack. We can't make sure we are returning one single file
+                ESSearchResponse response = runSearch("test-fr.txt", "fichier");
+                for (ESSearchHit hit : response.getHits()) {
+                    if (hit.getSourceAsMap().get("name").equals("test-fr.txt")) {
+                        assertThat(hit.getSourceAsMap(), hasEntry("language", "fr"));
+                    }
+                }
+                response = runSearch("test-de.txt", "Datei");
+                for (ESSearchHit hit : response.getHits()) {
+                    if (hit.getSourceAsMap().get("name").equals("test-de.txt")) {
+                        assertThat(hit.getSourceAsMap(), hasEntry("language", "de"));
+                    }
+                }
+                response = runSearch("test.txt", "contains");
+                for (ESSearchHit hit : response.getHits()) {
+                    if (hit.getSourceAsMap().get("name").equals("test.txt")) {
+                        assertThat(hit.getSourceAsMap(), hasEntry("language", "en"));
+                    }
+                }
             }
-        }
-        response = runSearch("test.txt", "contains");
-        for (ESSearchHit hit : response.getHits()) {
-            if (hit.getSourceAsMap().get("name$string").equals("test.txt")) {
-                assertThat(hit.getSourceAsMap(), hasEntry("language$string", "en"));
+            runSearch("issue-369.txt", "今天天气晴好");
+            runSearch("issue-400-shiftjis.txt", "elasticsearch");
+            runSearch("issue-418-中文名称.txt");
+
+            // If Tesseract is not installed, we are skipping this test
+            if (ExternalParser.check("tesseract")) {
+                runSearch("test-ocr.png", "words");
+                runSearch("test-ocr.pdf", "words");
             }
+
+        } catch (FsCrawlerIllegalConfigurationException e) {
+            Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
         }
-    }
-
-    @Test
-    public void testChineseContent369() throws IOException {
-        runSearch("issue-369.txt", "今天天气晴好");
-    }
-
-    @Test
-    public void testOcr() throws IOException {
-        assumeTrue("Tesseract is not installed so we are skipping this test", ExternalParser.check("tesseract"));
-        runSearch("test-ocr.png", "words");
-        runSearch("test-ocr.pdf", "words");
-    }
-
-    @Test
-    public void testShiftJisEncoding() throws IOException {
-        runSearch("issue-400-shiftjis.txt", "elasticsearch");
-    }
-
-    @Test
-    public void testNonUtf8Filename418() throws IOException {
-        runSearch("issue-418-中文名称.txt");
     }
 
     private ESSearchResponse runSearch(String filename) throws IOException {
@@ -278,12 +188,15 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplac
     private ESSearchResponse runSearch(String filename, String content) throws IOException {
         logger.info(" -> Testing if file [{}] has been indexed correctly{}.", filename,
                 content == null ? "" : " and contains [" + content + "]");
-        ESBoolQuery query = new ESBoolQuery().addMust(new ESTermQuery("name$string.enum", filename));
+
+        // TODO We should use instead the WPSearch search API
+
+        ESBoolQuery query = new ESBoolQuery().addMust(new ESTermQuery("name.enum", filename));
         if (content != null) {
-            query.addMust(new ESMatchQuery("body$string", content));
+            query.addMust(new ESMatchQuery("body", content));
         }
         ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
-                        .withIndex(".ent-search-engine-*")
+                        .withIndex(".ent-search-engine-documents-source-*")
                         .withESQuery(query));
         assertThat(response.getTotalHits(), is(1L));
         return response;

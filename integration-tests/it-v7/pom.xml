@@ -28,6 +28,11 @@
             <artifactId>fscrawler-elasticsearch-client-v7</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-it-common</artifactId>
+            <version>2.7-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -111,8 +116,7 @@
                 <configuration>
                     <services>
                         <service>elasticsearch</service>
-                        <!-- We are disabling enterprisesearch for now as we don't have an Admin API yet -->
-                        <!--service>enterprisesearch</service-->
+                        <service>enterprisesearch</service>
                     </services>
                 </configuration>
             </plugin>
@@ -125,13 +129,10 @@
                             <url>http://localhost:9200/</url>
                             <statusCode>401</statusCode>
                         </check>
-                        <!-- We are disabling enterprisesearch for now as we don't have an Admin API yet -->
-                        <!--
                         <check>
                             <url>http://localhost:3002/</url>
                             <statusCode>200</statusCode>
                         </check>
-                        -->
                     </checks>
                 </configuration>
             </plugin>

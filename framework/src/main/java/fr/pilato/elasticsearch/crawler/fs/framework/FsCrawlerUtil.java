@@ -65,6 +65,7 @@ import java.util.regex.Pattern;
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
     public static final String INDEX_SETTINGS_FILE = "_settings";
+    public static final String INDEX_WORKPLACE_SEARCH_SETTINGS_FILE = "_wpsearch_settings";
     public static final String INDEX_SETTINGS_FOLDER_FILE = "_settings_folder";
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerUtil.class);

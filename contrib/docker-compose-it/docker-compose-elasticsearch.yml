@@ -21,6 +21,7 @@ services:
         hard: -1
     ports: ["$ELASTICSEARCH_PORT:$ELASTICSEARCH_PORT"]
     networks: ['fscrawler_it']
+    restart: always
 
 networks:
   fscrawler_it: {}

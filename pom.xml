@@ -80,9 +80,9 @@
         <tests.cluster.pass>changeme</tests.cluster.pass>
         <integ.workplace.image>docker.elastic.co/enterprise-search/enterprise-search</integ.workplace.image>
         <integ.workplace.port>3002</integ.workplace.port>
-        <tests.workplace.url>http://127.0.0.1:3002</tests.workplace.url>
-        <tests.workplace.access_token></tests.workplace.access_token>
-        <tests.workplace.key></tests.workplace.key>
+        <tests.workplace.url></tests.workplace.url>
+        <tests.workplace.user>${tests.cluster.user}</tests.workplace.user>
+        <tests.workplace.pass>${tests.cluster.pass}</tests.workplace.pass>
         <tests.rest.port>8080</tests.rest.port>
 
         <!-- Randomized testing framework -->

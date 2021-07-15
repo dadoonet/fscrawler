@@ -55,6 +55,9 @@ But you need first to specify the Maven profile to use and rebuild the project.
 Run tests with an external cluster
 """"""""""""""""""""""""""""""""""
 
+Launching the docker containers might take some time so if to want to run the test suite against an already running
+cluster, you need to provide a ``tests.cluster.url`` value. This will skip launching the docker instances.
+
 To run the test suite against an elasticsearch instance running locally, just run::
 
     mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 -Dtests.cluster.url=http://localhost:9200
@@ -108,63 +111,46 @@ You can change this by using ``tests.cluster.pass`` option::
 Testing Workplace Search connector
 """"""""""""""""""""""""""""""""""
 
-To test the Workplace Search connector, some manual steps needs to be performed as you need to start
-Enterprise Search and create manually the custom source as there is no API yet to do that.
-
-    .. warning::
-
-    Running the integration tests **will remove everything** you have indexed so far in the workplace local instance.
-
 .. versionadded:: 2.7
 
-* Run the following steps::
+The Workplace Search integration is automatically tested when running the integration tests.
+The maven process will start both elasticsearch and enterprise search nodes. Note that this
+could take several minutes before to have it up and running.
 
-    mvn docker-compose:up waitfor:waitfor -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7
-
-* Wait for it to end and open http://localhost:3002/ws.
-* Enter ``enterprise_search`` as the login and ``changeme`` as the password.
-* Click on "Add sources" button and choose `Custom API <http://localhost:3002/ws/org/sources#/add/custom>`_.
-* Name it ``fscrawler`` and click on "Create Custom API Source" button.
-* Copy the "Access Token" value. We will mention it as ``ACCESS_TOKEN`` for the rest of this documentation.
-* Copy the "Key" value. We will mention it as ``KEY`` for the rest of this documentation.
-
-.. image:: /_static/wpsearch/fscrawler-custom-source.png
-
-* You can now run in another terminal::
+To test the Workplace Search connector against an existing cluster, you can provide the ``tests.cluster.url`` setting.
+This will skip launching the containers and all the test suite will run against this external cluster::
 
     mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
-        -Dtests.cluster.url=http://127.0.0.1:9200 \
-        -Dtests.workplace.access_token=ACCESS_TOKEN \
-        -Dtests.workplace.key=KEY
-
-* Then you should be able to see the documents in http://localhost:3002/ws/search
-
-* Once you're done and want to switch off the stack, run::
-
-    mvn docker-compose:down -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7
-
-.. hint::
-
-    If you want to modify the look, go to the source and choose "Display Settings".
-    Adapt the settings accordingly.
-
-    .. image:: /_static/wpsearch/fscrawler-display-settings-1.png
-
-    In "Result Detail" tab, add the missing fields. And click on "Save".
-
-    .. image:: /_static/wpsearch/fscrawler-display-settings-2.png
-
-To run Workplace Search tests against another instance (ie. running on
-`Enterprise Search service by Elastic <https://www.elastic.co/workplace-search>`_,
-you can also use ``tests.workplace.url`` to set where Enterprise Search is running::
-
-    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
+        -Dtests.cluster.url=http://localhost:9200 \
         -Dtests.cluster.user=elastic \
         -Dtests.cluster.pass=changeme \
-        -Dtests.cluster.cloud_id=CLOUD_ID
-        -Dtests.workplace.url=https://XYZ.ent-search.ZONE.CLOUD_PROVIDER.elastic-cloud.com \
-        -Dtests.workplace.access_token=ACCESS_TOKEN \
-        -Dtests.workplace.key=KEY
+        -Dtests.workplace.url=http://localhost:3002
+
+.. note::
+
+    By default, ``tests.workplace.user`` and ``tests.workplace.pass`` are using the same values as for
+    ``tests.cluster.user`` and ``tests.cluster.pass``. But if you want to use another username and password
+    to connect to workplace search, you can override the settings::
+
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
+            -Dtests.cluster.url=http://localhost:9200 \
+            -Dtests.cluster.user=elastic \
+            -Dtests.cluster.pass=changeme \
+            -Dtests.workplace.url=http://localhost:3002
+            -Dtests.workplace.user=enterprise_search \
+            -Dtests.workplace.pass=changeme
+
+To run Workplace Search tests against the
+`Enterprise Search service by Elastic <https://www.elastic.co/workplace-search>`_,
+you can also use something like::
+
+    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
+        -Dtests.cluster.url=https://ALIAS.es.eu-west-3.aws.elastic-cloud.com:9243 \
+        -Dtests.cluster.user=elastic \
+        -Dtests.cluster.pass=changeme \
+        -Dtests.workplace.url=https://ALIAS.ent.eu-west-3.aws.elastic-cloud.com \
+        -Dtests.workplace.user=enterprise_search \
+        -Dtests.workplace.pass=changeme
 
 Changing the REST port
 """"""""""""""""""""""

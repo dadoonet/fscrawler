@@ -24,10 +24,16 @@ import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerOperation;
 import java.util.Map;
 
 public class WPSearchOperation implements FsCrawlerOperation<WPSearchOperation> {
+    private final String customSourceId;
     private final Map<String, Object> document;
 
-    public WPSearchOperation(Map<String, Object> document) {
+    public WPSearchOperation(String customSourceId, Map<String, Object> document) {
+        this.customSourceId = customSourceId;
         this.document = document;
+    }
+
+    public String getCustomSourceId() {
+        return customSourceId;
     }
 
     public Map<String, Object> getDocument() {

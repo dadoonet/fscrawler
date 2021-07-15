@@ -52,16 +52,16 @@
     </dependencies>
 
     <build>
-        <testResources>
-            <testResource>
+        <resources>
+            <resource>
                 <directory>src/main/resources-binary</directory>
                 <filtering>false</filtering>
-            </testResource>
-            <testResource>
+            </resource>
+            <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
-            </testResource>
-        </testResources>
+            </resource>
+        </resources>
     </build>
 
     <profiles>

@@ -69,15 +69,15 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
         logger.debug("Starting Workplace Search V7 client");
         Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
         wpSearchClient = new WPSearchClient(config, jobMappingDir)
-            .withSourceName(settings.getName())
-            .withSourceId(settings.getWorkplaceSearch().getId())
             .withHost(settings.getWorkplaceSearch().getServer().decodedUrl())
-            .withUsername(settings.getWorkplaceSearch().getUsername())
-            .withPassword(settings.getWorkplaceSearch().getPassword())
+            .withUsername(settings.getWorkplaceSearch().getUsername(), settings.getElasticsearch().getUsername())
+            .withPassword(settings.getWorkplaceSearch().getPassword(), settings.getElasticsearch().getPassword())
             .withHost(settings.getWorkplaceSearch().getServer().decodedUrl())
             .withBulkSize(settings.getWorkplaceSearch().getBulkSize())
             .withFlushInterval(settings.getWorkplaceSearch().getFlushInterval());
         wpSearchClient.start();
+        wpSearchClient.configureCustomSource(settings.getWorkplaceSearch().getId(), settings.getName());
+
         esClient = ElasticsearchClientUtil.getInstance(config, settings);
         esClient.start();
         logger.debug("Workplace Search V7 client started");
@@ -192,7 +192,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public void delete(String index, String id) {
-        wpSearchClient.destroyDocument(id);
+        wpSearchClient.destroyDocument(index, id);
     }
 
     @Override
@@ -215,7 +215,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     public ESSearchResponse search(ESSearchRequest request) throws IOException {
         // For now we are going to run a dummy search in elasticsearch directly
         // and ignore the request in most times
-        request.withIndex(".ent-search-engine-*");
+        request.withIndex(".ent-search-engine-documents-source-*");
         return esClient.search(request);
     }
 

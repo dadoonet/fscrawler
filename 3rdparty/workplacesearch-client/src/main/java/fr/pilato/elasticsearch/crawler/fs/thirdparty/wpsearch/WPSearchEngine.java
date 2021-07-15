@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,17 +38,30 @@ public class WPSearchEngine implements Engine<WPSearchOperation, WPSearchBulkReq
 
     @Override
     public WPSearchBulkResponse bulk(WPSearchBulkRequest request) {
-        List<Map<String, Object>> documents = new ArrayList<>();
+
+        // We need to split the request bu custom id in case we have multiple ones
+        // the custom id is actually extracted from the index name
+        Map<String, List<Map<String, Object>>> operationsBySource = new HashMap<>();
         for (WPSearchOperation operation : request.getOperations()) {
+            List<Map<String, Object>> documents = operationsBySource.getOrDefault(operation.getCustomSourceId(), new ArrayList<>());
             documents.add(operation.getDocument());
+            operationsBySource.putIfAbsent(operation.getCustomSourceId(), documents);
         }
 
-        try {
-            String response = wpSearchClient.post(wpSearchClient.urlForBulkCreate, documents, String.class);
-            return new WPSearchBulkResponse(response);
-        } catch (Exception e) {
-            logger.error(e);
-            return new WPSearchBulkResponse(e.getMessage());
+        Map<String, String> responses = new HashMap<>();
+        for (String sourceId : operationsBySource.keySet()) {
+            try {
+                String urlForBulkCreate = "sources/" + sourceId + "/documents/bulk_create";
+
+                logger.debug("Sending a bulk request of [{}] documents to the Workplace Search service [{}]",
+                        operationsBySource.get(sourceId).size(), wpSearchClient.toString());
+                String response = wpSearchClient.post(urlForBulkCreate, operationsBySource.get(sourceId), String.class);
+                responses.put(sourceId, response);
+            } catch (Exception e) {
+                logger.error(e);
+                responses.put(sourceId, e.getMessage());
+            }
         }
+        return new WPSearchBulkResponse(responses);
     }
 }
