@@ -44,7 +44,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
 
     @Before
     @After
-    public void cleanUpCustomSource() throws IOException {
+    public void cleanUpCustomSource() {
         cleanExistingCustomSources(SOURCE_NAME);
     }
 

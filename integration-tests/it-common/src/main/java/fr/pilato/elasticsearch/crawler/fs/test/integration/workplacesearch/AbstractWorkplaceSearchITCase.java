@@ -54,7 +54,9 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     protected final static String testWorkplacePass = System.getProperty("tests.workplace.pass", testClusterPass);
 
     protected FsCrawlerImpl startCrawler(final FsCrawlerDocumentService documentService,
-                                         final String jobName, FsSettings fsSettings, TimeValue duration)
+                                         final String jobName,
+                                         final String customSourceId,
+                                         FsSettings fsSettings, TimeValue duration)
             throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
@@ -66,7 +68,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         crawler.start();
 
         // We wait up to X seconds before considering a failing test
-        assertThat("Job meta file should exists in ~/.fscrawler...", awaitBusy(() -> {
+        assertThat("Job meta file [" + jobName + "] should exists in ~/.fscrawler...", awaitBusy(() -> {
             try {
                 new FsJobFileHandler(metadataDir).read(jobName);
                 return true;
@@ -75,7 +77,8 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
             }
         }, duration.seconds(), TimeUnit.SECONDS), equalTo(true));
 
-        countTestHelper(documentService, new ESSearchRequest().withIndex(jobName), null, null, TimeValue.timeValueSeconds(20));
+        countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
+                null, null, TimeValue.timeValueSeconds(20));
 
         // Make sure we refresh indexed docs before launching tests
         refresh();
@@ -94,7 +97,9 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    public static ESSearchResponse countTestHelper(final FsCrawlerDocumentService documentService, final ESSearchRequest request, final Long expected, final Path path, final TimeValue timeout) throws Exception {
+    public static ESSearchResponse countTestHelper(final FsCrawlerDocumentService documentService,
+                                                   final ESSearchRequest request, final Long expected, final Path path,
+                                                   final TimeValue timeout) throws Exception {
 
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
@@ -139,8 +144,8 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         return response[0];
     }
 
-    protected WPSearchClient createClient() {
-        logger.info("  --> creating the workplace search custom source client");
+    protected static WPSearchClient createClient() {
+        staticLogger.info("  --> creating the workplace search custom source client");
         Path jobMappingDir = rootTmpDir.resolve("wpsearch").resolve("_mappings");
         WPSearchClient client = new WPSearchClient(metadataDir, jobMappingDir)
                 .withHost(testWorkplaceUrl)
@@ -150,35 +155,37 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         return client;
     }
 
-    protected void cleanExistingCustomSources(String sourceName) {
-        try (WPSearchClient client = createClient()) {
-            List<String> sourceIds = client.getCustomSourcesByName(sourceName);
-            for (String sourceId : sourceIds) {
-                client.removeCustomSource(sourceId);
+    protected static void cleanExistingCustomSources(String sourceName) {
+        if (!testKeepData) {
+            try (WPSearchClient client = createClient()) {
+                List<String> sourceIds = client.getCustomSourcesByName(sourceName);
+                for (String sourceId : sourceIds) {
+                    client.removeCustomSource(sourceId);
+                }
             }
         }
     }
 
-    protected String initSource(String sourceName) throws Exception {
-        logger.info("  --> creating the workplace search custom source {}", sourceName);
+    protected static String initSource(String sourceName) throws Exception {
+        staticLogger.info("  --> creating the workplace search custom source {}", sourceName);
         try (WPSearchClient client = createClient()) {
             cleanExistingCustomSources(sourceName);
             // Let's create a new source
             String customSourceId = client.createCustomSource(sourceName);
             assertThat(customSourceId, not(isEmptyOrNullString()));
 
-            logger.debug("  --> we will be using custom source {}.", customSourceId);
+            staticLogger.debug("  --> we will be using custom source {}.", customSourceId);
             return customSourceId;
         }
     }
 
-    protected String getSourceIdFromSourceName(String sourceName) throws Exception {
-        logger.info("  --> getting the workplace search custom source id from name {}", sourceName);
+    protected static String getSourceIdFromSourceName(String sourceName) throws Exception {
+        staticLogger.info("  --> getting the workplace search custom source id from name {}", sourceName);
         try (WPSearchClient client = createClient()) {
             List<String> sources = client.getCustomSourcesByName(sourceName);
             assertThat(sources, not(empty()));
 
-            logger.debug("  --> custom source name {} has id {}.", sourceName, sources.get(0));
+            staticLogger.debug("  --> custom source name {} has id {}.", sourceName, sources.get(0));
             return sources.get(0);
         }
     }

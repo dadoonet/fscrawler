@@ -32,6 +32,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import org.junit.After;
 import org.junit.Assume;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Map;
@@ -43,19 +45,32 @@ import static org.hamcrest.Matchers.*;
 /**
  * Test workplace search
  */
-public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCase {
-    private static final String SOURCE_NAME = "fscrawler-one-document";
-    private String sourceName = SOURCE_NAME;
+public class WPSearchIT extends AbstractWorkplaceSearchITCase {
+    private String sourceName;
+
+    @BeforeClass
+    public static void cleanAllTestResources() {
+        // Just for dev only. In case we need to remove tons of workplace search custom sources at once
+        // cleanExistingCustomSources("fscrawler_*");
+    }
+
+    @Before
+    public void generateJobName() {
+        sourceName = getRandomCrawlerName();
+    }
 
     @After
     public void cleanUpCustomSource() {
-        cleanExistingCustomSources(sourceName);
+        if (sourceName != null) {
+            cleanExistingCustomSources(sourceName);
+        }
     }
 
     @Test
     public void testWorkplaceSearch() throws Exception {
+        String crawlerName = sourceName;
         Fs fs = startCrawlerDefinition().build();
-        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
+        FsSettings fsSettings = FsSettings.builder(crawlerName)
                 .setFs(fs)
                 .setElasticsearch(Elasticsearch.builder()
                         .addNode(new ServerUrl(testClusterUrl))
@@ -68,7 +83,7 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCas
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
-        sourceName = generateDefaultCustomSourceName(fsSettings.getName());
+        sourceName = generateDefaultCustomSourceName(crawlerName);
 
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
@@ -76,7 +91,7 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCas
             String customSourceId = getSourceIdFromSourceName(sourceName);
             assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
 
-            startCrawler(documentService, getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(documentService, crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
             ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
                     1L, null, TimeValue.timeValueSeconds(20));
 
@@ -98,10 +113,10 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCas
 
     @Test
     public void testWorkplaceSearchWithCustomSourceId() throws Exception {
-        String customSourceId = initSource(SOURCE_NAME);
-
+        String customSourceId = initSource(sourceName);
+        String crawlerName = getRandomCrawlerName();
         Fs fs = startCrawlerDefinition().build();
-        FsSettings fsSettings = FsSettings.builder(getCrawlerName())
+        FsSettings fsSettings = FsSettings.builder(crawlerName)
                 .setFs(fs)
                 .setElasticsearch(Elasticsearch.builder()
                         .addNode(new ServerUrl(testClusterUrl))
@@ -118,7 +133,7 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCas
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            startCrawler(documentService, getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(documentService, crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
             ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
                     1L, null, TimeValue.timeValueSeconds(20));
 
@@ -150,7 +165,7 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCas
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
-                        .setName(SOURCE_NAME)
+                        .setName(sourceName)
                         .setBulkSize(1)
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
@@ -158,11 +173,12 @@ public class FsCrawlerTestWorkplaceSearchIT extends AbstractWorkplaceSearchITCas
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            String customSourceId = getSourceIdFromSourceName(SOURCE_NAME);
-            assertThat("Custom source id should be found for source " + SOURCE_NAME, customSourceId, notNullValue());
+            String customSourceId = getSourceIdFromSourceName(sourceName);
+            assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
 
-            startCrawler(documentService, getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
-            ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
+            startCrawler(documentService, getCrawlerName(), customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest()
+                            .withIndex(".ent-search-engine-documents-source-" + customSourceId),
                     1L, null, TimeValue.timeValueSeconds(20));
 
             Map<String, Object> source = searchResponse.getHits().get(0).getSourceAsMap();

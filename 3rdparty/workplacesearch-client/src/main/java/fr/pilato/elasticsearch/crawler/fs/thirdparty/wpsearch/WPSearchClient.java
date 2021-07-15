@@ -32,6 +32,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
@@ -307,7 +308,7 @@ public class WPSearchClient implements Closeable {
 
     /**
      * Get a list of Custom Sources knowing its name
-     * @param name the source name
+     * @param name the source name or a string pattern
      * @return the list of the source ids.
      */
     public List<String> getCustomSourcesByName(String name) {
@@ -327,7 +328,8 @@ public class WPSearchClient implements Closeable {
             List<Map<String, Object>> sources = JsonPath.read(document, "$.results[*]");
 
             for (Map<String, Object> source : sources) {
-                if (name.equals(source.get("name"))) {
+                if (FilenameUtils.wildcardMatch((String) source.get("name"), name)) {
+                    logger.trace("Source [{}] matched [{}] pattern", source.get("name"), name);
                     ids.add((String) source.get("id"));
                 }
             }
@@ -411,15 +413,17 @@ public class WPSearchClient implements Closeable {
     }
 
     <T> T get(String path, Class<T> clazz) {
+        logger.trace("Calling GET {}{}", urlForApi, path);
         return prepareHttpCall(path).get(clazz);
     }
 
     <T> T post(String path, Object data, Class<T> clazz) {
+        logger.trace("Calling POST {}{}", urlForApi, path);
         return prepareHttpCall(path).post(Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
     }
 
     private <T> T delete(String path, Object data, Class<T> clazz) {
-        // TODO This does not remove the entity. Something to fix in the future...
+        logger.trace("Calling DELETE {}{}", urlForApi, path);
         return prepareHttpCall(path).method("DELETE", Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
     }
 

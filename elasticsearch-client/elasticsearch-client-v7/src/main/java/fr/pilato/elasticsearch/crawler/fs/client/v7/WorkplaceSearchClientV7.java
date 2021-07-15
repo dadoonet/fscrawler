@@ -222,9 +222,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public ESSearchResponse search(ESSearchRequest request) throws IOException {
-        // For now we are going to run a dummy search in elasticsearch directly
-        // and ignore the request in most times
-        request.withIndex(".ent-search-engine-documents-source-*");
+        // TODO use the wpSearchClient instead
         return esClient.search(request);
     }
 

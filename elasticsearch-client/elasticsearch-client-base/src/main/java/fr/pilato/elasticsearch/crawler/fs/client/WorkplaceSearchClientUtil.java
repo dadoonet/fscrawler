@@ -126,6 +126,8 @@ public abstract class WorkplaceSearchClientUtil {
     public static String generateDefaultCustomSourceName(String suffix) {
         String name = DEFAULT_SOURCE_NAME_PREFIX + suffix;
 
+        logger.debug("generated source name: [{}]", suffix);
+
         /*
         The name may not be longer than 64 characters.
         */

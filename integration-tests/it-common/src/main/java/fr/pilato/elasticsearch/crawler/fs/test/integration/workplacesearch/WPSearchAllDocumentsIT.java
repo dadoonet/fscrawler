@@ -53,12 +53,14 @@ import static org.hamcrest.Matchers.*;
 /**
  * Test all type of documents we have with workplace search
  */
-public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
+public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
     private String sourceName;
 
     @After
     public void cleanUpCustomSource() {
-        cleanExistingCustomSources(sourceName);
+        if (sourceName != null) {
+            cleanExistingCustomSources(sourceName);
+        }
     }
 
     @Test
@@ -118,12 +120,12 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplac
 
             logger.info("  --> checking that files have expected content");
 
-            runSearch("issue-163.xml");
-            runSearch("test.json", "json");
-            runSearch("test.doc", "sample");
+            runSearch(customSourceId, "issue-163.xml");
+            runSearch(customSourceId, "test.json", "json");
+            runSearch(customSourceId, "test.doc", "sample");
 
             {
-                ESSearchResponse response = runSearch("test.docx", "sample");
+                ESSearchResponse response = runSearch(customSourceId, "test.docx", "sample");
                 for (ESSearchHit hit : response.getHits()) {
                     Map<String, Object> source = hit.getSourceAsMap();
                     assertThat(source, hasEntry(is("name"), notNullValue()));
@@ -138,45 +140,45 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplac
                     assertThat(source, hasEntry(is("body"), notNullValue()));
                 }
             }
-            runSearch("test.html", "sample");
-            runSearch("test.mp3", "tika");
-            runSearch("test.odt", "sample");
-            runSearch("test.pdf", "sample");
-            runSearch("test.rtf", "sample");
-            runSearch("test.txt", "contains");
-            runSearch("test.wav");
-            runSearch("test-protected.docx");
-            runSearch("issue-221-doc1.pdf", "Formations");
-            runSearch("issue-221-doc2.pdf", "FORMATIONS");
+            runSearch(customSourceId, "test.html", "sample");
+            runSearch(customSourceId, "test.mp3", "tika");
+            runSearch(customSourceId, "test.odt", "sample");
+            runSearch(customSourceId, "test.pdf", "sample");
+            runSearch(customSourceId, "test.rtf", "sample");
+            runSearch(customSourceId, "test.txt", "contains");
+            runSearch(customSourceId, "test.wav");
+            runSearch(customSourceId, "test-protected.docx");
+            runSearch(customSourceId, "issue-221-doc1.pdf", "Formations");
+            runSearch(customSourceId, "issue-221-doc2.pdf", "FORMATIONS");
             {
                 // TODO fix this hack. We can't make sure we are returning one single file
-                ESSearchResponse response = runSearch("test-fr.txt", "fichier");
+                ESSearchResponse response = runSearch(customSourceId, "test-fr.txt", "fichier");
                 for (ESSearchHit hit : response.getHits()) {
                     if (hit.getSourceAsMap().get("name").equals("test-fr.txt")) {
                         assertThat(hit.getSourceAsMap(), hasEntry("language", "fr"));
                     }
                 }
-                response = runSearch("test-de.txt", "Datei");
+                response = runSearch(customSourceId, "test-de.txt", "Datei");
                 for (ESSearchHit hit : response.getHits()) {
                     if (hit.getSourceAsMap().get("name").equals("test-de.txt")) {
                         assertThat(hit.getSourceAsMap(), hasEntry("language", "de"));
                     }
                 }
-                response = runSearch("test.txt", "contains");
+                response = runSearch(customSourceId, "test.txt", "contains");
                 for (ESSearchHit hit : response.getHits()) {
                     if (hit.getSourceAsMap().get("name").equals("test.txt")) {
                         assertThat(hit.getSourceAsMap(), hasEntry("language", "en"));
                     }
                 }
             }
-            runSearch("issue-369.txt", "今天天气晴好");
-            runSearch("issue-400-shiftjis.txt", "elasticsearch");
-            runSearch("issue-418-中文名称.txt");
+            runSearch(customSourceId, "issue-369.txt", "今天天气晴好");
+            runSearch(customSourceId, "issue-400-shiftjis.txt", "elasticsearch");
+            runSearch(customSourceId, "issue-418-中文名称.txt");
 
             // If Tesseract is not installed, we are skipping this test
             if (ExternalParser.check("tesseract")) {
-                runSearch("test-ocr.png", "words");
-                runSearch("test-ocr.pdf", "words");
+                runSearch(customSourceId, "test-ocr.png", "words");
+                runSearch(customSourceId, "test-ocr.pdf", "words");
             }
 
         } catch (FsCrawlerIllegalConfigurationException e) {
@@ -184,11 +186,11 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplac
         }
     }
 
-    private ESSearchResponse runSearch(String filename) throws IOException {
-        return runSearch(filename, null);
+    private ESSearchResponse runSearch(String customSourceId, String filename) throws IOException {
+        return runSearch(customSourceId, filename, null);
     }
 
-    private ESSearchResponse runSearch(String filename, String content) throws IOException {
+    private ESSearchResponse runSearch(String customSourceId, String filename, String content) throws IOException {
         logger.info(" -> Testing if file [{}] has been indexed correctly{}.", filename,
                 content == null ? "" : " and contains [" + content + "]");
 
@@ -199,7 +201,7 @@ public class FsCrawlerTestWorkplaceSearchAllDocumentsIT extends AbstractWorkplac
             query.addMust(new ESMatchQuery("body", content));
         }
         ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
-                        .withIndex(".ent-search-engine-documents-source-*")
+                        .withIndex(".ent-search-engine-documents-source-" + customSourceId)
                         .withESQuery(query));
         assertThat(response.getTotalHits(), is(1L));
         return response;
