@@ -41,7 +41,7 @@
         <elasticsearch6.version>6.8.15</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
-        <tika.version>1.26</tika.version>
+        <tika.version>1.27</tika.version>
         <jackson.version>2.12.3</jackson.version>
         <log4j.version>2.14.1</log4j.version>
         <jansi.version>2.3.3</jansi.version>
@@ -607,6 +607,12 @@
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${snakeyaml.version}</version>
+            </dependency>
+            <!-- this is needed for Tika 1.27 vs Jackson 2.12.3 -->
+            <dependency>
+                <groupId>com.fasterxml.woodstox</groupId>
+                <artifactId>woodstox-core</artifactId>
+                <version>6.2.6</version>
             </dependency>
 
             <!-- This is needed to compile on my machine :( -->
