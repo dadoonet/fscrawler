@@ -23,7 +23,11 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
@@ -32,10 +36,14 @@ import org.apache.logging.log4j.Level;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +60,19 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     protected static String testWorkplaceUrl = System.getProperty("tests.workplace.url", DEFAULT_TEST_WPSEARCH_URL);
     protected final static String testWorkplaceUser = System.getProperty("tests.workplace.user", testClusterUser);
     protected final static String testWorkplacePass = System.getProperty("tests.workplace.pass", testClusterPass);
+
+    @BeforeClass
+    public static void checkWorkplaceSearchCompatible() throws IOException {
+        // We must check that we can run the tests.
+        // For example, with a 6.x cluster, this is not possible as Workplace Search engine does not exist
+        // and thus is not started.
+        ElasticsearchClient client = ElasticsearchClientUtil.getInstance(null, FsSettings.builder("foo").build());
+        String version = client.compatibleVersion();
+        Assume.assumeThat("We can not run workplace search tests on a version different than 7",
+                version, equalTo("7"));
+        HttpURLConnection urlConnection = (HttpURLConnection) new URL(testWorkplaceUrl).openConnection();
+        urlConnection.getResponseCode();
+    }
 
     protected FsCrawlerImpl startCrawler(final FsCrawlerDocumentService documentService,
                                          final String jobName,
