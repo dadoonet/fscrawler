@@ -125,8 +125,8 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
             .setServer(
                 Server.builder()
                     .setHostname("192.168.18.207")
-                    .setUsername("username")
-                    .setPassword("password")
+                    .setUsername("helsonxiao")
+                    .setPassword("123456")
                     .setPort(21)
                     .build()
             )
@@ -144,9 +144,11 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
                 Collection<FileAbstractModel> subDirFiles = ftp.getFiles(file.getFullpath());
                 logger.debug("Found {} files in sub dir", subDirFiles.size());
                 for (FileAbstractModel subDirFile : subDirFiles) {
-                    try (InputStream inputStream = ftp.getInputStream(subDirFile)) {
-                        String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                        logger.debug("[sub dir] - {}: {}", subDirFile.getName(), content);
+                    if (subDirFile.isFile()) {
+                        try (InputStream inputStream = ftp.getInputStream(subDirFile)) {
+                            String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                            logger.debug("[sub dir] - {}: {}", subDirFile.getName(), content);
+                        }
                     }
                 }
             } else {

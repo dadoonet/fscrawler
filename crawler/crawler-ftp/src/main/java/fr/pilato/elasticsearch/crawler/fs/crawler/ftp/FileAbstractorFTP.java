@@ -72,17 +72,15 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
         // if server is not using utf-8
         if (controlEncoding.equals(FTP.DEFAULT_CONTROL_ENCODING)) {
-            if (file.isFile()) {
-                try {
-                    filename = new String(filename.getBytes(controlEncoding), StandardCharsets.UTF_8);
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    path = new String(_path.getBytes(controlEncoding), StandardCharsets.UTF_8);
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
+            try {
+                filename = new String(filename.getBytes(controlEncoding), StandardCharsets.UTF_8);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            try {
+                path = new String(_path.getBytes(controlEncoding), StandardCharsets.UTF_8);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
             }
         }
 
