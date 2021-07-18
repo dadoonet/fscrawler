@@ -171,7 +171,7 @@ Then, you can run Elasticsearch.
 
 .. code:: sh
 
-    docker-compose up -d elasticsearch elasticsearch2
+    docker-compose up -d elasticsearch
     docker-compose logs -f elasticsearch
 
 Wait for elasticsearch to be started:

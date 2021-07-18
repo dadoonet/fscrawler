@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -96,9 +97,9 @@ public abstract class FsParserAbstract extends FsParser {
             messageDigest = null;
         }
 
-        // On Windows, when using SSH server, we need to force the "Linux" separator
+        // On Windows, when using server, we need to force the "Linux" separator
         if (OsValidator.WINDOWS && fsSettings.getServer() != null) {
-            logger.debug("We are running on Windows with SSH Server settings so we need to force the Linux separator.");
+            logger.debug("We are running on Windows with Server settings so we need to force the Linux separator.");
             pathSeparator = "/";
         } else {
             pathSeparator = File.separator;
@@ -256,7 +257,7 @@ public abstract class FsParserAbstract extends FsParser {
                     logger.trace("FileAbstractModel = {}", child);
                     String filename = child.getName();
 
-                    String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, filename).toString());
+                    String virtualFileName = computeVirtualPathName(stats.getRootPath(), FsCrawlerUtil.computeRealPathName(filepath, filename));
 
                     // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
                     boolean isIndexable = isIndexable(child.isDirectory(), virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
@@ -318,7 +319,7 @@ public abstract class FsParserAbstract extends FsParser {
             for (String esfile : esFiles) {
                 logger.trace("Checking file [{}]", esfile);
 
-                String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, esfile).toString());
+                String virtualFileName = computeVirtualPathName(stats.getRootPath(), FsCrawlerUtil.computeRealPathName(filepath, esfile));
                 if (isIndexable(false, virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
                         && !fsFiles.contains(esfile)) {
                     logger.trace("Removing file [{}] in elasticsearch/workplace", esfile);
@@ -333,7 +334,7 @@ public abstract class FsParserAbstract extends FsParser {
 
                 // for the delete folder
                 for (String esfolder : esFolders) {
-                    String virtualFileName = computeVirtualPathName(stats.getRootPath(), new File(filepath, esfolder).toString());
+                    String virtualFileName = computeVirtualPathName(stats.getRootPath(), FsCrawlerUtil.computeRealPathName(filepath, esfolder));
                     if (isIndexable(true, virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
                         logger.trace("Checking directory [{}]", esfolder);
                         if (!fsFolders.contains(esfolder)) {
@@ -376,7 +377,7 @@ public abstract class FsParserAbstract extends FsParser {
         final long size = fileAbstractModel.getSize();
 
         logger.debug("fetching content from [{}],[{}]", dirname, filename);
-        String fullFilename = new File(dirname, filename).toString();
+        String fullFilename = FsCrawlerUtil.computeRealPathName(dirname, filename);
 
         try {
             // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't index json or xml)
@@ -392,6 +393,7 @@ public abstract class FsParserAbstract extends FsParser {
                 doc.getFile().setLastModified(localDateTimeToDate(lastModified));
                 doc.getFile().setLastAccessed(localDateTimeToDate(lastAccessed));
                 doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
+                // TODO: how about just set for local fs?
                 doc.getFile().setUrl("file://" + fullFilename);
                 doc.getFile().setExtension(extension);
                 if (fsSettings.getFs().isAddFilesize()) {
@@ -517,7 +519,7 @@ public abstract class FsParserAbstract extends FsParser {
 
     /**
      * Index a directory
-     * @param path complete path like /path/to/subdir
+     * @param path complete path like "/", "/path/to/subdir", "/C:/dir", "//SOMEONE/dir"
      */
     private void indexDirectory(String path) throws Exception {
         fr.pilato.elasticsearch.crawler.fs.beans.Path pathObject = new fr.pilato.elasticsearch.crawler.fs.beans.Path();

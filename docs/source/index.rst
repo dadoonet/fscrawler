@@ -15,7 +15,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 **Main features**:
 
 * Local file system (or a mounted drive) crawling and index new files, update existing ones and removes old ones.
-* Remote file system over SSH crawling.
+* Remote file system over SSH/FTP/SMB(WIP) crawling.
 * REST interface to let you "upload" your binary documents to elasticsearch.
 
 .. note::
@@ -56,6 +56,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
    admin/fs/simple
    admin/fs/local-fs
    admin/fs/ssh
+   admin/fs/ftp
    admin/fs/elasticsearch
    admin/fs/wpsearch
    admin/fs/rest

@@ -126,6 +126,9 @@ public class FsCrawlerImpl implements AutoCloseable {
             } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
                 // Remote SSH FS
                 fsParser = new FsParserSsh(settings, config, managementService, documentService, loop);
+            } else if (Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
+                // Remote FTP FS
+                fsParser = new FsParserFTP(settings, config, managementService, documentService, loop);
             } else {
                 // Non supported protocol
                 throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +

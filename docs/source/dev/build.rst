@@ -51,6 +51,12 @@ But you need first to specify the Maven profile to use and rebuild the project.
 * ``es-7x`` for Elasticsearch 7.x
 * ``es-6x`` for Elasticsearch 6.x
 
+Run specific module tests from your Terminal
+""""""""""""""""""""""""""""""
+
+To run integration tests for a specific module, just run::
+
+    mvn test -am -DfailIfNoTests=false -pl [module_name_or_folder_path]
 
 Run tests with an external cluster
 """"""""""""""""""""""""""""""""""

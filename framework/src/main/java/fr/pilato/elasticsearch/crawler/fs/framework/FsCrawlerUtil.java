@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.net.ftp.FTPFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -282,15 +283,38 @@ public class FsCrawlerUtil {
         return true;
     }
 
+    public static String computeRealPathName(String dirname, String filename) {
+        if (dirname != null) {
+            dirname = dirname.replace("\\", "/");
+        }
+
+        String fullFilename = new File(dirname, filename).toString();
+        // fix windows share folder path: "/server/dir" -> "//server/dir"
+        if (dirname != null && dirname.startsWith("//") && !fullFilename.startsWith("//")) {
+            fullFilename = "/".concat(fullFilename);
+        }
+        return fullFilename.startsWith("/") ? fullFilename : "/".concat(fullFilename);
+    }
+
     public static String computeVirtualPathName(String rootPath, String realPath) {
+        if (rootPath != null) {
+            rootPath = rootPath.replace("\\", "/");
+        }
+        if (realPath != null) {
+            realPath = realPath.replace("\\", "/");
+        }
+
         String result = "/";
-        if (realPath != null && realPath.length() > rootPath.length()) {
-            result = realPath.substring(rootPath.length())
-                    .replace("\\", "/");
+        if (realPath != null && rootPath != null && realPath.length() > rootPath.length()) {
+            if (rootPath.equals("/")) {
+                result = realPath;
+            } else {
+                result = realPath.substring(rootPath.length());
+            }
         }
 
         logger.debug("computeVirtualPathName({}, {}) = {}", rootPath, realPath, result);
-        return result;
+        return result.startsWith("/") ? result : "/".concat(result);
     }
 
     public static LocalDateTime getCreationTime(File file) {
@@ -415,7 +439,32 @@ public class FsCrawlerUtil {
             return user * 100 + group * 10 + others;
         }
         catch(Exception e) {
-            logger.warn("Failed to determine 'owner' of {}: {}", file, e.getMessage());
+            logger.warn("Failed to determine 'permissions' of {}: {}", file, e.getMessage());
+            return -1;
+        }
+    }
+
+    /**
+     * Determines FTPFile permissions.
+     */
+    public static int getFilePermissions(final FTPFile file) {
+        try {
+            int user = toOctalPermission(
+                file.hasPermission(FTPFile.USER_ACCESS, FTPFile.READ_PERMISSION),
+                file.hasPermission(FTPFile.USER_ACCESS, FTPFile.WRITE_PERMISSION),
+                file.hasPermission(FTPFile.USER_ACCESS, FTPFile.EXECUTE_PERMISSION));
+            int group = toOctalPermission(
+                file.hasPermission(FTPFile.GROUP_ACCESS, FTPFile.READ_PERMISSION),
+                file.hasPermission(FTPFile.GROUP_ACCESS, FTPFile.WRITE_PERMISSION),
+                file.hasPermission(FTPFile.GROUP_ACCESS, FTPFile.EXECUTE_PERMISSION));
+            int others = toOctalPermission(
+                file.hasPermission(FTPFile.WORLD_ACCESS, FTPFile.READ_PERMISSION),
+                file.hasPermission(FTPFile.WORLD_ACCESS, FTPFile.WRITE_PERMISSION),
+                file.hasPermission(FTPFile.WORLD_ACCESS, FTPFile.EXECUTE_PERMISSION));
+
+            return user * 100 + group * 10 + others;
+        } catch (Exception e) {
+            logger.warn("Failed to determine 'permissions' of {}: {}", file, e.getMessage());
             return -1;
         }
     }
