@@ -13,12 +13,15 @@ services:
       - xpack.security.enabled=true
       - xpack.security.authc.api_key.enabled=true
       - xpack.ml.enabled=false
+      # This is needed for integration tests at it uses the search API which is under platinum license
+      - xpack.license.self_generated.type=trial
     ulimits:
       memlock:
         soft: -1
         hard: -1
     ports: ["$ELASTICSEARCH_PORT:$ELASTICSEARCH_PORT"]
     networks: ['fscrawler_it']
+    restart: always
 
 networks:
   fscrawler_it: {}

@@ -65,6 +65,7 @@ import java.util.regex.Pattern;
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
     public static final String INDEX_SETTINGS_FILE = "_settings";
+    public static final String INDEX_WORKPLACE_SEARCH_SETTINGS_FILE = "_wpsearch_settings";
     public static final String INDEX_SETTINGS_FOLDER_FILE = "_settings_folder";
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerUtil.class);
@@ -426,7 +427,7 @@ public class FsCrawlerUtil {
     private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
     public static final String[] MAPPING_RESOURCES = {
             "6/_settings.json", "6/_settings_folder.json",
-            "7/_settings.json", "7/_settings_folder.json"
+            "7/_settings.json", "7/_settings_folder.json", "7/_wpsearch_settings.json"
     };
 
     /**

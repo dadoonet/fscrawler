@@ -1,0 +1,78 @@
+{
+  "name": "SOURCE_NAME",
+  "schema": {
+    "title": "text",
+    "name": "text",
+    "body": "text",
+    "url": "text",
+    "author": "text",
+    "keywords": "text",
+    "language": "text",
+    "comments": "text",
+    "mime_type": "text",
+    "extension": "text",
+    "size": "number",
+    "text_size": "number",
+    "last_modified": "date",
+    "created_at": "date",
+    "path": "text"
+  },
+  "display": {
+    "title_field": "title",
+    "subtitle_field": "name",
+    "description_field": "body",
+    "url_field": "url",
+    "detail_fields": [
+      {
+        "field_name": "author",
+        "label": "Author"
+      },
+      {
+        "field_name": "keywords",
+        "label": "Keywords"
+      },
+      {
+        "field_name": "language",
+        "label": "Language"
+      },
+      {
+        "field_name": "last_modified",
+        "label": "Last Modification Date"
+      },
+      {
+        "field_name": "created_at",
+        "label": "Creation date"
+      },
+      {
+        "field_name": "comments",
+        "label": "Comments"
+      },
+      {
+        "field_name": "mime_type",
+        "label": "Mime Type"
+      },
+      {
+        "field_name": "extension",
+        "label": "Extension"
+      },
+      {
+        "field_name": "size",
+        "label": "File size"
+      },
+      {
+        "field_name": "text_size",
+        "label": "Extracted text size"
+      },
+      {
+        "field_name": "path",
+        "label": "Path"
+      },
+      {
+        "field_name": "body",
+        "label": "Content"
+      }
+    ],
+    "color": "#000000"
+  },
+  "is_searchable": true
+}

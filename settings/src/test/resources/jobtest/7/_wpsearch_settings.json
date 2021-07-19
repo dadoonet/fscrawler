@@ -1,0 +1,7 @@
+{
+  "name": "SOURCE_NAME",
+  "schema": {
+    "title": "text"
+  },
+  "is_searchable": true
+}

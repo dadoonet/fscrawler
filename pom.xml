@@ -43,6 +43,8 @@
 
         <tika.version>1.27</tika.version>
         <jackson.version>2.12.4</jackson.version>
+        <jsonpath.version>2.6.0</jsonpath.version>
+        <slf4j.version>1.7.30</slf4j.version>
         <log4j.version>2.14.1</log4j.version>
         <jansi.version>2.3.3</jansi.version>
         <jersey.version>3.0.2</jersey.version>
@@ -72,15 +74,15 @@
         <integ.elasticsearch.image>docker.elastic.co/elasticsearch/elasticsearch</integ.elasticsearch.image>
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.elasticsearch.port>9200</integ.elasticsearch.port>
+        <integ.workplace.image>docker.elastic.co/enterprise-search/enterprise-search</integ.workplace.image>
+        <integ.workplace.port>3002</integ.workplace.port>
         <tests.cluster.url></tests.cluster.url>
         <tests.cluster.cloud_id></tests.cluster.cloud_id>
         <tests.cluster.user>elastic</tests.cluster.user>
         <tests.cluster.pass>changeme</tests.cluster.pass>
-        <integ.workplace.image>docker.elastic.co/enterprise-search/enterprise-search</integ.workplace.image>
-        <integ.workplace.port>3002</integ.workplace.port>
-        <tests.workplace.url>http://127.0.0.1:3002</tests.workplace.url>
-        <tests.workplace.access_token></tests.workplace.access_token>
-        <tests.workplace.key></tests.workplace.key>
+        <tests.workplace.url></tests.workplace.url>
+        <tests.workplace.user>${tests.cluster.user}</tests.workplace.user>
+        <tests.workplace.pass>${tests.cluster.pass}</tests.workplace.pass>
         <tests.rest.port>8080</tests.rest.port>
 
         <!-- Randomized testing framework -->
@@ -216,8 +218,8 @@
                             <tests.cluster.user>${tests.cluster.user}</tests.cluster.user>
                             <tests.cluster.pass>${tests.cluster.pass}</tests.cluster.pass>
                             <tests.workplace.url>${tests.workplace.url}</tests.workplace.url>
-                            <tests.workplace.access_token>${tests.workplace.access_token}</tests.workplace.access_token>
-                            <tests.workplace.key>${tests.workplace.key}</tests.workplace.key>
+                            <tests.workplace.user>${tests.workplace.user}</tests.workplace.user>
+                            <tests.workplace.pass>${tests.workplace.pass}</tests.workplace.pass>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
                         </systemProperties>
                     </configuration>
@@ -600,6 +602,11 @@
                 <artifactId>jackson-module-jaxb-annotations</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.jayway.jsonpath</groupId>
+                <artifactId>json-path</artifactId>
+                <version>${jsonpath.version}</version>
+            </dependency>
             <!--
             Because elasticsearch is not using transitive dependencies, we need to be explicit here
             -->
@@ -894,6 +901,14 @@
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
                 <version>${commons-logging.version}</version>
+            </dependency>
+            <!--
+                Because of json-path  which is using a higher version, we need to be explicit here
+            -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
 
             <dependency>

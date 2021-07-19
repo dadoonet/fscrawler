@@ -40,6 +40,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
+
 /**
  * Workplace Search Client for Clusters running v7.
  * It also starts an embedded Elasticsearch Client.
@@ -47,9 +49,9 @@ import java.util.Map;
 public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     private static final Logger logger = LogManager.getLogger(WorkplaceSearchClientV7.class);
+    private static final SimpleDateFormat RFC_3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ");
     private final Path config;
     private final FsSettings settings;
-    private final SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ");
 
     private ElasticsearchClient esClient = null;
     private WPSearchClient wpSearchClient = null;
@@ -67,13 +69,24 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     @Override
     public void start() throws IOException {
         logger.debug("Starting Workplace Search V7 client");
-        wpSearchClient = new WPSearchClient(
-                settings.getWorkplaceSearch().getAccessToken(),
-                settings.getWorkplaceSearch().getKey())
+        Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
+        wpSearchClient = new WPSearchClient(config, jobMappingDir)
             .withHost(settings.getWorkplaceSearch().getServer().decodedUrl())
+            .withUsername(settings.getWorkplaceSearch().getUsername(), settings.getElasticsearch().getUsername())
+            .withPassword(settings.getWorkplaceSearch().getPassword(), settings.getElasticsearch().getPassword())
             .withBulkSize(settings.getWorkplaceSearch().getBulkSize())
             .withFlushInterval(settings.getWorkplaceSearch().getFlushInterval());
         wpSearchClient.start();
+
+        // If the source name is provided, let's use it
+        String sourceName = settings.getWorkplaceSearch().getName();
+        if (sourceName == null) {
+            // If not, we will use a default one
+            sourceName = generateDefaultCustomSourceName(settings.getName());
+        }
+
+        wpSearchClient.configureCustomSource(settings.getWorkplaceSearch().getId(), sourceName);
+
         esClient = ElasticsearchClientUtil.getInstance(config, settings);
         esClient.start();
         logger.debug("Workplace Search V7 client started");
@@ -188,7 +201,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public void delete(String index, String id) {
-        wpSearchClient.destroyDocument(id);
+        wpSearchClient.destroyDocument(index, id);
     }
 
     @Override
@@ -209,9 +222,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public ESSearchResponse search(ESSearchRequest request) throws IOException {
-        // For now we are going to run a dummy search in elasticsearch directly
-        // and ignore the request in most times
-        request.withIndex(".ent-search-engine-*");
+        // TODO use the wpSearchClient instead
         return esClient.search(request);
     }
 
@@ -243,6 +254,6 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     private String toRFC3339(Date d)
     {
-        return rfc3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
+        return RFC_3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
     }
 }

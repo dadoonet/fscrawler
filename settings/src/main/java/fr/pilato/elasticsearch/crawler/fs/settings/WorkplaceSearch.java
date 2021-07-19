@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,21 +33,26 @@ public class WorkplaceSearch {
     public static final String DEFAULT_URL_PREFIX = "http://127.0.0.1";
 
     private ServerUrl server = DEFAULT_SERVER;
-    private String key;
-    private String accessToken;
+    private String id;
+    private String username;
+    @JsonIgnore
+    private String password;
     private String urlPrefix = DEFAULT_URL_PREFIX;
     private int bulkSize = 100;
     private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
+    private String name;
 
     public WorkplaceSearch() {
 
     }
 
-    public WorkplaceSearch(ServerUrl server, String key, String accessToken, String urlPrefix,
+    public WorkplaceSearch(ServerUrl server, String id, String name, String username, String password, String urlPrefix,
                            int bulkSize, TimeValue flushInterval) {
         this.server = server;
-        this.key = key;
-        this.accessToken = accessToken;
+        this.id = id;
+        this.name = name;
+        this.username = username;
+        this.password = password;
         this.urlPrefix = urlPrefix;
         this.bulkSize = bulkSize;
         this.flushInterval = flushInterval;
@@ -64,20 +70,34 @@ public class WorkplaceSearch {
         this.server = server;
     }
 
-    public String getKey() {
-        return key;
+    /**
+     * The id of the source. If not provided, the id will be automatically set
+     * by fetching the first custom source which name is equal to the fscrawler job name.
+     * If no custom source is found, a new one will be automatically created
+     * @return the id of the source if known
+     */
+    public String getId() {
+        return id;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public String getAccessToken() {
-        return accessToken;
+    public String getUsername() {
+        return username;
     }
 
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getUrlPrefix() {
@@ -104,10 +124,20 @@ public class WorkplaceSearch {
         this.flushInterval = flushInterval;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public static class Builder {
         private ServerUrl server = DEFAULT_SERVER;
-        private String key;
-        private String accessToken;
+        private String id;
+        private String name;
+        private String username;
+        private String password;
         private String urlPrefix = DEFAULT_URL_PREFIX;
         private int bulkSize = 100;
         private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
@@ -117,13 +147,36 @@ public class WorkplaceSearch {
             return this;
         }
 
-        public Builder setKey(String key) {
-            this.key = key;
+        /**
+         * The id of the source. If not provided, the id will be automatically set
+         * by fetching the first custom source which name is equal to source name.
+         * If no custom source is found, a new one will be automatically created
+         * @param id id of the source if known
+         * @return the builder
+         */
+        public Builder setId(String id) {
+            this.id = id;
             return this;
         }
 
-        public Builder setAccessToken(String accessToken) {
-            this.accessToken = accessToken;
+        /**
+         * Provide the custom source name. It will be used if the id is not provided.
+         * It defaults to "Local files from DIR" where DIR is the fs.url property.
+         * @param name The custom source name
+         * @return the builder
+         */
+        public Builder setName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder setUsername(String username) {
+            this.username = username;
+            return this;
+        }
+
+        public Builder setPassword(String password) {
+            this.password = password;
             return this;
         }
 
@@ -143,7 +196,7 @@ public class WorkplaceSearch {
         }
 
         public WorkplaceSearch build() {
-            return new WorkplaceSearch(server, key, accessToken, urlPrefix, bulkSize, flushInterval);
+            return new WorkplaceSearch(server, id, name, username, password, urlPrefix, bulkSize, flushInterval);
         }
     }
 
@@ -153,21 +206,21 @@ public class WorkplaceSearch {
         if (o == null || getClass() != o.getClass()) return false;
         WorkplaceSearch that = (WorkplaceSearch) o;
         return Objects.equals(server, that.server) &&
-                Objects.equals(key, that.key) &&
-                Objects.equals(accessToken, that.accessToken) &&
+                Objects.equals(id, that.id) &&
+                Objects.equals(username, that.username) &&
                 Objects.equals(urlPrefix, that.urlPrefix);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(server, key, accessToken, urlPrefix);
+        return Objects.hash(server, id, username, urlPrefix);
     }
 
     @Override
     public String toString() {
         return "WorkplaceSearch{" + "server=" + server +
-                ", key='" + key + '\'' +
-                ", accessToken='" + accessToken + '\'' +
+                ", id='" + id + '\'' +
+                ", username='" + username + '\'' +
                 ", urlPrefix='" + urlPrefix + '\'' +
                 '}';
     }

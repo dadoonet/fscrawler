@@ -28,11 +28,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FILE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SETTINGS_FOLDER_FILE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.MAPPING_RESOURCES;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyResourceFile;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readJsonFile;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -600,6 +596,90 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
     }
 
     @Test
+    public void fsSettingsForWorkplaceSearchVersion7() throws Exception {
+        String settings = readJsonFile(rootTmpDir, metadataDir, "7", INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
+        logger.info("Settings used for workplace search v7 : " + settings);
+        assertThat(settings, is("{\n" +
+                "  \"name\": \"SOURCE_NAME\",\n" +
+                "  \"schema\": {\n" +
+                "    \"title\": \"text\",\n" +
+                "    \"name\": \"text\",\n" +
+                "    \"body\": \"text\",\n" +
+                "    \"url\": \"text\",\n" +
+                "    \"author\": \"text\",\n" +
+                "    \"keywords\": \"text\",\n" +
+                "    \"language\": \"text\",\n" +
+                "    \"comments\": \"text\",\n" +
+                "    \"mime_type\": \"text\",\n" +
+                "    \"extension\": \"text\",\n" +
+                "    \"size\": \"number\",\n" +
+                "    \"text_size\": \"number\",\n" +
+                "    \"last_modified\": \"date\",\n" +
+                "    \"created_at\": \"date\",\n" +
+                "    \"path\": \"text\"\n" +
+                "  },\n" +
+                "  \"display\": {\n" +
+                "    \"title_field\": \"title\",\n" +
+                "    \"subtitle_field\": \"name\",\n" +
+                "    \"description_field\": \"body\",\n" +
+                "    \"url_field\": \"url\",\n" +
+                "    \"detail_fields\": [\n" +
+                "      {\n" +
+                "        \"field_name\": \"author\",\n" +
+                "        \"label\": \"Author\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"keywords\",\n" +
+                "        \"label\": \"Keywords\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"language\",\n" +
+                "        \"label\": \"Language\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"last_modified\",\n" +
+                "        \"label\": \"Last Modification Date\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"created_at\",\n" +
+                "        \"label\": \"Creation date\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"comments\",\n" +
+                "        \"label\": \"Comments\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"mime_type\",\n" +
+                "        \"label\": \"Mime Type\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"extension\",\n" +
+                "        \"label\": \"Extension\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"size\",\n" +
+                "        \"label\": \"File size\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"text_size\",\n" +
+                "        \"label\": \"Extracted text size\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"path\",\n" +
+                "        \"label\": \"Path\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"body\",\n" +
+                "        \"label\": \"Content\"\n" +
+                "      }\n" +
+                "    ],\n" +
+                "    \"color\": \"#000000\"\n" +
+                "  },\n" +
+                "  \"is_searchable\": true\n" +
+                "}\n"));
+    }
+
+    @Test
     public void fsSettingsForDocSpecificJobVersion7() throws Exception {
         String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "7", INDEX_SETTINGS_FILE);
         assertThat(settings, is("{\n" +
@@ -612,6 +692,18 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
         String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "7", INDEX_SETTINGS_FOLDER_FILE);
         assertThat(settings, is("{\n" +
                 "  // This is folder settings for version 7\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsSettingsForWorkplaceSearchSpecificJobVersion7() throws Exception {
+        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "7", INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
+        assertThat(settings, is("{\n" +
+                "  \"name\": \"SOURCE_NAME\",\n" +
+                "  \"schema\": {\n" +
+                "    \"title\": \"text\"\n" +
+                "  },\n" +
+                "  \"is_searchable\": true\n" +
                 "}\n"));
     }
 

@@ -25,47 +25,138 @@ FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/wo
         docker-compose up
 
     This will start Elasticsearch, Kibana (not used) and Workplace Search.
-
-    * Wait for it to start and open http://127.0.0.1:3002/ws.
-    * Enter ``enterprise_search`` as the login and ``changeme`` as the password.
-    * Click on "Add sources" button and choose `Custom API <http://127.0.0.1:3002/ws/org/sources#/add/custom>`_.
-    * Name it ``fscrawler`` and click on "Create Custom API Source" button.
-    * Copy the "Access Token" value. We will mention it as ``ACCESS_TOKEN`` for the rest of this documentation.
-    * Copy the "Key" value. We will mention it as ``KEY`` for the rest of this documentation.
-
-    .. image:: /_static/wpsearch/fscrawler-custom-source.png
+    Wait for it to start. http://127.0.0.1:3002/ws must be available before continuing.
 
 Here is a list of Workplace Search settings (under ``workplace_search.`` prefix)`:
 
-+-------------------------------------+---------------------------+---------------------------------+
-| Name                                | Default value             | Documentation                   |
-+=====================================+===========================+=================================+
-| ``workplace_search.access_token``   | None (Must be set)        | `Keys`_                         |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.key``            | None (Must be set)        | `Keys`_                         |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.server``         | ``http://127.0.0.1:3002`` | `Server`_                       |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.bulk_size``      | ``100``                   | `Bulk settings`_                |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.flush_interval`` | ``"5s"``                  | `Bulk settings`_                |
-+-------------------------------------+---------------------------+---------------------------------+
-| ``workplace_search.url_prefix``     | ``http://127.0.0.1``      | `Documents Repository URL`_     |
-+-------------------------------------+---------------------------+---------------------------------+
++-------------------------------------+--------------------------------+---------------------------------+
+| Name                                | Default value                  | Documentation                   |
++=====================================+================================+=================================+
+| ``workplace_search.id``             | None                           | `Custom Source ID`_             |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.name``           | Local files for job + Job Name | `Custom Source Name`_           |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.username``       | same as for elasticsearch      | `Secrets`_                      |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.password``       | same as for elasticsearch      | `Secrets`_                      |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.server``         | ``http://127.0.0.1:3002``      | `Server`_                       |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.bulk_size``      | ``100``                        | `Bulk settings`_                |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.flush_interval`` | ``"5s"``                       | `Bulk settings`_                |
++-------------------------------------+--------------------------------+---------------------------------+
+| ``workplace_search.url_prefix``     | ``http://127.0.0.1``           | `Documents Repository URL`_     |
++-------------------------------------+--------------------------------+---------------------------------+
 
 
-Keys
-^^^^
+Secrets
+^^^^^^^
 
-Once you have created your Custom API and have the ``ACCESS_TOKEN`` and ``KEY``, you can add to your existing
+FSCrawler is using the username/password capabilities of the Workplace Search API.
+The default values are the ones you defined in Elasticsearch configuration (see :ref:`elasticsearch-settings`).
+So the following settings will just work:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     username: "elastic"
+     password: "PASSWORD"
+
+But if you want to create another user (recommended) for FSCrawler like ``fscrawler``, you can define it as follows:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     username: "elastic"
+     password: "PASSWORD"
+   workplace_search:
+     username: "fscrawler"
+     password: "FSCRAWLER_PASSWORD"
+
+Custom Source Management
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+When starting, FSCrawler will check if a Custom Source already exists with the name that you used for the job.
+
+Custom Source ID
+~~~~~~~~~~~~~~~~
+
+When a Custom Source is found with the same name, the ``KEY`` of the Custom Source is automatically fetched and applied
+to the workplace search job settings.
+
+If you already have defined a Custom API in Workplace Search and have the ``KEY``, you can add it to your existing
 FSCrawler configuration file:
 
 .. code:: yaml
 
    name: "test"
+   elasticsearch:
+     username: "elastic"
+     password: "PASSWORD"
    workplace_search:
-     access_token: "ACCESS_TOKEN"
-     key: "KEY"
+     id: "KEY"
+
+.. tip::
+    If you let FSCrawler creates the Custom Source for you, it is recommended to manually edit the job settings
+    and provide the ``workplace_search.id``. So if you rename the Custom Source, FSCrawler won't try to create it again.
+
+Custom Source Name
+~~~~~~~~~~~~~~~~~~
+
+You can specify the custom source name you want to use when FSCrawler creates it automatically:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     username: "elastic"
+     password: "PASSWORD"
+   workplace_search:
+     name: "My fancy custom source name"
+
+.. tip::
+    By default, FSCrawler will use as the name ``Local files for JOB_NAME`` where ``JOB_NAME`` is
+    the FSCrawler ``name`` setting value. So the following job settings::
+
+    .. code:: yaml
+
+       name: "test"
+       elasticsearch:
+         username: "elastic"
+         password: "PASSWORD"
+       workplace_search:
+         username: "fscrawler"
+         password: "FSCRAWLER_PASSWORD"
+
+    will use ``Local files for test`` as the Custom Source name in Workplace Search.
+
+Automatic Custom Source Creation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the Custom Source id is not provided and no Custom Source exists with the same name, it will create automatically
+the Custom Source for you with all the default settings, which are read from
+``~/.fscrawler/_default/7/_wpsearch_settings.json``. You can read its content from
+`the source <https://github.com/dadoonet/fscrawler/blob/master/settings/src/main/resources/fr/pilato/elasticsearch/crawler/fs/_default/7/_wpsearch_settings.json>`__.
+
+If you want to define your own settings, you can either define your own Custom Source using the Workplace Search
+Administration UI or define a ``~/.fscrawler/_default/7/_wpsearch_settings.json`` document
+which contains the settings you wish **before starting FSCrawler**.
+See `Workplace Search documentation <https://www.elastic.co/guide/en/workplace-search/current/workplace-search-content-sources-api.html#create-content-source-api>`__
+for more details.
+
+Define explicit settings per job
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Let’s say you created a job named ``job_name`` and you are sending
+documents against a workplace search instance running version ``7.x``.
+
+If you create the following file, it will be picked up at job start
+time instead of the default ones:
+
+-  ``~/.fscrawler/{job_name}/_mappings/7/_wpsearch_settings.json``
 
 Server
 ^^^^^^
@@ -79,9 +170,10 @@ a production cluster:
 .. code:: yaml
 
    name: "test"
+   elasticsearch:
+     username: "elastic"
+     password: "PASSWORD"
    workplace_search:
-     access_token: "ACCESS_TOKEN"
-     key: "KEY"
      server: "http://wpsearch.mycompany.com:3002"
 
 Running on Cloud
@@ -101,15 +193,12 @@ Then you can define the following:
      nodes:
      - cloud_id: "CLOUD_ID"
    workplace_search:
-     access_token: "ACCESS_TOKEN"
-     key: "KEY"
-     server: "https://XYZ.ent-search.ZONE.CLOUD_PROVIDER.elastic-cloud.com"
+     server: "URL"
 
 .. note::
 
-    Change the ``PASSWORD``, ``CLOUD_ID`` by values coming from the `Elastic Console <https://cloud.elastic.co/deployments/>`_.
-    And get the ``ACCESS_TOKEN`` and ``KEY`` from your Enterprise Search deployment once you have created the
-    Custom API source as seen previously.
+    Change the ``PASSWORD``, ``CLOUD_ID`` and ``URL`` by values coming from the `Elastic Console <https://cloud.elastic.co/deployments/>`_.
+    ``URL`` is something like ``https://XYZ.ent-search.ZONE.CLOUD_PROVIDER.elastic-cloud.com``.
 
 Bulk settings
 ^^^^^^^^^^^^^
@@ -121,6 +210,9 @@ default settings using ``workplace_search.bulk_size`` and ``workplace_search.flu
 .. code:: yaml
 
   name: "test"
+   elasticsearch:
+     username: "elastic"
+     password: "PASSWORD"
   workplace_search:
     bulk_size: 1000
     flush_interval: "2s"
@@ -141,9 +233,10 @@ another url. This can be done by changing the ``workplace_search.url_prefix`` se
 .. code:: yaml
 
    name: "test"
+   elasticsearch:
+     username: "elastic"
+     password: "PASSWORD"
    workplace_search:
-     access_token: "ACCESS_TOKEN"
-     key: "KEY"
      url_prefix: "https://repository.mycompany.com/docs"
 
 .. note::

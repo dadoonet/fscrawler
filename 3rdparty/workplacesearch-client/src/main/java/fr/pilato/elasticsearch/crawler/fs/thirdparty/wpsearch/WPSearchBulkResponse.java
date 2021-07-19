@@ -23,10 +23,12 @@ import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Map;
+
 public class WPSearchBulkResponse extends FsCrawlerBulkResponse<WPSearchOperation> {
     private static final Logger logger = LogManager.getLogger(WPSearchBulkResponse.class);
 
-    public WPSearchBulkResponse(String response) {
-        logger.debug(response);
+    public WPSearchBulkResponse(Map<String, String> responses) {
+        logger.debug(responses);
     }
 }

@@ -35,11 +35,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
 import org.apache.logging.log4j.Level;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
@@ -56,21 +51,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.unzip;
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * Integration tests expect to have an elasticsearch instance running on http://127.0.0.1:9200.
@@ -106,9 +98,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
     protected static String testClusterUrl;
-    protected final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
-    protected final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
-    protected final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
+    protected final static String testClusterUser = getSystemProperty("tests.cluster.user", DEFAULT_USERNAME);
+    protected final static String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    protected final static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
+    protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", false);
 
     protected static Elasticsearch elasticsearchWithSecurity;
     protected static FsCrawlerManagementService managementService;
@@ -232,7 +225,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             testClusterUrl = decodeCloudId(testClusterCloudId);
             staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
         } else {
-            testClusterUrl = System.getProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
+            testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
             if (testClusterUrl.isEmpty()) {
                 // When running from Maven CLI, tests.cluster.url is empty and not null...
                 testClusterUrl = DEFAULT_TEST_CLUSTER_URL;
@@ -409,6 +402,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected String getCrawlerName() {
         String testName = testCrawlerPrefix.concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
         return testName.contains(" ") ? split(testName, " ")[0] : testName;
+    }
+
+    protected String getRandomCrawlerName() {
+        return testCrawlerPrefix.concat(randomAsciiAlphanumOfLength(randomIntBetween(1, 30))).toLowerCase(Locale.ROOT);
     }
 
     /**
