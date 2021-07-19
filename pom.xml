@@ -757,6 +757,12 @@
                 <version>${jpeg.version}</version>
                 <optional>true</optional>
             </dependency>
+            <!-- Fix json-path 2.6.0 vs tika 1.27 transitive dependency -->
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>9.2</version>
+            </dependency>
 
             <!-- For Language detection -->
             <dependency>
