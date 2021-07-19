@@ -98,10 +98,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
     protected static String testClusterUrl;
-    protected final static String testClusterUser = System.getProperty("tests.cluster.user", DEFAULT_USERNAME);
-    protected final static String testClusterPass = System.getProperty("tests.cluster.pass", DEFAULT_PASSWORD);
-    protected final static int testRestPort = Integer.parseInt(System.getProperty("tests.rest.port", DEFAULT_TEST_REST_PORT.toString()));
-    protected final static boolean testKeepData = Boolean.parseBoolean(System.getProperty("tests.leaveTemporary", Boolean.FALSE.toString()));
+    protected final static String testClusterUser = getSystemProperty("tests.cluster.user", DEFAULT_USERNAME);
+    protected final static String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    protected final static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
+    protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", false);
 
     protected static Elasticsearch elasticsearchWithSecurity;
     protected static FsCrawlerManagementService managementService;
@@ -225,7 +225,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             testClusterUrl = decodeCloudId(testClusterCloudId);
             staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
         } else {
-            testClusterUrl = System.getProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
+            testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
             if (testClusterUrl.isEmpty()) {
                 // When running from Maven CLI, tests.cluster.url is empty and not null...
                 testClusterUrl = DEFAULT_TEST_CLUSTER_URL;

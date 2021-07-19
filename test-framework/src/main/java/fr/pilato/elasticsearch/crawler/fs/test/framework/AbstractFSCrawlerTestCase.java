@@ -78,7 +78,7 @@ public abstract class AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void setLocale() {
-        String testLocale = System.getProperty("tests.locale", RANDOM);
+        String testLocale = getSystemProperty("tests.locale", RANDOM);
         Locale locale = testLocale.equals(RANDOM) ? randomLocale() : new Locale.Builder().setLanguageTag(testLocale).build();
         staticLogger.debug("Running test suite with Locale [{}]", locale);
         Locale.setDefault(locale);
@@ -91,7 +91,7 @@ public abstract class AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void setTimeZone() {
-        String testTimeZone = System.getProperty("tests.timezone", RANDOM);
+        String testTimeZone = getSystemProperty("tests.timezone", RANDOM);
         TimeZone timeZone = testTimeZone.equals(RANDOM) ? randomTimeZone() : TimeZone.getTimeZone(testTimeZone);
         staticLogger.debug("Running test suite with TimeZone [{}]/[{}]", timeZone.getID(), timeZone.getDisplayName());
         TimeZone.setDefault(timeZone);
@@ -232,6 +232,38 @@ public abstract class AbstractFSCrawlerTestCase {
             return defaultValue;
         } else {
             return property;
+        }
+    }
+
+    /**
+     * Get a System Property. If it does not exist or if it's empty, the
+     * fallback value will be returned.
+     * @param envName       The system property name
+     * @param defaultValue  The fallback value
+     * @return              The property value or its default value
+     */
+    protected static int getSystemProperty(String envName, int defaultValue) {
+        String property = System.getProperty(envName);
+        if (property == null || property.isBlank()) {
+            return defaultValue;
+        } else {
+            return Integer.parseInt(property);
+        }
+    }
+
+    /**
+     * Get a System Property. If it does not exist or if it's empty, the
+     * fallback value will be returned.
+     * @param envName       The system property name
+     * @param defaultValue  The fallback value
+     * @return              The property value or its default value
+     */
+    protected static boolean getSystemProperty(String envName, boolean defaultValue) {
+        String property = System.getProperty(envName);
+        if (property == null || property.isBlank()) {
+            return defaultValue;
+        } else {
+            return Boolean.parseBoolean(property);
         }
     }
 }
