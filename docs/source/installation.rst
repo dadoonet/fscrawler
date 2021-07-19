@@ -464,6 +464,7 @@ Upgrade to 2.7
 ~~~~~~~~~~~~~~
 
 - FSCrawler comes now with an elasticsearch 7.x implementation.
+- FSCrawler supports Workplace Search 7.x.
 - FSCrawler also supports YAML format for jobs (default).
 - The elasticsearch 6.x implementation does not support elasticsearch versions prior to 6.7.
   If you are using an older version, it's better to upgrade or you need to "hack" the distribution
