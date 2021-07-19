@@ -25,25 +25,19 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.apache.logging.log4j.Level;
 import org.hamcrest.Matcher;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assume;
-import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -51,15 +45,13 @@ import java.util.concurrent.TimeUnit;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assume.assumeNoException;
 
 public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
 
     private final static String DEFAULT_TEST_WPSEARCH_URL = "http://127.0.0.1:3002";
-    protected static String testWorkplaceUrl = System.getProperty("tests.workplace.url", DEFAULT_TEST_WPSEARCH_URL);
-    protected final static String testWorkplaceUser = System.getProperty("tests.workplace.user", testClusterUser);
-    protected final static String testWorkplacePass = System.getProperty("tests.workplace.pass", testClusterPass);
+    protected final static String testWorkplaceUrl = getSystemProperty("tests.workplace.url", DEFAULT_TEST_WPSEARCH_URL);
+    protected final static String testWorkplaceUser = getSystemProperty("tests.workplace.user", testClusterUser);
+    protected final static String testWorkplacePass = getSystemProperty("tests.workplace.pass", testClusterPass);
 
     @BeforeClass
     public static void checkWorkplaceSearchCompatible() throws IOException {

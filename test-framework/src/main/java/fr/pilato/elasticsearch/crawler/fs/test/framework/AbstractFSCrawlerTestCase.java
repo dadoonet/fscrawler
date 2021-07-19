@@ -218,4 +218,20 @@ public abstract class AbstractFSCrawlerTestCase {
         }
         return null;
     }
+
+    /**
+     * Get a System Property. If it does not exist or if it's empty, the
+     * fallback value will be returned.
+     * @param envName       The system property name
+     * @param defaultValue  The fallback value
+     * @return              The property value or its default value
+     */
+    protected static String getSystemProperty(String envName, String defaultValue) {
+        String property = System.getProperty(envName);
+        if (property == null || property.isBlank()) {
+            return defaultValue;
+        } else {
+            return property;
+        }
+    }
 }

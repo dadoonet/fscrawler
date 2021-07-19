@@ -74,12 +74,12 @@
         <integ.elasticsearch.image>docker.elastic.co/elasticsearch/elasticsearch</integ.elasticsearch.image>
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.elasticsearch.port>9200</integ.elasticsearch.port>
+        <integ.workplace.image>docker.elastic.co/enterprise-search/enterprise-search</integ.workplace.image>
+        <integ.workplace.port>3002</integ.workplace.port>
         <tests.cluster.url></tests.cluster.url>
         <tests.cluster.cloud_id></tests.cluster.cloud_id>
         <tests.cluster.user>elastic</tests.cluster.user>
         <tests.cluster.pass>changeme</tests.cluster.pass>
-        <integ.workplace.image>docker.elastic.co/enterprise-search/enterprise-search</integ.workplace.image>
-        <integ.workplace.port>3002</integ.workplace.port>
         <tests.workplace.url></tests.workplace.url>
         <tests.workplace.user>${tests.cluster.user}</tests.workplace.user>
         <tests.workplace.pass>${tests.cluster.pass}</tests.workplace.pass>
@@ -218,8 +218,8 @@
                             <tests.cluster.user>${tests.cluster.user}</tests.cluster.user>
                             <tests.cluster.pass>${tests.cluster.pass}</tests.cluster.pass>
                             <tests.workplace.url>${tests.workplace.url}</tests.workplace.url>
-                            <tests.workplace.access_token>${tests.workplace.access_token}</tests.workplace.access_token>
-                            <tests.workplace.key>${tests.workplace.key}</tests.workplace.key>
+                            <tests.workplace.user>${tests.workplace.user}</tests.workplace.user>
+                            <tests.workplace.pass>${tests.workplace.pass}</tests.workplace.pass>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
                         </systemProperties>
                     </configuration>
