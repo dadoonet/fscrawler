@@ -167,7 +167,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
                 (request, bulkListener) -> client.bulkAsync(request, RequestOptions.DEFAULT, bulkListener);
 
-        bulkProcessor = BulkProcessor.builder(bulkConsumer, new DebugListener())
+        bulkProcessor = BulkProcessor.builder(bulkConsumer, new DebugListener(), "fscrawler")
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(TimeValue.timeValueMillis(settings.getElasticsearch().getFlushInterval().millis()))
                 .setBulkSize(new ByteSizeValue(settings.getElasticsearch().getByteSize().getBytes()))

@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -59,7 +59,7 @@ public class MetaParser {
         mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.registerModule(fscrawler);
-        mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         mapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
@@ -70,7 +70,7 @@ public class MetaParser {
         prettyMapper.registerModule(new JavaTimeModule());
         prettyMapper.registerModule(fscrawler);
         prettyMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-        prettyMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        prettyMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         prettyMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         prettyMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         prettyMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
@@ -82,7 +82,7 @@ public class MetaParser {
         ymlMapper.registerModule(new JavaTimeModule());
         ymlMapper.registerModule(fscrawler);
         ymlMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-        ymlMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        ymlMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         ymlMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         ymlMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         ymlMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
