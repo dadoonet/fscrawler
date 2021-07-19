@@ -15,9 +15,7 @@ FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/wo
 
 .. hint::
 
-    To easily start locally with Workplace Search, follow the steps:
-
-    * Check-out the source code on `GitHub <https://github.com/dadoonet/fscrawler/>`_::
+    To easily start locally with Workplace Search, follow the steps::
 
         git clone git@github.com:dadoonet/fscrawler.git
         cd fscrawler
@@ -118,8 +116,9 @@ You can specify the custom source name you want to use when FSCrawler creates it
      name: "My fancy custom source name"
 
 .. tip::
+
     By default, FSCrawler will use as the name ``Local files for JOB_NAME`` where ``JOB_NAME`` is
-    the FSCrawler ``name`` setting value. So the following job settings::
+    the FSCrawler ``name`` setting value. So the following job settings:
 
     .. code:: yaml
 
