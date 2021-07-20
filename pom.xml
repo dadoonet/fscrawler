@@ -770,6 +770,15 @@
                 <artifactId>asm</artifactId>
                 <version>9.2</version>
             </dependency>
+            <!--
+                Temporary fix for https://github.com/dadoonet/fscrawler/pull/1030
+                This is fixed in PDFBox 2.0.22 which is not yet added to Tika
+             -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>2.0.23</version>
+            </dependency>
 
             <!-- For Language detection -->
             <dependency>
