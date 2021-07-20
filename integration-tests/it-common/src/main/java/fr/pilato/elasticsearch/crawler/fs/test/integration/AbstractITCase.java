@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -235,7 +236,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         staticLogger.info("Starting a client against [{}]", testClusterUrl);
         // We build the elasticsearch High Level Client based on the parameters
         elasticsearchWithSecurity = Elasticsearch.builder()
-                .addNode(new ServerUrl(testClusterUrl))
+                .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                 .setUsername(testClusterUser)
                 .setPassword(testClusterPass)
                 .build();
@@ -270,7 +271,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
                                                                TimeValue timeValue, ByteSizeValue byteSize) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
-                .addNode(new ServerUrl(testClusterUrl))
+                .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                 .setBulkSize(bulkSize);
 
         if (indexName != null) {
