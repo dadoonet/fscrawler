@@ -852,9 +852,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     @Test
     public void testDocxWithEmbeddedBadPDF() throws IOException {
         Doc doc = extractFromFile("issue-stackoverflow.docx");
-        // When we will update to the next Tika version, we will need to replace this line with:
-        // assertThat(doc.getContent(), not(isEmptyOrNullString()));
-        assertThat(doc.getContent(), isEmptyOrNullString());
+        assertThat(doc.getContent(), not(isEmptyOrNullString()));
     }
 
     private Doc extractFromFileExtension(String extension) throws IOException {
