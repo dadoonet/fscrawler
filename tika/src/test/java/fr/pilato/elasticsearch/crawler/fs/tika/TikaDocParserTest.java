@@ -849,6 +849,12 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getFile().getContentType(), is("application/x-tika-ooxml-protected"));
     }
 
+    @Test
+    public void testDocxWithEmbeddedBadPDF() throws IOException {
+        Doc doc = extractFromFile("issue-stackoverflow.docx");
+        assertThat(doc.getContent(), not(isEmptyOrNullString()));
+    }
+
     private Doc extractFromFileExtension(String extension) throws IOException {
         FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
                 .setFs(Fs.builder().setRawMetadata(true).build())
