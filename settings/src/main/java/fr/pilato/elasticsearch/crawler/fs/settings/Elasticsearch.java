@@ -28,6 +28,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,7 +38,7 @@ public class Elasticsearch {
     protected static final Logger logger = LogManager.getLogger(Elasticsearch.class);
     public static final ServerUrl NODE_DEFAULT = new ServerUrl("http://127.0.0.1:9200");
 
-    private List<ServerUrl> nodes;
+    private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
     private String index;
     private String indexFolder;
     private int bulkSize = 100;
@@ -76,9 +78,7 @@ public class Elasticsearch {
     // Using here a method instead of a constant as sadly FSCrawlerValidator can modify this object
     // TODO fix that: a validator should not modify the original object but return a modified copy
     public static Elasticsearch DEFAULT() {
-        return Elasticsearch.builder()
-                .addNode(NODE_DEFAULT)
-                .build();
+        return Elasticsearch.builder().build();
     }
 
     public List<ServerUrl> getNodes() {
@@ -157,7 +157,7 @@ public class Elasticsearch {
 
     @SuppressWarnings("UnusedReturnValue")
     public static class Builder {
-        private List<ServerUrl> nodes;
+        private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
         private String index;
         private String indexFolder;
         private int bulkSize = 100;
@@ -171,14 +171,6 @@ public class Elasticsearch {
 
         public Builder setNodes(List<ServerUrl> nodes) {
             this.nodes = nodes;
-            return this;
-        }
-
-        public Builder addNode(ServerUrl node) {
-            if (this.nodes == null) {
-                this.nodes = new ArrayList<>();
-            }
-            this.nodes.add(node);
             return this;
         }
 

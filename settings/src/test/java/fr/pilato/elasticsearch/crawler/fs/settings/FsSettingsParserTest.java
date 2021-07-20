@@ -28,6 +28,8 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -54,7 +56,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .build();
     private static final Elasticsearch ELASTICSEARCH_EMPTY = Elasticsearch.builder().build();
     private static final Elasticsearch ELASTICSEARCH_FULL = Elasticsearch.builder()
-            .addNode(new ServerUrl("http://127.0.0.1"))
+            .setNodes(Collections.singletonList(new ServerUrl("http://127.0.0.1")))
             .setUsername("elastic")
             .setPassword("changeme")
             .setBulkSize(1000)
@@ -196,7 +198,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
                         .setElasticsearch(Elasticsearch.builder()
-                                .addNode(new ServerUrl("http://127.0.0.1:9200"))
+                                .setNodes(Collections.singletonList(new ServerUrl("http://127.0.0.1:9200")))
                                 .build())
                         .build()
         );
@@ -207,8 +209,9 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
                         .setElasticsearch(Elasticsearch.builder()
-                                .addNode(new ServerUrl("http://127.0.0.1:9200"))
-                                .addNode(new ServerUrl("http://127.0.0.1:9201"))
+                                .setNodes(Arrays.asList(
+                                        new ServerUrl("http://127.0.0.1:9200"),
+                                        new ServerUrl("http://127.0.0.1:9201")))
                                 .build())
                         .build()
         );
@@ -219,8 +222,9 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
                         .setElasticsearch(Elasticsearch.builder()
-                                .addNode(new ServerUrl("http://127.0.0.1:9200"))
-                                .addNode(new ServerUrl("https://localhost:9243"))
+                                .setNodes(Arrays.asList(
+                                        new ServerUrl("http://127.0.0.1:9200"),
+                                        new ServerUrl("https://localhost:9243")))
                                 .build())
                         .build()
         );
@@ -242,7 +246,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         String cloudId = "wpsearch:ZXUtd2VzdC0zLmF3cy5lbGFzdGljLWNsb3VkLmNvbTo5MjQzJDg4NTYwNTJmNDBkNjQ4YjE5Mzk1ZDQ5YTViZjgwNTA4JDJhYjJmYTU5N2RiNDQwNjJhMGZmMjY2ZTBkZTEwY2Fm";
         FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
                 .setElasticsearch(Elasticsearch.builder()
-                        .addNode(new ServerUrl(cloudId))
+                        .setNodes(Collections.singletonList(new ServerUrl(cloudId)))
                         .build())
                 .build();
         settingsTester(fsSettings);

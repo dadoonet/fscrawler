@@ -36,6 +36,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
@@ -73,7 +74,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
         FsSettings fsSettings = FsSettings.builder(crawlerName)
                 .setFs(fs)
                 .setElasticsearch(Elasticsearch.builder()
-                        .addNode(new ServerUrl(testClusterUrl))
+                        .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                         .setUsername(testClusterUser)
                         .setPassword(testClusterPass)
                         .build())
@@ -119,7 +120,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
         FsSettings fsSettings = FsSettings.builder(crawlerName)
                 .setFs(fs)
                 .setElasticsearch(Elasticsearch.builder()
-                        .addNode(new ServerUrl(testClusterUrl))
+                        .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                         .setUsername(testClusterUser)
                         .setPassword(testClusterPass)
                         .build())
@@ -159,7 +160,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
         FsSettings fsSettings = FsSettings.builder(getCrawlerName())
                 .setFs(fs)
                 .setElasticsearch(Elasticsearch.builder()
-                        .addNode(new ServerUrl(testClusterUrl))
+                        .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                         .setUsername(testClusterUser)
                         .setPassword(testClusterPass)
                         .build())
