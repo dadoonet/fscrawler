@@ -210,11 +210,13 @@ public class FsCrawlerCli {
                 fsSettings.setFs(Fs.DEFAULT);
             }
 
-            if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && fsSettings.getServer().getPort() == PROTOCOL.SSH_PORT) {
-                fsSettings.getServer().setPort(PROTOCOL.FTP_PORT);
-            }
-            if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && StringUtils.isEmpty(fsSettings.getServer().getUsername())) {
-                fsSettings.getServer().setUsername("anonymous");
+            if (fsSettings.getServer() != null) {
+                if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && fsSettings.getServer().getPort() == PROTOCOL.SSH_PORT) {
+                    fsSettings.getServer().setPort(PROTOCOL.FTP_PORT);
+                }
+                if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && StringUtils.isEmpty(fsSettings.getServer().getUsername())) {
+                    fsSettings.getServer().setUsername("anonymous");
+                }
             }
 
             if (fsSettings.getElasticsearch() == null) {
