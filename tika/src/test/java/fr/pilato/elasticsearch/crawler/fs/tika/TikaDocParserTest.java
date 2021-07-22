@@ -25,7 +25,10 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Ocr;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.parser.external.ExternalParser;
+import org.apache.tika.parser.ocr.TesseractOCRParser;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -45,6 +48,18 @@ import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 public class TikaDocParserTest extends DocParserTestCase {
+
+    private static boolean isOcrAvailable;
+
+    @BeforeClass
+    public static void setOcrAvailable() {
+        try {
+            isOcrAvailable = new TesseractOCRParser().hasTesseract();
+        } catch (TikaConfigException e) {
+            staticLogger.warn("Can not configure Tesseract for tests, so we are supposing it won't be available");
+            isOcrAvailable = false;
+        }
+    }
 
     /**
      * Test case for https://github.com/dadoonet/fscrawler/issues/162
@@ -355,7 +370,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(37));
+        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 37 : 36));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:title", "Test Tika title"));
@@ -388,11 +403,14 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("pdf:charsPerPage", "42"));
         assertThat(raw, hasEntry("access_permission:extract_content", "true"));
         assertThat(raw, hasEntry("access_permission:can_print", "true"));
-        assertThat(raw, hasEntry("Content-Type-Parser-Override", "image/ocr-png"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("meta:keyword", "keyword1, keyword2"));
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z"));
+
+        if (isOcrAvailable) {
+            assertThat(raw, hasEntry("Content-Type-Parser-Override", "image/ocr-png"));
+        }
     }
 
     @Test
@@ -549,8 +567,8 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void testOcr() throws IOException {
-        assumeTrue("Tesseract is not installed so we are skipping this test", ExternalParser.check("tesseract"));
+    public void testOcr() throws IOException, TikaConfigException {
+        assumeTrue("Tesseract is not installed so we are skipping this test", isOcrAvailable);
 
         // Test with OCR On (default)
         Doc doc = extractFromFile("test-ocr.png");
@@ -683,7 +701,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(29));
+        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 29 : 28));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.4"));
         assertThat(raw, hasEntry("xmp:CreatorTool", "Writer"));
@@ -708,11 +726,14 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("pdf:charsPerPage", "14"));
         assertThat(raw, hasEntry("access_permission:extract_content", "true"));
         assertThat(raw, hasEntry("access_permission:can_print", "true"));
-        assertThat(raw, hasEntry("Content-Type-Parser-Override", "image/ocr-png"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:producer", "OpenOffice.org 2.1"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z"));
+
+        if (isOcrAvailable) {
+            assertThat(raw, hasEntry("Content-Type-Parser-Override", "image/ocr-png"));
+        }
     }
 
     /**
