@@ -27,15 +27,16 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
+import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FileAbstractorFile;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
@@ -43,7 +44,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -99,6 +99,10 @@ public abstract class FsParserAbstract extends FsParser {
         }
 
         pathSeparator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
+        if (OsValidator.WINDOWS && fsSettings.getServer() == null) {
+            logger.debug("We are running on Windows without Server settings so we use the separator in accordance with fs.url");
+            FileAbstractorFile.separator = pathSeparator;
+        }
     }
 
     protected abstract FileAbstractor<?> buildFileAbstractor();
