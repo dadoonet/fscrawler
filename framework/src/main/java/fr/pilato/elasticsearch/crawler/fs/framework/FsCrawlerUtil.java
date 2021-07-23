@@ -283,30 +283,30 @@ public class FsCrawlerUtil {
         return true;
     }
 
-    public static String computeRealPathName(String dirname, String filename) {
-        if (dirname != null) {
-            dirname = dirname.replace("\\", "/");
+    public static String getPathSeparator(String path) {
+        if (path.contains("/") && !path.contains("\\")) {
+            return "/";
         }
 
-        String fullFilename = new File(dirname, filename).toString();
-        // fix windows share folder path: "/server/dir" -> "//server/dir"
-        if (dirname != null && dirname.startsWith("//") && !fullFilename.startsWith("//")) {
-            fullFilename = "/".concat(fullFilename);
+        if (!path.contains("/") && (path.contains("\\") || path.contains(":"))) {
+            return "\\";
         }
-        return fullFilename.startsWith("/") ? fullFilename : "/".concat(fullFilename);
+
+        return File.separator;
+    }
+
+    public static String computeRealPathName(String _dirname, String filename) {
+        // new File(dirname, filename).toString() is not suitable for server
+        String separator = getPathSeparator(_dirname);
+        String dirname = _dirname.endsWith(separator) ? _dirname : _dirname.concat(separator);
+        return dirname + filename;
     }
 
     public static String computeVirtualPathName(String rootPath, String realPath) {
-        if (rootPath != null) {
-            rootPath = rootPath.replace("\\", "/");
-        }
-        if (realPath != null) {
-            realPath = realPath.replace("\\", "/");
-        }
-
-        String result = "/";
-        if (realPath != null && rootPath != null && realPath.length() > rootPath.length()) {
+        String result = getPathSeparator(rootPath);
+        if (realPath.startsWith(rootPath) && realPath.length() > rootPath.length()) {
             if (rootPath.equals("/")) {
+                // "/" is very common for FTP
                 result = realPath;
             } else {
                 result = realPath.substring(rootPath.length());
@@ -314,7 +314,7 @@ public class FsCrawlerUtil {
         }
 
         logger.debug("computeVirtualPathName({}, {}) = {}", rootPath, realPath, result);
-        return result.startsWith("/") ? result : "/".concat(result);
+        return result;
     }
 
     public static LocalDateTime getCreationTime(File file) {

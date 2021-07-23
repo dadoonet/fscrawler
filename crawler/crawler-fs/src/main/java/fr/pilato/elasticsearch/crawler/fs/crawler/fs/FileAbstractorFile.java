@@ -67,7 +67,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
 
     @Override
     public InputStream getInputStream(FileAbstractModel file) throws Exception {
-        return new FileInputStream(new File(file.getFullpath()));
+        return new FileInputStream(file.getFullpath());
     }
 
     @Override

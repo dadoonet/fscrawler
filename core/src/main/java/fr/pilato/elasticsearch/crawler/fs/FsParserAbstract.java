@@ -30,12 +30,13 @@ import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
@@ -97,13 +98,7 @@ public abstract class FsParserAbstract extends FsParser {
             messageDigest = null;
         }
 
-        // On Windows, when using server, we need to force the "Linux" separator
-        if (OsValidator.WINDOWS && fsSettings.getServer() != null) {
-            logger.debug("We are running on Windows with Server settings so we need to force the Linux separator.");
-            pathSeparator = "/";
-        } else {
-            pathSeparator = File.separator;
-        }
+        pathSeparator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
     }
 
     protected abstract FileAbstractor<?> buildFileAbstractor();
@@ -393,8 +388,11 @@ public abstract class FsParserAbstract extends FsParser {
                 doc.getFile().setLastModified(localDateTimeToDate(lastModified));
                 doc.getFile().setLastAccessed(localDateTimeToDate(lastAccessed));
                 doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
-                // TODO: how about just set for local fs?
-                doc.getFile().setUrl("file://" + fullFilename);
+                if (fsSettings.getServer() == null) {
+                    doc.getFile().setUrl("file://" + fullFilename);
+                } else if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP)) {
+                    doc.getFile().setUrl(String.format("ftp://%s:%d%s", fsSettings.getServer().getHostname(), fsSettings.getServer().getPort(), fullFilename));
+                }
                 doc.getFile().setExtension(extension);
                 if (fsSettings.getFs().isAddFilesize()) {
                     doc.getFile().setFilesize(size);
@@ -493,8 +491,11 @@ public abstract class FsParserAbstract extends FsParser {
         }
     }
 
-    private String generateIdFromFilename(String filename, String filepath) throws NoSuchAlgorithmException {
-        return fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign((new File(filepath, filename)).toString());
+    private String generateIdFromFilename(String _filename, String _filepath) throws NoSuchAlgorithmException {
+        String filepathForId = _filepath.replace("\\", "/");
+        String filename = _filename.replace("\\", "").replace("/", "");
+        String fullFilename = filepathForId.endsWith("/") ? filepathForId.concat(filename) : filepathForId.concat("/").concat(filename);
+        return fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign(fullFilename);
     }
 
     private String read(InputStream input) throws IOException {
