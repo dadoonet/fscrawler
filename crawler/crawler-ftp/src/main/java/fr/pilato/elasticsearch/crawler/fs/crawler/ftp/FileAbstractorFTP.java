@@ -75,12 +75,12 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
             try {
                 filename = new String(filename.getBytes(controlEncoding), StandardCharsets.UTF_8);
             } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+                logger.error("Error during filename encoding: {}", e.getMessage());
             }
             try {
                 path = new String(_path.getBytes(controlEncoding), StandardCharsets.UTF_8);
             } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+                logger.error("Error during path encoding: {}", e.getMessage());
             }
         }
 
@@ -149,9 +149,9 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
     @Override
     public boolean exists(String dir) {
         try {
-            if (controlEncoding.equals(FTP.DEFAULT_CONTROL_ENCODING)) {
-                dir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
-            }
+            logger.debug("Checking dir existence: " + dir);
+            // changeWorkingDirectory don't know utf-8
+            dir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
             return ftp.changeWorkingDirectory(dir);
         } catch (IOException e) {
             return false;

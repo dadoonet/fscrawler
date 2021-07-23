@@ -120,8 +120,8 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
 
     @Test @Ignore
     public void testConnectToFTPServer() throws Exception {
-        String path = "/";
-        FsSettings fsSettings = FsSettings.builder("local_test")
+        String path = "/中文目录";
+        FsSettings fsSettings = FsSettings.builder("local_utf8_test")
             .setServer(
                 Server.builder()
                     .setHostname("192.168.18.207")
