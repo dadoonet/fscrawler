@@ -58,7 +58,9 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
     private final PrintCommandListener ftpListener = new PrintCommandListener(new PrintWriter(loggerOutputStream));
 
-    private String controlEncoding = FTP.DEFAULT_CONTROL_ENCODING;
+    private boolean isUtf8 = false;
+
+    private static final String ALTERNATIVE_ENCODING = "GBK";
 
     public FileAbstractorFTP(FsSettings fsSettings) {
         super(fsSettings);
@@ -70,18 +72,15 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         String extension = FilenameUtils.getExtension(filename);
         String path = _path;
 
-        // if server is not using utf-8
-        if (controlEncoding.equals(FTP.DEFAULT_CONTROL_ENCODING)) {
-            try {
-                filename = new String(filename.getBytes(controlEncoding), StandardCharsets.UTF_8);
-            } catch (UnsupportedEncodingException e) {
-                logger.error("Error during filename encoding: {}", e.getMessage());
-            }
-            try {
-                path = new String(_path.getBytes(controlEncoding), StandardCharsets.UTF_8);
-            } catch (UnsupportedEncodingException e) {
-                logger.error("Error during path encoding: {}", e.getMessage());
-            }
+        String toEncoding = ALTERNATIVE_ENCODING;
+        if (isUtf8) {
+            toEncoding = StandardCharsets.UTF_8.displayName();
+        }
+        try {
+            filename = new String(filename.getBytes(FTP.DEFAULT_CONTROL_ENCODING), toEncoding);
+            path = new String(_path.getBytes(FTP.DEFAULT_CONTROL_ENCODING), toEncoding);
+        } catch (UnsupportedEncodingException e) {
+            logger.error("Error during encoding: {}", e.getMessage());
         }
 
         return new FileAbstractModel(
@@ -109,8 +108,10 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
         ftp.enterLocalPassiveMode();
         String fullPath = file.getFullpath();
-        if (controlEncoding.equals(FTP.DEFAULT_CONTROL_ENCODING)) {
+        if (isUtf8) {
             fullPath = new String(fullPath.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
+        } else {
+            fullPath = new String(fullPath.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
         }
         return ftp.retrieveFileStream(fullPath);
     }
@@ -120,11 +121,12 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         // FTP data connection could be closed after transfer process.
         openFTPConnection();
 
-        if (controlEncoding.equals(FTP.DEFAULT_CONTROL_ENCODING)) {
-            dir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
-        }
         logger.debug("Listing local files from {}", dir);
-
+        if (isUtf8) {
+            dir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
+        } else {
+            dir = new String(dir.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
+        }
         ftp.enterLocalPassiveMode();
         FTPFile[] ftpFiles = ftp.listFiles(dir);
         if (ftpFiles == null) return null;
@@ -150,8 +152,11 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
     public boolean exists(String dir) {
         try {
             logger.debug("Checking dir existence: " + dir);
-            // changeWorkingDirectory don't know utf-8
-            dir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
+            if (isUtf8) {
+                dir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
+            } else {
+                dir = new String(dir.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
+            }
             return ftp.changeWorkingDirectory(dir);
         } catch (IOException e) {
             return false;
@@ -196,9 +201,9 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
         int utf8Reply = ftp.sendCommand("OPTS UTF8", "ON");
         if (FTPReply.isPositiveCompletion(utf8Reply)) {
-            controlEncoding = StandardCharsets.UTF_8.displayName();
-            ftp.setControlEncoding(controlEncoding);
+            isUtf8 = true;
         }
+        ftp.setFileType(FTPClient.BINARY_FILE_TYPE);
 
         logger.debug("FTP connection successful");
     }

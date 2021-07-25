@@ -31,7 +31,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.net.ftp.FTPClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -45,25 +44,25 @@ import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
 public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
     private FakeFtpServer fakeFtpServer;
-    private final String path = "/data";
+    private final String home = "/home";
     private final String user = "user";
     private final String pass = "password";
 
     @Before
     public void setup() {
-        // it doesn't seem to support utf-8
+        // it doesn't support utf-8
         fakeFtpServer = new FakeFtpServer();
         fakeFtpServer.setServerControlPort(5968);
-        fakeFtpServer.addUserAccount(new UserAccount(user, pass, path));
+        fakeFtpServer.addUserAccount(new UserAccount(user, pass, home));
         FileSystem fileSystem = new UnixFakeFileSystem();
 
-        fileSystem.add(new DirectoryEntry("/data"));
-        fileSystem.add(new FileEntry("/data/foo.txt", "foo"));
-        fileSystem.add(new FileEntry("/data/bar.txt", "bar"));
+        fileSystem.add(new DirectoryEntry(home));
+        fileSystem.add(new FileEntry(home + "/foo.txt", "文件名不支持中文"));
+        fileSystem.add(new FileEntry(home + "/bar.txt", "bar"));
 
-        fileSystem.add(new DirectoryEntry("/data/buzz"));
-        fileSystem.add(new FileEntry("/data/buzz/hello.txt", "hello"));
-        fileSystem.add(new FileEntry("/data/buzz/world.txt", "world"));
+        fileSystem.add(new DirectoryEntry(home + "/buzz"));
+        fileSystem.add(new FileEntry(home + "/buzz/hello.txt", "hello"));
+        fileSystem.add(new FileEntry(home + "/buzz/world.txt", "world"));
 
         fakeFtpServer.setFileSystem(fileSystem);
         fakeFtpServer.start();
@@ -90,9 +89,9 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
 
         FileAbstractorFTP ftp = new FileAbstractorFTP(fsSettings);
         ftp.open();
-        boolean exists = ftp.exists(path);
+        boolean exists = ftp.exists(home);
         assertThat(exists, is(true));
-        Collection<FileAbstractModel> files = ftp.getFiles(path);
+        Collection<FileAbstractModel> files = ftp.getFiles(home);
         assertThat(files.size(), is(3));
 
         for (FileAbstractModel file : files) {
@@ -109,7 +108,7 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
                 }
             } else {
                 try (InputStream inputStream = ftp.getInputStream(file)) {
-                    String content = IOUtils.toString(inputStream, FTPClient.DEFAULT_CONTROL_ENCODING);
+                    String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                     logger.debug(" - {}: {}", file.getName(), content);
                 }
             }
