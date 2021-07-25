@@ -103,7 +103,7 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
                 for (FileAbstractModel subDirFile : subDirFiles) {
                     try (InputStream inputStream = ftp.getInputStream(subDirFile)) {
                         String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                        logger.debug("[sub dir] - {}: {}", subDirFile.getName(), content);
+                        logger.debug("[{}] - {}: {}", file.getName(), subDirFile.getName(), content);
                     }
                 }
             } else {
@@ -146,7 +146,7 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
                     if (subDirFile.isFile()) {
                         try (InputStream inputStream = ftp.getInputStream(subDirFile)) {
                             String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                            logger.debug("[sub dir] - {}: {}", subDirFile.getName(), content);
+                            logger.debug("[{}] - {}: {}", file.getName(), subDirFile.getName(), content);
                         }
                     }
                 }

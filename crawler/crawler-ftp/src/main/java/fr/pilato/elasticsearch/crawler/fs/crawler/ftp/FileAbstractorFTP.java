@@ -67,10 +67,9 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
     }
 
     @Override
-    public FileAbstractModel toFileAbstractModel(String _path, FTPFile file) {
+    public FileAbstractModel toFileAbstractModel(String path, FTPFile file) {
         String filename = file.getName();
         String extension = FilenameUtils.getExtension(filename);
-        String path = _path;
 
         String toEncoding = ALTERNATIVE_ENCODING;
         if (isUtf8) {
@@ -78,7 +77,7 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         }
         try {
             filename = new String(filename.getBytes(FTP.DEFAULT_CONTROL_ENCODING), toEncoding);
-            path = new String(_path.getBytes(FTP.DEFAULT_CONTROL_ENCODING), toEncoding);
+            path = new String(path.getBytes(FTP.DEFAULT_CONTROL_ENCODING), toEncoding);
         } catch (UnsupportedEncodingException e) {
             logger.error("Error during encoding: {}", e.getMessage());
         }
@@ -103,24 +102,19 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
     @Override
     public InputStream getInputStream(FileAbstractModel file) throws Exception {
-        // FTP data connection could be closed after transfer process.
-        openFTPConnection();
-
-        ftp.enterLocalPassiveMode();
         String fullPath = file.getFullpath();
         if (isUtf8) {
             fullPath = new String(fullPath.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
         } else {
             fullPath = new String(fullPath.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
         }
-        return ftp.retrieveFileStream(fullPath);
+        InputStream inputStream = ftp.retrieveFileStream(fullPath);
+        ftp.completePendingCommand();
+        return inputStream;
     }
 
     @Override
     public Collection<FileAbstractModel> getFiles(String dir) throws IOException {
-        // FTP data connection could be closed after transfer process.
-        openFTPConnection();
-
         logger.debug("Listing local files from {}", dir);
         if (isUtf8) {
             dir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
