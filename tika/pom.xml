@@ -78,10 +78,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
-            <artifactId>tika-langdetect-tika</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tika</groupId>
             <artifactId>tika-langdetect-optimaize</artifactId>
         </dependency>
 

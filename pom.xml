@@ -723,11 +723,6 @@
             <!-- For Language detection -->
             <dependency>
                 <groupId>org.apache.tika</groupId>
-                <artifactId>tika-langdetect-tika</artifactId>
-                <version>${tika.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tika</groupId>
                 <artifactId>tika-langdetect-optimaize</artifactId>
                 <version>${tika.version}</version>
             </dependency>
