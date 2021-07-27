@@ -218,12 +218,10 @@ If you want to skip the check, you can run with ``-Dossindex.fail=false``::
 Docker build
 ^^^^^^^^^^^^
 
-The docker images build is ran when calling the maven ``deploy`` phase. If you want to generate the images
-without deploying them, you can manually call the docker maven plugin with::
+The docker images build is ran when calling the maven ``package`` phase. If you want to skip the build of the images,
+you can manually use the ``docker.skip`` option::
 
-        cd distribution/es7
-        mvn docker:build
-        cd -
+        mvn package -Ddocker.skip
 
 DockerHub publication
 ^^^^^^^^^^^^^^^^^^^^^

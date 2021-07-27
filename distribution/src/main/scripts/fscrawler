@@ -43,8 +43,11 @@ JAVA_OPTS="$JAVA_OPTS -Dsun.jnu.encoding=UTF-8"
 # Use LOG4J2 instead of java.util.logging
 JAVA_OPTS="$JAVA_OPTS -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"
 
-# Define LOG4J2 config file
-JAVA_OPTS="$JAVA_OPTS -Dlog4j.configurationFile=$FS_HOME/config/log4j2.xml"
+# Define LOG4J2 config file (if running in background, we will use log4j2-file)
+case $(ps -o stat= -p $$) in
+  *+*) JAVA_OPTS="$JAVA_OPTS -Dlog4j.configurationFile=$FS_HOME/config/log4j2.xml" ;;
+  *) JAVA_OPTS="$JAVA_OPTS -Dlog4j.configurationFile=$FS_HOME/config/log4j2-file.xml" ;;
+esac
 
 # If the user defined FS_JAVA_OPTS, we will use it to start the crawler
 JAVA_OPTS="$JAVA_OPTS $FS_JAVA_OPTS"

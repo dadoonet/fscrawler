@@ -36,3 +36,8 @@ rotated every day or after 20mb of logs and gzipped. Logs are removed after 7 da
 
 You can change this strategy by modifying the ``config/log4j2.xml`` file.
 Please read `Log4J2 documentation <https://logging.apache.org/log4j/2.x/manual/index.html>`_ on how to configure Log4J.
+
+.. note::
+
+    FSCrawler detects automatically on Linux machines when it's running in background or foreground.
+    When in background, the logger configuration file used is ``config/log4j2-file.xml``.
