@@ -34,6 +34,7 @@
             <outputDirectory>config</outputDirectory>
             <includes>
                 <include>log4j2.xml</include>
+                <include>log4j2-console.xml</include>
             </includes>
         </fileSet>
     </fileSets>

@@ -14,4 +14,7 @@ COPY maven /usr/share/fscrawler
 RUN set -ex \
     && ln -sn /usr/share/fscrawler/bin/fscrawler /usr/bin/
 
+RUN mv /usr/share/fscrawler/config/log4j2.xml /usr/share/fscrawler/config/log4j2-file.xml \
+    && mv /usr/share/fscrawler/config/log4j2-console.xml /usr/share/fscrawler/config/log4j2.xml
+
 WORKDIR /usr/share/fscrawler
