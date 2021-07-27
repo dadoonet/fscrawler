@@ -158,7 +158,7 @@
                         </execution>
                     </executions>
                 </plugin>
-                <!-- Generate the docker images (run during package step) -->
+                <!-- Generate and push the docker images -->
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
@@ -198,11 +198,19 @@
                         </images>
                     </configuration>
                     <executions>
+                        <!-- Generate the docker images during the package phase -->
                         <execution>
-                            <id>docker-build-push</id>
-                            <phase>deploy</phase>
+                            <id>docker-build</id>
+                            <phase>package</phase>
                             <goals>
                                 <goal>build</goal>
+                            </goals>
+                        </execution>
+                        <!-- Push the docker images during the deploy phase -->
+                        <execution>
+                            <id>docker-push</id>
+                            <phase>deploy</phase>
+                            <goals>
                                 <goal>push</goal>
                             </goals>
                         </execution>
