@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="fatal" monitorInterval="30">
+   <Properties>
+      <!-- If you want to change the log level for fscrawler.log file -->
+      <Property name="LOG_LEVEL">info</Property>
+      <!-- If you want to change the log level for documents.log file -->
+      <Property name="DOC_LEVEL">info</Property>
+   </Properties>
+
+   <Appenders>
+      <Console name="Console" target="SYSTEM_OUT" follow="true">
+         <PatternLayout pattern="%d{ABSOLUTE} %highlight{%-5p} [%c{1.}] %m%n"/>
+      </Console>
+   </Appenders>
+   <Loggers>
+      <!-- This logger is used for the console -->
+      <Logger name="fscrawler.console" level="info" additivity="false">
+         <AppenderRef ref="Console" />
+      </Logger>
+
+      <!-- This logger is used to trace all information about documents -->
+      <Logger name="fscrawler.document" level="${sys:DOC_LEVEL}" additivity="false">
+         <AppenderRef ref="Console" />
+      </Logger>
+
+      <!-- This logger is used to log FSCrawler code execution -->
+      <Logger name="fr.pilato.elasticsearch.crawler.fs" level="${sys:LOG_LEVEL}" additivity="false">
+         <AppenderRef ref="Console" />
+      </Logger>
+
+      <!-- This logger is used to log 3rd party libs execution -->
+      <Logger name="org.elasticsearch" level="warn" additivity="false">
+         <AppenderRef ref="Console" />
+      </Logger>
+      <Logger name="org.glassfish" level="warn" additivity="false">
+         <AppenderRef ref="Console" />
+      </Logger>
+      <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">
+         <AppenderRef ref="Console" />
+      </Logger>
+      <Logger name="com.gargoylesoftware" level="error" additivity="false">
+         <AppenderRef ref="Console"/>
+      </Logger>
+
+      <Root level="warn">
+         <AppenderRef ref="Console" />
+      </Root>
+   </Loggers>
+</Configuration>
