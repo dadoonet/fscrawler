@@ -59,6 +59,7 @@ The distribution contains:
    └── lib
        ├── ... All needed jars
 
+.. _docker:
 
 Using docker
 ------------
@@ -68,6 +69,18 @@ Pull the Docker image:
 .. code:: sh
 
    docker pull dadoonet/fscrawler
+
+.. note::
+
+    This image is very big (1.2+gb) as it contains `Tesseract <https://tesseract-ocr.github.io/tessdoc/>`__ and
+    all the `trained language data <https://tesseract-ocr.github.io/tessdoc/Data-Files.html>`__.
+    If you don't want to use OCR at all, you can use a smaller image (around 530mb) by pulling instead
+    ``dadoonet/fscrawler:noocr``
+
+    .. code:: sh
+
+       docker pull dadoonet/fscrawler:noocr
+
 
 Let say your documents are located in ``~/tmp`` dir and you want to store your fscrawler jobs in ``~/.fscrawler``.
 You can run FSCrawler with:
