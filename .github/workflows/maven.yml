@@ -22,6 +22,8 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+      - name: Docker Layer Caching
+        uses: satackey/action-docker-layer-caching@v0.0.11
       - name: Build the project
         run: mvn --batch-mode verify -DskipTests
 
@@ -45,6 +47,8 @@ jobs:
           server-id: sonatype-nexus-snapshots
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
+      - name: Docker Layer Caching
+        uses: satackey/action-docker-layer-caching@v0.0.11
       - name: Deploy with Maven
         run: mvn deploy -DskipTests
         env:

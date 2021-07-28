@@ -23,5 +23,7 @@ jobs:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
+    - name: Docker Layer Caching
+      uses: satackey/action-docker-layer-caching@v0.0.11
     - name: Build with Maven
       run: mvn --batch-mode --update-snapshots verify
