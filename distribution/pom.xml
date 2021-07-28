@@ -19,9 +19,6 @@
     </modules>
 
     <properties>
-        <tesseract.version>4.0.0*</tesseract.version>
-        <tesseract.lang.version>1:4.00*</tesseract.lang.version>
-
         <!-- Global configuration parameters for docker -->
         <!-- By default, build docker images on each modules. -->
         <docker.skip>${env.DOCKER_SKIP}</docker.skip>
@@ -31,40 +28,22 @@
         <module.name>es7</module.name>
 
         <!-- Docker Image Definitions -->
-        <!-- no install tesseract-ocr and data files for any languages -->
-        <docker.nolang.alias>${project.artifactId}-nolang</docker.nolang.alias>
-        <docker.nolang.name>${docker.username}/fscrawler:${project.version}-${module.name}-nolang</docker.nolang.name>
-        <docker.nolang.cacheFrom>${docker.nolang.name}</docker.nolang.cacheFrom>
-        <docker.nolang.dockerFile>${project.basedir}/../src/main/docker/Dockerfile</docker.nolang.dockerFile>
-        <docker.nolang.assembly.descriptor>${project.basedir}/../src/main/assembly/assembly.xml</docker.nolang.assembly.descriptor>
-        <docker.nolang.assembly.mode>tgz</docker.nolang.assembly.mode>
+        <!-- standard install with no ocr -->
+        <docker.noocr.alias>${project.artifactId}-noocr</docker.noocr.alias>
+        <docker.noocr.name>${docker.username}/fscrawler:${project.version}-noocr-${module.name}</docker.noocr.name>
+        <docker.noocr.cacheFrom>${docker.noocr.name}</docker.noocr.cacheFrom>
+        <docker.noocr.dockerFile>${project.basedir}/../src/main/docker/Dockerfile</docker.noocr.dockerFile>
+        <docker.noocr.assembly.descriptor>${project.basedir}/../src/main/assembly/assembly.xml</docker.noocr.assembly.descriptor>
+        <docker.noocr.assembly.mode>tgz</docker.noocr.assembly.mode>
 
-        <!-- install tesseract-ocr and data files for English -->
-        <docker.eng.alias>${project.artifactId}-eng</docker.eng.alias>
-        <docker.eng.name>${docker.username}/fscrawler:${project.version}-${module.name}-eng</docker.eng.name>
-        <docker.eng.cacheFrom>${docker.eng.name}</docker.eng.cacheFrom>
-        <docker.eng.dockerFile>${docker.nolang.dockerFile}</docker.eng.dockerFile>
-        <docker.eng.assembly.descriptor>${docker.nolang.assembly.descriptor}</docker.eng.assembly.descriptor>
-        <docker.eng.assembly.mode>${docker.nolang.assembly.mode}</docker.eng.assembly.mode>
-        <docker.eng.args.langsPkg>tesseract-ocr=${tesseract.version} tesseract-ocr-eng=${tesseract.lang.version}</docker.eng.args.langsPkg>
-
-        <!-- install tesseract-ocr and data files for French -->
-        <docker.fra.alias>${project.artifactId}-fra</docker.fra.alias>
-        <docker.fra.name>${docker.username}/fscrawler:${project.version}-${module.name}-fra</docker.fra.name>
-        <docker.fra.cacheFrom>${docker.fra.name}</docker.fra.cacheFrom>
-        <docker.fra.dockerFile>${docker.nolang.dockerFile}</docker.fra.dockerFile>
-        <docker.fra.assembly.descriptor>${docker.nolang.assembly.descriptor}</docker.fra.assembly.descriptor>
-        <docker.fra.assembly.mode>${docker.nolang.assembly.mode}</docker.fra.assembly.mode>
-        <docker.fra.args.langsPkg>tesseract-ocr=${tesseract.version} tesseract-ocr-fra=${tesseract.lang.version}</docker.fra.args.langsPkg>
-
-        <!-- install tesseract-ocr and  data files for Japanese -->
-        <docker.jpn.alias>${project.artifactId}-jpn</docker.jpn.alias>
-        <docker.jpn.name>${docker.username}/fscrawler:${project.version}-${module.name}-jpn</docker.jpn.name>
-        <docker.jpn.cacheFrom>${docker.jpn.name}</docker.jpn.cacheFrom>
-        <docker.jpn.dockerFile>${docker.nolang.dockerFile}</docker.jpn.dockerFile>
-        <docker.jpn.assembly.descriptor>${docker.nolang.assembly.descriptor}</docker.jpn.assembly.descriptor>
-        <docker.jpn.assembly.mode>${docker.nolang.assembly.mode}</docker.jpn.assembly.mode>
-        <docker.jpn.args.langsPkg>tesseract-ocr=${tesseract.version} tesseract-ocr-jpn=${tesseract.lang.version}</docker.jpn.args.langsPkg>
+        <!-- install tesseract-ocr and all language files -->
+        <docker.ocr.alias>${project.artifactId}-ocr</docker.ocr.alias>
+        <docker.ocr.name>${docker.username}/fscrawler:${project.version}-ocr-${module.name}</docker.ocr.name>
+        <docker.ocr.cacheFrom>${docker.ocr.name}</docker.ocr.cacheFrom>
+        <docker.ocr.dockerFile>${docker.noocr.dockerFile}</docker.ocr.dockerFile>
+        <docker.ocr.assembly.descriptor>${docker.noocr.assembly.descriptor}</docker.ocr.assembly.descriptor>
+        <docker.ocr.assembly.mode>${docker.noocr.assembly.mode}</docker.ocr.assembly.mode>
+        <docker.ocr.args.langsPkg>imagemagick tesseract-ocr tesseract-ocr-all</docker.ocr.args.langsPkg>
     </properties>
 
     <dependencies>
@@ -169,30 +148,18 @@
                                 <password>${docker.push.password}</password>
                             </push>
                         </authConfig>
-                        <!-- Disable configuration for IT -->
+                        <!-- Create multiple images -->
                         <images combine.self="override">
                             <image>
                                 <external>
                                     <type>properties</type>
-                                    <prefix>docker.nolang</prefix>
+                                    <prefix>docker.noocr</prefix>
                                 </external>
                             </image>
                             <image>
                                 <external>
                                     <type>properties</type>
-                                    <prefix>docker.eng</prefix>
-                                </external>
-                            </image>
-                            <image>
-                                <external>
-                                    <type>properties</type>
-                                    <prefix>docker.fra</prefix>
-                                </external>
-                            </image>
-                            <image>
-                                <external>
-                                    <type>properties</type>
-                                    <prefix>docker.jpn</prefix>
+                                    <prefix>docker.ocr</prefix>
                                 </external>
                             </image>
                         </images>
