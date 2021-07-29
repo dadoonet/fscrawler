@@ -1,7 +1,7 @@
 Building the project
 --------------------
 
-This project is built with `Maven <https://maven.apache.org/>`_. It needs Java >= 1.14.
+This project is built with `Maven <https://maven.apache.org/>`_. It needs Java >= 1.11.
 Source code is available on `GitHub <https://github.com/dadoonet/fscrawler/>`_.
 Thanks to `JetBrains <https://www.jetbrains.com/?from=FSCrawler>`_ for the IntelliJ IDEA License!
 
