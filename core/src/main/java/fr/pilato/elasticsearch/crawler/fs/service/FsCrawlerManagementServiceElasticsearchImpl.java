@@ -19,14 +19,18 @@
 
 package fr.pilato.elasticsearch.crawler.fs.service;
 
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.PathParser;
+import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
+import fr.pilato.elasticsearch.crawler.fs.beans.FolderParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
@@ -42,6 +46,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     private static final Logger logger = LogManager.getLogger(FsCrawlerManagementServiceElasticsearchImpl.class);
     private static final String PATH_ROOT = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT;
     private static final String FILE_FILENAME = Doc.FIELD_NAMES.FILE + "." + fr.pilato.elasticsearch.crawler.fs.beans.File.FIELD_NAMES.FILENAME;
+    private static final String JSONP_PATH_REAL = "$." + Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.REAL;
 
     // TODO Optimize it. We can probably use a search for a big array of filenames instead of
     // searching fo 10000 files (which is somehow limited).
@@ -119,12 +124,11 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                 new ESSearchRequest()
                         .withIndex(settings.getElasticsearch().getIndexFolder())
                         .withSize(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                        .withESQuery(new ESTermQuery(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT, SignTool.sign(path))));
+                        .withESQuery(new ESTermQuery(PATH_ROOT, SignTool.sign(path))));
 
         if (response.getHits() != null) {
             for (ESSearchHit hit : response.getHits()) {
-                String name = hit.getSourceAsMap().get(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.REAL).toString();
-                files.add(name);
+                files.add(JsonPath.read(hit.getSourceAsString(), JSONP_PATH_REAL));
             }
         }
 
@@ -132,7 +136,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     }
 
     @Override
-    public void storeVisitedDirectory(String indexFolder, String id, fr.pilato.elasticsearch.crawler.fs.beans.Path path) throws IOException {
-        client.indexRawJson(indexFolder, id, PathParser.toJson(path), null);
+    public void storeVisitedDirectory(String indexFolder, String id, Folder folder) {
+        client.indexRawJson(indexFolder, id, FolderParser.toJson(folder), null);
     }
 }

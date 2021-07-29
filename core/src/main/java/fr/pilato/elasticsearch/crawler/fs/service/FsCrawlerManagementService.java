@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.service;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 import fr.pilato.elasticsearch.crawler.fs.beans.Path;
 
 import java.io.IOException;
@@ -47,7 +48,7 @@ public interface FsCrawlerManagementService extends FsCrawlerService {
      * current directories. So we will be able to remove data if needed.
      * @param indexFolder index name to store this information
      * @param id id of the directory
-     * @param path Path to store
+     * @param folder Folder to store
      */
-    void storeVisitedDirectory(String indexFolder, String id, Path path) throws IOException;
+    void storeVisitedDirectory(String indexFolder, String id, Folder folder) throws IOException;
 }

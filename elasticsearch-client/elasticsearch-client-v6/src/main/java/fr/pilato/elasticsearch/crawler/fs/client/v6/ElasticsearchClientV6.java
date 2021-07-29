@@ -527,7 +527,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         searchRequest.indicesOptions(LENIENT_EXPAND_OPEN);
 
         SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
-        ESSearchResponse esSearchResponse = new ESSearchResponse();
+        ESSearchResponse esSearchResponse = new ESSearchResponse(response.toString());
         if (response.getHits() != null) {
             for (SearchHit hit : response.getHits()) {
                 ESSearchHit esSearchHit = new ESSearchHit();

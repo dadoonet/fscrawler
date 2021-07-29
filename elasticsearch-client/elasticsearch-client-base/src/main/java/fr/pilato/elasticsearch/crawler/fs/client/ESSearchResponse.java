@@ -28,6 +28,11 @@ public class ESSearchResponse {
     private List<ESSearchHit> hits = new ArrayList<>();
     private long totalHits;
     private Map<String, ESTermsAggregation> aggregations = new HashMap<>();
+    private String json;
+
+    public ESSearchResponse(String json) {
+        this.json = json;
+    }
 
     public List<ESSearchHit> getHits() {
         return hits;
@@ -51,5 +56,9 @@ public class ESSearchResponse {
 
     public void addAggregation(String name, ESTermsAggregation aggregation) {
         aggregations.put(name, aggregation);
+    }
+
+    public String getJson() {
+        return json;
     }
 }
