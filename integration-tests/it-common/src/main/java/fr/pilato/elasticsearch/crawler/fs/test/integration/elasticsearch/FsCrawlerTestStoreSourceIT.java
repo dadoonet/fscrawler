@@ -19,7 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -29,7 +30,6 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Test store_source crawler setting
@@ -46,7 +46,7 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             // We check that the field is in _source
-            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
+            assertThat(JsonPath.read(hit.getSourceAsString(), "$.attachment"), notNullValue());
         }
     }
 
@@ -59,7 +59,7 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
         ESSearchResponse searchResponse = documentService.getClient().search(new ESSearchRequest().withIndex(getCrawlerName()));
         for (ESSearchHit hit : searchResponse.getHits()) {
             // We check that the field is not part of _source
-            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
+            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSourceAsString(), "$.attachment"));
         }
     }
 
@@ -74,7 +74,7 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             // We check that the field is in _source
-            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), notNullValue());
+            assertThat(JsonPath.read(hit.getSourceAsString(), "$.attachment"), notNullValue());
         }
     }
 }

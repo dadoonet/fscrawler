@@ -19,7 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -28,10 +29,8 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Test json support crawler setting
@@ -83,7 +82,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), builder.build(), endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get("raw"), nullValue());
+            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSourceAsString(), "$.meta.raw"));
         }
     }
 
@@ -95,7 +94,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get("raw"), notNullValue());
+            assertThat(JsonPath.read(hit.getSourceAsString(), "$.meta.raw"), notNullValue());
         }
     }
 }

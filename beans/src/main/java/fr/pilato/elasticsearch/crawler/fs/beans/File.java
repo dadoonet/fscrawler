@@ -26,23 +26,6 @@ import java.util.Date;
  */
 public class File {
 
-    /**
-     * Generated json field names
-     */
-    static public final class FIELD_NAMES {
-        public static final String EXTENSION = "extension";
-        public static final String CONTENT_TYPE = "content_type";
-        public static final String CREATED = "created";
-        public static final String LAST_MODIFIED = "last_modified";
-        public static final String LAST_ACCESSED = "last_accessed";
-        public static final String INDEXING_DATE = "indexing_date";
-        public static final String FILESIZE = "filesize";
-        public static final String FILENAME = "filename";
-        public static final String URL = "url";
-        public static final String INDEXED_CHARS = "indexed_chars";
-        public static final String CHECKSUM = "checksum";
-    }
-
     private String extension;
     private String contentType;
     private Date created;

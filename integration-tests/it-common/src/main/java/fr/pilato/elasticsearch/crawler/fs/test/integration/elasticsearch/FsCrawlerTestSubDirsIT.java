@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import com.jayway.jsonpath.JsonPath;
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
@@ -38,7 +37,6 @@ import java.util.List;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiLettersOfLengthBetween;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -57,9 +55,8 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
         // We check that the subdir document has his meta path data correctly set
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object virtual = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.PATH)
-                    .get(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.VIRTUAL);
-            assertThat(virtual, isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
+            Object document = parseJson(hit.getSourceAsString());
+            assertThat(JsonPath.read(document, "$.path.virtual"), isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
         }
 
         // Try to search within part of the full path, ie subdir
