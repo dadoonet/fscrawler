@@ -15,6 +15,14 @@
   },
   "mappings": {
     "properties" : {
+      "file": {
+        "properties": {
+          "filename": {
+            "type": "keyword",
+            "store": true
+          }
+        }
+      },
       "path": {
         "properties": {
           "real": {

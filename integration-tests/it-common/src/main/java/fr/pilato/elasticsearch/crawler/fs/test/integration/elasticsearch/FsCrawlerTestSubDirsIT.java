@@ -110,12 +110,19 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         document = parseJson(response.getJson());
 
         i = 0;
+        assertThat(JsonPath.read(document, "$.hits.hits[" + i + "]._source.file.filename"), is("test_subdirs_deep_tree"));
         pathHitTester(document, i++, "/test_subdirs_deep_tree", is("/"));
+        assertThat(JsonPath.read(document, "$.hits.hits[" + i + "]._source.file.filename"), is("subdir1"));
         pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir1", is("/subdir1"));
+        assertThat(JsonPath.read(document, "$.hits.hits[" + i + "]._source.file.filename"), is("subdir11"));
         pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/subdir11", is("/subdir1/subdir11"));
+        assertThat(JsonPath.read(document, "$.hits.hits[" + i + "]._source.file.filename"), is("subdir12"));
         pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/subdir12", is("/subdir1/subdir12"));
+        assertThat(JsonPath.read(document, "$.hits.hits[" + i + "]._source.file.filename"), is("subdir2"));
         pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir2", is("/subdir2"));
+        assertThat(JsonPath.read(document, "$.hits.hits[" + i + "]._source.file.filename"), is("subdir21"));
         pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir2/subdir21", is("/subdir2/subdir21"));
+        assertThat(JsonPath.read(document, "$.hits.hits[" + i + "]._source.file.filename"), is("subdir22"));
         pathHitTester(document, i, "/test_subdirs_deep_tree/subdir2/subdir22", is("/subdir2/subdir22"));
     }
 

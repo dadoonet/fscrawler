@@ -521,8 +521,9 @@ public abstract class FsParserAbstract extends FsParser {
      * @param path complete path like /path/to/subdir
      */
     private void indexDirectory(String path) throws Exception {
+        String name = path.substring(path.lastIndexOf(pathSeparator) + 1);
         String rootdir = path.substring(0, path.lastIndexOf(pathSeparator));
-        Folder folder = new Folder(SignTool.sign(rootdir), path, computeVirtualPathName(stats.getRootPath(), path));
+        Folder folder = new Folder(name, SignTool.sign(rootdir), path, computeVirtualPathName(stats.getRootPath(), path));
 
         indexDirectory(SignTool.sign(path), folder);
     }
