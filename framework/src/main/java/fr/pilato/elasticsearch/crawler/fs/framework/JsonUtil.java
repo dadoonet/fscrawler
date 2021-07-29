@@ -21,6 +21,8 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.Predicate;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,5 +70,14 @@ public class JsonUtil {
             currentObject = (Map<String, Object>) jObject;
         }
         return currentObject;
+    }
+
+    /**
+     * Parse a JSON Document using JSON Path
+     * @param json  json to parse
+     * @return an Object which can be used as an input for {@link com.jayway.jsonpath.JsonPath#read(Object, String, Predicate...)}
+     */
+    public static Object parseJson(String json) {
+        return Configuration.defaultConfiguration().jsonProvider().parse(json);
     }
 }

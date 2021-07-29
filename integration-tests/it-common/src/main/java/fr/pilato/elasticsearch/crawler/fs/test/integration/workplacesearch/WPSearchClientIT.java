@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -90,8 +91,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId), 1L, null);
             String json = client.search(uniqueId);
 
-            Object response = Configuration.defaultConfiguration().jsonProvider().parse(json);
-            List<String> ids = JsonPath.read(response, "$.results[*].id.raw");
+            List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
 
             assertThat(ids, hasSize(1));
             assertThat(ids.get(0), is("testSearch"));

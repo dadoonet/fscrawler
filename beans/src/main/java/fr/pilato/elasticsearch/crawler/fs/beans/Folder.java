@@ -19,22 +19,42 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import java.io.IOException;
+/**
+ * Represents a folder we have visited
+ */
+public class Folder {
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;
-
-public class PathParser {
-
-    public static String toJson(Path path) {
-        try {
-            return prettyMapper.writeValueAsString(path);
-        } catch (IOException e) {
-            // TODO Fix that code. We should log here and return null.
-            throw new RuntimeException(e);
-        }
+    /**
+     * Generated json field names
+     */
+    static public final class FIELD_NAMES {
+        public static final String PATH = "path";
     }
 
-    public static Path fromJson(String json) throws IOException {
-        return prettyMapper.readValue(json, Path.class);
+    private Path path;
+
+    public Folder() {
+        path = new Path();
+    }
+
+    /**
+     * Build a folder with a single ctor call
+     * @param root      Root of the folder
+     * @param real      The full path to the folder
+     * @param virtual   The virtual path from the root
+     */
+    public Folder(String root, String real, String virtual) {
+        path = new Path();
+        path.setRoot(root);
+        path.setReal(real);
+        path.setVirtual(virtual);
+    }
+
+    public Path getPath() {
+        return path;
+    }
+
+    public void setPath(Path path) {
+        this.path = path;
     }
 }

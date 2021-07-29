@@ -15,17 +15,38 @@
   },
   "mappings": {
     "properties" : {
-      "real" : {
-        "type" : "keyword",
-        "store" : true
-      },
-      "root" : {
-        "type" : "keyword",
-        "store" : true
-      },
-      "virtual" : {
-        "type" : "keyword",
-        "store" : true
+      "path": {
+        "properties": {
+          "real": {
+            "type": "keyword",
+            "fields": {
+              "tree": {
+                "type": "text",
+                "analyzer": "fscrawler_path",
+                "fielddata": true
+              },
+              "fulltext": {
+                "type": "text"
+              }
+            }
+          },
+          "root": {
+            "type": "keyword"
+          },
+          "virtual": {
+            "type": "keyword",
+            "fields": {
+              "tree": {
+                "type": "text",
+                "analyzer": "fscrawler_path",
+                "fielddata": true
+              },
+              "fulltext": {
+                "type": "text"
+              }
+            }
+          }
+        }
       }
     }
   }

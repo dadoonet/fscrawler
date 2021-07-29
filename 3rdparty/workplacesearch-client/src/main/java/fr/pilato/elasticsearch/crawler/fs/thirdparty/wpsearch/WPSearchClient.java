@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 
 /**
  * Workplace Search Java client
@@ -321,7 +322,7 @@ public class WPSearchClient implements Closeable {
             String json = listAllCustomSources(currentPage);
 
             // We parse the json
-            Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
+            Object document = parseJson(json);
             totalPages = JsonPath.read(document, "$.meta.page.total_pages");
 
             // We compare every source
@@ -370,7 +371,7 @@ public class WPSearchClient implements Closeable {
         logger.trace("Source [{}] created. Response: {}", sourceName, response);
 
         // We parse the json
-        Object document = Configuration.defaultConfiguration().jsonProvider().parse(response);
+        Object document = parseJson(response);
         String id = JsonPath.read(document, "$.id");
 
         logger.debug("Source [{}/{}] created.", id, sourceName);
@@ -445,11 +446,9 @@ public class WPSearchClient implements Closeable {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("WPSearchClient{");
-        sb.append("endpoint='").append(endpoint).append('\'');
-        sb.append(", host='").append(host).append('\'');
-        sb.append(", urlForApi='").append(urlForApi).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return "WPSearchClient{" + "endpoint='" + endpoint + '\'' +
+                ", host='" + host + '\'' +
+                ", urlForApi='" + urlForApi + '\'' +
+                '}';
     }
 }
