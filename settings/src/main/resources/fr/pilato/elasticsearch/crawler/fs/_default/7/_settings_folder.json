@@ -17,6 +17,9 @@
     "properties" : {
       "file": {
         "properties": {
+          "content_type": {
+            "type": "keyword"
+          },
           "filename": {
             "type": "keyword",
             "store": true

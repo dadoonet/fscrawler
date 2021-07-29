@@ -24,6 +24,8 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
  */
 public class Folder {
 
+    public static final String CONTENT_TYPE = "text/directory";
+
     /**
      * Generated json field names
      */
@@ -37,6 +39,7 @@ public class Folder {
     public Folder() {
         path = new Path();
         file = new File();
+        file.setContentType(CONTENT_TYPE);
     }
 
     /**
@@ -53,6 +56,7 @@ public class Folder {
         path.setVirtual(virtual);
         file = new File();
         file.setFilename(name);
+        file.setContentType(CONTENT_TYPE);
     }
 
     public Path getPath() {

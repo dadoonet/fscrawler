@@ -296,6 +296,9 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "    \"properties\" : {\n" +
                 "      \"file\": {\n" +
                 "        \"properties\": {\n" +
+                "          \"content_type\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
                 "          \"filename\": {\n" +
                 "            \"type\": \"keyword\",\n" +
                 "            \"store\": true\n" +
@@ -609,6 +612,9 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "    \"properties\" : {\n" +
                 "      \"file\": {\n" +
                 "        \"properties\": {\n" +
+                "          \"content_type\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
                 "          \"filename\": {\n" +
                 "            \"type\": \"keyword\",\n" +
                 "            \"store\": true\n" +
