@@ -19,25 +19,19 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.File;
-import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.arrayWithSize;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Test crawler default settings
@@ -53,7 +47,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
         // The default configuration should not add file attributes
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTRIBUTES), nullValue());
+            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSourceAsString(), "$.attributes"));
         }
     }
 
@@ -63,19 +57,20 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat(hit.getSourceAsMap().get(Doc.FIELD_NAMES.ATTACHMENT), nullValue());
+            Object document = JsonUtil.parseJson(hit.getSourceAsString());
+            expectThrows(PathNotFoundException.class, () -> JsonPath.read(document, "$.attachment"));
 
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILENAME), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CONTENT_TYPE), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.URL), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILESIZE), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS), nullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CREATED), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_ACCESSED), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.filename"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.content_type"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.url"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.filesize"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.indexing_date"), notNullValue());
+            expectThrows(PathNotFoundException.class, () -> JsonPath.read(document, "$.file.indexed_chars"));
+            assertThat(JsonPath.read(document, "$.file.created"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.last_modified"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.last_accessed"), notNullValue());
 
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.TITLE), notNullValue());
+            assertThat(JsonPath.read(document, "$.meta.title"), notNullValue());
         }
     }
 

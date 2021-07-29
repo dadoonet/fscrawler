@@ -29,37 +29,6 @@ import java.util.Map;
  */
 public class Meta {
 
-    /**
-     * Generated json field names
-     */
-    static public final class FIELD_NAMES {
-        public static final String AUTHOR = "author";
-        public static final String TITLE = "title";
-        public static final String DATE = "date";
-        public static final String KEYWORDS = "keywords";
-        public static final String LANGUAGE = "language";
-        public static final String FORMAT = "format";
-        public static final String IDENTIFIER = "identifier";
-        public static final String CONTRIBUTOR = "contributor";
-        public static final String COVERAGE = "coverage";
-        public static final String MODIFIER = "modifier";
-        public static final String CREATOR_TOOL = "creator_tool";
-        public static final String PUBLISHER = "publisher";
-        public static final String RELATION = "relation";
-        public static final String RIGHTS = "rights";
-        public static final String SOURCE = "source";
-        public static final String TYPE = "type";
-        public static final String DESCRIPTION = "description";
-        public static final String CREATED = "created";
-        public static final String PRINT_DATE = "print_date";
-        public static final String METADATA_DATE = "metadata_date";
-        public static final String LATITUDE = "latitude";
-        public static final String LONGITUDE = "longitude";
-        public static final String ALTITUDE = "altitude";
-        public static final String RATING = "rating";
-        public static final String COMMENTS = "comments";
-    }
-
     private String author;
     private String title;
     private Date date;

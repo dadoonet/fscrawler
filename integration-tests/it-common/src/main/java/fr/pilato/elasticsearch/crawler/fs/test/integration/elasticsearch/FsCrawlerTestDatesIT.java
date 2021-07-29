@@ -19,11 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.File;
+import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
@@ -33,7 +33,6 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.List;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
@@ -56,7 +55,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         // We expect to have two files
         ESSearchResponse responseNotModified = countTestHelper(new ESSearchRequest()
                         .withIndex(getCrawlerName())
-                        .withSort(Doc.FIELD_NAMES.FILE + "." + File.FIELD_NAMES.CREATED)
+                        .withSort("file.created")
                 , 2L, currentTestResourceDir);
 
         // We look at the dates.
@@ -75,7 +74,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         // We expect to have 3 files
         ESSearchResponse responseModified = countTestHelper(new ESSearchRequest()
                         .withIndex(getCrawlerName())
-                        .withSort(Doc.FIELD_NAMES.FILE + "." + File.FIELD_NAMES.CREATED)
+                        .withSort("file.created")
                 , 3L, currentTestResourceDir);
 
         // We look at the dates.
@@ -87,14 +86,16 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
     }
 
     private void compareHits(ESSearchHit hitBefore, ESSearchHit hitAfter, boolean shouldBeIdentical) {
-        String hitBeforeCreated = (String) extractFromPath(hitBefore.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CREATED);
-        String hitBeforeIndexingDate = (String) extractFromPath(hitBefore.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE);
-        String hitBeforeLastModified = (String) extractFromPath(hitBefore.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED);
-        String hitBeforeLastAccessed = (String) extractFromPath(hitBefore.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_ACCESSED);
-        String hitAfterCreated = (String) extractFromPath(hitAfter.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CREATED);
-        String hitAfterIndexingDate = (String) extractFromPath(hitAfter.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE);
-        String hitAfterLastModified = (String) extractFromPath(hitAfter.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED);
-        String hitAfterLastAccessed = (String) extractFromPath(hitAfter.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_ACCESSED);
+        Object documentBefore = JsonUtil.parseJson(hitBefore.getSourceAsString());
+        String hitBeforeCreated = JsonPath.read(documentBefore, "$.file.created");
+        String hitBeforeIndexingDate = JsonPath.read(documentBefore, "$.file.indexing_date");
+        String hitBeforeLastModified = JsonPath.read(documentBefore, "$.file.last_modified");
+        String hitBeforeLastAccessed = JsonPath.read(documentBefore, "$.file.last_accessed");
+        Object documentAfter = JsonUtil.parseJson(hitAfter.getSourceAsString());
+        String hitAfterCreated = JsonPath.read(documentAfter, "$.file.created");
+        String hitAfterIndexingDate = JsonPath.read(documentAfter, "$.file.indexing_date");
+        String hitAfterLastModified = JsonPath.read(documentAfter, "$.file.last_modified");
+        String hitAfterLastAccessed = JsonPath.read(documentAfter, "$.file.last_accessed");
 
         // Apparently on some FS, the creation date may be modified when changing the
         // modification date... So we can't really compare.
@@ -117,10 +118,11 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         logger.info("|        created date        |        indexing date       |     last modified date     |     last accessed date     |");
         logger.info("|----------------------------|----------------------------|----------------------------|----------------------------|");
         for (ESSearchHit hit : hits) {
-            String created = (String) extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CREATED);
-            String indexingDate = (String) extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE);
-            String lastModified = (String) extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED);
-            String lastAccessed = (String) extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_ACCESSED);
+            Object document = JsonUtil.parseJson(hit.getSourceAsString());
+            String created = JsonPath.read(document, "$.file.created");
+            String indexingDate = JsonPath.read(document, "$.file.indexing_date");
+            String lastModified = JsonPath.read(document, "$.file.last_modified");
+            String lastAccessed = JsonPath.read(document, "$.file.last_accessed");
             logger.info("|{}|{}|{}|{}|", created, indexingDate, lastModified, lastAccessed);
         }
     }

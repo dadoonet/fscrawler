@@ -26,13 +26,6 @@ public class Folder {
 
     public static final String CONTENT_TYPE = "text/directory";
 
-    /**
-     * Generated json field names
-     */
-    static public final class FIELD_NAMES {
-        public static final String PATH = "path";
-    }
-
     private Path path;
     private File file;
 
