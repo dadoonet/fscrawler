@@ -32,22 +32,27 @@ public class Folder {
     }
 
     private Path path;
+    private File file;
 
     public Folder() {
         path = new Path();
+        file = new File();
     }
 
     /**
      * Build a folder with a single ctor call
+     * @param name      The folder name
      * @param root      Root of the folder
      * @param real      The full path to the folder
      * @param virtual   The virtual path from the root
      */
-    public Folder(String root, String real, String virtual) {
+    public Folder(String name, String root, String real, String virtual) {
         path = new Path();
         path.setRoot(root);
         path.setReal(real);
         path.setVirtual(virtual);
+        file = new File();
+        file.setFilename(name);
     }
 
     public Path getPath() {
@@ -56,5 +61,13 @@ public class Folder {
 
     public void setPath(Path path) {
         this.path = path;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public void setFile(File file) {
+        this.file = file;
     }
 }
