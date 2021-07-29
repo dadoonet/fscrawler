@@ -39,14 +39,27 @@ public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
         // Test 500 random values
         for (int i = 0; i < 500; i++) {
             int unitNumber = randomIntBetween(0, 5);
-            ByteSizeUnit unit = switch (unitNumber) {
-                case 1 -> ByteSizeUnit.KB;
-                case 2 -> ByteSizeUnit.MB;
-                case 3 -> ByteSizeUnit.GB;
-                case 4 -> ByteSizeUnit.TB;
-                case 5 -> ByteSizeUnit.PB;
-                default -> ByteSizeUnit.BYTES;
-            };
+            ByteSizeUnit unit;
+            switch (unitNumber) {
+                case 1:
+                    unit = ByteSizeUnit.KB;
+                    break;
+                case 2:
+                    unit = ByteSizeUnit.MB;
+                    break;
+                case 3:
+                    unit = ByteSizeUnit.GB;
+                    break;
+                case 4:
+                    unit = ByteSizeUnit.TB;
+                    break;
+                case 5:
+                    unit = ByteSizeUnit.PB;
+                    break;
+                default:
+                    unit = ByteSizeUnit.BYTES;
+                    break;
+            }
 
             long value = randomLongBetween(1, 999);
             String randomByteSize = value + unit.getSuffix();

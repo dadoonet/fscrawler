@@ -109,7 +109,7 @@
         <docker.push.username>${env.DOCKER_USERNAME}</docker.push.username>
         <docker.push.password>${env.DOCKER_PASSWORD}</docker.push.password>
 
-        <java.compiler.version>14</java.compiler.version>
+        <java.compiler.version>11</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
