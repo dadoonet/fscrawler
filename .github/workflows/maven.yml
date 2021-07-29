@@ -45,7 +45,7 @@ jobs:
           distribution: 'adopt'
           server-id: sonatype-nexus-snapshots
           server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
+          server-password: MAVEN_CENTRAL_TOKEN
       - name: Cache Maven packages
         uses: actions/cache@v2
         with:
@@ -64,7 +64,7 @@ jobs:
         run: mvn deploy -DskipTests
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
