@@ -201,6 +201,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
                 staticLogger.info("-> Copying test documents from [{}] to [{}]", source, finalTarget);
                 copyDirs(source, finalTarget);
+                break;
             }
             case "jar" : {
                 if (Files.notExists(target)) {
@@ -214,8 +215,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
                 staticLogger.info("-> Unzipping test documents from [{}] to [{}]", jarFile, target);
                 unzip(jarFile, target);
+                break;
             }
-            default : fail("Unknown protocol for IT document sources: " + resource.getProtocol());
+            default :
+                fail("Unknown protocol for IT document sources: " + resource.getProtocol());
+                break;
         }
     }
 
