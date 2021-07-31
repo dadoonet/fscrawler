@@ -19,8 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.File;
+import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -31,7 +30,6 @@ import org.junit.Test;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assume.assumeNoException;
@@ -55,8 +53,7 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object checksum = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
-            assertThat(checksum, is("caa71e1914ecbcf5ae4f46cf85de8648"));
+            assertThat(JsonPath.read(hit.getSourceAsString(), "$.file.checksum"), is("caa71e1914ecbcf5ae4f46cf85de8648"));
         }
     }
 
@@ -74,8 +71,7 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object checksum = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CHECKSUM);
-            assertThat(checksum, is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
+            assertThat(JsonPath.read(hit.getSourceAsString(), "$.file.checksum"), is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
         }
     }
 }

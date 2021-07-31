@@ -19,8 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -29,12 +28,9 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Test attributes crawler settings
@@ -48,17 +44,16 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.ATTRIBUTES).get(Attributes.FIELD_NAMES.OWNER), notNullValue());
+            Object document = parseJson(hit.getSourceAsString());
+            assertThat(JsonPath.read(document, "$.attributes.owner"), notNullValue());
             if (OsValidator.WINDOWS) {
                 // We should not have values for group and permissions on Windows OS
-                assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.ATTRIBUTES), not(hasKey(Attributes.FIELD_NAMES.GROUP)));
-                assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.ATTRIBUTES), not(hasKey(Attributes.FIELD_NAMES.PERMISSIONS)));
+                assertThat(JsonPath.read(document, "$.attributes.group"), nullValue());
+                assertThat(JsonPath.read(document, "$.attributes.permissions"), nullValue());
             } else {
                 // We test group and permissions only on non Windows OS
-                assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.ATTRIBUTES).get(Attributes.FIELD_NAMES.GROUP), notNullValue());
-                Object permissions = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.ATTRIBUTES).get(Attributes.FIELD_NAMES.PERMISSIONS);
-                assertThat(permissions, notNullValue());
-                assertThat((int) permissions, greaterThanOrEqualTo(400));
+                assertThat(JsonPath.read(document, "$.attributes.group"), notNullValue());
+                assertThat(JsonPath.read(document, "$.attributes.permissions"), greaterThanOrEqualTo(400));
             }
         }
     }

@@ -98,19 +98,10 @@ Or fall back to the command line:
     elasticsearch version it is connected to.
     The default settings definitions are stored in ``~/.fscrawler/_default/_mappings``:
 
-    -  ``2/_settings.json``: for elasticsearch 2.x series document index settings
-    -  ``2/_settings_folder.json``: for elasticsearch 2.x series folder index settings
-    -  ``5/_settings.json``: for elasticsearch 5.x series document index settings
-    -  ``5/_settings_folder.json``: for elasticsearch 5.x series folder index settings
     -  ``6/_settings.json``: for elasticsearch 6.x series document index settings
     -  ``6/_settings_folder.json``: for elasticsearch 6.x series folder index settings
     -  ``7/_settings.json``: for elasticsearch 7.x series document index settings
     -  ``7/_settings_folder.json``: for elasticsearch 7.x series folder index settings
-
-.. note::
-
-    For versions before 6.x series, the type of the document is ``doc``.
-    From 6.x, the type of the document is ``_doc``.
 
 Creating your own mapping (analyzers)
 """""""""""""""""""""""""""""""""""""
@@ -370,10 +361,6 @@ time instead of the :ref:`default ones <mappings>`:
 .. tip::
     You can do the same for other elasticsearch versions with:
 
-    -  ``~/.fscrawler/{job_name}/_mappings/2/_settings.json`` for 2.x series (deprecated)
-    -  ``~/.fscrawler/{job_name}/_mappings/2/_settings_folder.json`` for 2.x series (deprecated)
-    -  ``~/.fscrawler/{job_name}/_mappings/5/_settings.json`` for 5.x series
-    -  ``~/.fscrawler/{job_name}/_mappings/5/_settings_folder.json`` for 5.x series
     -  ``~/.fscrawler/{job_name}/_mappings/6/_settings.json`` for 6.x series
     -  ``~/.fscrawler/{job_name}/_mappings/6/_settings_folder.json`` for 6.x series
 

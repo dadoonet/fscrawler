@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs;
 import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
@@ -509,13 +510,13 @@ public abstract class FsParserAbstract extends FsParser {
     }
 
     /**
-     * Index a Path object (AKA a folder) in elasticsearch
-     * @param id    id of the path
-     * @param path  path object
+     * Index a folder object in elasticsearch
+     * @param id        id of the folder
+     * @param folder    path object
      */
-    private void indexDirectory(String id, fr.pilato.elasticsearch.crawler.fs.beans.Path path) throws IOException {
+    private void indexDirectory(String id, Folder folder) throws IOException {
         if (!closed) {
-            managementService.storeVisitedDirectory(fsSettings.getElasticsearch().getIndexFolder(), id, path);
+            managementService.storeVisitedDirectory(fsSettings.getElasticsearch().getIndexFolder(), id, folder);
         } else {
             logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
                     fsSettings.getElasticsearch().getIndexFolder(), id);
@@ -527,16 +528,11 @@ public abstract class FsParserAbstract extends FsParser {
      * @param path complete path like "/", "/path/to/subdir", "/C:/dir", "//SOMEONE/dir"
      */
     private void indexDirectory(String path) throws Exception {
-        fr.pilato.elasticsearch.crawler.fs.beans.Path pathObject = new fr.pilato.elasticsearch.crawler.fs.beans.Path();
-        // The real and complete path
-        pathObject.setReal(path);
+        String name = path.substring(path.lastIndexOf(pathSeparator) + 1);
         String rootdir = path.substring(0, path.lastIndexOf(pathSeparator));
-        // Encoded version of the parent dir
-        pathObject.setRoot(SignTool.sign(rootdir));
-        // The virtual URL (not including the initial root dir)
-        pathObject.setVirtual(computeVirtualPathName(stats.getRootPath(), path));
+        Folder folder = new Folder(name, SignTool.sign(rootdir), path, computeVirtualPathName(stats.getRootPath(), path));
 
-        indexDirectory(SignTool.sign(path), pathObject);
+        indexDirectory(SignTool.sign(path), folder);
     }
 
     /**

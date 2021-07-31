@@ -23,18 +23,18 @@ import java.io.IOException;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;
 
-public class PathParser {
+public class FolderParser {
 
-    public static String toJson(Path path) {
+    public static String toJson(Folder folder) {
         try {
-            return prettyMapper.writeValueAsString(path);
+            return prettyMapper.writeValueAsString(folder);
         } catch (IOException e) {
             // TODO Fix that code. We should log here and return null.
             throw new RuntimeException(e);
         }
     }
 
-    public static Path fromJson(String json) throws IOException {
-        return prettyMapper.readValue(json, Path.class);
+    public static Folder fromJson(String json) throws IOException {
+        return prettyMapper.readValue(json, Folder.class);
     }
 }

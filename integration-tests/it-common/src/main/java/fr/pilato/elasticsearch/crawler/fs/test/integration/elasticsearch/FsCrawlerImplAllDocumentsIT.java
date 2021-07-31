@@ -19,10 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.File;
-import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
@@ -30,11 +28,9 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
 import org.apache.tika.parser.external.ExternalParser;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -46,7 +42,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -130,17 +126,18 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     public void testExtractFromDocx() throws IOException {
         ESSearchResponse response = runSearch("test.docx", "sample");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILENAME), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CONTENT_TYPE), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.URL), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.FILESIZE), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXING_DATE), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.CREATED), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_MODIFIED), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.LAST_ACCESSED), notNullValue());
+            Object document = parseJson(hit.getSourceAsString());
+            assertThat(JsonPath.read(document, "$.file.filename"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.content_type"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.url"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.filesize"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.indexing_date"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.created"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.last_modified"), notNullValue());
+            assertThat(JsonPath.read(document, "$.file.last_accessed"), notNullValue());
 
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.TITLE), notNullValue());
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.KEYWORDS), notNullValue());
+            assertThat(JsonPath.read(document, "$.meta.title"), notNullValue());
+            assertThat(JsonPath.read(document, "$.meta.keywords"), notNullValue());
         }
     }
 
@@ -200,15 +197,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     public void testLanguageDetection() throws IOException {
         ESSearchResponse response = runSearch("test-fr.txt", "fichier");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("fr"));
+            assertThat(JsonPath.read(hit.getSourceAsString(), "$.meta.language"), is("fr"));
         }
         response = runSearch("test-de.txt", "Datei");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("de"));
+            assertThat(JsonPath.read(hit.getSourceAsString(), "$.meta.language"), is("de"));
         }
         response = runSearch("test.txt", "contains");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.META).get(Meta.FIELD_NAMES.LANGUAGE), is("en"));
+            assertThat(JsonPath.read(hit.getSourceAsString(), "$.meta.language"), is("en"));
         }
     }
 

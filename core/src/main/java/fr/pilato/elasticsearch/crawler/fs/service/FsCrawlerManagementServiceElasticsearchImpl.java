@@ -19,8 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.service;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.PathParser;
+import com.jayway.jsonpath.JsonPath;
+import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
+import fr.pilato.elasticsearch.crawler.fs.beans.FolderParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -40,8 +41,6 @@ import java.util.Collection;
 public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerManagementService {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerManagementServiceElasticsearchImpl.class);
-    private static final String PATH_ROOT = Doc.FIELD_NAMES.PATH + "." + fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT;
-    private static final String FILE_FILENAME = Doc.FIELD_NAMES.FILE + "." + fr.pilato.elasticsearch.crawler.fs.beans.File.FIELD_NAMES.FILENAME;
 
     // TODO Optimize it. We can probably use a search for a big array of filenames instead of
     // searching fo 10000 files (which is somehow limited).
@@ -77,7 +76,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
             throws Exception {
 
         if (logger.isTraceEnabled()) {
-            logger.trace("Querying elasticsearch for files in dir [{}:{}]", PATH_ROOT, SignTool.sign(path));
+            logger.trace("Querying elasticsearch for files in dir [path.root:{}]", SignTool.sign(path));
         }
 
         Collection<String> files = new ArrayList<>();
@@ -85,22 +84,21 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                 new ESSearchRequest()
                         .withIndex(settings.getElasticsearch().getIndex())
                         .withSize(REQUEST_SIZE)
-                        .addField(FILE_FILENAME)
-                        .withESQuery(new ESTermQuery(PATH_ROOT, SignTool.sign(path))));
+                        .addField("file.filename")
+                        .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
 
         if (response.getHits() != null) {
             for (ESSearchHit hit : response.getHits()) {
                 String name;
                 if (hit.getFields() != null
-                        && hit.getFields().get(FILE_FILENAME) != null) {
+                        && hit.getFields().get("file.filename") != null) {
                     // In case someone disabled _source which is not recommended
-                    name = hit.getFields().get(FILE_FILENAME).getValue();
+                    name = hit.getFields().get("file.filename").getValue();
                 } else {
                     // Houston, we have a problem ! We can't get the old files from ES
                     logger.warn("Can't find stored field name to check existing filenames in path [{}]. " +
-                            "Please set store: true on field [{}]", path, FILE_FILENAME);
-                    throw new RuntimeException("Mapping is incorrect: please set stored: true on field [" +
-                            FILE_FILENAME + "].");
+                            "Please set store: true on field [file.filename]", path);
+                    throw new RuntimeException("Mapping is incorrect: please set stored: true on field [file.filename].");
                 }
                 files.add(name);
             }
@@ -119,12 +117,11 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                 new ESSearchRequest()
                         .withIndex(settings.getElasticsearch().getIndexFolder())
                         .withSize(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                        .withESQuery(new ESTermQuery(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.ROOT, SignTool.sign(path))));
+                        .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
 
         if (response.getHits() != null) {
             for (ESSearchHit hit : response.getHits()) {
-                String name = hit.getSourceAsMap().get(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.REAL).toString();
-                files.add(name);
+                files.add(JsonPath.read(hit.getSourceAsString(), "$.path.real"));
             }
         }
 
@@ -132,7 +129,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     }
 
     @Override
-    public void storeVisitedDirectory(String indexFolder, String id, fr.pilato.elasticsearch.crawler.fs.beans.Path path) throws IOException {
-        client.indexRawJson(indexFolder, id, PathParser.toJson(path), null);
+    public void storeVisitedDirectory(String indexFolder, String id, Folder folder) {
+        client.indexRawJson(indexFolder, id, FolderParser.toJson(folder), null);
     }
 }

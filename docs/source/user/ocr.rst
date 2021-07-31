@@ -6,7 +6,7 @@ OCR integration
 .. versionadded:: 2.3
 
 To deal with images containing text, just `install
-Tesseract <https://github.com/tesseract-ocr/tesseract/wiki>`__.
+Tesseract <https://tesseract-ocr.github.io/tessdoc/>`__.
 Tesseract will be auto-detected by Tika or you can explicitly `set the
 path to tesseract binary <OCR Path>`_. Then add an image (png, jpg, …)
 into your Fscrawler :ref:`root-directory`. After the next
@@ -55,9 +55,9 @@ By default, OCR is activated if tesseract can be found on your system.
 OCR Language
 ------------
 
-If you have installed a `Tesseract Language
-pack <https://wiki.apache.org/tika/TikaOCR>`__, you can use it when
-parsing your documents by setting ``fs.ocr.language`` property in your
+If you are using the default Docker image (see :ref:`docker`) or if you have installed any of the
+`Tesseract Languages <https://tesseract-ocr.github.io/tessdoc/Data-Files.html>`__,
+you can use them when parsing your documents by setting ``fs.ocr.language`` property in your
 ``~/.fscrawler/test/_settings.yaml`` file:
 
 .. code:: yaml

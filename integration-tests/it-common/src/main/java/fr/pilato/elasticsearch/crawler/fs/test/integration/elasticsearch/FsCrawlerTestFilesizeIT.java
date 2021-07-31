@@ -19,26 +19,22 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.File;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
 import java.nio.file.Files;
-import java.util.Map;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Test filesize crawler setting
@@ -54,14 +50,11 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object content = hit.getSourceAsMap().get(Doc.FIELD_NAMES.CONTENT);
-            Object indexedChars = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
-            assertThat(content, notNullValue());
-            assertThat(indexedChars, notNullValue());
+            Object document = JsonUtil.parseJson(hit.getSourceAsString());
 
             // Our original text should be truncated
-            assertThat(content, is("Novo de"));
-            assertThat(indexedChars, is(7));
+            assertThat(JsonPath.read(document, "$.content"), is("Novo de"));
+            assertThat(JsonPath.read(document, "$.file.indexed_chars"), is(7));
         }
     }
 
@@ -74,14 +67,11 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object content = hit.getSourceAsMap().get(Doc.FIELD_NAMES.CONTENT);
-            Object indexedChars = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
-            assertThat(content, notNullValue());
-            assertThat(indexedChars, notNullValue());
+            Object document = JsonUtil.parseJson(hit.getSourceAsString());
 
             // Our original text should be truncated
-            assertThat(content, is("Novo denique"));
-            assertThat(indexedChars, is(12));
+            assertThat(JsonPath.read(document, "$.content"), is("Novo denique"));
+            assertThat(JsonPath.read(document, "$.file.indexed_chars"), is(12));
         }
     }
 
@@ -94,13 +84,11 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object content = hit.getSourceAsMap().get(Doc.FIELD_NAMES.CONTENT);
-            Object indexedChars = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.FILE).get(File.FIELD_NAMES.INDEXED_CHARS);
-            assertThat(content, notNullValue());
-            assertThat(indexedChars, nullValue());
+            Object document = JsonUtil.parseJson(hit.getSourceAsString());
 
             // Our original text should not be truncated so we must have its end extracted
-            assertThat((String) content, containsString("haecque non diu sunt perpetrata."));
+            assertThat(JsonPath.read(document, "$.content"), containsString("haecque non diu sunt perpetrata."));
+            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSourceAsString(), "$.file.indexed_chars"));
         }
     }
 
@@ -110,9 +98,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            @SuppressWarnings("unchecked") Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
-            assertThat(file, notNullValue());
-            assertThat(file.get(File.FIELD_NAMES.FILESIZE), is(12230));
+            assertThat(JsonPath.read(hit.getSourceAsString(), "$.file.filesize"), is(12230));
         }
     }
 
@@ -125,9 +111,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            @SuppressWarnings("unchecked") Map<String, Object> file = (Map<String, Object>) hit.getSourceAsMap().get(Doc.FIELD_NAMES.FILE);
-            assertThat(file, notNullValue());
-            assertThat(file.get(File.FIELD_NAMES.FILESIZE), nullValue());
+            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSourceAsString(), "$.file.filesize"));
         }
     }
 

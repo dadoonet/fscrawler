@@ -294,17 +294,49 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "  },\n" +
                 "  \"mappings\": {\n" +
                 "    \"properties\" : {\n" +
-                "      \"real\" : {\n" +
-                "        \"type\" : \"keyword\",\n" +
-                "        \"store\" : true\n" +
+                "      \"file\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"content_type\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"filename\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"store\": true\n" +
+                "          }\n" +
+                "        }\n" +
                 "      },\n" +
-                "      \"root\" : {\n" +
-                "        \"type\" : \"keyword\",\n" +
-                "        \"store\" : true\n" +
-                "      },\n" +
-                "      \"virtual\" : {\n" +
-                "        \"type\" : \"keyword\",\n" +
-                "        \"store\" : true\n" +
+                "      \"path\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"real\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"fields\": {\n" +
+                "              \"tree\": {\n" +
+                "                \"type\": \"text\",\n" +
+                "                \"analyzer\": \"fscrawler_path\",\n" +
+                "                \"fielddata\": true\n" +
+                "              },\n" +
+                "              \"fulltext\": {\n" +
+                "                \"type\": \"text\"\n" +
+                "              }\n" +
+                "            }\n" +
+                "          },\n" +
+                "          \"root\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"virtual\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"fields\": {\n" +
+                "              \"tree\": {\n" +
+                "                \"type\": \"text\",\n" +
+                "                \"analyzer\": \"fscrawler_path\",\n" +
+                "                \"fielddata\": true\n" +
+                "              },\n" +
+                "              \"fulltext\": {\n" +
+                "                \"type\": \"text\"\n" +
+                "              }\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
                 "      }\n" +
                 "    }\n" +
                 "  }\n" +
@@ -578,17 +610,49 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "  },\n" +
                 "  \"mappings\": {\n" +
                 "    \"properties\" : {\n" +
-                "      \"real\" : {\n" +
-                "        \"type\" : \"keyword\",\n" +
-                "        \"store\" : true\n" +
+                "      \"file\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"content_type\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"filename\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"store\": true\n" +
+                "          }\n" +
+                "        }\n" +
                 "      },\n" +
-                "      \"root\" : {\n" +
-                "        \"type\" : \"keyword\",\n" +
-                "        \"store\" : true\n" +
-                "      },\n" +
-                "      \"virtual\" : {\n" +
-                "        \"type\" : \"keyword\",\n" +
-                "        \"store\" : true\n" +
+                "      \"path\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"real\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"fields\": {\n" +
+                "              \"tree\": {\n" +
+                "                \"type\": \"text\",\n" +
+                "                \"analyzer\": \"fscrawler_path\",\n" +
+                "                \"fielddata\": true\n" +
+                "              },\n" +
+                "              \"fulltext\": {\n" +
+                "                \"type\": \"text\"\n" +
+                "              }\n" +
+                "            }\n" +
+                "          },\n" +
+                "          \"root\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"virtual\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"fields\": {\n" +
+                "              \"tree\": {\n" +
+                "                \"type\": \"text\",\n" +
+                "                \"analyzer\": \"fscrawler_path\",\n" +
+                "                \"fielddata\": true\n" +
+                "              },\n" +
+                "              \"fulltext\": {\n" +
+                "                \"type\": \"text\"\n" +
+                "              }\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
                 "      }\n" +
                 "    }\n" +
                 "  }\n" +

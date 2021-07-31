@@ -59,6 +59,7 @@ The distribution contains:
    └── lib
        ├── ... All needed jars
 
+.. _docker:
 
 Using docker
 ------------
@@ -68,6 +69,18 @@ Pull the Docker image:
 .. code:: sh
 
    docker pull dadoonet/fscrawler
+
+.. note::
+
+    This image is very big (1.2+gb) as it contains `Tesseract <https://tesseract-ocr.github.io/tessdoc/>`__ and
+    all the `trained language data <https://tesseract-ocr.github.io/tessdoc/Data-Files.html>`__.
+    If you don't want to use OCR at all, you can use a smaller image (around 530mb) by pulling instead
+    ``dadoonet/fscrawler:noocr``
+
+    .. code:: sh
+
+       docker pull dadoonet/fscrawler:noocr
+
 
 Let say your documents are located in ``~/tmp`` dir and you want to store your fscrawler jobs in ``~/.fscrawler``.
 You can run FSCrawler with:
@@ -473,4 +486,9 @@ Upgrade to 2.7
   to ``true`` if you wish revert to the previous behavior.
 - The mapping for elasticsearch 6.x can not contain anymore the type name.
 - We removed the Elasticsearch V5 compatibility as it's not maintained anymore by elastic.
-- You need to use a recent JVM to run FSCrawler (Java 15+ recommended)
+- You need to use a recent JVM to run FSCrawler (Java 11 as a minimum. Java 15+ recommended)
+- The mapping for the folders changed and is now consistent with the mapping for documents. If you are already using
+  FSCrawler, you will need to first remove the existing ``*_folder`` indices and remove or edit the default
+  settings files in ``~/_default/7/_settings_folder.json`` and ``~/_default/6/_settings_folder.json`` or any job
+  specific setting file like ``~/.fscrawler/{job_name}/_mappings/7/_settings_folder.json`` or
+  ``~/.fscrawler/{job_name}/_mappings/6/_settings_folder.json``.

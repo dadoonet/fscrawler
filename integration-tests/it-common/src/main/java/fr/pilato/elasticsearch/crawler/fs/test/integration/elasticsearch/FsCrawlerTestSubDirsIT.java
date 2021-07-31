@@ -19,7 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import com.jayway.jsonpath.JsonPath;
+import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -32,19 +33,13 @@ import org.junit.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiLettersOfLengthBetween;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.extractFromPath;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isOneOf;
-import static org.hamcrest.Matchers.iterableWithSize;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Test crawler with subdirs
@@ -60,9 +55,8 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
         // We check that the subdir document has his meta path data correctly set
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object virtual = extractFromPath(hit.getSourceAsMap(), Doc.FIELD_NAMES.PATH)
-                    .get(fr.pilato.elasticsearch.crawler.fs.beans.Path.FIELD_NAMES.VIRTUAL);
-            assertThat(virtual, isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
+            Object document = parseJson(hit.getSourceAsString());
+            assertThat(JsonPath.read(document, "$.path.virtual"), isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
         }
 
         // Try to search within part of the full path, ie subdir
@@ -70,7 +64,6 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("path.real.fulltext", "subdir")), 1L, null);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void test_subdirs_deep_tree() throws Exception {
         startCrawler();
@@ -96,28 +89,32 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         response = documentService.getClient().search(new ESSearchRequest().withIndex(getCrawlerName()).withSort("path.virtual"));
         assertThat(response.getTotalHits(), is(7L));
 
+        Object document = parseJson(response.getJson());
+
         int i = 0;
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/roottxtfile.txt", is("/roottxtfile.txt"));
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", is("/subdir1/roottxtfile_multi_feed.txt"));
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", is("/subdir1/subdir11/roottxtfile.txt"));
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", is("/subdir1/subdir12/roottxtfile.txt"));
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", is("/subdir2/roottxtfile_multi_feed.txt"));
-        pathHitTester(response, i++, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", is("/subdir2/subdir21/roottxtfile.txt"));
-        pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", is("/subdir2/subdir22/roottxtfile.txt"));
+        pathHitTester(document, i++, "/test_subdirs_deep_tree/roottxtfile.txt", is("/roottxtfile.txt"));
+        pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", is("/subdir1/roottxtfile_multi_feed.txt"));
+        pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", is("/subdir1/subdir11/roottxtfile.txt"));
+        pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", is("/subdir1/subdir12/roottxtfile.txt"));
+        pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", is("/subdir2/roottxtfile_multi_feed.txt"));
+        pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", is("/subdir2/subdir21/roottxtfile.txt"));
+        pathHitTester(document, i, "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", is("/subdir2/subdir22/roottxtfile.txt"));
 
 
         // Check folders
-        response = documentService.getClient().search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER).withSort("virtual"));
+        response = documentService.getClient().search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER).withSort("path.virtual"));
         assertThat(response.getTotalHits(), is(7L));
 
+        document = parseJson(response.getJson());
+
         i = 0;
-        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree", is("/"));
-        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1", is("/subdir1"));
-        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1/subdir11", is("/subdir1/subdir11"));
-        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir1/subdir12", is("/subdir1/subdir12"));
-        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2", is("/subdir2"));
-        pathHitTester(response, i++, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2/subdir21", is("/subdir2/subdir21"));
-        pathHitTester(response, i, ESSearchHit::getSourceAsMap, "/test_subdirs_deep_tree/subdir2/subdir22", is("/subdir2/subdir22"));
+        folderHitTester(document, i++, "/test_subdirs_deep_tree", is("/"), "test_subdirs_deep_tree");
+        folderHitTester(document, i++, "/test_subdirs_deep_tree/subdir1", is("/subdir1"), "subdir1");
+        folderHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/subdir11", is("/subdir1/subdir11"), "subdir11");
+        folderHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/subdir12", is("/subdir1/subdir12"), "subdir12");
+        folderHitTester(document, i++, "/test_subdirs_deep_tree/subdir2", is("/subdir2"), "subdir2");
+        folderHitTester(document, i++, "/test_subdirs_deep_tree/subdir2/subdir21", is("/subdir2/subdir21"), "subdir21");
+        folderHitTester(document, i, "/test_subdirs_deep_tree/subdir2/subdir22", is("/subdir2/subdir22"), "subdir22");
     }
 
     @Test
@@ -165,16 +162,17 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
                 .withSort("path.virtual"));
         assertThat(response.getTotalHits(), is(subdirs+1));
 
+        Object document = parseJson(response.getJson());
+
         for (int i = 0; i < subdirs; i++) {
-            //noinspection unchecked
-            pathHitTester(response, i, hit -> (Map<String, Object>) hit.getSourceAsMap().get("path"), "sample.txt", endsWith("/" + "sample.txt"));
+            pathHitTester(document, i, "sample.txt", endsWith("/" + "sample.txt"));
         }
 
         // Check folders
         response = documentService.getClient().search(new ESSearchRequest()
                 .withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER)
                 .withSize(1000)
-                .withSort("virtual"));
+                .withSort("path.virtual"));
         assertThat(response.getTotalHits(), is(subdirs+2));
 
         // Let's remove the main subdir and wait...
@@ -185,15 +183,18 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
-    private void pathHitTester(ESSearchResponse response, int position, Function<ESSearchHit, Map<String, Object>> extractPath,
-                               String expectedReal, Matcher<String> expectedVirtual) {
-        ESSearchHit hit = response.getHits().get(position);
-        Map<String, Object> path = extractPath.apply(hit);
-        String real = (String) path.get("real");
-        String virtual = (String) path.get("virtual");
+    private void folderHitTester(Object document, int position, String expectedReal, Matcher<String> expectedVirtual,
+                                 String expectedFilename) {
+        pathHitTester(document, position, expectedReal, expectedVirtual);
+        assertThat(JsonPath.read(document, "$.hits.hits[" + position + "]._source.file.filename"), is(expectedFilename));
+        assertThat(JsonPath.read(document, "$.hits.hits[" + position + "]._source.file.content_type"), is(Folder.CONTENT_TYPE));
+    }
+
+    private void pathHitTester(Object document, int position, String expectedReal, Matcher<String> expectedVirtual) {
+        String real = JsonPath.read(document, "$.hits.hits[" + position + "]._source.path.real");
+        String virtual = JsonPath.read(document, "$.hits.hits[" + position + "]._source.path.virtual");
         logger.debug(" - {}, {}", real, virtual);
         assertThat("path.real[" + position + "]", real, endsWith(expectedReal));
         assertThat("path.virtual[" + position + "]", virtual, expectedVirtual);
     }
-
 }
