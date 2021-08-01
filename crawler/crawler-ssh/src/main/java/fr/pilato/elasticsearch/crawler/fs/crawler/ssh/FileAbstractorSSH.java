@@ -27,6 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import java.io.IOException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,6 +73,11 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
     @Override
     public InputStream getInputStream(FileAbstractModel file) throws Exception {
         return sftp.get(file.getFullpath());
+    }
+
+    @Override
+    public void closeInputStream(InputStream inputStream) throws IOException {
+        inputStream.close();
     }
 
     @SuppressWarnings("unchecked")

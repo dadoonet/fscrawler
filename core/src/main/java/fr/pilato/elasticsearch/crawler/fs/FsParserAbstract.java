@@ -270,15 +270,22 @@ public abstract class FsParserAbstract extends FsParser {
                             if (child.getLastModifiedDate().isAfter(lastScanDate) ||
                                     (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
                                 if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
+                                    InputStream inputStream = null;
                                     try {
-                                        indexFile(child, stats, filepath,
-                                                fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource() ? path.getInputStream(child) : null, child.getSize());
+                                        if (fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource()) {
+                                            inputStream = path.getInputStream(child);
+                                        }
+                                        indexFile(child, stats, filepath, inputStream, child.getSize());
                                         stats.addFile();
                                     } catch (Exception e) {
                                         if (fsSettings.getFs().isContinueOnError()) {
                                             logger.warn("Unable to index {}, skipping...: {}", filename, e.getMessage());
                                         } else {
                                             throw e;
+                                        }
+                                    } finally {
+                                        if (inputStream != null) {
+                                            path.closeInputStream(inputStream);
                                         }
                                     }
                                 } else {
@@ -379,119 +386,110 @@ public abstract class FsParserAbstract extends FsParser {
         logger.debug("fetching content from [{}],[{}]", dirname, filename);
         String fullFilename = computeRealPathName(dirname, filename);
 
-        try {
-            // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't index json or xml)
-            String id = generateIdFromFilename(filename, dirname);
-            if (fsSettings.getFs().isAddAsInnerObject() || (!fsSettings.getFs().isJsonSupport() && !fsSettings.getFs().isXmlSupport())) {
+        // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't index json or xml)
+        String id = generateIdFromFilename(filename, dirname);
+        if (fsSettings.getFs().isAddAsInnerObject() || (!fsSettings.getFs().isJsonSupport() && !fsSettings.getFs().isXmlSupport())) {
+            Doc doc = new Doc();
 
+            // File
+            doc.getFile().setFilename(filename);
+            doc.getFile().setCreated(localDateTimeToDate(created));
+            doc.getFile().setLastModified(localDateTimeToDate(lastModified));
+            doc.getFile().setLastAccessed(localDateTimeToDate(lastAccessed));
+            doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
+            if (fsSettings.getServer() == null) {
+                doc.getFile().setUrl("file://" + fullFilename);
+            } else if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP)) {
+                doc.getFile().setUrl(String.format("ftp://%s:%d%s", fsSettings.getServer().getHostname(), fsSettings.getServer().getPort(), fullFilename));
+            }
+            doc.getFile().setExtension(extension);
+            if (fsSettings.getFs().isAddFilesize()) {
+                doc.getFile().setFilesize(size);
+            }
+            // File
 
-                Doc doc = new Doc();
+            // Path
+            // Encoded version of the dir this file belongs to
+            doc.getPath().setRoot(SignTool.sign(dirname));
+            // The virtual URL (not including the initial root dir)
+            doc.getPath().setVirtual(computeVirtualPathName(stats.getRootPath(), fullFilename));
+            // The real and complete filename
+            doc.getPath().setReal(fullFilename);
+            // Path
 
-                // File
-                doc.getFile().setFilename(filename);
-                doc.getFile().setCreated(localDateTimeToDate(created));
-                doc.getFile().setLastModified(localDateTimeToDate(lastModified));
-                doc.getFile().setLastAccessed(localDateTimeToDate(lastAccessed));
-                doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
-                if (fsSettings.getServer() == null) {
-                    doc.getFile().setUrl("file://" + fullFilename);
-                } else if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP)) {
-                    doc.getFile().setUrl(String.format("ftp://%s:%d%s", fsSettings.getServer().getHostname(), fsSettings.getServer().getPort(), fullFilename));
-                }
-                doc.getFile().setExtension(extension);
-                if (fsSettings.getFs().isAddFilesize()) {
-                    doc.getFile().setFilesize(size);
-                }
-                // File
-
-                // Path
-                // Encoded version of the dir this file belongs to
-                doc.getPath().setRoot(SignTool.sign(dirname));
-                // The virtual URL (not including the initial root dir)
-                doc.getPath().setVirtual(computeVirtualPathName(stats.getRootPath(), fullFilename));
-                // The real and complete filename
-                doc.getPath().setReal(fullFilename);
-                // Path
-
-                // Attributes
-                if (fsSettings.getFs().isAttributesSupport()) {
-                    doc.setAttributes(new Attributes());
-                    doc.getAttributes().setOwner(fileAbstractModel.getOwner());
-                    doc.getAttributes().setGroup(fileAbstractModel.getGroup());
-                    if (fileAbstractModel.getPermissions() >= 0) {
-                        doc.getAttributes().setPermissions(fileAbstractModel.getPermissions());
-                    }
-                }
-                // Attributes
-
-                // If needed, we generate the content in addition to metadata
-                if (fsSettings.getFs().isJsonSupport()) {
-                    // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                    doc.setObject(DocParser.asMap(read(inputStream)));
-                } else if (fsSettings.getFs().isXmlSupport()) {
-                    // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                    doc.setObject(XmlDocParser.generateMap(inputStream));
-                } else {
-                    // Extracting content with Tika
-                    TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
-                }
-
-                // We index the data structure
-                if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
-                    if (!closed) {
-                        FSCrawlerLogger.documentDebug(id,
-                                computeVirtualPathName(stats.getRootPath(), fullFilename),
-                                "Indexing content");
-                        documentService.index(
-                                fsSettings.getElasticsearch().getIndex(),
-                                id,
-                                doc,
-                                fsSettings.getElasticsearch().getPipeline());
-                    } else {
-                        logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                                fsSettings.getElasticsearch().getIndex(), id);
-                    }
-                } else {
-                    logger.debug("We ignore file [{}] because it does not match all the patterns {}", filename,
-                            fsSettings.getFs().getFilters());
-                }
-            } else {
-                if (fsSettings.getFs().isJsonSupport()) {
-                    FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
-                            computeVirtualPathName(stats.getRootPath(), fullFilename),
-                            "Indexing json content");
-                    // We index the json content directly
-                    if (!closed) {
-                        documentService.indexRawJson(
-                                fsSettings.getElasticsearch().getIndex(),
-                                id,
-                                read(inputStream),
-                                fsSettings.getElasticsearch().getPipeline());
-                    } else {
-                        logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                                fsSettings.getElasticsearch().getIndex(), id);
-                    }
-                } else if (fsSettings.getFs().isXmlSupport()) {
-                    FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
-                            computeVirtualPathName(stats.getRootPath(), fullFilename),
-                            "Indexing xml content");
-                    // We index the xml content directly (after transformation to json)
-                    if (!closed) {
-                        documentService.indexRawJson(
-                                fsSettings.getElasticsearch().getIndex(),
-                                id,
-                                XmlDocParser.generate(inputStream),
-                                fsSettings.getElasticsearch().getPipeline());
-                    } else {
-                        logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                                fsSettings.getElasticsearch().getIndex(), id);
-                    }
+            // Attributes
+            if (fsSettings.getFs().isAttributesSupport()) {
+                doc.setAttributes(new Attributes());
+                doc.getAttributes().setOwner(fileAbstractModel.getOwner());
+                doc.getAttributes().setGroup(fileAbstractModel.getGroup());
+                if (fileAbstractModel.getPermissions() >= 0) {
+                    doc.getAttributes().setPermissions(fileAbstractModel.getPermissions());
                 }
             }
-        } finally {
-            // Let's close the stream
-            if (inputStream != null) {
-                inputStream.close();
+            // Attributes
+
+            // If needed, we generate the content in addition to metadata
+            if (fsSettings.getFs().isJsonSupport()) {
+                // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                doc.setObject(DocParser.asMap(read(inputStream)));
+            } else if (fsSettings.getFs().isXmlSupport()) {
+                // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
+                doc.setObject(XmlDocParser.generateMap(inputStream));
+            } else {
+                // Extracting content with Tika
+                TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
+            }
+
+            // We index the data structure
+            if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
+                if (!closed) {
+                    FSCrawlerLogger.documentDebug(id,
+                            computeVirtualPathName(stats.getRootPath(), fullFilename),
+                            "Indexing content");
+                    documentService.index(
+                            fsSettings.getElasticsearch().getIndex(),
+                            id,
+                            doc,
+                            fsSettings.getElasticsearch().getPipeline());
+                } else {
+                    logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                            fsSettings.getElasticsearch().getIndex(), id);
+                }
+            } else {
+                logger.debug("We ignore file [{}] because it does not match all the patterns {}", filename,
+                        fsSettings.getFs().getFilters());
+            }
+        } else {
+            if (fsSettings.getFs().isJsonSupport()) {
+                FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
+                        computeVirtualPathName(stats.getRootPath(), fullFilename),
+                        "Indexing json content");
+                // We index the json content directly
+                if (!closed) {
+                    documentService.indexRawJson(
+                            fsSettings.getElasticsearch().getIndex(),
+                            id,
+                            read(inputStream),
+                            fsSettings.getElasticsearch().getPipeline());
+                } else {
+                    logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                            fsSettings.getElasticsearch().getIndex(), id);
+                }
+            } else if (fsSettings.getFs().isXmlSupport()) {
+                FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
+                        computeVirtualPathName(stats.getRootPath(), fullFilename),
+                        "Indexing xml content");
+                // We index the xml content directly (after transformation to json)
+                if (!closed) {
+                    documentService.indexRawJson(
+                            fsSettings.getElasticsearch().getIndex(),
+                            id,
+                            XmlDocParser.generate(inputStream),
+                            fsSettings.getElasticsearch().getPipeline());
+                } else {
+                    logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                            fsSettings.getElasticsearch().getIndex(), id);
+                }
             }
         }
     }

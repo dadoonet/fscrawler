@@ -31,6 +31,8 @@ public abstract class FileAbstractor<T> {
 
     public abstract InputStream getInputStream(FileAbstractModel file) throws Exception;
 
+    public abstract void closeInputStream(InputStream inputStream) throws Exception;
+
     public abstract Collection<FileAbstractModel> getFiles(String dir) throws Exception;
 
     public abstract boolean exists(String dir);

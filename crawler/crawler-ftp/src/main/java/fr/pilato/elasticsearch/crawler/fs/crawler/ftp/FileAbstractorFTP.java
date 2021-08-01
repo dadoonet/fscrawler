@@ -110,11 +110,17 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
         InputStream inputStream = ftp.retrieveFileStream(fullPath);
         if (inputStream != null) {
-            ftp.completePendingCommand();
             return inputStream;
         } else {
             throw new IOException(String.format("FTP client can not retrieve stream for [%s]", file.getFullpath()));
         }
+    }
+
+    @Override
+    public void closeInputStream(InputStream inputStream) throws IOException {
+        inputStream.close();
+        // This is necessary if we want to read the stream
+        ftp.completePendingCommand();
     }
 
     @Override
@@ -125,7 +131,7 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         } else {
             dir = new String(dir.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
         }
-        ftp.enterLocalPassiveMode();
+
         FTPFile[] ftpFiles = ftp.listFiles(dir);
         if (ftpFiles == null) return null;
         List<FTPFile> files = Arrays.stream(ftpFiles).filter(file -> {
@@ -202,6 +208,7 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
             isUtf8 = true;
         }
         ftp.setFileType(FTPClient.BINARY_FILE_TYPE);
+        ftp.enterLocalPassiveMode();
 
         logger.debug("FTP connection successful");
     }

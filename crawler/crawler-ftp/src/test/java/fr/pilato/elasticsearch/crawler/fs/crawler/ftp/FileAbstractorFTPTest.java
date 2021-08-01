@@ -113,16 +113,16 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
                 assertThat(subDirFiles.size(), is(2));
                 logger.debug("Found {} files in sub dir", subDirFiles.size());
                 for (FileAbstractModel subDirFile : subDirFiles) {
-                    try (InputStream inputStream = ftp.getInputStream(subDirFile)) {
-                        String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                        logger.debug("[{}] - {}: {}", file.getName(), subDirFile.getName(), content);
-                    }
+                    InputStream inputStream = ftp.getInputStream(subDirFile);
+                    String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                    logger.debug("[{}] - {}: {}", file.getName(), subDirFile.getName(), content);
+                    ftp.closeInputStream(inputStream);
                 }
             } else {
-                try (InputStream inputStream = ftp.getInputStream(file)) {
-                    String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                    logger.debug(" - {}: {}", file.getName(), content);
-                }
+                InputStream inputStream = ftp.getInputStream(file);
+                String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                logger.debug(" - {}: {}", file.getName(), content);
+                ftp.closeInputStream(inputStream);
             }
         }
 
@@ -161,17 +161,17 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
                 logger.debug("Found {} files in sub dir", subDirFiles.size());
                 for (FileAbstractModel subDirFile : subDirFiles) {
                     if (subDirFile.isFile()) {
-                        try (InputStream inputStream = ftp.getInputStream(subDirFile)) {
-                            String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                            logger.debug("[{}] - {}: {}", file.getName(), subDirFile.getName(), content);
-                        }
+                        InputStream inputStream = ftp.getInputStream(subDirFile);
+                        String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                        logger.debug("[{}] - {}: {}", file.getName(), subDirFile.getName(), content);
+                        ftp.closeInputStream(inputStream);
                     }
                 }
             } else {
-                try (InputStream inputStream = ftp.getInputStream(file)) {
-                    String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                    logger.debug(" - {}: {}", file.getName(), content);
-                }
+                InputStream inputStream = ftp.getInputStream(file);
+                String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                logger.debug(" - {}: {}", file.getName(), content);
+                ftp.closeInputStream(inputStream);
             }
         }
 
@@ -203,15 +203,14 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
         for (FileAbstractModel file : files) {
             if (file.getName().equals("all.txt")) {
                 assertThat(file.getPermissions(), is(777));
-                try (InputStream inputStream = ftp.getInputStream(file)) {
-                    String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                    logger.debug(" - {}: {}", file.getName(), content);
-                }
+                InputStream inputStream = ftp.getInputStream(file);
+                String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                logger.debug(" - {}: {}", file.getName(), content);
+                ftp.closeInputStream(inputStream);
             } else if (file.getName().equals("none.txt")) {
                 assertThat(file.getPermissions(), is(0));
                 boolean errorOccurred = false;
                 try (InputStream ignored = ftp.getInputStream(file)) {
-                    logger.error(ignored);
                 } catch (IOException e) {
                     errorOccurred = true;
                     logger.error(e.getMessage());
