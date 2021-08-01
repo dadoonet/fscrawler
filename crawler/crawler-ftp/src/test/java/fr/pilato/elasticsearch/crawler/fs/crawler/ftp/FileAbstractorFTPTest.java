@@ -26,10 +26,13 @@ import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -40,36 +43,45 @@ import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
 import org.mockftpserver.fake.filesystem.FileEntry;
 import org.mockftpserver.fake.filesystem.FileSystem;
+import org.mockftpserver.fake.filesystem.Permissions;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
 public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
     private FakeFtpServer fakeFtpServer;
-    private final String home = "/home";
+    private final String nestedDir = "/nested";
+    private final String permissionDir = "/permission";
     private final String user = "user";
-    private final String pass = "password";
+    private final String pass = "pass";
 
     @Before
     public void setup() {
-        // it doesn't support utf-8
         fakeFtpServer = new FakeFtpServer();
         fakeFtpServer.setServerControlPort(5968);
-        fakeFtpServer.addUserAccount(new UserAccount(user, pass, home));
+        fakeFtpServer.addUserAccount(new UserAccount(user, pass, "/"));
         FileSystem fileSystem = new UnixFakeFileSystem();
 
-        fileSystem.add(new DirectoryEntry(home));
-        fileSystem.add(new FileEntry(home + "/foo.txt", "文件名不支持中文"));
-        fileSystem.add(new FileEntry(home + "/bar.txt", "bar"));
+        fileSystem.add(new DirectoryEntry(nestedDir));
+        fileSystem.add(new FileEntry(nestedDir + "/foo.txt", "文件名不支持中文"));
+        fileSystem.add(new FileEntry(nestedDir + "/bar.txt", "filename doesn't support utf-8"));
 
-        fileSystem.add(new DirectoryEntry(home + "/buzz"));
-        fileSystem.add(new FileEntry(home + "/buzz/hello.txt", "hello"));
-        fileSystem.add(new FileEntry(home + "/buzz/world.txt", "world"));
+        fileSystem.add(new DirectoryEntry(nestedDir + "/buzz"));
+        fileSystem.add(new FileEntry(nestedDir + "/buzz/hello.txt", "hello"));
+        fileSystem.add(new FileEntry(nestedDir + "/buzz/world.txt", "world"));
+
+        fileSystem.add(new DirectoryEntry(permissionDir));
+        FileEntry fileAllPermissions = new FileEntry(permissionDir + "/all.txt", "123");
+        fileAllPermissions.setPermissions(Permissions.ALL);
+        fileSystem.add(fileAllPermissions);
+        FileEntry fileNonePermissions = new FileEntry(permissionDir + "/none.txt", "456");
+        fileNonePermissions.setPermissions(Permissions.NONE);
+        fileSystem.add(fileNonePermissions);
 
         fakeFtpServer.setFileSystem(fileSystem);
         fakeFtpServer.start();
     }
 
     @After
-    public void teardown() {
+    public void shutDown() {
         fakeFtpServer.stop();
     }
 
@@ -89,9 +101,9 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
 
         FileAbstractorFTP ftp = new FileAbstractorFTP(fsSettings);
         ftp.open();
-        boolean exists = ftp.exists(home);
+        boolean exists = ftp.exists(nestedDir);
         assertThat(exists, is(true));
-        Collection<FileAbstractModel> files = ftp.getFiles(home);
+        Collection<FileAbstractModel> files = ftp.getFiles(nestedDir);
         assertThat(files.size(), is(3));
 
         for (FileAbstractModel file : files) {
@@ -117,6 +129,11 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
         ftp.close();
     }
 
+    /**
+     * FakeFtpServer doesn't support utf-8
+     * You have to adapt this test to your own system
+     * So this test is disabled by default
+     */
     @Test @Ignore
     public void testConnectToFTPServer() throws Exception {
         String path = "/中文目录";
@@ -155,6 +172,51 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
                     String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                     logger.debug(" - {}: {}", file.getName(), content);
                 }
+            }
+        }
+
+        ftp.close();
+    }
+
+    @Test
+    public void testFTPFilePermissions() throws IOException {
+        int port = fakeFtpServer.getServerControlPort();
+        FsSettings fsSettings = FsSettings.builder("fake")
+            .setServer(
+                Server.builder()
+                    .setHostname("localhost")
+                    .setUsername(user)
+                    .setPassword(pass)
+                    .setPort(port)
+                    .build()
+            )
+            .build();
+
+        FileAbstractorFTP ftp = new FileAbstractorFTP(fsSettings);
+        ftp.open();
+
+        Collection<FileAbstractModel> files = ftp.getFiles(permissionDir);
+        assertThat(files.size(), is(2));
+        List<String> filenames = files.stream().map(FileAbstractModel::getName).collect(Collectors.toList());
+        assertThat(filenames.contains("all.txt"), is(true));
+        assertThat(filenames.contains("none.txt"), is(true));
+        for (FileAbstractModel file : files) {
+            if (file.getName().equals("all.txt")) {
+                assertThat(file.getPermissions(), is(777));
+                try (InputStream inputStream = ftp.getInputStream(file)) {
+                    String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                    logger.debug(" - {}: {}", file.getName(), content);
+                }
+            } else if (file.getName().equals("none.txt")) {
+                assertThat(file.getPermissions(), is(0));
+                boolean errorOccurred = false;
+                try (InputStream ignored = ftp.getInputStream(file)) {
+                    logger.error(ignored);
+                } catch (IOException e) {
+                    errorOccurred = true;
+                    logger.error(e.getMessage());
+                }
+                assertThat(errorOccurred, is(true));
             }
         }
 

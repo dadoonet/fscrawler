@@ -21,13 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 import java.util.TimeZone;
-import java.util.stream.Collectors;
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.ftp.FTPReply;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -39,13 +33,6 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
-import org.mockftpserver.fake.FakeFtpServer;
-import org.mockftpserver.fake.UserAccount;
-import org.mockftpserver.fake.filesystem.DirectoryEntry;
-import org.mockftpserver.fake.filesystem.FileEntry;
-import org.mockftpserver.fake.filesystem.FileSystem;
-import org.mockftpserver.fake.filesystem.Permissions;
-import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeRealPathName;
@@ -95,49 +82,6 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
         int permissions = getFilePermissions(file);
         assertThat(permissions, is(700));
-    }
-
-    @Test
-    public void testFTPFilePermissions() throws IOException {
-        String user = "user";
-        String password = "password";
-        FakeFtpServer fakeFtpServer = new FakeFtpServer();
-        fakeFtpServer.setServerControlPort(5968);
-        fakeFtpServer.addUserAccount(new UserAccount(user, password, "/data"));
-        FileSystem fileSystem = new UnixFakeFileSystem();
-        fileSystem.add(new DirectoryEntry("/data"));
-        FileEntry fileAllPermissions = new FileEntry("/data/all.txt", "123");
-        fileAllPermissions.setPermissions(Permissions.ALL);
-        fileSystem.add(fileAllPermissions);
-        FileEntry fileNonePermissions = new FileEntry("/data/none.txt", "456");
-        fileNonePermissions.setPermissions(Permissions.NONE);
-        fileSystem.add(fileNonePermissions);
-        fakeFtpServer.setFileSystem(fileSystem);
-        fakeFtpServer.start();
-
-        FTPClient ftp = new FTPClient();
-        ftp.connect("localhost", fakeFtpServer.getServerControlPort());
-        int reply = ftp.getReplyCode();
-        if (!FTPReply.isPositiveCompletion(reply)) {
-            ftp.disconnect();
-            throw new IOException("Exception in connecting to FTP Server");
-        }
-        ftp.login(user, password);
-
-        FTPFile[] files = ftp.listFiles("/data");
-        List<String> filenames = Arrays.stream(files).map(FTPFile::getName).collect(Collectors.toList());
-        assertThat(filenames.contains("all.txt"), is(true));
-        assertThat(filenames.contains("none.txt"), is(true));
-        for (FTPFile file : files) {
-            if (file.getName().equals("all.txt")) {
-                assertThat(getFilePermissions(file), is(777));
-            } else if (file.getName().equals("none.txt")) {
-                assertThat(getFilePermissions(file), is(0));
-            }
-        }
-
-        ftp.disconnect();
-        fakeFtpServer.stop();
     }
 
     @Test

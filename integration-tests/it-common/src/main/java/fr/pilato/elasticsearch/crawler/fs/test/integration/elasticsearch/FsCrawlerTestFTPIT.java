@@ -22,57 +22,72 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.junit.Ignore;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockftpserver.fake.FakeFtpServer;
+import org.mockftpserver.fake.UserAccount;
+import org.mockftpserver.fake.filesystem.DirectoryEntry;
+import org.mockftpserver.fake.filesystem.FileEntry;
+import org.mockftpserver.fake.filesystem.FileSystem;
+import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
 /**
  * Test crawler with FTP
- * TODO: test framework is broken?
  */
 public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
+    private FakeFtpServer fakeFtpServer;
+    private final int port = 5968;
+    private final String hostname = "localhost";
+    private final String user = "user";
+    private final String pass = "pass";
 
-    /**
-     * You have to adapt this test to your own system
-     * So this test is disabled by default
-     */
-    @Test @Ignore
+    @Before
+    public void setup() {
+        fakeFtpServer = new FakeFtpServer();
+        fakeFtpServer.setServerControlPort(port);
+        UserAccount anonymous = new UserAccount("anonymous", "", "/");
+        anonymous.setPasswordRequiredForLogin(false);
+        fakeFtpServer.addUserAccount(anonymous);
+        fakeFtpServer.addUserAccount(new UserAccount(user, pass, "/"));
+        FileSystem fileSystem = new UnixFakeFileSystem();
+
+        fileSystem.add(new DirectoryEntry("/"));
+        fileSystem.add(new FileEntry("/foo.txt", "bar"));
+
+        fakeFtpServer.setFileSystem(fileSystem);
+        fakeFtpServer.start();
+    }
+
+    @After
+    public void shutDown() {
+        fakeFtpServer.stop();
+    }
+
+    @Test
     public void test_ftp() throws Exception {
-        String hostname = "192.168.18.207";
-        String username = "anonymous";
-        String password = "";
-
-        Fs fs = startCrawlerDefinition().build();
+        Fs fs = startCrawlerDefinition().setUrl("/").build();
         Server server = Server.builder()
                 .setHostname(hostname)
-                .setUsername(username)
-                .setPassword(password)
+                .setUsername("anonymous")
                 .setProtocol(Server.PROTOCOL.FTP)
-                .setPort(PROTOCOL.FTP_PORT)
+                .setPort(port)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 
-    /**
-     * You have to adapt this test to your own system
-     * So this test is disabled by default
-     */
-    @Test @Ignore
+    @Test
     public void test_ftp_with_user() throws Exception {
-        String hostname = "192.168.18.207";
-        String username = "helsonxiao";
-        String password = "123456";
-
-        Fs fs = startCrawlerDefinition().build();
+        Fs fs = startCrawlerDefinition().setUrl("/").build();
         Server server = Server.builder()
                 .setHostname(hostname)
-                .setUsername(username)
-                .setPassword(password)
+                .setUsername(user)
+                .setPassword(pass)
                 .setProtocol(Server.PROTOCOL.FTP)
-                .setPort(PROTOCOL.FTP_PORT)
+                .setPort(port)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
 

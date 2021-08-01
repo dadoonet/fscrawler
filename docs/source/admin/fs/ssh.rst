@@ -94,8 +94,10 @@ To specify the drive, you need to use the following format:
      password: "password"
      protocol: "ssh"
 
-Windows shared folders
-~~~~~~~~~~~~~~
+Windows shared folder
+~~~~~~~~~~~~~~~~~~~~~
+
+When using Windows shared folder, you need to use the following format:
 
 .. code:: yaml
 

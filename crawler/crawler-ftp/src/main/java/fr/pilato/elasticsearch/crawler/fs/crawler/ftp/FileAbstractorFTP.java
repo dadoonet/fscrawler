@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.crawler.ftp;
 
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import java.io.IOException;
@@ -97,25 +96,30 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
                 file.getSize(),
                 file.getUser(),
                 file.getGroup(),
-                FsCrawlerUtil.getFilePermissions(file));
+                FTPUtils.getFilePermissions(file));
     }
 
     @Override
-    public InputStream getInputStream(FileAbstractModel file) throws Exception {
+    public InputStream getInputStream(FileAbstractModel file) throws IOException {
         String fullPath = file.getFullpath();
         if (isUtf8) {
             fullPath = new String(fullPath.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
         } else {
             fullPath = new String(fullPath.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
         }
+
         InputStream inputStream = ftp.retrieveFileStream(fullPath);
-        ftp.completePendingCommand();
-        return inputStream;
+        if (inputStream != null) {
+            ftp.completePendingCommand();
+            return inputStream;
+        } else {
+            throw new IOException(String.format("FTP client can not retrieve stream for [%s]", file.getFullpath()));
+        }
     }
 
     @Override
     public Collection<FileAbstractModel> getFiles(String dir) throws IOException {
-        logger.debug("Listing local files from {}", dir);
+        logger.debug("Listing files from {}", dir);
         if (isUtf8) {
             dir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
         } else {

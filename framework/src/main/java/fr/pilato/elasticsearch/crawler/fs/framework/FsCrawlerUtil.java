@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.net.ftp.FTPFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
@@ -444,32 +442,7 @@ public class FsCrawlerUtil {
         }
     }
 
-    /**
-     * Determines FTPFile permissions.
-     */
-    public static int getFilePermissions(final FTPFile file) {
-        try {
-            int user = toOctalPermission(
-                file.hasPermission(FTPFile.USER_ACCESS, FTPFile.READ_PERMISSION),
-                file.hasPermission(FTPFile.USER_ACCESS, FTPFile.WRITE_PERMISSION),
-                file.hasPermission(FTPFile.USER_ACCESS, FTPFile.EXECUTE_PERMISSION));
-            int group = toOctalPermission(
-                file.hasPermission(FTPFile.GROUP_ACCESS, FTPFile.READ_PERMISSION),
-                file.hasPermission(FTPFile.GROUP_ACCESS, FTPFile.WRITE_PERMISSION),
-                file.hasPermission(FTPFile.GROUP_ACCESS, FTPFile.EXECUTE_PERMISSION));
-            int others = toOctalPermission(
-                file.hasPermission(FTPFile.WORLD_ACCESS, FTPFile.READ_PERMISSION),
-                file.hasPermission(FTPFile.WORLD_ACCESS, FTPFile.WRITE_PERMISSION),
-                file.hasPermission(FTPFile.WORLD_ACCESS, FTPFile.EXECUTE_PERMISSION));
-
-            return user * 100 + group * 10 + others;
-        } catch (Exception e) {
-            logger.warn("Failed to determine 'permissions' of {}: {}", file, e.getMessage());
-            return -1;
-        }
-    }
-
-    private static int toOctalPermission(boolean read, boolean write, boolean execute) {
+    public static int toOctalPermission(boolean read, boolean write, boolean execute) {
         return (read ? 4 : 0) + (write ? 2 : 0) + (execute ? 1 : 0);
     }
 
@@ -625,7 +598,9 @@ public class FsCrawlerUtil {
             if (Files.notExists(root)) {
                 Files.createDirectory(root);
             }
-        } catch (IOException ignored) { }
+        } catch (IOException ignored) {
+            logger.error("Failed to create config dir");
+        }
     }
 
     /**
