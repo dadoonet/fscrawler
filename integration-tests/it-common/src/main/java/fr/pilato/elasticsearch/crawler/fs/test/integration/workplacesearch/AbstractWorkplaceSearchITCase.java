@@ -19,12 +19,17 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
+import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.File;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -39,10 +44,15 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.frequently;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.docToJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -66,10 +76,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         urlConnection.getResponseCode();
     }
 
-    protected FsCrawlerImpl startCrawler(final FsCrawlerDocumentService documentService,
-                                         final String jobName,
-                                         final String customSourceId,
-                                         FsSettings fsSettings, TimeValue duration)
+    protected FsCrawlerImpl startCrawler(final String jobName, FsSettings fsSettings, TimeValue duration)
             throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
@@ -90,11 +97,11 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
             }
         }, duration.seconds(), TimeUnit.SECONDS), equalTo(true));
 
-        countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
-                null, null, TimeValue.timeValueSeconds(20));
-
-        // Make sure we refresh indexed docs before launching tests
         refresh();
+
+        try (WPSearchClient wpClient = createClient()) {
+            countTestHelper(wpClient, null, duration);
+        }
 
         return crawler;
     }
@@ -157,6 +164,58 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         return response[0];
     }
 
+    /**
+     * Check that we have the expected number of docs or at least one if expected is null
+     *
+     * @param wpClient  Elasticsearch request to run.
+     * @param expected  expected number of docs. Null if at least 1.
+     * @param timeout   Time before we declare a failure
+     * @return the search response if further tests are needed
+     * @throws Exception in case of error
+     */
+    public static String countTestHelper(final WPSearchClient wpClient, final Long expected, final TimeValue timeout) throws Exception {
+
+        final String[] response = new String[1];
+
+        // We wait before considering a failing test
+        staticLogger.info("  ---> Waiting up to {} for {} documents in workplace search", timeout.toString(),
+                expected == null ? "some" : expected);
+        long hits = awaitBusy(() -> {
+            long totalHits;
+
+            // Let's search for entries
+            try {
+                refresh();
+                response[0] = wpClient.search(null, null);
+            } catch (RuntimeException | IOException e) {
+                staticLogger.warn("error caught", e);
+                return -1;
+            }
+
+            // We need to tell JsonPath to return an int
+            totalHits = JsonPath.<Integer>read(response[0], "$.meta.page.total_results");
+            staticLogger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+
+            return totalHits;
+        }, expected, timeout.millis(), TimeUnit.MILLISECONDS);
+
+        Matcher<Long> matcher;
+        if (expected == null) {
+            matcher = greaterThan(0L);
+        } else {
+            matcher = equalTo(expected);
+        }
+
+        if (matcher.matches(hits)) {
+            staticLogger.debug("     ---> expecting [{}] and got [{}] documents", expected, hits);
+        } else {
+            staticLogger.warn("     ---> expecting [{}] but got [{}] documents", expected, hits);
+        }
+        assertThat(hits, matcher);
+
+        return response[0];
+    }
+
     protected static WPSearchClient createClient() {
         staticLogger.info("  --> creating the workplace search custom source client");
         Path jobMappingDir = rootTmpDir.resolve("wpsearch").resolve("_mappings");
@@ -201,5 +260,44 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
             staticLogger.debug("  --> custom source name {} has id {}.", sourceName, sources.get(0));
             return sources.get(0);
         }
+    }
+
+    protected static Map<String, Object> fakeDocument(String id, String text, String lang, String filename, String... tags) {
+        Doc doc = new Doc();
+
+        // Index content
+        doc.setContent("Content for " + text);
+
+        // Index main metadata
+        Meta meta = new Meta();
+
+        // Sometimes we won't generate a title but will let the system create a title from the filename
+        if (frequently()) {
+            meta.setTitle("Title for " + text);
+        }
+        meta.setAuthor("Mister " + text);
+        meta.setKeywords(Arrays.asList(tags));
+        meta.setLanguage(lang);
+        meta.setComments("Comments for " + text);
+        doc.setMeta(meta);
+
+        // Index main file attributes
+        File file = new File();
+        file.setFilename(filename + ".txt");
+        file.setContentType("text/plain");
+        file.setExtension("txt");
+        file.setIndexedChars(text.length());
+        file.setFilesize(text.length() + 10L);
+        file.setCreated(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now()));
+        file.setLastModified(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now()));
+        doc.setFile(file);
+
+        // Index main path attributes
+        fr.pilato.elasticsearch.crawler.fs.beans.Path path = new fr.pilato.elasticsearch.crawler.fs.beans.Path();
+        path.setVirtual("/" + filename + ".txt");
+        path.setReal("/tmp/es/" + filename + ".txt");
+        doc.setPath(path);
+
+        return docToJson(id, doc, "http://127.0.0.1");
     }
 }

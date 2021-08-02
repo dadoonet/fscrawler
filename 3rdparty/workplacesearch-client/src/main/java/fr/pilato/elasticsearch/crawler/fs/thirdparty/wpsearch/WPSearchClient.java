@@ -286,11 +286,18 @@ public class WPSearchClient implements Closeable {
      * @param query Text we are searching for
      * @return the json response
      */
-    public String search(String query) {
+    public String search(String query, Map<String, List<String>> filters) {
         checkStarted();
-        logger.debug("Searching for {}", query);
+        logger.debug("Searching for {} with filters {}", query, filters);
         Map<String, Object> request = new HashMap<>();
-        request.put("query", query);
+
+        if (query != null) {
+            request.put("query", query);
+        }
+
+        if (filters != null) {
+            request.put("filters", filters);
+        }
 
         String json = post("search", request, String.class);
 

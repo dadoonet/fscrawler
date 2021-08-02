@@ -21,9 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
-import java.io.IOException;
-import java.util.function.Supplier;
-
 public abstract class ElasticsearchClientDummyBase implements ElasticsearchClient {
 
     @Override

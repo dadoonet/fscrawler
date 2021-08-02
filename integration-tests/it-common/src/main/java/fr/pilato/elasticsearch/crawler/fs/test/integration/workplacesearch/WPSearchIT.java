@@ -92,7 +92,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             String customSourceId = getSourceIdFromSourceName(sourceName);
             assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
 
-            startCrawler(documentService, crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(crawlerName, fsSettings, TimeValue.timeValueSeconds(10));
             ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
                     1L, null, TimeValue.timeValueSeconds(20));
 
@@ -134,7 +134,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            startCrawler(documentService, crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(crawlerName, fsSettings, TimeValue.timeValueSeconds(10));
             ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
                     1L, null, TimeValue.timeValueSeconds(20));
 
@@ -177,7 +177,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             String customSourceId = getSourceIdFromSourceName(sourceName);
             assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
 
-            startCrawler(documentService, getCrawlerName(), customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
             ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest()
                             .withIndex(".ent-search-engine-documents-source-" + customSourceId),
                     1L, null, TimeValue.timeValueSeconds(20));
