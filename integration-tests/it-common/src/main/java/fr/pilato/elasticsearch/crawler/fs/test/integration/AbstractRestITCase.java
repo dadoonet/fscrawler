@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -53,6 +54,13 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         return targetPath.request(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(mp, mp.getMediaType()), clazz);
+    }
+
+    public static <T> T delete(WebTarget target, String path, Class<T> clazz, Map<String, Object> params) {
+        WebTarget targetPath = target.path(path);
+        Invocation.Builder builder = targetPath.request();
+        params.forEach(builder::property);
+        return builder.delete(clazz);
     }
 
     @BeforeClass

@@ -30,8 +30,11 @@ import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -48,15 +51,15 @@ import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 
-@Path("/_upload")
-public class UploadApi extends RestApi {
+@Path("/_document")
+public class DocumentApi extends RestApi {
 
     private final FsCrawlerDocumentService documentService;
     private final FsSettings settings;
     private final MessageDigest messageDigest;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
 
-    UploadApi(FsSettings settings, FsCrawlerDocumentService documentService) {
+    DocumentApi(FsSettings settings, FsCrawlerDocumentService documentService) {
         this.settings = settings;
         this.documentService = documentService;
         // Create MessageDigest instance
@@ -71,7 +74,7 @@ public class UploadApi extends RestApi {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public UploadResponse post(
+    public UploadResponse addDocument(
             @QueryParam("debug") String debug,
             @QueryParam("simulate") String simulate,
             @FormDataParam("id") String id,
@@ -79,8 +82,6 @@ public class UploadApi extends RestApi {
             @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
-
-        logger.warn("This API has been deprecated by /_document. Please use the new API instead.");
 
         // Create the Doc object
         Doc doc = new Doc();
@@ -142,6 +143,40 @@ public class UploadApi extends RestApi {
         return response;
     }
 
+    @Path("/{id}")
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public DeleteResponse removeDocument(
+            @DefaultValue("")  @PathParam("id") String id,
+            @QueryParam("filename") String filename,
+            @QueryParam("index") String index) throws NoSuchAlgorithmException {
+        if (id.isEmpty() && filename == null) {
+            logger.warn("We can not delete a document without an id or a filename");
+            DeleteResponse response = new DeleteResponse();
+            response.setOk(false);
+            return response;
+        }
+
+        if (id.isEmpty()) {
+            id = SignTool.sign(filename);
+        }
+
+        if (index == null) {
+            index = settings.getElasticsearch().getIndex();
+        }
+
+        logger.debug("Delete document [{}/{}] to elasticsearch.", id, filename);
+        documentService.delete(index, id);
+
+        DeleteResponse response = new DeleteResponse();
+        response.setOk(true);
+        response.setIndex(index);
+        response.setId(id);
+        response.setFilename(filename);
+
+        return response;
+    }
+
     private Doc getMergedJsonDoc(Doc doc, InputStream tags) throws BadRequestException {
         if (tags == null) {
             return doc;
@@ -159,5 +194,4 @@ public class UploadApi extends RestApi {
             throw new BadRequestException("Error parsing tags", e);
         }
     }
-
 }

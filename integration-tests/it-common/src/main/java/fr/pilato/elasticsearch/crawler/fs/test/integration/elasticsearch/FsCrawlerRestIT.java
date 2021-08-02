@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
+import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
@@ -48,11 +49,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -160,6 +163,84 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
+    public void testTxtDocumentsWithDeprecatedUploadApi() throws Exception {
+        Path from = rootTmpDir.resolve("resources").resolve("documents");
+        if (Files.notExists(from)) {
+            staticLogger.error("directory [{}] should exist before wa start tests", from);
+            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        AtomicInteger number = new AtomicInteger();
+        Files.walk(from)
+                .filter(Files::isRegularFile)
+                .filter(new Predicate<Path>() {
+                    @Override
+                    public boolean test(Path path) {
+                        return path.toString().endsWith("txt");
+                    }
+                })
+                .forEach(path -> {
+                    number.getAndIncrement();
+                    UploadResponse response = uploadFile(target, path, null, null, "/_upload");
+                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+                });
+
+        // We wait until we have all txt docs
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), number.longValue(), null, TimeValue
+                .timeValueMinutes(2));
+        for (ESSearchHit hit : response.getHits()) {
+            assertThat(hit.getSourceAsMap(), hasKey("file"));
+            assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
+        }
+    }
+
+    @Test
+    public void testDeleteDocumentApi() throws Exception {
+        deleteDocument(target, null, "foo", null, "/_document");
+
+        Path from = rootTmpDir.resolve("resources").resolve("documents");
+        if (Files.notExists(from)) {
+            staticLogger.error("directory [{}] should exist before wa start tests", from);
+            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        AtomicInteger number = new AtomicInteger();
+        List<String> toBeRemoved = new ArrayList<>();
+
+        Files.walk(from)
+                .filter(Files::isRegularFile)
+                .filter(new Predicate<Path>() {
+                    @Override
+                    public boolean test(Path path) {
+                        return path.toString().endsWith("txt");
+                    }
+                })
+                .forEach(path -> {
+                    number.getAndIncrement();
+                    UploadResponse response = uploadFile(target, path, null, null, "/_document");
+                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+
+                    toBeRemoved.add(response.getFilename());
+                });
+
+        // We wait until we have all txt docs
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), number.longValue(), null, TimeValue
+                .timeValueMinutes(2));
+        for (ESSearchHit hit : response.getHits()) {
+            assertThat(hit.getSourceAsMap(), hasKey("file"));
+            assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
+        }
+
+        // We can now remove all docs
+        for (String filename : toBeRemoved) {
+            DeleteResponse deleteResponse = deleteDocument(target, null, null, filename, "/_document");
+            assertThat(deleteResponse.isOk(), is(true));
+        }
+
+        // We wait until we have removed all documents
+        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 0L, null, TimeValue
+                .timeValueMinutes(2));
+    }
+
+    @Test
     public void testAllDocumentsWithRestExternalIndex() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
@@ -193,7 +274,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 .forEach(path -> {
                     Path tagsFilePath = currentTestTagDir.resolve(path.getFileName().toString() + ".json");
                     logger.debug("Upload file #[{}]: [{}] with tags [{}]", numFiles.incrementAndGet(), path.getFileName(), tagsFilePath.getFileName());
-                    UploadResponse response = uploadFile(target, path, tagsFilePath, null);
+                    UploadResponse response = uploadFile(target, path, tagsFilePath, null, "/_document");
                     assertThat(response.getFilename(), is(path.getFileName().toString()));
                 });
 
@@ -331,14 +412,18 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     public static UploadResponse uploadFile(WebTarget target, Path file) {
-        return uploadFile(target, file, null, null);
+        return uploadFile(target, file, null, null, "/_document");
     }
 
     public static UploadResponse uploadFileOnIndex(WebTarget target, Path file, String index) {
-        return uploadFile(target, file, null, index);
+        return uploadFile(target, file, null, index, "/_document");
     }
 
     public static UploadResponse uploadFile(WebTarget target, Path file, Path tagsFile, String index) {
+        return uploadFile(target, file, tagsFile, index, "/_document");
+    }
+
+    public static UploadResponse uploadFile(WebTarget target, Path file, Path tagsFile, String index, String api) {
         assertThat(Files.exists(file), is(true));
 
         // MediaType of the body part will be derived from the file.
@@ -357,9 +442,30 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
 
         if (staticLogger.isDebugEnabled()) {
-            staticLogger.debug("Rest response: {}", restCall(target, "/_upload", mp, String.class, debugOption));
+            staticLogger.debug("Rest response: {}", restCall(target, api, mp, String.class, debugOption));
         }
 
-        return restCall(target, "/_upload", mp, UploadResponse.class, Collections.emptyMap());
+        return restCall(target, api, mp, UploadResponse.class, Collections.emptyMap());
+    }
+
+    public static DeleteResponse deleteDocument(WebTarget target, String index, String id, String filename, String api) {
+        if (id != null) {
+            api = api + "/" + id;
+            staticLogger.info("Using id {}. Api is now {}", api);
+        }
+
+        Map<String, Object> options = new HashMap<>();
+
+        if (index != null) {
+            staticLogger.info("Using index {}", index);
+            options.put("index", index);
+        }
+
+        if (filename != null) {
+            staticLogger.info("Using filename {}", filename);
+            options.put("filename", filename);
+        }
+
+        return delete(target, api, DeleteResponse.class, options);
     }
 }
