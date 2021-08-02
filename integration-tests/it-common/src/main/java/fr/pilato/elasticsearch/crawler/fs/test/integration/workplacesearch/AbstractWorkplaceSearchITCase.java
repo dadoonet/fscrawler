@@ -25,17 +25,13 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
-import org.apache.logging.log4j.Level;
 import org.hamcrest.Matcher;
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -104,64 +100,6 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         }
 
         return crawler;
-    }
-
-    /**
-     * Check that we have the expected number of docs or at least one if expected is null
-     *
-     * @param documentService The Document Service to run searches on.
-     * @param request   Elasticsearch request to run.
-     * @param expected  expected number of docs. Null if at least 1.
-     * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
-     * @param timeout   Time before we declare a failure
-     * @return the search response if further tests are needed
-     * @throws Exception in case of error
-     */
-    public static ESSearchResponse countTestHelper(final FsCrawlerDocumentService documentService,
-                                                   final ESSearchRequest request, final Long expected, final Path path,
-                                                   final TimeValue timeout) throws Exception {
-
-        final ESSearchResponse[] response = new ESSearchResponse[1];
-
-        // We wait before considering a failing test
-        staticLogger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
-                expected == null ? "some" : expected, request.getIndex());
-        long hits = awaitBusy(() -> {
-            long totalHits;
-
-            // Let's search for entries
-            try {
-                // Make sure we refresh indexed docs before counting
-                refresh();
-                response[0] = documentService.getClient().search(request);
-            } catch (RuntimeException| IOException e) {
-                staticLogger.warn("error caught", e);
-                return -1;
-            }
-            totalHits = response[0].getTotalHits();
-
-            staticLogger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
-
-            return totalHits;
-        }, expected, timeout.millis(), TimeUnit.MILLISECONDS);
-
-        Matcher<Long> matcher;
-        if (expected == null) {
-            matcher = greaterThan(0L);
-        } else {
-            matcher = equalTo(expected);
-        }
-
-        if (matcher.matches(hits)) {
-            staticLogger.debug("     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
-            logContentOfDir(path, Level.DEBUG);
-        } else {
-            staticLogger.warn("     ---> expecting [{}] but got [{}] documents in {}", expected, hits, request.getIndex());
-            logContentOfDir(path, Level.WARN);
-        }
-        assertThat(hits, matcher);
-
-        return response[0];
     }
 
     /**
