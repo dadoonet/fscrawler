@@ -27,7 +27,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.apache.logging.log4j.LogManager;
@@ -35,11 +34,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.docToJson;
 import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
 
 /**
@@ -49,7 +46,6 @@ import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUti
 public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     private static final Logger logger = LogManager.getLogger(WorkplaceSearchClientV7.class);
-    private static final SimpleDateFormat RFC_3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ");
     private final Path config;
     private final FsSettings settings;
 
@@ -158,35 +154,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     @Override
     public void index(String index, String id, Doc doc, String pipeline) {
-        Map<String, Object> document = new HashMap<>();
-        // Id
-        document.put("id", id);
-
-        // Index content
-        document.put("body", doc.getContent());
-
-        // Index main metadata
-        // We use the name of the file if no title has been found in the document metadata
-        document.put("title", FsCrawlerUtil.isNullOrEmpty(doc.getMeta().getTitle()) ? doc.getFile().getFilename() : doc.getMeta().getTitle());
-        document.put("author", doc.getMeta().getAuthor());
-        document.put("keywords", doc.getMeta().getKeywords());
-        document.put("language", doc.getMeta().getLanguage());
-        document.put("comments", doc.getMeta().getComments());
-
-        // Index main file attributes
-        document.put("name", doc.getFile().getFilename());
-        document.put("mime_type", doc.getFile().getContentType());
-        document.put("extension", doc.getFile().getExtension());
-        document.put("size", doc.getFile().getFilesize());
-        document.put("text_size", doc.getFile().getIndexedChars());
-        document.put("last_modified", toRFC3339(doc.getFile().getLastModified()));
-        document.put("created_at", toRFC3339(doc.getFile().getCreated()));
-
-        // Index main path attributes
-        document.put("url", settings.getWorkplaceSearch().getUrlPrefix() + doc.getPath().getVirtual());
-        document.put("path", doc.getPath().getReal());
-
-        wpSearchClient.indexDocument(document);
+        wpSearchClient.indexDocument(docToJson(id, doc, settings.getWorkplaceSearch().getUrlPrefix()));
     }
 
     @Override
@@ -250,10 +218,5 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     public boolean exists(String index, String id) {
         throw new RuntimeException("Not implemented yet");
         // return esClient.exists(index, id);
-    }
-
-    private String toRFC3339(Date d)
-    {
-        return RFC_3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
     }
 }

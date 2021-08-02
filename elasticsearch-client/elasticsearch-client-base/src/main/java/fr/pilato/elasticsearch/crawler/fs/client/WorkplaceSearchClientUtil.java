@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,11 +28,16 @@ import org.apache.logging.log4j.Logger;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public abstract class WorkplaceSearchClientUtil {
 
     protected static final Logger logger = LogManager.getLogger(WorkplaceSearchClientUtil.class);
+    private static final SimpleDateFormat RFC_3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ");
 
     private WorkplaceSearchClientUtil() {
 
@@ -139,5 +146,49 @@ public abstract class WorkplaceSearchClientUtil {
         }
 
         return name;
+    }
+
+    public static String toRFC3339(Date d)
+    {
+        return RFC_3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
+    }
+
+    /**
+     * Generate a Json ready document from a FSCrawler Doc bean
+     * @param id        id of the document
+     * @param doc       FSCrawler doc bean
+     * @param urlPrefix Prefix to use for url generation
+     * @return a JSon object as a Map
+     */
+    public static Map<String, Object> docToJson(String id, Doc doc, String urlPrefix) {
+        Map<String, Object> document = new HashMap<>();
+        // Id
+        document.put("id", id);
+
+        // Index content
+        document.put("body", doc.getContent());
+
+        // Index main metadata
+        // We use the name of the file if no title has been found in the document metadata
+        document.put("title", FsCrawlerUtil.isNullOrEmpty(doc.getMeta().getTitle()) ? doc.getFile().getFilename() : doc.getMeta().getTitle());
+        document.put("author", doc.getMeta().getAuthor());
+        document.put("keywords", doc.getMeta().getKeywords());
+        document.put("language", doc.getMeta().getLanguage());
+        document.put("comments", doc.getMeta().getComments());
+
+        // Index main file attributes
+        document.put("name", doc.getFile().getFilename());
+        document.put("mime_type", doc.getFile().getContentType());
+        document.put("extension", doc.getFile().getExtension());
+        document.put("size", doc.getFile().getFilesize());
+        document.put("text_size", doc.getFile().getIndexedChars());
+        document.put("last_modified", toRFC3339(doc.getFile().getLastModified()));
+        document.put("created_at", toRFC3339(doc.getFile().getCreated()));
+
+        // Index main path attributes
+        document.put("url", urlPrefix + doc.getPath().getVirtual());
+        document.put("path", doc.getPath().getReal());
+
+        return document;
     }
 }

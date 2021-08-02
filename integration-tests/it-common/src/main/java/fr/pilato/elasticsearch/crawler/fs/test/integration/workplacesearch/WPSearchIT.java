@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
+import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
@@ -30,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
+import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -40,6 +42,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -92,21 +95,27 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             String customSourceId = getSourceIdFromSourceName(sourceName);
             assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
 
-            startCrawler(documentService, crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
-            ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
-                    1L, null, TimeValue.timeValueSeconds(20));
+            startCrawler(crawlerName, fsSettings, TimeValue.timeValueSeconds(10));
+            try (WPSearchClient client = createClient()) {
+                // We need to wait until it's done
+                String json = countTestHelper(client, 1L, TimeValue.timeValueSeconds(1));
+                Object document = parseJson(json);
+                // We can check the meta data to check the custom source id
+                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));
 
-            Map<String, Object> source = searchResponse.getHits().get(0).getSourceAsMap();
-            assertThat(source, hasEntry(is("path"), notNullValue()));
-            assertThat(source, hasEntry("extension", "txt"));
-            assertThat(source, hasKey(startsWith("size")));
-            assertThat(source, hasKey(startsWith("text_size")));
-            assertThat(source, hasEntry(is("mime_type"), notNullValue()));
-            assertThat(source, hasEntry("name", "roottxtfile.txt"));
-            assertThat(source, hasEntry(is("created_at"), notNullValue()));
-            assertThat(source, hasEntry(is("body"), notNullValue()));
-            assertThat(source, hasEntry(is("last_modified"), notNullValue()));
-            assertThat(source, hasEntry("url", "http://127.0.0.1/roottxtfile.txt"));
+                // We can check the content
+                assertThat(JsonPath.read(document, "$.results[0].title.raw"), is("roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].body.raw"), containsString("Gallienus"));
+                assertThat(JsonPath.read(document, "$.results[0].size.raw"), notNullValue());
+                assertThat(JsonPath.read(document, "$.results[0].text_size.raw"), nullValue());
+                assertThat(JsonPath.read(document, "$.results[0].mime_type.raw"), startsWith("text/plain"));
+                assertThat(JsonPath.read(document, "$.results[0].name.raw"), is("roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].extension.raw"), is("txt"));
+                assertThat(JsonPath.read(document, "$.results[0].path.raw"), endsWith("roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].url.raw"), is("http://127.0.0.1/roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].created_at.raw"), notNullValue());
+                assertThat(JsonPath.read(document, "$.results[0].last_modified.raw"), notNullValue());
+            }
         } catch (FsCrawlerIllegalConfigurationException e) {
             Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
         }
@@ -134,21 +143,27 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            startCrawler(documentService, crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
-            ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
-                    1L, null, TimeValue.timeValueSeconds(20));
+            startCrawler(crawlerName, fsSettings, TimeValue.timeValueSeconds(10));
+            try (WPSearchClient client = createClient()) {
+                // We need to wait until it's done
+                String json = countTestHelper(client, 1L, TimeValue.timeValueSeconds(1));
+                Object document = parseJson(json);
+                // We can check the meta data to check the custom source id
+                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));
 
-            Map<String, Object> source = searchResponse.getHits().get(0).getSourceAsMap();
-            assertThat(source, hasEntry(is("path"), notNullValue()));
-            assertThat(source, hasEntry("extension", "txt"));
-            assertThat(source, hasKey(startsWith("size")));
-            assertThat(source, hasKey(startsWith("text_size")));
-            assertThat(source, hasEntry(is("mime_type"), notNullValue()));
-            assertThat(source, hasEntry("name", "roottxtfile.txt"));
-            assertThat(source, hasEntry(is("created_at"), notNullValue()));
-            assertThat(source, hasEntry(is("body"), notNullValue()));
-            assertThat(source, hasEntry(is("last_modified"), notNullValue()));
-            assertThat(source, hasEntry("url", "http://127.0.0.1/roottxtfile.txt"));
+                // We can check the content
+                assertThat(JsonPath.read(document, "$.results[0].title.raw"), is("roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].body.raw"), containsString("Gallienus"));
+                assertThat(JsonPath.read(document, "$.results[0].size.raw"), notNullValue());
+                assertThat(JsonPath.read(document, "$.results[0].text_size.raw"), nullValue());
+                assertThat(JsonPath.read(document, "$.results[0].mime_type.raw"), startsWith("text/plain"));
+                assertThat(JsonPath.read(document, "$.results[0].name.raw"), is("roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].extension.raw"), is("txt"));
+                assertThat(JsonPath.read(document, "$.results[0].path.raw"), endsWith("roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].url.raw"), is("http://127.0.0.1/roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].created_at.raw"), notNullValue());
+                assertThat(JsonPath.read(document, "$.results[0].last_modified.raw"), notNullValue());
+            }
         } catch (FsCrawlerIllegalConfigurationException e) {
             Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
         }
@@ -177,22 +192,27 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             String customSourceId = getSourceIdFromSourceName(sourceName);
             assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
 
-            startCrawler(documentService, getCrawlerName(), customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
-            ESSearchResponse searchResponse = countTestHelper(documentService, new ESSearchRequest()
-                            .withIndex(".ent-search-engine-documents-source-" + customSourceId),
-                    1L, null, TimeValue.timeValueSeconds(20));
+            startCrawler(getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
+            try (WPSearchClient client = createClient()) {
+                // We need to wait until it's done
+                String json = countTestHelper(client, 1L, TimeValue.timeValueSeconds(1));
+                Object document = parseJson(json);
+                // We can check the meta data to check the custom source id
+                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));
 
-            Map<String, Object> source = searchResponse.getHits().get(0).getSourceAsMap();
-            assertThat(source, hasEntry(is("path"), notNullValue()));
-            assertThat(source, hasEntry("extension", "txt"));
-            assertThat(source, hasKey(startsWith("size")));
-            assertThat(source, hasKey(startsWith("text_size")));
-            assertThat(source, hasEntry(is("mime_type"), notNullValue()));
-            assertThat(source, hasEntry("name", "roottxtfile.txt"));
-            assertThat(source, hasEntry(is("created_at"), notNullValue()));
-            assertThat(source, hasEntry(is("body"), notNullValue()));
-            assertThat(source, hasEntry(is("last_modified"), notNullValue()));
-            assertThat(source, hasEntry("url", "http://127.0.0.1/roottxtfile.txt"));
+                // We can check the content
+                assertThat(JsonPath.read(document, "$.results[0].title.raw"), is("roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].body.raw"), containsString("Gallienus"));
+                assertThat(JsonPath.read(document, "$.results[0].size.raw"), notNullValue());
+                assertThat(JsonPath.read(document, "$.results[0].text_size.raw"), nullValue());
+                assertThat(JsonPath.read(document, "$.results[0].mime_type.raw"), startsWith("text/plain"));
+                assertThat(JsonPath.read(document, "$.results[0].name.raw"), is("roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].extension.raw"), is("txt"));
+                assertThat(JsonPath.read(document, "$.results[0].path.raw"), endsWith("roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].url.raw"), is("http://127.0.0.1/roottxtfile.txt"));
+                assertThat(JsonPath.read(document, "$.results[0].created_at.raw"), notNullValue());
+                assertThat(JsonPath.read(document, "$.results[0].last_modified.raw"), notNullValue());
+            }
         } catch (FsCrawlerIllegalConfigurationException e) {
             Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
         }

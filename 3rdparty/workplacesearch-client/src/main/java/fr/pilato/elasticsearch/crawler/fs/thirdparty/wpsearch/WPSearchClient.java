@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
 
-import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
@@ -264,7 +263,7 @@ public class WPSearchClient implements Closeable {
         checkStarted();
         logger.debug("Removing from source {} documents {}", sourceId, ids);
         try {
-            String response = post("sources/" + sourceId + "/documents/bulk_create", ids, String.class);
+            String response = post("sources/" + sourceId + "/documents/bulk_destroy", ids, String.class);
             logger.debug("Removing documents response: {}", response);
             // TODO parse the response to check for errors
         } catch (NotFoundException e) {
@@ -286,11 +285,18 @@ public class WPSearchClient implements Closeable {
      * @param query Text we are searching for
      * @return the json response
      */
-    public String search(String query) {
+    public String search(String query, Map<String, List<String>> filters) {
         checkStarted();
-        logger.debug("Searching for {}", query);
+        logger.debug("Searching for {} with filters {}", query, filters);
         Map<String, Object> request = new HashMap<>();
-        request.put("query", query);
+
+        if (query != null) {
+            request.put("query", query);
+        }
+
+        if (filters != null) {
+            request.put("filters", filters);
+        }
 
         String json = post("search", request, String.class);
 
