@@ -251,7 +251,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         }
     }
 
-    protected static String getSourceIdFromSourceName(String sourceName) throws Exception {
+    protected static String getSourceIdFromSourceName(String sourceName) {
         staticLogger.info("  --> getting the workplace search custom source id from name {}", sourceName);
         try (WPSearchClient client = createClient()) {
             List<String> sources = client.getCustomSourcesByName(sourceName);

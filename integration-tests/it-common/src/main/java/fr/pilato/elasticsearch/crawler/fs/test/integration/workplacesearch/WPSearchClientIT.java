@@ -24,15 +24,20 @@ import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -87,13 +92,31 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             client.indexDocument(fakeDocument(RandomizedTest.randomAsciiLettersOfLength(10), "Foo Bar Baz", "EN", "foobarbaz", "Foo", "Bar", "Baz"));
 
             // We need to wait until it's done
-            String json = countTestHelper(client, 4L, TimeValue.timeValueSeconds(20));
+            String json = countTestHelper(client, 4L, TimeValue.timeValueSeconds(5));
 
             // We read the ids of the documents so we can remove them then
             List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
 
+            // Search for some specific use cases
+            checker(client.search("Foo", null), 2,
+                    Arrays.asList("foo.txt", "foobarbaz.txt"),
+                    Arrays.asList("Foo", "Foo Bar Baz"));
+            checker(client.search("Bar", null), 3, // 3 because of fuzziness, we are getting back Baz as well
+                    Arrays.asList("bar.txt", "baz.txt", "foobarbaz.txt"),
+                    Arrays.asList("Bar", "Baz", "Foo Bar Baz"));
+            checker(client.search("Baz", null), 3, // 3 because of fuzziness, we are getting back Bar as well
+                    Arrays.asList("bar.txt", "baz.txt", "foobarbaz.txt"),
+                    Arrays.asList("Bar", "Baz", "Foo Bar Baz"));
+            checker(client.search("Foo Bar Baz", null), 3, // 3 because Foo is meaningless apparently
+                    Arrays.asList("bar.txt", "baz.txt", "foobarbaz.txt"),
+                    Arrays.asList("Bar", "Baz", "Foo Bar Baz"));
 
-            logger.fatal("{}", ids);
+            for (int i = 0; i < ids.size(); i++) {
+                // Let's remove one document and wait until it's done
+                logger.info("   --> removing one document");
+                client.destroyDocument(customSourceId, ids.get(i));
+                countTestHelper(client, Long.valueOf(ids.size() - 1 - i), TimeValue.timeValueSeconds(5));
+            }
         }
     }
 
@@ -184,5 +207,37 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             client.indexDocument(document);
             client.destroyDocument(customSourceId, "testSendAndRemoveADocument");
         }
+    }
+
+    private static void checker(String json, int results, List<String> filenames, List<String> texts) {
+        staticLogger.trace("{}", json);
+
+        Object document = parseJson(json);
+        List<String> urls = new ArrayList<>();
+        List<String> titles = new ArrayList<>();
+        List<String> bodies = new ArrayList<>();
+
+        filenames.forEach((filename) -> {
+            urls.add("http://127.0.0.1/" + filename);
+            titles.add(filename);
+        });
+
+        texts.forEach((text) -> {
+            titles.add("Title for " + text);
+            bodies.add("Content for " + text);
+        });
+
+        assertThat(JsonPath.read(document, "$.meta.page.total_results"), is(results));
+        assertThat(JsonPath.read(document, "$.results[*].title.raw"), hasItem(isOneOf(titles.toArray())));
+        assertThat(JsonPath.read(document, "$.results[*].body.raw"), hasItems(bodies.toArray()));
+        assertThat(JsonPath.read(document, "$.results[*].size.raw"), notNullValue());
+        assertThat(JsonPath.read(document, "$.results[*].text_size.raw"), notNullValue());
+        assertThat(JsonPath.read(document, "$.results[*].mime_type.raw"), hasItem(startsWith("text/plain")));
+        assertThat(JsonPath.read(document, "$.results[*].name.raw"), hasItems(filenames.toArray()));
+        assertThat(JsonPath.read(document, "$.results[*].extension.raw"), hasItem("txt"));
+        filenames.forEach((filename) -> assertThat(JsonPath.read(document, "$.results[*].path.raw"), hasItem(endsWith(filename))));
+        assertThat(JsonPath.read(document, "$.results[*].url.raw"), hasItems(urls.toArray()));
+        assertThat(JsonPath.read(document, "$.results[*].created_at.raw"), notNullValue());
+        assertThat(JsonPath.read(document, "$.results[*].last_modified.raw"), notNullValue());
     }
 }

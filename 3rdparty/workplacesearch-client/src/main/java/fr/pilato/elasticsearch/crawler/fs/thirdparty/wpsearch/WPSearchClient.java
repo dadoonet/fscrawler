@@ -263,7 +263,7 @@ public class WPSearchClient implements Closeable {
         checkStarted();
         logger.debug("Removing from source {} documents {}", sourceId, ids);
         try {
-            String response = post("sources/" + sourceId + "/documents/bulk_create", ids, String.class);
+            String response = post("sources/" + sourceId + "/documents/bulk_destroy", ids, String.class);
             logger.debug("Removing documents response: {}", response);
             // TODO parse the response to check for errors
         } catch (NotFoundException e) {
