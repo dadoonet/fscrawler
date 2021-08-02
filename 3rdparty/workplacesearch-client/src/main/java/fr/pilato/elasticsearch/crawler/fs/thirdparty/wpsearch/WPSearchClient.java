@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
 
-import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;

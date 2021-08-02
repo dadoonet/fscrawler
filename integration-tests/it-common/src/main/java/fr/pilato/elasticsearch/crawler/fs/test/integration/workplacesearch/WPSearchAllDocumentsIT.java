@@ -47,8 +47,7 @@ import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Test all type of documents we have with workplace search
@@ -107,22 +106,16 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
 
             logger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
-            crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
-            crawler.start();
-
-            // We wait until we have all docs
-            // TODO Replace with the real search API
-            try (WPSearchClient wpClient = createClient()) {
+            // Create the crawler and wait until we have all docs
+            try (FsCrawlerImpl crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
+                 WPSearchClient wpClient = createClient();) {
+                crawler.start();
                 countTestHelper(wpClient, numFiles, TimeValue.timeValueMinutes(5));
             }
 
-            logger.info("  --> stopping crawler");
-            crawler.close();
-            crawler = null;
-
             logger.info("  --> checking that files have expected content");
 
-            runSearch("issue-163.xml");
+            runSearch("issue-163.xml", null);
             runSearch("test.json", "json");
             runSearch("test.doc", "sample");
 
@@ -145,36 +138,21 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
             runSearch("test.pdf", "sample");
             runSearch("test.rtf", "sample");
             runSearch("test.txt", "contains");
-            runSearch("test.wav");
-            runSearch("test-protected.docx");
+            runSearch("test.wav", null);
+            runSearch("test-protected.docx", null);
             runSearch("issue-221-doc1.pdf", "Formations");
             runSearch("issue-221-doc2.pdf", "FORMATIONS");
-/*
-            {
-                // TODO fix this hack. We can't make sure we are returning one single file
-                ESSearchResponse response = runSearch("test-fr.txt", "fichier");
-                for (ESSearchHit hit : response.getHits()) {
-                    if (hit.getSourceAsMap().get("name").equals("test-fr.txt")) {
-                        assertThat(hit.getSourceAsMap(), hasEntry("language", "fr"));
-                    }
-                }
-                response = runSearch("test-de.txt", "Datei");
-                for (ESSearchHit hit : response.getHits()) {
-                    if (hit.getSourceAsMap().get("name").equals("test-de.txt")) {
-                        assertThat(hit.getSourceAsMap(), hasEntry("language", "de"));
-                    }
-                }
-                response = runSearch("test.txt", "contains");
-                for (ESSearchHit hit : response.getHits()) {
-                    if (hit.getSourceAsMap().get("name").equals("test.txt")) {
-                        assertThat(hit.getSourceAsMap(), hasEntry("language", "en"));
-                    }
-                }
-            }
-*/
+
+            Object response = runSearch("test-fr.txt", "fichier");
+            assertThat(JsonPath.read(response, "$.results[0].language.raw"), is("fr"));
+            response = runSearch("test-de.txt", "Datei");
+            assertThat(JsonPath.read(response, "$.results[0].language.raw"), is("de"));
+            response = runSearch("test.txt", "contains");
+            assertThat(JsonPath.read(response, "$.results[0].language.raw"), is("en"));
+
             runSearch("issue-369.txt", "今天天气晴好");
             runSearch("issue-400-shiftjis.txt", "elasticsearch");
-            runSearch("issue-418-中文名称.txt");
+            runSearch("issue-418-中文名称.txt", null);
 
             // If Tesseract is not installed, we are skipping this test
             if (ExternalParser.check("tesseract")) {
@@ -185,10 +163,6 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
         } catch (FsCrawlerIllegalConfigurationException e) {
             Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
         }
-    }
-
-    private Object runSearch(String filename) {
-        return runSearch(filename, null);
     }
 
     /**
