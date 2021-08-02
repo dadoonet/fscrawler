@@ -36,8 +36,12 @@ import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.io.IoBuilder;
 
 import java.io.InputStream;
@@ -119,7 +123,7 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
     @Override
     public void closeInputStream(InputStream inputStream) throws IOException {
         inputStream.close();
-        // This is necessary if we want to read the stream
+        // This is necessary if we want to retrieve multiple streams one by one
         ftp.completePendingCommand();
     }
 
@@ -148,7 +152,7 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
                 .map(file -> toFileAbstractModel(finalDir, file))
                 .collect(Collectors.toList()));
 
-        logger.debug("{} local files found", result.size());
+        logger.debug("{} files found", result.size());
         return result;
     }
 
@@ -167,13 +171,19 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         }
     }
 
+    private boolean commandListenerEnabled() {
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig("fr.pilato.elasticsearch.crawler.fs");
+        return loggerConfig.getLevel() == Level.DEBUG || loggerConfig.getLevel() == Level.TRACE;
+    }
+
     @Override
     public void open() throws IOException {
-        Server server = fsSettings.getServer();
-        logger.debug("Opening FTP connection to {}@{}", server.getUsername(), server.getHostname());
-
         ftp = new FTPClient();
-        ftp.addProtocolCommandListener(ftpListener);
+        if (commandListenerEnabled()) {
+            ftp.addProtocolCommandListener(ftpListener);
+        }
         // send a safe command (i.e. NOOP) over the control connection to reset the router's idle timer
         ftp.setControlKeepAliveTimeout(300);
         openFTPConnection();
@@ -187,6 +197,8 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
     private void openFTPConnection() throws IOException {
         Server server = fsSettings.getServer();
+        logger.debug("Opening FTP connection to {}@{}", server.getUsername(), server.getHostname());
+
         ftp.connect(server.getHostname(), server.getPort());
 
         // checking FTP client connection.
