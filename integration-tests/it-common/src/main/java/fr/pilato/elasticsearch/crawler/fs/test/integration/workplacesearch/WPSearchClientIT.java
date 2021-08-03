@@ -89,7 +89,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Foo Bar Baz", "EN", "foobarbaz", "Foo", "Bar", "Baz"));
 
             // We need to wait until it's done
-            String json = countTestHelper(client, 4L, TimeValue.timeValueSeconds(5));
+            String json = countTestHelper(client, customSourceId, 4L, TimeValue.timeValueSeconds(5));
 
             // We read the ids of the documents so we can remove them then
             List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
@@ -112,7 +112,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
                 // Let's remove one document and wait until it's done
                 logger.info("   --> removing one document");
                 client.destroyDocument(ids.get(i));
-                countTestHelper(client, Long.valueOf(ids.size() - 1 - i), TimeValue.timeValueSeconds(5));
+                countTestHelper(client, customSourceId, Long.valueOf(ids.size() - 1 - i), TimeValue.timeValueSeconds(5));
             }
         }
     }
@@ -130,7 +130,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             client.indexDocument(fakeDocumentAsMap(id, "Foo", "EN", "foo", "Foo"));
 
             // We need to wait until it's done
-            countTestHelper(client, 1L, TimeValue.timeValueSeconds(5));
+            countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(5));
 
             // We can now get the document
             String document = client.getDocument(id);

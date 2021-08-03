@@ -104,10 +104,10 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             String customSourceId = getSourceIdFromSourceName(sourceName);
             assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
 
-            startCrawler(crawlerName, fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                String json = countTestHelper(client, 1L, TimeValue.timeValueSeconds(1));
+                String json = countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
                 // We can check the meta data to check the custom source id
                 assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));
@@ -152,10 +152,10 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            startCrawler(crawlerName, fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                String json = countTestHelper(client, 1L, TimeValue.timeValueSeconds(1));
+                String json = countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
                 // We can check the meta data to check the custom source id
                 assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));
@@ -201,10 +201,10 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             String customSourceId = getSourceIdFromSourceName(sourceName);
             assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
 
-            startCrawler(getCrawlerName(), fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(getCrawlerName(), customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                String json = countTestHelper(client, 1L, TimeValue.timeValueSeconds(1));
+                String json = countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
                 // We can check the meta data to check the custom source id
                 assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));
@@ -259,7 +259,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
 
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                countTestHelper(client, 1L, TimeValue.timeValueSeconds(5));
+                countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(5));
             }
 
             assertThat(documentService.exists(null, id), is(true));
@@ -308,7 +308,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
 
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                countTestHelper(client, 4L, TimeValue.timeValueSeconds(5));
+                countTestHelper(client, customSourceId, 4L, TimeValue.timeValueSeconds(5));
             }
 
             {
@@ -448,10 +448,10 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             String customSourceId = getSourceIdFromSourceName(sourceName);
             assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
 
-            startCrawler(crawlerName, fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                String json = countTestHelper(client, 2L, TimeValue.timeValueSeconds(1));
+                String json = countTestHelper(client, customSourceId, 2L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
                 // We can check the meta data to check the custom source id
                 assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));

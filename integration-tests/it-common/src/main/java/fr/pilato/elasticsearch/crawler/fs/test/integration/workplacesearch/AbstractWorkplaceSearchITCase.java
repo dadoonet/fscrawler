@@ -44,6 +44,8 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +77,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         urlConnection.getResponseCode();
     }
 
-    protected FsCrawlerImpl startCrawler(final String jobName, FsSettings fsSettings, TimeValue duration)
+    protected FsCrawlerImpl startCrawler(final String jobName, final String customSourceId, FsSettings fsSettings, TimeValue duration)
             throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
@@ -99,7 +101,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         refresh();
 
         try (WPSearchClient wpClient = createClient()) {
-            countTestHelper(wpClient, null, duration);
+            countTestHelper(wpClient, customSourceId, null, duration);
         }
 
         return crawler;
@@ -109,12 +111,13 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
      * Check that we have the expected number of docs or at least one if expected is null
      *
      * @param wpClient  Elasticsearch request to run.
+     * @param sourceId  The custom source id if any
      * @param expected  expected number of docs. Null if at least 1.
      * @param timeout   Time before we declare a failure
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    public static String countTestHelper(final WPSearchClient wpClient, final Long expected, final TimeValue timeout) throws Exception {
+    public static String countTestHelper(final WPSearchClient wpClient, final String sourceId, final Long expected, final TimeValue timeout) throws Exception {
 
         final String[] response = new String[1];
 
@@ -127,7 +130,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
             // Let's search for entries
             try {
                 refresh();
-                response[0] = wpClient.search(null, null);
+                response[0] = wpClient.search(null, sourceId == null ? null : Collections.singletonMap("content_source_id", List.of(sourceId)));
             } catch (RuntimeException | IOException e) {
                 staticLogger.warn("error caught", e);
                 return -1;

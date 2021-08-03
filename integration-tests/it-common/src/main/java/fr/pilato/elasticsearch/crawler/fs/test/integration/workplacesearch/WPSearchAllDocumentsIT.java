@@ -110,7 +110,7 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
             try (FsCrawlerImpl crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
                  WPSearchClient wpClient = createClient()) {
                 crawler.start();
-                countTestHelper(wpClient, numFiles, TimeValue.timeValueMinutes(5));
+                countTestHelper(wpClient, customSourceId, numFiles, TimeValue.timeValueMinutes(5));
             }
 
             logger.info("  --> checking that files have expected content");
