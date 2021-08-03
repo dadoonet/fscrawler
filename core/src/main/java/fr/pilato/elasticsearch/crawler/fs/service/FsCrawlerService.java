@@ -1,7 +1,5 @@
 package fr.pilato.elasticsearch.crawler.fs.service;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-
 import java.io.Closeable;
 import java.io.IOException;
 
@@ -13,8 +11,8 @@ public interface FsCrawlerService extends Closeable {
     void start() throws IOException;
 
     /**
-     * Get the elasticsearch client
-     * @return elasticsearch client
+     * Get the version of the service
+     * @return a version
      */
-    ElasticsearchClient getClient();
+    String getVersion() throws IOException;
 }

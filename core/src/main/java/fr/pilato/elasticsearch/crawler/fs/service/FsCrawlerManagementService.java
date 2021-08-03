@@ -51,4 +51,12 @@ public interface FsCrawlerManagementService extends FsCrawlerService {
      * @param folder Folder to store
      */
     void storeVisitedDirectory(String indexFolder, String id, Folder folder) throws IOException;
+
+
+    /**
+     * Remove a document from the target service
+     * @param index     Index name
+     * @param id        Document ID
+     */
+    void delete(String index, String id);
 }

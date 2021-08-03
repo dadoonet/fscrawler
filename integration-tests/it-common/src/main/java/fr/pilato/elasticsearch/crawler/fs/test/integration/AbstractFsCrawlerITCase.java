@@ -44,7 +44,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractRestITCase {
     @Before
     public void cleanExistingIndex() throws IOException {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        documentService.getClient().deleteIndex(getCrawlerName() + "*");
+        managementService.getClient().deleteIndex(getCrawlerName() + "*");
     }
 
     @After

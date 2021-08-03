@@ -94,7 +94,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
         // Let's test highlighting
-        ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
+        ESSearchResponse response = documentService.search(new ESSearchRequest()
                 .withIndex(getCrawlerName())
                 .withESQuery(new ESMatchQuery("content", "exemplo"))
                 .addHighlighter("content"));

@@ -21,11 +21,10 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaParser;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
@@ -52,14 +51,14 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDa
 @Path("/_upload")
 public class UploadApi extends RestApi {
 
-    private final ElasticsearchClient esClient;
+    private final FsCrawlerDocumentService documentService;
     private final FsSettings settings;
     private final MessageDigest messageDigest;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
 
-    UploadApi(FsSettings settings, ElasticsearchClient esClient) {
+    UploadApi(FsSettings settings, FsCrawlerDocumentService documentService) {
         this.settings = settings;
-        this.esClient = esClient;
+        this.documentService = documentService;
         // Create MessageDigest instance
         try {
             messageDigest = settings.getFs().getChecksum() == null ?
@@ -115,16 +114,13 @@ public class UploadApi extends RestApi {
 
         // Elasticsearch entity coordinates (we use the first node address)
         ServerUrl node = settings.getElasticsearch().getNodes().get(0);
-        String url = node.getUrl() + "/" +
-                index + "/" +
-                esClient.getDefaultTypeName() + "/" +
-                id;
+        String url = node.getUrl() + "/" + index + "/_doc/" + id;
         if (Boolean.parseBoolean(simulate)) {
             logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].", filename, url);
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
             final Doc mergedDoc = this.getMergedJsonDoc(doc, tags);
-            esClient.index(
+            documentService.index(
                     index,
                     id,
                     mergedDoc,

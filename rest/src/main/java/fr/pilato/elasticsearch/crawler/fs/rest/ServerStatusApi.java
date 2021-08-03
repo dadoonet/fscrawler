@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -36,11 +37,11 @@ import java.io.IOException;
 @Path("/")
 public class ServerStatusApi extends RestApi {
 
-    private final ElasticsearchClient esClient;
+    private final FsCrawlerManagementService managementService;
     private final FsSettings settings;
 
-    ServerStatusApi(ElasticsearchClient esClient, FsSettings settings) {
-        this.esClient = esClient;
+    ServerStatusApi(FsCrawlerManagementService managementService, FsSettings settings) {
+        this.managementService = managementService;
         this.settings = settings;
     }
 
@@ -49,7 +50,7 @@ public class ServerStatusApi extends RestApi {
     public ServerStatusResponse getStatus() throws IOException {
         ServerStatusResponse status = new ServerStatusResponse();
         status.setVersion(Version.getVersion());
-        status.setElasticsearch(esClient.getVersion());
+        status.setElasticsearch(managementService.getVersion());
         status.setOk(true);
         status.setSettings(settings);
         return status;

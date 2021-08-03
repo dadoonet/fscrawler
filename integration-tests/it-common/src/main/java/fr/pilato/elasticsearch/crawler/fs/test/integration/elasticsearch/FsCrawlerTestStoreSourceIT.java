@@ -56,7 +56,7 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
-        ESSearchResponse searchResponse = documentService.getClient().search(new ESSearchRequest().withIndex(getCrawlerName()));
+        ESSearchResponse searchResponse = documentService.search(new ESSearchRequest().withIndex(getCrawlerName()));
         for (ESSearchHit hit : searchResponse.getHits()) {
             // We check that the field is not part of _source
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSourceAsString(), "$.attachment"));

@@ -158,6 +158,10 @@ public class FsCrawlerBulkProcessor<
         return listener;
     }
 
+    public void flush() {
+        execute();
+    }
+
     public static class Builder<O extends FsCrawlerOperation<O>,
             Req extends FsCrawlerBulkRequest<O>,
             Res extends FsCrawlerBulkResponse<O>> {

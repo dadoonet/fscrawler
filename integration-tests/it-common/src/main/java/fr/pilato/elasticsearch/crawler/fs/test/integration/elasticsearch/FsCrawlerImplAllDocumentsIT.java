@@ -75,7 +75,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         }
 
         staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents*]");
-        documentService.getClient().deleteIndex("fscrawler_test_all_documents*");
+        managementService.getClient().deleteIndex("fscrawler_test_all_documents*");
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
@@ -242,7 +242,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         if (content != null) {
             query.addMust(new ESMatchQuery("content", content));
         }
-        ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
+        ESSearchResponse response = documentService.search(new ESSearchRequest()
                         .withIndex("fscrawler_test_all_documents")
                         .withESQuery(query));
         assertThat(response.getTotalHits(), is(1L));

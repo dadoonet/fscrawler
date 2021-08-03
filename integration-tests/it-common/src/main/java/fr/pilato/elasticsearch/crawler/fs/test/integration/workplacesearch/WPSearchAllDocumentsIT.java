@@ -108,9 +108,9 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
 
             // Create the crawler and wait until we have all docs
             try (FsCrawlerImpl crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
-                 WPSearchClient wpClient = createClient();) {
+                 WPSearchClient wpClient = createClient()) {
                 crawler.start();
-                countTestHelper(wpClient, numFiles, TimeValue.timeValueMinutes(5));
+                countTestHelper(wpClient, customSourceId, numFiles, TimeValue.timeValueMinutes(5));
             }
 
             logger.info("  --> checking that files have expected content");
@@ -179,7 +179,7 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
                 content == null ? "" : " and contains [" + content + "]");
 
         try (WPSearchClient client = createClient()) {
-            Map<String, List<String>> filters = new HashMap<>();
+            Map<String, Object> filters = new HashMap<>();
             if (filename != null) {
                 filters.put("name", Collections.singletonList(filename));
             }

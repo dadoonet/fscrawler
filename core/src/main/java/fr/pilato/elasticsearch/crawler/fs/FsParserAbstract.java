@@ -34,7 +34,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
@@ -548,12 +547,24 @@ public abstract class FsParserAbstract extends FsParser {
     }
 
     /**
-     * Add to bulk a DeleteRequest
+     * Remove a document with the document service
      */
-    private void esDelete(FsCrawlerService service, String index, String id) {
+    private void esDelete(FsCrawlerDocumentService service, String index, String id) {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed) {
-            service.getClient().delete(index, id);
+            service.delete(index, id);
+        } else {
+            logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
+        }
+    }
+
+    /**
+     * Remove a document with the management service
+     */
+    private void esDelete(FsCrawlerManagementService service, String index, String id) {
+        logger.debug("Deleting {}/{}", index, id);
+        if (!closed) {
+            service.delete(index, id);
         } else {
             logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }

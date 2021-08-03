@@ -72,7 +72,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
 
         // Run aggs
-        ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
+        ESSearchResponse response = documentService.search(new ESSearchRequest()
                         .withIndex(getCrawlerName())
                         .withSize(0)
                         .withAggregation(new ESTermsAggregation("folders", "path.virtual.tree")));
@@ -86,7 +86,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         assertThat(buckets, iterableWithSize(10));
 
         // Check files
-        response = documentService.getClient().search(new ESSearchRequest().withIndex(getCrawlerName()).withSort("path.virtual"));
+        response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName()).withSort("path.virtual"));
         assertThat(response.getTotalHits(), is(7L));
 
         Object document = parseJson(response.getJson());
@@ -102,7 +102,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
 
         // Check folders
-        response = documentService.getClient().search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER).withSort("path.virtual"));
+        response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER).withSort("path.virtual"));
         assertThat(response.getTotalHits(), is(7L));
 
         document = parseJson(response.getJson());
@@ -142,7 +142,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), subdirs+1, null);
 
         // Run aggs
-        ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
+        ESSearchResponse response = documentService.search(new ESSearchRequest()
                 .withIndex(getCrawlerName())
                 .withSize(0)
                 .withAggregation(new ESTermsAggregation("folders", "path.virtual.tree")));
@@ -156,7 +156,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         assertThat(buckets, iterableWithSize(10));
 
         // Check files
-        response = documentService.getClient().search(new ESSearchRequest()
+        response = documentService.search(new ESSearchRequest()
                 .withIndex(getCrawlerName())
                 .withSize(1000)
                 .withSort("path.virtual"));
@@ -169,7 +169,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         }
 
         // Check folders
-        response = documentService.getClient().search(new ESSearchRequest()
+        response = documentService.search(new ESSearchRequest()
                 .withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER)
                 .withSize(1000)
                 .withSort("path.virtual"));
