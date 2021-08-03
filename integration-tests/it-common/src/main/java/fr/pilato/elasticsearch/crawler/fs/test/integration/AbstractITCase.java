@@ -418,7 +418,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     protected String getRandomCrawlerName() {
-        return testCrawlerPrefix.concat(randomAsciiAlphanumOfLength(randomIntBetween(1, 30))).toLowerCase(Locale.ROOT);
+        return testCrawlerPrefix.concat(randomAsciiAlphanumOfLength(randomIntBetween(10, 15))).toLowerCase(Locale.ROOT);
     }
 
     /**
