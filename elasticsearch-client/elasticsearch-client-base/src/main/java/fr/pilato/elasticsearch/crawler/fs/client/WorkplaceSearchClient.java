@@ -28,7 +28,7 @@ public interface WorkplaceSearchClient extends Closeable {
      * @param id    Document id
      * @return the document or null
      */
-    Object get(String id);
+    String get(String id);
 
     /**
      * Flush any pending operation

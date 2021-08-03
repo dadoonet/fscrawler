@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.junit.After;
@@ -132,8 +133,8 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             countTestHelper(client, 1L, TimeValue.timeValueSeconds(5));
 
             // We can now get the document
-            Object document = client.getDocument(id);
-            documentChecker(document, List.of("foo.txt"), List.of("Foo"));
+            String document = client.getDocument(id);
+            documentChecker(JsonUtil.parseJson(document), List.of("foo.txt"), List.of("Foo"));
 
             // Get a non existing document
             assertThat(client.getDocument("thisiddoesnotexist"), nullValue());

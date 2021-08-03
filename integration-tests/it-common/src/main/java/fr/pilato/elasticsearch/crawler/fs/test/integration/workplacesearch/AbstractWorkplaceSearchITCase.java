@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
@@ -273,16 +274,26 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
             bodies.add("Content for " + text);
         });
 
-        assertThat(JsonPath.read(document, "$.title.raw"), isOneOf(titles.toArray()));
-        assertThat(JsonPath.read(document, "$.body.raw"), isOneOf(bodies.toArray()));
-        assertThat(JsonPath.read(document, "$.size.raw"), notNullValue());
-        assertThat(JsonPath.read(document, "$.text_size.raw"), notNullValue());
-        assertThat(JsonPath.read(document, "$.mime_type.raw"), startsWith("text/plain"));
-        assertThat(JsonPath.read(document, "$.name.raw"), isOneOf(filenames.toArray()));
-        assertThat(JsonPath.read(document, "$.extension.raw"), is("txt"));
-        assertThat(JsonPath.read(document, "$.path.raw"), isOneOf(paths.toArray()));
-        assertThat(JsonPath.read(document, "$.url.raw"), isOneOf(urls.toArray()));
-        assertThat(JsonPath.read(document, "$.created_at.raw"), notNullValue());
-        assertThat(JsonPath.read(document, "$.last_modified.raw"), notNullValue());
+        propertyChecker(document, "title", isOneOf(titles.toArray()));
+        propertyChecker(document, "body", isOneOf(bodies.toArray()));
+        propertyChecker(document, "size", notNullValue());
+        propertyChecker(document, "text_size", notNullValue());
+        propertyChecker(document, "mime_type", startsWith("text/plain"));
+        propertyChecker(document, "name", isOneOf(filenames.toArray()));
+        propertyChecker(document, "extension", is("txt"));
+        propertyChecker(document, "path", isOneOf(paths.toArray()));
+        propertyChecker(document, "url", isOneOf(urls.toArray()));
+        propertyChecker(document, "created_at", notNullValue());
+        propertyChecker(document, "last_modified", notNullValue());
+    }
+
+    private static void propertyChecker(Object document, String fieldName, Matcher<?> matcher) {
+        try {
+            // We try the .raw field if the document is coming from the search API
+            assertThat(JsonPath.read(document, "$." + fieldName + ".raw"), matcher);
+        } catch (PathNotFoundException e) {
+            // We fall back to the field name if the document is coming from the get API
+            assertThat(JsonPath.read(document, "$." + fieldName), matcher);
+        }
     }
 }

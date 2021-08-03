@@ -106,7 +106,7 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     }
 
     @Override
-    public Object get(String id) {
+    public String get(String id) {
         return wpSearchClient.getDocument(id);
     }
 

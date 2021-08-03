@@ -266,7 +266,8 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             ESSearchHit hit = documentService.get(null, id);
 
             assertThat(hit, notNullValue());
-            documentChecker(hit.getSourceAsObject(), List.of("foo.txt"), List.of("Foo"));
+            Object document = parseJson(hit.getSourceAsString());
+            documentChecker(document, List.of("foo.txt"), List.of("Foo"));
         } catch (FsCrawlerIllegalConfigurationException e) {
             Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
         }

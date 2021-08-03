@@ -140,12 +140,12 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     @Override
     public ESSearchHit get(String index, String id) throws IOException {
         logger.debug("Getting {}/{}", index, id);
-        Object json = client.get(id);
+        String json = client.get(id);
 
         ESSearchHit hit = new ESSearchHit();
         hit.setIndex(index);
         hit.setId(id);
-        hit.setSourceAsObject(json);
+        hit.setSourceAsString(json);
 
         return hit;
     }

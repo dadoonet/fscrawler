@@ -259,18 +259,16 @@ public class WPSearchClient implements Closeable {
     /**
      * Get one single document
      * @param id the document id
-     * @return the Json document as an object readable with JsonPath
+     * @return the Json document as an object readable with JsonPath or null if not found
      */
-    public Object getDocument(String id) {
+    public String getDocument(String id) {
         checkStarted();
         logger.debug("Getting document {} to custom source {}", id, sourceId);
-
-        String json = get("/sources/" + sourceId + "/documents/" + id, String.class);
-        logger.fatal("{}", json);
-
-        Object document = parseJson(json);
-
-        return JsonPath.read(document, "$.results[0]");
+        try {
+            return get("/sources/" + sourceId + "/documents/" + id, String.class);
+        } catch (NotFoundException e) {
+            return null;
+        }
     }
 
     /**
