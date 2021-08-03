@@ -24,8 +24,6 @@ import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -230,14 +228,14 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
         assertThat(JsonPath.read(document, "$.meta.page.total_results"), is(results));
         assertThat(JsonPath.read(document, "$.results[*].title.raw"), hasItem(isOneOf(titles.toArray())));
         assertThat(JsonPath.read(document, "$.results[*].body.raw"), hasItems(bodies.toArray()));
-        assertThat(JsonPath.read(document, "$.results[*].size.raw"), notNullValue());
-        assertThat(JsonPath.read(document, "$.results[*].text_size.raw"), notNullValue());
+        assertThat(JsonPath.read(document, "$.results[*].size.raw"), hasItem(notNullValue()));
+        assertThat(JsonPath.read(document, "$.results[*].text_size.raw"), hasItem(notNullValue()));
         assertThat(JsonPath.read(document, "$.results[*].mime_type.raw"), hasItem(startsWith("text/plain")));
         assertThat(JsonPath.read(document, "$.results[*].name.raw"), hasItems(filenames.toArray()));
         assertThat(JsonPath.read(document, "$.results[*].extension.raw"), hasItem("txt"));
         filenames.forEach((filename) -> assertThat(JsonPath.read(document, "$.results[*].path.raw"), hasItem(endsWith(filename))));
         assertThat(JsonPath.read(document, "$.results[*].url.raw"), hasItems(urls.toArray()));
-        assertThat(JsonPath.read(document, "$.results[*].created_at.raw"), notNullValue());
-        assertThat(JsonPath.read(document, "$.results[*].last_modified.raw"), notNullValue());
+        assertThat(JsonPath.read(document, "$.results[*].created_at.raw"), hasItem(notNullValue()));
+        assertThat(JsonPath.read(document, "$.results[*].last_modified.raw"), hasItem(notNullValue()));
     }
 }
