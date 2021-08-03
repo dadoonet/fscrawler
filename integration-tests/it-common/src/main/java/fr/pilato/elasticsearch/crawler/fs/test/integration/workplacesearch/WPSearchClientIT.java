@@ -112,7 +112,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             for (int i = 0; i < ids.size(); i++) {
                 // Let's remove one document and wait until it's done
                 logger.info("   --> removing one document");
-                client.destroyDocument(customSourceId, ids.get(i));
+                client.destroyDocument(ids.get(i));
                 countTestHelper(client, Long.valueOf(ids.size() - 1 - i), TimeValue.timeValueSeconds(5));
             }
         }
@@ -203,7 +203,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             document.put("id", "testSendAndRemoveADocument");
             document.put("title", "To be deleted " + RandomizedTest.randomAsciiLettersOfLength(10));
             client.indexDocument(document);
-            client.destroyDocument(customSourceId, "testSendAndRemoveADocument");
+            client.destroyDocument("testSendAndRemoveADocument");
         }
     }
 

@@ -283,7 +283,7 @@ public class FsCrawlerCli {
                 if (!startEsClient(fsCrawler)) {
                     return;
                 }
-                String elasticsearchVersion = fsCrawler.getManagementService().getClient().getVersion();
+                String elasticsearchVersion = fsCrawler.getManagementService().getVersion();
                 checkForDeprecatedResources(configDir, elasticsearchVersion);
 
                 // Start the REST Server if needed

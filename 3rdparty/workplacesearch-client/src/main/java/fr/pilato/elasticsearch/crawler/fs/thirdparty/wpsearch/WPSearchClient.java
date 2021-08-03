@@ -254,6 +254,18 @@ public class WPSearchClient implements Closeable {
         bulkProcessor.add(new WPSearchOperation(sourceId, document));
     }
 
+
+    /**
+     * Get one single document
+     * @param id the document id
+     */
+    public String getDocument(String id) {
+        checkStarted();
+        logger.debug("Getting document {} to custom source {}", id, sourceId);
+        String json = search(null, Collections.singletonMap("id", Collections.singletonList(id)));
+        return JsonPath.read(json, "$.results[0]");
+    }
+
     /**
      * Delete existing documents
      * @param sourceId  The custom source Id
@@ -275,7 +287,7 @@ public class WPSearchClient implements Closeable {
      * Delete one document
      * @param id Document id to delete
      */
-    public void destroyDocument(String sourceId, String id) {
+    public void destroyDocument(String id) {
         destroyDocuments(sourceId, Collections.singletonList(id));
     }
 
@@ -395,6 +407,10 @@ public class WPSearchClient implements Closeable {
         // Delete the source
         String response = delete("sources/" + id, null, String.class);
         logger.debug("removeCustomSource({}): {}", id, response);
+    }
+
+    public void flush() {
+        bulkProcessor.flush();
     }
 
     @Override
