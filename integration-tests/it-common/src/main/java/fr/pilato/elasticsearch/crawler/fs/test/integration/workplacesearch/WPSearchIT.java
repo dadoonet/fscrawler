@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
@@ -317,7 +318,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(4));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(hit.getSourceAsObject(),
+                    documentChecker(JsonUtil.parseJson(hit.getSourceAsString()),
                             Arrays.asList("foo.txt", "bar.txt", "baz.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Bar", "Baz", "Foo Bar Baz"));
                 }
@@ -332,7 +333,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(2));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(hit.getSourceAsObject(),
+                    documentChecker(JsonUtil.parseJson(hit.getSourceAsString()),
                             Arrays.asList("foo.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Foo Bar Baz"));
                 }
@@ -347,7 +348,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(1));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(hit.getSourceAsObject(),
+                    documentChecker(JsonUtil.parseJson(hit.getSourceAsString()),
                             Arrays.asList("foo.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Foo Bar Baz"));
                 }
@@ -362,7 +363,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(2));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(hit.getSourceAsObject(),
+                    documentChecker(JsonUtil.parseJson(hit.getSourceAsString()),
                             Arrays.asList("foo.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Foo Bar Baz"));
                 }
@@ -379,7 +380,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(1));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(hit.getSourceAsObject(),
+                    documentChecker(JsonUtil.parseJson(hit.getSourceAsString()),
                             Arrays.asList("foo.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Foo Bar Baz"));
                 }
@@ -397,7 +398,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(1));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(hit.getSourceAsObject(),
+                    documentChecker(JsonUtil.parseJson(hit.getSourceAsString()),
                             Arrays.asList("foo.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Foo Bar Baz"));
                 }

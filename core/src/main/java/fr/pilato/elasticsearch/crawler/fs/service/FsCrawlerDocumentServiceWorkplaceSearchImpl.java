@@ -19,7 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.service;
 
+import com.google.gson.JsonObject;
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.spi.json.GsonJsonProvider;
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
@@ -50,9 +54,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
+
 public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDocumentService {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerDocumentServiceWorkplaceSearchImpl.class);
+    private final Configuration conf = Configuration.builder().jsonProvider(new JacksonJsonProvider(mapper)).build();
 
     private final WorkplaceSearchClient client;
 
@@ -124,7 +131,8 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
         response.setTotalHits(totalHits);
         for (int i = 0; i < totalHits; i++) {
             ESSearchHit hit = new ESSearchHit();
-            hit.setSourceAsObject(JsonPath.read(document, "$.results[" + i + "]"));
+            // We read the hit and transform it again as a json document using Jackson
+            hit.setSourceAsString(mapper.writeValueAsString(JsonPath.read(document, "$.results[" + i + "]")));
             response.addHit(hit);
         }
 
