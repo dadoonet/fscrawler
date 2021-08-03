@@ -14,7 +14,7 @@ public interface WorkplaceSearchClient extends Closeable {
 
     void delete(String id);
 
-    String search(String query, Map<String, List<String>> filters);
+    String search(String query, Map<String, Object> filters);
 
     /**
      * Check that a document exists
@@ -28,7 +28,7 @@ public interface WorkplaceSearchClient extends Closeable {
      * @param id    Document id
      * @return the document or null
      */
-    String get(String id);
+    Object get(String id);
 
     /**
      * Flush any pending operation

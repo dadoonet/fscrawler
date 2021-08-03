@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.service;
 
+import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
@@ -32,12 +33,22 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.client.Entity;
+import org.apache.http.HttpEntity;
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDocumentService {
 
@@ -95,17 +106,29 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     }
 
     @Override
-    public void refresh(String index) throws IOException {
-        logger.debug("Refreshing {}", index);
+    public void refresh(String index) {
+        // We do nothing
     }
 
     @Override
     public ESSearchResponse search(ESSearchRequest request) throws IOException {
         logger.debug("Searching {}", request);
 
-        // Convert the ESSearchRequest to a WPSearch request
-        client.search(toWorkplaceSearchQuery(request.getESQuery()), null);
-        return null;
+        String json = client.search(toWorkplaceSearchQuery(request.getESQuery()),
+                toWorkplaceSearchFilters(request.getESQuery()));
+
+        Object document = JsonUtil.parseJson(json);
+        ESSearchResponse response = new ESSearchResponse(json);
+
+        int totalHits = JsonPath.read(document, "$.meta.page.total_results");
+        response.setTotalHits(totalHits);
+        for (int i = 0; i < totalHits; i++) {
+            ESSearchHit hit = new ESSearchHit();
+            hit.setSourceAsObject(JsonPath.read(document, "$.results[" + i + "]"));
+            response.addHit(hit);
+        }
+
+        return response;
     }
 
     @Override
@@ -117,10 +140,14 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     @Override
     public ESSearchHit get(String index, String id) throws IOException {
         logger.debug("Getting {}/{}", index, id);
-        String json = client.get(id);
+        Object json = client.get(id);
 
-        // TODO parse the json and return it as an ESSearchHit
-        return null;
+        ESSearchHit hit = new ESSearchHit();
+        hit.setIndex(index);
+        hit.setId(id);
+        hit.setSourceAsObject(json);
+
+        return hit;
     }
 
     @Override
@@ -129,31 +156,72 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
         client.flush();
     }
 
+    /**
+     * We extract the {@link ESMatchQuery} from the {@link ESQuery}.
+     * We ignore totally the {@link ESTermQuery} if any and we fail for the others.
+     * @param query the query to transform as a fulltext search content
+     * @return a fulltext search content
+     */
     private String toWorkplaceSearchQuery(ESQuery query) {
-        if (query instanceof ESTermQuery) {
-            ESTermQuery esQuery = (ESTermQuery) query;
-            return esQuery.getValue();
+        if (query == null) {
+            return null;
         }
         if (query instanceof ESMatchQuery) {
             ESMatchQuery esQuery = (ESMatchQuery) query;
             return esQuery.getValue();
         }
-        if (query instanceof ESPrefixQuery) {
-            ESPrefixQuery esQuery = (ESPrefixQuery) query;
-        }
-        if (query instanceof ESRangeQuery) {
-            ESRangeQuery esQuery = (ESRangeQuery) query;
-            if (esQuery.getFrom() != null) {
-            }
-            if (esQuery.getTo() != null) {
-            }
+        if (query instanceof ESTermQuery) {
+            return null;
         }
         if (query instanceof ESBoolQuery) {
             ESBoolQuery esQuery = (ESBoolQuery) query;
             for (ESQuery clause : esQuery.getMustClauses()) {
+                String fulltextQuery = toWorkplaceSearchQuery(clause);
+                if (fulltextQuery != null) {
+                    return fulltextQuery;
+                }
             }
+            return null;
         }
-        throw new IllegalArgumentException("Query " + query.getClass().getSimpleName() + " not implemented yet");
+        throw new IllegalArgumentException("Query " + query.getClass().getSimpleName() + " is not supported for " +
+                "fulltext search within Workplace Search");
     }
 
+    /**
+     * We extract the {@link ESTermQuery} from the {@link ESQuery}.
+     * It also supports the {@link ESBoolQuery}.
+     * We ignore totally the {@link ESMatchQuery} if any and we fail for the others.
+     * @param query the query to transform as filter
+     * @return the filter to apply
+     */
+    private Map<String, Object> toWorkplaceSearchFilters(ESQuery query) {
+        if (query == null) {
+            return null;
+        }
+        if (query instanceof ESTermQuery) {
+            ESTermQuery esQuery = (ESTermQuery) query;
+            return Collections.singletonMap(query.getField(), List.of(esQuery.getValue()));
+        }
+        if (query instanceof ESMatchQuery) {
+            return null;
+        }
+        if (query instanceof ESBoolQuery) {
+            ESBoolQuery esQuery = (ESBoolQuery) query;
+            Map<String, Object> filters = new HashMap<>();
+            List<Map<String, Object>> all = new ArrayList<>();
+
+            for (ESQuery clause : esQuery.getMustClauses()) {
+                Map<String, Object> filter = toWorkplaceSearchFilters(clause);
+                if (filter != null) {
+                    all.add(filter);
+                }
+            }
+            if (!all.isEmpty()) {
+                filters.put("all", all);
+            }
+            return filters;
+        }
+        throw new IllegalArgumentException("Query " + query.getClass().getSimpleName() + " is not supported for " +
+                "filtering within Workplace Search");
+    }
 }

@@ -28,6 +28,7 @@ public class ESSearchHit {
     private Long version;
     private Map<String, Object> source;
     private String sourceAsString;
+    private Object sourceAsObject;
     private Map<String, ESDocumentField> fields;
     private Map<String, ESHighlightField> highlightFields = new HashMap<>();
 
@@ -85,5 +86,13 @@ public class ESSearchHit {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public Object getSourceAsObject() {
+        return sourceAsObject;
+    }
+
+    public void setSourceAsObject(Object json) {
+        this.sourceAsObject = json;
     }
 }

@@ -96,20 +96,17 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     }
 
     @Override
-    public String search(String query, Map<String, List<String>> filters) {
+    public String search(String query, Map<String, Object> filters) {
         return wpSearchClient.search(query, filters);
     }
 
     @Override
     public boolean exists(String id) {
-        String document = wpSearchClient.getDocument(id);
-
-        // TODO Implement this and test it
-        return document == null;
+        return wpSearchClient.getDocument(id) != null;
     }
 
     @Override
-    public String get(String id) {
+    public Object get(String id) {
         return wpSearchClient.getDocument(id);
     }
 

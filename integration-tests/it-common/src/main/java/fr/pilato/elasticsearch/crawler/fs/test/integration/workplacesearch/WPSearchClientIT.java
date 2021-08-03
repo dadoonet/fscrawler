@@ -28,14 +28,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -84,10 +82,10 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             client.configureCustomSource(customSourceId, SOURCE_NAME);
 
             // Index some documents
-            client.indexDocument(fakeDocument(RandomizedTest.randomAsciiLettersOfLength(10), "Foo", "EN", "foo", "Foo"));
-            client.indexDocument(fakeDocument(RandomizedTest.randomAsciiLettersOfLength(10), "Bar", "FR", "bar", "Bar"));
-            client.indexDocument(fakeDocument(RandomizedTest.randomAsciiLettersOfLength(10), "Baz", "DE", "baz", "Baz"));
-            client.indexDocument(fakeDocument(RandomizedTest.randomAsciiLettersOfLength(10), "Foo Bar Baz", "EN", "foobarbaz", "Foo", "Bar", "Baz"));
+            client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Foo", "EN", "foo", "Foo"));
+            client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Bar", "FR", "bar", "Bar"));
+            client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Baz", "DE", "baz", "Baz"));
+            client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Foo Bar Baz", "EN", "foobarbaz", "Foo", "Bar", "Baz"));
 
             // We need to wait until it's done
             String json = countTestHelper(client, 4L, TimeValue.timeValueSeconds(5));
@@ -115,6 +113,30 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
                 client.destroyDocument(ids.get(i));
                 countTestHelper(client, Long.valueOf(ids.size() - 1 - i), TimeValue.timeValueSeconds(5));
             }
+        }
+    }
+
+    @Test
+    public void testGetDocument() throws Exception {
+        try (WPSearchClient client = createClient()) {
+            // We configure the custom source.
+            String customSourceId = client.createCustomSource(SOURCE_NAME);
+            client.configureCustomSource(customSourceId, SOURCE_NAME);
+
+            String id = RandomizedTest.randomAsciiLettersOfLength(10);
+
+            // Index a document
+            client.indexDocument(fakeDocumentAsMap(id, "Foo", "EN", "foo", "Foo"));
+
+            // We need to wait until it's done
+            countTestHelper(client, 1L, TimeValue.timeValueSeconds(5));
+
+            // We can now get the document
+            Object document = client.getDocument(id);
+            documentChecker(document, List.of("foo.txt"), List.of("Foo"));
+
+            // Get a non existing document
+            assertThat(client.getDocument("thisiddoesnotexist"), nullValue());
         }
     }
 
@@ -173,7 +195,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             }
             // Search using a filter
             {
-                Map<String, List<String>> filters = new HashMap<>();
+                Map<String, Object> filters = new HashMap<>();
                 filters.put("language", Collections.singletonList("FR"));
                 String json = client.search(null, filters);
                 List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
@@ -182,7 +204,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             }
             // Search using both a query and a filter
             {
-                Map<String, List<String>> filters = new HashMap<>();
+                Map<String, Object> filters = new HashMap<>();
                 filters.put("language", Collections.singletonList("DE"));
                 String json = client.search("Foo Bar", filters);
                 List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
@@ -207,35 +229,4 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
         }
     }
 
-    private static void checker(String json, int results, List<String> filenames, List<String> texts) {
-        staticLogger.trace("{}", json);
-
-        Object document = parseJson(json);
-        List<String> urls = new ArrayList<>();
-        List<String> titles = new ArrayList<>();
-        List<String> bodies = new ArrayList<>();
-
-        filenames.forEach((filename) -> {
-            urls.add("http://127.0.0.1/" + filename);
-            titles.add(filename);
-        });
-
-        texts.forEach((text) -> {
-            titles.add("Title for " + text);
-            bodies.add("Content for " + text);
-        });
-
-        assertThat(JsonPath.read(document, "$.meta.page.total_results"), is(results));
-        assertThat(JsonPath.read(document, "$.results[*].title.raw"), hasItem(isOneOf(titles.toArray())));
-        assertThat(JsonPath.read(document, "$.results[*].body.raw"), hasItems(bodies.toArray()));
-        assertThat(JsonPath.read(document, "$.results[*].size.raw"), hasItem(notNullValue()));
-        assertThat(JsonPath.read(document, "$.results[*].text_size.raw"), hasItem(notNullValue()));
-        assertThat(JsonPath.read(document, "$.results[*].mime_type.raw"), hasItem(startsWith("text/plain")));
-        assertThat(JsonPath.read(document, "$.results[*].name.raw"), hasItems(filenames.toArray()));
-        assertThat(JsonPath.read(document, "$.results[*].extension.raw"), hasItem("txt"));
-        filenames.forEach((filename) -> assertThat(JsonPath.read(document, "$.results[*].path.raw"), hasItem(endsWith(filename))));
-        assertThat(JsonPath.read(document, "$.results[*].url.raw"), hasItems(urls.toArray()));
-        assertThat(JsonPath.read(document, "$.results[*].created_at.raw"), hasItem(notNullValue()));
-        assertThat(JsonPath.read(document, "$.results[*].last_modified.raw"), hasItem(notNullValue()));
-    }
 }

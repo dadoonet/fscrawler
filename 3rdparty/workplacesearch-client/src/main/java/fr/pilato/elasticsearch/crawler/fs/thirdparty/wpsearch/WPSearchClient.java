@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -258,12 +259,18 @@ public class WPSearchClient implements Closeable {
     /**
      * Get one single document
      * @param id the document id
+     * @return the Json document as an object readable with JsonPath
      */
-    public String getDocument(String id) {
+    public Object getDocument(String id) {
         checkStarted();
         logger.debug("Getting document {} to custom source {}", id, sourceId);
-        String json = search(null, Collections.singletonMap("id", Collections.singletonList(id)));
-        return JsonPath.read(json, "$.results[0]");
+
+        String json = get("/sources/" + sourceId + "/documents/" + id, String.class);
+        logger.fatal("{}", json);
+
+        Object document = parseJson(json);
+
+        return JsonPath.read(document, "$.results[0]");
     }
 
     /**
@@ -297,9 +304,9 @@ public class WPSearchClient implements Closeable {
      * @param query Text we are searching for
      * @return the json response
      */
-    public String search(String query, Map<String, List<String>> filters) {
+    public String search(String query, Map<String, Object> filters) {
         checkStarted();
-        logger.debug("Searching for {} with filters {}", query, filters);
+        logger.trace("Searching for {} with filters {}", query, filters);
         Map<String, Object> request = new HashMap<>();
 
         if (query != null) {
@@ -437,17 +444,32 @@ public class WPSearchClient implements Closeable {
 
     <T> T get(String path, Class<T> clazz) {
         logger.trace("Calling GET {}{}", urlForApi, path);
-        return prepareHttpCall(path).get(clazz);
+        try {
+            return prepareHttpCall(path).get(clazz);
+        } catch (BadRequestException e) {
+            logger.warn("Error while running GET {}{}: {}", urlForApi, path, e.getResponse().readEntity(String.class));
+            throw e;
+        }
     }
 
     <T> T post(String path, Object data, Class<T> clazz) {
         logger.trace("Calling POST {}{}", urlForApi, path);
-        return prepareHttpCall(path).post(Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
+        try {
+            return prepareHttpCall(path).post(Entity.json(data), clazz);
+        } catch (BadRequestException e) {
+            logger.warn("Error while running POST {}{}: {}", urlForApi, path, e.getResponse().readEntity(String.class));
+            throw e;
+        }
     }
 
     private <T> T delete(String path, Object data, Class<T> clazz) {
         logger.trace("Calling DELETE {}{}", urlForApi, path);
-        return prepareHttpCall(path).method("DELETE", Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
+        try {
+            return prepareHttpCall(path).method("DELETE", Entity.json(data), clazz);
+        } catch (BadRequestException e) {
+            logger.warn("Error while running DELETE {}{}: {}", urlForApi, path, e.getResponse().readEntity(String.class));
+            throw e;
+        }
     }
 
     private Invocation.Builder prepareHttpCall(String path) {

@@ -41,6 +41,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.frequently;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.docToJson;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -200,7 +202,11 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         }
     }
 
-    protected static Map<String, Object> fakeDocument(String id, String text, String lang, String filename, String... tags) {
+    protected static Map<String, Object> fakeDocumentAsMap(String id, String text, String lang, String filename, String... tags) {
+        return docToJson(id, fakeDocument(text, lang, filename, tags), "http://127.0.0.1");
+    }
+
+    protected static Doc fakeDocument(String text, String lang, String filename, String... tags) {
         Doc doc = new Doc();
 
         // Index content
@@ -236,6 +242,47 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         path.setReal("/tmp/es/" + filename + ".txt");
         doc.setPath(path);
 
-        return docToJson(id, doc, "http://127.0.0.1");
+        return doc;
+    }
+
+    protected static void checker(String json, int results, List<String> filenames, List<String> texts) {
+        staticLogger.trace("{}", json);
+
+        Object document = parseJson(json);
+        assertThat(JsonPath.read(document, "$.meta.page.total_results"), is(results));
+
+        for (int i = 0; i < results; i++) {
+            documentChecker(JsonPath.read(document, "$.results[" + i + "]"), filenames, texts);
+        }
+    }
+
+    protected static void documentChecker(Object document, List<String> filenames, List<String> texts) {
+        List<String> urls = new ArrayList<>();
+        List<String> titles = new ArrayList<>();
+        List<String> bodies = new ArrayList<>();
+        List<String> paths = new ArrayList<>();
+
+        filenames.forEach((filename) -> {
+            urls.add("http://127.0.0.1/" + filename);
+            titles.add(filename);
+            paths.add("/tmp/es/" + filename);
+        });
+
+        texts.forEach((text) -> {
+            titles.add("Title for " + text);
+            bodies.add("Content for " + text);
+        });
+
+        assertThat(JsonPath.read(document, "$.title.raw"), isOneOf(titles.toArray()));
+        assertThat(JsonPath.read(document, "$.body.raw"), isOneOf(bodies.toArray()));
+        assertThat(JsonPath.read(document, "$.size.raw"), notNullValue());
+        assertThat(JsonPath.read(document, "$.text_size.raw"), notNullValue());
+        assertThat(JsonPath.read(document, "$.mime_type.raw"), startsWith("text/plain"));
+        assertThat(JsonPath.read(document, "$.name.raw"), isOneOf(filenames.toArray()));
+        assertThat(JsonPath.read(document, "$.extension.raw"), is("txt"));
+        assertThat(JsonPath.read(document, "$.path.raw"), isOneOf(paths.toArray()));
+        assertThat(JsonPath.read(document, "$.url.raw"), isOneOf(urls.toArray()));
+        assertThat(JsonPath.read(document, "$.created_at.raw"), notNullValue());
+        assertThat(JsonPath.read(document, "$.last_modified.raw"), notNullValue());
     }
 }
