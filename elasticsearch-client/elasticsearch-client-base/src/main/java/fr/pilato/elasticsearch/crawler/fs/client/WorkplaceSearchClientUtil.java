@@ -148,9 +148,8 @@ public abstract class WorkplaceSearchClientUtil {
         return name;
     }
 
-    public static String toRFC3339(Date d)
-    {
-        return RFC_3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
+    public static String toRFC3339(Date d) {
+        return d == null ? null : RFC_3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
     }
 
     /**
