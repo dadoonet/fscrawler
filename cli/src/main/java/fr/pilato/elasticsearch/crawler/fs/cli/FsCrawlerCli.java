@@ -127,13 +127,17 @@ public class FsCrawlerCli {
                     return;
                 }
                 // We don't write anything on the console anymore
-                console.addFilter(LevelMatchFilter.newBuilder().setLevel(Level.ALL).setOnMatch(Filter.Result.DENY).build());
+                if (console != null) {
+                    console.addFilter(LevelMatchFilter.newBuilder().setLevel(Level.ALL).setOnMatch(Filter.Result.DENY).build());
+                }
             } else {
-                console.addFilter(LevelRangeFilter.createFilter(
-                        commands.debug ? Level.DEBUG : Level.TRACE,
-                        Level.ALL,
-                        Filter.Result.DENY,
-                        Filter.Result.ACCEPT));
+                if (console != null) {
+                    console.addFilter(LevelRangeFilter.createFilter(
+                            commands.debug ? Level.DEBUG : Level.TRACE,
+                            Level.ALL,
+                            Filter.Result.DENY,
+                            Filter.Result.ACCEPT));
+                }
             }
 
             loggerConfig.setLevel(commands.debug ? Level.DEBUG : Level.TRACE);
