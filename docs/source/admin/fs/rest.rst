@@ -8,6 +8,8 @@ REST service
 FSCrawler can expose a REST service running at http://127.0.0.1:8080/fscrawler.
 To activate it, launch FSCrawler with ``--rest`` option.
 
+.. contents:: :backlinks: entry
+
 FSCrawler status
 ~~~~~~~~~~~~~~~~
 

@@ -10,6 +10,8 @@ Thanks to `JetBrains <https://www.jetbrains.com/?from=FSCrawler>`_ for the Intel
     :alt: Jet Brains
     :target: https://www.jetbrains.com/?from=FSCrawler
 
+.. contents:: :backlinks: entry
+
 Clone the project
 ^^^^^^^^^^^^^^^^^
 

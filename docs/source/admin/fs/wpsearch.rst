@@ -7,6 +7,8 @@ Workplace Search settings
 
 FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/workplace-search>`_.
 
+.. contents:: :backlinks: entry
+
 .. note::
 
     Although this won't be needed in the future, it is still mandatory to have access to the elasticsearch

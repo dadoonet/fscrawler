@@ -1,0 +1,6 @@
+Version 2.4
+===========
+
+-  No specific step needed. Just note that mapping changed as we support
+   more metadata. Might be useful to run similar steps as for 2.2
+   upgrade.
