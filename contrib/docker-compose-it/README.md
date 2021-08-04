@@ -1,36 +1,25 @@
 # Developper Guide
 
-This documentation shows how to start a Workplace Search cluster.
+This documentation shows how to easily start a Workplace Search cluster.
 
 ## Launch Elastic Stack
 
 Go to the `contrib/docker-compose-it` dir and type:
 
 ```sh
-docker-compose \
-    -f docker-compose-elasticsearch.yml \
-    -f docker-compose-enterprise-search.yml \
-    up
+docker-compose up
 ```
 
-If you want to also start the stack with Kibana, run instead:
+Wait for everything to start. It could take several minutes.
+Then you can open Kibana at http://localhost:5601 and log in with `elastic` / `changeme` account.
+
+**Note:** the cluster will start with a `basic` license. If you want to run integration tests,
+those are using some APIs which are available with a `trial` license. So run the cluster with: 
 
 ```sh
-docker-compose \
-    -f docker-compose-elasticsearch.yml \
-    -f docker-compose-kibana.yml \
-    -f docker-compose-enterprise-search.yml \
-    up
+LICENSE_TYPE=trial docker-compose up
 ```
 
-Wait for everything to start. It could take several minutes:
-
-```
-enterprisesearch_1  | 2020-07-20 13:55:08.199:INFO:oejs.ServerConnector:main: Started ServerConnector@252570b9{HTTP/1.1}{0.0.0.0:3002}
-enterprisesearch_1  | 2020-07-20 13:55:08.199:INFO:oejs.Server:main: Started @342868ms
-```
-
-Then you can open http://localhost:3002 and log in with `enterprise_search` / `changeme` account.
 
 ## Configure FSCrawler
 
@@ -58,3 +47,12 @@ workplace_search:
 ```sh
 bin/fscrawler workplace --config_dir ./config
 ```
+
+## Stop Elastic Stack
+
+Go to the `contrib/docker-compose-it` dir and type:
+
+```sh
+docker-compose down
+```
+

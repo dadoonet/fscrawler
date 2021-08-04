@@ -20,10 +20,10 @@ FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/wo
         git clone git@github.com:dadoonet/fscrawler.git
         cd fscrawler
         cd contrib/docker-compose-workplacesearch
-        docker-compose -f docker-compose-elasticsearch.yml -f docker-compose-enterprise-search.yml up
+        docker-compose up
 
-    This will start Elasticsearch and Workplace Search.
-    Wait for it to start. http://127.0.0.1:3002/ws must be available before continuing.
+    This will start Elasticsearch, Kibana and Workplace Search. Wait for it to start.
+    http://0.0.0.0:5601/app/enterprise_search/workplace_search must be available before continuing.
 
 Here is a list of Workplace Search settings (under ``workplace_search.`` prefix):
 
@@ -91,8 +91,8 @@ Custom Source ID
 When a Custom Source is found with the same name, the ``KEY`` of the Custom Source is automatically fetched and applied
 to the workplace search job settings.
 
-If you already have defined a Custom API in Workplace Search and have the ``KEY``, you can add it to your existing
-FSCrawler configuration file:
+If you already have defined a Custom API in `Workplace Search Admin UI <http://0.0.0.0:5601/app/enterprise_search/workplace_search>`
+and have the ``KEY``, you can add it to your existing FSCrawler configuration file:
 
 .. code:: yaml
 
