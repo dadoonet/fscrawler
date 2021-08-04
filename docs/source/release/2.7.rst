@@ -3,7 +3,7 @@ Version 2.7
 
 A lot of works happened for this release. More than 800 commits since version 2.6.
 
-.. rubric:: Highlights
+.. note::
 
     FSCrawler can now send documents to Workplace Search, meaning that users can benefit from a powerful and centralized
     interface to search for local documents in addition to enterprise documents like Dropbox, Google Drive...
