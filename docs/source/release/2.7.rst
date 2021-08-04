@@ -1,6 +1,19 @@
 Version 2.7
 ===========
 
+A lot of works happened for this release. More than 800 commits since version 2.6.
+
+.. rubric:: Highlights
+
+    FSCrawler can now send documents to Workplace Search, meaning that users can benefit from a powerful and centralized
+    interface to search for local documents in addition to enterprise documents like Dropbox, Google Drive...
+
+    This version is mainly meant to work with Elasticsearch 7.x but you might be able to use it with 6.8 version.
+
+    The mapping for folders have changed and is more aligned with the mapping for documents.
+
+    Docker images are now generated from the build.
+
 - FSCrawler comes now with an elasticsearch 7.x implementation.
 - FSCrawler supports Workplace Search 7.x.
 - FSCrawler also supports YAML format for jobs (default).
@@ -17,3 +30,8 @@ Version 2.7
   settings files in ``~/_default/7/_settings_folder.json`` and ``~/_default/6/_settings_folder.json`` or any job
   specific setting file like ``~/.fscrawler/{job_name}/_mappings/7/_settings_folder.json`` or
   ``~/.fscrawler/{job_name}/_mappings/6/_settings_folder.json``.
+
+Thanks to ``@CircuitGuy``, ``@Einsteinder``, ``@JLLeitschuh``, ``@Maijin``, ``@TommyLike``, ``@aram535``,
+``@chrissound``, ``@dadoonet``, ``@gaiadas``, ``@helsonxiao``, ``@ian-cameron``, ``@isaac-ipl``, ``@janhoy``,
+``@jetersen``, ``@k3ninho``, ``@kikkauz``, ``@mario-89``, ``@muraken720``, ``@shahariaazam``, ``@toto1310``,
+``@wrathagom``, ``Aram Mirzadeh``, ``Erwan Arzur`` and ``fco-at-801217851326`` for this release!
