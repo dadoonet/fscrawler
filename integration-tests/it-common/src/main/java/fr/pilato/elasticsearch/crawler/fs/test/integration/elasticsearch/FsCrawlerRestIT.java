@@ -31,7 +31,6 @@ import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -58,16 +57,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 
 @SuppressWarnings("ALL")
 public class FsCrawlerRestIT extends AbstractRestITCase {
 
     private Path currentTestTagDir;
-    private FsCrawlerManagementService managementService;
+    private FsCrawlerManagementServiceElasticsearchImpl managementService;
     private FsCrawlerDocumentService documentService;
 
     @Before
@@ -312,7 +308,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     private void checkDocument(String filename, HitChecker checker) throws IOException {
-        ESSearchResponse response = documentService.getClient().search(new ESSearchRequest()
+        ESSearchResponse response = documentService.search(new ESSearchRequest()
                 .withIndex(getCrawlerName())
                 .withESQuery(new ESTermQuery("file.filename", filename)));
 

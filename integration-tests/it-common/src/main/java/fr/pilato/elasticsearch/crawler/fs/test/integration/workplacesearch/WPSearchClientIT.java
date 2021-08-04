@@ -20,20 +20,19 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
-import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -41,19 +40,12 @@ import static org.hamcrest.Matchers.*;
  * Test Workplace Search HTTP client
  */
 public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
-    private static final String SOURCE_NAME = "fscrawler-wpsearch-client";
-
-    @Before
-    @After
-    public void cleanUpCustomSource() {
-        cleanExistingCustomSources(SOURCE_NAME);
-    }
 
     @Test
     public void testGetSourceById() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String id = client.createCustomSource(SOURCE_NAME);
+            String id = client.createCustomSource(sourceName);
 
             // This is what we want to test actually
             String source = client.getCustomSourceById(id);
@@ -65,12 +57,78 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testGetSourceByName() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String id = client.createCustomSource(SOURCE_NAME);
+            String id = client.createCustomSource(sourceName);
 
             // This is what we want to test actually
-            List<String> sourceIds = client.getCustomSourcesByName(SOURCE_NAME);
+            List<String> sourceIds = client.getCustomSourcesByName(sourceName);
             assertThat(sourceIds, hasSize(1));
             assertThat(id, isIn(sourceIds));
+        }
+    }
+
+    @Test
+    public void testWithSomeFakeDocuments() throws Exception {
+        try (WPSearchClient client = createClient()) {
+            // We configure the custom source.
+            String customSourceId = client.createCustomSource(sourceName);
+            client.configureCustomSource(customSourceId, sourceName);
+
+            // Index some documents
+            client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Foo", "EN", "foo", "Foo"));
+            client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Bar", "FR", "bar", "Bar"));
+            client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Baz", "DE", "baz", "Baz"));
+            client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Foo Bar Baz", "EN", "foobarbaz", "Foo", "Bar", "Baz"));
+
+            // We need to wait until it's done
+            String json = countTestHelper(client, customSourceId, 4L, TimeValue.timeValueSeconds(5));
+
+            // We read the ids of the documents so we can remove them then
+            List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
+
+            // Search for some specific use cases
+            checker(client.search("Foo", null), 2,
+                    Arrays.asList("foo.txt", "foobarbaz.txt"),
+                    Arrays.asList("Foo", "Foo Bar Baz"));
+            checker(client.search("Bar", null), 3, // 3 because of fuzziness, we are getting back Baz as well
+                    Arrays.asList("bar.txt", "baz.txt", "foobarbaz.txt"),
+                    Arrays.asList("Bar", "Baz", "Foo Bar Baz"));
+            checker(client.search("Baz", null), 3, // 3 because of fuzziness, we are getting back Bar as well
+                    Arrays.asList("bar.txt", "baz.txt", "foobarbaz.txt"),
+                    Arrays.asList("Bar", "Baz", "Foo Bar Baz"));
+            checker(client.search("Foo Bar Baz", null), 3, // 3 because Foo is meaningless apparently
+                    Arrays.asList("bar.txt", "baz.txt", "foobarbaz.txt"),
+                    Arrays.asList("Bar", "Baz", "Foo Bar Baz"));
+
+            for (int i = 0; i < ids.size(); i++) {
+                // Let's remove one document and wait until it's done
+                logger.info("   --> removing one document");
+                client.destroyDocument(ids.get(i));
+                countTestHelper(client, customSourceId, Long.valueOf(ids.size() - 1 - i), TimeValue.timeValueSeconds(5));
+            }
+        }
+    }
+
+    @Test
+    public void testGetDocument() throws Exception {
+        try (WPSearchClient client = createClient()) {
+            // We configure the custom source.
+            String customSourceId = client.createCustomSource(sourceName);
+            client.configureCustomSource(customSourceId, sourceName);
+
+            String id = RandomizedTest.randomAsciiLettersOfLength(10);
+
+            // Index a document
+            client.indexDocument(fakeDocumentAsMap(id, "Foo", "EN", "foo", "Foo"));
+
+            // We need to wait until it's done
+            countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(5));
+
+            // We can now get the document
+            String document = client.getDocument(id);
+            documentChecker(JsonUtil.parseJson(document), List.of("foo.txt"), List.of("Foo"));
+
+            // Get a non existing document
+            assertThat(client.getDocument("thisiddoesnotexist"), nullValue());
         }
     }
 
@@ -78,23 +136,73 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testSearch() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String customSourceId = client.createCustomSource(SOURCE_NAME);
-            client.configureCustomSource(customSourceId, SOURCE_NAME);
-            Map<String, Object> document = new HashMap<>();
-            String uniqueId = RandomizedTest.randomAsciiLettersOfLength(10);
-            document.put("id", "testSearch");
-            document.put("title", "To be searched " + uniqueId);
-            document.put("body", "Foo Bar Baz " + uniqueId);
-            client.indexDocument(document);
+            String customSourceId = client.createCustomSource(sourceName);
+            client.configureCustomSource(customSourceId, sourceName);
+
+            String uniqueId1 = RandomizedTest.randomAsciiLettersOfLength(10);
+            {
+                Map<String, Object> document = new HashMap<>();
+                document.put("id", uniqueId1);
+                document.put("language", "EN");
+                document.put("title", "To be searched " + uniqueId1);
+                document.put("body", "Foo Bar Baz " + uniqueId1);
+                client.indexDocument(document);
+            }
+
+            String uniqueId2 = RandomizedTest.randomAsciiLettersOfLength(10);
+            {
+                Map<String, Object> document = new HashMap<>();
+                document.put("id", uniqueId2);
+                document.put("language", "FR");
+                document.put("title", "To be searched " + uniqueId2);
+                document.put("body", "Foo Bar Baz " + uniqueId2);
+                client.indexDocument(document);
+            }
+
+            String uniqueId3 = RandomizedTest.randomAsciiLettersOfLength(10);
+            {
+                Map<String, Object> document = new HashMap<>();
+                document.put("id", uniqueId3);
+                document.put("language", "DE");
+                document.put("title", "To be searched " + uniqueId3);
+                document.put("body", "Foo Bar Baz " + uniqueId3);
+                client.indexDocument(document);
+            }
 
             // We need to wait until it's done
-            countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId), 1L, null);
-            String json = client.search(uniqueId);
+            countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId), 3L, null);
 
-            List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
-
-            assertThat(ids, hasSize(1));
-            assertThat(ids.get(0), is("testSearch"));
+            // Search using fulltext search
+            {
+                String json = client.search("Foo Bar", null);
+                List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
+                assertThat(ids, hasSize(3));
+            }
+            // Search using fulltext search for document 1
+            {
+                String json = client.search(uniqueId1, null);
+                List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
+                assertThat(ids, hasSize(1));
+                assertThat(ids.get(0), is(uniqueId1));
+            }
+            // Search using a filter
+            {
+                Map<String, Object> filters = new HashMap<>();
+                filters.put("language", Collections.singletonList("FR"));
+                String json = client.search(null, filters);
+                List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
+                assertThat(ids, hasSize(1));
+                assertThat(ids.get(0), is(uniqueId2));
+            }
+            // Search using both a query and a filter
+            {
+                Map<String, Object> filters = new HashMap<>();
+                filters.put("language", Collections.singletonList("DE"));
+                String json = client.search("Foo Bar", filters);
+                List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
+                assertThat(ids, hasSize(1));
+                assertThat(ids.get(0), is(uniqueId3));
+            }
         }
     }
 
@@ -102,14 +210,15 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testSendAndRemoveADocument() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String customSourceId = client.createCustomSource(SOURCE_NAME);
-            client.configureCustomSource(customSourceId, SOURCE_NAME);
+            String customSourceId = client.createCustomSource(sourceName);
+            client.configureCustomSource(customSourceId, sourceName);
 
             Map<String, Object> document = new HashMap<>();
             document.put("id", "testSendAndRemoveADocument");
             document.put("title", "To be deleted " + RandomizedTest.randomAsciiLettersOfLength(10));
             client.indexDocument(document);
-            client.destroyDocument(customSourceId, "testSendAndRemoveADocument");
+            client.destroyDocument("testSendAndRemoveADocument");
         }
     }
+
 }

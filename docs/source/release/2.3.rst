@@ -1,0 +1,115 @@
+Version 2.3
+===========
+
+-  fscrawler comes with new mapping for folders. The change is really
+   tiny so you can skip this step if you wish. We basically removed
+   ``name`` field in the folder mapping as it was unused.
+
+-  The way FSCrawler computes now ``path.virtual`` for docs has changed.
+   It now includes the filename. Instead of ``/path/to`` you will now
+   get ``/path/to/file.txt``.
+
+-  The way FSCrawler computes now ``virtual`` for folders is now
+   consistent with what you can see for folders.
+
+-  ``path.encoded`` in documents and ``encoded`` in folders have been
+   removed as not needed by FSCrawler after all.
+
+-  :ref:`ocr_integration` is now properly activated for PDF documents.
+   This can be time, cpu and memory consuming though. You can disable
+   explicitly it by setting ``fs.pdf_ocr`` to ``false``.
+
+-  All dates are now indexed in elasticsearch in UTC instead of without
+   any time zone. For example, we were indexing previously a date like
+   ``2017-05-19T13:24:47.000``. Which was producing bad results when you
+   were located in a time zone other than UTC. It’s now indexed as
+   ``2017-05-19T13:24:47.000+0000``.
+
+-  In order to be compatible with the coming 6.0 elasticsearch version,
+   we need to get rid of types as only one type per index is still
+   supported. Which means that we now create index named ``job_name``
+   and ``job_name_folder`` instead of one index ``job_name`` with two
+   types ``doc`` and ``folder``. If you are upgrading from FSCrawler
+   2.2, it requires that you reindex your existing data either by
+   deleting the old index and running again FSCrawler or by using the
+   `reindex
+   API <https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html>`__
+   as follows:
+
+::
+
+   # Create folder index job_name_folder based on existing folder data
+   POST _reindex
+   {
+     "source": {
+       "index": "job_name",
+       "type": "folder"
+     },
+     "dest": {
+       "index": "job_name_folder"
+     }
+   }
+   # Remove old folder data from job_name index
+   POST job_name/folder/_delete_by_query
+   {
+     "query": {
+       "match_all": {}
+     }
+   }
+
+Note that you will need first to create the right settings and mappings
+so you can then run the reindex job. You can do that by launching
+``bin/fscrawler job_name --loop 0``.
+
+Better, you can run ``bin/fscrawler job_name --upgrade`` and let
+FSCrawler do all that for you. Note that this can take a loooong time.
+
+Also please be aware that some APIs used by the upgrade action are only
+available from elasticsearch 2.3 (reindex) or elasticsearch 5.0 (delete
+by query). If you are running an older version than 5.0 you need first
+to upgrade elasticsearch.
+
+This procedure only applies if you did not set previously
+``elasticsearch.type`` setting (default value was ``doc``). If you did,
+then you also need to reindex the existing documents to the default
+``_doc`` type as per elasticsearch 6.x (or ``doc`` for 5.x series):
+
+::
+
+   # Copy old type doc to the default doc type
+   POST _reindex
+   {
+     "source": {
+       "index": "job_name",
+       "type": "your_type_here"
+     },
+     "dest": {
+       "index": "job_name",
+       "type": "_doc"
+     }
+   }
+   # Remove old type data from job_name index
+   POST job_name/your_type_here/_delete_by_query
+   {
+     "query": {
+       "match_all": {}
+     }
+   }
+
+But note that this last step can take a very loooong time and will
+generate a lot of IO on your disk. It might be easier in such case to
+restart fscrawler from scratch.
+
+-  As seen in the previous point, we now have 2 indices instead of a
+   single one. Which means that ``elasticsearch.index`` setting has been
+   split to ``elasticsearch.index`` and ``elasticsearch.index_folder``.
+   By default, it’s set to the crawler name and the crawler name plus
+   ``_folder``. Note that the ``upgrade`` feature performs that change
+   for you.
+
+-  fscrawler has removed now mapping files ``doc.json`` and
+   ``folder.json``. Mapping for doc is merged within ``_settings.json``
+   file and folder mapping is now part of ``_settings_folder.json``.
+   Which means you can remove old files to avoid confusion. You can
+   simply remove existing files in ``~/.fscrawler/_default`` before
+   starting the new version so default files will be created again.

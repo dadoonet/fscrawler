@@ -86,4 +86,5 @@ public class ESSearchHit {
     public void setVersion(Long version) {
         this.version = version;
     }
+
 }

@@ -20,6 +20,11 @@
 package fr.pilato.elasticsearch.crawler.fs.service;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+
+import java.io.IOException;
 
 public interface FsCrawlerDocumentService extends FsCrawlerService {
     /**
@@ -45,4 +50,45 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @param pipeline  Pipeline (can be null)
      */
     void indexRawJson(String index, String id, String json, String pipeline);
+
+    /**
+     * Remove a document from the target service
+     * @param index     Index name
+     * @param id        Document ID
+     */
+    void delete(String index, String id);
+
+    /**
+     * Refresh the document database to make changes visible
+     * @param index     Optional index name
+     */
+    void refresh(String index) throws IOException;
+
+    /**
+     * Search for information
+     * @param request   The request
+     * @return a response from the document service
+     */
+    ESSearchResponse search(ESSearchRequest request) throws IOException;
+
+    /**
+     * Remove a document from the target service
+     * @param index     Index name
+     * @param id        Document ID
+     * @return true if the document exists
+     */
+    boolean exists(String index, String id) throws IOException;
+
+    /**
+     * Get a document from the target service
+     * @param index     Index name
+     * @param id        Document ID
+     * @return the document or null
+     */
+    ESSearchHit get(String index, String id) throws IOException;
+
+    /**
+     * Flush any pending operation
+     */
+    void flush();
 }

@@ -1,0 +1,21 @@
+Version 2.2
+===========
+
+-  fscrawler comes with new default mappings for files. They have better
+   defaults as they consume less disk space and CPU at index time. You
+   should remove existing files in ``~/.fscrawler/_default/_mappings``
+   before starting the new version so default mappings will be updated.
+   If you modified manually mapping files, apply the modification you
+   made on sample files.
+
+-  ``excludes`` is now set by default for new jobs to ``["~*"]``. In
+   previous versions, any file or directory containing a ``~`` was
+   excluded. Which means that if in your jobs, you are defining any
+   exclusion rule, you need to add ``*~*`` if you want to get back the
+   exact previous behavior.
+
+-  If you were indexing ``json`` or ``xml`` documents with the
+   ``filename_as_id`` option set, we were previously removing the suffix
+   of the file name, like indexing ``1.json`` was indexed as ``1``. With
+   this new version, we don’t remove anymore the suffix. So the ``_id``
+   for your document will be now ``1.json``.

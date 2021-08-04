@@ -19,13 +19,13 @@
 
 package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
 
-import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -255,6 +255,22 @@ public class WPSearchClient implements Closeable {
         bulkProcessor.add(new WPSearchOperation(sourceId, document));
     }
 
+
+    /**
+     * Get one single document
+     * @param id the document id
+     * @return the Json document as an object readable with JsonPath or null if not found
+     */
+    public String getDocument(String id) {
+        checkStarted();
+        logger.debug("Getting document {} to custom source {}", id, sourceId);
+        try {
+            return get("/sources/" + sourceId + "/documents/" + id, String.class);
+        } catch (NotFoundException e) {
+            return null;
+        }
+    }
+
     /**
      * Delete existing documents
      * @param sourceId  The custom source Id
@@ -264,7 +280,7 @@ public class WPSearchClient implements Closeable {
         checkStarted();
         logger.debug("Removing from source {} documents {}", sourceId, ids);
         try {
-            String response = post("sources/" + sourceId + "/documents/bulk_create", ids, String.class);
+            String response = post("sources/" + sourceId + "/documents/bulk_destroy", ids, String.class);
             logger.debug("Removing documents response: {}", response);
             // TODO parse the response to check for errors
         } catch (NotFoundException e) {
@@ -276,7 +292,7 @@ public class WPSearchClient implements Closeable {
      * Delete one document
      * @param id Document id to delete
      */
-    public void destroyDocument(String sourceId, String id) {
+    public void destroyDocument(String id) {
         destroyDocuments(sourceId, Collections.singletonList(id));
     }
 
@@ -286,11 +302,18 @@ public class WPSearchClient implements Closeable {
      * @param query Text we are searching for
      * @return the json response
      */
-    public String search(String query) {
+    public String search(String query, Map<String, Object> filters) {
         checkStarted();
-        logger.debug("Searching for {}", query);
+        logger.trace("Searching for {} with filters {}", query, filters);
         Map<String, Object> request = new HashMap<>();
-        request.put("query", query);
+
+        if (query != null) {
+            request.put("query", query);
+        }
+
+        if (filters != null) {
+            request.put("filters", filters);
+        }
 
         String json = post("search", request, String.class);
 
@@ -391,6 +414,10 @@ public class WPSearchClient implements Closeable {
         logger.debug("removeCustomSource({}): {}", id, response);
     }
 
+    public void flush() {
+        bulkProcessor.flush();
+    }
+
     @Override
     public void close() {
         logger.debug("Closing the WPSearchClient");
@@ -415,17 +442,32 @@ public class WPSearchClient implements Closeable {
 
     <T> T get(String path, Class<T> clazz) {
         logger.trace("Calling GET {}{}", urlForApi, path);
-        return prepareHttpCall(path).get(clazz);
+        try {
+            return prepareHttpCall(path).get(clazz);
+        } catch (WebApplicationException e) {
+            logger.warn("Error while running GET {}{}: {}", urlForApi, path, e.getResponse().readEntity(String.class));
+            throw e;
+        }
     }
 
     <T> T post(String path, Object data, Class<T> clazz) {
         logger.trace("Calling POST {}{}", urlForApi, path);
-        return prepareHttpCall(path).post(Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
+        try {
+            return prepareHttpCall(path).post(Entity.json(data), clazz);
+        } catch (WebApplicationException e) {
+            logger.warn("Error while running POST {}{}: {}", urlForApi, path, e.getResponse().readEntity(String.class));
+            throw e;
+        }
     }
 
     private <T> T delete(String path, Object data, Class<T> clazz) {
         logger.trace("Calling DELETE {}{}", urlForApi, path);
-        return prepareHttpCall(path).method("DELETE", Entity.entity(data, MediaType.APPLICATION_JSON), clazz);
+        try {
+            return prepareHttpCall(path).method("DELETE", Entity.json(data), clazz);
+        } catch (WebApplicationException e) {
+            logger.warn("Error while running DELETE {}{}: {}", urlForApi, path, e.getResponse().readEntity(String.class));
+            throw e;
+        }
     }
 
     private Invocation.Builder prepareHttpCall(String path) {

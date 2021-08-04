@@ -147,11 +147,13 @@ public abstract class AbstractFSCrawlerTestCase {
 
         while (sum + timeInMillis < maxTimeInMillis) {
             long current = breakSupplier.getAsLong();
+            staticLogger.trace("Check if {} is equal to {}", current, expected);
             if (expected == null && current >= 1) {
                 return current;
             } else if (expected != null && current == expected) {
                 return expected;
             }
+            staticLogger.trace("Sleep for {} because {} is not equal to {}", timeInMillis, current, expected);
             Thread.sleep(timeInMillis);
             sum += timeInMillis;
             timeInMillis = Math.min(AWAIT_BUSY_THRESHOLD, timeInMillis * 2);

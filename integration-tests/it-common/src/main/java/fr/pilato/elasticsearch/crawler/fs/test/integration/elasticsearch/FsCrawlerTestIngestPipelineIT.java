@@ -47,7 +47,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         String crawlerName = getCrawlerName();
 
         // We can only run this test against a 5.0 cluster or >
-        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >", documentService.getClient().isIngestSupported(), is(true));
+        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >", managementService.getClient().isIngestSupported(), is(true));
 
         // Create an empty ingest pipeline
         String pipeline = "{\n" +
@@ -61,7 +61,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        documentService.getClient().performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+        managementService.getClient().performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);
@@ -74,7 +74,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 .withESQuery(new ESMatchQuery("my_content_field", "perniciosoque")), 1L, currentTestResourceDir);
 
         // We expect to have one folder
-        ESSearchResponse response = documentService.getClient().search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
+        ESSearchResponse response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
         assertThat(response.getTotalHits(), is(1L));
     }
 
@@ -86,7 +86,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         String crawlerName = getCrawlerName();
 
         // We can only run this test against a 5.0 cluster or >
-        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >", documentService.getClient().isIngestSupported(), is(true));
+        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >", managementService.getClient().isIngestSupported(), is(true));
 
         // Create an empty ingest pipeline
         String pipeline = "{\n" +
@@ -109,7 +109,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        documentService.getClient().performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+        managementService.getClient().performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);
@@ -130,7 +130,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
 
         // We can only run this test against a 5.0 cluster or >
         assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
-                documentService.getClient().isIngestSupported(), is(true));
+                managementService.getClient().isIngestSupported(), is(true));
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);

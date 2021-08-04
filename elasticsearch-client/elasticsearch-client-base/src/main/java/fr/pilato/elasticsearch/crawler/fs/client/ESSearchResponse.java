@@ -50,6 +50,10 @@ public class ESSearchResponse {
         this.totalHits = totalHits;
     }
 
+    public void setTotalHits(int totalHits) {
+        this.totalHits = totalHits;
+    }
+
     public Map<String, ESTermsAggregation> getAggregations() {
         return aggregations;
     }

@@ -21,13 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.client.v7;
 
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.apache.logging.log4j.LogManager;
@@ -35,11 +29,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.docToJson;
 import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
 
 /**
@@ -49,21 +42,14 @@ import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUti
 public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
     private static final Logger logger = LogManager.getLogger(WorkplaceSearchClientV7.class);
-    private static final SimpleDateFormat RFC_3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ");
     private final Path config;
     private final FsSettings settings;
 
-    private ElasticsearchClient esClient = null;
     private WPSearchClient wpSearchClient = null;
 
     public WorkplaceSearchClientV7(Path config, FsSettings settings) {
         this.config = config;
         this.settings = settings;
-    }
-
-    @Override
-    public String compatibleVersion() {
-        return "7";
     }
 
     @Override
@@ -87,173 +73,45 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
 
         wpSearchClient.configureCustomSource(settings.getWorkplaceSearch().getId(), sourceName);
 
-        esClient = ElasticsearchClientUtil.getInstance(config, settings);
-        esClient.start();
         logger.debug("Workplace Search V7 client started");
     }
 
     @Override
-    public String getVersion() throws IOException {
-        return esClient.getVersion();
-    }
-
-    /**
-     * Create an index
-     * @param index index name
-     * @param ignoreErrors don't fail if the index already exists
-     * @param indexSettings index settings if any
-     * @throws IOException In case of error
-     */
-    public void createIndex(String index, boolean ignoreErrors, String indexSettings) throws IOException {
-        esClient.createIndex(index, ignoreErrors, indexSettings);
-    }
-
-    /**
-     * Check if an index exists
-     * @param index index name
-     * @return true if the index exists, false otherwise
-     * @throws IOException In case of error
-     */
-    public boolean isExistingIndex(String index) throws IOException {
-        return esClient.isExistingIndex(index);
-    }
-
-    /**
-     * Check if a pipeline exists
-     * @param pipelineName pipeline name
-     * @return true if the pipeline exists, false otherwise
-     * @throws IOException In case of error
-     */
-    public boolean isExistingPipeline(String pipelineName) throws IOException {
-        return esClient.isExistingPipeline(pipelineName);
-    }
-
-    /**
-     * Refresh an index
-     * @param index index name
-     * @throws IOException In case of error
-     */
-    public void refresh(String index) throws IOException {
-        esClient.refresh(index);
-    }
-
-    /**
-     * Wait for an index to become at least yellow (all primaries assigned)
-     * @param index index name
-     * @throws IOException In case of error
-     */
-    public void waitForHealthyIndex(String index) throws IOException {
-        esClient.waitForHealthyIndex(index);
-    }
-
-    // Utility methods
-
-    public boolean isIngestSupported() {
-        return true;
-    }
-
-    public String getDefaultTypeName() {
-        return esClient.getDefaultTypeName();
-    }
-
-    @Override
-    public void index(String index, String id, Doc doc, String pipeline) {
-        Map<String, Object> document = new HashMap<>();
-        // Id
-        document.put("id", id);
-
-        // Index content
-        document.put("body", doc.getContent());
-
-        // Index main metadata
-        // We use the name of the file if no title has been found in the document metadata
-        document.put("title", FsCrawlerUtil.isNullOrEmpty(doc.getMeta().getTitle()) ? doc.getFile().getFilename() : doc.getMeta().getTitle());
-        document.put("author", doc.getMeta().getAuthor());
-        document.put("keywords", doc.getMeta().getKeywords());
-        document.put("language", doc.getMeta().getLanguage());
-        document.put("comments", doc.getMeta().getComments());
-
-        // Index main file attributes
-        document.put("name", doc.getFile().getFilename());
-        document.put("mime_type", doc.getFile().getContentType());
-        document.put("extension", doc.getFile().getExtension());
-        document.put("size", doc.getFile().getFilesize());
-        document.put("text_size", doc.getFile().getIndexedChars());
-        document.put("last_modified", toRFC3339(doc.getFile().getLastModified()));
-        document.put("created_at", toRFC3339(doc.getFile().getCreated()));
-
-        // Index main path attributes
-        document.put("url", settings.getWorkplaceSearch().getUrlPrefix() + doc.getPath().getVirtual());
-        document.put("path", doc.getPath().getReal());
-
-        wpSearchClient.indexDocument(document);
-    }
-
-    @Override
-    public void indexRawJson(String index, String id, String json, String pipeline) {
-        throw new RuntimeException("Not supported by the workplace search client. Should not be called.");
-    }
-
-    @Override
-    public void indexSingle(String index, String id, String json) {
-        throw new RuntimeException("Not supported by the workplace search client. Should not be called.");
-    }
-
-    @Override
-    public void delete(String index, String id) {
-        wpSearchClient.destroyDocument(index, id);
-    }
-
-    @Override
-    public void close() throws IOException {
+    public void close() {
         logger.debug("Closing Workplace Search V7 client");
-        if (esClient != null) {
-            esClient.close();
-        }
         if (wpSearchClient != null) {
             wpSearchClient.close();
         }
         logger.debug("Workplace Search V7 client closed");
     }
 
-    public void createIndices() throws Exception {
-        esClient.createIndices();
+    @Override
+    public void index(String id, Doc doc) {
+        wpSearchClient.indexDocument(docToJson(id, doc, settings.getWorkplaceSearch().getUrlPrefix()));
     }
 
     @Override
-    public ESSearchResponse search(ESSearchRequest request) throws IOException {
-        // TODO use the wpSearchClient instead
-        return esClient.search(request);
+    public void delete(String id) {
+        wpSearchClient.destroyDocument(id);
     }
 
     @Override
-    public void deleteIndex(String index) throws IOException {
-        esClient.deleteIndex(index);
+    public String search(String query, Map<String, Object> filters) {
+        return wpSearchClient.search(query, filters);
+    }
+
+    @Override
+    public boolean exists(String id) {
+        return wpSearchClient.getDocument(id) != null;
+    }
+
+    @Override
+    public String get(String id) {
+        return wpSearchClient.getDocument(id);
     }
 
     @Override
     public void flush() {
-        esClient.flush();
-    }
-
-    @Override
-    public void performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException {
-        esClient.performLowLevelRequest(method, endpoint, jsonEntity);
-    }
-
-    @Override
-    public ESSearchHit get(String index, String id) {
-        throw new RuntimeException("Not implemented yet");
-    }
-
-    @Override
-    public boolean exists(String index, String id) {
-        throw new RuntimeException("Not implemented yet");
-        // return esClient.exists(index, id);
-    }
-
-    private String toRFC3339(Date d)
-    {
-        return RFC_3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
+        wpSearchClient.flush();
     }
 }

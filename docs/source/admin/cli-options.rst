@@ -11,18 +11,10 @@ CLI options
    default ``~/.fscrawler``.
 -  ``--username`` defines the username to use when using an secured
    version of elasticsearch cluster. Read :ref:`credentials`.
--  ``--upgrade`` runs a reindex operation for indices created with an older version.
-   See `Upgrade`_.
 -  ``--loop x`` defines the number of runs we want before exiting. See `Loop`_.
 -  ``--restart`` restart a job from scratch. See `Restart`_.
 -  ``--rest`` starts the REST service. See `Rest`_.
 
-
-Upgrade
--------
-
-``--upgrade`` runs a reindex operation for indices created with an older version which was using
-multiple types within the same index. More on this in :ref:`upgrade_2.3` section.
 
 Loop
 ----

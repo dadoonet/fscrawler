@@ -19,15 +19,18 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
+
+import java.text.ParseException;
+import java.util.Date;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
+import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.toRFC3339;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 public class WorkplaceSearchClientUtilTest extends AbstractFSCrawlerTestCase {
 
@@ -44,5 +47,11 @@ public class WorkplaceSearchClientUtilTest extends AbstractFSCrawlerTestCase {
         String suffix = max + randomAsciiAlphanumOfLength(randomIntBetween(1, 10));
         String name = generateDefaultCustomSourceName(suffix);
         assertThat(name, is("Local files for " + max));
+    }
+
+    @Test
+    public void testRFC3339() {
+        assertThat(toRFC3339(new Date()), notNullValue());
+        assertThat(toRFC3339(null), nullValue());
     }
 }

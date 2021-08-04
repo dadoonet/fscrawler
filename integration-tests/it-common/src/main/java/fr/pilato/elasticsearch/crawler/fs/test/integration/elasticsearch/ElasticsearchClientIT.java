@@ -42,7 +42,7 @@ import static org.junit.Assume.assumeThat;
  */
 public class ElasticsearchClientIT extends AbstractITCase {
 
-    private ElasticsearchClient esClient = documentService.getClient();
+    private final ElasticsearchClient esClient = managementService.getClient();
 
     @Before
     public void cleanExistingIndex() throws IOException {

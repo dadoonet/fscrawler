@@ -37,8 +37,8 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch7.version>7.13.4</elasticsearch7.version>
-        <elasticsearch6.version>6.8.17</elasticsearch6.version>
+        <elasticsearch7.version>7.14.0</elasticsearch7.version>
+        <elasticsearch6.version>6.8.18</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
         <tika.version>1.27</tika.version>
@@ -297,10 +297,10 @@
                             <ELASTICSEARCH_PORT>${integ.elasticsearch.port}</ELASTICSEARCH_PORT>
                             <IMG_ENTERPRISE_SEARCH>${integ.workplace.image}</IMG_ENTERPRISE_SEARCH>
                             <ENTERPRISE_SEARCH_PORT>${integ.workplace.port}</ENTERPRISE_SEARCH_PORT>
+                            <LICENSE_TYPE>trial</LICENSE_TYPE>
                         </envVars>
                         <composeFiles>
-                            <composeFile>${contrib.dir}/docker-compose-it/docker-compose-elasticsearch.yml</composeFile>
-                            <composeFile>${contrib.dir}/docker-compose-it/docker-compose-enterprise-search.yml</composeFile>
+                            <composeFile>${contrib.dir}/docker-compose-it/docker-compose.yml</composeFile>
                         </composeFiles>
                         <services>
                             <service>elasticsearch</service>

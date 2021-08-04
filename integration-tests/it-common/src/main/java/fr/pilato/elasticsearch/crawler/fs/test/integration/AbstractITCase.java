@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
@@ -29,7 +30,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
@@ -105,7 +106,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", false);
 
     protected static Elasticsearch elasticsearchWithSecurity;
-    protected static FsCrawlerManagementService managementService;
+    protected static FsCrawlerManagementServiceElasticsearchImpl managementService;
     protected static FsCrawlerDocumentService documentService;
 
     /**
@@ -224,7 +225,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @BeforeClass
-    public static void startDocumentService() throws IOException {
+    public static void startServices() throws IOException {
         String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
         if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
             testClusterUrl = decodeCloudId(testClusterCloudId);
@@ -248,10 +249,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
         documentService.start();
+        managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
+        managementService.start();
 
         // We make sure the cluster is running
         try {
-            String version = documentService.getClient().getVersion();
+            String version = managementService.getVersion();
             staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
         } catch (ConnectException e) {
             // If we have an exception here, let's ignore the test
@@ -261,16 +264,29 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @AfterClass
-    public static void stopDocumentService() throws IOException {
+    public static void stopServices() throws IOException {
         staticLogger.info("Stopping integration tests against an external cluster");
         if (documentService != null) {
             documentService.close();
             documentService = null;
-            staticLogger.info("Elasticsearch client stopped");
+            staticLogger.info("Document service stopped");
+        }
+        if (managementService != null) {
+            managementService.close();
+            managementService = null;
+            staticLogger.info("Management service stopped");
         }
     }
 
-    private static final String testCrawlerPrefix = "fscrawler_";
+    @Before
+    public void checkSkipIntegTests() {
+        // In case we are running tests from the IDE with the skipIntegTests option, let make sure we are skipping
+        // those tests
+        RandomizedTest.assumeFalse("skipIntegTests is true. So we are skipping the integration tests.",
+                getSystemProperty("skipIntegTests", false));
+    }
+
+    protected static final String testCrawlerPrefix = "fscrawler_";
 
     protected static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
                                                                TimeValue timeValue, ByteSizeValue byteSize) {
@@ -299,7 +315,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     protected static void refresh() throws IOException {
-        documentService.getClient().refresh(null);
+        documentService.refresh(null);
     }
 
     /**
@@ -339,7 +355,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             try {
                 // Make sure we refresh indexed docs before counting
                 refresh();
-                response[0] = documentService.getClient().search(request);
+                response[0] = documentService.search(request);
             } catch (RuntimeException|IOException e) {
                 staticLogger.warn("error caught", e);
                 return -1;
@@ -410,7 +426,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     protected String getRandomCrawlerName() {
-        return testCrawlerPrefix.concat(randomAsciiAlphanumOfLength(randomIntBetween(1, 30))).toLowerCase(Locale.ROOT);
+        return testCrawlerPrefix.concat(randomAsciiAlphanumOfLength(randomIntBetween(10, 15))).toLowerCase(Locale.ROOT);
     }
 
     /**

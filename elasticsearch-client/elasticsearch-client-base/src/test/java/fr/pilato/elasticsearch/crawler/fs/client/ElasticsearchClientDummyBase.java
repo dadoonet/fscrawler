@@ -21,9 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
-import java.io.IOException;
-import java.util.function.Supplier;
-
 public abstract class ElasticsearchClientDummyBase implements ElasticsearchClient {
 
     @Override
@@ -117,8 +114,9 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public void performLowLevelRequest(String method, String endpoint, String jsonEntity) {
+    public String performLowLevelRequest(String method, String endpoint, String jsonEntity) {
         // Testing purpose only
+        return method;
     }
 
     @Override

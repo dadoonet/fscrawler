@@ -21,6 +21,9 @@ package fr.pilato.elasticsearch.crawler.fs.service;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -40,6 +43,10 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
         this.client = ElasticsearchClientUtil.getInstance(config, settings);
     }
 
+    public ElasticsearchClient getClient() {
+        return client;
+    }
+
     @Override
     public void start() throws IOException {
         client.start();
@@ -47,14 +54,14 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public ElasticsearchClient getClient() {
-        return client;
-    }
-
-    @Override
     public void close() throws IOException {
         client.close();
         logger.debug("Elasticsearch Document Service stopped");
+    }
+
+    @Override
+    public String getVersion() throws IOException {
+        return client.getVersion();
     }
 
     @Override
@@ -73,4 +80,39 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
         client.indexRawJson(index, id, json, pipeline);
     }
 
+    @Override
+    public void delete(String index, String id) {
+        logger.debug("Deleting {}/{}", index, id);
+        client.delete(index, id);
+    }
+
+    @Override
+    public void refresh(String index) throws IOException {
+        logger.debug("Refreshing {}", index);
+        client.refresh(index);
+    }
+
+    @Override
+    public ESSearchResponse search(ESSearchRequest request) throws IOException {
+        logger.debug("Searching {}", request);
+        return client.search(request);
+    }
+
+    @Override
+    public boolean exists(String index, String id) throws IOException {
+        logger.debug("Search if document {}/{} exists", index, id);
+        return client.exists(index, id);
+    }
+
+    @Override
+    public ESSearchHit get(String index, String id) throws IOException {
+        logger.debug("Getting {}/{}", index, id);
+        return client.get(index, id);
+    }
+
+    @Override
+    public void flush() {
+        logger.debug("Flushing");
+        client.flush();
+    }
 }

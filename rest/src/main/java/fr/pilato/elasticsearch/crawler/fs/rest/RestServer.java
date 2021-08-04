@@ -50,8 +50,8 @@ public class RestServer {
             // in fr.pilato.elasticsearch.crawler.fs.rest package
             final ResourceConfig rc = new ResourceConfig()
                     .registerInstances(
-                            new ServerStatusApi(managementService.getClient(), settings),
-                            new UploadApi(settings, documentService.getClient()))
+                            new ServerStatusApi(managementService, settings),
+                            new UploadApi(settings, documentService))
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)
                     .register(JacksonFeature.class)

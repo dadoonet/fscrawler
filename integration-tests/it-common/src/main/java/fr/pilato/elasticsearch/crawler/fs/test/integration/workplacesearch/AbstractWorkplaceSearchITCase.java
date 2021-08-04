@@ -19,32 +19,43 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.File;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
+import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
-import org.apache.logging.log4j.Level;
 import org.hamcrest.Matcher;
-import org.junit.Assume;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.frequently;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.docToJson;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeThat;
 
 public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
 
@@ -53,23 +64,56 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     protected final static String testWorkplaceUser = getSystemProperty("tests.workplace.user", testClusterUser);
     protected final static String testWorkplacePass = getSystemProperty("tests.workplace.pass", testClusterPass);
 
+    protected String sourceName;
+    protected String sourceId;
+
     @BeforeClass
-    public static void checkWorkplaceSearchCompatible() throws IOException {
+    public static void checkWorkplaceSearchCompatible() {
         // We must check that we can run the tests.
         // For example, with a 6.x cluster, this is not possible as Workplace Search engine does not exist
         // and thus is not started.
-        ElasticsearchClient client = ElasticsearchClientUtil.getInstance(null, FsSettings.builder("foo").build());
-        String version = client.compatibleVersion();
-        Assume.assumeThat("We can not run workplace search tests on a version different than 7",
+        String version = managementService.getClient().compatibleVersion();
+        assumeThat("We can not run workplace search tests on a version different than 7",
                 version, equalTo("7"));
-        HttpURLConnection urlConnection = (HttpURLConnection) new URL(testWorkplaceUrl).openConnection();
-        urlConnection.getResponseCode();
+
+        try {
+            HttpURLConnection urlConnection = (HttpURLConnection) new URL(testWorkplaceUrl).openConnection();
+            urlConnection.getResponseCode();
+
+            // Test the license
+            String response = managementService.getClient().performLowLevelRequest("GET", "/_license", null);
+            assumeThat("We can not run the Workplace Search tests without at least a trial version.",
+                    JsonPath.read(response, "$.license.type"), isOneOf("platinum", "enterprise", "trial"));
+        } catch (IOException e) {
+            assumeNoException("We can not run the Workplace Search tests against this cluster. " +
+                    "Check that you have workplace search running at " + testWorkplaceUrl, e);
+        }
     }
 
-    protected FsCrawlerImpl startCrawler(final FsCrawlerDocumentService documentService,
-                                         final String jobName,
-                                         final String customSourceId,
-                                         FsSettings fsSettings, TimeValue duration)
+    @BeforeClass
+    public static void cleanAllTestResources() {
+        // Just for dev only. In case we need to remove tons of workplace search custom sources at once
+        // cleanExistingCustomSources(testCrawlerPrefix + "*");
+    }
+
+    @Before
+    public void generateJobName() {
+        sourceName = getRandomCrawlerName();
+        sourceId = null;
+    }
+
+    @Before
+    @After
+    public void cleanUpCustomSource() {
+        if (sourceId != null) {
+            cleanExistingCustomSource(sourceId);
+        }
+        if (sourceName != null) {
+            cleanExistingCustomSources(sourceName);
+        }
+    }
+
+    protected FsCrawlerImpl startCrawler(final String jobName, final String customSourceId, FsSettings fsSettings, TimeValue duration)
             throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
@@ -90,11 +134,11 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
             }
         }, duration.seconds(), TimeUnit.SECONDS), equalTo(true));
 
-        countTestHelper(documentService, new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId),
-                null, null, TimeValue.timeValueSeconds(20));
-
-        // Make sure we refresh indexed docs before launching tests
         refresh();
+
+        try (WPSearchClient wpClient = createClient()) {
+            countTestHelper(wpClient, customSourceId, null, duration);
+        }
 
         return crawler;
     }
@@ -102,37 +146,34 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     /**
      * Check that we have the expected number of docs or at least one if expected is null
      *
-     * @param documentService The Document Service to run searches on.
-     * @param request   Elasticsearch request to run.
+     * @param wpClient  Elasticsearch request to run.
+     * @param sourceId  The custom source id if any
      * @param expected  expected number of docs. Null if at least 1.
-     * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
      * @param timeout   Time before we declare a failure
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    public static ESSearchResponse countTestHelper(final FsCrawlerDocumentService documentService,
-                                                   final ESSearchRequest request, final Long expected, final Path path,
-                                                   final TimeValue timeout) throws Exception {
+    public static String countTestHelper(final WPSearchClient wpClient, final String sourceId, final Long expected, final TimeValue timeout) throws Exception {
 
-        final ESSearchResponse[] response = new ESSearchResponse[1];
+        final String[] response = new String[1];
 
         // We wait before considering a failing test
-        staticLogger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
-                expected == null ? "some" : expected, request.getIndex());
+        staticLogger.info("  ---> Waiting up to {} for {} documents in workplace search", timeout.toString(),
+                expected == null ? "some" : expected);
         long hits = awaitBusy(() -> {
             long totalHits;
 
             // Let's search for entries
             try {
-                // Make sure we refresh indexed docs before counting
                 refresh();
-                response[0] = documentService.getClient().search(request);
-            } catch (RuntimeException| IOException e) {
+                response[0] = wpClient.search(null, sourceId == null ? null : Collections.singletonMap("content_source_id", List.of(sourceId)));
+            } catch (RuntimeException | IOException e) {
                 staticLogger.warn("error caught", e);
                 return -1;
             }
-            totalHits = response[0].getTotalHits();
 
+            // We need to tell JsonPath to return an int
+            totalHits = JsonPath.<Integer>read(response[0], "$.meta.page.total_results");
             staticLogger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
             return totalHits;
@@ -146,11 +187,9 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         }
 
         if (matcher.matches(hits)) {
-            staticLogger.debug("     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
-            logContentOfDir(path, Level.DEBUG);
+            staticLogger.debug("     ---> expecting [{}] and got [{}] documents", expected, hits);
         } else {
-            staticLogger.warn("     ---> expecting [{}] but got [{}] documents in {}", expected, hits, request.getIndex());
-            logContentOfDir(path, Level.WARN);
+            staticLogger.warn("     ---> expecting [{}] but got [{}] documents", expected, hits);
         }
         assertThat(hits, matcher);
 
@@ -179,6 +218,14 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         }
     }
 
+    protected static void cleanExistingCustomSource(String sourceId) {
+        if (!testKeepData) {
+            try (WPSearchClient client = createClient()) {
+                client.removeCustomSource(sourceId);
+            }
+        }
+    }
+
     protected static String initSource(String sourceName) throws Exception {
         staticLogger.info("  --> creating the workplace search custom source {}", sourceName);
         try (WPSearchClient client = createClient()) {
@@ -192,7 +239,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         }
     }
 
-    protected static String getSourceIdFromSourceName(String sourceName) throws Exception {
+    protected static String getSourceIdFromSourceName(String sourceName) {
         staticLogger.info("  --> getting the workplace search custom source id from name {}", sourceName);
         try (WPSearchClient client = createClient()) {
             List<String> sources = client.getCustomSourcesByName(sourceName);
@@ -200,6 +247,100 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
 
             staticLogger.debug("  --> custom source name {} has id {}.", sourceName, sources.get(0));
             return sources.get(0);
+        }
+    }
+
+    protected static Map<String, Object> fakeDocumentAsMap(String id, String text, String lang, String filename, String... tags) {
+        return docToJson(id, fakeDocument(text, lang, filename, tags), "http://127.0.0.1");
+    }
+
+    protected static Doc fakeDocument(String text, String lang, String filename, String... tags) {
+        Doc doc = new Doc();
+
+        // Index content
+        doc.setContent("Content for " + text);
+
+        // Index main metadata
+        Meta meta = new Meta();
+
+        // Sometimes we won't generate a title but will let the system create a title from the filename
+        if (frequently()) {
+            meta.setTitle("Title for " + text);
+        }
+        meta.setAuthor("Mister " + text);
+        meta.setKeywords(Arrays.asList(tags));
+        meta.setLanguage(lang);
+        meta.setComments("Comments for " + text);
+        doc.setMeta(meta);
+
+        // Index main file attributes
+        File file = new File();
+        file.setFilename(filename + ".txt");
+        file.setContentType("text/plain");
+        file.setExtension("txt");
+        file.setIndexedChars(text.length());
+        file.setFilesize(text.length() + 10L);
+        file.setCreated(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now()));
+        file.setLastModified(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now()));
+        doc.setFile(file);
+
+        // Index main path attributes
+        fr.pilato.elasticsearch.crawler.fs.beans.Path path = new fr.pilato.elasticsearch.crawler.fs.beans.Path();
+        path.setVirtual("/" + filename + ".txt");
+        path.setReal("/tmp/es/" + filename + ".txt");
+        doc.setPath(path);
+
+        return doc;
+    }
+
+    protected static void checker(String json, int results, List<String> filenames, List<String> texts) {
+        staticLogger.trace("{}", json);
+
+        Object document = parseJson(json);
+        assertThat(JsonPath.read(document, "$.meta.page.total_results"), is(results));
+
+        for (int i = 0; i < results; i++) {
+            documentChecker(JsonPath.read(document, "$.results[" + i + "]"), filenames, texts);
+        }
+    }
+
+    protected static void documentChecker(Object document, List<String> filenames, List<String> texts) {
+        List<String> urls = new ArrayList<>();
+        List<String> titles = new ArrayList<>();
+        List<String> bodies = new ArrayList<>();
+        List<String> paths = new ArrayList<>();
+
+        filenames.forEach((filename) -> {
+            urls.add("http://127.0.0.1/" + filename);
+            titles.add(filename);
+            paths.add("/tmp/es/" + filename);
+        });
+
+        texts.forEach((text) -> {
+            titles.add("Title for " + text);
+            bodies.add("Content for " + text);
+        });
+
+        propertyChecker(document, "title", isOneOf(titles.toArray()));
+        propertyChecker(document, "body", isOneOf(bodies.toArray()));
+        propertyChecker(document, "size", notNullValue());
+        propertyChecker(document, "text_size", notNullValue());
+        propertyChecker(document, "mime_type", startsWith("text/plain"));
+        propertyChecker(document, "name", isOneOf(filenames.toArray()));
+        propertyChecker(document, "extension", is("txt"));
+        propertyChecker(document, "path", isOneOf(paths.toArray()));
+        propertyChecker(document, "url", isOneOf(urls.toArray()));
+        propertyChecker(document, "created_at", notNullValue());
+        propertyChecker(document, "last_modified", notNullValue());
+    }
+
+    private static void propertyChecker(Object document, String fieldName, Matcher<?> matcher) {
+        try {
+            // We try the .raw field if the document is coming from the search API
+            assertThat(JsonPath.read(document, "$." + fieldName + ".raw"), matcher);
+        } catch (PathNotFoundException e) {
+            // We fall back to the field name if the document is coming from the get API
+            assertThat(JsonPath.read(document, "$." + fieldName), matcher);
         }
     }
 }

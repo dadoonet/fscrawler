@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.crawler.ssh;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
@@ -118,8 +119,10 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
 
     @Override
     public void close() throws Exception {
-        sftp.getSession().disconnect();
-        sftp.disconnect();
+        if (sftp != null) {
+            sftp.getSession().disconnect();
+            sftp.disconnect();
+        }
     }
 
     private ChannelSftp openSSHConnection(Server server) throws Exception {
@@ -136,7 +139,14 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
         if (server.getPassword() != null) {
             session.setPassword(server.getPassword());
         }
-        session.connect();
+
+        try {
+            session.connect();
+        } catch (JSchException e) {
+            logger.warn("Cannot connect with SSH to {}@{}: {}", server.getUsername(),
+                    server.getHostname(), e.getMessage());
+            throw e;
+        }
 
         //Open a new session for SFTP.
         Channel channel = session.openChannel("sftp");

@@ -7,6 +7,8 @@ Workplace Search settings
 
 FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/workplace-search>`_.
 
+.. contents:: :backlinks: entry
+
 .. note::
 
     Although this won't be needed in the future, it is still mandatory to have access to the elasticsearch
@@ -22,10 +24,10 @@ FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/wo
         cd contrib/docker-compose-workplacesearch
         docker-compose up
 
-    This will start Elasticsearch, Kibana (not used) and Workplace Search.
-    Wait for it to start. http://127.0.0.1:3002/ws must be available before continuing.
+    This will start Elasticsearch, Kibana and Workplace Search. Wait for it to start.
+    http://0.0.0.0:5601/app/enterprise_search/workplace_search must be available before continuing.
 
-Here is a list of Workplace Search settings (under ``workplace_search.`` prefix)`:
+Here is a list of Workplace Search settings (under ``workplace_search.`` prefix):
 
 +-------------------------------------+--------------------------------+---------------------------------+
 | Name                                | Default value                  | Documentation                   |
@@ -47,6 +49,10 @@ Here is a list of Workplace Search settings (under ``workplace_search.`` prefix)
 | ``workplace_search.url_prefix``     | ``http://127.0.0.1``           | `Documents Repository URL`_     |
 +-------------------------------------+--------------------------------+---------------------------------+
 
+.. note::
+
+    At least, one of the settings under ``workplace_search.`` prefix must be set if you want to activate
+    the Workplace Search output. Otherwise, it will use Elasticsearch as the output.
 
 Secrets
 ^^^^^^^
@@ -61,6 +67,8 @@ So the following settings will just work:
    elasticsearch:
      username: "elastic"
      password: "PASSWORD"
+   workplace_search:
+     name: "My fancy custom source name"
 
 But if you want to create another user (recommended) for FSCrawler like ``fscrawler``, you can define it as follows:
 
@@ -85,8 +93,8 @@ Custom Source ID
 When a Custom Source is found with the same name, the ``KEY`` of the Custom Source is automatically fetched and applied
 to the workplace search job settings.
 
-If you already have defined a Custom API in Workplace Search and have the ``KEY``, you can add it to your existing
-FSCrawler configuration file:
+If you already have defined a Custom API in `Workplace Search Admin UI <http://0.0.0.0:5601/app/enterprise_search/workplace_search>`
+and have the ``KEY``, you can add it to your existing FSCrawler configuration file:
 
 .. code:: yaml
 

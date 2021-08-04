@@ -54,6 +54,10 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
         this.client = ElasticsearchClientUtil.getInstance(config, settings);
     }
 
+    public ElasticsearchClient getClient() {
+        return client;
+    }
+
     @Override
     public void start() throws IOException {
         client.start();
@@ -61,14 +65,14 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     }
 
     @Override
-    public ElasticsearchClient getClient() {
-        return client;
-    }
-
-    @Override
     public void close() throws IOException {
         client.close();
         logger.debug("Elasticsearch Management Service stopped");
+    }
+
+    @Override
+    public String getVersion() throws IOException {
+        return client.getVersion();
     }
 
     @Override
@@ -131,5 +135,10 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     @Override
     public void storeVisitedDirectory(String indexFolder, String id, Folder folder) {
         client.indexRawJson(indexFolder, id, FolderParser.toJson(folder), null);
+    }
+
+    @Override
+    public void delete(String index, String id) {
+        client.delete(index, id);
     }
 }
