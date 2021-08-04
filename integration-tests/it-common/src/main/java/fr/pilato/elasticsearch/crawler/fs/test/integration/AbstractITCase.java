@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
@@ -29,7 +30,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -276,6 +276,14 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             managementService = null;
             staticLogger.info("Management service stopped");
         }
+    }
+
+    @Before
+    public void checkSkipIntegTests() {
+        // In case we are running tests from the IDE with the skipIntegTests option, let make sure we are skipping
+        // those tests
+        RandomizedTest.assumeFalse("skipIntegTests is true. So we are skipping the integration tests.",
+                getSystemProperty("skipIntegTests", false));
     }
 
     private static final String testCrawlerPrefix = "fscrawler_";
