@@ -32,6 +32,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.hamcrest.Matcher;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
@@ -62,6 +64,9 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     protected final static String testWorkplaceUser = getSystemProperty("tests.workplace.user", testClusterUser);
     protected final static String testWorkplacePass = getSystemProperty("tests.workplace.pass", testClusterPass);
 
+    protected String sourceName;
+    protected String sourceId;
+
     @BeforeClass
     public static void checkWorkplaceSearchCompatible() {
         // We must check that we can run the tests.
@@ -82,6 +87,29 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         } catch (IOException e) {
             assumeNoException("We can not run the Workplace Search tests against this cluster. " +
                     "Check that you have workplace search running at " + testWorkplaceUrl, e);
+        }
+    }
+
+    @BeforeClass
+    public static void cleanAllTestResources() {
+        // Just for dev only. In case we need to remove tons of workplace search custom sources at once
+        // cleanExistingCustomSources(testCrawlerPrefix + "*");
+    }
+
+    @Before
+    public void generateJobName() {
+        sourceName = getRandomCrawlerName();
+        sourceId = null;
+    }
+
+    @Before
+    @After
+    public void cleanUpCustomSource() {
+        if (sourceId != null) {
+            cleanExistingCustomSource(sourceId);
+        }
+        if (sourceName != null) {
+            cleanExistingCustomSources(sourceName);
         }
     }
 
@@ -186,6 +214,14 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
                 for (String sourceId : sourceIds) {
                     client.removeCustomSource(sourceId);
                 }
+            }
+        }
+    }
+
+    protected static void cleanExistingCustomSource(String sourceId) {
+        if (!testKeepData) {
+            try (WPSearchClient client = createClient()) {
+                client.removeCustomSource(sourceId);
             }
         }
     }

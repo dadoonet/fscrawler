@@ -24,8 +24,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -444,7 +444,7 @@ public class WPSearchClient implements Closeable {
         logger.trace("Calling GET {}{}", urlForApi, path);
         try {
             return prepareHttpCall(path).get(clazz);
-        } catch (BadRequestException e) {
+        } catch (WebApplicationException e) {
             logger.warn("Error while running GET {}{}: {}", urlForApi, path, e.getResponse().readEntity(String.class));
             throw e;
         }
@@ -454,7 +454,7 @@ public class WPSearchClient implements Closeable {
         logger.trace("Calling POST {}{}", urlForApi, path);
         try {
             return prepareHttpCall(path).post(Entity.json(data), clazz);
-        } catch (BadRequestException e) {
+        } catch (WebApplicationException e) {
             logger.warn("Error while running POST {}{}: {}", urlForApi, path, e.getResponse().readEntity(String.class));
             throw e;
         }
@@ -464,7 +464,7 @@ public class WPSearchClient implements Closeable {
         logger.trace("Calling DELETE {}{}", urlForApi, path);
         try {
             return prepareHttpCall(path).method("DELETE", Entity.json(data), clazz);
-        } catch (BadRequestException e) {
+        } catch (WebApplicationException e) {
             logger.warn("Error while running DELETE {}{}: {}", urlForApi, path, e.getResponse().readEntity(String.class));
             throw e;
         }

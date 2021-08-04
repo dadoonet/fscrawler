@@ -25,7 +25,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,9 +44,9 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     private static final String SOURCE_NAME = "fscrawler-wpsearch-client";
 
     @Before
-    @After
-    public void cleanUpCustomSource() {
-        cleanExistingCustomSources(SOURCE_NAME);
+    public void generateJobName() {
+        sourceName = SOURCE_NAME;
+        sourceId = null;
     }
 
     @Test
