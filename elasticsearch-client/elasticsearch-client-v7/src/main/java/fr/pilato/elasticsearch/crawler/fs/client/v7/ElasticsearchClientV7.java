@@ -45,6 +45,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchStatusException;
@@ -606,13 +607,14 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     }
 
     @Override
-    public void performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException {
+    public String performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException {
         Request request = new Request(method, endpoint);
         if (!isNullOrEmpty(jsonEntity)) {
             request.setJsonEntity(jsonEntity);
         }
 
-        client.getLowLevelClient().performRequest(request);
+        Response response = client.getLowLevelClient().performRequest(request);
+        return EntityUtils.toString(response.getEntity());
     }
 
     @Override

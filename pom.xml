@@ -295,10 +295,10 @@
                             <ELASTICSEARCH_PORT>${integ.elasticsearch.port}</ELASTICSEARCH_PORT>
                             <IMG_ENTERPRISE_SEARCH>${integ.workplace.image}</IMG_ENTERPRISE_SEARCH>
                             <ENTERPRISE_SEARCH_PORT>${integ.workplace.port}</ENTERPRISE_SEARCH_PORT>
+                            <LICENSE_TYPE>trial</LICENSE_TYPE>
                         </envVars>
                         <composeFiles>
-                            <composeFile>${contrib.dir}/docker-compose-it/docker-compose-elasticsearch.yml</composeFile>
-                            <composeFile>${contrib.dir}/docker-compose-it/docker-compose-enterprise-search.yml</composeFile>
+                            <composeFile>${contrib.dir}/docker-compose-it/docker-compose.yml</composeFile>
                         </composeFiles>
                         <services>
                             <service>elasticsearch</service>
