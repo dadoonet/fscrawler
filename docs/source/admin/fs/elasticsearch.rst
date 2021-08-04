@@ -3,6 +3,8 @@
 Elasticsearch settings
 ----------------------
 
+.. contents::
+
 Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 
 +-----------------------------------+---------------------------+---------------------------------+

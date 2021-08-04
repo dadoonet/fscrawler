@@ -1,9 +1,9 @@
-.. contents::
-
 .. _local-fs-settings:
 
 Local FS settings
 -----------------
+
+.. contents::
 
 Here is a list of Local FS settings (under ``fs.`` prefix)`:
 

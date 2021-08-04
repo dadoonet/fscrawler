@@ -3,6 +3,8 @@
 SSH settings
 ------------
 
+.. contents::
+
 You can index files remotely using SSH.
 
 Here is a list of SSH settings (under ``server.`` prefix)`:
