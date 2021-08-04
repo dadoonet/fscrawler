@@ -20,12 +20,12 @@ FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/wo
         git clone git@github.com:dadoonet/fscrawler.git
         cd fscrawler
         cd contrib/docker-compose-workplacesearch
-        docker-compose up
+        docker-compose -f docker-compose-elasticsearch.yml -f docker-compose-enterprise-search.yml up
 
-    This will start Elasticsearch, Kibana (not used) and Workplace Search.
+    This will start Elasticsearch and Workplace Search.
     Wait for it to start. http://127.0.0.1:3002/ws must be available before continuing.
 
-Here is a list of Workplace Search settings (under ``workplace_search.`` prefix)`:
+Here is a list of Workplace Search settings (under ``workplace_search.`` prefix):
 
 +-------------------------------------+--------------------------------+---------------------------------+
 | Name                                | Default value                  | Documentation                   |
@@ -47,6 +47,10 @@ Here is a list of Workplace Search settings (under ``workplace_search.`` prefix)
 | ``workplace_search.url_prefix``     | ``http://127.0.0.1``           | `Documents Repository URL`_     |
 +-------------------------------------+--------------------------------+---------------------------------+
 
+.. note::
+
+    At least, one of the settings under ``workplace_search.`` prefix must be set if you want to activate
+    the Workplace Search output. Otherwise, it will use Elasticsearch as the output.
 
 Secrets
 ^^^^^^^
@@ -61,6 +65,8 @@ So the following settings will just work:
    elasticsearch:
      username: "elastic"
      password: "PASSWORD"
+   workplace_search:
+     name: "My fancy custom source name"
 
 But if you want to create another user (recommended) for FSCrawler like ``fscrawler``, you can define it as follows:
 
