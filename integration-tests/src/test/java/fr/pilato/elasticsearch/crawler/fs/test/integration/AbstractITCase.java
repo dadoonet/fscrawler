@@ -66,7 +66,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 /**
- * Integration tests expect to have an elasticsearch instance running on http://127.0.0.1:9200.
+ * Integration tests expect to have an elasticsearch instance running on https://127.0.0.1:9200.
  * Otherwise, a TestContainer instance will be started.
  *
  * Note that all existing data in this cluster might be removed
@@ -74,7 +74,7 @@ import static org.junit.Assume.assumeThat;
  * If you want to run tests against a remote cluster, please launch tests using
  * tests.cluster.url property:
  *
- * mvn verify -Dtests.cluster.url=http://127.0.0.1:9200
+ * mvn verify -Dtests.cluster.url=https://127.0.0.1:9200
  *
  * All integration tests might be skipped using:
  *
@@ -99,6 +99,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected final static String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
     protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
+    protected final static boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
 
     protected static Elasticsearch elasticsearchConfiguration;
     protected static FsCrawlerManagementServiceElasticsearchImpl managementService = null;
@@ -508,5 +509,4 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
         });
     }
-
 }

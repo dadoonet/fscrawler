@@ -24,7 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.InputStream;
 import java.util.Collection;
 
-public abstract class FileAbstractor<T> {
+public abstract class FileAbstractor<T> implements AutoCloseable {
     protected final FsSettings fsSettings;
 
     public abstract FileAbstractModel toFileAbstractModel(String path, T file);

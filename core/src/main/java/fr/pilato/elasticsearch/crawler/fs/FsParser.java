@@ -21,12 +21,12 @@ package fr.pilato.elasticsearch.crawler.fs;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class FsParser implements Runnable {
+public abstract class FsParser implements Runnable, AutoCloseable {
     static final Object semaphore = new Object();
     final AtomicInteger runNumber = new AtomicInteger(0);
     boolean closed;
 
-    void close() {
+    public void close() {
         this.closed = true;
     }
 

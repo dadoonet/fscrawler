@@ -21,6 +21,9 @@
       <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.crawler.ssh" level="trace" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.service" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
@@ -58,6 +61,9 @@
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="org.mockftpserver" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="org.apache.sshd" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">

@@ -620,11 +620,10 @@
                 <version>${tika.version}</version>
             </dependency>
 
-            <!-- Dependency for parsing remote ssh directory [http://www.jcraft.com/jsch/] -->
             <dependency>
-                <groupId>com.jcraft</groupId>
-                <artifactId>jsch</artifactId>
-                <version>0.1.55</version>
+                <groupId>org.apache.sshd</groupId>
+                <artifactId>sshd-sftp</artifactId>
+                <version>2.13.2</version>
             </dependency>
 
             <!-- Dependency for parsing remote ftp directory -->
@@ -637,7 +636,6 @@
                 <groupId>org.mockftpserver</groupId>
                 <artifactId>MockFtpServer</artifactId>
                 <version>3.2.0</version>
-                <scope>test</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>

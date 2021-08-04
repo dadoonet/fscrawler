@@ -30,11 +30,11 @@ import java.nio.file.Path;
 public class FsParserSsh extends FsParserAbstract {
 
     public FsParserSsh(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
-                         FsCrawlerDocumentService documentService, Integer loop) {
+                       FsCrawlerDocumentService documentService, Integer loop) {
         super(fsSettings, config, managementService, documentService, loop);
     }
 
-    protected FileAbstractor<?> buildFileAbstractor() {
+    protected FileAbstractor<?> buildFileAbstractor(FsSettings fsSettings) {
         return new FileAbstractorSSH(fsSettings);
     }
 }

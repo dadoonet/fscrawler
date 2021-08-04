@@ -19,93 +19,99 @@
 
 package fr.pilato.elasticsearch.crawler.fs.crawler.ssh;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+
 import java.io.IOException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.sshd.sftp.client.SftpClient;
 
 import java.io.InputStream;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Vector;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
+public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
     private final Logger logger = LogManager.getLogger(FileAbstractorSSH.class);
 
-    private ChannelSftp sftp;
+    private final FsCrawlerSshClient fsCrawlerSshClient;
 
     public FileAbstractorSSH(FsSettings fsSettings) {
         super(fsSettings);
+        fsCrawlerSshClient = new FsCrawlerSshClient(
+                fsSettings.getServer().getUsername(),
+                fsSettings.getServer().getPassword(),
+                fsSettings.getServer().getPemPath(),
+                fsSettings.getServer().getHostname(),
+                fsSettings.getServer().getPort()
+        );
     }
 
     @Override
-    public FileAbstractModel toFileAbstractModel(String path, ChannelSftp.LsEntry file) {
+    public FileAbstractModel toFileAbstractModel(String path, SftpClient.DirEntry file) {
+        logger.trace("Transform ssh file/dir [{}/{}] to a FileAbstractModel", path, file.getFilename());
         return new FileAbstractModel(
                 file.getFilename(),
-                !file.getAttrs().isDir(),
+                !file.getAttributes().isDirectory(),
                 // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getMTime()*1000L), ZoneId.systemDefault()),
+                LocalDateTime.ofInstant(file.getAttributes().getModifyTime().toInstant(), ZoneId.systemDefault()),
                 // We don't have the creation date
                 null,
                 // We are using here the local TimeZone as a reference. If the remote system is under another TZ, this might cause issues
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getAttrs().getATime()*1000L), ZoneId.systemDefault()),
+                LocalDateTime.ofInstant(file.getAttributes().getAccessTime().toInstant(), ZoneId.systemDefault()),
                 FilenameUtils.getExtension(file.getFilename()),
                 path,
                 path.equals("/") ? path.concat(file.getFilename()) : path.concat("/").concat(file.getFilename()),
-                file.getAttrs().getSize(),
-                Integer.toString(file.getAttrs().getUId()),
-                Integer.toString(file.getAttrs().getGId()),
-                file.getAttrs().getPermissions());
+                file.getAttributes().getSize(),
+                Integer.toString(file.getAttributes().getUserId()),
+                Integer.toString(file.getAttributes().getGroupId()),
+                file.getAttributes().getPermissions());
     }
 
     @Override
     public InputStream getInputStream(FileAbstractModel file) throws Exception {
-        return sftp.get(file.getFullpath());
+        logger.trace("Getting input stream for [{}]", file.getFullpath());
+        return fsCrawlerSshClient.getSftpClient().read(file.getFullpath());
     }
 
     @Override
     public void closeInputStream(InputStream inputStream) throws IOException {
+        logger.trace("Closing input stream");
         inputStream.close();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Collection<FileAbstractModel> getFiles(String dir) throws Exception {
-        logger.debug("Listing local files from {}", dir);
-        Vector<ChannelSftp.LsEntry> ls;
+        logger.debug("Listing local files from [{}]", dir);
 
-        ls = sftp.ls(dir);
-        if (ls == null) return null;
+        Iterable<SftpClient.DirEntry> ls;
 
-        Collection<FileAbstractModel> result = new ArrayList<>(ls.size());
-        // Iterate other files
-        // We ignore here all files like . and ..
-        result.addAll(ls.stream().filter(file -> !".".equals(file.getFilename()) &&
-                !"..".equals(file.getFilename()))
+        ls = fsCrawlerSshClient.getSftpClient().readDir(dir);
+
+        /*
+         Iterate other files
+         We ignore here all files like "." and ".."
+        */
+        Collection<FileAbstractModel> result = StreamSupport.stream(ls.spliterator(), false)
+                .filter(file -> !".".equals(file.getFilename()) &&
+                        !"..".equals(file.getFilename()))
                 .map(file -> toFileAbstractModel(dir, file))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
 
-        logger.debug("{} local files found", result.size());
+        logger.trace("{} local files found", result.size());
         return result;
     }
 
     @Override
     public boolean exists(String dir) {
+        logger.trace("Checking if ssh file/dir [{}] exists", dir);
         try {
-            sftp.ls(dir);
+            fsCrawlerSshClient.getSftpClient().stat(dir);
         } catch (Exception e) {
             return false;
         }
@@ -114,51 +120,13 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
 
     @Override
     public void open() throws Exception {
-        sftp = openSSHConnection(fsSettings.getServer());
+        logger.trace("Opening fsCrawlerSshClient");
+        fsCrawlerSshClient.open();
     }
 
     @Override
     public void close() throws Exception {
-        if (sftp != null) {
-            sftp.getSession().disconnect();
-            sftp.disconnect();
-        }
-    }
-
-    private ChannelSftp openSSHConnection(Server server) throws Exception {
-        logger.debug("Opening SSH connection to {}@{}", server.getUsername(), server.getHostname());
-
-        JSch jsch = new JSch();
-        Session session = jsch.getSession(server.getUsername(), server.getHostname(), server.getPort());
-        java.util.Properties config = new java.util.Properties();
-        config.put("StrictHostKeyChecking", "no");
-        if (server.getPemPath() != null) {
-            jsch.addIdentity(server.getPemPath());
-        }
-        session.setConfig(config);
-        if (server.getPassword() != null) {
-            session.setPassword(server.getPassword());
-        }
-
-        try {
-            session.connect();
-        } catch (JSchException e) {
-            logger.warn("Cannot connect with SSH to {}@{}: {}", server.getUsername(),
-                    server.getHostname(), e.getMessage());
-            throw e;
-        }
-
-        //Open a new session for SFTP.
-        Channel channel = session.openChannel("sftp");
-        channel.connect();
-
-        //checking SSH client connection.
-        if (!channel.isConnected()) {
-            logger.warn("Cannot connect with SSH to {}@{}", server.getUsername(),
-                    server.getHostname());
-            throw new RuntimeException("Can not connect to " + server.getUsername() + "@" + server.getHostname());
-        }
-        logger.debug("SSH connection successful");
-        return (ChannelSftp) channel;
+        logger.trace("Closing fsCrawlerSshClient");
+        fsCrawlerSshClient.close();
     }
 }
