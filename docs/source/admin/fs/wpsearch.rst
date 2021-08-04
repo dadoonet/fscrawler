@@ -7,7 +7,7 @@ Workplace Search settings
 
 FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/workplace-search>`_.
 
-.. contents::
+.. contents:: :backlinks: entry
 
 .. note::
 

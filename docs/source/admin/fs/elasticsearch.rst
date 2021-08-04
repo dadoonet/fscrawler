@@ -3,7 +3,7 @@
 Elasticsearch settings
 ----------------------
 
-.. contents::
+.. contents:: :backlinks: entry
 
 Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 

@@ -3,7 +3,7 @@
 Local FS settings
 -----------------
 
-.. contents::
+.. contents:: :backlinks: entry
 
 Here is a list of Local FS settings (under ``fs.`` prefix)`:
 

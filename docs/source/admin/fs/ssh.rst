@@ -3,7 +3,7 @@
 SSH settings
 ------------
 
-.. contents::
+.. contents:: :backlinks: entry
 
 You can index files remotely using SSH.
 
