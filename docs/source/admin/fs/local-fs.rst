@@ -1,3 +1,5 @@
+.. contents::
+
 .. _local-fs-settings:
 
 Local FS settings
