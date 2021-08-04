@@ -3,16 +3,14 @@ Version 2.7
 
 A lot of works happened for this release. More than 800 commits since version 2.6.
 
-.. note::
+FSCrawler can now send documents to Workplace Search, meaning that users can benefit from a powerful and centralized
+interface to search for local documents in addition to enterprise documents like Dropbox, Google Drive...
 
-    FSCrawler can now send documents to Workplace Search, meaning that users can benefit from a powerful and centralized
-    interface to search for local documents in addition to enterprise documents like Dropbox, Google Drive...
+This version is mainly meant to work with Elasticsearch 7.x but you might be able to use it with 6.8 version.
 
-    This version is mainly meant to work with Elasticsearch 7.x but you might be able to use it with 6.8 version.
+The mapping for folders have changed and is more aligned with the mapping for documents.
 
-    The mapping for folders have changed and is more aligned with the mapping for documents.
-
-    Docker images are now generated from the build.
+Docker images are now generated from the build.
 
 - FSCrawler comes now with an elasticsearch 7.x implementation.
 - FSCrawler supports Workplace Search 7.x.
