@@ -36,12 +36,8 @@ import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.io.IoBuilder;
 
 import java.io.InputStream;
@@ -80,7 +76,6 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         }
         try {
             filename = new String(filename.getBytes(FTP.DEFAULT_CONTROL_ENCODING), toEncoding);
-            path = new String(path.getBytes(FTP.DEFAULT_CONTROL_ENCODING), toEncoding);
         } catch (UnsupportedEncodingException e) {
             logger.error("Error during encoding: {}", e.getMessage());
         }
@@ -130,13 +125,12 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
     @Override
     public Collection<FileAbstractModel> getFiles(String dir) throws IOException {
         logger.debug("Listing files from {}", dir);
+        String ftpDir = new String(dir.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
         if (isUtf8) {
-            dir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
-        } else {
-            dir = new String(dir.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
+            ftpDir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
         }
 
-        FTPFile[] ftpFiles = ftp.listFiles(dir);
+        FTPFile[] ftpFiles = ftp.listFiles(ftpDir);
         if (ftpFiles == null) return null;
         List<FTPFile> files = Arrays.stream(ftpFiles).filter(file -> {
             if (fsSettings.getFs().isFollowSymlinks()) return true;
@@ -146,10 +140,9 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         Collection<FileAbstractModel> result = new ArrayList<>(files.size());
         // Iterate other files
         // We ignore here all files like . and ..
-        String finalDir = dir;
         result.addAll(files.stream().filter(file -> !".".equals(file.getName()) &&
                 !"..".equals(file.getName()))
-                .map(file -> toFileAbstractModel(finalDir, file))
+                .map(file -> toFileAbstractModel(dir, file))
                 .collect(Collectors.toList()));
 
         logger.debug("{} files found", result.size());
@@ -171,17 +164,10 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         }
     }
 
-    private boolean commandListenerEnabled() {
-        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-        Configuration config = ctx.getConfiguration();
-        LoggerConfig loggerConfig = config.getLoggerConfig("fr.pilato.elasticsearch.crawler.fs");
-        return loggerConfig.getLevel() == Level.DEBUG || loggerConfig.getLevel() == Level.TRACE;
-    }
-
     @Override
     public void open() throws IOException {
         ftp = new FTPClient();
-        if (commandListenerEnabled()) {
+        if (logger.isTraceEnabled() || logger.isDebugEnabled()) {
             ftp.addProtocolCommandListener(ftpListener);
         }
         // send a safe command (i.e. NOOP) over the control connection to reset the router's idle timer
