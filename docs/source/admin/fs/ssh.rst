@@ -3,9 +3,9 @@
 SSH settings
 ------------
 
-.. contents:: :backlinks: entry
-
 You can index files remotely using SSH.
+
+.. contents:: :backlinks: entry
 
 Here is a list of SSH settings (under ``server.`` prefix)`:
 
