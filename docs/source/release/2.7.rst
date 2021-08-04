@@ -1,0 +1,19 @@
+Version 2.7
+-----------
+
+- FSCrawler comes now with an elasticsearch 7.x implementation.
+- FSCrawler supports Workplace Search 7.x.
+- FSCrawler also supports YAML format for jobs (default).
+- The elasticsearch 6.x implementation does not support elasticsearch versions prior to 6.7.
+  If you are using an older version, it's better to upgrade or you need to "hack" the distribution
+  and replace all elasticsearch/lucene jars to the 6.6 version.
+- FSCrawler does not follow symbolic links anymore. You need to set explicitly ``fs.follow_symlink``
+  to ``true`` if you wish revert to the previous behavior.
+- The mapping for elasticsearch 6.x can not contain anymore the type name.
+- We removed the Elasticsearch V5 compatibility as it's not maintained anymore by elastic.
+- You need to use a recent JVM to run FSCrawler (Java 11 as a minimum. Java 15+ recommended)
+- The mapping for the folders changed and is now consistent with the mapping for documents. If you are already using
+  FSCrawler, you will need to first remove the existing ``*_folder`` indices and remove or edit the default
+  settings files in ``~/_default/7/_settings_folder.json`` and ``~/_default/6/_settings_folder.json`` or any job
+  specific setting file like ``~/.fscrawler/{job_name}/_mappings/7/_settings_folder.json`` or
+  ``~/.fscrawler/{job_name}/_mappings/6/_settings_folder.json``.
