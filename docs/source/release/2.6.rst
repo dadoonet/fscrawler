@@ -1,5 +1,5 @@
 Version 2.6
------------
+===========
 
 - FSCrawler comes now with multiple distributions, depending on the elasticsearch
   cluster you're targeting to run.

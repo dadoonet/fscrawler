@@ -1,5 +1,5 @@
 Version 2.5
------------
+===========
 
 -   A bug was causing a lot of data going over the wire each time
     FSCrawler was running. To fix this issue, we changed the default

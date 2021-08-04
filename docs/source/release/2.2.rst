@@ -1,5 +1,5 @@
 Version 2.2
------------
+===========
 
 -  fscrawler comes with new default mappings for files. They have better
    defaults as they consume less disk space and CPU at index time. You

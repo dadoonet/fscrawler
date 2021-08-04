@@ -1,5 +1,5 @@
 Version 2.3
------------
+===========
 
 -  fscrawler comes with new mapping for folders. The change is really
    tiny so you can skip this step if you wish. We basically removed

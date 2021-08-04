@@ -71,7 +71,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 
 .. toctree::
       :caption: Release Notes
-      :maxdepth: 1
+      :maxdepth: 2
 
       release/index
       release/2.7
