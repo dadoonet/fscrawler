@@ -66,6 +66,10 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         settings = buildSettings(null, Server.builder().setProtocol(Server.PROTOCOL.SSH).build());
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
 
+        // Checking username / password when FTP
+        settings = buildSettings(null, Server.builder().setProtocol(Server.PROTOCOL.FTP).build());
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));
+
         // Checking That we don't try to do both xml and json
         settings = buildSettings(Fs.builder().setJsonSupport(true).setXmlSupport(true).build(), null);
         assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(true));

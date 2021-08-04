@@ -4,12 +4,11 @@ Writing documentation
 This project uses `ReadTheDocs <https://readthedocs.org/>`_ to build and serve the documentation.
 
 If you want to run the generation of documentation (recommended!), you need
-to have Python installed. Then install ``sphinx``
-$ pip install sphinx sphinx-autobuild
+to have Python3 installed.
 
-Assuming you have `Python <https://www.python.org/>`_ already, install `Sphinx <http://www.sphinx-doc.org/>`_::
+Assuming you have `Python3 <https://www.python.org/>`_ already, install `Sphinx <http://www.sphinx-doc.org/>`_::
 
-    $ pip install sphinx sphinx-autobuild
+    $ pip install sphinx sphinx-autobuild sphinx_rtd_theme recommonmark
 
 Go to the ``docs`` directory and build the html documentation::
 

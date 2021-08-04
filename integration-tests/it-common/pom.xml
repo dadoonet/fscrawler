@@ -31,6 +31,11 @@
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-test-documents</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.mockftpserver</groupId>
+            <artifactId>MockFtpServer</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
         <!--
         For legal reasons (incompatible license), these dependencies are to marked as optional so users who might want

@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
@@ -282,11 +281,34 @@ public class FsCrawlerUtil {
         return true;
     }
 
+    public static String getPathSeparator(String path) {
+        if (path.contains("/") && !path.contains("\\")) {
+            return "/";
+        }
+
+        if (!path.contains("/") && (path.contains("\\") || path.contains(":"))) {
+            return "\\";
+        }
+
+        return File.separator;
+    }
+
+    public static String computeRealPathName(String _dirname, String filename) {
+        // new File(dirname, filename).toString() is not suitable for server
+        String separator = getPathSeparator(_dirname);
+        String dirname = _dirname.endsWith(separator) ? _dirname : _dirname.concat(separator);
+        return dirname + filename;
+    }
+
     public static String computeVirtualPathName(String rootPath, String realPath) {
-        String result = "/";
-        if (realPath != null && realPath.length() > rootPath.length()) {
-            result = realPath.substring(rootPath.length())
-                    .replace("\\", "/");
+        String result = getPathSeparator(rootPath);
+        if (realPath.startsWith(rootPath) && realPath.length() > rootPath.length()) {
+            if (rootPath.equals("/")) {
+                // "/" is very common for FTP
+                result = realPath;
+            } else {
+                result = realPath.substring(rootPath.length());
+            }
         }
 
         logger.debug("computeVirtualPathName({}, {}) = {}", rootPath, realPath, result);
@@ -415,12 +437,12 @@ public class FsCrawlerUtil {
             return user * 100 + group * 10 + others;
         }
         catch(Exception e) {
-            logger.warn("Failed to determine 'owner' of {}: {}", file, e.getMessage());
+            logger.warn("Failed to determine 'permissions' of {}: {}", file, e.getMessage());
             return -1;
         }
     }
 
-    private static int toOctalPermission(boolean read, boolean write, boolean execute) {
+    public static int toOctalPermission(boolean read, boolean write, boolean execute) {
         return (read ? 4 : 0) + (write ? 2 : 0) + (execute ? 1 : 0);
     }
 
@@ -576,7 +598,9 @@ public class FsCrawlerUtil {
             if (Files.notExists(root)) {
                 Files.createDirectory(root);
             }
-        } catch (IOException ignored) { }
+        } catch (IOException ignored) {
+            logger.error("Failed to create config dir");
+        }
     }
 
     /**

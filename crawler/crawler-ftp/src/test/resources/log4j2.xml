@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="fatal">
+   <Appenders>
+      <Console name="CONSOLE" target="SYSTEM_OUT">
+         <PatternLayout pattern="%d{ABSOLUTE} %highlight{%-5p} [%c{1.}] %m%n"/>
+      </Console>
+      <Console name="CONSOLE_NO_DECORATOR" target="SYSTEM_OUT">
+         <PatternLayout pattern="%m%n"/>
+      </Console>
+   </Appenders>
+   <Loggers>
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.crawler.ftp" level="debug" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="commons-net" level="debug" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Root level="info">
+         <AppenderRef ref="CONSOLE"/>
+      </Root>
+   </Loggers>
+</Configuration>

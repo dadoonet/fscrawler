@@ -17,31 +17,23 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.crawler;
+package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
+import fr.pilato.elasticsearch.crawler.fs.crawler.ftp.FileAbstractorFTP;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import java.nio.file.Path;
 
-import java.io.InputStream;
-import java.util.Collection;
+public class FsParserFTP extends FsParserAbstract {
 
-public abstract class FileAbstractor<T> {
-    protected final FsSettings fsSettings;
+    public FsParserFTP(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
+                         FsCrawlerDocumentService documentService, Integer loop) {
+        super(fsSettings, config, managementService, documentService, loop);
+    }
 
-    public abstract FileAbstractModel toFileAbstractModel(String path, T file);
-
-    public abstract InputStream getInputStream(FileAbstractModel file) throws Exception;
-
-    public abstract void closeInputStream(InputStream inputStream) throws Exception;
-
-    public abstract Collection<FileAbstractModel> getFiles(String dir) throws Exception;
-
-    public abstract boolean exists(String dir);
-
-    public abstract void open() throws Exception;
-
-    public abstract void close() throws Exception;
-
-    protected FileAbstractor(FsSettings fsSettings) {
-        this.fsSettings = fsSettings;
+    protected FileAbstractor<?> buildFileAbstractor() {
+        return new FileAbstractorFTP(fsSettings);
     }
 }

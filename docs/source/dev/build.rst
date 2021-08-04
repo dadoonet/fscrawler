@@ -53,6 +53,12 @@ But you need first to specify the Maven profile to use and rebuild the project.
 * ``es-7x`` for Elasticsearch 7.x
 * ``es-6x`` for Elasticsearch 6.x
 
+Run a specific test from your Terminal
+""""""""""""""""""""""""""""""""""""""
+
+To run a specific integration test, just run::
+
+    mvn verify -am -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.integration.CLASS_NAME -Dtests.method="METHOD_NAME"
 
 Run tests with an external cluster
 """"""""""""""""""""""""""""""""""

@@ -16,7 +16,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import os
-import ConfigParser
+import configparser
 from datetime import date
 from os.path import join, dirname
 
@@ -38,7 +38,7 @@ author = u'David Pilato'
 # built documents.
 #
 
-config = ConfigParser.RawConfigParser()
+config = configparser.RawConfigParser()
 config.read(join(dirname(__file__), "fscrawler.ini"))
 
 # development versions always have the suffix '-SNAPSHOT'
