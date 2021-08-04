@@ -114,8 +114,9 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public void performLowLevelRequest(String method, String endpoint, String jsonEntity) {
+    public String performLowLevelRequest(String method, String endpoint, String jsonEntity) {
         // Testing purpose only
+        return method;
     }
 
     @Override

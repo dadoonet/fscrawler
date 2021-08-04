@@ -618,13 +618,14 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
     }
 
     @Override
-    public void performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException {
+    public String performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException {
         Request request = new Request(method, endpoint);
         if (!isNullOrEmpty(jsonEntity)) {
             request.setJsonEntity(jsonEntity);
         }
 
         client.getLowLevelClient().performRequest(request);
+        return method;
     }
 
     @Override

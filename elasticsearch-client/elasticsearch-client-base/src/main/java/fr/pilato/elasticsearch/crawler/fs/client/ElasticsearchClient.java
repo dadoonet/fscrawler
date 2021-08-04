@@ -167,8 +167,9 @@ public interface ElasticsearchClient extends Closeable {
      * @param endpoint      Endpoint
      * @param jsonEntity    Json entity if any
      * @throws IOException In case of error
+     * @return the response from the server
      */
-    void performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException;
+    String performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException;
 
     /**
      * Get a document by its ID

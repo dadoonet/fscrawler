@@ -26,15 +26,12 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.hamcrest.Matcher;
-import org.junit.Assume;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
@@ -45,7 +42,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +52,8 @@ import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUti
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeThat;
 
 public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
 
@@ -65,16 +63,26 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     protected final static String testWorkplacePass = getSystemProperty("tests.workplace.pass", testClusterPass);
 
     @BeforeClass
-    public static void checkWorkplaceSearchCompatible() throws IOException {
+    public static void checkWorkplaceSearchCompatible() {
         // We must check that we can run the tests.
         // For example, with a 6.x cluster, this is not possible as Workplace Search engine does not exist
         // and thus is not started.
-        ElasticsearchClient client = ElasticsearchClientUtil.getInstance(null, FsSettings.builder("foo").build());
-        String version = client.compatibleVersion();
-        Assume.assumeThat("We can not run workplace search tests on a version different than 7",
+        String version = managementService.getClient().compatibleVersion();
+        assumeThat("We can not run workplace search tests on a version different than 7",
                 version, equalTo("7"));
-        HttpURLConnection urlConnection = (HttpURLConnection) new URL(testWorkplaceUrl).openConnection();
-        urlConnection.getResponseCode();
+
+        try {
+            HttpURLConnection urlConnection = (HttpURLConnection) new URL(testWorkplaceUrl).openConnection();
+            urlConnection.getResponseCode();
+
+            // Test the license
+            String response = managementService.getClient().performLowLevelRequest("GET", "/_license", null);
+            assumeThat("We can not run the Workplace Search tests without at least a trial version.",
+                    JsonPath.read(response, "$.license.type"), isOneOf("platinum", "enterprise", "trial"));
+        } catch (IOException e) {
+            assumeNoException("We can not run the Workplace Search tests against this cluster. " +
+                    "Check that you have workplace search running at " + testWorkplaceUrl, e);
+        }
     }
 
     protected FsCrawlerImpl startCrawler(final String jobName, final String customSourceId, FsSettings fsSettings, TimeValue duration)
