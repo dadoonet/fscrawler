@@ -74,13 +74,13 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
-        sourceName = generateDefaultCustomSourceName(crawlerName);
+        String defaultCustomSourceName = generateDefaultCustomSourceName(crawlerName);
 
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            sourceId = getSourceIdFromSourceName(sourceName);
-            assertThat("Custom source id should be found for source " + sourceName, sourceId, notNullValue());
+            sourceId = getSourceIdFromSourceName(defaultCustomSourceName);
+            assertThat("Custom source id should be found for source " + defaultCustomSourceName, sourceId, notNullValue());
 
             startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
@@ -222,13 +222,13 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
-        sourceName = generateDefaultCustomSourceName(crawlerName);
+        String defaultCustomSourceName = generateDefaultCustomSourceName(crawlerName);
 
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            sourceId = getSourceIdFromSourceName(sourceName);
-            assertThat("Custom source id should be found for source " + sourceName, sourceId, notNullValue());
+            sourceId = getSourceIdFromSourceName(defaultCustomSourceName);
+            assertThat("Custom source id should be found for source " + defaultCustomSourceName, sourceId, notNullValue());
 
             String id = RandomizedTest.randomAsciiLettersOfLength(10);
 
@@ -269,13 +269,13 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
-        sourceName = generateDefaultCustomSourceName(crawlerName);
+        String defaultCustomSourceName = generateDefaultCustomSourceName(crawlerName);
 
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            sourceId = getSourceIdFromSourceName(sourceName);
-            assertThat("Custom source id should be found for source " + sourceName, sourceId, notNullValue());
+            sourceId = getSourceIdFromSourceName(defaultCustomSourceName);
+            assertThat("Custom source id should be found for source " + defaultCustomSourceName, sourceId, notNullValue());
 
             String id = RandomizedTest.randomAsciiLettersOfLength(10);
 
@@ -418,13 +418,13 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
-        sourceName = generateDefaultCustomSourceName(crawlerName);
+        String defaultCustomSourceName = generateDefaultCustomSourceName(crawlerName);
 
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            sourceId = getSourceIdFromSourceName(sourceName);
-            assertThat("Custom source id should be found for source " + sourceName, sourceId, notNullValue());
+            sourceId = getSourceIdFromSourceName(defaultCustomSourceName);
+            assertThat("Custom source id should be found for source " + defaultCustomSourceName, sourceId, notNullValue());
 
             startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
