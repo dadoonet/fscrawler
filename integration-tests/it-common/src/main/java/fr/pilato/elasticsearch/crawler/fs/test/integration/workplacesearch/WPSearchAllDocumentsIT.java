@@ -31,7 +31,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import org.apache.tika.parser.external.ExternalParser;
-import org.junit.After;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -53,14 +52,6 @@ import static org.hamcrest.Matchers.*;
  * Test all type of documents we have with workplace search
  */
 public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
-    private String sourceName;
-
-    @After
-    public void cleanUpCustomSource() {
-        if (sourceName != null) {
-            cleanExistingCustomSources(sourceName);
-        }
-    }
 
     @Test
     public void testAllDocuments() throws Exception {
@@ -101,8 +92,8 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            String customSourceId = getSourceIdFromSourceName(sourceName);
-            assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
+            sourceId = getSourceIdFromSourceName(sourceName);
+            assertThat("Custom source id should be found for source " + sourceName, sourceId, notNullValue());
 
             logger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
@@ -110,7 +101,7 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
             try (FsCrawlerImpl crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
                  WPSearchClient wpClient = createClient()) {
                 crawler.start();
-                countTestHelper(wpClient, customSourceId, numFiles, TimeValue.timeValueMinutes(5));
+                countTestHelper(wpClient, sourceId, numFiles, TimeValue.timeValueMinutes(5));
             }
 
             logger.info("  --> checking that files have expected content");

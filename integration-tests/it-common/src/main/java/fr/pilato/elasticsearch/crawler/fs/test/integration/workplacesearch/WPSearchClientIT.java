@@ -25,8 +25,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -42,19 +40,12 @@ import static org.hamcrest.Matchers.*;
  * Test Workplace Search HTTP client
  */
 public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
-    private static final String SOURCE_NAME = "fscrawler-wpsearch-client";
-
-    @Before
-    @After
-    public void cleanUpCustomSource() {
-        cleanExistingCustomSources(SOURCE_NAME);
-    }
 
     @Test
     public void testGetSourceById() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String id = client.createCustomSource(SOURCE_NAME);
+            String id = client.createCustomSource(sourceName);
 
             // This is what we want to test actually
             String source = client.getCustomSourceById(id);
@@ -66,10 +57,10 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testGetSourceByName() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String id = client.createCustomSource(SOURCE_NAME);
+            String id = client.createCustomSource(sourceName);
 
             // This is what we want to test actually
-            List<String> sourceIds = client.getCustomSourcesByName(SOURCE_NAME);
+            List<String> sourceIds = client.getCustomSourcesByName(sourceName);
             assertThat(sourceIds, hasSize(1));
             assertThat(id, isIn(sourceIds));
         }
@@ -79,8 +70,8 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testWithSomeFakeDocuments() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We configure the custom source.
-            String customSourceId = client.createCustomSource(SOURCE_NAME);
-            client.configureCustomSource(customSourceId, SOURCE_NAME);
+            String customSourceId = client.createCustomSource(sourceName);
+            client.configureCustomSource(customSourceId, sourceName);
 
             // Index some documents
             client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Foo", "EN", "foo", "Foo"));
@@ -121,8 +112,8 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testGetDocument() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We configure the custom source.
-            String customSourceId = client.createCustomSource(SOURCE_NAME);
-            client.configureCustomSource(customSourceId, SOURCE_NAME);
+            String customSourceId = client.createCustomSource(sourceName);
+            client.configureCustomSource(customSourceId, sourceName);
 
             String id = RandomizedTest.randomAsciiLettersOfLength(10);
 
@@ -145,8 +136,8 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testSearch() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String customSourceId = client.createCustomSource(SOURCE_NAME);
-            client.configureCustomSource(customSourceId, SOURCE_NAME);
+            String customSourceId = client.createCustomSource(sourceName);
+            client.configureCustomSource(customSourceId, sourceName);
 
             String uniqueId1 = RandomizedTest.randomAsciiLettersOfLength(10);
             {
@@ -219,8 +210,8 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testSendAndRemoveADocument() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String customSourceId = client.createCustomSource(SOURCE_NAME);
-            client.configureCustomSource(customSourceId, SOURCE_NAME);
+            String customSourceId = client.createCustomSource(sourceName);
+            client.configureCustomSource(customSourceId, sourceName);
 
             Map<String, Object> document = new HashMap<>();
             document.put("id", "testSendAndRemoveADocument");

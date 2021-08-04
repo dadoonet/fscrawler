@@ -39,10 +39,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
-import org.junit.After;
 import org.junit.Assume;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -59,25 +56,6 @@ import static org.hamcrest.Matchers.*;
  * Test workplace search
  */
 public class WPSearchIT extends AbstractWorkplaceSearchITCase {
-    private String sourceName;
-
-    @BeforeClass
-    public static void cleanAllTestResources() {
-        // Just for dev only. In case we need to remove tons of workplace search custom sources at once
-        // cleanExistingCustomSources("fscrawler_*");
-    }
-
-    @Before
-    public void generateJobName() {
-        sourceName = getRandomCrawlerName();
-    }
-
-    @After
-    public void cleanUpCustomSource() {
-        if (sourceName != null) {
-            cleanExistingCustomSources(sourceName);
-        }
-    }
 
     @Test
     public void testWorkplaceSearch() throws Exception {
@@ -96,21 +74,21 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
-        sourceName = generateDefaultCustomSourceName(crawlerName);
+        String defaultCustomSourceName = generateDefaultCustomSourceName(crawlerName);
 
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            String customSourceId = getSourceIdFromSourceName(sourceName);
-            assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
+            sourceId = getSourceIdFromSourceName(defaultCustomSourceName);
+            assertThat("Custom source id should be found for source " + defaultCustomSourceName, sourceId, notNullValue());
 
-            startCrawler(crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                String json = countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(1));
+                String json = countTestHelper(client, sourceId, 1L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
                 // We can check the meta data to check the custom source id
-                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));
+                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(sourceId));
 
                 // We can check the content
                 assertThat(JsonPath.read(document, "$.results[0].title.raw"), is("roottxtfile.txt"));
@@ -132,7 +110,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
 
     @Test
     public void testWorkplaceSearchWithCustomSourceId() throws Exception {
-        String customSourceId = initSource(sourceName);
+        sourceId = initSource(sourceName);
         String crawlerName = getRandomCrawlerName();
         Fs fs = startCrawlerDefinition().build();
         FsSettings fsSettings = FsSettings.builder(crawlerName)
@@ -144,7 +122,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
-                        .setId(customSourceId)
+                        .setId(sourceId)
                         .setBulkSize(1)
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
@@ -152,13 +130,13 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            startCrawler(crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                String json = countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(1));
+                String json = countTestHelper(client, sourceId, 1L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
                 // We can check the meta data to check the custom source id
-                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));
+                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(sourceId));
 
                 // We can check the content
                 assertThat(JsonPath.read(document, "$.results[0].title.raw"), is("roottxtfile.txt"));
@@ -198,16 +176,16 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            String customSourceId = getSourceIdFromSourceName(sourceName);
-            assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
+            sourceId = getSourceIdFromSourceName(sourceName);
+            assertThat("Custom source id should be found for source " + sourceName, sourceId, notNullValue());
 
-            startCrawler(getCrawlerName(), customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(getCrawlerName(), sourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                String json = countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(1));
+                String json = countTestHelper(client, sourceId, 1L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
                 // We can check the meta data to check the custom source id
-                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));
+                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(sourceId));
 
                 // We can check the content
                 assertThat(JsonPath.read(document, "$.results[0].title.raw"), is("roottxtfile.txt"));
@@ -244,13 +222,13 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
-        sourceName = generateDefaultCustomSourceName(crawlerName);
+        String defaultCustomSourceName = generateDefaultCustomSourceName(crawlerName);
 
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            String customSourceId = getSourceIdFromSourceName(sourceName);
-            assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
+            sourceId = getSourceIdFromSourceName(defaultCustomSourceName);
+            assertThat("Custom source id should be found for source " + defaultCustomSourceName, sourceId, notNullValue());
 
             String id = RandomizedTest.randomAsciiLettersOfLength(10);
 
@@ -259,7 +237,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
 
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(5));
+                countTestHelper(client, sourceId, 1L, TimeValue.timeValueSeconds(5));
             }
 
             assertThat(documentService.exists(null, id), is(true));
@@ -291,13 +269,13 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
-        sourceName = generateDefaultCustomSourceName(crawlerName);
+        String defaultCustomSourceName = generateDefaultCustomSourceName(crawlerName);
 
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            String customSourceId = getSourceIdFromSourceName(sourceName);
-            assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
+            sourceId = getSourceIdFromSourceName(defaultCustomSourceName);
+            assertThat("Custom source id should be found for source " + defaultCustomSourceName, sourceId, notNullValue());
 
             String id = RandomizedTest.randomAsciiLettersOfLength(10);
 
@@ -308,7 +286,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
 
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                countTestHelper(client, customSourceId, 4L, TimeValue.timeValueSeconds(5));
+                countTestHelper(client, sourceId, 4L, TimeValue.timeValueSeconds(5));
             }
 
             {
@@ -440,21 +418,21 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())
                 .build();
-        sourceName = generateDefaultCustomSourceName(crawlerName);
+        String defaultCustomSourceName = generateDefaultCustomSourceName(crawlerName);
 
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            String customSourceId = getSourceIdFromSourceName(sourceName);
-            assertThat("Custom source id should be found for source " + sourceName, customSourceId, notNullValue());
+            sourceId = getSourceIdFromSourceName(defaultCustomSourceName);
+            assertThat("Custom source id should be found for source " + defaultCustomSourceName, sourceId, notNullValue());
 
-            startCrawler(crawlerName, customSourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                String json = countTestHelper(client, customSourceId, 2L, TimeValue.timeValueSeconds(1));
+                String json = countTestHelper(client, sourceId, 2L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
                 // We can check the meta data to check the custom source id
-                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(customSourceId));
+                assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(sourceId));
 
                 // We can check the content
                 assertThat(JsonPath.read(document, "$.results[*].title.raw"), hasItem(isOneOf("roottxtfile.txt", "roottxtfile_multi_feed.txt")));

@@ -286,7 +286,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 getSystemProperty("skipIntegTests", false));
     }
 
-    private static final String testCrawlerPrefix = "fscrawler_";
+    protected static final String testCrawlerPrefix = "fscrawler_";
 
     protected static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
                                                                TimeValue timeValue, ByteSizeValue byteSize) {
