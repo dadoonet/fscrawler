@@ -448,7 +448,7 @@
                             <remove>remove</remove>
                         </issueTypes>
                         <onlyCurrentVersion>true</onlyCurrentVersion>
-                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es6/${project.version}</urlDownload>
+                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es7/${project.version}</urlDownload>
                         <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
                     </configuration>
                 </plugin>
