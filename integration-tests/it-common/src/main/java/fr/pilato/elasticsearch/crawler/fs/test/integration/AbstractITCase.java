@@ -20,9 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -35,7 +32,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import org.apache.logging.log4j.Level;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
@@ -83,9 +79,6 @@ import static org.junit.Assume.assumeThat;
  *
  * All integration tests might be skipped if the cluster is not running
  */
-@ThreadLeakFilters(filters = {TestContainerThreadFilter.class})
-@ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
-@ThreadLeakLingering(linger = 5000) // 5 sec lingering
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     protected static Path metadataDir = null;
