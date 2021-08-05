@@ -120,6 +120,7 @@ public class FileAbstractorSSH extends FileAbstractor<ChannelSftp.LsEntry> {
     @Override
     public void close() throws Exception {
         if (sftp != null) {
+            logger.debug("Closing SSH connection");
             sftp.getSession().disconnect();
             sftp.disconnect();
         }

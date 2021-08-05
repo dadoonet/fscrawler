@@ -21,6 +21,8 @@ package fr.pilato.elasticsearch.crawler.fs.test.framework;
 import com.carrotsearch.randomizedtesting.RandomizedContext;
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.annotations.Listeners;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import com.carrotsearch.randomizedtesting.generators.RandomNumbers;
 import org.apache.logging.log4j.LogManager;
@@ -55,6 +57,8 @@ import static org.junit.Assert.fail;
 @RunWith(RandomizedRunner.class)
 @Listeners({FSCrawlerReproduceInfoPrinter.class})
 @TimeoutSuite(millis = 5 * 60 * 1000)
+@ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
+@ThreadLeakLingering(linger = 5000) // 5 sec lingering
 public abstract class AbstractFSCrawlerTestCase {
 
     protected static final Logger staticLogger = LogManager.getLogger(AbstractFSCrawlerTestCase.class);

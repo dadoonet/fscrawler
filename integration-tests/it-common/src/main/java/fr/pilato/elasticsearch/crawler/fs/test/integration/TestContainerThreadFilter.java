@@ -17,10 +17,15 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.test.framework;
+package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.carrotsearch.randomizedtesting.ThreadFilter;
 
+/**
+ * We are not using TestContainers anymore so this one is
+ * probably useless now
+ */
+@Deprecated
 public class TestContainerThreadFilter implements ThreadFilter {
     @Override
     public boolean reject(Thread t) {

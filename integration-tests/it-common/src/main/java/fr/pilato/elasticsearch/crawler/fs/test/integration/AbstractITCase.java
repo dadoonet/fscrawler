@@ -21,8 +21,9 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.KeyPair;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -35,8 +36,13 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import org.apache.logging.log4j.Level;
+import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
+import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.session.ServerSession;
+import org.apache.sshd.sftp.server.SftpFileSystemAccessor;
+import org.apache.sshd.sftp.server.SftpSubsystemFactory;
+import org.apache.sshd.sftp.server.SftpSubsystemProxy;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -48,6 +54,7 @@ import java.net.ConnectException;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
@@ -59,6 +66,8 @@ import java.util.stream.Stream;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
+import static com.jcraft.jsch.KeyPair.RSA;
+import static com.jcraft.jsch.KeyPair.genKeyPair;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -83,9 +92,7 @@ import static org.junit.Assume.assumeThat;
  *
  * All integration tests might be skipped if the cluster is not running
  */
-@ThreadLeakFilters(filters = {TestContainerThreadFilter.class})
-@ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
-@ThreadLeakLingering(linger = 5000) // 5 sec lingering
+@ThreadLeakFilters(filters = {SshdThreadFilter.class})
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     protected static Path metadataDir = null;
@@ -98,6 +105,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
+    protected final static String SSH_USERNAME = "USERNAME";
+    protected final static String SSH_PASSWORD = "PASSWORD";
+
 
     protected static String testClusterUrl;
     protected final static String testClusterUser = getSystemProperty("tests.cluster.user", DEFAULT_USERNAME);
@@ -462,4 +472,38 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         });
     }
 
+    protected SshServer startSshServer() throws IOException, JSchException {
+        SftpSubsystemFactory factory = new SftpSubsystemFactory.Builder()
+                .withFileSystemAccessor(new SftpFileSystemAccessor() {
+                    @Override
+                    public Path resolveLocalFilePath(ServerSession session, SftpSubsystemProxy subsystem, Path rootDir,
+                                                     String remotePath) throws InvalidPathException {
+                        String path = remotePath;
+                        if (remotePath.startsWith("/")) {
+                            path = remotePath.substring(1);
+                        }
+                        return currentTestResourceDir.resolve(path);
+                    }
+                })
+                .build();
+
+        // Generate the key files
+        JSch jSch = new JSch();
+        KeyPair keyPair = genKeyPair(jSch, RSA);
+        keyPair.writePrivateKey(rootTmpDir.resolve("private.key").toString());
+        keyPair.writePublicKey(rootTmpDir.resolve("public.key").toString(), "Fake public key for FSCrawler tests");
+
+        SshServer sshd = SshServer.setUpDefaultServer();
+        sshd.setPasswordAuthenticator((username, password, session) ->
+                SSH_USERNAME.equals(username) && SSH_PASSWORD.equals(password));
+
+        sshd.setHost("0.0.0.0");
+        sshd.setKeyPairProvider(new FileKeyPairProvider(rootTmpDir.resolve("private.key")));
+        sshd.setSubsystemFactories(Collections.singletonList(factory));
+        sshd.start();
+
+        logger.info(" -> Started fake SSHD service on {}:{}", sshd.getHost(), sshd.getPort());
+
+        return sshd;
+    }
 }

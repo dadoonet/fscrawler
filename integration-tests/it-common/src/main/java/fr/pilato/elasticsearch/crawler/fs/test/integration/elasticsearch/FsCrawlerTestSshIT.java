@@ -19,33 +19,47 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import com.jcraft.jsch.JSchException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.apache.sshd.server.SshServer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.IOException;
 
 /**
  * Test crawler with SSH
  */
 public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
 
-    /**
-     * You have to adapt this test to your own system (login / password and SSH connexion)
-     * So this test is disabled by default
-     */
-    @Test @Ignore
-    public void test_ssh() throws Exception {
-        String username = "USERNAME";
-        String password = "PASSWORD";
-        String hostname = "localhost";
+    private SshServer sshd = null;
 
-        Fs fs = startCrawlerDefinition().build();
+    @Before
+    public void setup() throws IOException, JSchException {
+        sshd = startSshServer();
+    }
+
+    @After
+    public void shutDown() throws IOException {
+        if (sshd != null) {
+            sshd.stop(true);
+            logger.info(" -> Stopped fake SSHD service on {}:{}", sshd.getHost(), sshd.getPort());
+        }
+    }
+
+    @Test
+    public void test_ssh() throws Exception {
+        Fs fs = startCrawlerDefinition("/").build();
         Server server = Server.builder()
-                .setHostname(hostname)
-                .setUsername(username)
-                .setPassword(password)
+                .setHostname(sshd.getHost())
+                .setPort(sshd.getPort())
+                .setUsername(SSH_USERNAME)
+                .setPassword(SSH_PASSWORD)
                 .setProtocol(Server.PROTOCOL.SSH)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
@@ -53,21 +67,15 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
-    /**
-     * You have to adapt this test to your own system (login / pem file and SSH connexion)
-     * So this test is disabled by default
-     */
+    // TODO fix the key pair generation problem
     @Test @Ignore
     public void test_ssh_with_key() throws Exception {
-        String username = "USERNAME";
-        String path_to_pem_file = "/path/to/private_key.pem";
-        String hostname = "localhost";
-
-        Fs fs = startCrawlerDefinition().build();
+        Fs fs = startCrawlerDefinition("/").build();
         Server server = Server.builder()
-                .setHostname(hostname)
-                .setUsername(username)
-                .setPemPath(path_to_pem_file)
+                .setHostname(sshd.getHost())
+                .setPort(sshd.getPort())
+                .setUsername(SSH_USERNAME)
+                .setPemPath(rootTmpDir.resolve("private.key").toFile().getAbsolutePath())
                 .setProtocol(Server.PROTOCOL.SSH)
                 .build();
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);

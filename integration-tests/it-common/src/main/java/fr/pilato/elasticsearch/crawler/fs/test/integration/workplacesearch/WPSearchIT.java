@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.jayway.jsonpath.JsonPath;
+import com.jcraft.jsch.JSchException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
@@ -39,10 +40,13 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
+import org.apache.sshd.server.SshServer;
+import org.junit.After;
 import org.junit.Assume;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +60,21 @@ import static org.hamcrest.Matchers.*;
  * Test workplace search
  */
 public class WPSearchIT extends AbstractWorkplaceSearchITCase {
+
+    private SshServer sshd = null;
+
+    @Before
+    public void setup() throws IOException, JSchException {
+        sshd = startSshServer();
+    }
+
+    @After
+    public void shutDown() throws IOException {
+        if (sshd != null) {
+            sshd.stop(true);
+            logger.info(" -> Stopped fake SSHD service on {}:{}", sshd.getHost(), sshd.getPort());
+        }
+    }
 
     @Test
     public void testWorkplaceSearch() throws Exception {
@@ -387,24 +406,17 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
         }
     }
 
-    /**
-     * You have to adapt this test to your own system (login / password and SSH connexion)
-     * So this test is disabled by default
-     */
-    @Test @Ignore
+    @Test
     public void test_ssh() throws Exception {
-        String username = "USERNAME";
-        String password = "PASSWORD";
-        String hostname = "localhost";
-
         String crawlerName = sourceName;
-        Fs fs = startCrawlerDefinition().build();
+        Fs fs = startCrawlerDefinition("/").build();
         FsSettings fsSettings = FsSettings.builder(crawlerName)
                 .setFs(fs)
                 .setServer(Server.builder()
-                        .setHostname(hostname)
-                        .setUsername(username)
-                        .setPassword(password)
+                        .setHostname(sshd.getHost())
+                        .setPort(sshd.getPort())
+                        .setUsername(SSH_USERNAME)
+                        .setPassword(SSH_PASSWORD)
                         .setProtocol(Server.PROTOCOL.SSH)
                         .build())
                 .setElasticsearch(Elasticsearch.builder()

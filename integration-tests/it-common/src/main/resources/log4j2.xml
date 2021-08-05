@@ -51,6 +51,9 @@
       <Logger name="org.glassfish" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
+      <Logger name="org.apache.sshd" level="info" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>

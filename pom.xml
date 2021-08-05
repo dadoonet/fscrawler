@@ -808,6 +808,11 @@
                 <artifactId>jsch</artifactId>
                 <version>0.1.55</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.sshd</groupId>
+                <artifactId>sshd-sftp</artifactId>
+                <version>2.7.0</version>
+            </dependency>
 
             <!-- Dependency for parsing remote ftp directory -->
             <dependency>
@@ -819,7 +824,6 @@
                 <groupId>org.mockftpserver</groupId>
                 <artifactId>MockFtpServer</artifactId>
                 <version>2.8.0</version>
-                <scope>test</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
