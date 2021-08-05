@@ -1116,6 +1116,10 @@
         </profile>
         <profile>
             <id>release</id>
+            <properties>
+                <!-- The ocr version will be the default one for anyone trying docker pull dadoonet/fscrawler -->
+                <docker.ocr.tags.1>latest</docker.ocr.tags.1>
+            </properties>
             <build>
                 <plugins>
                     <plugin>

@@ -18,9 +18,9 @@
         <!-- We use this tag to make easy using docker pull dadoonet/fscrawler:noocr -->
         <docker.noocr.tags.0>noocr</docker.noocr.tags.0>
 
-        <!-- The ocr version will be the default one for anyone trying docker pull dadoonet/fscrawler -->
-        <docker.ocr.tags.0>latest</docker.ocr.tags.0>
-        <docker.ocr.tags.1>${project.version}</docker.ocr.tags.1>
+        <!-- The ocr version will be the default one for anyone trying docker pull dadoonet/fscrawler:VERSION -->
+        <docker.ocr.tags.0>${project.version}</docker.ocr.tags.0>
+        <docker.ocr.tags.1>latest</docker.ocr.tags.1>
     </properties>
 
     <dependencies>
