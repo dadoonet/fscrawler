@@ -41,7 +41,7 @@
         <elasticsearch6.version>6.8.18</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
-        <tika.version>2.0.0</tika.version>
+        <tika.version>2.1.0</tika.version>
         <jackson.version>2.12.5</jackson.version>
         <jsonpath.version>2.6.0</jsonpath.version>
         <slf4j.version>1.7.32</slf4j.version>
@@ -676,6 +676,11 @@
 
             <dependency>
                 <groupId>org.apache.tika</groupId>
+                <artifactId>tika-core</artifactId>
+                <version>${tika.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tika</groupId>
                 <artifactId>tika-parsers-standard-package</artifactId>
                 <version>${tika.version}</version>
             </dependency>
@@ -704,20 +709,58 @@
                 <version>9.2</version>
             </dependency>
 
-            <!-- For CVE. Comes from tika-parser-scientific-module:2.0.0
-[INFO] |  +- edu.ucar:netcdf4:jar:4.5.5:compile
-[INFO] |  |  \- edu.ucar:cdm:jar:4.5.5:compile
-[INFO] |  |     +- edu.ucar:udunits:jar:4.5.5:compile
-[INFO] |  |     +- edu.ucar:httpservices:jar:4.5.5:compile
-[INFO] |  |     |  \- org.apache.httpcomponents:httpmime:jar:4.5.13:compile
-[INFO] |  |     +- joda-time:joda-time:jar:2.2:compile
-[INFO] |  |     +- org.quartz-scheduler:quartz:jar:2.2.0:compile
-[INFO] |  |     |  \- c3p0:c3p0:jar:0.9.1.1:compile
-            -->
+            <!-- Because of CVE-2019-5427 and CVE-2019-13990. Comes from tika-parser-scientific-module:2.0.0 dep -->
             <dependency>
                 <groupId>org.quartz-scheduler</groupId>
                 <artifactId>quartz</artifactId>
                 <version>2.3.2</version>
+            </dependency>
+
+            <!-- Because of CVE-2021-37714 and CVE-2015-6748 - this comes from Tika 2.1.0 -->
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>1.14.2</version>
+            </dependency>
+
+            <!-- Version conflict between
+            org.apache.tika:tika-parser-scientific-module:2.1.0 deps
+            org.apache.tika:tika-langdetect-optimaize:2.1.0 deps
+            -->
+            <!-- Because of CVE-2020-8908 and CVE-2018-10237 - this comes from Tika 2.1.0 -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>30.1.1-jre</version>
+            </dependency>
+
+            <!-- Version conflict between
+            org.apache.tika:tika-parsers-standard-package:2.1.0 deps
+            org.apache.tika:tika-parser-scientific-module:2.1.0 deps
+            -->
+            <dependency>
+                <groupId>org.jdom</groupId>
+                <artifactId>jdom2</artifactId>
+                <version>2.0.6</version>
+            </dependency>
+
+            <!-- Version conflict between
+            org.apache.tika:tika-parsers-standard-package:2.1.0 deps
+            -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.12.0</version>
+            </dependency>
+
+            <!-- Version conflict between
+            org.elasticsearch.client:elasticsearch-rest-high-level-client:7.14.1 deps
+            org.apache.tika:tika-parser-scientific-module:2.1.0 deps
+            -->
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>2.10.10</version>
             </dependency>
 
             <!-- For Language detection -->
