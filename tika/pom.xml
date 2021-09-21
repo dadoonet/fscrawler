@@ -109,6 +109,12 @@
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
         </dependency>
+        <!-- Because of CVE-2021-37714. Remove this when upgrading to Tika 2.x -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.14.2</version>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
