@@ -52,4 +52,4 @@ esac
 # If the user defined FS_JAVA_OPTS, we will use it to start the crawler
 JAVA_OPTS="$JAVA_OPTS $FS_JAVA_OPTS"
 
-exec "$JAVA" ${JAVA_OPTS} -cp "$FS_CLASSPATH" -jar "$FS_HOME/lib/${project.build.finalName}.jar" "$@"
+exec "$JAVA" ${JAVA_OPTS} -cp "$FS_CLASSPATH" "${distribution.mainClassName}" "$@"
