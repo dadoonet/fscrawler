@@ -39,6 +39,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -88,7 +89,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("issue-221-doc1.pdf");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("Formations"));
+        assertThat(doc.getContent(), containsString("coucou"));
 
         // Content Type
         assertThat(doc.getFile().getContentType(), containsString("application/pdf"));
@@ -683,16 +684,17 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void testPdfIssue1097() throws IOException {
+        // Run the test with or without OCR as the behavior changes
+        boolean withOcr = isOcrAvailable && randomBoolean();
         FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setRawMetadata(true).build())
+                .setFs(Fs.builder().setRawMetadata(true).setOcr(Ocr.builder().setEnabled(withOcr).build()).build())
                 .build();
         Doc doc = extractFromFile("issue-1097.pdf", fsSettings);
-        // TODO This test is now passing but should be failing when
+        // TODO This test is now passing but should be failing with ocr when
         // https://issues.apache.org/jira/browse/TIKA-3364 is solved
-        assertThat(doc.getContent(), isOneOf(
-                "\nDummy PDF file\n\n\n\n\n\tDummy PDF file\n\n", // When OCR
-                "\nDummy PDF file\n\n\n\tDummy PDF file\n\n") // When NO OCR
-        );
+        assertThat(doc.getContent(), is(withOcr ?
+                "\nDummy PDF file\n\nDummy PDF file\n\n\n\n" :
+                "\nDummy PDF file\n\n\n"));
 
         // Meta data
         assertThat(doc.getMeta().getAuthor(), not(nullValue()));
@@ -701,7 +703,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 29 : 28));
+        assertThat(raw.entrySet(), iterableWithSize(withOcr ? 29 : 28));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.4"));
         assertThat(raw, hasEntry("xmp:CreatorTool", "Writer"));
@@ -731,7 +733,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("pdf:docinfo:producer", "OpenOffice.org 2.1"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z"));
 
-        if (isOcrAvailable) {
+        if (withOcr) {
             assertThat(raw, hasEntry("Content-Type-Parser-Override", "image/ocr-png"));
         }
     }

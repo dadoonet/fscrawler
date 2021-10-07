@@ -83,6 +83,10 @@ public class TikaInstance {
             DefaultParser defaultParser;
             TesseractOCRParser ocrParser;
 
+            // To solve https://issues.apache.org/jira/browse/TIKA-3364
+            // PDF content might be extracted multiple times.
+            pdfParser.getPDFParserConfig().setExtractBookmarksText(false);
+
             ocrActivated = fs.getOcr().isEnabled();
 
             if (ocrActivated) {
