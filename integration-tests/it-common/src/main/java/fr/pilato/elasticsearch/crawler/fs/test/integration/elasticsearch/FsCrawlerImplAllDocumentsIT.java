@@ -189,7 +189,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void testProtectedDocument221() throws IOException {
-        runSearch("issue-221-doc1.pdf", "Formations");
+        runSearch("issue-221-doc1.pdf", "coucou");
         runSearch("issue-221-doc2.pdf", "FORMATIONS");
     }
 

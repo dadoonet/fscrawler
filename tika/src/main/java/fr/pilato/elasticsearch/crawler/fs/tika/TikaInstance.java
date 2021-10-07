@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tika.config.ServiceLoader;
 import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.exception.ZeroByteFileException;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.metadata.Metadata;
@@ -165,6 +166,9 @@ public class TikaInstance {
         WriteOutContentHandler handler = new WriteOutContentHandler(indexedChars);
         try (stream) {
             parser.parse(stream, new BodyContentHandler(handler), metadata, context);
+        } catch (WriteLimitReachedException e) {
+            String resourceName = metadata.get("resourceName");
+            logger.debug("We reached the limit we set ({}) for {}: {}", indexedChars, resourceName, e.getMessage());
         } catch (SAXException e) {
             throw new TikaException("Unexpected SAX processing failure", e);
         } catch (ZeroByteFileException e) {

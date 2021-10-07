@@ -131,7 +131,7 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
             runSearch("test.txt", "contains");
             runSearch("test.wav", null);
             runSearch("test-protected.docx", null);
-            runSearch("issue-221-doc1.pdf", "Formations");
+            runSearch("issue-221-doc1.pdf", "coucou");
             runSearch("issue-221-doc2.pdf", "FORMATIONS");
 
             Object response = runSearch("test-fr.txt", "fichier");
