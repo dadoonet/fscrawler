@@ -74,6 +74,12 @@
             <artifactId>jaxb-api</artifactId>
         </dependency>
 
+        <!-- Needed for Jersey -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jaxb-annotations</artifactId>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
