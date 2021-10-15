@@ -6,6 +6,7 @@ RUN set -ex \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
     "gettext-base=0.19.*" \
+    procps \
     ${langsPkg} \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
