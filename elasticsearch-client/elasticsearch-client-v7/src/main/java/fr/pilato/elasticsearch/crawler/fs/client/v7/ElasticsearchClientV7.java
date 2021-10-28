@@ -39,6 +39,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -74,6 +75,9 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.core.MainResponse;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.client.sniff.ElasticsearchNodesSniffer;
+import org.elasticsearch.client.sniff.NodesSniffer;
+import org.elasticsearch.client.sniff.Sniffer;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -121,6 +125,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     private final FsSettings settings;
 
     private RestHighLevelClient client = null;
+    private Sniffer sniffer = null;
     private BulkProcessor bulkProcessor = null;
 
     /**
@@ -150,6 +155,19 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         try {
             // Create an elasticsearch client
             client = new RestHighLevelClient(buildRestClient(settings.getElasticsearch()));
+
+            // Check if we have http or https so we can use the right Scheme for the sniffer
+            ElasticsearchNodesSniffer.Scheme scheme = ElasticsearchNodesSniffer.Scheme.HTTP;
+            for (ServerUrl node : settings.getElasticsearch().getNodes()) {
+                HttpHost host = HttpHost.create(node.decodedUrl());
+                if (host.getSchemeName().equals("https")) {
+                    scheme = ElasticsearchNodesSniffer.Scheme.HTTPS;
+                    break;
+                }
+            }
+            NodesSniffer nodesSniffer = new ElasticsearchNodesSniffer(client.getLowLevelClient(), TimeUnit.SECONDS.toMillis(10), scheme);
+            sniffer = Sniffer.builder(client.getLowLevelClient()).setNodesSniffer(nodesSniffer).build();
+
             checkVersion();
             logger.info("Elasticsearch Client for version {}.x connected to a node running version {}", compatibleVersion(), getVersion());
         } catch (Exception e) {
@@ -417,6 +435,9 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
                 logger.warn("Did not succeed in closing the bulk processor for documents", e);
                 throw new IOException(e);
             }
+        }
+        if (sniffer != null) {
+            sniffer.close();
         }
         if (client != null) {
             client.close();
