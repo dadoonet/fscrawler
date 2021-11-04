@@ -22,6 +22,8 @@
     "subtitle_field": "name",
     "description_field": "body",
     "url_field": "url",
+    "media_type_field": "mime_type",
+    "created_by_field": "author",
     "detail_fields": [
       {
         "field_name": "author",
