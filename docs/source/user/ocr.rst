@@ -8,7 +8,7 @@ OCR integration
 To deal with images containing text, just `install
 Tesseract <https://tesseract-ocr.github.io/tessdoc/>`__.
 Tesseract will be auto-detected by Tika or you can explicitly `set the
-path to tesseract binary <OCR Path>`_. Then add an image (png, jpg, …)
+path to tesseract binary <#ocr-path>`_. Then add an image (png, jpg, …)
 into your Fscrawler :ref:`root-directory`. After the next
 index update, the text will be indexed and placed in "_source.content".
 
