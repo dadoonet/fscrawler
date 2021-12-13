@@ -706,12 +706,6 @@
                 <artifactId>jcl-over-slf4j</artifactId>
                 <version>1.7.32</version>
             </dependency>
-            <!-- Fix tika-parsers-standard-package with JDOM2 CVE-2021-33813 -->
-            <dependency>
-                <groupId>org.jdom</groupId>
-                <artifactId>jdom2</artifactId>
-                <version>2.0.6.1</version>
-            </dependency>
 
             <!-- Fix org.elasticsearch.client:elasticsearch-rest-high-level-client:7.16.1 vs org.apache.tika:tika-parser-scientific-module:2.1.0 transitive dependency -->
             <dependency>
