@@ -149,6 +149,11 @@ public abstract class WorkplaceSearchClientUtil {
     }
 
     public static String toRFC3339(Date d) {
+        if (logger.isDebugEnabled() && d != null) {
+            String format = RFC_3339.format(d);
+            String finalDate = format.replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
+            logger.debug("Transforming date to RFC_3339 [{}] -> [{}] -> [{}]", d, format, finalDate);
+        }
         return d == null ? null : RFC_3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
     }
 

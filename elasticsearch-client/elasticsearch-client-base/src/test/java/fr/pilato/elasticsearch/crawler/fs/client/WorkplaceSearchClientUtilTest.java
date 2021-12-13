@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
-import java.text.ParseException;
 import java.util.Date;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
