@@ -31,6 +31,9 @@ set JAVA_OPTS=%JAVA_OPTS% -Djava.util.logging.manager=org.apache.logging.log4j.j
 REM Define LOG4J2 config file
 set JAVA_OPTS=%JAVA_OPTS% -Dlog4j.configurationFile=%FS_HOME%/config/log4j2.xml
 
+REM Fix for CVE-2021-44228
+set JAVA_OPTS=%JAVA_OPTS% -Dlog4j2.formatMsgNoLookups=true
+
 REM If the user defined FS_JAVA_OPTS, we will use it to start the crawler
 set JAVA_OPTS=%JAVA_OPTS% %FS_JAVA_OPTS%
 
