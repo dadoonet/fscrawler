@@ -49,6 +49,9 @@ case $(ps -o stat= -p $$) in
   *) JAVA_OPTS="$JAVA_OPTS -Dlog4j.configurationFile=$FS_HOME/config/log4j2-file.xml" ;;
 esac
 
+# Fix for CVE-2021-44228
+JAVA_OPTS="$JAVA_OPTS -Dlog4j2.formatMsgNoLookups=true"
+
 # If the user defined FS_JAVA_OPTS, we will use it to start the crawler
 JAVA_OPTS="$JAVA_OPTS $FS_JAVA_OPTS"
 

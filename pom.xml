@@ -37,8 +37,8 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch7.version>7.15.0</elasticsearch7.version>
-        <elasticsearch6.version>6.8.18</elasticsearch6.version>
+        <elasticsearch7.version>7.16.1</elasticsearch7.version>
+        <elasticsearch6.version>6.8.21</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
         <tika.version>2.1.0</tika.version>
@@ -705,6 +705,19 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>jcl-over-slf4j</artifactId>
                 <version>1.7.32</version>
+            </dependency>
+            <!-- Fix tika-parsers-standard-package with JDOM2 CVE-2021-33813 -->
+            <dependency>
+                <groupId>org.jdom</groupId>
+                <artifactId>jdom2</artifactId>
+                <version>2.0.6.1</version>
+            </dependency>
+
+            <!-- Fix org.elasticsearch.client:elasticsearch-rest-high-level-client:7.16.1 vs org.apache.tika:tika-parser-scientific-module:2.1.0 transitive dependency -->
+            <dependency>
+                <groupId>net.java.dev.jna</groupId>
+                <artifactId>jna</artifactId>
+                <version>5.10.0</version>
             </dependency>
 
             <!-- Fix json-path 2.6.0 vs tika 1.27 transitive dependency -->
