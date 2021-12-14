@@ -4,22 +4,22 @@ Version 2.8
 New features
 ------------
 
-#1310: Update ocr.rst, the path was wrong and not working . Thanks to sahin52.
-#1256: Add section Workaround for huge temporary files . Thanks to dfbm.
+* Update ocr.rst, the path was wrong and not working. Thanks to sahin52.
+* Add section Workaround for huge temporary files. Thanks to dfbm.
 
 Fixed Bugs
 ----------
 
-#1286: Fix starting fscrawler with Docker . Thanks to dadoonet.
-#1271: fix: not working optional libraries (e.g. jpeg2000) . Thanks to NickUfer.
-#1252: Add procps apt package to container install . Thanks to cwperry.
-#1229: File logs missing in docker container . Thanks to helsonxiao.
+* Fix starting fscrawler with Docker. Thanks to dadoonet.
+* fix: not working optional libraries (e.g. jpeg2000). Thanks to NickUfer.
+* Add procps apt package to container install. Thanks to cwperry.
+* File logs missing in docker container. Thanks to helsonxiao.
 
 Changes
 -------
 
-#1320: Bump log4j-core from 2.14.1 to 2.15.0 . Thanks to dependabot[bot].
-#1198: Update to Tika 2.1 . Thanks to dadoonet.
+* Bump log4j-core from 2.14.1 to 2.15.0.
+* Update to Tika 2.1. Thanks to dadoonet.
 
 Thanks to ``@sahin52``, ``@dfbm``, ``@NickUfer``, ``@cwperry``, ``@helsonxiao``, ``@dadoonet``
 for this release!
