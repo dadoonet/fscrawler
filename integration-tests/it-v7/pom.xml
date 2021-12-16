@@ -28,11 +28,6 @@
             <artifactId>fscrawler-elasticsearch-client-v7</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-it-common</artifactId>
-            <version>2.9-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 
     <build>
