@@ -700,6 +700,25 @@
                 <version>${tika.version}</version>
             </dependency>
 
+            <!--
+                org.apache.tika:tika-*:2.1.0 declares a javax.servlet:servlet-api:2.3
+                org.apache.tika:tika-langdetect-optimaize:2.1.0 declares a javax.servlet:servlet-api:2.4
+            -->
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>servlet-api</artifactId>
+                <version>2.4</version>
+            </dependency>
+            <!--
+                org.apache.tika:tika-parsers-standard-package:2.1.0 declares a xml-apis:xml-apis:1.4.01
+                org.apache.tika:tika-parser-scientific-module:2.1.0 declares a xml-apis:xml-apis:1.0.b2
+            -->
+            <dependency>
+                <groupId>xml-apis</groupId>
+                <artifactId>xml-apis</artifactId>
+                <version>1.4.01</version>
+            </dependency>
+
             <!-- Fix tika-parsers-standard-package 2.0.0 vs tika-parser-scientific-module:2.0.0 transitive dependency -->
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -858,6 +877,16 @@
                 <artifactId>jakarta.annotation-api</artifactId>
                 <version>2.0.0</version>
             </dependency>
+            <!--
+                org.glassfish.jersey.core:jersey-*:3.0.3 declares a org.osgi.core:6.0.0
+                org.apache.logging.log4j:log4j-core:2.16.0 declares a org.osgi.core:4.3.1
+            -->
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.core</artifactId>
+                <version>6.0.0</version>
+            </dependency>
+
             <!-- Logging dependencies -->
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
