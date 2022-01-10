@@ -734,9 +734,11 @@ If you want FSCrawler to generate a checksum for each file, set
 ``checksum`` to the algorithm you wish to use to compute the checksum,
 such as ``MD5`` or ``SHA-1``.
 
-ATTENTION: You MUST set ``index_content`` to true to allow this feature to work. Nevertheless you MAY set ``indexed_chars`` to 0 if you do not need any content in the index.
+.. note::
 
-ATTENTION: You MUST NOT set ``json_support`` or ``xml_support`` to allow this feature to work also.
+    You MUST set ``index_content`` to true to allow this feature to work. Nevertheless you MAY set ``indexed_chars`` to 0 if you do not need any content in the index.
+    
+    You MUST NOT set ``json_support`` or ``xml_support`` to allow this feature to work also.
 
 .. code:: yaml
 
@@ -744,7 +746,7 @@ ATTENTION: You MUST NOT set ``json_support`` or ``xml_support`` to allow this fe
    fs:
       # required
      index_content: true
-	 #indexed_chars: 0
+     #indexed_chars: 0
      checksum: "MD5"
 
 Follow Symlinks
