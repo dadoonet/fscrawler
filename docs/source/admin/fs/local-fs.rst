@@ -46,13 +46,13 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.continue_on_error``   | ``false``             | :ref:`continue_on_error`        |
 +----------------------------+-----------------------+---------------------------------+
-| ``fs.pdf_ocr``             | ``true``              | :ref:`ocr_integration`          |
+| ``fs.ocr.pdf_strategy``    | ``ocr_and_text``      | :ref:`ocr_integration`          |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.indexed_chars``       | ``100000.0``          | `Extracted characters`_         |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.ignore_above``        | ``null``              | `Ignore above`_                 |
 +----------------------------+-----------------------+---------------------------------+
-| ``fs.checksum``            | ``null``              | `File Checksum`_                |
+| ``fs.checksum``            | ``false``             | `File Checksum`_                |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.follow_symlinks``     | ``false``             | `Follow Symlinks`_              |
 +----------------------------+-----------------------+---------------------------------+
@@ -275,6 +275,8 @@ Note that in that case, FSCrawler won’t be able to detect removed
 folders so any document has been indexed in elasticsearch, it won’t be
 removed when you remove or move the folder away.
 
+See ``elasticsearch.index_folder`` below for the name of the index to be used to store the folder data (if ``es.index_folders`` is set to ``true``).
+
 .. code:: yaml
 
    name: "test"
@@ -284,7 +286,7 @@ removed when you remove or move the folder away.
 Dealing with multiple types and multiple dirs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have more than one type, create as many crawlers as types:
+If you have more than one type, create as many crawlers as types and/or folders:
 
 ``~/.fscrawler/test_type1/_settings.yaml``:
 
@@ -376,7 +378,7 @@ scanning the same dir and by setting ``includes`` parameter:
 Using filename as elasticsearch ``_id``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Please note that the document ``_id`` is always generated (hash value)
+Please note that the document ``_id`` is generated as a hash value
 from the filename to avoid issues with special characters in filename.
 You can force to use the ``_id`` to be the filename using
 ``filename_as_id`` attribute:
@@ -714,7 +716,7 @@ Ignore Above
 
 .. versionadded:: 2.5
 
-By default FSCrawler will send to Tika every single file, whatever its size.
+By default (if ``index_content`` set to ``true``) FSCrawler will send every single file to Tika, whatever its size.
 But some files on your file system might be a way too big to be parsed.
 
 Set ``ignore_above`` to the desired value of the limit.
@@ -723,7 +725,7 @@ Set ``ignore_above`` to the desired value of the limit.
 
    name: "test"
    fs:
-     ignore_above: "5mb"
+     ignore_above: "512mb"
 
 File checksum
 ^^^^^^^^^^^^^
@@ -732,10 +734,19 @@ If you want FSCrawler to generate a checksum for each file, set
 ``checksum`` to the algorithm you wish to use to compute the checksum,
 such as ``MD5`` or ``SHA-1``.
 
+.. note::
+
+    You MUST set ``index_content`` to true to allow this feature to work. Nevertheless you MAY set ``indexed_chars`` to 0 if you do not need any content in the index.
+    
+    You MUST NOT set ``json_support`` or ``xml_support`` to allow this feature to work also.
+
 .. code:: yaml
 
    name: "test"
    fs:
+      # required
+     index_content: true
+     #indexed_chars: 0
      checksum: "MD5"
 
 Follow Symlinks
