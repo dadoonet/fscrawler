@@ -150,7 +150,14 @@ public class TikaDocParser {
             setMeta(fullFilename, metadata, TikaCoreProperties.CREATOR, doc.getMeta()::setAuthor, Function.identity());
             setMeta(fullFilename, metadata, TikaCoreProperties.TITLE, doc.getMeta()::setTitle, Function.identity());
             setMeta(fullFilename, metadata, TikaCoreProperties.MODIFIED, doc.getMeta()::setDate, FsCrawlerUtil::localDateTimeToDate);
+
             setMeta(fullFilename, metadata, Office.KEYWORDS, doc.getMeta()::setKeywords, TikaDocParser::commaDelimitedListToStringArray);
+            // TODO Fix this with Tika 2.2.1+
+            // See https://issues.apache.org/jira/browse/TIKA-3629
+            if (doc.getMeta().getKeywords() == null) {
+                setMeta(fullFilename, metadata, Property.internalText("pdf:docinfo:keywords"), doc.getMeta()::setKeywords, TikaDocParser::commaDelimitedListToStringArray);
+            }
+
             setMeta(fullFilename, metadata, TikaCoreProperties.FORMAT, doc.getMeta()::setFormat, Function.identity());
             setMeta(fullFilename, metadata, TikaCoreProperties.IDENTIFIER, doc.getMeta()::setIdentifier, Function.identity());
             setMeta(fullFilename, metadata, TikaCoreProperties.CONTRIBUTOR, doc.getMeta()::setContributor, Function.identity());

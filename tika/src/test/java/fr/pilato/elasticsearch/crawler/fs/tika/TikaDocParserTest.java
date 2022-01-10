@@ -162,7 +162,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(25));
+        assertThat(raw.entrySet(), iterableWithSize(24));
         assertThat(raw, hasEntry("cp:revision", "2"));
         assertThat(raw, hasEntry("meta:word-count", "19"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
@@ -174,7 +174,6 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));
         assertThat(raw, hasEntry("extended-properties:TotalTime", "600000000"));
         assertThat(raw, hasEntry("extended-properties:Manager", "My Mother"));
-        assertThat(raw, hasEntry("cp:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("custom:N° du document", "1234"));
         assertThat(raw, hasEntry("Content-Type", "application/msword"));
         assertThat(raw, hasEntry("w:Comments", "Comments"));
@@ -207,7 +206,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(31));
+        assertThat(raw.entrySet(), iterableWithSize(30));
         assertThat(raw, hasEntry("cp:revision", "4"));
         assertThat(raw, hasEntry("dc:description", "Comments"));
         assertThat(raw, hasEntry("extended-properties:AppVersion", "15.0000"));
@@ -224,7 +223,6 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));
         assertThat(raw, hasEntry("extended-properties:TotalTime", "6"));
         assertThat(raw, hasEntry("extended-properties:Manager", "My Mother"));
-        assertThat(raw, hasEntry("cp:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("custom:N° du document", "1234"));
         assertThat(raw, hasEntry("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
         assertThat(raw, hasEntry("dc:subject", "Test Tika Object"));
@@ -371,7 +369,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 37 : 36));
+        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 36 : 35));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:title", "Test Tika title"));
@@ -387,9 +385,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("access_permission:fill_in_form", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:keywords", "keyword1, keyword2"));
         assertThat(raw, hasEntry("pdf:docinfo:modified", "2016-07-07T08:37:42Z"));
+        assertThat(raw, hasEntry("pdf:hasCollection", "false"));
         assertThat(raw, hasEntry("pdf:encrypted", "false"));
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));
-        assertThat(raw, hasEntry("cp:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("pdf:docinfo:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("pdf:hasMarkedContent", "true"));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
@@ -405,7 +403,6 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("access_permission:extract_content", "true"));
         assertThat(raw, hasEntry("access_permission:can_print", "true"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
-        assertThat(raw, hasEntry("meta:keyword", "keyword1, keyword2"));
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z"));
 
@@ -431,7 +428,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(15));
+        assertThat(raw.entrySet(), iterableWithSize(14));
         assertThat(raw, hasEntry("meta:word-count", "19"));
         assertThat(raw, hasEntry("dc:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
@@ -443,7 +440,6 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));
         assertThat(raw, hasEntry("meta:keyword", "keyword1, keyword2"));
         assertThat(raw, hasEntry("extended-properties:Manager", "My Mother"));
-        assertThat(raw, hasEntry("cp:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("meta:page-count", "2"));
         assertThat(raw, hasEntry("cp:category", "test"));
         assertThat(raw, hasEntry("Content-Type", "application/rtf"));
@@ -703,7 +699,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(withOcr ? 29 : 28));
+        assertThat(raw.entrySet(), iterableWithSize(withOcr ? 30 : 29));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.4"));
         assertThat(raw, hasEntry("xmp:CreatorTool", "Writer"));
@@ -715,6 +711,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("dc:format", "application/pdf; version=1.4"));
         assertThat(raw, hasEntry("pdf:docinfo:creator_tool", "Writer"));
         assertThat(raw, hasEntry("access_permission:fill_in_form", "true"));
+        assertThat(raw, hasEntry("pdf:hasCollection", "false"));
         assertThat(raw, hasEntry("pdf:encrypted", "false"));
         assertThat(raw, hasEntry("pdf:hasMarkedContent", "false"));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
