@@ -54,8 +54,8 @@ downloadUrlV6 = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/
 downloadUrlV7 = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es7/%s/fscrawler-es7-%s.zip" % (version, version)
 
 if release.endswith('-SNAPSHOT'):
-    downloadUrlV6 = "https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es6/%s/" % release
-    downloadUrlV7 = "https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es7/%s/" % release
+    downloadUrlV6 = "https://s01.oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es6/%s/" % release
+    downloadUrlV7 = "https://s01.oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es7/%s/" % release
 
 # -- General configuration ---------------------------------------------------
 
@@ -252,8 +252,8 @@ rst_prolog = rst_prolog + """
 .. _Download_URL_V7: {fmt_downloadUrl_V7}
 .. _Maven_Central_V6: https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es6/
 .. _Maven_Central_V7: https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es7/
-.. _Sonatype_V6: https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es6/
-.. _Sonatype_V7: https://oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es7/
+.. _Sonatype_V6: https://s01.oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es6/
+.. _Sonatype_V7: https://s01.oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-es7/
 """.format(
 fmt_tika_version=config.get('3rdParty', 'TikaVersion'),
 fmt_es_version6=config.get('3rdParty', 'ElasticsearchVersion6'),

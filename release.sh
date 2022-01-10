@@ -188,7 +188,7 @@ git checkout -q ${CURRENT_BRANCH}
 if [ ${DRY_RUN} -eq 0 ]
 then
     echo "Inspect Sonatype staging repositories"
-    open https://oss.sonatype.org/#stagingRepositories
+    open https://s01.oss.sonatype.org/#stagingRepositories
 
     if promptyn "Is the staging repository ok?"
     then
