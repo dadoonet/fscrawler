@@ -93,6 +93,11 @@ MAVEN_OPTION=$(readvalue "Enter any maven option you want to add" "")
 
 RELEASE_BRANCH=release-${RELEASE_VERSION}
 
+if [ "${CURRENT_BRANCH}" = "${RELEASE_BRANCH}" ]
+then
+  echo "WARN: you are running the script from the release branch. You might want to switch to another branch first."
+fi
+
 echo "STARTING LOGS FOR $RELEASE_VERSION..." > /tmp/fscrawler-${RELEASE_VERSION}.log
 
 # Check if the release already exists
