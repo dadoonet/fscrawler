@@ -14,7 +14,7 @@ The release script will:
 * Build the final artifacts using release profile (signing artifacts and generating all needed files)
 * Tag the version
 * Prepare the announcement email
-* Deploy to https://oss.sonatype.org/
+* Deploy to https://s01.oss.sonatype.org/
 * Prepare the next SNAPSHOT version
 * Commit the change
 * Release the Sonatype staging repository
