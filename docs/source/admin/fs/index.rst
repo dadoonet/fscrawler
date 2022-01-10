@@ -39,16 +39,16 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
 
      # use MD5 from filename (instead of filename) if set to false
      filename_as_id: true
-	 
+
      # include size ot file in index
      add_filesize: true
 
-	 # inlcude user/group of file only if needed
+     # inlcude user/group of file only if needed
      attributes_support: false
 
      # do you REALLY want to store every file as a copy in the index ? Then set this to true
      store_source: false
-	 
+
      # you may want to store (partial) content of the file (see indexed_chars)	 
      index_content: true
 
@@ -64,7 +64,7 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
 
      # recommmended, but will create another index
      index_folders: true
-	 
+
      lang_detect: false
 
      ocr.pdf_strategy: noocr
