@@ -687,6 +687,8 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "    \"subtitle_field\": \"name\",\n" +
                 "    \"description_field\": \"body\",\n" +
                 "    \"url_field\": \"url\",\n" +
+                "    \"media_type_field\": \"mime_type\",\n" +
+                "    \"created_by_field\": \"author\",\n" +
                 "    \"detail_fields\": [\n" +
                 "      {\n" +
                 "        \"field_name\": \"author\",\n" +
