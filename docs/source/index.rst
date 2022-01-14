@@ -75,6 +75,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
       :maxdepth: 2
 
       release/index
+      release/2.10
       release/2.9
       release/2.8
       release/2.7

@@ -37,8 +37,8 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch7.version>7.16.2</elasticsearch7.version>
-        <elasticsearch6.version>6.8.22</elasticsearch6.version>
+        <elasticsearch7.version>7.16.3</elasticsearch7.version>
+        <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
         <tika.version>2.2.1</tika.version>
