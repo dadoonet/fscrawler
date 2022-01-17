@@ -74,6 +74,7 @@ public class TikaInstance {
      * @param fs fs settings
      */
     private static void initTika(Fs fs) {
+        ocrActivated = fs.getOcr().isEnabled();
         initContext(fs);
         initParser(fs);
     }
@@ -88,9 +89,7 @@ public class TikaInstance {
             // PDF content might be extracted multiple times.
             pdfParser.getPDFParserConfig().setExtractBookmarksText(false);
 
-            ocrActivated = fs.getOcr().isEnabled();
-
-            if (ocrActivated) {
+             if (ocrActivated) {
                 logger.debug("OCR is activated.");
                 ocrParser = new TesseractOCRParser();
                 if (fs.getOcr().getPath() != null) {
