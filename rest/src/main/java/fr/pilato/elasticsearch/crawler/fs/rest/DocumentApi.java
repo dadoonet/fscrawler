@@ -149,7 +149,7 @@ public class DocumentApi extends RestApi {
     public DeleteResponse removeDocument(
             @DefaultValue("")  @PathParam("id") String id,
             @QueryParam("filename") String filename,
-            @QueryParam("index") String index) throws NoSuchAlgorithmException {
+            @QueryParam("index") String index) throws NoSuchAlgorithmException, IOException {
         if (id.isEmpty() && filename == null) {
             logger.warn("We can not delete a document without an id or a filename");
             DeleteResponse response = new DeleteResponse();
@@ -166,10 +166,10 @@ public class DocumentApi extends RestApi {
         }
 
         logger.debug("Delete document [{}/{}] to elasticsearch.", id, filename);
-        documentService.delete(index, id);
+        boolean removed = documentService.deleteSingle(index, id);
 
         DeleteResponse response = new DeleteResponse();
-        response.setOk(true);
+        response.setOk(removed);
         response.setIndex(index);
         response.setId(id);
         response.setFilename(filename);

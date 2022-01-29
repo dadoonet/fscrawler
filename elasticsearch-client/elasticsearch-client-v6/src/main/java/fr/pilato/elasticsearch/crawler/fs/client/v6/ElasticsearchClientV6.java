@@ -408,16 +408,26 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
     }
 
     @Override
-    public void indexSingle(String index, String id, String json) throws IOException {
+    public void indexSingle(String index, String id, String json, String pipeline) throws IOException {
         logger.trace("JSon indexed : {}", json);
         IndexRequest request = new IndexRequest(index, getDefaultTypeName(), id);
         request.source(json, XContentType.JSON);
+        if (pipeline != null && !pipeline.isEmpty()) {
+            request.setPipeline(pipeline);
+        }
         client.index(request, RequestOptions.DEFAULT);
     }
 
     @Override
     public void delete(String index, String id) {
         bulkProcessor.add(new DeleteRequest(index, getDefaultTypeName(), id));
+    }
+
+    @Override
+    public boolean deleteSingle(String index, String id) throws IOException {
+        logger.trace("Removing document : {}/{}", index, id);
+        client.delete(new DeleteRequest(index).id(id), RequestOptions.DEFAULT);
+        return false;
     }
 
     @Override

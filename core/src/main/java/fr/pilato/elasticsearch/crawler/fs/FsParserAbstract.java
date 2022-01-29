@@ -554,7 +554,7 @@ public abstract class FsParserAbstract extends FsParser {
     /**
      * Remove a document with the document service
      */
-    private void esDelete(FsCrawlerDocumentService service, String index, String id) {
+    private void esDelete(FsCrawlerDocumentService service, String index, String id) throws IOException {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed) {
             service.delete(index, id);

@@ -275,25 +275,29 @@ public class WPSearchClient implements Closeable {
      * Delete existing documents
      * @param sourceId  The custom source Id
      * @param ids       List of document ids to delete
+     * @return true if removed, false if not found or in case of error
      */
-    public void destroyDocuments(String sourceId, List<String> ids) {
+    public boolean destroyDocuments(String sourceId, List<String> ids) {
         checkStarted();
         logger.debug("Removing from source {} documents {}", sourceId, ids);
         try {
             String response = post("sources/" + sourceId + "/documents/bulk_destroy", ids, String.class);
             logger.debug("Removing documents response: {}", response);
             // TODO parse the response to check for errors
+            return true;
         } catch (NotFoundException e) {
             logger.warn("We did not find the resources: {} in source {}", ids, sourceId);
+            return false;
         }
     }
 
     /**
      * Delete one document
      * @param id Document id to delete
+     * @return true if removed, false if not found or in case of error
      */
-    public void destroyDocument(String id) {
-        destroyDocuments(sourceId, Collections.singletonList(id));
+    public boolean destroyDocument(String id) {
+        return destroyDocuments(sourceId, Collections.singletonList(id));
     }
 
     /**

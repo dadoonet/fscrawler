@@ -281,6 +281,16 @@ If you know the document id, you can pass it to FSCrawler within the url:
 
    curl -X DELETE "http://127.0.0.1:8080/fscrawler/_document/dd18bf3a8ea2a3e53e2661c7fb53534"
 
+If the document does not exist, you will get the following response:
+
+.. code:: json
+
+    {
+      "ok": false,
+      "index": "rest",
+      "id": "1"
+    }
+
 Specifying an elasticsearch index
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
