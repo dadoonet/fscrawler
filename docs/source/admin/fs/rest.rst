@@ -10,6 +10,27 @@ To activate it, launch FSCrawler with ``--rest`` option.
 
 .. contents:: :backlinks: entry
 
+General settings
+~~~~~~~~~~~~~~~~
+
+.. versionadded:: 2.10
+
+For all the APIs on this page, you can pass parameters in different ways.
+
+You can use a query string parameter:
+
+.. code:: sh
+
+   curl "http://127.0.0.1:8080/fscrawler/API?param1=foo&param2=bar"
+
+You can use a header parameter:
+
+.. code:: sh
+
+   curl -H "param1=foo" -H "param2=bar" "http://127.0.0.1:8080/fscrawler/API"
+
+The rest of this documentation will assume using a query string parameter unless stated otherwise.
+
 FSCrawler status
 ~~~~~~~~~~~~~~~~
 
@@ -181,7 +202,14 @@ means that if you send 2 files with the same filename ``test.txt``, the
 second one will overwrite the first one because they will both share the
 same ID.
 
-You can force any id you wish by adding ``id=YOUR_ID`` in the form data:
+You can force any id you wish by adding ``id=YOUR_ID`` as a parameter:
+
+.. code:: sh
+
+   echo "This is my text" > test.txt
+   curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_document?id=my-test"
+
+You can pass the ``id`` parameter within the form data:
 
 .. code:: sh
 
@@ -256,24 +284,26 @@ The field ``external`` doesn't necessarily be a flat structure. This is a more a
 Remove a document
 ~~~~~~~~~~~~~~~~~
 
+.. versionadded:: 2.10
+
 To remove a document, you can call ``DELETE /_document`` endpoint.
 
 If you only know the filename, you can pass it to FSCrawler using the ``filename`` field:
 
 .. code:: sh
 
-   curl -X DELETE -F "filename=test.txt" "http://127.0.0.1:8080/fscrawler/_document"
+   curl -X DELETE "http://127.0.0.1:8080/fscrawler/_document?filename=test.txt"
 
 It will give you a response similar to:
 
 .. code:: json
 
-   {
-     "ok" : true,
-     "index" : "fscrawler-rest-tests",
-     "id" : "dd18bf3a8ea2a3e53e2661c7fb53534",
-     "filename" : "test.txt"
-   }
+    {
+      "ok": true,
+      "filename": "test.txt",
+      "index": "rest",
+      "id": "dd18bf3a8ea2a3e53e2661c7fb53534"
+    }
 
 If you know the document id, you can pass it to FSCrawler within the url:
 
@@ -287,15 +317,26 @@ If the document does not exist, you will get the following response:
 
     {
       "ok": false,
+      "message": "Can not remove document [rest/test.txt]: Can not remove document rest/dd18bf3a8ea2a3e53e2661c7fb53534 cause: NOT_FOUND",
+      "filename": "test.txt",
       "index": "rest",
-      "id": "1"
+      "id": "dd18bf3a8ea2a3e53e2661c7fb53534"
     }
 
 Specifying an elasticsearch index
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, fscrawler creates document in the index defined in the ``_settings.yaml`` file.
-However, using the REST service, it is possible to require fscrawler to use different indexes, by adding ``index=YOUR_INDEX`` in the form data:
+However, using the REST service, it is possible to require fscrawler to use different indexes, by setting the ``index``
+parameter:
+
+.. code:: sh
+
+   echo "This is my text" > test.txt
+   curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_document?index=my-index"
+   curl -X DELETE "http://127.0.0.1:8080/fscrawler/_document?filename=test.txt&index=my-index"
+
+When uploading, you can pass the ``id`` parameter within the form data:
 
 .. code:: sh
 

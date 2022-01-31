@@ -136,9 +136,8 @@ public interface ElasticsearchClient extends Closeable {
      * Delete a single document using the Delete Document API
      * @param index     Index name
      * @param id        Document ID
-     * @return
      */
-    boolean deleteSingle(String index, String id) throws IOException;
+    void deleteSingle(String index, String id) throws IOException;
 
     /**
      * Create all needed indices

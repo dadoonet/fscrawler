@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 class RestResponse {
 
     private boolean ok;
+    private String message;
 
     public void setOk(boolean ok) {
         this.ok = ok;
@@ -29,5 +30,13 @@ class RestResponse {
 
     public boolean isOk() {
         return ok;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

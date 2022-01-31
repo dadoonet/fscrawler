@@ -94,9 +94,8 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
-    public boolean deleteSingle(String index, String id) {
+    public void deleteSingle(String index, String id) {
         // Testing purpose only
-        return false;
     }
 
     @Override

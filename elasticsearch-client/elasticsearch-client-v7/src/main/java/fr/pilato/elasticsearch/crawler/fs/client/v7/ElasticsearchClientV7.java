@@ -416,19 +416,14 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     }
 
     @Override
-    public boolean deleteSingle(String index, String id) throws IOException {
+    public void deleteSingle(String index, String id) throws IOException {
         logger.debug("Removing document : {}/{}", index, id);
         DeleteResponse response = client.delete(new DeleteRequest(index).id(id), RequestOptions.DEFAULT);
-        if (response.getResult() == DocWriteResponse.Result.DELETED) {
-            logger.debug("Document {}/{} has been removed", index, id);
-            return true;
+        if (response.getResult() != DocWriteResponse.Result.DELETED) {
+            throw new IOException("Can not remove document " + index + "/" + id + " cause: " + response.getResult());
         }
-        if (response.getResult() == DocWriteResponse.Result.NOT_FOUND) {
-            logger.debug("Document {}/{} was not found", index, id);
-            return false;
-        }
-        logger.warn("DELETE _document {}/{} gave an unexpected result: {}", index, id, response.getResult());
-        return false;
+
+        logger.debug("Document {}/{} has been removed", index, id);
     }
 
     @Override

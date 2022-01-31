@@ -63,7 +63,7 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @param index     Index name
      * @param id        Document ID
      */
-    boolean deleteSingle(String index, String id) throws IOException;
+    void deleteSingle(String index, String id) throws IOException;
 
     /**
      * Refresh the document database to make changes visible

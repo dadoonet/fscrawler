@@ -105,9 +105,9 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     }
 
     @Override
-    public boolean deleteSingle(String index, String id) {
+    public void deleteSingle(String index, String id) {
         logger.debug("Deleting {}/{}", index, id);
-        return client.delete(id);
+        client.delete(id);
     }
 
     @Override

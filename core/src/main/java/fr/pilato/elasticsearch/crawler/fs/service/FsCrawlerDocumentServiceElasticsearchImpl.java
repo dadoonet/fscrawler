@@ -87,9 +87,9 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public boolean deleteSingle(String index, String id) throws IOException {
+    public void deleteSingle(String index, String id) throws IOException {
         logger.debug("Deleting {}/{}", index, id);
-        return client.deleteSingle(index, id);
+        client.deleteSingle(index, id);
     }
 
     @Override

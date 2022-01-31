@@ -31,8 +31,9 @@ import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -44,6 +45,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -77,11 +80,86 @@ public class DocumentApi extends RestApi {
     public UploadResponse addDocument(
             @QueryParam("debug") String debug,
             @QueryParam("simulate") String simulate,
-            @FormDataParam("id") String id,
-            @FormDataParam("index") String index,
+            @FormDataParam("id") String formId,
+            @FormDataParam("index") String formIndex,
+            @HeaderParam("id") String headerId,
+            @HeaderParam("index") String headerIndex,
+            @QueryParam("id") String queryParamId,
+            @QueryParam("index") String queryParamIndex,
             @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
+        String id = formId != null ? formId : headerId != null ? headerId : queryParamId;
+        String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
+        return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public UploadResponse addDocument(
+            @QueryParam("debug") String debug,
+            @QueryParam("simulate") String simulate,
+            @PathParam("id") String id,
+            @FormDataParam("index") String formIndex,
+            @HeaderParam("index") String headerIndex,
+            @QueryParam("index") String queryParamIndex,
+            @FormDataParam("tags") InputStream tags,
+            @FormDataParam("file") InputStream filecontent,
+            @FormDataParam("file") FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
+        String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
+        return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public DeleteResponse removeDocument(
+            @HeaderParam("filename") String headerFilename,
+            @HeaderParam("filename*") String headerFilenameStar,
+            @QueryParam("filename") String queryParamFilename,
+            @HeaderParam("index") String headerIndex,
+            @QueryParam("index") String queryParamIndex) throws NoSuchAlgorithmException {
+        String index = headerIndex == null ? queryParamIndex : headerIndex;
+        String filename = headerFilename == null ? queryParamFilename : headerFilename;
+
+        // Support for rfc6266: https://datatracker.ietf.org/doc/html/rfc6266#section-5
+        if (headerFilenameStar != null) {
+            String[] splits = headerFilenameStar.split("''");
+            filename = URLDecoder.decode(splits[1], Charset.forName(splits[0]));
+        }
+
+        if (filename == null) {
+            DeleteResponse response = new DeleteResponse();
+            response.setOk(false);
+            response.setMessage("We can not delete a document without an id or a filename. " +
+                    "Either call DELETE /_document/ID or DELETE /_document?filename=foo.txt");
+            return response;
+        }
+
+        return removeDocumentInDocumentService(SignTool.sign(filename), filename, index);
+    }
+
+    @Path("/{id}")
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public DeleteResponse removeDocument(
+            @PathParam("id") String id,
+            @HeaderParam("index") String headerIndex,
+            @QueryParam("index") String queryParamIndex) {
+        return removeDocumentInDocumentService(id, null, headerIndex == null ? queryParamIndex : headerIndex);
+    }
+
+    private UploadResponse uploadToDocumentService(
+            String debug,
+            String simulate,
+            String id,
+            String index,
+            InputStream tags,
+            InputStream filecontent,
+            FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
+
+        logger.debug("uploadToDocumentService({}, {}, {}, {}, ...)", debug, simulate, id, index);
 
         // Create the Doc object
         Doc doc = new Doc();
@@ -143,36 +221,37 @@ public class DocumentApi extends RestApi {
         return response;
     }
 
-    @Path("/{id}")
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public DeleteResponse removeDocument(
-            @DefaultValue("")  @PathParam("id") String id,
-            @QueryParam("filename") String filename,
-            @QueryParam("index") String index) throws NoSuchAlgorithmException, IOException {
-        if (id.isEmpty() && filename == null) {
-            logger.warn("We can not delete a document without an id or a filename");
-            DeleteResponse response = new DeleteResponse();
-            response.setOk(false);
-            return response;
-        }
-
-        if (id.isEmpty()) {
-            id = SignTool.sign(filename);
-        }
-
+    private DeleteResponse removeDocumentInDocumentService(
+            String id,
+            String filename,
+            String index) {
         if (index == null) {
             index = settings.getElasticsearch().getIndex();
         }
 
-        logger.debug("Delete document [{}/{}] to elasticsearch.", id, filename);
-        boolean removed = documentService.deleteSingle(index, id);
+        if (id == null && filename == null) {
+            DeleteResponse response = new DeleteResponse();
+            response.setOk(false);
+            response.setMessage("We can not delete a document without an id or a filename. " +
+                    "Either call DELETE /_document/ID or DELETE /_document?filename=foo.txt");
+            return response;
+        }
 
+        logger.debug("Delete document [{}/{}] from elasticsearch using index [{}].", id, filename, index);
         DeleteResponse response = new DeleteResponse();
-        response.setOk(removed);
-        response.setIndex(index);
-        response.setId(id);
-        response.setFilename(filename);
+        try {
+            documentService.deleteSingle(index, id);
+            response.setOk(true);
+            response.setIndex(index);
+            response.setId(id);
+            response.setFilename(filename);
+        } catch (Exception e) {
+            response.setOk(false);
+            response.setMessage("Can not remove document [" + index + "/" + (filename == null ? id : filename) + "]: " + e.getMessage());
+            response.setIndex(index);
+            response.setId(id);
+            response.setFilename(filename);
+        }
 
         return response;
     }

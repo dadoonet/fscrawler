@@ -50,6 +50,7 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -59,6 +60,7 @@ import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -424,10 +426,14 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
     }
 
     @Override
-    public boolean deleteSingle(String index, String id) throws IOException {
-        logger.trace("Removing document : {}/{}", index, id);
-        client.delete(new DeleteRequest(index).id(id), RequestOptions.DEFAULT);
-        return false;
+    public void deleteSingle(String index, String id) throws IOException {
+        logger.debug("Removing document : {}/{}", index, id);
+        DeleteResponse response = client.delete(new DeleteRequest(index).id(id), RequestOptions.DEFAULT);
+        if (response.getResult() != DocWriteResponse.Result.DELETED) {
+            throw new IOException("Can not remove document " + index + "/" + id + " cause: " + response.getResult());
+        }
+
+        logger.debug("Document {}/{} has been removed", index, id);
     }
 
     @Override
