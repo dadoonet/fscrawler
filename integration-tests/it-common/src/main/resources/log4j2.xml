@@ -69,7 +69,7 @@
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Root level="debug">
+      <Root level="info">
          <AppenderRef ref="CONSOLE"/>
       </Root>
    </Loggers>
