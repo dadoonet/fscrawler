@@ -428,7 +428,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
     @Override
     public void deleteSingle(String index, String id) throws IOException {
         logger.debug("Removing document : {}/{}", index, id);
-        DeleteResponse response = client.delete(new DeleteRequest(index).id(id), RequestOptions.DEFAULT);
+        DeleteResponse response = client.delete(new DeleteRequest(index).type(INDEX_TYPE_DOC).id(id), RequestOptions.DEFAULT);
         if (response.getResult() != DocWriteResponse.Result.DELETED) {
             throw new IOException("Can not remove document " + index + "/" + id + " cause: " + response.getResult());
         }
