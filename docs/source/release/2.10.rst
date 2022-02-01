@@ -14,7 +14,7 @@ Deprecated
 Updated
 -------
 
-* Update to Elasticsearch 7.16.3 and 6.8.23. Thanks to dadoonet.
+* Update to Elasticsearch 7.17.0 and 6.8.23. Thanks to dadoonet.
 
 Thanks to ``@dadoonet``
 for this release!
