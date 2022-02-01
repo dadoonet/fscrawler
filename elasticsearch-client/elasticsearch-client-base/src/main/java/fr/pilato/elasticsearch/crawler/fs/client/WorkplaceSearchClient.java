@@ -17,7 +17,7 @@ public interface WorkplaceSearchClient extends Closeable {
      * @param id the document id
      * @return true if removed, false if not found or in case of error
      */
-    boolean delete(String id);
+    void delete(String id);
 
     String search(String query, Map<String, Object> filters);
 

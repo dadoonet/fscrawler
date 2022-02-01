@@ -91,8 +91,8 @@ public class WorkplaceSearchClientV7 implements WorkplaceSearchClient {
     }
 
     @Override
-    public boolean delete(String id) {
-        return wpSearchClient.destroyDocument(id);
+    public void delete(String id) {
+        wpSearchClient.destroyDocument(id);
     }
 
     @Override
