@@ -50,6 +50,7 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -59,6 +60,7 @@ import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -408,16 +410,30 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
     }
 
     @Override
-    public void indexSingle(String index, String id, String json) throws IOException {
+    public void indexSingle(String index, String id, String json, String pipeline) throws IOException {
         logger.trace("JSon indexed : {}", json);
         IndexRequest request = new IndexRequest(index, getDefaultTypeName(), id);
         request.source(json, XContentType.JSON);
+        if (pipeline != null && !pipeline.isEmpty()) {
+            request.setPipeline(pipeline);
+        }
         client.index(request, RequestOptions.DEFAULT);
     }
 
     @Override
     public void delete(String index, String id) {
         bulkProcessor.add(new DeleteRequest(index, getDefaultTypeName(), id));
+    }
+
+    @Override
+    public void deleteSingle(String index, String id) throws IOException {
+        logger.debug("Removing document : {}/{}", index, id);
+        DeleteResponse response = client.delete(new DeleteRequest(index).type(INDEX_TYPE_DOC).id(id), RequestOptions.DEFAULT);
+        if (response.getResult() != DocWriteResponse.Result.DELETED) {
+            throw new IOException("Can not remove document " + index + "/" + id + " cause: " + response.getResult());
+        }
+
+        logger.debug("Document {}/{} has been removed", index, id);
     }
 
     @Override

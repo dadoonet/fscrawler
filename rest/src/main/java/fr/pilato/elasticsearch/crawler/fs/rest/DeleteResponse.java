@@ -19,24 +19,53 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-class RestResponse {
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
-    private boolean ok;
-    private String message;
+public class DeleteResponse extends RestResponse {
 
-    public void setOk(boolean ok) {
-        this.ok = ok;
+    private String filename;
+    private String url;
+    private Doc doc;
+    private String index;
+    private String id;
+
+    public void setFilename(String filename) {
+        this.filename = filename;
     }
 
-    public boolean isOk() {
-        return ok;
+    public String getFilename() {
+        return filename;
     }
 
-    public String getMessage() {
-        return message;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public String getUrl() {
+        return url;
+    }
+
+    public void setDoc(Doc doc) {
+        this.doc = doc;
+    }
+
+    public Doc getDoc() {
+        return doc;
+    }
+
+    public void setIndex(String index) {
+        this.index = index;
+    }
+
+    public String getIndex() {
+        return index;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
     }
 }

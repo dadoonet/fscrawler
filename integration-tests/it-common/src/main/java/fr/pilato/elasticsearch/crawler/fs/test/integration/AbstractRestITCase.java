@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -31,6 +32,8 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public abstract class AbstractRestITCase extends AbstractITCase {
@@ -38,7 +41,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     protected static WebTarget target;
     protected static Client client;
 
-    public static <T> T restCall(String path, Class<T> clazz) {
+    public static <T> T get(String path, Class<T> clazz) {
         if (staticLogger.isDebugEnabled()) {
             String response = target.path(path).request().get(String.class);
             staticLogger.debug("Rest response: {}", response);
@@ -46,13 +49,38 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         return target.path(path).request().get(clazz);
     }
 
-    public static <T> T restCall(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
+    public static <T> T post(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
         WebTarget targetPath = target.path(path);
+        // TODO check this as it does not seem to produce anything
         params.forEach(targetPath::queryParam);
 
         return targetPath.request(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(mp, mp.getMediaType()), clazz);
+    }
+
+    public static <T> T put(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
+        WebTarget targetPath = target.path(path);
+        // TODO check this as it does not seem to produce anything
+        params.forEach(targetPath::queryParam);
+
+        return targetPath.request(MediaType.MULTIPART_FORM_DATA)
+                .accept(MediaType.APPLICATION_JSON)
+                .put(Entity.entity(mp, mp.getMediaType()), clazz);
+    }
+
+    public static <T> T delete(WebTarget target, String path, Class<T> clazz, Map<String, Object> params) {
+        WebTarget targetPath = target.path(path);
+        Invocation.Builder builder = targetPath.request();
+        // Sadly headers by default only support ISO-8859-1 and not UTF-8: https://www.jmix.io/cuba-blog/utf-8-in-http-headers/
+        // So we need to hack around this and support rfc6266 https://datatracker.ietf.org/doc/html/rfc6266#section-5
+        params.forEach((k, v) -> {
+            builder.header(k, v);
+            builder.header(k + "*", "UTF-8''" + URLEncoder.encode((String) v, StandardCharsets.UTF_8));
+        });
+
+        // params.forEach(builder::property);
+        return builder.delete(clazz);
     }
 
     @BeforeClass
