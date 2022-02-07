@@ -24,6 +24,8 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 
@@ -60,7 +62,7 @@ public interface ElasticsearchClient extends Closeable {
      * @param indexSettings index settings if any
      * @throws IOException In case of error
      */
-    void createIndex(String index, boolean ignoreErrors, String indexSettings) throws IOException;
+    void createIndex(String index, boolean ignoreErrors, String indexSettings) throws IOException, ElasticsearchClientException;
 
     /**
      * Check if an index exists
@@ -83,7 +85,7 @@ public interface ElasticsearchClient extends Closeable {
      * @param index index name
      * @throws IOException In case of error
      */
-    void refresh(String index) throws IOException;
+    void refresh(String index) throws IOException, ElasticsearchClientException;
 
     /**
      * Wait for an index to become at least yellow (all primaries assigned)
@@ -160,7 +162,7 @@ public interface ElasticsearchClient extends Closeable {
      * @param index Index name
      * @throws IOException In case of error
      */
-    void deleteIndex(String index) throws IOException;
+    void deleteIndex(String index) throws IOException, ElasticsearchClientException;
 
     /**
      * Flush any pending Bulk operation. Used for tests only.
@@ -205,4 +207,11 @@ public interface ElasticsearchClient extends Closeable {
                     esVersion + "].");
         }
     }
+
+    /**
+     * Send a _bulk request to Elasticsearch
+     * @param ndjson    the bulk content to send
+     * @return  the outcome
+     */
+    String bulk(String ndjson);
 }

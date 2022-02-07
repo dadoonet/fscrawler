@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
@@ -93,7 +94,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public void refresh(String index) throws IOException {
+    public void refresh(String index) throws IOException, ElasticsearchClientException {
         logger.debug("Refreshing {}", index);
         client.refresh(index);
     }

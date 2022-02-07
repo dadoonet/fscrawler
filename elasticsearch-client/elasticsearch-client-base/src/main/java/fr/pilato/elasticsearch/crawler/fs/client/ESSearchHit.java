@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ESSearchHit {
@@ -28,15 +29,15 @@ public class ESSearchHit {
     private Long version;
     private Map<String, Object> source;
     private String sourceAsString;
-    private Map<String, ESDocumentField> fields;
-    private Map<String, ESHighlightField> highlightFields = new HashMap<>();
+    private Map<String, List<String>> storedFields;
+    private final Map<String, List<String>> highlightFields = new HashMap<>();
 
-    public Map<String, ESDocumentField> getFields() {
-        return fields;
+    public Map<String, List<String>> getStoredFields() {
+        return storedFields;
     }
 
-    public void setFields(Map<String, ESDocumentField> fields) {
-        this.fields = fields;
+    public void setStoredFields(Map<String, List<String>> storedFields) {
+        this.storedFields = storedFields;
     }
 
     public Map<String, Object> getSourceAsMap() {
@@ -55,11 +56,11 @@ public class ESSearchHit {
         return sourceAsString;
     }
 
-    public Map<String, ESHighlightField> getHighlightFields() {
+    public Map<String, List<String>> getHighlightFields() {
         return highlightFields;
     }
 
-    public void addHighlightField(String name, ESHighlightField highlightField) {
+    public void addHighlightField(String name, List<String> highlightField) {
         highlightFields.put(name, highlightField);
     }
 

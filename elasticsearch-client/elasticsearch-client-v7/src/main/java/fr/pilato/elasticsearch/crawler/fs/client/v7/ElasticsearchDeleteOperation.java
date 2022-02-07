@@ -1,5 +1,5 @@
 /*
- * Licensed to David Pilato under one or more contributor
+ * Licensed to Elasticsearch under one or more contributor
  * license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright
  * ownership. Elasticsearch licenses this file to you under
@@ -17,32 +17,11 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.client;
+package fr.pilato.elasticsearch.crawler.fs.client.v7;
 
-public class ESRangeQuery extends ESQuery {
-    private Integer gte;
-    private Integer lt;
+public class ElasticsearchDeleteOperation extends ElasticsearchOperation {
 
-    public ESRangeQuery(String field) {
-        super(field);
+    public ElasticsearchDeleteOperation(String index, String id) {
+        super(Operation.DELETE, index, id);
     }
-
-    public ESRangeQuery withGte(int gte) {
-        this.gte = gte;
-        return this;
-    }
-
-    public ESRangeQuery withLt(int lt) {
-        this.lt = lt;
-        return this;
-    }
-
-    public Integer getGte() {
-        return gte;
-    }
-
-    public Integer getLt() {
-        return lt;
-    }
-
 }

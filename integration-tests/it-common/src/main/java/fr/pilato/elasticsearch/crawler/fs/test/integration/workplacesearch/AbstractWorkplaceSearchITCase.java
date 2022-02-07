@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -167,7 +168,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
             try {
                 refresh();
                 response[0] = wpClient.search(null, sourceId == null ? null : Collections.singletonMap("content_source_id", List.of(sourceId)));
-            } catch (RuntimeException | IOException e) {
+            } catch (RuntimeException | IOException | ElasticsearchClientException e) {
                 staticLogger.warn("error caught", e);
                 return -1;
             }

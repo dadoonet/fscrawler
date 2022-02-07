@@ -50,7 +50,7 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
                 1L, null);
         countTestHelper(new ESSearchRequest()
                 .withIndex(getCrawlerName())
-                .withESQuery(new ESRangeQuery("price").withFrom(5).withTo(6)), 2L, null);
+                .withESQuery(new ESRangeQuery("price").withGte(5).withLt(6)), 2L, null);
 
         logger.info("XML documents converted to:");
         for (ESSearchHit hit : response.getHits()) {

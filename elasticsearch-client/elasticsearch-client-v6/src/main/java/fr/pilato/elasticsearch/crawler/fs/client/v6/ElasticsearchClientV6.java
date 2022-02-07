@@ -24,7 +24,6 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESDocumentField;
-import fr.pilato.elasticsearch.crawler.fs.client.ESHighlightField;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESPrefixQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESQuery;
@@ -199,6 +198,11 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
                     "Elasticsearch version [" +
                     esVersion + "]. Please upgrade Elasticsearch to at least a 6.4.x version.");
         }
+    }
+
+    @Override
+    public String bulk(String ndjson) {
+        return null;
     }
 
     static class DebugListener implements BulkProcessor.Listener {
@@ -523,8 +527,8 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         if (request.getSize() != null) {
             ssb.size(request.getSize());
         }
-        if (!request.getFields().isEmpty()) {
-            ssb.storedFields(request.getFields());
+        if (!request.getStoredFields().isEmpty()) {
+            ssb.storedFields(request.getStoredFields());
         }
         if (request.getESQuery() != null) {
             ssb.query(toElasticsearchQuery(request.getESQuery()));
@@ -552,7 +556,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
                     for (Map.Entry<String, DocumentField> entry : hit.getFields().entrySet()) {
                         esFields.put(entry.getKey(), new ESDocumentField(entry.getKey(), entry.getValue().getValues()));
                     }
-                    esSearchHit.setFields(esFields);
+                    // esSearchHit.setStoredFields(esFields);
                 }
                 esSearchHit.setIndex(hit.getIndex());
                 esSearchHit.setId(hit.getId());
@@ -565,7 +569,7 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
                         Text fragment = value.fragments()[i];
                         texts[i] = fragment.string();
                     }
-                    esSearchHit.addHighlightField(key, new ESHighlightField(key, texts));
+                    // esSearchHit.addHighlightField(key, texts);
                 });
 
                 esSearchResponse.addHit(esSearchHit);
@@ -604,11 +608,11 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
         if (query instanceof ESRangeQuery) {
             ESRangeQuery esQuery = (ESRangeQuery) query;
             RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(esQuery.getField());
-            if (esQuery.getFrom() != null) {
-                rangeQuery.from(esQuery.getFrom());
+            if (esQuery.getGte() != null) {
+                rangeQuery.from(esQuery.getGte());
             }
-            if (esQuery.getTo() != null) {
-                rangeQuery.to(esQuery.getTo());
+            if (esQuery.getLt() != null) {
+                rangeQuery.to(esQuery.getLt());
             }
             return rangeQuery;
         }

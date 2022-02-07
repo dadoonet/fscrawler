@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
@@ -42,7 +43,7 @@ import static org.hamcrest.Matchers.equalTo;
 public abstract class AbstractFsCrawlerITCase extends AbstractRestITCase {
 
     @Before
-    public void cleanExistingIndex() throws IOException {
+    public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
         managementService.getClient().deleteIndex(getCrawlerName() + "*");
     }

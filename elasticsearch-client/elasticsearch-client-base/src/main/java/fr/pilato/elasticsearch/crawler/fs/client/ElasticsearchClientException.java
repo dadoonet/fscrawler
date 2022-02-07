@@ -1,5 +1,5 @@
 /*
- * Licensed to David Pilato under one or more contributor
+ * Licensed to Elasticsearch under one or more contributor
  * license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright
  * ownership. Elasticsearch licenses this file to you under
@@ -19,36 +19,12 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import java.util.Objects;
-
-/**
- * A field highlighted with its highlighted fragments.
- */
-public class ESHighlightField {
-
-    private String name;
-
-    private String[] fragments;
-
-    ESHighlightField() {
+public class ElasticsearchClientException extends Exception {
+    public ElasticsearchClientException(String message) {
+        super(message);
     }
 
-    public ESHighlightField(String name, String[] fragments) {
-        this.name = Objects.requireNonNull(name, "missing highlight field name");
-        this.fragments = fragments;
-    }
-
-    /**
-     * The name of the field highlighted.
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * The highlighted fragments. {@code null} if failed to highlight (for example, the field is not stored).
-     */
-    public String[] getFragments() {
-        return fragments;
+    public ElasticsearchClientException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

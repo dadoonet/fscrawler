@@ -28,13 +28,34 @@
             <artifactId>fscrawler-elasticsearch-client-base</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>${elasticsearch7.version}</version>
-        </dependency>
-        <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-workplacesearch-client</artifactId>
+        </dependency>
+
+        <!-- Rest Http Client -->
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+        </dependency>
+
+        <!-- Needed for Jersey -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jaxb-annotations</artifactId>
+        </dependency>
+
+        <!-- jsonpath -->
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
         </dependency>
     </dependencies>
 

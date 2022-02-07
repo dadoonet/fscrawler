@@ -28,7 +28,7 @@ public class ESSearchRequest {
     private String sort;
     private Integer size;
     private ESQuery ESQuery;
-    private List<String> fields = new ArrayList<>();
+    private List<String> storedFields = new ArrayList<>();
     private List<String> highlighters = new ArrayList<>();
     private List<ESTermsAggregation> aggregations = new ArrayList<>();
 
@@ -59,12 +59,12 @@ public class ESSearchRequest {
         return this;
     }
 
-    public List<String> getFields() {
-        return fields;
+    public List<String> getStoredFields() {
+        return storedFields;
     }
 
-    public ESSearchRequest addField(String field) {
-        this.fields.add(field);
+    public ESSearchRequest addStoredField(String storedField) {
+        this.storedFields.add(storedField);
         return this;
     }
 

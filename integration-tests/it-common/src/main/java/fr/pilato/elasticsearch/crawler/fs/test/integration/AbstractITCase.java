@@ -23,6 +23,7 @@ import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -307,7 +308,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         return builder.build();
     }
 
-    protected static void refresh() throws IOException {
+    protected static void refresh() throws IOException, ElasticsearchClientException {
         documentService.refresh(null);
     }
 
@@ -349,7 +350,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 // Make sure we refresh indexed docs before counting
                 refresh();
                 response[0] = documentService.search(request);
-            } catch (RuntimeException|IOException e) {
+            } catch (RuntimeException | IOException | ElasticsearchClientException e) {
                 staticLogger.warn("error caught", e);
                 return -1;
             }

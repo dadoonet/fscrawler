@@ -102,7 +102,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
         ESSearchHit hit = response.getHits().get(0);
         assertThat(hit.getHighlightFields(), hasKey("content"));
-        assertThat(hit.getHighlightFields().get("content").getFragments(), arrayWithSize(1));
-        assertThat(hit.getHighlightFields().get("content").getFragments()[0], containsString("<em>exemplo</em>"));
+        assertThat(hit.getHighlightFields().get("content"), iterableWithSize(1));
+        assertThat(hit.getHighlightFields().get("content"), hasItem(containsString("<em>exemplo</em>")));
     }
 }

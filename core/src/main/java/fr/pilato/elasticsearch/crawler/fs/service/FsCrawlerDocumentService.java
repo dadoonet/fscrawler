@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 
 import java.io.IOException;
 
@@ -69,7 +70,7 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * Refresh the document database to make changes visible
      * @param index     Optional index name
      */
-    void refresh(String index) throws IOException;
+    void refresh(String index) throws IOException, ElasticsearchClientException;
 
     /**
      * Search for information

@@ -135,6 +135,11 @@ public abstract class ElasticsearchClientDummyBase implements ElasticsearchClien
     }
 
     @Override
+    public String bulk(String ndjson) {
+        return null;
+    }
+
+    @Override
     public void close() {
         // Testing purpose only
     }

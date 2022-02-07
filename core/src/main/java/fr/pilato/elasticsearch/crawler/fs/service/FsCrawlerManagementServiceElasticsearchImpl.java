@@ -88,16 +88,16 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                 new ESSearchRequest()
                         .withIndex(settings.getElasticsearch().getIndex())
                         .withSize(REQUEST_SIZE)
-                        .addField("file.filename")
+                        .addStoredField("file.filename")
                         .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
 
         if (response.getHits() != null) {
             for (ESSearchHit hit : response.getHits()) {
                 String name;
-                if (hit.getFields() != null
-                        && hit.getFields().get("file.filename") != null) {
+                if (hit.getStoredFields() != null
+                        && hit.getStoredFields().get("file.filename") != null) {
                     // In case someone disabled _source which is not recommended
-                    name = hit.getFields().get("file.filename").getValue();
+                    name = hit.getStoredFields().get("file.filename").get(0);
                 } else {
                     // Houston, we have a problem ! We can't get the old files from ES
                     logger.warn("Can't find stored field name to check existing filenames in path [{}]. " +
