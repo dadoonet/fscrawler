@@ -26,8 +26,8 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientV7;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
@@ -46,15 +46,15 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     // searching fo 10000 files (which is somehow limited).
     private static final int REQUEST_SIZE = 10000;
 
-    private final ElasticsearchClient client;
+    private final IElasticsearchClient client;
     private final FsSettings settings;
 
     public FsCrawlerManagementServiceElasticsearchImpl(Path config, FsSettings settings) {
         this.settings = settings;
-        this.client = new ElasticsearchClientV7(config, settings);
+        this.client = new ElasticsearchClient(config, settings);
     }
 
-    public ElasticsearchClient getClient() {
+    public IElasticsearchClient getClient() {
         return client;
     }
 

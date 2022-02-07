@@ -25,15 +25,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Locale;
-import java.util.Objects;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
 
 public class ElasticsearchEngine implements Engine<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> {
     private static final Logger logger = LogManager.getLogger(ElasticsearchEngine.class);
-    private final ElasticsearchClient elasticsearchClient;
+    private final IElasticsearchClient elasticsearchClient;
 
-    public ElasticsearchEngine(ElasticsearchClient elasticsearchClient) {
+    public ElasticsearchEngine(IElasticsearchClient elasticsearchClient) {
         this.elasticsearchClient = elasticsearchClient;
     }
 

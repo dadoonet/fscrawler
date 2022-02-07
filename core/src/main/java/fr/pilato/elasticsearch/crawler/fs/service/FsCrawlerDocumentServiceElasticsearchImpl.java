@@ -24,9 +24,9 @@ import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientV7;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,13 +38,13 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerDocumentServiceElasticsearchImpl.class);
 
-    private final ElasticsearchClient client;
+    private final IElasticsearchClient client;
 
     public FsCrawlerDocumentServiceElasticsearchImpl(Path config, FsSettings settings) {
-        this.client = new ElasticsearchClientV7(config, settings);
+        this.client = new ElasticsearchClient(config, settings);
     }
 
-    public ElasticsearchClient getClient() {
+    public IElasticsearchClient getClient() {
         return client;
     }
 

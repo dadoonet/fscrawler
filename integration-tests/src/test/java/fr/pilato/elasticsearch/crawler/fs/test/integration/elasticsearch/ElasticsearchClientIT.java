@@ -30,12 +30,11 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchDeleteOperation;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchEngine;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
-import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
 import jakarta.ws.rs.ClientErrorException;
@@ -56,7 +55,7 @@ import static org.junit.Assume.assumeThat;
  */
 public class ElasticsearchClientIT extends AbstractITCase {
 
-    private final ElasticsearchClient esClient = managementService.getClient();
+    private final IElasticsearchClient esClient = managementService.getClient();
 
     @Before
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {

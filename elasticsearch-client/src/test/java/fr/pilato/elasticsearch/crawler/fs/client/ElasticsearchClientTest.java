@@ -27,7 +27,7 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 
-public class ElasticsearchClientV7Test extends AbstractFSCrawlerTestCase {
+public class ElasticsearchClientTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testGetWorkplaceSearchInstance() {
