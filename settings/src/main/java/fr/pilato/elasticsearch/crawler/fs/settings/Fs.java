@@ -249,8 +249,8 @@ public class Fs {
         }
 
         public Builder setTikaConfigPath(String tikaConfigPath) {
-          this.tikaConfigPath = tikaConfigPath;
-          return this;
+            this.tikaConfigPath = tikaConfigPath;
+            return this;
         }
 
         public Fs build() {
@@ -567,7 +567,7 @@ public class Fs {
                 ", ocr=" + ocr +
                 ", ignoreAbove=" + ignoreAbove +
                 ", followSymlinks=" + followSymlinks +
-                ", tikaConfigPath=" + tikaConfigPath +
+                ", tikaConfigPath='" + tikaConfigPath + '\'' +
                 '}';
     }
 }
