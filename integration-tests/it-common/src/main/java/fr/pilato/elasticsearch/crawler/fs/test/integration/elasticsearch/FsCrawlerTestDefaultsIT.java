@@ -47,7 +47,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
         // The default configuration should not add file attributes
         for (ESSearchHit hit : searchResponse.getHits()) {
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSourceAsString(), "$.attributes"));
+            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.attributes"));
         }
     }
 
@@ -57,7 +57,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object document = JsonUtil.parseJson(hit.getSourceAsString());
+            Object document = JsonUtil.parseJson(hit.getSource());
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(document, "$.attachment"));
 
             assertThat(JsonPath.read(document, "$.file.filename"), notNullValue());

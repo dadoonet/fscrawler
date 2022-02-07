@@ -44,7 +44,7 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object document = parseJson(hit.getSourceAsString());
+            Object document = parseJson(hit.getSource());
             assertThat(JsonPath.read(document, "$.attributes.owner"), notNullValue());
             if (OsValidator.WINDOWS) {
                 // We should not have values for group and permissions on Windows OS

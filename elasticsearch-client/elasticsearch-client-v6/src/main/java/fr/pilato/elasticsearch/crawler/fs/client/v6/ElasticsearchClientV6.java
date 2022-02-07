@@ -23,7 +23,6 @@ package fr.pilato.elasticsearch.crawler.fs.client.v6;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESDocumentField;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESPrefixQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESQuery;
@@ -74,7 +73,6 @@ import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
@@ -101,7 +99,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -552,16 +549,12 @@ public class ElasticsearchClientV6 implements ElasticsearchClient {
             for (SearchHit hit : response.getHits()) {
                 ESSearchHit esSearchHit = new ESSearchHit();
                 if (!hit.getFields().isEmpty()) {
-                    Map<String, ESDocumentField> esFields = new HashMap<>();
-                    for (Map.Entry<String, DocumentField> entry : hit.getFields().entrySet()) {
-                        esFields.put(entry.getKey(), new ESDocumentField(entry.getKey(), entry.getValue().getValues()));
-                    }
                     // esSearchHit.setStoredFields(esFields);
                 }
                 esSearchHit.setIndex(hit.getIndex());
                 esSearchHit.setId(hit.getId());
                 esSearchHit.setSourceAsMap(hit.getSourceAsMap());
-                esSearchHit.setSourceAsString(hit.getSourceAsString());
+                esSearchHit.setSource(hit.getSourceAsString());
 
                 hit.getHighlightFields().forEach((key, value) -> {
                     String[] texts = new String[value.fragments().length];

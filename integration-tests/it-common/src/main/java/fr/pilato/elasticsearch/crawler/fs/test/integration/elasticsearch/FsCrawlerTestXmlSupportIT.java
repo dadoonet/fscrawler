@@ -54,7 +54,7 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
 
         logger.info("XML documents converted to:");
         for (ESSearchHit hit : response.getHits()) {
-            logger.info("{}", hit.getSourceAsString());
+            logger.info("{}", hit.getSource());
         }
     }
 }

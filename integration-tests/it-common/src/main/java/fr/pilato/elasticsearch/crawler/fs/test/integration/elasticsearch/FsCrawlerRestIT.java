@@ -432,7 +432,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         assertThat(response.getTotalHits(), is(1L));
         ESSearchHit hit = response.getHits().get(0);
-        logger.debug("For [file.filename:{}], we got: {}", filename, hit.getSourceAsString());
+        logger.debug("For [file.filename:{}], we got: {}", filename, hit.getSource());
 
         checker.check(hit);
     }

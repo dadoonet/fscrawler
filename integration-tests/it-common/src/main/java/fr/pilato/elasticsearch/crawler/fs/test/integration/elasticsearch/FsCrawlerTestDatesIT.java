@@ -86,12 +86,12 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
     }
 
     private void compareHits(ESSearchHit hitBefore, ESSearchHit hitAfter, boolean shouldBeIdentical) {
-        Object documentBefore = JsonUtil.parseJson(hitBefore.getSourceAsString());
+        Object documentBefore = JsonUtil.parseJson(hitBefore.getSource());
         String hitBeforeCreated = JsonPath.read(documentBefore, "$.file.created");
         String hitBeforeIndexingDate = JsonPath.read(documentBefore, "$.file.indexing_date");
         String hitBeforeLastModified = JsonPath.read(documentBefore, "$.file.last_modified");
         String hitBeforeLastAccessed = JsonPath.read(documentBefore, "$.file.last_accessed");
-        Object documentAfter = JsonUtil.parseJson(hitAfter.getSourceAsString());
+        Object documentAfter = JsonUtil.parseJson(hitAfter.getSource());
         String hitAfterCreated = JsonPath.read(documentAfter, "$.file.created");
         String hitAfterIndexingDate = JsonPath.read(documentAfter, "$.file.indexing_date");
         String hitAfterLastModified = JsonPath.read(documentAfter, "$.file.last_modified");
@@ -118,7 +118,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         logger.info("|        created date        |        indexing date       |     last modified date     |     last accessed date     |");
         logger.info("|----------------------------|----------------------------|----------------------------|----------------------------|");
         for (ESSearchHit hit : hits) {
-            Object document = JsonUtil.parseJson(hit.getSourceAsString());
+            Object document = JsonUtil.parseJson(hit.getSource());
             String created = JsonPath.read(document, "$.file.created");
             String indexingDate = JsonPath.read(document, "$.file.indexing_date");
             String lastModified = JsonPath.read(document, "$.file.last_modified");

@@ -125,7 +125,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
 
         if (response.getHits() != null) {
             for (ESSearchHit hit : response.getHits()) {
-                files.add(JsonPath.read(hit.getSourceAsString(), "$.path.real"));
+                files.add(JsonPath.read(hit.getSource(), "$.path.real"));
             }
         }
 

@@ -155,7 +155,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 assertThat(hit.getIndex(), is(getCrawlerName()));
                 assertThat(hit.getId(), isOneOf("1", "2", "3", "4"));
                 assertThat(hit.getVersion(), is(1L));
-                assertThat(hit.getSourceAsMap().isEmpty(), is(false));
+                assertThat(hit.getSource(), not(isEmptyString()));
                 assertThat(hit.getHighlightFields().isEmpty(), is(true));
                 assertThat(hit.getStoredFields(), nullValue());
             }
@@ -169,7 +169,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
             assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
             assertThat(response.getHits().get(0).getId(), is("1"));
             assertThat(response.getHits().get(0).getVersion(), is(1L));
-            assertThat(response.getHits().get(0).getSourceAsMap().isEmpty(), is(false));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
             assertThat(response.getHits().get(0).getHighlightFields().isEmpty(), is(true));
             assertThat(response.getHits().get(0).getStoredFields(), nullValue());
         }
@@ -182,7 +182,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
             assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
             assertThat(response.getHits().get(0).getId(), is("1"));
             assertThat(response.getHits().get(0).getVersion(), is(1L));
-            assertThat(response.getHits().get(0).getSourceAsMap().isEmpty(), is(false));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
             assertThat(response.getHits().get(0).getHighlightFields().isEmpty(), is(true));
             assertThat(response.getHits().get(0).getStoredFields(), nullValue());
         }
@@ -197,7 +197,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 assertThat(hit.getIndex(), is(getCrawlerName()));
                 assertThat(hit.getId(), isOneOf("1", "2"));
                 assertThat(hit.getVersion(), is(1L));
-                assertThat(hit.getSourceAsMap().isEmpty(), is(false));
+                assertThat(hit.getSource(), not(isEmptyString()));
                 assertThat(hit.getHighlightFields().isEmpty(), is(true));
                 assertThat(hit.getStoredFields(), nullValue());
             }
@@ -211,7 +211,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
             assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
             assertThat(response.getHits().get(0).getId(), is("3"));
             assertThat(response.getHits().get(0).getVersion(), is(1L));
-            assertThat(response.getHits().get(0).getSourceAsMap().isEmpty(), is(false));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
             assertThat(response.getHits().get(0).getHighlightFields().isEmpty(), is(true));
             assertThat(response.getHits().get(0).getStoredFields(), nullValue());
         }
@@ -224,7 +224,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
             assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
             assertThat(response.getHits().get(0).getId(), is("4"));
             assertThat(response.getHits().get(0).getVersion(), is(1L));
-            assertThat(response.getHits().get(0).getSourceAsMap().isEmpty(), is(false));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
             assertThat(response.getHits().get(0).getHighlightFields().isEmpty(), is(true));
             assertThat(response.getHits().get(0).getStoredFields(), nullValue());
         }
@@ -240,7 +240,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
             assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
             assertThat(response.getHits().get(0).getId(), is("1"));
             assertThat(response.getHits().get(0).getVersion(), is(1L));
-            assertThat(response.getHits().get(0).getSourceAsMap().isEmpty(), is(false));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
             assertThat(response.getHits().get(0).getHighlightFields().isEmpty(), is(true));
             assertThat(response.getHits().get(0).getStoredFields(), nullValue());
         }
@@ -255,7 +255,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
             assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
             assertThat(response.getHits().get(0).getId(), is("1"));
             assertThat(response.getHits().get(0).getVersion(), is(1L));
-            assertThat(response.getHits().get(0).getSourceAsMap().isEmpty(), is(false));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
             assertThat(response.getHits().get(0).getHighlightFields().size(), is(1));
             assertThat(response.getHits().get(0).getHighlightFields(), hasKey("foo.bar"));
             assertThat(response.getHits().get(0).getHighlightFields().get("foo.bar"), iterableWithSize(1));
@@ -275,7 +275,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 assertThat(hit.getIndex(), is(getCrawlerName()));
                 assertThat(hit.getId(), isOneOf("1", "2"));
                 assertThat(hit.getVersion(), is(1L));
-                assertThat(hit.getSourceAsMap().isEmpty(), is(true));
+                assertThat(hit.getSource(), isEmptyOrNullString());
                 assertThat(hit.getHighlightFields().isEmpty(), is(true));
                 assertThat(hit.getStoredFields(), notNullValue());
                 assertThat(hit.getStoredFields(), hasKey(is("foo.bar")));
@@ -296,7 +296,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 assertThat(hit.getIndex(), is(getCrawlerName()));
                 assertThat(hit.getId(), isOneOf("1", "2"));
                 assertThat(hit.getVersion(), is(1L));
-                assertThat(hit.getSourceAsMap().isEmpty(), is(false));
+                assertThat(hit.getSource(), not(isEmptyString()));
                 assertThat(hit.getHighlightFields().isEmpty(), is(true));
                 assertThat(hit.getStoredFields(), notNullValue());
                 assertThat(hit.getStoredFields(), hasKey(is("foo.bar")));

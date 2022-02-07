@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client.v7;
 
 
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
@@ -73,6 +74,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 /**
  * Elasticsearch Client for Clusters running v7.
@@ -489,24 +491,25 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         ESSearchResponse esSearchResponse = new ESSearchResponse(response);
 
         // Parse
-        Object document = parseJson(response);
-        esSearchResponse.setTotalHits(JsonPath.read(document, "$.hits.total.value"));
+        DocumentContext document = parseJsonAsDocumentContext(response);
+        esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
 
-        int numHits = JsonPath.read(document, "$.hits.hits.length()");
+        int numHits = document.read("$.hits.hits.length()");
         for (int hitNum = 0; hitNum < numHits; hitNum++) {
             final ESSearchHit esSearchHit = new ESSearchHit();
-            esSearchHit.setIndex(JsonPath.read(document, "$.hits.hits[" + hitNum + "]._index"));
-            esSearchHit.setId(JsonPath.read(document, "$.hits.hits[" + hitNum + "]._id"));
-            esSearchHit.setVersion(Integer.toUnsignedLong(JsonPath.read(document, "$.hits.hits[" + hitNum + "]._version")));
+            esSearchHit.setIndex(document.read("$.hits.hits[" + hitNum + "]._index"));
+            esSearchHit.setId(document.read("$.hits.hits[" + hitNum + "]._id"));
+            esSearchHit.setVersion(Integer.toUnsignedLong(document.read("$.hits.hits[" + hitNum + "]._version")));
             try {
-                esSearchHit.setSourceAsMap(JsonPath.read(document, "$.hits.hits[" + hitNum + "]._source"));
+                esSearchHit.setSource(document.read("$.hits.hits[" + hitNum + "]._source", String.class));
+                esSearchHit.setSourceAsMap(document.read("$.hits.hits[" + hitNum + "]._source"));
             } catch (PathNotFoundException e) {
                 esSearchHit.setSourceAsMap(Collections.emptyMap());
             }
 
             // Parse the highlights if any
             try {
-                Map<String, List<String>> highlights = JsonPath.read(document, "$.hits.hits[" + hitNum + "].highlight");
+                Map<String, List<String>> highlights = document.read("$.hits.hits[" + hitNum + "].highlight");
                 highlights.forEach(esSearchHit::addHighlightField);
             } catch (PathNotFoundException ignored) {
                 // No highlights
@@ -514,7 +517,7 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
 
             // Parse the fields if any
             try {
-                Map<String, List<String>> fields = JsonPath.read(document, "$.hits.hits[" + hitNum + "].fields");
+                Map<String, List<String>> fields = document.read("$.hits.hits[" + hitNum + "].fields");
                 esSearchHit.setStoredFields(fields);
             } catch (PathNotFoundException ignored) {
                 // No stored fields

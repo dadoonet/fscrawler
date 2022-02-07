@@ -126,7 +126,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     public void testExtractFromDocx() throws IOException {
         ESSearchResponse response = runSearch("test.docx", "sample");
         for (ESSearchHit hit : response.getHits()) {
-            Object document = parseJson(hit.getSourceAsString());
+            Object document = parseJson(hit.getSource());
             assertThat(JsonPath.read(document, "$.file.filename"), notNullValue());
             assertThat(JsonPath.read(document, "$.file.content_type"), notNullValue());
             assertThat(JsonPath.read(document, "$.file.url"), notNullValue());
@@ -197,15 +197,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     public void testLanguageDetection() throws IOException {
         ESSearchResponse response = runSearch("test-fr.txt", "fichier");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(JsonPath.read(hit.getSourceAsString(), "$.meta.language"), is("fr"));
+            assertThat(JsonPath.read(hit.getSource(), "$.meta.language"), is("fr"));
         }
         response = runSearch("test-de.txt", "Datei");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(JsonPath.read(hit.getSourceAsString(), "$.meta.language"), is("de"));
+            assertThat(JsonPath.read(hit.getSource(), "$.meta.language"), is("de"));
         }
         response = runSearch("test.txt", "contains");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(JsonPath.read(hit.getSourceAsString(), "$.meta.language"), is("en"));
+            assertThat(JsonPath.read(hit.getSource(), "$.meta.language"), is("en"));
         }
     }
 

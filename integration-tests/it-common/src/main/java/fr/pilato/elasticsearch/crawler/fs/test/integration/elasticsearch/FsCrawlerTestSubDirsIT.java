@@ -55,7 +55,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
         // We check that the subdir document has his meta path data correctly set
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object document = parseJson(hit.getSourceAsString());
+            Object document = parseJson(hit.getSource());
             assertThat(JsonPath.read(document, "$.path.virtual"), isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
         }
 

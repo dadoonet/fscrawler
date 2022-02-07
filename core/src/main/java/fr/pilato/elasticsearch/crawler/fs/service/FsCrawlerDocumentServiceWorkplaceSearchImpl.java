@@ -130,7 +130,7 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
         for (int i = 0; i < totalHits; i++) {
             ESSearchHit hit = new ESSearchHit();
             // We read the hit and transform it again as a json document using Jackson
-            hit.setSourceAsString(mapper.writeValueAsString(JsonPath.read(document, "$.results[" + i + "]")));
+            hit.setSource(mapper.writeValueAsString(JsonPath.read(document, "$.results[" + i + "]")));
             response.addHit(hit);
         }
 
@@ -151,7 +151,7 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
         ESSearchHit hit = new ESSearchHit();
         hit.setIndex(index);
         hit.setId(id);
-        hit.setSourceAsString(json);
+        hit.setSource(json);
 
         return hit;
     }

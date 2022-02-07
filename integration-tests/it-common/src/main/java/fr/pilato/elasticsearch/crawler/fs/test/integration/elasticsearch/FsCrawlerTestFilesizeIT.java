@@ -50,7 +50,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object document = JsonUtil.parseJson(hit.getSourceAsString());
+            Object document = JsonUtil.parseJson(hit.getSource());
 
             // Our original text should be truncated
             assertThat(JsonPath.read(document, "$.content"), is("Novo de"));
@@ -67,7 +67,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object document = JsonUtil.parseJson(hit.getSourceAsString());
+            Object document = JsonUtil.parseJson(hit.getSource());
 
             // Our original text should be truncated
             assertThat(JsonPath.read(document, "$.content"), is("Novo denique"));
@@ -84,11 +84,11 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object document = JsonUtil.parseJson(hit.getSourceAsString());
+            Object document = JsonUtil.parseJson(hit.getSource());
 
             // Our original text should not be truncated so we must have its end extracted
             assertThat(JsonPath.read(document, "$.content"), containsString("haecque non diu sunt perpetrata."));
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSourceAsString(), "$.file.indexed_chars"));
+            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.file.indexed_chars"));
         }
     }
 
@@ -98,7 +98,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat(JsonPath.read(hit.getSourceAsString(), "$.file.filesize"), is(12230));
+            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), is(12230));
         }
     }
 
@@ -111,7 +111,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSourceAsString(), "$.file.filesize"));
+            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.file.filesize"));
         }
     }
 
