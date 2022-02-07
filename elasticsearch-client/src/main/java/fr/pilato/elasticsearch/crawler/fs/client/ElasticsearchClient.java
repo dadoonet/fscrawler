@@ -139,7 +139,7 @@ public interface ElasticsearchClient extends Closeable {
      * @param index     Index name
      * @param id        Document ID
      */
-    void deleteSingle(String index, String id) throws IOException;
+    void deleteSingle(String index, String id) throws ElasticsearchClientException;
 
     /**
      * Create all needed indices

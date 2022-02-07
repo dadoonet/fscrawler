@@ -24,11 +24,20 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.Predicate;
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
+import com.jayway.jsonpath.spi.json.JsonProvider;
+import com.jayway.jsonpath.spi.json.JsonSmartJsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
+import com.jayway.jsonpath.spi.mapper.JsonSmartMappingProvider;
+import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
 
@@ -42,9 +51,9 @@ public class JsonUtil {
         }
     }
 
-    public static <T> T deserialize(InputStream stream, Class<T> clazz) {
+    public static <T> T deserialize(String json, Class<T> clazz) {
         try {
-            return mapper.readValue(stream, clazz);
+            return mapper.readValue(json, clazz);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -58,6 +67,11 @@ public class JsonUtil {
         }
     }
 
+    private static Configuration configuration = new Configuration.ConfigurationBuilder()
+            .jsonProvider(new JsonSmartJsonProvider())
+            .mappingProvider(new JsonSmartMappingProvider())
+            .build();
+
     /**
      * Parse a JSON Document using JSON Path
      * @param json  json to parse
@@ -66,7 +80,7 @@ public class JsonUtil {
      */
     @Deprecated
     public static Object parseJson(String json) {
-        return Configuration.defaultConfiguration().jsonProvider().parse(json);
+        return configuration.jsonProvider().parse(json);
     }
 
     /**
@@ -75,6 +89,6 @@ public class JsonUtil {
      * @return an Object which can be used as an input for {@link com.jayway.jsonpath.DocumentContext#read(String, Predicate...)}
      */
     public static DocumentContext parseJsonAsDocumentContext(String json) {
-        return JsonPath.parse(json);
+        return JsonPath.using(configuration).parse(json);
     }
 }

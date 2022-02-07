@@ -64,7 +64,7 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @param index     Index name
      * @param id        Document ID
      */
-    void deleteSingle(String index, String id) throws IOException;
+    void deleteSingle(String index, String id) throws IOException, ElasticsearchClientException;
 
     /**
      * Refresh the document database to make changes visible

@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchEngine;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
 import jakarta.ws.rs.ClientErrorException;
@@ -359,8 +360,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     @Test
     public void testBulk() throws IOException, ElasticsearchClientException {
         {
-            // long nbItems = RandomizedTest.randomLongBetween(5, 1000);
-            long nbItems = RandomizedTest.randomLongBetween(1, 2);
+            long nbItems = RandomizedTest.randomLongBetween(5, 20);
 
             ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
 
@@ -382,8 +382,35 @@ public class ElasticsearchClientIT extends AbstractITCase {
             assertThat(response.getTotalHits(), is(nbItems));
         }
         {
-            // long nbItems = RandomizedTest.randomLongBetween(5, 1000);
-            long nbItems = RandomizedTest.randomLongBetween(6, 10);
+            esClient.deleteIndex(getCrawlerName());
+            long nbItems = RandomizedTest.randomLongBetween(5, 20);
+
+            ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
+
+            // Add some index op
+            for (int i = 0; i < nbItems; i++) {
+                bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName(),
+                        "" + i,
+                        null,
+                        "{\n" +
+                                "          \"foo\" : {\n" +
+                                "            \"bar\" : \"baz\"\n" +
+                                "          }\n" +
+                                "        }"));
+            }
+
+            ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
+            ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
+            assertThat(bulkResponse.hasFailures(), is(false));
+            assertThat(bulkResponse.getItems(), not(emptyIterable()));
+
+            esClient.refresh(getCrawlerName());
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+            assertThat(response.getTotalHits(), is(nbItems));
+        }
+        {
+            esClient.deleteIndex(getCrawlerName());
+            long nbItems = RandomizedTest.randomLongBetween(5, 20);
 
             ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
 
@@ -416,5 +443,29 @@ public class ElasticsearchClientIT extends AbstractITCase {
             ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
             assertThat(response.getTotalHits(), is(nbItems - nbErrors));
         }
+    }
+
+    @Test
+    public void testDeleteSingle() throws IOException, ElasticsearchClientException {
+        esClient.indexSingle(getCrawlerName(), "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
+        esClient.indexSingle(getCrawlerName(), "2", "{ \"foo\": { \"bar\": \"baz\" } }", null);
+        esClient.indexSingle(getCrawlerName(), "3", "{ \"number\": 1 }", null);
+        esClient.indexSingle(getCrawlerName(), "4", "{ \"number\": 2 }", null);
+
+        esClient.refresh(getCrawlerName());
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+        assertThat(response.getTotalHits(), is(4L));
+
+        esClient.deleteSingle(getCrawlerName(), "1");
+        esClient.refresh(getCrawlerName());
+
+        response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+        assertThat(response.getTotalHits(), is(3L));
+
+        esClient.deleteSingle(getCrawlerName(), "99999");
+        esClient.refresh(getCrawlerName());
+
+        response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+        assertThat(response.getTotalHits(), is(3L));
     }
 }

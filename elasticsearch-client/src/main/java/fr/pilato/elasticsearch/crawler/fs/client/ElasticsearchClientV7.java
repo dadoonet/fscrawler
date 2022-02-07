@@ -318,15 +318,21 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
     }
 
     @Override
-    public void deleteSingle(String index, String id) throws IOException {
+    public void deleteSingle(String index, String id) throws ElasticsearchClientException {
         logger.debug("Removing document : {}/{}", index, id);
-        String response = httpDelete(index + "/" + INDEX_TYPE_DOC + "/" + id, null);
-        // TODO Parse the response
-        if (!response.contains("FOO")) {
-            throw new IOException("Can not remove document " + index + "/" + id + " cause: " + response);
-        }
+        try {
+            String response = httpDelete(index + "/" + INDEX_TYPE_DOC + "/" + id, null);
 
-        logger.debug("Document {}/{} has been removed", index, id);
+            DocumentContext document = parseJsonAsDocumentContext(response);
+            String result = document.read("$.result");
+            if (!result.equals("deleted")) {
+                throw new ElasticsearchClientException("Can not remove document " + index + "/" + id + " cause: " + response);
+            }
+
+            logger.debug("Document {}/{} has been removed", index, id);
+        } catch (NotFoundException e) {
+            logger.debug("Document {}/{} does not exist. It can't be removed.", index, id);
+        }
     }
 
     @Override
@@ -411,7 +417,9 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
 
         boolean bodyEmpty = true;
 
+        int size = 10;
         if (request.getSize() != null) {
+            size = request.getSize();
             body.getAndUpdate(s -> s += "\"size\":" + request.getSize());
             bodyEmpty = false;
         }
@@ -488,7 +496,10 @@ public class ElasticsearchClientV7 implements ElasticsearchClient {
         esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
 
         int numHits = document.read("$.hits.hits.length()");
-        for (int hitNum = 0; hitNum < numHits; hitNum++) {
+        if (numHits < size) {
+            size = numHits;
+        }
+        for (int hitNum = 0; hitNum < size; hitNum++) {
             final ESSearchHit esSearchHit = new ESSearchHit();
             esSearchHit.setIndex(document.read("$.hits.hits[" + hitNum + "]._index"));
             esSearchHit.setId(document.read("$.hits.hits[" + hitNum + "]._id"));

@@ -19,11 +19,15 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.Engine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Locale;
+import java.util.Objects;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
 
 public class ElasticsearchEngine implements Engine<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> {
     private static final Logger logger = LogManager.getLogger(ElasticsearchEngine.class);
@@ -57,8 +61,7 @@ public class ElasticsearchEngine implements Engine<ElasticsearchOperation, Elast
             bulkRequest.append("}}\n");
             if (r instanceof ElasticsearchIndexOperation) {
                 ElasticsearchIndexOperation indexOp = (ElasticsearchIndexOperation) r;
-                bulkRequest.append(indexOp.getJson())
-                        .append("\n");
+                bulkRequest.append(JsonUtil.serialize(JsonUtil.deserialize(indexOp.getJson(), Object.class))).append("\n");
             }
             logger.trace("Adding to bulk request: {}", bulkRequest);
             ndjson.append(bulkRequest);
