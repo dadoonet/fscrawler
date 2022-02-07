@@ -32,6 +32,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchDeleteOperation;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchEngine;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
@@ -380,6 +381,34 @@ public class ElasticsearchClientIT extends AbstractITCase {
             esClient.refresh(getCrawlerName());
             ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
             assertThat(response.getTotalHits(), is(nbItems));
+        }
+        {
+            esClient.deleteIndex(getCrawlerName());
+            long nbItems = RandomizedTest.randomLongBetween(5, 20);
+            long nbItemsToDelete = RandomizedTest.randomLongBetween(1, nbItems);
+
+            ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
+
+            // Add some index op
+            for (int i = 0; i < nbItems; i++) {
+                bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName(),
+                        "" + i,
+                        null,
+                        "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
+            }
+            // Add some delete op
+            for (int i = 0; i < nbItemsToDelete; i++) {
+                bulkRequest.add(new ElasticsearchDeleteOperation(getCrawlerName(), "" + i));
+            }
+
+            ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
+            ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
+            assertThat(bulkResponse.hasFailures(), is(false));
+            assertThat(bulkResponse.getItems(), not(emptyIterable()));
+
+            esClient.refresh(getCrawlerName());
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+            assertThat(response.getTotalHits(), is(nbItems-nbItemsToDelete));
         }
         {
             esClient.deleteIndex(getCrawlerName());
