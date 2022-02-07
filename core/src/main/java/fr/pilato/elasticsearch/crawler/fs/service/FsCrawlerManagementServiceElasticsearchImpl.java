@@ -27,7 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientV7;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
@@ -51,7 +51,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
 
     public FsCrawlerManagementServiceElasticsearchImpl(Path config, FsSettings settings) {
         this.settings = settings;
-        this.client = ElasticsearchClientUtil.getInstance(config, settings);
+        this.client = new ElasticsearchClientV7(config, settings);
     }
 
     public ElasticsearchClient getClient() {

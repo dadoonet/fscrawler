@@ -11,13 +11,6 @@
 
     <artifactId>fscrawler-elasticsearch-client</artifactId>
     <name>FSCrawler Elasticsearch Client</name>
-    <packaging>pom</packaging>
-
-    <modules>
-        <module>elasticsearch-client-base</module>
-        <module>elasticsearch-client-v7</module>
-        <module>elasticsearch-client-v6</module>
-    </modules>
 
     <dependencies>
         <!-- Our framework -->
@@ -30,6 +23,44 @@
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-settings</artifactId>
+        </dependency>
+
+        <!-- Our beans -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-beans</artifactId>
+        </dependency>
+
+        <!-- Workplace search client -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-workplacesearch-client</artifactId>
+        </dependency>
+
+        <!-- Rest Http Client -->
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+        </dependency>
+
+        <!-- Needed for Jersey -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jaxb-annotations</artifactId>
+        </dependency>
+
+        <!-- jsonpath -->
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
         </dependency>
 
         <!-- Test dependencies -->

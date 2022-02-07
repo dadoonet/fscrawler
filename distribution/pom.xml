@@ -15,7 +15,6 @@
 
     <modules>
         <module>es7</module>
-        <module>es6</module>
     </modules>
 
     <properties>

@@ -22,15 +22,17 @@ package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @SuppressWarnings("CanBeFinal")
 public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerBulkResponse.class);
 
-    private boolean errors;
-    private BulkItemResponse<O>[] items;
+    protected boolean errors;
+    protected List<BulkItemResponse<O>> items = new ArrayList<>();
 
     @SuppressWarnings("ConstantConditions")
     public boolean hasFailures() {
@@ -43,7 +45,7 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
         return false;
     }
 
-    public BulkItemResponse<O>[] getItems() {
+    public List<BulkItemResponse<O>> getItems() {
         return items;
     }
 
@@ -58,7 +60,7 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
             if (item.failed) {
                 if (logger.isTraceEnabled()) {
                     sbf.append(item.getOperation());
-                    sbf.append(":").append(item.getOpType()).append(":").append(item.getFailureMessage());
+                    sbf.append(":").append(item.getOperation().toString()).append(":").append(item.getFailureMessage());
                 }
                 failures++;
             }
@@ -74,11 +76,7 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
     public static class BulkItemResponse<O extends FsCrawlerOperation<O>> {
         private boolean failed;
         private O operation;
-        private String opType;
         private String failureMessage;
-
-        // We use Object here as in 1.7 it will be a String and from 2.0 it will be a Map
-        private Object error;
 
         public boolean isFailed() {
             return failed;
@@ -86,10 +84,6 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
 
         public O getOperation() {
             return operation;
-        }
-
-        public String getOpType() {
-            return opType;
         }
 
         public String getFailureMessage() {
@@ -104,29 +98,14 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
             this.operation = operation;
         }
 
-        public void setOpType(String opType) {
-            this.opType = opType;
-        }
-
         public void setFailureMessage(String failureMessage) {
             this.failureMessage = failureMessage;
-        }
-
-        public Object getError() {
-            return error;
-        }
-
-        public void setError(Object error) {
-            this.error = error;
-            this.failed = true;
-            this.failureMessage = error.toString();
         }
 
         @Override
         public String toString() {
             return "BulkItemResponse{" + "failed=" + failed +
                     ", operation='" + operation + '\'' +
-                    ", opType=" + opType +
                     ", failureMessage='" + failureMessage + '\'' +
                     '}';
         }
@@ -134,6 +113,6 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
 
     @Override
     public String toString() {
-        return "BulkResponse{" + "items=" + (items == null ? "null" : Arrays.asList(items).toString()) + '}';
+        return "BulkResponse{" + "items=" + (items == null ? "null" : List.of(items).toString()) + '}';
     }
 }

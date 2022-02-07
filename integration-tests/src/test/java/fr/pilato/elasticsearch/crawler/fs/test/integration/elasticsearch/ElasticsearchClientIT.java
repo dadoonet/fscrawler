@@ -1,0 +1,420 @@
+/*
+ * Licensed to David Pilato (the "Author") under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. Author licenses this
+ * file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
+
+import com.carrotsearch.randomizedtesting.RandomizedTest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESPrefixQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESRangeQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchEngine;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
+import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
+import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
+import jakarta.ws.rs.ClientErrorException;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.Properties;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
+
+/**
+ * Test elasticsearch HTTP client
+ */
+public class ElasticsearchClientIT extends AbstractITCase {
+
+    private final ElasticsearchClient esClient = managementService.getClient();
+
+    @Before
+    public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
+        logger.info(" -> Removing existing index [{}*]", getCrawlerName());
+        esClient.deleteIndex(getCrawlerName() + "*");
+    }
+
+    @Test
+    public void testDeleteIndex() throws IOException, ElasticsearchClientException {
+        esClient.deleteIndex("does-not-exist-index");
+        esClient.createIndex(getCrawlerName(), false, null);
+        assertThat(esClient.isExistingIndex(getCrawlerName()), is(true));
+        esClient.deleteIndex(getCrawlerName());
+        assertThat(esClient.isExistingIndex(getCrawlerName()), is(false));
+    }
+
+    @Test
+    public void testWaitForHealthyIndex() throws IOException, ElasticsearchClientException {
+        esClient.createIndex(getCrawlerName(), false, null);
+        esClient.waitForHealthyIndex(getCrawlerName());
+        try {
+            esClient.waitForHealthyIndex("does-not-exist-index");
+            fail("We should have raised a ClientErrorException");
+        } catch (ClientErrorException e) {
+            assertThat(e.getResponse().getStatus(), is(408));
+        }
+    }
+
+    @Test
+    public void testCreateIndex() throws IOException, ElasticsearchClientException {
+        esClient.createIndex(getCrawlerName(), false, null);
+        boolean exists = esClient.isExistingIndex(getCrawlerName());
+        assertThat(exists, is(true));
+    }
+
+    @Test
+    public void testCreateIndexWithSettings() throws IOException, ElasticsearchClientException {
+        esClient.createIndex(getCrawlerName(), false, "{\n" +
+                "  \"settings\": {\n" +
+                "    \"number_of_shards\": 1,\n" +
+                "    \"number_of_replicas\": 1\n" +
+                "  }\n" +
+                "}\n");
+        boolean exists = esClient.isExistingIndex(getCrawlerName());
+        assertThat(exists, is(true));
+    }
+
+    @Test
+    public void testRefresh() throws IOException, ElasticsearchClientException {
+        esClient.createIndex(getCrawlerName(), false, null);
+        esClient.refresh(getCrawlerName());
+    }
+
+    @Test
+    public void testCreateIndexAlreadyExistsShouldFail() throws IOException, ElasticsearchClientException {
+        esClient.createIndex(getCrawlerName(), false, null);
+        esClient.waitForHealthyIndex(getCrawlerName());
+        try {
+            esClient.createIndex(getCrawlerName(), false, null);
+            fail("we should reject creation of an already existing index");
+        } catch (ElasticsearchClientException e) {
+            assertThat(e.getMessage(), containsString("already exists"));
+        }
+    }
+
+    @Test
+    public void testCreateIndexAlreadyExistsShouldBeIgnored() throws IOException, ElasticsearchClientException {
+        esClient.createIndex(getCrawlerName(), false, null);
+        esClient.waitForHealthyIndex(getCrawlerName());
+        esClient.createIndex(getCrawlerName(), true, null);
+    }
+
+    @Test
+    public void testSearch() throws IOException, ElasticsearchClientException {
+        esClient.createIndex(getCrawlerName(), false, "{\n" +
+                "  \"mappings\": {\n" +
+                "    \"properties\": {\n" +
+                "      \"foo\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"bar\": {\n" +
+                "            \"type\": \"text\",\n" +
+                "            \"store\": true\n" +
+                "          }\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}");
+
+        esClient.indexSingle(getCrawlerName(), "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
+        esClient.indexSingle(getCrawlerName(), "2", "{ \"foo\": { \"bar\": \"baz\" } }", null);
+        esClient.indexSingle(getCrawlerName(), "3", "{ \"number\": 1 }", null);
+        esClient.indexSingle(getCrawlerName(), "4", "{ \"number\": 2 }", null);
+
+        esClient.refresh(getCrawlerName());
+
+        // match_all
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+            assertThat(response.getTotalHits(), is(4L));
+
+            for (ESSearchHit hit : response.getHits()) {
+                assertThat(hit.getIndex(), is(getCrawlerName()));
+                assertThat(hit.getId(), isOneOf("1", "2", "3", "4"));
+                assertThat(hit.getVersion(), is(1L));
+                assertThat(hit.getSource(), not(isEmptyString()));
+                assertThat(hit.getHighlightFields().isEmpty(), is(true));
+                assertThat(hit.getStoredFields(), nullValue());
+            }
+        }
+
+        // term
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                    .withESQuery(new ESTermQuery("foo.bar", "bar")));
+            assertThat(response.getTotalHits(), is(1L));
+            assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
+            assertThat(response.getHits().get(0).getId(), is("1"));
+            assertThat(response.getHits().get(0).getVersion(), is(1L));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
+            assertThat(response.getHits().get(0).getHighlightFields().isEmpty(), is(true));
+            assertThat(response.getHits().get(0).getStoredFields(), nullValue());
+        }
+
+        // match
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                    .withESQuery(new ESMatchQuery("foo.bar", "bar")));
+            assertThat(response.getTotalHits(), is(1L));
+            assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
+            assertThat(response.getHits().get(0).getId(), is("1"));
+            assertThat(response.getHits().get(0).getVersion(), is(1L));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
+            assertThat(response.getHits().get(0).getHighlightFields().isEmpty(), is(true));
+            assertThat(response.getHits().get(0).getStoredFields(), nullValue());
+        }
+
+        // prefix
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                    .withESQuery(new ESPrefixQuery("foo.bar", "ba")));
+            assertThat(response.getTotalHits(), is(2L));
+
+            for (ESSearchHit hit : response.getHits()) {
+                assertThat(hit.getIndex(), is(getCrawlerName()));
+                assertThat(hit.getId(), isOneOf("1", "2"));
+                assertThat(hit.getVersion(), is(1L));
+                assertThat(hit.getSource(), not(isEmptyString()));
+                assertThat(hit.getHighlightFields().isEmpty(), is(true));
+                assertThat(hit.getStoredFields(), nullValue());
+            }
+        }
+
+        // range - lower than 2
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                    .withESQuery(new ESRangeQuery("number").withLt(2)));
+            assertThat(response.getTotalHits(), is(1L));
+            assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
+            assertThat(response.getHits().get(0).getId(), is("3"));
+            assertThat(response.getHits().get(0).getVersion(), is(1L));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
+            assertThat(response.getHits().get(0).getHighlightFields().isEmpty(), is(true));
+            assertThat(response.getHits().get(0).getStoredFields(), nullValue());
+        }
+
+        // range - greater or equal to 2
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                    .withESQuery(new ESRangeQuery("number").withGte(2)));
+            assertThat(response.getTotalHits(), is(1L));
+            assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
+            assertThat(response.getHits().get(0).getId(), is("4"));
+            assertThat(response.getHits().get(0).getVersion(), is(1L));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
+            assertThat(response.getHits().get(0).getHighlightFields().isEmpty(), is(true));
+            assertThat(response.getHits().get(0).getStoredFields(), nullValue());
+        }
+
+        // bool with prefix and match
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                    .withESQuery(new ESBoolQuery()
+                            .addMust(new ESPrefixQuery("foo.bar", "ba"))
+                            .addMust(new ESMatchQuery("foo.bar", "bar"))
+                    ));
+            assertThat(response.getTotalHits(), is(1L));
+            assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
+            assertThat(response.getHits().get(0).getId(), is("1"));
+            assertThat(response.getHits().get(0).getVersion(), is(1L));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
+            assertThat(response.getHits().get(0).getHighlightFields().isEmpty(), is(true));
+            assertThat(response.getHits().get(0).getStoredFields(), nullValue());
+        }
+
+        // Highlighting
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                    .withESQuery(new ESMatchQuery("foo.bar", "bar"))
+                    .addHighlighter("foo.bar")
+            );
+            assertThat(response.getTotalHits(), is(1L));
+            assertThat(response.getHits().get(0).getIndex(), is(getCrawlerName()));
+            assertThat(response.getHits().get(0).getId(), is("1"));
+            assertThat(response.getHits().get(0).getVersion(), is(1L));
+            assertThat(response.getHits().get(0).getSource(), not(isEmptyString()));
+            assertThat(response.getHits().get(0).getHighlightFields().size(), is(1));
+            assertThat(response.getHits().get(0).getHighlightFields(), hasKey("foo.bar"));
+            assertThat(response.getHits().get(0).getHighlightFields().get("foo.bar"), iterableWithSize(1));
+            assertThat(response.getHits().get(0).getHighlightFields().get("foo.bar"), hasItem("<em>bar</em>"));
+            assertThat(response.getHits().get(0).getStoredFields(), nullValue());
+        }
+
+        // Fields
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                    .withESQuery(new ESPrefixQuery("foo.bar", "ba"))
+                    .addStoredField("foo.bar")
+            );
+            assertThat(response.getTotalHits(), is(2L));
+
+            for (ESSearchHit hit : response.getHits()) {
+                assertThat(hit.getIndex(), is(getCrawlerName()));
+                assertThat(hit.getId(), isOneOf("1", "2"));
+                assertThat(hit.getVersion(), is(1L));
+                assertThat(hit.getSource(), isEmptyOrNullString());
+                assertThat(hit.getHighlightFields().isEmpty(), is(true));
+                assertThat(hit.getStoredFields(), notNullValue());
+                assertThat(hit.getStoredFields(), hasKey(is("foo.bar")));
+                assertThat(hit.getStoredFields(), hasEntry(is("foo.bar"), hasItem(isOneOf("bar", "baz"))));
+            }
+        }
+
+        // Fields with _source
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                    .withESQuery(new ESPrefixQuery("foo.bar", "ba"))
+                    .addStoredField("_source")
+                    .addStoredField("foo.bar")
+            );
+            assertThat(response.getTotalHits(), is(2L));
+
+            for (ESSearchHit hit : response.getHits()) {
+                assertThat(hit.getIndex(), is(getCrawlerName()));
+                assertThat(hit.getId(), isOneOf("1", "2"));
+                assertThat(hit.getVersion(), is(1L));
+                assertThat(hit.getSource(), not(isEmptyString()));
+                assertThat(hit.getHighlightFields().isEmpty(), is(true));
+                assertThat(hit.getStoredFields(), notNullValue());
+                assertThat(hit.getStoredFields(), hasKey(is("foo.bar")));
+                assertThat(hit.getStoredFields(), hasEntry(is("foo.bar"), hasItem(isOneOf("bar", "baz"))));
+            }
+        }
+    }
+
+    @Test
+    public void testFindVersion() throws IOException {
+        String version = esClient.getVersion();
+        logger.info("Current elasticsearch version: [{}]", version);
+
+        // If we did not use an external URL but the docker instance we can test for sure that the version is the expected one
+        if (System.getProperty("tests.cluster.url") == null) {
+            Properties properties = readPropertiesFromClassLoader("elasticsearch.version.properties");
+            assertThat(version, is(properties.getProperty("version")));
+        }
+    }
+
+    @Test
+    public void testPipeline() throws IOException {
+        String crawlerName = getCrawlerName();
+
+        // We can only run this test against a 5.0 cluster or >
+        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >", esClient.isIngestSupported(), is(true));
+
+        // Create an empty ingest pipeline
+        String pipeline = "{\n" +
+                "  \"description\": \"Testing Grok on PDF upload\",\n" +
+                "  \"processors\": [\n" +
+                "    {\n" +
+                "      \"gsub\": {\n" +
+                "        \"field\": \"content\",\n" +
+                "        \"pattern\": \"\\n\",\n" +
+                "        \"replacement\": \"-\"\n" +
+                "      }\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"grok\": {\n" +
+                "        \"field\": \"content\",\n" +
+                "        \"patterns\": [\n" +
+                "          \"%{DATA}%{IP:ip_addr} %{GREEDYDATA}\"\n" +
+                "        ]\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+        esClient.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+
+        assertThat(esClient.isExistingPipeline(crawlerName), is(true));
+        assertThat(esClient.isExistingPipeline(crawlerName + "_foo"), is(false));
+    }
+
+    @Test
+    public void testBulk() throws IOException, ElasticsearchClientException {
+        {
+            // long nbItems = RandomizedTest.randomLongBetween(5, 1000);
+            long nbItems = RandomizedTest.randomLongBetween(1, 2);
+
+            ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
+
+            // Add some index op
+            for (int i = 0; i < nbItems; i++) {
+                bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName(),
+                        "" + i,
+                        null,
+                        "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
+            }
+
+            ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
+            ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
+            assertThat(bulkResponse.hasFailures(), is(false));
+            assertThat(bulkResponse.getItems(), not(emptyIterable()));
+
+            esClient.refresh(getCrawlerName());
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+            assertThat(response.getTotalHits(), is(nbItems));
+        }
+        {
+            // long nbItems = RandomizedTest.randomLongBetween(5, 1000);
+            long nbItems = RandomizedTest.randomLongBetween(6, 10);
+
+            ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
+
+            // Add some index op
+            // Every 5 ops, we had a failing document
+            long nbErrors = 0;
+            for (int i = 0; i < nbItems; i++) {
+                if (i > 0 && i % 5 == 0) {
+                    bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName(),
+                            "" + i,
+                            null,
+                            "{\"foo\":{\"bar\":\"bar\"},\"number\":\"bar\"}"));
+                    nbErrors++;
+                } else {
+                    bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName(),
+                            "" + i,
+                            null,
+                            "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
+                }
+            }
+
+            ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
+            ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
+            assertThat(bulkResponse.hasFailures(), is(true));
+            assertThat(bulkResponse.getItems(), not(emptyIterable()));
+            long errors = bulkResponse.getItems().stream().filter(FsCrawlerBulkResponse.BulkItemResponse::isFailed).count();
+            assertThat(errors, is(nbErrors));
+
+            esClient.refresh(getCrawlerName());
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+            assertThat(response.getTotalHits(), is(nbItems - nbErrors));
+        }
+    }
+}

@@ -17,24 +17,9 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.beans;
+package fr.pilato.elasticsearch.crawler.fs.client;
 
-import java.io.IOException;
+import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkRequest;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
-
-public class FolderParser {
-
-    public static String toJson(Folder folder) {
-        try {
-            return mapper.writeValueAsString(folder);
-        } catch (IOException e) {
-            // TODO Fix that code. We should log here and return null.
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static Folder fromJson(String json) throws IOException {
-        return mapper.readValue(json, Folder.class);
-    }
+public class ElasticsearchBulkRequest extends FsCrawlerBulkRequest<ElasticsearchOperation> {
 }
