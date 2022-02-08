@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -28,7 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -44,16 +44,16 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
         startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object document = parseJson(hit.getSource());
-            assertThat(JsonPath.read(document, "$.attributes.owner"), notNullValue());
+            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            assertThat(document.read("$.attributes.owner"), notNullValue());
             if (OsValidator.WINDOWS) {
                 // We should not have values for group and permissions on Windows OS
-                assertThat(JsonPath.read(document, "$.attributes.group"), nullValue());
-                assertThat(JsonPath.read(document, "$.attributes.permissions"), nullValue());
+                assertThat(document.read("$.attributes.group"), nullValue());
+                assertThat(document.read("$.attributes.permissions"), nullValue());
             } else {
                 // We test group and permissions only on non Windows OS
-                assertThat(JsonPath.read(document, "$.attributes.group"), notNullValue());
-                assertThat(JsonPath.read(document, "$.attributes.permissions"), greaterThanOrEqualTo(400));
+                assertThat(document.read("$.attributes.group"), notNullValue());
+                assertThat(document.read("$.attributes.permissions"), greaterThanOrEqualTo(400));
             }
         }
     }

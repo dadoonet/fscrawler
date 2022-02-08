@@ -25,6 +25,7 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
@@ -505,8 +506,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
             esSearchHit.setId(document.read("$.hits.hits[" + hitNum + "]._id"));
             esSearchHit.setVersion(Integer.toUnsignedLong(document.read("$.hits.hits[" + hitNum + "]._version")));
             try {
-                esSearchHit.setSource(document.read("$.hits.hits[" + hitNum + "]._source", String.class));
-                esSearchHit.setSourceAsMap(document.read("$.hits.hits[" + hitNum + "]._source"));
+                Map<String, Object> jsonMap = document.read("$.hits.hits[" + hitNum + "]._source");
+                esSearchHit.setSource(JsonUtil.serialize(jsonMap));
+                esSearchHit.setSourceAsMap(jsonMap);
             } catch (PathNotFoundException e) {
                 esSearchHit.setSourceAsMap(Collections.emptyMap());
             }
