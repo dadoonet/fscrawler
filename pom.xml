@@ -37,13 +37,13 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch7.version>7.16.3</elasticsearch7.version>
+        <elasticsearch7.version>7.17.0</elasticsearch7.version>
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
         <tika.version>2.2.1</tika.version>
         <jackson.version>2.13.1</jackson.version>
-        <jsonpath.version>2.6.0</jsonpath.version>
+        <jsonpath.version>2.7.0</jsonpath.version>
         <slf4j.version>1.7.35</slf4j.version>
         <log4j.version>2.17.1</log4j.version>
         <jansi.version>2.4.0</jansi.version>
@@ -280,7 +280,7 @@
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.38.1</version>
+                    <version>0.39.0</version>
                 </plugin>
 
                 <!-- For IT using Docker Compose -->
@@ -404,7 +404,7 @@
                 <plugin>
                     <groupId>org.sonatype.ossindex.maven</groupId>
                     <artifactId>ossindex-maven-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.2.0</version>
                     <executions>
                         <execution>
                             <id>audit-dependencies</id>
@@ -989,7 +989,7 @@
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-client</artifactId>
-                <version>9.4.44.v20210927</version>
+                <version>9.4.45.v20220203</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -1,7 +1,20 @@
 Version 2.10
 ============
 
-* Update to Elasticsearch 7.16.3 and 6.8.23. Thanks to dadoonet.
+New
+---
+
+* You can now remove a document in Elasticsearch using FSCrawler `_document` endpoint. Thanks to dadoonet.
+
+Deprecated
+----------
+
+* The `_upload` REST endpoint has been deprecated. Please now use the `_document` endpoint. Thanks to dadoonet.
+
+Updated
+-------
+
+* Update to Elasticsearch 7.17.0 and 6.8.23. Thanks to dadoonet.
 
 Thanks to ``@dadoonet``
 for this release!

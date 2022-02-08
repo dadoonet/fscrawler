@@ -117,12 +117,13 @@ public interface ElasticsearchClient extends Closeable {
     void indexRawJson(String index, String id, String json, String pipeline);
 
     /**
-     * Index a document (for test purposes only)
+     * Index a single document using the Index Document API
      * @param index     Index name
      * @param id        Document ID
      * @param json      Document to index
+     * @param pipeline  Pipeline (can be null)
      */
-    void indexSingle(String index, String id, String json) throws IOException;
+    void indexSingle(String index, String id, String json, String pipeline) throws IOException;
 
     /**
      * Delete a document using a BulkProcessor behind the scenes
@@ -130,6 +131,13 @@ public interface ElasticsearchClient extends Closeable {
      * @param id        Document ID
      */
     void delete(String index, String id);
+
+    /**
+     * Delete a single document using the Delete Document API
+     * @param index     Index name
+     * @param id        Document ID
+     */
+    void deleteSingle(String index, String id) throws IOException;
 
     /**
      * Create all needed indices

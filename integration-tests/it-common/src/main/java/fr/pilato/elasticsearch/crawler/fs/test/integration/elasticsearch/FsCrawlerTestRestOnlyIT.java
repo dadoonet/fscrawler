@@ -74,7 +74,7 @@ public class FsCrawlerTestRestOnlyIT extends AbstractFsCrawlerITCase {
             Files.walk(from)
                     .filter(Files::isRegularFile)
                     .forEach(path -> {
-                        UploadResponse response = uploadFile(target, path);
+                        UploadResponse response = FsCrawlerRestIT.uploadFileUsingApi(target, path, null, null, "/_document", null);
                         assertThat(response.getFilename(), is(path.getFileName().toString()));
                     });
 

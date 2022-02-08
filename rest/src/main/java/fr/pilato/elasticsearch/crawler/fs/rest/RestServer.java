@@ -51,6 +51,7 @@ public class RestServer {
             final ResourceConfig rc = new ResourceConfig()
                     .registerInstances(
                             new ServerStatusApi(managementService, settings),
+                            new DocumentApi(settings, documentService),
                             new UploadApi(settings, documentService))
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)

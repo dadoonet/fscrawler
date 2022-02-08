@@ -52,11 +52,18 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
     void indexRawJson(String index, String id, String json, String pipeline);
 
     /**
+     * Remove a document from the target service (could be asynchronous)
+     * @param index     Index name
+     * @param id        Document ID
+     */
+    void delete(String index, String id) throws IOException;
+
+    /**
      * Remove a document from the target service
      * @param index     Index name
      * @param id        Document ID
      */
-    void delete(String index, String id);
+    void deleteSingle(String index, String id) throws IOException;
 
     /**
      * Refresh the document database to make changes visible
