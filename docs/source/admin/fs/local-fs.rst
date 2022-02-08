@@ -56,6 +56,8 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.follow_symlinks``     | ``false``             | `Follow Symlinks`_              |
 +----------------------------+-----------------------+---------------------------------+
+| ``fs.tika_config_path``    | ``null``              | `Tika Config Path`_             |
++----------------------------+-----------------------+---------------------------------+
 
 .. _root-directory:
 
@@ -762,3 +764,37 @@ If you want FSCrawler to follow the symbolic links, you need to be explicit abou
    name: "test"
    fs:
      follow_symlink: true
+
+Tika Config Path
+^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.10
+
+If you want to override the default tika parser configuration, you can set the path to a custom tika
+configuration file, which will be used instead.
+
+.. code:: yaml
+
+   name: "test"
+   fs:
+     tika_config_path: '/path/to/tikaConfig.xml'
+
+An example tika config file is shown below. See `apache documentation <https://tika.apache.org/1.27/configuring.html>`__ for more information.
+
+.. code:: xml
+
+  <?xml version="1.0" encoding="UTF-8"?>
+  <properties>
+    <service-loader dynamic="true"/>
+    <service-loader loadErrorHandler="IGNORE"/>
+    <parsers>
+      <!-- Use Default Parser for files, but Default Parser will never use HTML parser -->
+      <parser class="org.apache.tika.parser.DefaultParser">
+        <parser-exclude class="org.apache.tika.parser.html.HtmlParser"/>
+      </parser>
+      <!-- Use a different parser for XHTML -->
+      <parser class="org.apache.tika.parser.xml.XMLParser">
+        <mime>application/xhtml+xml</mime>
+      </parser>
+    </parsers>
+  </properties>
