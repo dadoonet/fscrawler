@@ -704,7 +704,7 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>jcl-over-slf4j</artifactId>
-                <version>1.7.33</version>
+                <version>1.7.36</version>
             </dependency>
 
             <!-- Fix org.elasticsearch.client:elasticsearch-rest-high-level-client:7.16.1 vs org.apache.tika:tika-parser-scientific-module:2.1.0 transitive dependency -->
