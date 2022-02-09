@@ -51,7 +51,7 @@ public class ElasticsearchEngine implements Engine<ElasticsearchOperation, Elast
 
             if (r instanceof ElasticsearchIndexOperation && ((ElasticsearchIndexOperation) r).getPipeline() != null) {
                 bulkRequest
-                        .append(",\"_pipeline\":\"")
+                        .append(",\"pipeline\":\"")
                         .append(((ElasticsearchIndexOperation) r).getPipeline())
                         .append("\"");
             }
