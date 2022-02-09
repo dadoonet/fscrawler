@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.service;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -33,6 +32,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 
 public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocumentService {
 
@@ -72,7 +73,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
 
     @Override
     public void index(String index, String id, Doc doc, String pipeline) {
-        indexRawJson(index, id, DocParser.toJson(doc), pipeline);
+        indexRawJson(index, id, serialize(doc), pipeline);
     }
 
     @Override
@@ -100,7 +101,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public ESSearchResponse search(ESSearchRequest request) throws IOException {
+    public ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException {
         logger.debug("Searching {}", request);
         return client.search(request);
     }

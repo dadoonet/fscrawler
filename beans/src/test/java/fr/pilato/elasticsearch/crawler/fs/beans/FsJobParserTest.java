@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -33,10 +34,10 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     private static final FsJob JOB_EMPTY = FsJob.builder().build();
 
     private void jobTester(FsJob source) throws IOException {
-        String json = FsJobParser.toJson(source);
+        String json = prettyMapper.writeValueAsString(source);
 
         logger.info("-> generated job: [{}]", json);
-        FsJob generated = FsJobParser.fromJson(json);
+        FsJob generated = prettyMapper.readValue(json, FsJob.class);
         assertThat(generated, is(source));
     }
 
@@ -65,8 +66,8 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     public void testDateTimeSerialization() throws IOException {
         LocalDateTime now = LocalDateTime.now();
         FsJob job = FsJob.builder().setLastrun(now).build();
-        String json = FsJobParser.toJson(job);
-        FsJob generated = FsJobParser.fromJson(json);
+        String json = prettyMapper.writeValueAsString(job);
+        FsJob generated = prettyMapper.readValue(json, FsJob.class);
         assertThat(generated.getLastrun(), is(now));
     }
 

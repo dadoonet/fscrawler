@@ -19,29 +19,82 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.Predicate;
-import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
-import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.json.JsonSmartJsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.JsonSmartMappingProvider;
-import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.EnumSet;
 import java.util.Map;
-import java.util.Set;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
 
 public class JsonUtil {
+
+    public static final ObjectMapper prettyMapper;
+    public static final ObjectMapper mapper;
+    public static final ObjectMapper ymlMapper;
+    public static final Configuration configuration = new Configuration.ConfigurationBuilder()
+            .jsonProvider(new JsonSmartJsonProvider())
+            .mappingProvider(new JsonSmartMappingProvider())
+            .build();
+
+
+    static {
+        SimpleModule fscrawler = new SimpleModule("FsCrawler", new Version(2, 0, 0, null,
+                "fr.pilato.elasticsearch.crawler", "fscrawler"));
+        fscrawler.addSerializer(new TimeValueSerializer());
+        fscrawler.addDeserializer(TimeValue.class, new TimeValueDeserializer());
+        fscrawler.addSerializer(new PercentageSerializer());
+        fscrawler.addDeserializer(Percentage.class, new PercentageDeserializer());
+        fscrawler.addSerializer(new ByteSizeValueSerializer());
+        fscrawler.addDeserializer(ByteSizeValue.class, new ByteSizeValueDeserializer());
+
+        mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.registerModule(fscrawler);
+        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        mapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+
+        prettyMapper = new ObjectMapper();
+        prettyMapper.registerModule(new JavaTimeModule());
+        prettyMapper.registerModule(fscrawler);
+        prettyMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        prettyMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        prettyMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        prettyMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        prettyMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        prettyMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        prettyMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+
+        YAMLFactory yamlFactory = new YAMLFactory();
+        ymlMapper = new ObjectMapper(yamlFactory);
+        ymlMapper.registerModule(new JavaTimeModule());
+        ymlMapper.registerModule(fscrawler);
+        ymlMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        ymlMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        ymlMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        ymlMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        ymlMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        ymlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ymlMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+    }
 
     public static String serialize(Object object) {
         try {
@@ -67,11 +120,6 @@ public class JsonUtil {
         }
     }
 
-    private static Configuration configuration = new Configuration.ConfigurationBuilder()
-            .jsonProvider(new JsonSmartJsonProvider())
-            .mappingProvider(new JsonSmartMappingProvider())
-            .build();
-
     /**
      * Parse a JSON Document using JSON Path
      * @param json  json to parse
@@ -90,5 +138,17 @@ public class JsonUtil {
      */
     public static DocumentContext parseJsonAsDocumentContext(String json) {
         return JsonPath.using(configuration).parse(json);
+    }
+
+    /**
+     * Read a field from a JSON document as a JSON String content
+     * @param context   the document context
+     * @param path      path to access the field. Like "$.field"
+     * @return          the JSON as a String
+     * @see #parseJsonAsDocumentContext(String) to get a document context
+     */
+    public static String extractJsonFromPath(DocumentContext context, String path) {
+        Map<String, Object> jsonMap = context.read(path);
+        return JsonUtil.serialize(jsonMap);
     }
 }

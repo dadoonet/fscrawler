@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
@@ -325,8 +326,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
             assertThat(hit.getSourceAsMap(), hasKey("file"));
             assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
-            assertThat(hit.getSourceAsMap(), hasKey("meta"));
-            assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), not(hasKey("raw")));
+
+            assertThat(hit.getSourceAsMap(), not(hasKey("meta")));
 
             assertThat(hit.getSourceAsMap(), hasKey("external"));
             Map<String, Object> external = (Map<String, Object>) hit.getSourceAsMap().get("external");
@@ -365,8 +366,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
             assertThat(hit.getSourceAsMap(), hasKey("file"));
             assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
-            assertThat(hit.getSourceAsMap(), hasKey("meta"));
-            assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), not(hasKey("raw")));
+
+            assertThat(hit.getSourceAsMap(), not(hasKey("meta")));
 
             assertThat(hit.getSourceAsMap(), hasKey("external"));
             Map<String, Object> external = (Map<String, Object>) hit.getSourceAsMap().get("external");
@@ -405,8 +406,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
             assertThat(hit.getSourceAsMap(), hasKey("file"));
             assertThat((Map<String, Object>) hit.getSourceAsMap().get("file"), hasKey("extension"));
-            assertThat(hit.getSourceAsMap(), hasKey("meta"));
-            assertThat((Map<String, Object>) hit.getSourceAsMap().get("meta"), not(hasKey("raw")));
+
+            assertThat(hit.getSourceAsMap(), not(hasKey("meta")));
 
             assertThat(hit.getSourceAsMap(), not(hasKey("external")));
         });
@@ -425,7 +426,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         });
     }
 
-    private void checkDocument(String filename, HitChecker checker) throws IOException {
+    private void checkDocument(String filename, HitChecker checker) throws IOException, ElasticsearchClientException {
         ESSearchResponse response = documentService.search(new ESSearchRequest()
                 .withIndex(getCrawlerName())
                 .withESQuery(new ESTermQuery("file.filename", filename)));

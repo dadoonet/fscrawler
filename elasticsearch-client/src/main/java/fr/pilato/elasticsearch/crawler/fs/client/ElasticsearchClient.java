@@ -24,8 +24,6 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
-import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
@@ -63,8 +61,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.*;
 
 /**
  * Elasticsearch Client for Clusters running v7.
@@ -293,7 +290,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     @Override
     public void index(String index, String id, Doc doc, String pipeline) {
-        String json = DocParser.toJson(doc);
+        String json = serialize(doc);
         indexRawJson(index, id, json, pipeline);
     }
 
@@ -333,6 +330,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             logger.debug("Document {}/{} has been removed", index, id);
         } catch (NotFoundException e) {
             logger.debug("Document {}/{} does not exist. It can't be removed.", index, id);
+            throw new ElasticsearchClientException("Document " + index + "/" + id + " does not exist");
         }
     }
 
@@ -404,7 +402,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public ESSearchResponse search(ESSearchRequest request) throws IOException {
+    public ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException {
 
         String url = "";
 
@@ -451,7 +449,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             if (!bodyEmpty) {
                 body.getAndUpdate(s -> s += ",");
             }
-            body.getAndUpdate(s -> s += "\"sort\" : [" + request.getSort() + "]");
+            body.getAndUpdate(s -> s += "\"sort\" : [\"" + request.getSort() + "\"]");
             bodyEmpty = false;
         }
         if (!request.getHighlighters().isEmpty()) {
@@ -489,93 +487,70 @@ public class ElasticsearchClient implements IElasticsearchClient {
         String query = body.updateAndGet(s -> s += "}");
         logger.trace("Elasticsearch query to run: {}", query);
 
-        String response = httpPost(url, query, new AbstractMap.SimpleImmutableEntry<>("version", "true"));
-        ESSearchResponse esSearchResponse = new ESSearchResponse(response);
+        try {
 
-        // Parse
-        DocumentContext document = parseJsonAsDocumentContext(response);
-        esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
+            String response = httpPost(url, query, new AbstractMap.SimpleImmutableEntry<>("version", "true"));
+            ESSearchResponse esSearchResponse = new ESSearchResponse(response);
 
-        int numHits = document.read("$.hits.hits.length()");
-        if (numHits < size) {
-            size = numHits;
-        }
-        for (int hitNum = 0; hitNum < size; hitNum++) {
-            final ESSearchHit esSearchHit = new ESSearchHit();
-            esSearchHit.setIndex(document.read("$.hits.hits[" + hitNum + "]._index"));
-            esSearchHit.setId(document.read("$.hits.hits[" + hitNum + "]._id"));
-            esSearchHit.setVersion(Integer.toUnsignedLong(document.read("$.hits.hits[" + hitNum + "]._version")));
-            try {
-                Map<String, Object> jsonMap = document.read("$.hits.hits[" + hitNum + "]._source");
-                esSearchHit.setSource(JsonUtil.serialize(jsonMap));
-                esSearchHit.setSourceAsMap(jsonMap);
-            } catch (PathNotFoundException e) {
-                esSearchHit.setSourceAsMap(Collections.emptyMap());
+            // Parse
+            DocumentContext document = parseJsonAsDocumentContext(response);
+            esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
+
+            int numHits = document.read("$.hits.hits.length()");
+            if (numHits < size) {
+                size = numHits;
             }
-
-            // Parse the highlights if any
-            try {
-                Map<String, List<String>> highlights = document.read("$.hits.hits[" + hitNum + "].highlight");
-                highlights.forEach(esSearchHit::addHighlightField);
-            } catch (PathNotFoundException ignored) {
-                // No highlights
-            }
-
-            // Parse the fields if any
-            try {
-                Map<String, List<String>> fields = document.read("$.hits.hits[" + hitNum + "].fields");
-                esSearchHit.setStoredFields(fields);
-            } catch (PathNotFoundException ignored) {
-                // No stored fields
-            }
-            // hits.hits[].fields":{"foo.bar":["bar"]}}
-            esSearchResponse.addHit(esSearchHit);
-        }
-
-        /*
-        if (response.getHits() != null) {
-            for (SearchHit hit : response.getHits()) {
-                ESSearchHit esSearchHit = new ESSearchHit();
-                if (!hit.getFields().isEmpty()) {
-                    Map<String, ESDocumentField> esFields = new HashMap<>();
-                    for (Map.Entry<String, DocumentField> entry : hit.getFields().entrySet()) {
-                        esFields.put(entry.getKey(), new ESDocumentField(entry.getKey(), entry.getValue().getValues()));
-                    }
-                    esSearchHit.setFields(esFields);
+            for (int hitNum = 0; hitNum < size; hitNum++) {
+                final ESSearchHit esSearchHit = new ESSearchHit();
+                esSearchHit.setIndex(document.read("$.hits.hits[" + hitNum + "]._index"));
+                esSearchHit.setId(document.read("$.hits.hits[" + hitNum + "]._id"));
+                esSearchHit.setVersion(Integer.toUnsignedLong(document.read("$.hits.hits[" + hitNum + "]._version")));
+                try {
+                    esSearchHit.setSource(extractJsonFromPath(document, "$.hits.hits[" + hitNum + "]._source"));
+                    esSearchHit.setSourceAsMap(document.read("$.hits.hits[" + hitNum + "]._source"));
+                } catch (PathNotFoundException e) {
+                    esSearchHit.setSourceAsMap(Collections.emptyMap());
                 }
-                esSearchHit.setIndex(hit.getIndex());
-                esSearchHit.setId(hit.getId());
-                esSearchHit.setSourceAsMap(hit.getSourceAsMap());
-                esSearchHit.setSourceAsString(hit.getSourceAsString());
 
-                hit.getHighlightFields().forEach((key, value) -> {
-                    String[] texts = new String[value.fragments().length];
-                    for (int i = 0; i < value.fragments().length; i++) {
-                        Text fragment = value.fragments()[i];
-                        texts[i] = fragment.string();
-                    }
-                    esSearchHit.addHighlightField(key, new ESHighlightField(key, texts));
-                });
+                // Parse the highlights if any
+                try {
+                    Map<String, List<String>> highlights = document.read("$.hits.hits[" + hitNum + "].highlight");
+                    highlights.forEach(esSearchHit::addHighlightField);
+                } catch (PathNotFoundException ignored) {
+                    // No highlights
+                }
 
+                // Parse the fields if any
+                try {
+                    Map<String, List<String>> fields = document.read("$.hits.hits[" + hitNum + "].fields");
+                    esSearchHit.setStoredFields(fields);
+                } catch (PathNotFoundException ignored) {
+                    // No stored fields
+                }
+                // hits.hits[].fields":{"foo.bar":["bar"]}}
                 esSearchResponse.addHit(esSearchHit);
             }
 
-            esSearchResponse.setTotalHits(response.getHits().getTotalHits().value);
-
-            if (response.getAggregations() != null) {
-                for (String name : response.getAggregations().asMap().keySet()) {
-                    Terms termsAgg = response.getAggregations().get(name);
-                    ESTermsAggregation aggregation = new ESTermsAggregation(name, null);
-                    for (Terms.Bucket bucket : termsAgg.getBuckets()) {
-                        aggregation.addBucket(new ESTermsAggregation.ESTermsBucket(bucket.getKeyAsString(), bucket.getDocCount()));
+            /*
+            if (response.getHits() != null) {
+                if (response.getAggregations() != null) {
+                    for (String name : response.getAggregations().asMap().keySet()) {
+                        Terms termsAgg = response.getAggregations().get(name);
+                        ESTermsAggregation aggregation = new ESTermsAggregation(name, null);
+                        for (Terms.Bucket bucket : termsAgg.getBuckets()) {
+                            aggregation.addBucket(new ESTermsAggregation.ESTermsBucket(bucket.getKeyAsString(), bucket.getDocCount()));
+                        }
+                        esSearchResponse.addAggregation(name, aggregation);
                     }
-                    esSearchResponse.addAggregation(name, aggregation);
                 }
             }
-        }
-         */
+             */
 
-        return esSearchResponse;
+            return esSearchResponse;
+        } catch (NotFoundException e) {
+            logger.debug("index {} does not exist.", request.getIndex());
+            throw new ElasticsearchClientException("index " + request.getIndex() + " does not exist.");
+        }
     }
 
     private String toElasticsearchQuery(ESQuery query) {
@@ -654,13 +629,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public ESSearchHit get(String index, String id) throws IOException {
         logger.debug("get document [{}/{}]", index, id);
         String response = httpGet(index + "/" + INDEX_TYPE_DOC + "/" + id);
-        Object document = parseJson(response);
 
+        // Parse the response
+        DocumentContext document = parseJsonAsDocumentContext(response);
         ESSearchHit hit = new ESSearchHit();
-        hit.setIndex(JsonPath.read(document, "$._index"));
-        hit.setId(JsonPath.read(document, "$._id"));
-        hit.setVersion(JsonPath.read(document, "$._version"));
-        hit.setSourceAsMap(JsonPath.read(document, "$._source"));
+        hit.setIndex(document.read("$._index"));
+        hit.setId(document.read("$._id"));
+        hit.setVersion(document.read("$._version"));
+        hit.setSource(extractJsonFromPath(document, "$._source"));
+        hit.setSourceAsMap(document.read("$._source"));
         return hit;
     }
 
@@ -668,8 +645,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public boolean exists(String index, String id) throws IOException {
         logger.debug("get document [{}/{}]", index, id);
         String response = httpHead(index + "/" + INDEX_TYPE_DOC + "/" + id);
-        Object document = parseJson(response);
-        return JsonPath.read(document, "$.exists");
+        // Parse the response
+        DocumentContext document = parseJsonAsDocumentContext(response);
+        return document.read("$.exists");
     }
 
     @Override

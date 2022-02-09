@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
@@ -59,6 +58,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
 
 public abstract class FsParserAbstract extends FsParser {
     private static final Logger logger = LogManager.getLogger(FsParserAbstract.class);
@@ -430,7 +430,7 @@ public abstract class FsParserAbstract extends FsParser {
             // If needed, we generate the content in addition to metadata
             if (fsSettings.getFs().isJsonSupport()) {
                 // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                doc.setObject(DocParser.asMap(read(inputStream)));
+                doc.setObject(asMap(inputStream));
             } else if (fsSettings.getFs().isXmlSupport()) {
                 // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
                 doc.setObject(XmlDocParser.generateMap(inputStream));

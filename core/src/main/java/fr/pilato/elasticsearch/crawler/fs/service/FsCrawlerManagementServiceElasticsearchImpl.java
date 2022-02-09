@@ -21,13 +21,12 @@ package fr.pilato.elasticsearch.crawler.fs.service;
 
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
-import fr.pilato.elasticsearch.crawler.fs.beans.FolderParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
@@ -37,6 +36,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 
 public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerManagementService {
 
@@ -134,7 +135,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
 
     @Override
     public void storeVisitedDirectory(String indexFolder, String id, Folder folder) {
-        client.indexRawJson(indexFolder, id, FolderParser.toJson(folder), null);
+        client.indexRawJson(indexFolder, id, serialize(folder), null);
     }
 
     @Override

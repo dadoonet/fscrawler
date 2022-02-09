@@ -27,6 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -108,22 +109,22 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
      * Test case for https://github.com/dadoonet/fscrawler/issues/163
      */
     @Test
-    public void testXmlIssue163() throws IOException {
+    public void testXmlIssue163() throws IOException, ElasticsearchClientException {
         runSearch("issue-163.xml");
     }
 
     @Test
-    public void testJson() throws IOException {
+    public void testJson() throws IOException, ElasticsearchClientException {
         runSearch("test.json", "json");
     }
 
     @Test
-    public void testExtractFromDoc() throws IOException {
+    public void testExtractFromDoc() throws IOException, ElasticsearchClientException {
         runSearch("test.doc", "sample");
     }
 
     @Test
-    public void testExtractFromDocx() throws IOException {
+    public void testExtractFromDocx() throws IOException, ElasticsearchClientException {
         ESSearchResponse response = runSearch("test.docx", "sample");
         for (ESSearchHit hit : response.getHits()) {
             Object document = parseJson(hit.getSource());
@@ -142,37 +143,37 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void testExtractFromHtml() throws IOException {
+    public void testExtractFromHtml() throws IOException, ElasticsearchClientException {
         runSearch("test.html", "sample");
     }
 
     @Test
-    public void testExtractFromMp3() throws IOException {
+    public void testExtractFromMp3() throws IOException, ElasticsearchClientException {
         runSearch("test.mp3", "tika");
     }
 
     @Test
-    public void testExtractFromOdt() throws IOException {
+    public void testExtractFromOdt() throws IOException, ElasticsearchClientException {
         runSearch("test.odt", "sample");
     }
 
     @Test
-    public void testExtractFromPdf() throws IOException {
+    public void testExtractFromPdf() throws IOException, ElasticsearchClientException {
         runSearch("test.pdf", "sample");
     }
 
     @Test
-    public void testExtractFromRtf() throws IOException {
+    public void testExtractFromRtf() throws IOException, ElasticsearchClientException {
         runSearch("test.rtf", "sample");
     }
 
     @Test
-    public void testExtractFromTxt() throws IOException {
+    public void testExtractFromTxt() throws IOException, ElasticsearchClientException {
         runSearch("test.txt", "contains");
     }
 
     @Test
-    public void testExtractFromWav() throws IOException {
+    public void testExtractFromWav() throws IOException, ElasticsearchClientException {
         runSearch("test.wav");
     }
 
@@ -180,7 +181,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
      * Test case for https://github.com/dadoonet/fscrawler/issues/229
      */
     @Test
-    public void testProtectedDocument229() throws IOException {
+    public void testProtectedDocument229() throws IOException, ElasticsearchClientException {
         runSearch("test-protected.docx");
     }
 
@@ -188,13 +189,13 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
      * Test case for https://github.com/dadoonet/fscrawler/issues/221
      */
     @Test
-    public void testProtectedDocument221() throws IOException {
+    public void testProtectedDocument221() throws IOException, ElasticsearchClientException {
         runSearch("issue-221-doc1.pdf", "coucou");
         runSearch("issue-221-doc2.pdf", "FORMATIONS");
     }
 
     @Test
-    public void testLanguageDetection() throws IOException {
+    public void testLanguageDetection() throws IOException, ElasticsearchClientException {
         ESSearchResponse response = runSearch("test-fr.txt", "fichier");
         for (ESSearchHit hit : response.getHits()) {
             assertThat(JsonPath.read(hit.getSource(), "$.meta.language"), is("fr"));
@@ -210,32 +211,32 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void testChineseContent369() throws IOException {
+    public void testChineseContent369() throws IOException, ElasticsearchClientException {
         runSearch("issue-369.txt", "今天天气晴好");
     }
 
     @Test
-    public void testOcr() throws IOException {
+    public void testOcr() throws IOException, ElasticsearchClientException {
         assumeTrue("Tesseract is not installed so we are skipping this test", ExternalParser.check("tesseract"));
         runSearch("test-ocr.png", "words");
         runSearch("test-ocr.pdf", "words");
     }
 
     @Test
-    public void testShiftJisEncoding() throws IOException {
+    public void testShiftJisEncoding() throws IOException, ElasticsearchClientException {
         runSearch("issue-400-shiftjis.txt", "elasticsearch");
     }
 
     @Test
-    public void testNonUtf8Filename418() throws IOException {
+    public void testNonUtf8Filename418() throws IOException, ElasticsearchClientException {
         runSearch("issue-418-中文名称.txt");
     }
 
-    private ESSearchResponse runSearch(String filename) throws IOException {
+    private ESSearchResponse runSearch(String filename) throws IOException, ElasticsearchClientException {
         return runSearch(filename, null);
     }
 
-    private ESSearchResponse runSearch(String filename, String content) throws IOException {
+    private ESSearchResponse runSearch(String filename, String content) throws IOException, ElasticsearchClientException {
         logger.info(" -> Testing if file [{}] has been indexed correctly{}.", filename,
                 content == null ? "" : " and contains [" + content + "]");
         ESBoolQuery query = new ESBoolQuery().addMust(new ESTermQuery("file.filename", filename));

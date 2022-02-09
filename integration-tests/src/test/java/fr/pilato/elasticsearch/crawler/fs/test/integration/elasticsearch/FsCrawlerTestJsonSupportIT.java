@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
@@ -52,7 +53,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                         .withIndex(getCrawlerName())
                         .withESQuery(new ESMatchQuery("text", "tweet")));
                 return response.getTotalHits() == 2;
-            } catch (IOException e) {
+            } catch (IOException | ElasticsearchClientException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }
@@ -75,7 +76,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                         .withIndex(getCrawlerName())
                         .withESQuery(new ESMatchQuery("text", "tweet")));
                 return response.getTotalHits() == 0;
-            } catch (IOException e) {
+            } catch (IOException | ElasticsearchClientException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }
@@ -87,7 +88,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                         .withIndex(getCrawlerName())
                         .withESQuery(new ESMatchQuery("content", "tweet")));
                 return response.getTotalHits() == 2;
-            } catch (IOException e) {
+            } catch (IOException | ElasticsearchClientException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }
@@ -111,7 +112,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                         .withIndex(getCrawlerName())
                         .withESQuery(new ESMatchQuery("object.text", "tweet")));
                 return response.getTotalHits() == 2;
-            } catch (IOException e) {
+            } catch (IOException | ElasticsearchClientException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }
@@ -132,7 +133,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
             try {
                 ESSearchResponse response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName()));
                 return response.getTotalHits() == 2;
-            } catch (IOException e) {
+            } catch (IOException | ElasticsearchClientException e) {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }

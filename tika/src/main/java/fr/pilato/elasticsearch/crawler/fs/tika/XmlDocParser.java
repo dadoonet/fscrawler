@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
 
 /**
  * Parse a XML document and generate a FSCrawler Doc

@@ -151,7 +151,7 @@ public interface IElasticsearchClient extends Closeable {
      * @return A search response object
      * @throws IOException In case of error
      */
-    ESSearchResponse search(ESSearchRequest request) throws IOException;
+    ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException;
 
     /**
      * Remove an index

@@ -77,7 +77,7 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @param request   The request
      * @return a response from the document service
      */
-    ESSearchResponse search(ESSearchRequest request) throws IOException;
+    ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException;
 
     /**
      * Remove a document from the target service

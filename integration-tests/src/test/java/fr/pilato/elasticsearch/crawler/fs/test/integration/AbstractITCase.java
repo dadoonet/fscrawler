@@ -350,8 +350,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 // Make sure we refresh indexed docs before counting
                 refresh();
                 response[0] = documentService.search(request);
-            } catch (RuntimeException | IOException | ElasticsearchClientException e) {
+            } catch (RuntimeException | IOException e) {
                 staticLogger.warn("error caught", e);
+                return -1;
+            } catch (ElasticsearchClientException e) {
+                // TODO create a NOT FOUND Exception instead
+                staticLogger.debug("error caught", e);
                 return -1;
             }
             totalHits = response[0].getTotalHits();
