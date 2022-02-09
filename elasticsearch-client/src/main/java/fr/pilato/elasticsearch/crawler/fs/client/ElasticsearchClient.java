@@ -531,20 +531,22 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 esSearchResponse.addHit(esSearchHit);
             }
 
-            /*
-            if (response.getHits() != null) {
-                if (response.getAggregations() != null) {
-                    for (String name : response.getAggregations().asMap().keySet()) {
-                        Terms termsAgg = response.getAggregations().get(name);
-                        ESTermsAggregation aggregation = new ESTermsAggregation(name, null);
-                        for (Terms.Bucket bucket : termsAgg.getBuckets()) {
-                            aggregation.addBucket(new ESTermsAggregation.ESTermsBucket(bucket.getKeyAsString(), bucket.getDocCount()));
-                        }
-                        esSearchResponse.addAggregation(name, aggregation);
-                    }
-                }
+            // Aggregations
+            try {
+                Map<String, Object> aggs = document.read("$.aggregations");
+                aggs.forEach((aggName, v) -> {
+                    ESTermsAggregation aggregation = new ESTermsAggregation(aggName, null);
+                    List<Map<String, Object>> buckets = document.read("$.aggregations." + aggName + ".buckets");
+                    buckets.forEach((map) -> {
+                        String key = (String) map.get("key");
+                        long docCount = Integer.toUnsignedLong((Integer) map.get("doc_count"));
+                        aggregation.addBucket(new ESTermsAggregation.ESTermsBucket(key, docCount));
+                    });
+                    esSearchResponse.addAggregation(aggName, aggregation);
+                });
+            } catch (PathNotFoundException ignored) {
+                // No aggregation
             }
-             */
 
             return esSearchResponse;
         } catch (NotFoundException e) {
@@ -635,7 +637,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         ESSearchHit hit = new ESSearchHit();
         hit.setIndex(document.read("$._index"));
         hit.setId(document.read("$._id"));
-        hit.setVersion(document.read("$._version"));
+        hit.setVersion(Integer.toUnsignedLong(document.read("$._version")));
         hit.setSource(extractJsonFromPath(document, "$._source"));
         hit.setSourceAsMap(document.read("$._source"));
         return hit;

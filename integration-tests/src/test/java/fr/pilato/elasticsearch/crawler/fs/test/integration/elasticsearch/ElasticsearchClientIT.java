@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
@@ -137,7 +138,12 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 "        \"properties\": {\n" +
                 "          \"bar\": {\n" +
                 "            \"type\": \"text\",\n" +
-                "            \"store\": true\n" +
+                "            \"store\": true,\n" +
+                "            \"fields\": {\n" +
+                "              \"raw\": { \n" +
+                "                \"type\":  \"keyword\"\n" +
+                "              }\n" +
+                "            }\n" +
                 "          }\n" +
                 "        }\n" +
                 "      }\n" +
@@ -308,6 +314,32 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 assertThat(hit.getStoredFields(), hasKey(is("foo.bar")));
                 assertThat(hit.getStoredFields(), hasEntry(is("foo.bar"), hasItem(isOneOf("bar", "baz"))));
             }
+        }
+
+        // Aggregation
+        {
+            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                    .withAggregation(new ESTermsAggregation("foobar1", "foo.bar.raw"))
+                    .withAggregation(new ESTermsAggregation("foobar2", "foo.bar.raw"))
+                    .withSize(0)
+            );
+            assertThat(response.getTotalHits(), is(4L));
+            assertThat(response.getAggregations(), notNullValue());
+            assertThat(response.getAggregations().size(), is(2));
+            assertThat(response.getAggregations(), hasKey("foobar1"));
+            assertThat(response.getAggregations().get("foobar1").getName(), is("foobar1"));
+            assertThat(response.getAggregations().get("foobar1").getBuckets(), hasSize(2));
+            assertThat(response.getAggregations().get("foobar1").getBuckets(), hasItems(
+                    new ESTermsAggregation.ESTermsBucket("bar", 1),
+                    new ESTermsAggregation.ESTermsBucket("baz", 1)
+            ));
+            assertThat(response.getAggregations(), hasKey("foobar2"));
+            assertThat(response.getAggregations().get("foobar2").getName(), is("foobar2"));
+            assertThat(response.getAggregations().get("foobar2").getBuckets(), hasSize(2));
+            assertThat(response.getAggregations().get("foobar2").getBuckets(), hasItems(
+                    new ESTermsAggregation.ESTermsBucket("bar", 1),
+                    new ESTermsAggregation.ESTermsBucket("baz", 1)
+            ));
         }
     }
 

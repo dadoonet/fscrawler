@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ESTermsAggregation {
     private final String name;
@@ -63,6 +64,19 @@ public class ESTermsAggregation {
 
         public long getDocCount() {
             return docCount;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ESTermsBucket that = (ESTermsBucket) o;
+            return docCount == that.docCount && key.equals(that.key);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(key, docCount);
         }
     }
 }
