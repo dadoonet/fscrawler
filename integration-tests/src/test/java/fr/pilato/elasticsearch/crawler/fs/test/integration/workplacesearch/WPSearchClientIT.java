@@ -45,7 +45,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testGetSourceById() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String id = client.createCustomSource(sourceName);
+            String id = client.createCustomSource(sourceName, null);
 
             // This is what we want to test actually
             String source = client.getCustomSourceById(id);
@@ -57,7 +57,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testGetSourceByName() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String id = client.createCustomSource(sourceName);
+            String id = client.createCustomSource(sourceName, null);
 
             // This is what we want to test actually
             List<String> sourceIds = client.getCustomSourcesByName(sourceName);
@@ -70,8 +70,8 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testWithSomeFakeDocuments() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We configure the custom source.
-            String customSourceId = client.createCustomSource(sourceName);
-            client.configureCustomSource(customSourceId, sourceName);
+            String customSourceId = client.createCustomSource(sourceName, null);
+            client.configureCustomSource(customSourceId, sourceName, client.getVersion());
 
             // Index some documents
             client.indexDocument(fakeDocumentAsMap(RandomizedTest.randomAsciiLettersOfLength(10), "Foo", "EN", "foo", "Foo"));
@@ -112,8 +112,8 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testGetDocument() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We configure the custom source.
-            String customSourceId = client.createCustomSource(sourceName);
-            client.configureCustomSource(customSourceId, sourceName);
+            String customSourceId = client.createCustomSource(sourceName, null);
+            client.configureCustomSource(customSourceId, sourceName, client.getVersion());
 
             String id = RandomizedTest.randomAsciiLettersOfLength(10);
 
@@ -136,8 +136,8 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testSearch() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String customSourceId = client.createCustomSource(sourceName);
-            client.configureCustomSource(customSourceId, sourceName);
+            String customSourceId = client.createCustomSource(sourceName, null);
+            client.configureCustomSource(customSourceId, sourceName, client.getVersion());
 
             String uniqueId1 = RandomizedTest.randomAsciiLettersOfLength(10);
             {
@@ -210,8 +210,8 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testSendAndRemoveADocument() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String customSourceId = client.createCustomSource(sourceName);
-            client.configureCustomSource(customSourceId, sourceName);
+            String customSourceId = client.createCustomSource(sourceName, null);
+            client.configureCustomSource(customSourceId, sourceName, client.getVersion());
 
             Map<String, Object> document = new HashMap<>();
             document.put("id", "testSendAndRemoveADocument");

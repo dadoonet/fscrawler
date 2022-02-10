@@ -44,6 +44,7 @@ public class WorkplaceSearchClient implements IWorkplaceSearchClient {
     private final FsSettings settings;
 
     private WPSearchClient wpSearchClient = null;
+    private String version;
 
     public WorkplaceSearchClient(Path config, FsSettings settings) {
         this.config = config;
@@ -62,6 +63,9 @@ public class WorkplaceSearchClient implements IWorkplaceSearchClient {
             .withFlushInterval(settings.getWorkplaceSearch().getFlushInterval());
         wpSearchClient.start();
 
+        version = wpSearchClient.getVersion();
+        logger.info("Workplace Client connected to a node running version {}", version);
+
         // If the source name is provided, let's use it
         String sourceName = settings.getWorkplaceSearch().getName();
         if (sourceName == null) {
@@ -69,9 +73,7 @@ public class WorkplaceSearchClient implements IWorkplaceSearchClient {
             sourceName = generateDefaultCustomSourceName(settings.getName());
         }
 
-        wpSearchClient.configureCustomSource(settings.getWorkplaceSearch().getId(), sourceName);
-
-        logger.debug("Workplace Search V7 client started");
+        wpSearchClient.configureCustomSource(settings.getWorkplaceSearch().getId(), sourceName, version);
     }
 
     @Override

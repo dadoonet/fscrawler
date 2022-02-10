@@ -32,14 +32,6 @@ import java.io.IOException;
 public interface IElasticsearchClient extends Closeable {
 
     /**
-     * The Major digit of the compatible version the client has been designed for.
-     * For example, a compatible version 6 should work on every 6.x.y cluster but
-     * won't work with a cluster 5.x.y or 7.x.y.
-     * @return The major digit of the compatible elasticsearch version
-     */
-    String compatibleVersion();
-
-    /**
      * Start the client and its internal resources. This must be called before any operation can be performed.
      * @throws IOException in case of communication error with the cluster
      */

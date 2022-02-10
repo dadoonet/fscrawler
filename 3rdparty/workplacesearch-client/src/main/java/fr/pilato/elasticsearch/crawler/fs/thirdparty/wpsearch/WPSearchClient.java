@@ -47,7 +47,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
@@ -60,15 +59,6 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 public class WPSearchClient implements Closeable {
 
     private static final Logger logger = LogManager.getLogger(WPSearchClient.class);
-
-    private final static String WORKPLACESEARCH_PROPERTIES = "workplacesearch.properties";
-    private static final Properties properties;
-    private final static String CLIENT_VERSION;
-
-    static {
-        properties = readPropertiesFromClassLoader(WORKPLACESEARCH_PROPERTIES);
-        CLIENT_VERSION = properties.getProperty("workplacesearch.version");
-    }
 
     private final static String DEFAULT_ENDPOINT = "/api/ws/v1/";
     private final static String DEFAULT_HOST = "http://127.0.0.1:3002";
@@ -213,11 +203,12 @@ public class WPSearchClient implements Closeable {
 
     /**
      * Configure the custom source for this client
-     * @param id    custom source id
-     * @param name  custom source name
+     * @param id        custom source id
+     * @param name      custom source name
+     * @param version   workplace search server version
      * @throws IOException in case of communication error
      */
-    public void configureCustomSource(final String id, final String name) throws IOException {
+    public void configureCustomSource(final String id, final String name, String version) throws IOException {
         checkStarted();
         // Let's check that the source exists
         if (id != null) {
@@ -233,7 +224,7 @@ public class WPSearchClient implements Closeable {
             List<String> customSourceIds = getCustomSourcesByName(name);
             if (customSourceIds.isEmpty()) {
                 // Let's create a new source
-                sourceId = createCustomSource(name);
+                sourceId = createCustomSource(name, version);
                 logger.debug("Custom source [{}] created with id [{}].", name, sourceId);
             } else {
                 sourceId = customSourceIds.get(0);
@@ -381,14 +372,15 @@ public class WPSearchClient implements Closeable {
     /**
      * Create a custom source by using the built-in template
      * @param sourceName the source name to build
+     * @param version version of the workplace search server
      * @return the id of the source
      * @throws IOException in case something goes wrong
      */
-    public String createCustomSource(String sourceName) throws IOException {
+    public String createCustomSource(String sourceName, String version) throws IOException {
         checkStarted();
 
         // If needed, we create the new settings for this files index
-        String worplaceSearchVersion = FsCrawlerUtil.extractMajorVersion(CLIENT_VERSION);
+        String worplaceSearchVersion = FsCrawlerUtil.extractMajorVersion(version);
         String json = readJsonFile(jobMappingDir, rootDir, worplaceSearchVersion, INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
 
         // We need to replace the place holder values
@@ -416,6 +408,15 @@ public class WPSearchClient implements Closeable {
         // Delete the source
         String response = delete("sources/" + id, null, String.class);
         logger.debug("removeCustomSource({}): {}", id, response);
+    }
+
+    /**
+     * Get the version number of the server if running. Fail otherwise.
+     * @return  the version number
+     */
+    public String getVersion() {
+        throw new jakarta.ws.rs.ServiceUnavailableException("The service is not running... Check the service.");
+//        return null;
     }
 
     public void flush() {

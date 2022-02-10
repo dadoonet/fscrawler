@@ -32,14 +32,13 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
+import jakarta.ws.rs.ServiceUnavailableException;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -56,7 +55,6 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assume.assumeNoException;
-import static org.junit.Assume.assumeThat;
 
 public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
 
@@ -69,23 +67,10 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     protected String sourceId;
 
     @BeforeClass
-    public static void checkWorkplaceSearchCompatible() {
-        // We must check that we can run the tests.
-        // For example, with a 6.x cluster, this is not possible as Workplace Search engine does not exist
-        // and thus is not started.
-        String version = managementService.getClient().compatibleVersion();
-        assumeThat("We can not run workplace search tests on a version different than 7",
-                version, equalTo("7"));
-
-        try {
-            HttpURLConnection urlConnection = (HttpURLConnection) new URL(testWorkplaceUrl).openConnection();
-            urlConnection.getResponseCode();
-
-            // Test the license
-            String response = managementService.getClient().performLowLevelRequest("GET", "/_license", null);
-            assumeThat("We can not run the Workplace Search tests without at least a trial version.",
-                    JsonPath.read(response, "$.license.type"), isOneOf("platinum", "enterprise", "trial"));
-        } catch (IOException e) {
+    public static void checkWorkplaceSearchIsRunning() {
+        try (WPSearchClient wpClient = createClient()) {
+            wpClient.getVersion();
+        } catch (ServiceUnavailableException e) {
             assumeNoException("We can not run the Workplace Search tests against this cluster. " +
                     "Check that you have workplace search running at " + testWorkplaceUrl, e);
         }
@@ -205,6 +190,8 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
                 .withUsername(null, testWorkplaceUser)
                 .withPassword(null, testWorkplacePass);
         client.start();
+        String version = client.getVersion();
+        staticLogger.info("  --> connected to workplace search service running a {} version", version);
         return client;
     }
 
@@ -232,7 +219,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         try (WPSearchClient client = createClient()) {
             cleanExistingCustomSources(sourceName);
             // Let's create a new source
-            String customSourceId = client.createCustomSource(sourceName);
+            String customSourceId = client.createCustomSource(sourceName, null);
             assertThat(customSourceId, not(isEmptyOrNullString()));
 
             staticLogger.debug("  --> we will be using custom source {}.", customSourceId);

@@ -96,11 +96,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public String compatibleVersion() {
-        return "7";
-    }
-
-    @Override
     public void start() throws IOException {
         if (client != null) {
             // The client has already been initialized. Let's skip this again
