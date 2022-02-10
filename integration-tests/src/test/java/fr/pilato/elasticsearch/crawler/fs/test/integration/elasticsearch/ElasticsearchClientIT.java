@@ -528,4 +528,12 @@ public class ElasticsearchClientIT extends AbstractITCase {
         response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
         assertThat(response.getTotalHits(), is(3L));
     }
+
+    @Test
+    public void testExists() throws IOException, ElasticsearchClientException {
+        esClient.indexSingle(getCrawlerName(), "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
+        esClient.refresh(getCrawlerName());
+        assertThat(esClient.exists(getCrawlerName(), "1"), is(true));
+        assertThat(esClient.exists(getCrawlerName(), "999"), is(false));
+    }
 }

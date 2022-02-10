@@ -646,10 +646,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public boolean exists(String index, String id) throws IOException {
         logger.debug("get document [{}/{}]", index, id);
-        String response = httpHead(index + "/" + INDEX_TYPE_DOC + "/" + id);
-        // Parse the response
-        DocumentContext document = parseJsonAsDocumentContext(response);
-        return document.read("$.exists");
+        try {
+            httpHead(index + "/" + INDEX_TYPE_DOC + "/" + id);
+            logger.debug("document [{}/{}] exists", index, id);
+            return true;
+        } catch (NotFoundException e) {
+            logger.debug("document [{}/{}] does not exist", index, id);
+            return false;
+        }
     }
 
     @Override
@@ -672,8 +676,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    String httpHead(String path) {
-        return httpCall("HEAD", path, null);
+    void httpHead(String path) {
+        httpCall("HEAD", path, null);
     }
 
     String httpGet(String path, Map.Entry<String, Object>... params) {
