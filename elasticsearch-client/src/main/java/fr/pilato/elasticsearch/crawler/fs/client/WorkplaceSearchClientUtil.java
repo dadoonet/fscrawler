@@ -108,7 +108,7 @@ public abstract class WorkplaceSearchClientUtil {
      * @return The Client class
      */
     private static Class<WorkplaceSearchClient> findClass(int version) throws ClassNotFoundException {
-        String className = "fr.pilato.elasticsearch.crawler.fs.client.v" + version + ".WorkplaceSearchClientV" + version;
+        String className = "fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientV" + version;
         logger.trace("Trying to find a class named [{}]", className);
         Class<?> aClass = Class.forName(className);
         boolean isImplementingInterface = WorkplaceSearchClient.class.isAssignableFrom(aClass);
