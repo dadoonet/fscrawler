@@ -221,7 +221,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         try (WPSearchClient client = createClient()) {
             cleanExistingCustomSources(sourceName);
             // Let's create a new source
-            String customSourceId = client.createCustomSource(sourceName, null);
+            String customSourceId = client.createCustomSource(sourceName);
             assertThat(customSourceId, not(isEmptyOrNullString()));
 
             staticLogger.debug("  --> we will be using custom source {}.", customSourceId);

@@ -115,6 +115,12 @@ public class FsCrawlerValidator {
             settings.setRest(Rest.DEFAULT);
         }
 
+        if (settings.getWorkplaceSearch() != null && settings.getFs().isRemoveDeleted()) {
+            logger.warn("Workplace Search integration does not support removing existing documents. " +
+                    "but fs.remove_deleted is set to true. We are forcing it to false.");
+            settings.getFs().setRemoveDeleted(false);
+        }
+
         return false;
     }
 }

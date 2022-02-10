@@ -85,6 +85,7 @@ public class WPSearchClient implements Closeable {
     private String sourceId;
     private final Path rootDir;
     private final Path jobMappingDir;
+    private String version;
 
     /**
      * Create a client
@@ -191,7 +192,7 @@ public class WPSearchClient implements Closeable {
 
         // We check that the service is available
         try {
-            String version = getVersion();
+            version = getVersion();
             logger.info("Wokplace Search Client connected to a service running version {}", version);
         } catch (Exception e) {
             logger.warn("failed to create workplace search client on {}, disabling crawler...", host);
@@ -205,10 +206,9 @@ public class WPSearchClient implements Closeable {
      * Configure the custom source for this client
      * @param id        custom source id
      * @param name      custom source name
-     * @param version   workplace search server version
      * @throws IOException in case of communication error
      */
-    public void configureCustomSource(final String id, final String name, String version) throws IOException {
+    public void configureCustomSource(final String id, final String name) throws IOException {
         checkStarted();
         // Let's check that the source exists
         if (id != null) {
@@ -224,7 +224,7 @@ public class WPSearchClient implements Closeable {
             List<String> customSourceIds = getCustomSourcesByName(name);
             if (customSourceIds.isEmpty()) {
                 // Let's create a new source
-                sourceId = createCustomSource(name, version);
+                sourceId = createCustomSource(name);
                 logger.debug("Custom source [{}] created with id [{}].", name, sourceId);
             } else {
                 sourceId = customSourceIds.get(0);
@@ -372,11 +372,10 @@ public class WPSearchClient implements Closeable {
     /**
      * Create a custom source by using the built-in template
      * @param sourceName the source name to build
-     * @param version version of the workplace search server
      * @return the id of the source
      * @throws IOException in case something goes wrong
      */
-    public String createCustomSource(String sourceName, String version) throws IOException {
+    public String createCustomSource(String sourceName) throws IOException {
         checkStarted();
 
         // If needed, we create the new settings for this files index

@@ -75,7 +75,7 @@ public class WorkplaceSearchClient implements IWorkplaceSearchClient {
                 sourceName = generateDefaultCustomSourceName(settings.getName());
             }
 
-            wpSearchClient.configureCustomSource(settings.getWorkplaceSearch().getId(), sourceName, version);
+            wpSearchClient.configureCustomSource(settings.getWorkplaceSearch().getId(), sourceName);
         } catch (ServiceUnavailableException e) {
             logger.fatal("Can not connect to Workplace Search service. " +
                     "Check that you have workplace search running at {}: {}",
