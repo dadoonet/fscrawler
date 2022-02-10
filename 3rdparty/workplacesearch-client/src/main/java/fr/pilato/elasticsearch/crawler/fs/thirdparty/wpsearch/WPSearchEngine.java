@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient.DEFAULT_WS_ENDPOINT;
+
 public class WPSearchEngine implements Engine<WPSearchOperation, WPSearchBulkRequest, WPSearchBulkResponse> {
     private static final Logger logger = LogManager.getLogger(WPSearchEngine.class);
     private final WPSearchClient wpSearchClient;
@@ -55,7 +57,7 @@ public class WPSearchEngine implements Engine<WPSearchOperation, WPSearchBulkReq
 
                 logger.debug("Sending a bulk request of [{}] documents to the Workplace Search service [{}]",
                         operationsBySource.get(sourceId).size(), wpSearchClient.toString());
-                String response = wpSearchClient.post(urlForBulkCreate, operationsBySource.get(sourceId), String.class);
+                String response = wpSearchClient.post(DEFAULT_WS_ENDPOINT, urlForBulkCreate, operationsBySource.get(sourceId), String.class);
                 responses.put(sourceId, response);
             } catch (Exception e) {
                 logger.error(e);

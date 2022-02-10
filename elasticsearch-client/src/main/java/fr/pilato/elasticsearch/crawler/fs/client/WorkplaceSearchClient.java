@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
+import jakarta.ws.rs.ServiceUnavailableException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -63,17 +64,26 @@ public class WorkplaceSearchClient implements IWorkplaceSearchClient {
             .withFlushInterval(settings.getWorkplaceSearch().getFlushInterval());
         wpSearchClient.start();
 
-        version = wpSearchClient.getVersion();
-        logger.info("Workplace Client connected to a node running version {}", version);
+        try {
+            version = wpSearchClient.getVersion();
+            logger.info("Workplace Client connected to a node running version {}", version);
 
-        // If the source name is provided, let's use it
-        String sourceName = settings.getWorkplaceSearch().getName();
-        if (sourceName == null) {
-            // If not, we will use a default one
-            sourceName = generateDefaultCustomSourceName(settings.getName());
+            // If the source name is provided, let's use it
+            String sourceName = settings.getWorkplaceSearch().getName();
+            if (sourceName == null) {
+                // If not, we will use a default one
+                sourceName = generateDefaultCustomSourceName(settings.getName());
+            }
+
+            wpSearchClient.configureCustomSource(settings.getWorkplaceSearch().getId(), sourceName, version);
+        } catch (ServiceUnavailableException e) {
+            logger.fatal("Can not connect to Workplace Search service. " +
+                    "Check that you have workplace search running at {}: {}",
+                    settings.getWorkplaceSearch().getServer().decodedUrl(),
+                    e.getMessage());
+            logger.debug("Full trace", e);
+            throw new IOException("Can not connect to Workplace Search service.");
         }
-
-        wpSearchClient.configureCustomSource(settings.getWorkplaceSearch().getId(), sourceName, version);
     }
 
     @Override

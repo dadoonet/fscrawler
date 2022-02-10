@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.IWorkplaceSearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import jakarta.ws.rs.ServiceUnavailableException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -60,7 +61,11 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
 
     @Override
     public void start() throws IOException {
-        client.start();
+        try {
+            client.start();
+        } catch (ServiceUnavailableException e) {
+            logger.fatal("Can not start the Workplace Search client.");
+        }
         logger.debug("Workplace Search Document Service started");
     }
 

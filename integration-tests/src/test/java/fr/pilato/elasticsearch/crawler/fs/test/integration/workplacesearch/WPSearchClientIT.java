@@ -22,19 +22,26 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
+import jakarta.ws.rs.ProcessingException;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
+import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.fail;
 
 /**
  * Test Workplace Search HTTP client
@@ -42,10 +49,35 @@ import static org.hamcrest.Matchers.*;
 public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
 
     @Test
+    public void testGetVersion() {
+        try (WPSearchClient client = createClient()) {
+            String version = client.getVersion();
+            logger.info("Current workplace search version: [{}]", version);
+
+            // If we did not use an external URL but the docker instance we can test for sure that the version is the expected one
+            if (System.getProperty("tests.cluster.url") == null) {
+                Properties properties = readPropertiesFromClassLoader("elasticsearch.version.properties");
+                assertThat(version, is(properties.getProperty("version")));
+            }
+        }
+    }
+
+    @Test
+    public void testNonRunningService() {
+        try {
+            String nonExistingService = "http://127.0.0.1:3012";
+            createClient(nonExistingService);
+            fail("We should have raised an exception as the service " + nonExistingService + " should not be running");
+        } catch (ProcessingException e) {
+            assertThat(e.getCause(), instanceOf(ConnectException.class));
+        }
+    }
+
+    @Test
     public void testGetSourceById() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String id = client.createCustomSource(sourceName, null);
+            String id = client.createCustomSource(sourceName, client.getVersion());
 
             // This is what we want to test actually
             String source = client.getCustomSourceById(id);
@@ -57,7 +89,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testGetSourceByName() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String id = client.createCustomSource(sourceName, null);
+            String id = client.createCustomSource(sourceName, client.getVersion());
 
             // This is what we want to test actually
             List<String> sourceIds = client.getCustomSourcesByName(sourceName);
@@ -70,7 +102,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testWithSomeFakeDocuments() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We configure the custom source.
-            String customSourceId = client.createCustomSource(sourceName, null);
+            String customSourceId = client.createCustomSource(sourceName, client.getVersion());
             client.configureCustomSource(customSourceId, sourceName, client.getVersion());
 
             // Index some documents
@@ -112,7 +144,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testGetDocument() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We configure the custom source.
-            String customSourceId = client.createCustomSource(sourceName, null);
+            String customSourceId = client.createCustomSource(sourceName, client.getVersion());
             client.configureCustomSource(customSourceId, sourceName, client.getVersion());
 
             String id = RandomizedTest.randomAsciiLettersOfLength(10);
@@ -136,7 +168,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testSearch() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String customSourceId = client.createCustomSource(sourceName, null);
+            String customSourceId = client.createCustomSource(sourceName, client.getVersion());
             client.configureCustomSource(customSourceId, sourceName, client.getVersion());
 
             String uniqueId1 = RandomizedTest.randomAsciiLettersOfLength(10);
@@ -210,7 +242,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     public void testSendAndRemoveADocument() throws Exception {
         try (WPSearchClient client = createClient()) {
             // We first create a source so we can use it later.
-            String customSourceId = client.createCustomSource(sourceName, null);
+            String customSourceId = client.createCustomSource(sourceName, client.getVersion());
             client.configureCustomSource(customSourceId, sourceName, client.getVersion());
 
             Map<String, Object> document = new HashMap<>();

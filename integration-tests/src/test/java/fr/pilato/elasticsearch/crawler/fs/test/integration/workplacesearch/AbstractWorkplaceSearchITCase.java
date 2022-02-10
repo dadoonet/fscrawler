@@ -183,15 +183,17 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     }
 
     protected static WPSearchClient createClient() {
+        return createClient(testWorkplaceUrl);
+    }
+
+    protected static WPSearchClient createClient(String host) {
         staticLogger.info("  --> creating the workplace search custom source client");
         Path jobMappingDir = rootTmpDir.resolve("wpsearch").resolve("_mappings");
         WPSearchClient client = new WPSearchClient(metadataDir, jobMappingDir)
-                .withHost(testWorkplaceUrl)
+                .withHost(host)
                 .withUsername(null, testWorkplaceUser)
                 .withPassword(null, testWorkplacePass);
         client.start();
-        String version = client.getVersion();
-        staticLogger.info("  --> connected to workplace search service running a {} version", version);
         return client;
     }
 

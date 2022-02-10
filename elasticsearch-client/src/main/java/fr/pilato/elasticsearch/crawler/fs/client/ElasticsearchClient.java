@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
@@ -59,6 +60,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.*;
@@ -111,8 +113,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 settings.getElasticsearch().getPassword());
         client = ClientBuilder.newClient(config);
         if (logger.isTraceEnabled()) {
-            client.property(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_ANY)
-                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_LEVEL_CLIENT, "FINER");
+            client
+//                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_NAME_CLIENT, ElasticsearchClient.class.getName())
+                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_LEVEL_CLIENT, Level.FINEST.getName())
+                    .property(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_ANY)
+                    .property(LoggingFeature.LOGGING_FEATURE_MAX_ENTITY_SIZE_CLIENT, 8000);
         }
         client.register(feature);
 
@@ -705,6 +710,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
             return response;
         } catch (WebApplicationException e) {
+            // TODO Test with non existing nodes. It should raise a ProcessingException -> ConnectException
             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
                 logger.warn("Error on server side. We need to try another node if possible. {} -> {}",
                         e.getResponse().getStatus(),
