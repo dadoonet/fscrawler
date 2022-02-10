@@ -30,9 +30,8 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.IWorkplaceSearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
@@ -53,15 +52,10 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     private static final Logger logger = LogManager.getLogger(FsCrawlerDocumentServiceWorkplaceSearchImpl.class);
     private final Configuration conf = Configuration.builder().jsonProvider(new JacksonJsonProvider(mapper)).build();
 
-    private final WorkplaceSearchClient client;
+    private final IWorkplaceSearchClient client;
 
     public FsCrawlerDocumentServiceWorkplaceSearchImpl(Path config, FsSettings settings) throws RuntimeException {
-        this.client = WorkplaceSearchClientUtil.getInstance(config, settings);
-
-        if (client == null) {
-            throw new FsCrawlerIllegalConfigurationException("As we can not find an existing Workplace Search client for elastic stack before 7.8," +
-                    " you can't define workplace settings in your configuration. FSCrawler will refuse to start.");
-        }
+        this.client = new WorkplaceSearchClient(config, settings);
     }
 
     @Override

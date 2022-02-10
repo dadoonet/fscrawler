@@ -1,42 +1,115 @@
+/*
+ * Licensed to David Pilato (the "Author") under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. Author licenses this
+ * file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
-import java.io.Closeable;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
-import java.util.List;
+import java.nio.file.Path;
 import java.util.Map;
 
-public interface WorkplaceSearchClient extends Closeable {
-    void start() throws IOException;
+import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.docToJson;
+import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
 
-    void index(String id, Doc doc);
+/**
+ * Workplace Search Client for Clusters running v7.
+ * It also starts an embedded Elasticsearch Client.
+ */
+public class WorkplaceSearchClient implements IWorkplaceSearchClient {
 
-    /**
-     * Remove a document from Workplace Search
-     * @param id the document id
-     * @return true if removed, false if not found or in case of error
-     */
-    void delete(String id);
+    private static final Logger logger = LogManager.getLogger(WorkplaceSearchClient.class);
+    private final Path config;
+    private final FsSettings settings;
 
-    String search(String query, Map<String, Object> filters);
+    private WPSearchClient wpSearchClient = null;
 
-    /**
-     * Check that a document exists
-     * @param id    Document id
-     * @return true if it exists, false otherwise
-     */
-    boolean exists(String id);
+    public WorkplaceSearchClient(Path config, FsSettings settings) {
+        this.config = config;
+        this.settings = settings;
+    }
 
-    /**
-     * Get a document
-     * @param id    Document id
-     * @return the document or null
-     */
-    String get(String id);
+    @Override
+    public void start() throws IOException {
+        logger.debug("Starting Workplace Search client");
+        Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
+        wpSearchClient = new WPSearchClient(config, jobMappingDir)
+            .withHost(settings.getWorkplaceSearch().getServer().decodedUrl())
+            .withUsername(settings.getWorkplaceSearch().getUsername(), settings.getElasticsearch().getUsername())
+            .withPassword(settings.getWorkplaceSearch().getPassword(), settings.getElasticsearch().getPassword())
+            .withBulkSize(settings.getWorkplaceSearch().getBulkSize())
+            .withFlushInterval(settings.getWorkplaceSearch().getFlushInterval());
+        wpSearchClient.start();
 
-    /**
-     * Flush any pending operation
-     */
-    void flush();
+        // If the source name is provided, let's use it
+        String sourceName = settings.getWorkplaceSearch().getName();
+        if (sourceName == null) {
+            // If not, we will use a default one
+            sourceName = generateDefaultCustomSourceName(settings.getName());
+        }
+
+        wpSearchClient.configureCustomSource(settings.getWorkplaceSearch().getId(), sourceName);
+
+        logger.debug("Workplace Search V7 client started");
+    }
+
+    @Override
+    public void close() {
+        logger.debug("Closing Workplace Search V7 client");
+        if (wpSearchClient != null) {
+            wpSearchClient.close();
+        }
+        logger.debug("Workplace Search V7 client closed");
+    }
+
+    @Override
+    public void index(String id, Doc doc) {
+        wpSearchClient.indexDocument(docToJson(id, doc, settings.getWorkplaceSearch().getUrlPrefix()));
+    }
+
+    @Override
+    public void delete(String id) {
+        wpSearchClient.destroyDocument(id);
+    }
+
+    @Override
+    public String search(String query, Map<String, Object> filters) {
+        return wpSearchClient.search(query, filters);
+    }
+
+    @Override
+    public boolean exists(String id) {
+        return wpSearchClient.getDocument(id) != null;
+    }
+
+    @Override
+    public String get(String id) {
+        return wpSearchClient.getDocument(id);
+    }
+
+    @Override
+    public void flush() {
+        wpSearchClient.flush();
+    }
 }
