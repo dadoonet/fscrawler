@@ -30,7 +30,7 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>cli/src/main/resources</directory>
+            <directory>${project.parent.basedir}/cli/src/main/resources</directory>
             <outputDirectory>config</outputDirectory>
             <includes>
                 <include>log4j2.xml</include>
