@@ -522,7 +522,12 @@ public class ElasticsearchClientIT extends AbstractITCase {
         response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
         assertThat(response.getTotalHits(), is(3L));
 
-        esClient.deleteSingle(getCrawlerName(), "99999");
+        try {
+            esClient.deleteSingle(getCrawlerName(), "99999");
+            fail("We should have raised an " + ElasticsearchClientException.class.getSimpleName());
+        } catch (ElasticsearchClientException e) {
+            assertThat(e.getMessage(), is("Document " + getCrawlerName() + "/99999 does not exist"));
+        }
         esClient.refresh(getCrawlerName());
 
         response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
