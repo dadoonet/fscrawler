@@ -13,7 +13,7 @@
 
     <fileSets>
         <fileSet>
-            <directory>${project.parent.basedir}/src/main/scripts</directory>
+            <directory>src/main/scripts</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>fscrawler*</include>
@@ -21,7 +21,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${project.parent.basedir}/..</directory>
+            <directory>../</directory>
             <outputDirectory/>
             <includes>
                 <include>LICENSE</include>
@@ -30,7 +30,7 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.parent.basedir}/../cli/src/main/resources</directory>
+            <directory>cli/src/main/resources</directory>
             <outputDirectory>config</outputDirectory>
             <includes>
                 <include>log4j2.xml</include>
