@@ -179,12 +179,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
         logger.trace("index settings: [{}]", realIndexSettings);
         try {
-            Map.Entry<String, Object> includeTypeName = null;
             if (majorVersion < 7) {
                 // For version < 7 we need to pass include_type_name=false (true by default)
-                includeTypeName = new AbstractMap.SimpleImmutableEntry<>("include_type_name", "false");
+                httpPut(index, realIndexSettings, new AbstractMap.SimpleImmutableEntry<>("include_type_name", "false"));
+            } else {
+                httpPut(index, realIndexSettings);
             }
-            httpPut(index, realIndexSettings, includeTypeName);
             waitForHealthyIndex(index);
         } catch (WebApplicationException e) {
             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
