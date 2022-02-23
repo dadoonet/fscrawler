@@ -130,6 +130,16 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
+    public void testCreateIndexWithErrors() throws IOException {
+        try {
+            esClient.createIndex(getCrawlerName(), false, "{this is wrong}");
+            fail("we should reject creation of an already existing index");
+        } catch (ElasticsearchClientException e) {
+            assertThat(e.getMessage(), containsString("error while creating index"));
+        }
+    }
+
+    @Test
     public void testSearch() throws IOException, ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, "{\n" +
                 "  \"mappings\": {\n" +
@@ -359,9 +369,6 @@ public class ElasticsearchClientIT extends AbstractITCase {
     public void testPipeline() throws IOException {
         String crawlerName = getCrawlerName();
 
-        // We can only run this test against a 5.0 cluster or >
-        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >", esClient.isIngestSupported(), is(true));
-
         // Create an empty ingest pipeline
         String pipeline = "{\n" +
                 "  \"description\": \"Testing Grok on PDF upload\",\n" +
@@ -470,6 +477,22 @@ public class ElasticsearchClientIT extends AbstractITCase {
         }
         {
             esClient.deleteIndex(getCrawlerName());
+            String indexSettings = "{\n" +
+                    "  \"mappings\": {\n" +
+                    "    \"properties\": {\n" +
+                    "      \"foo\": {\n" +
+                    "        \"properties\": {\n" +
+                    "          \"number\": {\n" +
+                    "            \"type\": \"long\"\n" +
+                    "          }\n" +
+                    "        }\n" +
+                    "      }\n" +
+                    "    }\n" +
+                    "  }\n" +
+                    "}";
+
+            esClient.createIndex(getCrawlerName(), false, indexSettings);
+
             long nbItems = RandomizedTest.randomLongBetween(5, 20);
 
             ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();

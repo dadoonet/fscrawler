@@ -205,6 +205,19 @@
             <properties>
                 <integ.elasticsearch.version>${elasticsearch6.version}</integ.elasticsearch.version>
             </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.dkanejs.maven.plugins</groupId>
+                        <artifactId>docker-compose-maven-plugin</artifactId>
+                        <configuration>
+                            <services>
+                                <service>elasticsearch</service>
+                            </services>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 

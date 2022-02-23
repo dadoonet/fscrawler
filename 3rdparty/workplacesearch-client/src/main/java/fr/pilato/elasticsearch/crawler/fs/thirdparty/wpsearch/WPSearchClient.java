@@ -27,7 +27,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -379,7 +378,7 @@ public class WPSearchClient implements Closeable {
         checkStarted();
 
         // If needed, we create the new settings for this files index
-        String worplaceSearchVersion = FsCrawlerUtil.extractMajorVersion(version);
+        int worplaceSearchVersion = FsCrawlerUtil.extractMajorVersion(version);
         String json = readJsonFile(jobMappingDir, rootDir, worplaceSearchVersion, INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
 
         // We need to replace the place holder values

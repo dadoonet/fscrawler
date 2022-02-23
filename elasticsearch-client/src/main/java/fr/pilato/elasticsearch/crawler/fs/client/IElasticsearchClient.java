@@ -32,6 +32,11 @@ import java.io.IOException;
 public interface IElasticsearchClient extends Closeable {
 
     /**
+     * Type name when using very old Elasticsearch versions like 6.x
+     */
+    String INDEX_TYPE_DOC = "_doc";
+
+    /**
      * Start the client and its internal resources. This must be called before any operation can be performed.
      * @throws IOException in case of communication error with the cluster
      */
@@ -44,13 +49,18 @@ public interface IElasticsearchClient extends Closeable {
     String getVersion() throws IOException;
 
     /**
+     * Get the major version about the node it's connected to
+     */
+    int getMajorVersion();
+
+    /**
      * Create an index
      * @param index index name
-     * @param ignoreErrors don't fail if the index already exists
+     * @param ignoreExistingIndex don't fail if the index already exists
      * @param indexSettings index settings if any
      * @throws IOException In case of error
      */
-    void createIndex(String index, boolean ignoreErrors, String indexSettings) throws IOException, ElasticsearchClientException;
+    void createIndex(String index, boolean ignoreExistingIndex, String indexSettings) throws IOException, ElasticsearchClientException;
 
     /**
      * Check if an index exists
@@ -81,12 +91,6 @@ public interface IElasticsearchClient extends Closeable {
      * @throws IOException In case of error
      */
     void waitForHealthyIndex(String index) throws IOException;
-
-    // Utility methods
-
-    boolean isIngestSupported();
-
-    String getDefaultTypeName();
 
     /**
      * Index a document (might use a BulkProcessor behind the scenes)

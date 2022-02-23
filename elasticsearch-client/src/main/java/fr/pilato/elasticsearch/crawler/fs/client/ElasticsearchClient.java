@@ -28,7 +28,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
@@ -81,13 +80,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private final AtomicInteger nodeNumber;
     private final List<String> hosts;
 
-    /**
-     * Type name for Elasticsearch versions >= 6.0
-     * @deprecated Will be removed with Elasticsearch V8
-     */
-    @Deprecated
-    private static final String INDEX_TYPE_DOC = "_doc";
-    private String majorVersion;
+    private String version = null;
+    private int majorVersion;
 
     public ElasticsearchClient(Path config, FsSettings settings) {
         this.config = config;
@@ -123,7 +117,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         try {
             String esVersion = getVersion();
-            majorVersion = extractMajorVersion(esVersion);
             logger.info("Elasticsearch Client connected to a node running version {}", esVersion);
         } catch (Exception e) {
             logger.warn("failed to create elasticsearch client on {}, disabling crawler...", settings.getElasticsearch().toString());
@@ -150,21 +143,34 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     @Override
     public String getVersion() {
+        if (version != null) {
+            return version;
+        }
         logger.debug("get version");
         String response = httpGet(null);
         // We parse the response
         Object document = parseJson(response);
-        return JsonPath.read(document, "$.version.number");
+        // Cache the version and the major version
+        version = JsonPath.read(document, "$.version.number");
+        majorVersion = extractMajorVersion(version);
+
+        logger.debug("get version returns {} and {} as the major version number", version, majorVersion);
+        return version;
+    }
+
+    @Override
+    public int getMajorVersion() {
+        return majorVersion;
     }
 
     /**
      * Create an index
      * @param index index name
-     * @param ignoreErrors don't fail if the index already exists
+     * @param ignoreExistingIndex don't fail if the index already exists
      * @param indexSettings index settings if any
      */
     @Override
-    public void createIndex(String index, boolean ignoreErrors, String indexSettings) throws ElasticsearchClientException {
+    public void createIndex(String index, boolean ignoreExistingIndex, String indexSettings) throws ElasticsearchClientException {
         String realIndexSettings = indexSettings;
         logger.debug("create index [{}]", index);
         if (indexSettings == null) {
@@ -173,14 +179,23 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
         logger.trace("index settings: [{}]", realIndexSettings);
         try {
-            httpPut(index, realIndexSettings);
+            Map.Entry<String, Object> includeTypeName = null;
+            if (majorVersion < 7) {
+                // For version < 7 we need to pass include_type_name=false (true by default)
+                includeTypeName = new AbstractMap.SimpleImmutableEntry<>("include_type_name", "false");
+            }
+            httpPut(index, realIndexSettings, includeTypeName);
             waitForHealthyIndex(index);
         } catch (WebApplicationException e) {
             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
                 logger.debug("Response for create index [{}]: {}", index, e.getMessage());
-                Object document = parseJson(e.getResponse().readEntity(String.class));
-                String errorType = JsonPath.read(document, "$.error.type");
-                if (errorType.contains("resource_already_exists_exception") && !ignoreErrors) {
+                DocumentContext document = parseJsonAsDocumentContext(e.getResponse().readEntity(String.class));
+                String errorType = document.read("$.error.type");
+                if (!errorType.contains("resource_already_exists_exception")) {
+                    throw new ElasticsearchClientException("error while creating index " + index + ": " +
+                            document.read("$"));
+                }
+                if (errorType.contains("resource_already_exists_exception") && !ignoreExistingIndex) {
                     throw new ElasticsearchClientException("index already exists");
                 }
             } else {
@@ -255,18 +270,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
         httpGet("_cluster/health/" + index,
                 new AbstractMap.SimpleImmutableEntry<>("wait_for_status", "yellow"),
                 new AbstractMap.SimpleImmutableEntry<>("timeout", "5s"));
-    }
-
-    // Utility methods
-
-    @Override
-    public boolean isIngestSupported() {
-        return true;
-    }
-
-    @Override
-    public String getDefaultTypeName() {
-        return INDEX_TYPE_DOC;
     }
 
     private static final TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
@@ -494,7 +497,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
             // Parse
             DocumentContext document = parseJsonAsDocumentContext(response);
-            esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
+            if (majorVersion < 7) {
+                esSearchResponse.setTotalHits(document.read("$.hits.total"));
+            } else {
+                esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
+            }
 
             int numHits = document.read("$.hits.hits.length()");
             if (numHits < size) {
@@ -664,7 +671,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return response;
     }
 
-    private void createIndex(Path jobMappingDir, String elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
+    private void createIndex(Path jobMappingDir, int elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
         try {
             // If needed, we create the new settings for this files index
             String indexSettings = readJsonFile(jobMappingDir, config, elasticsearchVersion, indexSettingsFile);
@@ -688,8 +695,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return httpCall("POST", path, data, params);
     }
 
-    String httpPut(String path, Object data) {
-        return httpCall("PUT", path, data);
+    String httpPut(String path, Object data, Map.Entry<String, Object>... params) {
+        return httpCall("PUT", path, data, params);
     }
 
     private String httpDelete(String path, Object data) {

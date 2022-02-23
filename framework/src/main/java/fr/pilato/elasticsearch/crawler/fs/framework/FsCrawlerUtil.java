@@ -78,7 +78,7 @@ public class FsCrawlerUtil {
      * @return the mapping
      * @throws IOException If the mapping can not be read
      */
-    public static String readDefaultJsonVersionedFile(Path config, String version, String type) throws IOException {
+    public static String readDefaultJsonVersionedFile(Path config, int version, String type) throws IOException {
         Path defaultConfigDir = config.resolve("_default");
         try {
             return readJsonVersionedFile(defaultConfigDir, version, type);
@@ -97,8 +97,8 @@ public class FsCrawlerUtil {
      * @return the mapping
      * @throws IOException If the mapping can not be read
      */
-    private static String readJsonVersionedFile(Path dir, String version, String type) throws IOException {
-        Path file = dir.resolve(version).resolve(type + ".json");
+    private static String readJsonVersionedFile(Path dir, int version, String type) throws IOException {
+        Path file = dir.resolve("" + version).resolve(type + ".json");
         return Files.readString(file);
     }
 
@@ -113,7 +113,7 @@ public class FsCrawlerUtil {
      * @return the mapping
      * @throws IOException If the mapping can not be read
      */
-    public static String readJsonFile(Path dir, Path config, String version, String filename) throws IOException {
+    public static String readJsonFile(Path dir, Path config, int version, String filename) throws IOException {
         try {
             return readJsonVersionedFile(dir, version, filename);
         } catch (NoSuchFileException e) {
@@ -646,8 +646,8 @@ public class FsCrawlerUtil {
         return result;
     }
 
-    public static String extractMajorVersion(String version) {
-        return version.split("\\.")[0];
+    public static int extractMajorVersion(String version) {
+        return Integer.parseInt(version.split("\\.")[0]);
     }
 
     public static String extractMinorVersion(String version) {

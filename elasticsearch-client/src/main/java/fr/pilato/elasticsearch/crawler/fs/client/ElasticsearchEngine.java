@@ -26,6 +26,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Locale;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient.INDEX_TYPE_DOC;
+
 public class ElasticsearchEngine implements Engine<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> {
     private static final Logger logger = LogManager.getLogger(ElasticsearchEngine.class);
     private final IElasticsearchClient elasticsearchClient;
@@ -45,7 +47,16 @@ public class ElasticsearchEngine implements Engine<ElasticsearchOperation, Elast
                     .append(r.getOperation().toString().toLowerCase(Locale.ROOT))
                     .append("\":{\"_index\":\"")
                     .append(r.getIndex())
-                    .append("\",\"_id\":\"")
+                    .append("\"");
+
+            if (elasticsearchClient.getMajorVersion() < 7) {
+                // Before version 7, the _type was needed
+                bulkRequest.append(",\"_type\":\"")
+                        .append(INDEX_TYPE_DOC)
+                        .append("\"");
+            }
+
+            bulkRequest.append(",\"_id\":\"")
                     .append(r.getId())
                     .append("\"");
 

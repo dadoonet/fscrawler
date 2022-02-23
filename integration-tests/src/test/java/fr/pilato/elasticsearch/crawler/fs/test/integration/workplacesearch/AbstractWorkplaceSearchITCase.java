@@ -32,6 +32,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.ServiceUnavailableException;
 import org.hamcrest.Matcher;
 import org.junit.After;
@@ -39,6 +40,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -54,6 +56,7 @@ import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUti
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 
 public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
@@ -73,6 +76,17 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         } catch (ServiceUnavailableException e) {
             assumeNoException("We can not run the Workplace Search tests against this cluster. " +
                     "Check that you have workplace search running at " + testWorkplaceUrl, e);
+        } catch (ProcessingException e) {
+            if (e.getCause() instanceof ConnectException) {
+                assumeNoException("We can not run the Workplace Search tests against this cluster. " +
+                        "Check that you have workplace search running at " + testWorkplaceUrl, e);
+            } else {
+                staticLogger.error("We got an unexpected exception when running the Workplace Search tests against this cluster. " +
+                        "Check that you have workplace search running at {}", testWorkplaceUrl);
+                staticLogger.error("Stacktrace:", e);
+                fail("We got an unexpected exception when running the Workplace Search tests against this cluster. " +
+                        "Check that you have workplace search running at " + testWorkplaceUrl);
+            }
         }
     }
 

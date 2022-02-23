@@ -46,9 +46,6 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
     public void test_ingest_pipeline() throws Exception {
         String crawlerName = getCrawlerName();
 
-        // We can only run this test against a 5.0 cluster or >
-        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >", managementService.getClient().isIngestSupported(), is(true));
-
         // Create an empty ingest pipeline
         String pipeline = "{\n" +
                 "  \"description\" : \"describe pipeline\",\n" +
@@ -84,9 +81,6 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_ingest_pipeline_392() throws Exception {
         String crawlerName = getCrawlerName();
-
-        // We can only run this test against a 5.0 cluster or >
-        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >", managementService.getClient().isIngestSupported(), is(true));
 
         // Create an empty ingest pipeline
         String pipeline = "{\n" +
@@ -127,10 +121,6 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_ingest_missing_pipeline_490() throws Exception {
         String crawlerName = getCrawlerName();
-
-        // We can only run this test against a 5.0 cluster or >
-        assumeThat("We skip the test as we are not running it with a 5.0 cluster or >",
-                managementService.getClient().isIngestSupported(), is(true));
 
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);
