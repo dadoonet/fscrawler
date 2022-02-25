@@ -48,6 +48,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHECK_NODES_EVERY;
@@ -630,6 +631,26 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .setNodes(Arrays.asList(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl("http://127.0.0.1:9207")))
+                .setUsername(testClusterUser)
+                .setPassword(testClusterPass)
+                .build();
+        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
+
+        try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
+            localClient.start();
+            fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
+        } catch (IOException ex) {
+            fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
+        } catch (ElasticsearchClientException ex) {
+            assertThat(ex.getMessage(), containsString("All nodes are failing"));
+        }
+    }
+
+    @Test
+    public void testWithNonRunningNode() {
+        // Build a client with a non-running node
+        Elasticsearch elasticsearch = Elasticsearch.builder()
+                .setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")))
                 .setUsername(testClusterUser)
                 .setPassword(testClusterPass)
                 .build();

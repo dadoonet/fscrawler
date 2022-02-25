@@ -97,6 +97,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
             hosts.add(node.decodedUrl());
             initialHosts.add(node.decodedUrl());
         });
+        if (hosts.size() == 1) {
+            // We have only one node so we won't have to select a specific one but the only one.
+            currentNode = 0;
+        }
     }
 
     @Override
