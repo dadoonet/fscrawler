@@ -6,41 +6,26 @@ Download FSCrawler
 .. ifconfig:: release.endswith('-SNAPSHOT')
 
     Depending on your Elasticsearch cluster version, you can download
-    FSCrawler |version| using the following links:
-
-    * |Download_URL_V7|_ for Elasticsearch V7.
-    * |Download_URL_V6|_ for Elasticsearch V6.
+    FSCrawler |version| using the following links from |Download_URL|_.
 
     The filename ends with ``.zip``.
 
     .. warning::
 
         This is a **SNAPSHOT** version.
-        You can also download a **stable** version from Maven Central:
-
-        * |Maven_Central_V7|_ for Elasticsearch V7.
-        * |Maven_Central_V6|_ for Elasticsearch V6.
+        You can also download a **stable** version from |Maven_Central|_.
 
 .. ifconfig:: release == version
 
     Depending on your Elasticsearch cluster version, you can download
-    FSCrawler |version| using the following links:
-
-    * |Download_URL_V7|_ for Elasticsearch V7.
-    * |Download_URL_V6|_ for Elasticsearch V6.
+    FSCrawler |version| from |Download_URL|_.
 
     .. tip::
 
         This is a **stable** version.
-        You can choose another version than |version| from Maven Central:
+        You can choose another version than |version| from |Maven_Central|_.
 
-        * |Maven_Central_V7|_ for Elasticsearch V7.
-        * |Maven_Central_V6|_ for Elasticsearch V6.
-
-        You can also download a **SNAPSHOT** version from Sonatype:
-
-        * |Sonatype_V7|_ for Elasticsearch V7.
-        * |Sonatype_V6|_ for Elasticsearch V6.
+        You can also download a **SNAPSHOT** version from |Sonatype|_.
 
 The distribution contains:
 
