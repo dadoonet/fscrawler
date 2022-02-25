@@ -28,7 +28,15 @@ import java.util.Map;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<ElasticsearchOperation> {
+
+    private final ElasticsearchClientException exception;
+
+    public ElasticsearchBulkResponse(ElasticsearchClientException exception) {
+        this.exception = exception;
+    }
+
     public ElasticsearchBulkResponse(String response) {
+        exception = null;
         // We need to parse the response object
         DocumentContext document = parseJsonAsDocumentContext(response);
         errors = document.read("$.errors");
@@ -46,5 +54,13 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
             }
             items.add(itemResponse);
         });
+    }
+
+    @Override
+    public Throwable buildFailureMessage() {
+        if (exception != null) {
+            return exception;
+        }
+        return super.buildFailureMessage();
     }
 }

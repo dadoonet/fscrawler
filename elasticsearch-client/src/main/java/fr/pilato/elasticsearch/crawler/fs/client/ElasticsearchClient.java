@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -49,6 +50,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.nio.file.Path;
 import java.security.cert.X509Certificate;
 import java.util.AbstractMap;
@@ -57,7 +59,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
@@ -74,25 +75,32 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private final FsSettings settings;
     private static final String USER_AGENT = "FSCrawler-Rest-Client-" + Version.getVersion();
 
+    // TODO this should be configurable
+    public static final int CHECK_NODES_EVERY = 10;
 
     private Client client = null;
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> bulkProcessor = null;
-    private final AtomicInteger nodeNumber;
     private final List<String> hosts;
+    private final List<String> initialHosts;
 
     private String version = null;
     private int majorVersion;
+    private int currentNode = -1;
+    private int currentRun = -1;
 
     public ElasticsearchClient(Path config, FsSettings settings) {
         this.config = config;
         this.settings = settings;
-        this.nodeNumber = new AtomicInteger();
         this.hosts = new ArrayList<>(settings.getElasticsearch().getNodes().size());
-        settings.getElasticsearch().getNodes().forEach(node -> hosts.add(node.decodedUrl()));
+        this.initialHosts = new ArrayList<>(settings.getElasticsearch().getNodes().size());
+        settings.getElasticsearch().getNodes().forEach(node -> {
+            hosts.add(node.decodedUrl());
+            initialHosts.add(node.decodedUrl());
+        });
     }
 
     @Override
-    public void start() throws IOException {
+    public void start() throws IOException, ElasticsearchClientException {
         if (client != null) {
             // The client has already been initialized. Let's skip this again
             return;
@@ -119,7 +127,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
             String esVersion = getVersion();
             logger.info("Elasticsearch Client connected to a node running version {}", esVersion);
         } catch (Exception e) {
-            logger.warn("failed to create elasticsearch client on {}, disabling crawler...", settings.getElasticsearch().toString());
+            logger.warn("Failed to create elasticsearch client on {}. Message: {}.",
+                    settings.getElasticsearch().toString(),
+                    e.getMessage());
             throw e;
         }
 
@@ -141,8 +151,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 .build();
     }
 
+    public List<String> getAvailableNodes() {
+        return hosts;
+    }
+
     @Override
-    public String getVersion() {
+    public String getVersion() throws ElasticsearchClientException {
         if (version != null) {
             return version;
         }
@@ -210,7 +224,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * @return true if the index exists, false otherwise
      */
     @Override
-    public boolean isExistingIndex(String index) {
+    public boolean isExistingIndex(String index) throws ElasticsearchClientException {
         logger.debug("is existing index [{}]", index);
         try {
             httpGet(index);
@@ -228,7 +242,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * @return true if the pipeline exists, false otherwise
      */
     @Override
-    public boolean isExistingPipeline(String pipelineName) {
+    public boolean isExistingPipeline(String pipelineName) throws ElasticsearchClientException {
         logger.debug("is existing pipeline [{}]", pipelineName);
         try {
             httpGet("_ingest/pipeline/" + pipelineName);
@@ -265,7 +279,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * @param index index name
      */
     @Override
-    public void waitForHealthyIndex(String index) {
+    public void waitForHealthyIndex(String index) throws ElasticsearchClientException {
         logger.debug("wait for yellow health on index [{}]", index);
         httpGet("_cluster/health/" + index,
                 new AbstractMap.SimpleImmutableEntry<>("wait_for_status", "yellow"),
@@ -304,7 +318,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public void indexSingle(String index, String id, String json, String pipeline) throws IOException {
+    public void indexSingle(String index, String id, String json, String pipeline) throws ElasticsearchClientException {
         logger.trace("JSon indexed : {}", json);
         String url = index + "/" + INDEX_TYPE_DOC + "/" + id;
         if (!isNullOrEmpty(pipeline)) {
@@ -630,12 +644,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public String performLowLevelRequest(String method, String endpoint, String jsonEntity) {
+    public String performLowLevelRequest(String method, String endpoint, String jsonEntity) throws ElasticsearchClientException {
         return httpCall(method, endpoint, jsonEntity);
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException {
+    public ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException {
         logger.debug("get document [{}/{}]", index, id);
         String response = httpGet(index + "/" + INDEX_TYPE_DOC + "/" + id);
 
@@ -651,7 +665,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException {
+    public boolean exists(String index, String id) throws IOException, ElasticsearchClientException {
         logger.debug("get document [{}/{}]", index, id);
         try {
             httpHead(index + "/" + INDEX_TYPE_DOC + "/" + id);
@@ -664,7 +678,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public String bulk(String ndjson) {
+    public String bulk(String ndjson) throws ElasticsearchClientException {
         logger.debug("bulk a ndjson of {} characters", ndjson.length());
 
         String response = httpPost("_bulk", ndjson);
@@ -683,27 +697,27 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    void httpHead(String path) {
+    void httpHead(String path) throws ElasticsearchClientException {
         httpCall("HEAD", path, null);
     }
 
-    String httpGet(String path, Map.Entry<String, Object>... params) {
+    String httpGet(String path, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         return httpCall("GET", path, null, params);
     }
 
-    String httpPost(String path, Object data, Map.Entry<String, Object>... params) {
+    String httpPost(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         return httpCall("POST", path, data, params);
     }
 
-    String httpPut(String path, Object data, Map.Entry<String, Object>... params) {
+    String httpPut(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         return httpCall("PUT", path, data, params);
     }
 
-    private String httpDelete(String path, Object data) {
+    private String httpDelete(String path, Object data) throws ElasticsearchClientException {
         return httpCall("DELETE", path, data);
     }
 
-    private String httpCall(String method, String path, Object data, Map.Entry<String, Object>... params) {
+    private String httpCall(String method, String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         String node = getNode();
         logger.trace("Calling {} {}/{} with params {}", method, node, path == null ? "" : path, params);
         try {
@@ -717,24 +731,75 @@ public class ElasticsearchClient implements IElasticsearchClient {
             logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
             return response;
         } catch (WebApplicationException e) {
-            // TODO Test with non existing nodes. It should raise a ProcessingException -> ConnectException
             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                logger.warn("Error on server side. We need to try another node if possible. {} -> {}",
+                logger.warn("Error on server side. {} -> {}",
                         e.getResponse().getStatus(),
                         e.getResponse().getStatusInfo().getReasonPhrase());
-                // TODO Retry on the next node if any
-                // TODO Remove the node from the list
             } else {
                 logger.debug("Error while running {} {}/{}: {}", method, node, path == null ? "" : path, e.getResponse().readEntity(String.class));
             }
             throw e;
+        } catch (ProcessingException e) {
+            if (e.getCause() instanceof ConnectException) {
+                // Test with non-existing nodes.
+                logger.warn("We can not connect to {}. Let's try to find another one if available.", node);
+                // Remove the node from the list and try again
+                removeNode();
+                return httpCall(method, path, data, params);
+            } else {
+                throw e;
+            }
         }
     }
 
-    private String getNode() {
-        // Choose a node
-        int nextNode = nodeNumber.incrementAndGet() % hosts.size();
-        return hosts.get(nextNode);
+    /**
+     * Choose a node
+     * @return the selected node
+     * @throws ElasticsearchClientException if no node is running
+     */
+    private synchronized String getNode() throws ElasticsearchClientException {
+        reloadNodesIfNeeded();
+        if (hosts.isEmpty()) {
+            // We don't have any running node available
+            // TODO Our last chance is to try to ping again the original list of nodes
+            throw new ElasticsearchClientException("All nodes are failing. You need to check your configuration and " +
+                    "your Elasticsearch cluster which should be running at " + initialHosts);
+        }
+
+        if (hosts.size() > 1) {
+            ++currentNode;
+            // Optimization. If we have only one node, there's no need to compute anything
+            if (currentNode >= hosts.size()) {
+                currentNode = 0;
+            }
+            logger.debug("More than one node is available so we pick node number {} from {}.", currentNode, hosts);
+            return hosts.get(currentNode);
+        }
+
+        // We have only one node. We just return it.
+        return hosts.get(0);
+    }
+
+    private void reloadNodesIfNeeded() {
+        currentRun++;
+        if (hosts.size() != initialHosts.size() && currentRun >= CHECK_NODES_EVERY) {
+            // We don't have the initial list of nodes.
+            // Let reintroduce all the nodes
+            currentRun = 0;
+            currentNode = -1;
+            hosts.clear();
+
+            // TODO be a bit smarter and just add nodes that are actually available
+            hosts.addAll(initialHosts);
+
+            logger.trace("We are adding back again all the nodes: {}", hosts);
+        }
+    }
+
+    private synchronized void removeNode() {
+        logger.debug("Removing node {}.", hosts.get(currentNode));
+        hosts.remove(currentNode);
+        logger.trace("List of remaining nodes {}.", hosts);
     }
 
     private Invocation.Builder prepareHttpCall(String node, String path, Map.Entry<String, Object>[] params) {

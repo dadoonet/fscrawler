@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.Level;
@@ -235,8 +236,8 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
             try {
                 ESSearchHit getHit = documentService.get(hit.getIndex(), hit.getId());
                 assertThat(getHit.getVersion(), lessThanOrEqualTo(maxVersion));
-            } catch (IOException e) {
-                fail("We got an IOException: " + e.getMessage());
+            } catch (IOException | ElasticsearchClientException e) {
+                fail("We got an Exception: " + e.getMessage());
             }
         }
     }

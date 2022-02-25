@@ -85,7 +85,7 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @param id        Document ID
      * @return true if the document exists
      */
-    boolean exists(String index, String id) throws IOException;
+    boolean exists(String index, String id) throws IOException, ElasticsearchClientException;
 
     /**
      * Get a document from the target service
@@ -93,7 +93,7 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @param id        Document ID
      * @return the document or null
      */
-    ESSearchHit get(String index, String id) throws IOException;
+    ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException;
 
     /**
      * Flush any pending operation

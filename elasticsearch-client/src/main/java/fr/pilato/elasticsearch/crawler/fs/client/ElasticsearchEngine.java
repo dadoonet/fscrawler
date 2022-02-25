@@ -77,7 +77,12 @@ public class ElasticsearchEngine implements Engine<ElasticsearchOperation, Elast
 
         logger.trace("Full bulk request {}", ndjson);
         logger.debug("Sending a bulk request of [{}] documents to the Elasticsearch service", request.numberOfActions());
-        String response = elasticsearchClient.bulk(ndjson.toString());
+        String response;
+        try {
+            response = elasticsearchClient.bulk(ndjson.toString());
+        } catch (ElasticsearchClientException e) {
+            return new ElasticsearchBulkResponse(e);
+        }
         return new ElasticsearchBulkResponse(response);
     }
 }

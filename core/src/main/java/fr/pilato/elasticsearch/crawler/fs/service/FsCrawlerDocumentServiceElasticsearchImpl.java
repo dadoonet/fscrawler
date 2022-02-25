@@ -50,7 +50,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public void start() throws IOException {
+    public void start() throws IOException, ElasticsearchClientException {
         client.start();
         logger.debug("Elasticsearch Document Service started");
     }
@@ -62,7 +62,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public String getVersion() throws IOException {
+    public String getVersion() throws IOException, ElasticsearchClientException {
         return client.getVersion();
     }
 
@@ -107,13 +107,13 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException {
+    public boolean exists(String index, String id) throws IOException, ElasticsearchClientException {
         logger.debug("Search if document {}/{} exists", index, id);
         return client.exists(index, id);
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException {
+    public ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException {
         logger.debug("Getting {}/{}", index, id);
         return client.get(index, id);
     }

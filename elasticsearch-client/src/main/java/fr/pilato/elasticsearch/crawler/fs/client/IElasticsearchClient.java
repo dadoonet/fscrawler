@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Simple Elasticsearch client over HTTP or HTTPS.
@@ -40,13 +41,19 @@ public interface IElasticsearchClient extends Closeable {
      * Start the client and its internal resources. This must be called before any operation can be performed.
      * @throws IOException in case of communication error with the cluster
      */
-    void start() throws IOException;
+    void start() throws IOException, ElasticsearchClientException;
+
+    /**
+     * Get the list of the active nodes. Could be use in an admin status API.
+     * @return the list of available nodes
+     */
+    List<String> getAvailableNodes();
 
     /**
      * Get version about the node it's connected to
      * @throws IOException in case of communication error with the cluster
      */
-    String getVersion() throws IOException;
+    String getVersion() throws IOException, ElasticsearchClientException;
 
     /**
      * Get the major version about the node it's connected to
@@ -68,7 +75,7 @@ public interface IElasticsearchClient extends Closeable {
      * @return true if the index exists, false otherwise
      * @throws IOException In case of error
      */
-    boolean isExistingIndex(String index) throws IOException;
+    boolean isExistingIndex(String index) throws IOException, ElasticsearchClientException;
 
     /**
      * Check if a pipeline exists
@@ -76,7 +83,7 @@ public interface IElasticsearchClient extends Closeable {
      * @return true if the pipeline exists, false otherwise
      * @throws IOException In case of error
      */
-    boolean isExistingPipeline(String pipeline) throws IOException;
+    boolean isExistingPipeline(String pipeline) throws IOException, ElasticsearchClientException;
 
     /**
      * Refresh an index
@@ -90,7 +97,7 @@ public interface IElasticsearchClient extends Closeable {
      * @param index index name
      * @throws IOException In case of error
      */
-    void waitForHealthyIndex(String index) throws IOException;
+    void waitForHealthyIndex(String index) throws IOException, ElasticsearchClientException;
 
     /**
      * Index a document (might use a BulkProcessor behind the scenes)
@@ -117,7 +124,7 @@ public interface IElasticsearchClient extends Closeable {
      * @param json      Document to index
      * @param pipeline  Pipeline (can be null)
      */
-    void indexSingle(String index, String id, String json, String pipeline) throws IOException;
+    void indexSingle(String index, String id, String json, String pipeline) throws IOException, ElasticsearchClientException;
 
     /**
      * Delete a document using a BulkProcessor behind the scenes
@@ -171,7 +178,7 @@ public interface IElasticsearchClient extends Closeable {
      * @throws IOException In case of error
      * @return the response from the server
      */
-    String performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException;
+    String performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException, ElasticsearchClientException;
 
     /**
      * Get a document by its ID
@@ -180,7 +187,7 @@ public interface IElasticsearchClient extends Closeable {
      * @return A Search Hit
      * @throws IOException In case of error
      */
-    ESSearchHit get(String index, String id) throws IOException;
+    ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException;
 
     /**
      * Check that a document exists
@@ -189,12 +196,12 @@ public interface IElasticsearchClient extends Closeable {
      * @return true if it exists, false otherwise
      * @throws IOException In case of error
      */
-    boolean exists(String index, String id) throws IOException;
+    boolean exists(String index, String id) throws IOException, ElasticsearchClientException;
 
     /**
      * Send a _bulk request to Elasticsearch
      * @param ndjson    the bulk content to send
      * @return  the outcome
      */
-    String bulk(String ndjson);
+    String bulk(String ndjson) throws ElasticsearchClientException;
 }

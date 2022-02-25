@@ -31,25 +31,30 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchDeleteOperation;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchEngine;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
+import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
 import jakarta.ws.rs.ClientErrorException;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Properties;
 
+import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHECK_NODES_EVERY;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
 
 /**
  * Test elasticsearch HTTP client
@@ -354,7 +359,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testFindVersion() throws IOException {
+    public void testFindVersion() throws IOException, ElasticsearchClientException {
         String version = esClient.getVersion();
         logger.info("Current elasticsearch version: [{}]", version);
 
@@ -366,7 +371,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testPipeline() throws IOException {
+    public void testPipeline() throws IOException, ElasticsearchClientException {
         String crawlerName = getCrawlerName();
 
         // Create an empty ingest pipeline
@@ -563,5 +568,80 @@ public class ElasticsearchClientIT extends AbstractITCase {
         esClient.refresh(getCrawlerName());
         assertThat(esClient.exists(getCrawlerName(), "1"), is(true));
         assertThat(esClient.exists(getCrawlerName(), "999"), is(false));
+    }
+
+    @Test
+    public void testWithOnlyOneRunningNode() throws ElasticsearchClientException, IOException {
+        // Build a client with a non-running node
+        Elasticsearch elasticsearch = Elasticsearch.builder()
+                .setNodes(Arrays.asList(
+                        new ServerUrl("http://127.0.0.1:9206"),
+                        new ServerUrl(testClusterUrl)))
+                .setUsername(testClusterUser)
+                .setPassword(testClusterPass)
+                .build();
+        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
+        try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
+            localClient.start();
+            localClient.isExistingIndex("foo");
+            localClient.isExistingIndex("bar");
+            localClient.isExistingIndex("baz");
+        }
+    }
+
+    @Test
+    public void testWithTwoRunningNodes() throws ElasticsearchClientException, IOException {
+        // Build a client with 2 running nodes (well, the same one is used twice) and one non-running node
+        Elasticsearch elasticsearch = Elasticsearch.builder()
+                .setNodes(Arrays.asList(
+                        new ServerUrl(testClusterUrl),
+                        new ServerUrl("http://127.0.0.1:9206"),
+                        new ServerUrl(testClusterUrl)))
+                .setUsername(testClusterUser)
+                .setPassword(testClusterPass)
+                .build();
+        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
+        try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
+            localClient.start();
+            assertThat(localClient.getAvailableNodes(), hasSize(3));
+            localClient.isExistingIndex("foo");
+            assertThat(localClient.getAvailableNodes(), hasSize(2));
+
+            for (int i = 0; i < CHECK_NODES_EVERY - 3; i++) {
+                localClient.isExistingIndex("foo");
+                assertThat("Run " + i, localClient.getAvailableNodes(), hasSize(2));
+            }
+
+            for (int i = 0; i < 10; i++) {
+                localClient.isExistingIndex("foo");
+                assertThat("Run " + i, localClient.getAvailableNodes(), hasSize(3));
+                for (int j = 0; j < CHECK_NODES_EVERY - 2; j++) {
+                    localClient.isExistingIndex("foo");
+                    assertThat("Run " + i + "-" + j, localClient.getAvailableNodes(), hasSize(2));
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testWithNonRunningNodes() {
+        // Build a client with a non-running node
+        Elasticsearch elasticsearch = Elasticsearch.builder()
+                .setNodes(Arrays.asList(
+                        new ServerUrl("http://127.0.0.1:9206"),
+                        new ServerUrl("http://127.0.0.1:9207")))
+                .setUsername(testClusterUser)
+                .setPassword(testClusterPass)
+                .build();
+        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
+
+        try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
+            localClient.start();
+            fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
+        } catch (IOException ex) {
+            fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
+        } catch (ElasticsearchClientException ex) {
+            assertThat(ex.getMessage(), containsString("All nodes are failing"));
+        }
     }
 }

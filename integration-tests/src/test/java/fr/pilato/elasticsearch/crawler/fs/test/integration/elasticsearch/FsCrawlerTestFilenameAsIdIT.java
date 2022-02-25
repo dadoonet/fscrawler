@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
@@ -48,7 +49,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
                 return documentService.exists(getCrawlerName(), "roottxtfile.txt");
-            } catch (IOException e) {
+            } catch (IOException | ElasticsearchClientException e) {
                 return false;
             }
         }), equalTo(true));
@@ -71,14 +72,14 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         assertThat("Document should exists with [id1.txt] id...", awaitBusy(() -> {
             try {
                 return documentService.exists(getCrawlerName(), "id1.txt");
-            } catch (IOException e) {
+            } catch (IOException | ElasticsearchClientException e) {
                 return false;
             }
         }), equalTo(true));
         assertThat("Document should exists with [id2.txt] id...", awaitBusy(() -> {
             try {
                 return documentService.exists(getCrawlerName(), "id2.txt");
-            } catch (IOException e) {
+            } catch (IOException | ElasticsearchClientException e) {
                 return false;
             }
         }), equalTo(true));
