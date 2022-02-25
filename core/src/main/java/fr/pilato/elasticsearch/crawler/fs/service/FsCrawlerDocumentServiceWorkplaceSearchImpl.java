@@ -30,11 +30,11 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.IWorkplaceSearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import jakarta.ws.rs.ServiceUnavailableException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,27 +46,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
 
 public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDocumentService {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerDocumentServiceWorkplaceSearchImpl.class);
     private final Configuration conf = Configuration.builder().jsonProvider(new JacksonJsonProvider(mapper)).build();
 
-    private final WorkplaceSearchClient client;
+    private final IWorkplaceSearchClient client;
 
     public FsCrawlerDocumentServiceWorkplaceSearchImpl(Path config, FsSettings settings) throws RuntimeException {
-        this.client = WorkplaceSearchClientUtil.getInstance(config, settings);
-
-        if (client == null) {
-            throw new FsCrawlerIllegalConfigurationException("As we can not find an existing Workplace Search client for elastic stack before 7.8," +
-                    " you can't define workplace settings in your configuration. FSCrawler will refuse to start.");
-        }
+        this.client = new WorkplaceSearchClient(config, settings);
     }
 
     @Override
     public void start() throws IOException {
-        client.start();
+        try {
+            client.start();
+        } catch (ServiceUnavailableException e) {
+            logger.fatal("Can not start the Workplace Search client.");
+        }
         logger.debug("Workplace Search Document Service started");
     }
 
@@ -130,7 +129,7 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
         for (int i = 0; i < totalHits; i++) {
             ESSearchHit hit = new ESSearchHit();
             // We read the hit and transform it again as a json document using Jackson
-            hit.setSourceAsString(mapper.writeValueAsString(JsonPath.read(document, "$.results[" + i + "]")));
+            hit.setSource(mapper.writeValueAsString(JsonPath.read(document, "$.results[" + i + "]")));
             response.addHit(hit);
         }
 
@@ -151,7 +150,7 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
         ESSearchHit hit = new ESSearchHit();
         hit.setIndex(index);
         hit.setId(id);
-        hit.setSourceAsString(json);
+        hit.setSource(json);
 
         return hit;
     }

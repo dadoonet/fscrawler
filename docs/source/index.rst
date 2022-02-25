@@ -6,7 +6,7 @@ Welcome to FSCrawler's documentation!
     .. warning::
 
         This documentation is for the version of FSCrawler currently under development.
-        Were you looking for the `documentation of the latest stable version <../fscrawler-2.8/>`_?
+        Were you looking for the `documentation of the latest stable version <../fscrawler-2.9/>`_?
 
 Welcome to the FS Crawler for |ES|_.
 
@@ -20,10 +20,10 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 
 .. note::
 
-    FS Crawler |release| is using |Tika_version|_ and:
+    FS Crawler |release| is using |Tika_version|_ and is tested against:
 
-    * |ESHL_version7|_ for Elasticsearch V7.
-    * |ESHL_version6|_ for Elasticsearch V6.
+    * |ES_version7|_.
+    * |ES_version6|_.
 
 .. toctree::
    :caption: Installation Guide

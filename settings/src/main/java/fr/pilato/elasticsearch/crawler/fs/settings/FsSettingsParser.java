@@ -23,8 +23,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.io.IOException;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;
-import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.ymlMapper;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.ymlMapper;
 
 public class FsSettingsParser {
 

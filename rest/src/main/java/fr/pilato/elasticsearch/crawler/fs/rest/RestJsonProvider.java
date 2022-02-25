@@ -24,8 +24,8 @@ import jakarta.ws.rs.ext.ContextResolver;
 import jakarta.ws.rs.ext.Provider;
 import org.apache.logging.log4j.LogManager;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.mapper;
-import static fr.pilato.elasticsearch.crawler.fs.framework.MetaParser.prettyMapper;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
 
 @Provider
 public class RestJsonProvider implements ContextResolver<ObjectMapper> {

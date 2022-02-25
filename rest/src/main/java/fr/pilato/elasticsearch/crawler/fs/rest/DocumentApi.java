@@ -19,10 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.MetaParser;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -53,6 +54,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.configuration;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
 
 @Path("/_document")
 public class DocumentApi extends RestApi {
@@ -262,12 +265,12 @@ public class DocumentApi extends RestApi {
         }
 
         try {
-            JsonNode tagsNode = MetaParser.mapper.readTree(tags);
-            JsonNode docNode = MetaParser.mapper.convertValue(doc, JsonNode.class);
+            JsonNode tagsNode = mapper.readTree(tags);
+            JsonNode docNode = mapper.convertValue(doc, JsonNode.class);
 
             JsonNode mergedNode = FsCrawlerUtil.merge(tagsNode, docNode);
 
-            return MetaParser.mapper.treeToValue(mergedNode, Doc.class);
+            return mapper.treeToValue(mergedNode, Doc.class);
         } catch (Exception e) {
             logger.error("Error parsing tags", e);
             throw new BadRequestException("Error parsing tags", e);

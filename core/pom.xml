@@ -81,7 +81,7 @@
         <!-- Our Elasticsearch Client -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-elasticsearch-client-base</artifactId>
+            <artifactId>fscrawler-elasticsearch-client</artifactId>
         </dependency>
 
         <!-- Our Workplace Search Client -->

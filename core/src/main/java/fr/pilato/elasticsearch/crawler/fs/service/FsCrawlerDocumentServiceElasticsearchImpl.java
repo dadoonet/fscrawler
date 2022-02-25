@@ -20,12 +20,12 @@
 package fr.pilato.elasticsearch.crawler.fs.service;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.DocParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,22 +33,24 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+
 public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocumentService {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerDocumentServiceElasticsearchImpl.class);
 
-    private final ElasticsearchClient client;
+    private final IElasticsearchClient client;
 
     public FsCrawlerDocumentServiceElasticsearchImpl(Path config, FsSettings settings) {
-        this.client = ElasticsearchClientUtil.getInstance(config, settings);
+        this.client = new ElasticsearchClient(config, settings);
     }
 
-    public ElasticsearchClient getClient() {
+    public IElasticsearchClient getClient() {
         return client;
     }
 
     @Override
-    public void start() throws IOException {
+    public void start() throws IOException, ElasticsearchClientException {
         client.start();
         logger.debug("Elasticsearch Document Service started");
     }
@@ -60,7 +62,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public String getVersion() throws IOException {
+    public String getVersion() throws IOException, ElasticsearchClientException {
         return client.getVersion();
     }
 
@@ -71,7 +73,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
 
     @Override
     public void index(String index, String id, Doc doc, String pipeline) {
-        indexRawJson(index, id, DocParser.toJson(doc), pipeline);
+        indexRawJson(index, id, serialize(doc), pipeline);
     }
 
     @Override
@@ -87,31 +89,31 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public void deleteSingle(String index, String id) throws IOException {
+    public void deleteSingle(String index, String id) throws ElasticsearchClientException {
         logger.debug("Deleting {}/{}", index, id);
         client.deleteSingle(index, id);
     }
 
     @Override
-    public void refresh(String index) throws IOException {
+    public void refresh(String index) throws IOException, ElasticsearchClientException {
         logger.debug("Refreshing {}", index);
         client.refresh(index);
     }
 
     @Override
-    public ESSearchResponse search(ESSearchRequest request) throws IOException {
+    public ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException {
         logger.debug("Searching {}", request);
         return client.search(request);
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException {
+    public boolean exists(String index, String id) throws IOException, ElasticsearchClientException {
         logger.debug("Search if document {}/{} exists", index, id);
         return client.exists(index, id);
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException {
+    public ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException {
         logger.debug("Getting {}/{}", index, id);
         return client.get(index, id);
     }

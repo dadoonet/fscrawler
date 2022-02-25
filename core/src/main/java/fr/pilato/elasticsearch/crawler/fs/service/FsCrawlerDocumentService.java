@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 
 import java.io.IOException;
 
@@ -63,20 +64,20 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @param index     Index name
      * @param id        Document ID
      */
-    void deleteSingle(String index, String id) throws IOException;
+    void deleteSingle(String index, String id) throws IOException, ElasticsearchClientException;
 
     /**
      * Refresh the document database to make changes visible
      * @param index     Optional index name
      */
-    void refresh(String index) throws IOException;
+    void refresh(String index) throws IOException, ElasticsearchClientException;
 
     /**
      * Search for information
      * @param request   The request
      * @return a response from the document service
      */
-    ESSearchResponse search(ESSearchRequest request) throws IOException;
+    ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException;
 
     /**
      * Remove a document from the target service
@@ -84,7 +85,7 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @param id        Document ID
      * @return true if the document exists
      */
-    boolean exists(String index, String id) throws IOException;
+    boolean exists(String index, String id) throws IOException, ElasticsearchClientException;
 
     /**
      * Get a document from the target service
@@ -92,7 +93,7 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @param id        Document ID
      * @return the document or null
      */
-    ESSearchHit get(String index, String id) throws IOException;
+    ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException;
 
     /**
      * Flush any pending operation

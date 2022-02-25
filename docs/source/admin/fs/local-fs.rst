@@ -549,6 +549,11 @@ a directory, you can set ``remove_deleted`` to ``false`` (default to
    fs:
      remove_deleted: false
 
+.. note::
+
+    Setting ``remove_deleted`` is forced to ``false`` when using the Workplace Search output (:ref:`wpsearch-settings`).
+
+
 Ignore content
 ^^^^^^^^^^^^^^
 

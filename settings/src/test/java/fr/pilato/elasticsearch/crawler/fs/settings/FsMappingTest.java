@@ -55,7 +55,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void fsSettingsForDocVersion6() throws Exception {
-        String settings = readJsonFile(rootTmpDir, metadataDir, "6", INDEX_SETTINGS_FILE);
+        String settings = readJsonFile(rootTmpDir, metadataDir, 6, INDEX_SETTINGS_FILE);
         logger.info("Settings used for doc index v6 : " + settings);
         assertThat(settings, is("{\n" +
                 "  \"settings\": {\n" +
@@ -275,7 +275,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void fsSettingsForFolderVersion6() throws Exception {
-        String settings = readJsonFile(rootTmpDir, metadataDir, "6", INDEX_SETTINGS_FOLDER_FILE);
+        String settings = readJsonFile(rootTmpDir, metadataDir, 6, INDEX_SETTINGS_FOLDER_FILE);
         logger.info("Settings used for folder index v6 : " + settings);
         assertThat(settings, is("{\n" +
                 "  \"settings\": {\n" +
@@ -345,7 +345,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void fsSettingsForDocSpecificJobVersion6() throws Exception {
-        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "6", INDEX_SETTINGS_FILE);
+        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 6, INDEX_SETTINGS_FILE);
         assertThat(settings, is("{\n" +
                 "  // This is settings for version 6\n" +
                 "}\n"));
@@ -353,7 +353,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void fsSettingsForFolderSpecificJobVersion6() throws Exception {
-        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "6", INDEX_SETTINGS_FOLDER_FILE);
+        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 6, INDEX_SETTINGS_FOLDER_FILE);
         assertThat(settings, is("{\n" +
                 "  // This is folder settings for version 6\n" +
                 "}\n"));
@@ -362,7 +362,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
     @Test
     public void fsSettingsForDocVersionNotSupported() throws Exception {
         try {
-            readJsonFile(rootTmpDir, metadataDir, "0", INDEX_SETTINGS_FILE);
+            readJsonFile(rootTmpDir, metadataDir, 0, INDEX_SETTINGS_FILE);
             fail("We should have thrown an exception for an unknown elasticsearch version");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), containsString("does not exist for elasticsearch version"));
@@ -371,7 +371,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void fsSettingsForDocVersion7() throws Exception {
-        String settings = readJsonFile(rootTmpDir, metadataDir, "7", INDEX_SETTINGS_FILE);
+        String settings = readJsonFile(rootTmpDir, metadataDir, 7, INDEX_SETTINGS_FILE);
         logger.info("Settings used for doc index v7 : " + settings);
         assertThat(settings, is("{\n" +
                 "  \"settings\": {\n" +
@@ -591,7 +591,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void fsSettingsForFolderVersion7() throws Exception {
-        String settings = readJsonFile(rootTmpDir, metadataDir, "7", INDEX_SETTINGS_FOLDER_FILE);
+        String settings = readJsonFile(rootTmpDir, metadataDir, 7, INDEX_SETTINGS_FOLDER_FILE);
         logger.info("Settings used for folder index v7 : " + settings);
         assertThat(settings, is("{\n" +
                 "  \"settings\": {\n" +
@@ -661,7 +661,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void fsSettingsForWorkplaceSearchVersion7() throws Exception {
-        String settings = readJsonFile(rootTmpDir, metadataDir, "7", INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
+        String settings = readJsonFile(rootTmpDir, metadataDir, 7, INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
         logger.info("Settings used for workplace search v7 : " + settings);
         assertThat(settings, is("{\n" +
                 "  \"name\": \"SOURCE_NAME\",\n" +
@@ -747,7 +747,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void fsSettingsForDocSpecificJobVersion7() throws Exception {
-        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "7", INDEX_SETTINGS_FILE);
+        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 7, INDEX_SETTINGS_FILE);
         assertThat(settings, is("{\n" +
                 "  // This is settings for version 7\n" +
                 "}\n"));
@@ -755,7 +755,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void fsSettingsForFolderSpecificJobVersion7() throws Exception {
-        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "7", INDEX_SETTINGS_FOLDER_FILE);
+        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 7, INDEX_SETTINGS_FOLDER_FILE);
         assertThat(settings, is("{\n" +
                 "  // This is folder settings for version 7\n" +
                 "}\n"));
@@ -763,7 +763,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
     public void fsSettingsForWorkplaceSearchSpecificJobVersion7() throws Exception {
-        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, "7", INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
+        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 7, INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
         assertThat(settings, is("{\n" +
                 "  \"name\": \"SOURCE_NAME\",\n" +
                 "  \"schema\": {\n" +
@@ -776,7 +776,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
     @Test
     public void fsSettingsForFolderVersionNotSupported() throws Exception {
         try {
-            readJsonFile(rootTmpDir, metadataDir, "0", INDEX_SETTINGS_FOLDER_FILE);
+            readJsonFile(rootTmpDir, metadataDir, 0, INDEX_SETTINGS_FOLDER_FILE);
             fail("We should have thrown an exception for an unknown elasticsearch version");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), containsString("does not exist for elasticsearch version"));
