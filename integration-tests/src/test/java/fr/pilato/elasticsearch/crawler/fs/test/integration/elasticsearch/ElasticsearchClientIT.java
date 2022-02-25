@@ -43,11 +43,12 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
 import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.NotAuthorizedException;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.net.ConnectException;
 import java.util.List;
 import java.util.Properties;
 
@@ -575,7 +576,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     public void testWithOnlyOneRunningNode() throws ElasticsearchClientException, IOException {
         // Build a client with a non-running node
         Elasticsearch elasticsearch = Elasticsearch.builder()
-                .setNodes(Arrays.asList(
+                .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
                 .setUsername(testClusterUser)
@@ -594,7 +595,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     public void testWithTwoRunningNodes() throws ElasticsearchClientException, IOException {
         // Build a client with 2 running nodes (well, the same one is used twice) and one non-running node
         Elasticsearch elasticsearch = Elasticsearch.builder()
-                .setNodes(Arrays.asList(
+                .setNodes(List.of(
                         new ServerUrl(testClusterUrl),
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
@@ -628,7 +629,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     public void testWithNonRunningNodes() {
         // Build a client with a non-running node
         Elasticsearch elasticsearch = Elasticsearch.builder()
-                .setNodes(Arrays.asList(
+                .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl("http://127.0.0.1:9207")))
                 .setUsername(testClusterUser)
@@ -662,7 +663,25 @@ public class ElasticsearchClientIT extends AbstractITCase {
         } catch (IOException ex) {
             fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
         } catch (ElasticsearchClientException ex) {
-            assertThat(ex.getMessage(), containsString("All nodes are failing"));
+            assertThat(ex.getMessage(), containsString("Can not execute GET"));
+            assertThat(ex.getCause().getCause(), instanceOf(ConnectException.class));
+            assertThat(ex.getCause().getCause().getMessage(), containsString("Connection refused"));
+        }
+    }
+
+    @Test
+    public void testSecuredClusterWithBadCredentials() throws IOException, ElasticsearchClientException {
+        // Build a client with a null password
+        Elasticsearch elasticsearch = Elasticsearch.builder()
+                .setNodes(List.of(new ServerUrl(testClusterUrl)))
+                .build();
+        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
+
+        try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
+            localClient.start();
+            fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
+        } catch (NotAuthorizedException ex) {
+            assertThat(ex.getMessage(), containsString("HTTP 401 Unauthorized"));
         }
     }
 }

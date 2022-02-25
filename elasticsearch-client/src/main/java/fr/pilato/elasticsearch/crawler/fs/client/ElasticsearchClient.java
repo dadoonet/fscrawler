@@ -744,14 +744,16 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
             throw e;
         } catch (ProcessingException e) {
-            if (e.getCause() instanceof ConnectException) {
+            if (e.getCause() instanceof ConnectException && initialHosts.size() > 1) {
                 // Test with non-existing nodes.
                 logger.warn("We can not connect to {}. Let's try to find another one if available.", node);
                 // Remove the node from the list and try again
                 removeNode();
                 return httpCall(method, path, data, params);
             } else {
-                throw e;
+                throw new ElasticsearchClientException("Can not execute " + method + " " +
+                        node + "/" + (path == null ? "" : path) + " : " +
+                        e.getCause().getMessage(), e);
             }
         }
     }

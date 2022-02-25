@@ -233,7 +233,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
 
         staticLogger.info("Starting a client against [{}]", testClusterUrl);
-        // We build the elasticsearch High Level Client based on the parameters
+        // We build the elasticsearch Client based on the parameters
         elasticsearchWithSecurity = Elasticsearch.builder()
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                 .setUsername(testClusterUser)
