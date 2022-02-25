@@ -7,6 +7,7 @@ RUN set -ex \
     && apt-get install -y --no-install-recommends \
     "gettext-base=0.19.*" \
     procps \
+    curl \
     ${langsPkg} \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
