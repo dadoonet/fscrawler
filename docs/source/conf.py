@@ -227,20 +227,20 @@ rst_prolog = rst_prolog + """
 .. |ES| replace:: Elasticsearch
 .. |Tika_format| replace:: Tika
 .. |Tika_version| replace:: Tika {fmt_tika_version}
-.. |ESHL_version6| replace:: Elasticsearch Rest Client {fmt_es_version6}
-.. |ESHL_version7| replace:: Elasticsearch Rest Client {fmt_es_version7}
+.. |ES_version6| replace:: Elasticsearch {fmt_es_version6}
+.. |ES_version7| replace:: Elasticsearch {fmt_es_version7}
 .. |Tiff_version| replace:: jai-imageio-core:{fmt_tiff_version}
 .. |JPEG2000_version| replace:: jai-imageio-jpeg2000:{fmt_jpeg_version}
 .. |Download_URL| replace:: fscrawler-{fmt_release}
-.. |Maven_Central| replace:: fscrawler-*
-.. |Sonatype| replace:: fscrawler-*
+.. |Maven_Central| replace:: Maven Central
+.. |Sonatype| replace:: Sonatype
 
 .. _Tika: https://tika.apache.org/{fmt_tika_version}/
 .. _ES: https://www.elastic.co/products/elasticsearch
 .. _Tika_format: https://tika.apache.org/{fmt_tika_version}/formats.html#Supported_Document_Formats
 .. _Tika_version: https://tika.apache.org/{fmt_tika_version}/
-.. _ESHL_version6: https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/index.html
-.. _ESHL_version7: https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/index.html
+.. _ES_version6: https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
+.. _ES_version7: https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
 .. _Tiff_version: https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/{fmt_tiff_version}/
 .. _JPEG2000_version: https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{fmt_jpeg_version}/
 .. _Download_URL: {fmt_downloadUrl}
