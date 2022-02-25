@@ -83,13 +83,17 @@ public class TikaInstance {
 
     private static void initParser(Fs fs) {
         if (parser == null) {
-            if (fs.getTikaConfigPath() != null && (new File(fs.getTikaConfigPath())).exists()) {
-                logger.info("Using custom tika configuration.");
+            if (fs.getTikaConfigPath() != null) {
+                if (!(new File(fs.getTikaConfigPath())).exists()) {
+                    throw new RuntimeException("Tika configuration file " + fs.getTikaConfigPath() + " not found!");
+                }
+                logger.info("Using custom tika configuration from [{}].", fs.getTikaConfigPath());
                 TikaConfig config = null;
                 try {
                     config = new TikaConfig(fs.getTikaConfigPath());
                 } catch (TikaException|IOException|SAXException e) {
-                    e.printStackTrace();
+                    logger.error("Can not configure Tika: {}", e.getMessage());
+                    logger.debug("Fullstack trace error for Tika", e);
                 }
 
                 parser = new AutoDetectParser(config);

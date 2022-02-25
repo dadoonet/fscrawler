@@ -23,9 +23,9 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Ocr;
-import java.io.File;
 import java.net.URISyntaxException;
-import org.apache.commons.io.FileUtils;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.junit.BeforeClass;
@@ -669,12 +669,15 @@ public class TikaDocParserTest extends DocParserTestCase {
 
     @Test
     public void testCustomTikaConfig() throws IOException, URISyntaxException {
-        InputStream tikaConfigIS = getClass().getResourceAsStream("/documents/tikaConfig.xml");
-        File tikaConfigFile = File.createTempFile("tikaConfigTestFile", ".xml");
-        FileUtils.copyInputStreamToFile(tikaConfigIS, tikaConfigFile);
+        InputStream tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.xml");
+        Path testTikaConfig = rootTmpDir.resolve("tika-config");
+        if (Files.notExists(testTikaConfig)) {
+            Files.createDirectory(testTikaConfig);
+        }
+        Files.copy(tikaConfigIS, testTikaConfig.resolve("tikaConfig.xml"));
 
         FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
-            .setFs(Fs.builder().setTikaConfigPath(tikaConfigFile.getPath()).build())
+            .setFs(Fs.builder().setTikaConfigPath(testTikaConfig.resolve("tikaConfig.xml").toString()).build())
             .build();
 
         // Test that default parser for HTML is HTML parser
@@ -695,8 +698,6 @@ public class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test.xhtml", fsSettings);
         assertThat(doc.getContent(), containsString("Test Tika title"));
         assertThat(doc.getContent(), not(containsString("<title>Test Tika title</title>")));
-
-        tikaConfigFile.delete();
     }
 
     @Test

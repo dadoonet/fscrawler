@@ -739,7 +739,7 @@ such as ``MD5`` or ``SHA-1``.
 .. note::
 
     You MUST set ``index_content`` to true to allow this feature to work. Nevertheless you MAY set ``indexed_chars`` to 0 if you do not need any content in the index.
-    
+
     You MUST NOT set ``json_support`` or ``xml_support`` to allow this feature to work also.
 
 .. code:: yaml
@@ -779,7 +779,7 @@ configuration file, which will be used instead.
    fs:
      tika_config_path: '/path/to/tikaConfig.xml'
 
-An example tika config file is shown below. See `apache documentation <https://tika.apache.org/1.27/configuring.html>`__ for more information.
+An example tika config file is shown below. See |Tika_configuring|_ for more information.
 
 .. code:: xml
 
