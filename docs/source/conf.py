@@ -231,7 +231,7 @@ rst_prolog = rst_prolog + """
 .. |ES_version7| replace:: Elasticsearch {fmt_es_version7}
 .. |Tiff_version| replace:: jai-imageio-core:{fmt_tiff_version}
 .. |JPEG2000_version| replace:: jai-imageio-jpeg2000:{fmt_jpeg_version}
-.. |Download_URL| replace:: fscrawler-{fmt_release}
+.. |Download_URL| replace:: Sonatype
 .. |Maven_Central| replace:: Maven Central
 .. |Sonatype| replace:: Sonatype
 
