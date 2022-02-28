@@ -42,6 +42,7 @@ import org.junit.BeforeClass;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.SocketException;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -88,7 +89,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected Path currentTestResourceDir;
 
     private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
-    private final static String DEFAULT_TEST_CLUSTER_URL = "http://127.0.0.1:9200";
+    private final static String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
+    private final static String DEFAULT_TEST_CLUSTER_HTTP_URL = "http://127.0.0.1:9200";
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
@@ -238,11 +240,31 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                 .setUsername(testClusterUser)
                 .setPassword(testClusterPass)
+                .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
 
         documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
-        documentService.start();
+
+        try {
+            documentService.start();
+        } catch (ElasticsearchClientException e) {
+            if (e.getCause() instanceof SocketException && testClusterUrl.equals(DEFAULT_TEST_CLUSTER_URL)) {
+                staticLogger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http");
+                testClusterUrl=DEFAULT_TEST_CLUSTER_HTTP_URL;
+                staticLogger.info("Starting a client against [{}]", testClusterUrl);
+                // We build the elasticsearch Client based on the parameters
+                elasticsearchWithSecurity = Elasticsearch.builder()
+                        .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
+                        .setUsername(testClusterUser)
+                        .setPassword(testClusterPass)
+                        .setSslVerification(false)
+                        .build();
+                fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
+                documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
+            }
+        }
+
         managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
         managementService.start();
 
@@ -304,6 +326,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         builder.setUsername(testClusterUser);
         builder.setPassword(testClusterPass);
+        builder.setSslVerification(false);
 
         return builder.build();
     }

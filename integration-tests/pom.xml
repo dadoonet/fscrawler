@@ -13,7 +13,7 @@
     <name>FSCrawler Integration Tests</name>
 
     <properties>
-        <integ.elasticsearch.version>${elasticsearch7.version}</integ.elasticsearch.version>
+        <integ.elasticsearch.version>${elasticsearch8.version}</integ.elasticsearch.version>
         <contrib.dir>${project.basedir}/../contrib</contrib.dir>
     </properties>
 
@@ -192,6 +192,13 @@
             </build>
         </profile>
 
+        <!-- We are building a profile that can be activated from the IDE -->
+        <profile>
+            <id>es-8x</id>
+            <properties>
+                <integ.elasticsearch.version>${elasticsearch8.version}</integ.elasticsearch.version>
+            </properties>
+        </profile>
         <!-- We are building a profile that can be activated from the IDE -->
         <profile>
             <id>es-7x</id>

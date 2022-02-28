@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Properties;
 
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHECK_NODES_EVERY;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -68,7 +69,8 @@ public class ElasticsearchClientIT extends AbstractITCase {
     @Before
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        esClient.deleteIndex(getCrawlerName() + "*");
+        esClient.deleteIndex(getCrawlerName());
+        esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
     }
 
     @Test
@@ -581,6 +583,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                         new ServerUrl(testClusterUrl)))
                 .setUsername(testClusterUser)
                 .setPassword(testClusterPass)
+                .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
         try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
@@ -601,6 +604,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                         new ServerUrl(testClusterUrl)))
                 .setUsername(testClusterUser)
                 .setPassword(testClusterPass)
+                .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
         try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
@@ -634,6 +638,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                         new ServerUrl("http://127.0.0.1:9207")))
                 .setUsername(testClusterUser)
                 .setPassword(testClusterPass)
+                .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
 
@@ -654,6 +659,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")))
                 .setUsername(testClusterUser)
                 .setPassword(testClusterPass)
+                .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
 
@@ -674,6 +680,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
         // Build a client with a null password
         Elasticsearch elasticsearch = Elasticsearch.builder()
                 .setNodes(List.of(new ServerUrl(testClusterUrl)))
+                .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
 

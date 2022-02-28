@@ -45,7 +45,8 @@ public abstract class AbstractFsCrawlerITCase extends AbstractRestITCase {
     @Before
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        managementService.getClient().deleteIndex(getCrawlerName() + "*");
+        managementService.getClient().deleteIndex(getCrawlerName());
+        managementService.getClient().deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
     }
 
     @After

@@ -129,19 +129,19 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "          },\n" +
                 "          \"indexing_date\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"created\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"last_modified\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"last_accessed\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"checksum\": {\n" +
                 "            \"type\": \"keyword\"\n" +
@@ -159,7 +159,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "          },\n" +
                 "          \"date\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"keywords\": {\n" +
                 "            \"type\": \"text\"\n" +
@@ -208,15 +208,15 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "          },\n" +
                 "          \"created\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"print_date\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"metadata_date\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"latitude\": {\n" +
                 "            \"type\": \"text\"\n" +
@@ -445,19 +445,19 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "          },\n" +
                 "          \"indexing_date\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"created\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"last_modified\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"last_accessed\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"checksum\": {\n" +
                 "            \"type\": \"keyword\"\n" +
@@ -475,7 +475,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "          },\n" +
                 "          \"date\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"keywords\": {\n" +
                 "            \"type\": \"text\"\n" +
@@ -524,15 +524,15 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "          },\n" +
                 "          \"created\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"print_date\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"metadata_date\": {\n" +
                 "            \"type\": \"date\",\n" +
-                "            \"format\": \"dateOptionalTime\"\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          },\n" +
                 "          \"latitude\": {\n" +
                 "            \"type\": \"text\"\n" +
@@ -771,6 +771,11 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "  },\n" +
                 "  \"is_searchable\": true\n" +
                 "}\n"));
+    }
+
+    @Test
+    public void failMissingTests() {
+        fail("Implement me");
     }
 
     @Test

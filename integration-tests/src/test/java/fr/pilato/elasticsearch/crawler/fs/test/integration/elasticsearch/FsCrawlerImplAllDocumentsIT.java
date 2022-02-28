@@ -43,6 +43,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -76,7 +77,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         }
 
         staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents*]");
-        managementService.getClient().deleteIndex("fscrawler_test_all_documents*");
+        managementService.getClient().deleteIndex("fscrawler_test_all_documents");
+        managementService.getClient().deleteIndex("fscrawler_test_all_documents" + INDEX_SUFFIX_FOLDER);
 
         staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 

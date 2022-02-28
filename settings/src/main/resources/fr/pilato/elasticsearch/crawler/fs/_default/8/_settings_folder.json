@@ -1,0 +1,64 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "fscrawler_path": {
+          "tokenizer": "fscrawler_path"
+        }
+      },
+      "tokenizer": {
+        "fscrawler_path": {
+          "type": "path_hierarchy"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties" : {
+      "file": {
+        "properties": {
+          "content_type": {
+            "type": "keyword"
+          },
+          "filename": {
+            "type": "keyword",
+            "store": true
+          }
+        }
+      },
+      "path": {
+        "properties": {
+          "real": {
+            "type": "keyword",
+            "fields": {
+              "tree": {
+                "type": "text",
+                "analyzer": "fscrawler_path",
+                "fielddata": true
+              },
+              "fulltext": {
+                "type": "text"
+              }
+            }
+          },
+          "root": {
+            "type": "keyword"
+          },
+          "virtual": {
+            "type": "keyword",
+            "fields": {
+              "tree": {
+                "type": "text",
+                "analyzer": "fscrawler_path",
+                "fielddata": true
+              },
+              "fulltext": {
+                "type": "text"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
