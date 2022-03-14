@@ -774,8 +774,407 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
     }
 
     @Test
-    public void failMissingTests() {
-        fail("Implement me");
+    public void fsSettingsForDocVersion8() throws Exception {
+        String settings = readJsonFile(rootTmpDir, metadataDir, 8, INDEX_SETTINGS_FILE);
+        logger.info("Settings used for doc index v8 : " + settings);
+        assertThat(settings, is("{\n" +
+                "  \"settings\": {\n" +
+                "    \"number_of_shards\": 1,\n" +
+                "    \"index.mapping.total_fields.limit\": 2000,\n" +
+                "    \"analysis\": {\n" +
+                "      \"analyzer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"tokenizer\": \"fscrawler_path\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"tokenizer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"type\": \"path_hierarchy\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"mappings\": {\n" +
+                "    \"dynamic_templates\": [\n" +
+                "      {\n" +
+                "        \"raw_as_text\": {\n" +
+                "          \"path_match\": \"meta.raw.*\",\n" +
+                "          \"mapping\": {\n" +
+                "            \"type\": \"text\",\n" +
+                "            \"fields\": {\n" +
+                "              \"keyword\": {\n" +
+                "                \"type\": \"keyword\",\n" +
+                "                \"ignore_above\": 256\n" +
+                "              }\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
+                "      }\n" +
+                "    ],\n" +
+                "    \"properties\": {\n" +
+                "      \"attachment\": {\n" +
+                "        \"type\": \"binary\",\n" +
+                "        \"doc_values\": false\n" +
+                "      },\n" +
+                "      \"attributes\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"group\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"owner\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          }\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"content\": {\n" +
+                "        \"type\": \"text\"\n" +
+                "      },\n" +
+                "      \"file\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"content_type\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"filename\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"store\": true\n" +
+                "          },\n" +
+                "          \"extension\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"filesize\": {\n" +
+                "            \"type\": \"long\"\n" +
+                "          },\n" +
+                "          \"indexed_chars\": {\n" +
+                "            \"type\": \"long\"\n" +
+                "          },\n" +
+                "          \"indexing_date\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
+                "          },\n" +
+                "          \"created\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
+                "          },\n" +
+                "          \"last_modified\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
+                "          },\n" +
+                "          \"last_accessed\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
+                "          },\n" +
+                "          \"checksum\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"url\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"index\": false\n" +
+                "          }\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"meta\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"author\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"date\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
+                "          },\n" +
+                "          \"keywords\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"title\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"language\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"format\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"identifier\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"contributor\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"coverage\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"modifier\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"creator_tool\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"publisher\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"relation\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"rights\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"source\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"type\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"description\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"created\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
+                "          },\n" +
+                "          \"print_date\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
+                "          },\n" +
+                "          \"metadata_date\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
+                "          },\n" +
+                "          \"latitude\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"longitude\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"altitude\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          },\n" +
+                "          \"rating\": {\n" +
+                "            \"type\": \"byte\"\n" +
+                "          },\n" +
+                "          \"comments\": {\n" +
+                "            \"type\": \"text\"\n" +
+                "          }\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"path\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"real\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"fields\": {\n" +
+                "              \"tree\": {\n" +
+                "                \"type\": \"text\",\n" +
+                "                \"analyzer\": \"fscrawler_path\",\n" +
+                "                \"fielddata\": true\n" +
+                "              },\n" +
+                "              \"fulltext\": {\n" +
+                "                \"type\": \"text\"\n" +
+                "              }\n" +
+                "            }\n" +
+                "          },\n" +
+                "          \"root\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"virtual\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"fields\": {\n" +
+                "              \"tree\": {\n" +
+                "                \"type\": \"text\",\n" +
+                "                \"analyzer\": \"fscrawler_path\",\n" +
+                "                \"fielddata\": true\n" +
+                "              },\n" +
+                "              \"fulltext\": {\n" +
+                "                \"type\": \"text\"\n" +
+                "              }\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsSettingsForFolderVersion8() throws Exception {
+        String settings = readJsonFile(rootTmpDir, metadataDir, 8, INDEX_SETTINGS_FOLDER_FILE);
+        logger.info("Settings used for folder index v8 : " + settings);
+        assertThat(settings, is("{\n" +
+                "  \"settings\": {\n" +
+                "    \"analysis\": {\n" +
+                "      \"analyzer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"tokenizer\": \"fscrawler_path\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"tokenizer\": {\n" +
+                "        \"fscrawler_path\": {\n" +
+                "          \"type\": \"path_hierarchy\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"mappings\": {\n" +
+                "    \"properties\" : {\n" +
+                "      \"file\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"content_type\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"filename\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"store\": true\n" +
+                "          }\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"path\": {\n" +
+                "        \"properties\": {\n" +
+                "          \"real\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"fields\": {\n" +
+                "              \"tree\": {\n" +
+                "                \"type\": \"text\",\n" +
+                "                \"analyzer\": \"fscrawler_path\",\n" +
+                "                \"fielddata\": true\n" +
+                "              },\n" +
+                "              \"fulltext\": {\n" +
+                "                \"type\": \"text\"\n" +
+                "              }\n" +
+                "            }\n" +
+                "          },\n" +
+                "          \"root\": {\n" +
+                "            \"type\": \"keyword\"\n" +
+                "          },\n" +
+                "          \"virtual\": {\n" +
+                "            \"type\": \"keyword\",\n" +
+                "            \"fields\": {\n" +
+                "              \"tree\": {\n" +
+                "                \"type\": \"text\",\n" +
+                "                \"analyzer\": \"fscrawler_path\",\n" +
+                "                \"fielddata\": true\n" +
+                "              },\n" +
+                "              \"fulltext\": {\n" +
+                "                \"type\": \"text\"\n" +
+                "              }\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsSettingsForWorkplaceSearchVersion8() throws Exception {
+        String settings = readJsonFile(rootTmpDir, metadataDir, 8, INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
+        logger.info("Settings used for workplace search v8 : " + settings);
+        assertThat(settings, is("{\n" +
+                "  \"name\": \"SOURCE_NAME\",\n" +
+                "  \"schema\": {\n" +
+                "    \"title\": \"text\",\n" +
+                "    \"name\": \"text\",\n" +
+                "    \"body\": \"text\",\n" +
+                "    \"url\": \"text\",\n" +
+                "    \"author\": \"text\",\n" +
+                "    \"keywords\": \"text\",\n" +
+                "    \"language\": \"text\",\n" +
+                "    \"comments\": \"text\",\n" +
+                "    \"mime_type\": \"text\",\n" +
+                "    \"extension\": \"text\",\n" +
+                "    \"size\": \"number\",\n" +
+                "    \"text_size\": \"number\",\n" +
+                "    \"last_modified\": \"date\",\n" +
+                "    \"created_at\": \"date\",\n" +
+                "    \"path\": \"text\"\n" +
+                "  },\n" +
+                "  \"display\": {\n" +
+                "    \"title_field\": \"title\",\n" +
+                "    \"subtitle_field\": \"name\",\n" +
+                "    \"description_field\": \"body\",\n" +
+                "    \"url_field\": \"url\",\n" +
+                "    \"media_type_field\": \"mime_type\",\n" +
+                "    \"created_by_field\": \"author\",\n" +
+                "    \"detail_fields\": [\n" +
+                "      {\n" +
+                "        \"field_name\": \"author\",\n" +
+                "        \"label\": \"Author\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"keywords\",\n" +
+                "        \"label\": \"Keywords\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"language\",\n" +
+                "        \"label\": \"Language\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"last_modified\",\n" +
+                "        \"label\": \"Last Modification Date\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"created_at\",\n" +
+                "        \"label\": \"Creation date\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"comments\",\n" +
+                "        \"label\": \"Comments\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"mime_type\",\n" +
+                "        \"label\": \"Mime Type\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"extension\",\n" +
+                "        \"label\": \"Extension\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"size\",\n" +
+                "        \"label\": \"File size\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"text_size\",\n" +
+                "        \"label\": \"Extracted text size\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"path\",\n" +
+                "        \"label\": \"Path\"\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"field_name\": \"body\",\n" +
+                "        \"label\": \"Content\"\n" +
+                "      }\n" +
+                "    ],\n" +
+                "    \"color\": \"#000000\"\n" +
+                "  },\n" +
+                "  \"is_searchable\": true\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsSettingsForDocSpecificJobVersion8() throws Exception {
+        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 8, INDEX_SETTINGS_FILE);
+        assertThat(settings, is("{\n" +
+                "  // This is settings for version 8\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsSettingsForFolderSpecificJobVersion8() throws Exception {
+        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 8, INDEX_SETTINGS_FOLDER_FILE);
+        assertThat(settings, is("{\n" +
+                "  // This is folder settings for version 8\n" +
+                "}\n"));
+    }
+
+    @Test
+    public void fsSettingsForWorkplaceSearchSpecificJobVersion8() throws Exception {
+        String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 8, INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
+        assertThat(settings, is("{\n" +
+                "  \"name\": \"SOURCE_NAME\",\n" +
+                "  \"schema\": {\n" +
+                "    \"title\": \"text\"\n" +
+                "  },\n" +
+                "  \"is_searchable\": true\n" +
+                "}\n"));
     }
 
     @Test
