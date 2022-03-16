@@ -265,11 +265,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
         }
 
-        managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-        managementService.start();
-
         // We make sure the cluster is running
         try {
+            managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
+            managementService.start();
+
             String version = managementService.getVersion();
             staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
         } catch (ConnectException e) {

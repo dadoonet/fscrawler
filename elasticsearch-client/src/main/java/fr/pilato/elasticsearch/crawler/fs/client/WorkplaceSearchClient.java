@@ -88,11 +88,11 @@ public class WorkplaceSearchClient implements IWorkplaceSearchClient {
 
     @Override
     public void close() {
-        logger.debug("Closing Workplace Search V7 client");
+        logger.debug("Closing Workplace Search client");
         if (wpSearchClient != null) {
             wpSearchClient.close();
         }
-        logger.debug("Workplace Search V7 client closed");
+        logger.debug("Workplace Search client closed");
     }
 
     @Override

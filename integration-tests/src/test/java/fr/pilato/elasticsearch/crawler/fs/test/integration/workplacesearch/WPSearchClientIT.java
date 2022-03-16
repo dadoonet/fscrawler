@@ -200,7 +200,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             }
 
             // We need to wait until it's done
-            countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId), 3L, null);
+            countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-documents-custom-" + customSourceId), 3L, null);
 
             // Search using fulltext search
             {

@@ -151,16 +151,18 @@ public class ElasticsearchClient implements IElasticsearchClient {
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(
                 settings.getElasticsearch().getUsername(),
                 settings.getElasticsearch().getPassword());
-        SSLContext sslContext;
+        SSLContext sslContext = null;
         if (settings.getElasticsearch().getSslVerification()) {
             // TODO implement this part and add elasticsearch ssl settings
+            // If we have a truststore and a keystore, let's use it
+            /*
             SslConfigurator sslConfig = SslConfigurator.newInstance()
                     .trustStoreFile("./truststore_client")
                     .trustStorePassword("secret-password-for-truststore")
                     .keyStoreFile("./keystore_client")
                     .keyPassword("secret-password-for-keystore");
-
             sslContext = sslConfig.createSSLContext();
+            */
         } else {
             // Trusting all certificates. For test purposes only.
             try {
@@ -173,11 +175,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
         }
 
-        client = ClientBuilder.newBuilder()
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .withConfig(config)
-                .sslContext(sslContext)
-                .register(feature)
-                .build();
+                .register(feature);
+        if (sslContext != null) {
+            clientBuilder.sslContext(sslContext);
+        }
+        client =  clientBuilder.build();
         if (logger.isTraceEnabled()) {
             client
 //                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_NAME_CLIENT, ElasticsearchClient.class.getName())
@@ -349,23 +353,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 new AbstractMap.SimpleImmutableEntry<>("timeout", "5s"));
     }
 
-    private static final TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-
-        @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) {}
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers() { return null; }
+    private static final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+        @Override public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+        @Override public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+        @Override public X509Certificate[] getAcceptedIssuers() { return null; }
     }};
 
     public static class NullHostNameVerifier implements HostnameVerifier {
-
-        @Override
-        public boolean verify(String arg0, SSLSession arg1) { return true; }
-
+        @Override public boolean verify(String arg0, SSLSession arg1) { return true; }
     }
 
     @Override
