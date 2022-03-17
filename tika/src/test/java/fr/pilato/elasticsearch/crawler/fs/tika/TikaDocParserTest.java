@@ -23,10 +23,10 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Ocr;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.tika.exception.TikaConfigException;
-import org.apache.tika.parser.external.ExternalParser;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -665,6 +665,39 @@ public class TikaDocParserTest extends DocParserTestCase {
         } catch (AssertionError e) {
             logger.info("We were not able to get the Hebrew content with OCR. May be the language pack was not installed?");
         }
+    }
+
+    @Test
+    public void testCustomTikaConfig() throws IOException, URISyntaxException {
+        InputStream tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.xml");
+        Path testTikaConfig = rootTmpDir.resolve("tika-config");
+        if (Files.notExists(testTikaConfig)) {
+            Files.createDirectory(testTikaConfig);
+        }
+        Files.copy(tikaConfigIS, testTikaConfig.resolve("tikaConfig.xml"));
+
+        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
+            .setFs(Fs.builder().setTikaConfigPath(testTikaConfig.resolve("tikaConfig.xml").toString()).build())
+            .build();
+
+        // Test that default parser for HTML is HTML parser
+        Doc doc = extractFromFile("test.html");
+        assertThat(doc.getContent(), not(containsString("Test Tika title")));
+        assertThat(doc.getContent(), containsString("This second part of the text is in Page 2"));
+
+        // Test HTML parser is never used, TXT parser used instead
+        doc = extractFromFile("test.html", fsSettings);
+        assertThat(doc.getContent(), containsString("<title>Test Tika title</title>"));
+
+        // Test that default parser for XHTML is HTML parser
+        doc = extractFromFile("test.xhtml");
+        assertThat(doc.getContent(), not(containsString("Test Tika title")));
+        assertThat(doc.getContent(), containsString("This is an example of XHTML"));
+
+        // Test XML parser is used to parse XHTML
+        doc = extractFromFile("test.xhtml", fsSettings);
+        assertThat(doc.getContent(), containsString("Test Tika title"));
+        assertThat(doc.getContent(), not(containsString("<title>Test Tika title</title>")));
     }
 
     @Test

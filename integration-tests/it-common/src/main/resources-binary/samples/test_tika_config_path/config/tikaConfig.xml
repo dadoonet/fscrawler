@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<properties>
+  <service-loader dynamic="true"/>
+  <service-loader loadErrorHandler="IGNORE"/>
+  <parsers>
+    <!-- Default Parser, but never use HTML parser -->
+    <parser class="org.apache.tika.parser.DefaultParser">
+      <parser-exclude class="org.apache.tika.parser.html.HtmlParser"/>
+    </parser>
+    <!-- Use a different parser for XHTML -->
+    <parser class="org.apache.tika.parser.xml.XMLParser">
+      <mime>application/xhtml+xml</mime>
+    </parser>
+  </parsers>
+</properties>

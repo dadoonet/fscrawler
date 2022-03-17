@@ -227,6 +227,7 @@ rst_prolog = rst_prolog + """
 .. |ES| replace:: Elasticsearch
 .. |Tika_format| replace:: Tika
 .. |Tika_version| replace:: Tika {fmt_tika_version}
+.. |Tika_configuring| replace:: Configuring Tika
 .. |ES_version6| replace:: Elasticsearch {fmt_es_version6}
 .. |ES_version7| replace:: Elasticsearch {fmt_es_version7}
 .. |Tiff_version| replace:: jai-imageio-core:{fmt_tiff_version}
@@ -239,6 +240,7 @@ rst_prolog = rst_prolog + """
 .. _ES: https://www.elastic.co/products/elasticsearch
 .. _Tika_format: https://tika.apache.org/{fmt_tika_version}/formats.html#Supported_Document_Formats
 .. _Tika_version: https://tika.apache.org/{fmt_tika_version}/
+.. _Tika_configuring: https://tika.apache.org/{fmt_tika_version}/configuring.html
 .. _ES_version6: https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
 .. _ES_version7: https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
 .. _Tiff_version: https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/{fmt_tiff_version}/
