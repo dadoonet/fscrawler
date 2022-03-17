@@ -198,26 +198,6 @@
             <properties>
                 <integ.elasticsearch.version>${elasticsearch7.version}</integ.elasticsearch.version>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>de.scravy</groupId>
-                        <artifactId>waitfor-maven-plugin</artifactId>
-                        <configuration>
-                            <checks>
-                                <check>
-                                    <url>http://localhost:9200/</url>
-                                    <statusCode>401</statusCode>
-                                </check>
-                                <check>
-                                    <url>http://localhost:3002/</url>
-                                    <statusCode>200</statusCode>
-                                </check>
-                            </checks>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
         <!-- Profile for ES6: No enterprise search. No security. -->
         <profile>

@@ -38,7 +38,7 @@
     <!--suppress CheckTagEmptyBody -->
     <properties>
         <elasticsearch8.version>8.1.0</elasticsearch8.version>
-        <elasticsearch7.version>7.17.0</elasticsearch7.version>
+        <elasticsearch7.version>7.17.1</elasticsearch7.version>
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch8.version}</elasticsearch.version>
 
@@ -72,10 +72,8 @@
 
         <!-- For integration tests using Docker Compose or external cluster -->
         <contrib.dir>${project.basedir}/contrib</contrib.dir>
-        <integ.elasticsearch.image>docker.elastic.co/elasticsearch/elasticsearch</integ.elasticsearch.image>
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.elasticsearch.port>9200</integ.elasticsearch.port>
-        <integ.workplace.image>docker.elastic.co/enterprise-search/enterprise-search</integ.workplace.image>
         <integ.workplace.port>3002</integ.workplace.port>
         <tests.cluster.url></tests.cluster.url>
         <tests.cluster.cloud_id></tests.cluster.cloud_id>
@@ -293,13 +291,11 @@
                     <configuration>
                         <envFile>${contrib.dir}/docker-compose-it/.env</envFile>
                         <envVars>
-                            <ELASTIC_VERSION>${integ.elasticsearch.version}</ELASTIC_VERSION>
+                            <STACK_VERSION>${integ.elasticsearch.version}</STACK_VERSION>
                             <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
-                            <IMG_ELASTICSEARCH>${integ.elasticsearch.image}</IMG_ELASTICSEARCH>
-                            <ELASTICSEARCH_PORT>${integ.elasticsearch.port}</ELASTICSEARCH_PORT>
-                            <IMG_ENTERPRISE_SEARCH>${integ.workplace.image}</IMG_ENTERPRISE_SEARCH>
+                            <ES_PORT>${integ.elasticsearch.port}</ES_PORT>
                             <ENTERPRISE_SEARCH_PORT>${integ.workplace.port}</ENTERPRISE_SEARCH_PORT>
-                            <LICENSE_TYPE>trial</LICENSE_TYPE>
+                            <LICENSE>trial</LICENSE>
                         </envVars>
                         <composeFiles>
                             <composeFile>${contrib.dir}/docker-compose-it/docker-compose.yml</composeFile>
