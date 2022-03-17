@@ -224,6 +224,7 @@
                             <tests.workplace.user>${tests.workplace.user}</tests.workplace.user>
                             <tests.workplace.pass>${tests.workplace.pass}</tests.workplace.pass>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
+                            <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
                         </systemProperties>
                     </configuration>
 
