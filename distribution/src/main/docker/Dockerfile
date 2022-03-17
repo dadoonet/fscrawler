@@ -1,12 +1,13 @@
-FROM openjdk:15.0.2-jdk-slim-buster
+FROM openjdk:17-jdk-slim-bullseye
 
 ARG langsPkg
 
 RUN set -ex \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-    "gettext-base=0.19.*" \
+    gettext-base \
     procps \
+    curl \
     ${langsPkg} \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*

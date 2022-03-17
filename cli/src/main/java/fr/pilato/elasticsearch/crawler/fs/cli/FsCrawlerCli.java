@@ -133,7 +133,7 @@ public class FsCrawlerCli {
             } else {
                 if (console != null) {
                     console.addFilter(LevelRangeFilter.createFilter(
-                            commands.debug ? Level.DEBUG : Level.TRACE,
+                            commands.debug ? Level.TRACE : Level.ALL,
                             Level.ALL,
                             Filter.Result.DENY,
                             Filter.Result.ACCEPT));

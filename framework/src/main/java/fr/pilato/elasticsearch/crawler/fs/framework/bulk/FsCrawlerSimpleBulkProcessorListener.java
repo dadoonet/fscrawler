@@ -44,8 +44,7 @@ public class FsCrawlerSimpleBulkProcessorListener<
             if (logger.isDebugEnabled()) {
                 for (FsCrawlerBulkResponse.BulkItemResponse<O> item : response.getItems()) {
                     if (item.isFailed()) {
-                        logger.debug("Error for {} for {} operation: {}", item.getOperation(),
-                                item.getOpType(), item.getFailureMessage());
+                        logger.debug("Error for [{}]: {}", item.getOperation(), item.getFailureMessage());
                     }
                 }
             }

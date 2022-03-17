@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="fatal">
+   <Appenders>
+      <Console name="CONSOLE" target="SYSTEM_OUT">
+         <PatternLayout pattern="%d{ABSOLUTE} %highlight{%-5p} [%c{1.}] %m%n"/>
+      </Console>
+   </Appenders>
+   <Loggers>
+      <Logger name="fr.pilato.elasticsearch.crawler.fs" level="info" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="info" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="org.glassfish" level="info" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Root level="info">
+         <AppenderRef ref="CONSOLE"/>
+      </Root>
+   </Loggers>
+</Configuration>

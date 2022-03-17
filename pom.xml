@@ -42,10 +42,10 @@
         <elasticsearch.version>${elasticsearch7.version}</elasticsearch.version>
 
         <tika.version>2.2.1</tika.version>
-        <jackson.version>2.13.1</jackson.version>
+        <jackson.version>2.13.2</jackson.version>
         <jsonpath.version>2.7.0</jsonpath.version>
         <slf4j.version>1.7.36</slf4j.version>
-        <log4j.version>2.17.1</log4j.version>
+        <log4j.version>2.17.2</log4j.version>
         <jansi.version>2.4.0</jansi.version>
         <jersey.version>3.0.4</jersey.version>
 
@@ -143,7 +143,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.10.0</version>
+                    <version>3.10.1</version>
                     <configuration>
                         <release>${java.compiler.version}</release>
                         <encoding>UTF-8</encoding>
@@ -190,7 +190,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <groupId>com.carrotsearch.randomizedtesting</groupId>
@@ -280,7 +280,7 @@
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.39.0</version>
+                    <version>0.39.1</version>
                 </plugin>
 
                 <!-- For IT using Docker Compose -->
@@ -515,11 +515,6 @@
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
-                <artifactId>fscrawler-elasticsearch-client-v6</artifactId>
-                <version>2.10-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-elasticsearch-client-v7</artifactId>
                 <version>2.10-SNAPSHOT</version>
             </dependency>
@@ -743,7 +738,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>31.0.1-jre</version>
+                <version>31.1-jre</version>
             </dependency>
 
             <!-- Version conflict between

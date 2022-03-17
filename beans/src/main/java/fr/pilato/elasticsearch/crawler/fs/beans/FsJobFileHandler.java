@@ -24,6 +24,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
+
 /**
  * Provides utility methods to read and write job status files (_status.json)
  */
@@ -42,7 +44,7 @@ public class FsJobFileHandler extends MetaFileHandler {
      * @throws IOException in case of error while reading
      */
     public FsJob read(String jobname) throws IOException {
-        return FsJobParser.fromJson(readFile(jobname, FILENAME));
+        return prettyMapper.readValue(readFile(jobname, FILENAME), FsJob.class);
     }
 
     /**
@@ -52,7 +54,7 @@ public class FsJobFileHandler extends MetaFileHandler {
      * @throws IOException in case of error while reading
      */
     public void write(String jobname, FsJob job) throws IOException {
-        writeFile(jobname, FILENAME, FsJobParser.toJson(job));
+        writeFile(jobname, FILENAME, prettyMapper.writeValueAsString(job));
     }
 
     /**

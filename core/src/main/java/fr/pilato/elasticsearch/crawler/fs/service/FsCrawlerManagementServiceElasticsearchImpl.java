@@ -21,13 +21,13 @@ package fr.pilato.elasticsearch.crawler.fs.service;
 
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
-import fr.pilato.elasticsearch.crawler.fs.beans.FolderParser;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientUtil;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
@@ -38,6 +38,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+
 public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerManagementService {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerManagementServiceElasticsearchImpl.class);
@@ -46,20 +48,20 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     // searching fo 10000 files (which is somehow limited).
     private static final int REQUEST_SIZE = 10000;
 
-    private final ElasticsearchClient client;
+    private final IElasticsearchClient client;
     private final FsSettings settings;
 
     public FsCrawlerManagementServiceElasticsearchImpl(Path config, FsSettings settings) {
         this.settings = settings;
-        this.client = ElasticsearchClientUtil.getInstance(config, settings);
+        this.client = new ElasticsearchClient(config, settings);
     }
 
-    public ElasticsearchClient getClient() {
+    public IElasticsearchClient getClient() {
         return client;
     }
 
     @Override
-    public void start() throws IOException {
+    public void start() throws IOException, ElasticsearchClientException {
         client.start();
         logger.debug("Elasticsearch Management Service started");
     }
@@ -71,7 +73,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     }
 
     @Override
-    public String getVersion() throws IOException {
+    public String getVersion() throws IOException, ElasticsearchClientException {
         return client.getVersion();
     }
 
@@ -88,16 +90,16 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                 new ESSearchRequest()
                         .withIndex(settings.getElasticsearch().getIndex())
                         .withSize(REQUEST_SIZE)
-                        .addField("file.filename")
+                        .addStoredField("file.filename")
                         .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
 
         if (response.getHits() != null) {
             for (ESSearchHit hit : response.getHits()) {
                 String name;
-                if (hit.getFields() != null
-                        && hit.getFields().get("file.filename") != null) {
+                if (hit.getStoredFields() != null
+                        && hit.getStoredFields().get("file.filename") != null) {
                     // In case someone disabled _source which is not recommended
-                    name = hit.getFields().get("file.filename").getValue();
+                    name = hit.getStoredFields().get("file.filename").get(0);
                 } else {
                     // Houston, we have a problem ! We can't get the old files from ES
                     logger.warn("Can't find stored field name to check existing filenames in path [{}]. " +
@@ -125,7 +127,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
 
         if (response.getHits() != null) {
             for (ESSearchHit hit : response.getHits()) {
-                files.add(JsonPath.read(hit.getSourceAsString(), "$.path.real"));
+                files.add(JsonPath.read(hit.getSource(), "$.path.real"));
             }
         }
 
@@ -134,7 +136,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
 
     @Override
     public void storeVisitedDirectory(String indexFolder, String id, Folder folder) {
-        client.indexRawJson(indexFolder, id, FolderParser.toJson(folder), null);
+        client.indexRawJson(indexFolder, id, serialize(folder), null);
     }
 
     @Override
