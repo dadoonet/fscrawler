@@ -33,12 +33,14 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import jakarta.ws.rs.ProcessingException;
 import org.apache.logging.log4j.Level;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import javax.net.ssl.SSLException;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -249,7 +251,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         try {
             documentService.start();
         } catch (ElasticsearchClientException e) {
-            if (e.getCause() instanceof SocketException && testClusterUrl.equals(DEFAULT_TEST_CLUSTER_URL)) {
+            if ((e.getCause() instanceof SocketException ||
+                    (e.getCause() instanceof ProcessingException && e.getCause().getCause() instanceof SSLException))
+                            && testClusterUrl.equals(DEFAULT_TEST_CLUSTER_URL)) {
                 staticLogger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http");
                 testClusterUrl=DEFAULT_TEST_CLUSTER_HTTP_URL;
                 staticLogger.info("Starting a client against [{}]", testClusterUrl);
@@ -262,6 +266,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                         .build();
                 fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
                 documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
+                documentService.start();
             }
         }
 

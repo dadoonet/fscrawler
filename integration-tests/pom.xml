@@ -211,6 +211,17 @@
                         <groupId>com.dkanejs.maven.plugins</groupId>
                         <artifactId>docker-compose-maven-plugin</artifactId>
                         <configuration>
+                            <envFile>${contrib.dir}/docker-compose-it-v6/.env</envFile>
+                            <envVars>
+                                <STACK_VERSION>${integ.elasticsearch.version}</STACK_VERSION>
+                                <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
+                                <ES_PORT>${integ.elasticsearch.port}</ES_PORT>
+                                <ENTERPRISE_SEARCH_PORT>${integ.workplace.port}</ENTERPRISE_SEARCH_PORT>
+                                <LICENSE>basic</LICENSE>
+                            </envVars>
+                            <composeFiles>
+                                <composeFile>${contrib.dir}/docker-compose-it-v6/docker-compose.yml</composeFile>
+                            </composeFiles>
                             <services>
                                 <service>elasticsearch</service>
                             </services>
