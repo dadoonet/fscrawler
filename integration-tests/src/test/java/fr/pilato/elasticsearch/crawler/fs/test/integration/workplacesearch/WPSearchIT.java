@@ -289,7 +289,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
 
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                countTestHelper(client, sourceId, 4L, TimeValue.timeValueSeconds(5));
+                countTestHelper(client, sourceId, 4L, TimeValue.timeValueSeconds(30));
             }
 
             {
