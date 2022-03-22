@@ -142,6 +142,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getFs().getIncludes(), nullValue());
         assertThat(settings.getFs().getExcludes(), contains("*/~*"));
         assertThat(settings.getFs().getIndexedChars(), nullValue());
+        assertThat(settings.getFs().getTikaConfigPath(), nullValue());
         assertThat(settings.getFs().getUpdateRate(), is(TimeValue.timeValueMinutes(15)));
         assertThat(settings.getFs().getUrl(), is("/tmp/es"));
         assertThat(settings.getFs().isAddFilesize(), is(true));

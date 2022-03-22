@@ -58,6 +58,7 @@ public class Fs {
     private Ocr ocr = new Ocr();
     private ByteSizeValue ignoreAbove = null;
     private boolean followSymlinks = false;
+    private String tikaConfigPath = null;
 
     public static Builder builder() {
         return new Builder();
@@ -91,6 +92,7 @@ public class Fs {
         private Ocr ocr = new Ocr();
         private ByteSizeValue ignoreAbove = null;
         private boolean followSymlinks = false;
+        private String tikaConfigPath = null;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -246,10 +248,16 @@ public class Fs {
             return this;
         }
 
+        public Builder setTikaConfigPath(String tikaConfigPath) {
+            this.tikaConfigPath = tikaConfigPath;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks,
+                    tikaConfigPath);
         }
     }
 
@@ -260,7 +268,8 @@ public class Fs {
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, List<String> filters, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove, boolean followSymlinks) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove, boolean followSymlinks,
+               String tikaConfigPath) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -284,6 +293,7 @@ public class Fs {
         this.ocr = ocr;
         this.ignoreAbove = ignoreAbove;
         this.followSymlinks = followSymlinks;
+        this.tikaConfigPath = tikaConfigPath;
     }
 
     public String getUrl() {
@@ -486,6 +496,14 @@ public class Fs {
         this.followSymlinks = followSymlinks;
     }
 
+    public String getTikaConfigPath() {
+      return tikaConfigPath;
+    }
+
+    public void setTikaConfigPath(String tikaConfigPath) {
+      this.tikaConfigPath = tikaConfigPath;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -513,14 +531,15 @@ public class Fs {
                 Objects.equals(indexedChars, fs.indexedChars) &&
                 Objects.equals(checksum, fs.checksum) &&
                 Objects.equals(ocr, fs.ocr) &&
-                Objects.equals(ignoreAbove, fs.ignoreAbove);
+                Objects.equals(ignoreAbove, fs.ignoreAbove) &&
+                Objects.equals(tikaConfigPath, fs.tikaConfigPath);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
                 removeDeleted, addAsInnerObject, storeSource, indexContent, indexedChars, attributesSupport, rawMetadata, xmlSupport,
-                checksum, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks);
+                checksum, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks, tikaConfigPath);
     }
 
     @Override
@@ -548,6 +567,7 @@ public class Fs {
                 ", ocr=" + ocr +
                 ", ignoreAbove=" + ignoreAbove +
                 ", followSymlinks=" + followSymlinks +
+                ", tikaConfigPath='" + tikaConfigPath + '\'' +
                 '}';
     }
 }

@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.config.ServiceLoader;
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.exception.WriteLimitReachedException;
@@ -43,6 +44,7 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.WriteOutContentHandler;
 import org.xml.sax.SAXException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -81,63 +83,79 @@ public class TikaInstance {
 
     private static void initParser(Fs fs) {
         if (parser == null) {
-            PDFParser pdfParser = new PDFParser();
-            DefaultParser defaultParser;
-            TesseractOCRParser ocrParser;
-
-            // To solve https://issues.apache.org/jira/browse/TIKA-3364
-            // PDF content might be extracted multiple times.
-            pdfParser.getPDFParserConfig().setExtractBookmarksText(false);
-
-             if (ocrActivated) {
-                logger.debug("OCR is activated.");
-                ocrParser = new TesseractOCRParser();
-                if (fs.getOcr().getPath() != null) {
-                    logger.debug("Tesseract Path set to [{}].", fs.getOcr().getPath());
-                    ocrParser.setTesseractPath(fs.getOcr().getPath());
+            if (fs.getTikaConfigPath() != null) {
+                if (!(new File(fs.getTikaConfigPath())).exists()) {
+                    throw new RuntimeException("Tika configuration file " + fs.getTikaConfigPath() + " not found!");
                 }
-                if (fs.getOcr().getDataPath() != null) {
-                    logger.debug("Tesseract Data Path set to [{}].", fs.getOcr().getDataPath());
-                    ocrParser.setTessdataPath(fs.getOcr().getDataPath());
-                }
+                logger.info("Using custom tika configuration from [{}].", fs.getTikaConfigPath());
+                TikaConfig config = null;
                 try {
-                    if (ocrParser.hasTesseract()) {
-                        logger.debug("OCR strategy for PDF documents is [{}] and tesseract was found.", fs.getOcr().getPdfStrategy());
-                        pdfParser.setOcrStrategy(fs.getOcr().getPdfStrategy());
-                    } else {
-                        logger.debug("But Tesseract is not installed so we won't run OCR.");
+                    config = new TikaConfig(fs.getTikaConfigPath());
+                } catch (TikaException|IOException|SAXException e) {
+                    logger.error("Can not configure Tika: {}", e.getMessage());
+                    logger.debug("Fullstack trace error for Tika", e);
+                }
+
+                parser = new AutoDetectParser(config);
+            } else {
+                PDFParser pdfParser = new PDFParser();
+                DefaultParser defaultParser;
+                TesseractOCRParser ocrParser;
+
+                // To solve https://issues.apache.org/jira/browse/TIKA-3364
+                // PDF content might be extracted multiple times.
+                pdfParser.getPDFParserConfig().setExtractBookmarksText(false);
+
+                 if (ocrActivated) {
+                    logger.debug("OCR is activated.");
+                    ocrParser = new TesseractOCRParser();
+                    if (fs.getOcr().getPath() != null) {
+                        logger.debug("Tesseract Path set to [{}].", fs.getOcr().getPath());
+                        ocrParser.setTesseractPath(fs.getOcr().getPath());
+                    }
+                    if (fs.getOcr().getDataPath() != null) {
+                        logger.debug("Tesseract Data Path set to [{}].", fs.getOcr().getDataPath());
+                        ocrParser.setTessdataPath(fs.getOcr().getDataPath());
+                    }
+                    try {
+                        if (ocrParser.hasTesseract()) {
+                            logger.debug("OCR strategy for PDF documents is [{}] and tesseract was found.", fs.getOcr().getPdfStrategy());
+                            pdfParser.setOcrStrategy(fs.getOcr().getPdfStrategy());
+                        } else {
+                            logger.debug("But Tesseract is not installed so we won't run OCR.");
+                            ocrActivated = false;
+                            pdfParser.setOcrStrategy("no_ocr");
+                        }
+                    } catch (TikaConfigException e) {
+                        logger.debug("Tesseract is not correctly set up so we won't run OCR. Error is: {}", e.getMessage());
+                        logger.debug("Fullstack trace error for Tesseract", e);
                         ocrActivated = false;
                         pdfParser.setOcrStrategy("no_ocr");
                     }
-                } catch (TikaConfigException e) {
-                    logger.debug("Tesseract is not correctly set up so we won't run OCR. Error is: {}", e.getMessage());
-                    logger.debug("Fullstack trace error for Tesseract", e);
-                    ocrActivated = false;
-                    pdfParser.setOcrStrategy("no_ocr");
                 }
-            }
 
-            if (ocrActivated) {
-                logger.info("OCR is enabled. This might slowdown the process.");
-                // We are excluding the pdf parser as we built one that we want to use instead.
-                defaultParser = new DefaultParser(
-                        MediaTypeRegistry.getDefaultRegistry(),
-                        new ServiceLoader(),
-                        Collections.singletonList(PDFParser.class));
-            } else {
-                logger.info("OCR is disabled.");
-                TesseractOCRConfig config = context.get(TesseractOCRConfig.class);
-                if (config != null) {
-                    config.setSkipOcr(true);
+                if (ocrActivated) {
+                    logger.info("OCR is enabled. This might slowdown the process.");
+                    // We are excluding the pdf parser as we built one that we want to use instead.
+                    defaultParser = new DefaultParser(
+                            MediaTypeRegistry.getDefaultRegistry(),
+                            new ServiceLoader(),
+                            Collections.singletonList(PDFParser.class));
+                } else {
+                    logger.info("OCR is disabled.");
+                    TesseractOCRConfig config = context.get(TesseractOCRConfig.class);
+                    if (config != null) {
+                        config.setSkipOcr(true);
+                    }
+                    // We are excluding the pdf parser as we built one that we want to use instead
+                    // and the OCR Parser as it's explicitly disabled.
+                    defaultParser = new DefaultParser(
+                            MediaTypeRegistry.getDefaultRegistry(),
+                            new ServiceLoader(),
+                            Arrays.asList(PDFParser.class, TesseractOCRParser.class));
                 }
-                // We are excluding the pdf parser as we built one that we want to use instead
-                // and the OCR Parser as it's explicitly disabled.
-                defaultParser = new DefaultParser(
-                        MediaTypeRegistry.getDefaultRegistry(),
-                        new ServiceLoader(),
-                        Arrays.asList(PDFParser.class, TesseractOCRParser.class));
+                parser = new AutoDetectParser(defaultParser, pdfParser);
             }
-            parser = new AutoDetectParser(defaultParser, pdfParser);
         }
     }
 
