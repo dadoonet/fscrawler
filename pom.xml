@@ -331,9 +331,8 @@
                     </executions>
                 </plugin>
                 <plugin>
-                    <groupId>de.scravy</groupId>
+                    <groupId>fr.pilato.elasticsearch.crawler</groupId>
                     <artifactId>waitfor-maven-plugin</artifactId>
-                    <version>1.4-SNAPSHOT</version>
                     <configuration>
                         <quiet>true</quiet>
                         <chatty>false</chatty>
@@ -510,12 +509,7 @@
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
-                <artifactId>fscrawler-elasticsearch-client-base</artifactId>
-                <version>2.10-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>fr.pilato.elasticsearch.crawler</groupId>
-                <artifactId>fscrawler-elasticsearch-client-v7</artifactId>
+                <artifactId>waitfor-maven-plugin</artifactId>
                 <version>2.10-SNAPSHOT</version>
             </dependency>
             <dependency>
