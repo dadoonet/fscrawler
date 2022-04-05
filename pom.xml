@@ -713,7 +713,7 @@
             <dependency>
                 <groupId>org.ow2.asm</groupId>
                 <artifactId>asm</artifactId>
-                <version>9.2</version>
+                <version>9.3</version>
             </dependency>
 
             <!-- Because of CVE-2019-5427 and CVE-2019-13990. Comes from tika-parser-scientific-module:2.0.0 dep -->
