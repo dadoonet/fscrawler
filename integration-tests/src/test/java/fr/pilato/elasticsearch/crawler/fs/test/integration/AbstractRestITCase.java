@@ -38,8 +38,8 @@ import java.util.Map;
 
 public abstract class AbstractRestITCase extends AbstractITCase {
 
-    protected static WebTarget target;
-    protected static Client client;
+    protected volatile static WebTarget target;
+    protected volatile static Client client;
 
     public static <T> T get(String path, Class<T> clazz) {
         if (staticLogger.isDebugEnabled()) {
