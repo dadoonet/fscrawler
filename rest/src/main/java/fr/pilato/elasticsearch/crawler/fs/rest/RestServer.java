@@ -34,7 +34,7 @@ import java.net.URI;
 
 public class RestServer {
 
-    private static HttpServer httpServer = null;
+    private volatile static HttpServer httpServer = null;
     private static final Logger logger = LogManager.getLogger();
 
     /**
