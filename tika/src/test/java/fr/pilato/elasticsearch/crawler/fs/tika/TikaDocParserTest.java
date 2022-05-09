@@ -139,8 +139,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(3));
+        assertThat(raw.entrySet(), iterableWithSize(4));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("resourceName", "issue-163.xml"));
         assertThat(raw, hasEntry("Content-Type", "application/xml"));
     }
@@ -162,9 +163,10 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(24));
+        assertThat(raw.entrySet(), iterableWithSize(25));
         assertThat(raw, hasEntry("cp:revision", "2"));
         assertThat(raw, hasEntry("meta:word-count", "19"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
         assertThat(raw, hasEntry("extended-properties:Company", "elastic"));
         assertThat(raw, hasEntry("dcterms:created", "2016-07-07T08:37:00Z"));
@@ -206,12 +208,13 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(30));
+        assertThat(raw.entrySet(), iterableWithSize(31));
         assertThat(raw, hasEntry("cp:revision", "4"));
         assertThat(raw, hasEntry("dc:description", "Comments"));
         assertThat(raw, hasEntry("extended-properties:AppVersion", "15.0000"));
         assertThat(raw, hasEntry("meta:paragraph-count", "2"));
         assertThat(raw, hasEntry("meta:word-count", "19"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
         assertThat(raw, hasEntry("extended-properties:Company", "elastic"));
         assertThat(raw, hasEntry("dcterms:created", "2015-12-19T23:39:00Z"));
@@ -256,17 +259,18 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(12));
+        assertThat(raw.entrySet(), iterableWithSize(13));
         assertThat(raw, hasEntry("Titre", "Test Tika title"));
-        assertThat(raw, hasEntry("Originator", "Microsoft Word 15"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("Content-Location", "Web%20page"));
-        assertThat(raw, hasEntry("dc:title", "Test Tika title"));
-        assertThat(raw, hasEntry("Content-Encoding", "UTF-8"));
-        assertThat(raw, hasEntry("Content-Type-Hint", "text/html; charset=macintosh"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("resourceName", "test.html"));
         assertThat(raw, hasEntry("Mots clés", "keyword1, keyword2"));
         assertThat(raw, hasEntry("ProgId", "Word.Document"));
+        assertThat(raw, hasEntry("Originator", "Microsoft Word 15"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
+        assertThat(raw, hasEntry("dc:title", "Test Tika title"));
+        assertThat(raw, hasEntry("Content-Encoding", "UTF-8"));
+        assertThat(raw, hasEntry("Content-Type-Hint", "text/html; charset=macintosh"));
         assertThat(raw, hasEntry("Content-Type", "text/html; charset=UTF-8"));
         assertThat(raw, hasEntry("Generator", "Microsoft Word 15"));
     }
@@ -291,12 +295,13 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(18));
+        assertThat(raw.entrySet(), iterableWithSize(19));
         assertThat(raw, hasEntry("xmpDM:genre", "Vocal"));
         assertThat(raw, hasEntry("xmpDM:album", "FS Crawler"));
         assertThat(raw, hasEntry("xmpDM:trackNumber", "1"));
         assertThat(raw, hasEntry("xmpDM:releaseDate", "2016"));
         assertThat(raw, hasEntry("xmpDM:artist", "David Pilato"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
         assertThat(raw, hasEntry("xmpDM:audioCompressor", "MP3"));
         assertThat(raw, hasEntry("resourceName", "test.mp3"));
@@ -329,11 +334,12 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(20));
+        assertThat(raw.entrySet(), iterableWithSize(21));
         assertThat(raw, hasEntry("dc:description", "Comments"));
         assertThat(raw, hasEntry("meta:paragraph-count", "1"));
         assertThat(raw, hasEntry("meta:word-count", "12"));
         assertThat(raw, hasEntry("dc:subject", "keyword1,  keyword2"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
         assertThat(raw, hasEntry("generator", "MicrosoftOffice/15.0 MicrosoftWord"));
         assertThat(raw, hasEntry("xmpTPg:NPages", "1"));
@@ -369,7 +375,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 36 : 35));
+        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 37 : 36));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:title", "Test Tika title"));
@@ -377,6 +383,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("pdf:hasXFA", "false"));
         assertThat(raw, hasEntry("access_permission:modify_annotations", "true"));
         assertThat(raw, hasEntry("access_permission:can_print_degraded", "true"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
         assertThat(raw, hasEntry("dcterms:created", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("dcterms:modified", "2016-07-07T08:37:42Z"));
@@ -428,9 +435,10 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(14));
+        assertThat(raw.entrySet(), iterableWithSize(15));
         assertThat(raw, hasEntry("meta:word-count", "19"));
         assertThat(raw, hasEntry("dc:subject", "Test Tika Object"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
         assertThat(raw, hasEntry("extended-properties:Company", "elastic"));
         assertThat(raw, hasEntry("resourceName", "test.rtf"));
@@ -462,8 +470,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(4));
+        assertThat(raw.entrySet(), iterableWithSize(5));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("Content-Encoding", "ISO-8859-1"));
         assertThat(raw, hasEntry("resourceName", "test.txt"));
         assertThat(raw, hasEntry("Content-Type", "text/plain; charset=ISO-8859-1"));
@@ -489,10 +498,11 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(9));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
+        assertThat(raw.entrySet(), iterableWithSize(10));
         assertThat(raw, hasEntry("xmpDM:audioSampleRate", "44100"));
         assertThat(raw, hasEntry("channels", "2"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("bits", "16"));
         assertThat(raw, hasEntry("resourceName", "test.wav"));
         assertThat(raw, hasEntry("encoding", "PCM_SIGNED"));
@@ -732,13 +742,14 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(withOcr ? 30 : 29));
+        assertThat(raw.entrySet(), iterableWithSize(withOcr ? 31 : 30));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.4"));
         assertThat(raw, hasEntry("xmp:CreatorTool", "Writer"));
         assertThat(raw, hasEntry("pdf:hasXFA", "false"));
         assertThat(raw, hasEntry("access_permission:modify_annotations", "true"));
         assertThat(raw, hasEntry("access_permission:can_print_degraded", "true"));
+        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("dc:creator", "Evangelos Vlachogiannis"));
         assertThat(raw, hasEntry("dcterms:created", "2007-02-23T15:56:37Z"));
         assertThat(raw, hasEntry("dc:format", "application/pdf; version=1.4"));
