@@ -669,7 +669,10 @@ public class TikaDocParserTest extends DocParserTestCase {
 
     @Test
     public void testCustomTikaConfig() throws IOException, URISyntaxException {
-        InputStream tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.xml");
+        
+        InputStream tikaConfigIS = null;
+        try{
+        tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.xml");
         Path testTikaConfig = rootTmpDir.resolve("tika-config");
         if (Files.notExists(testTikaConfig)) {
             Files.createDirectory(testTikaConfig);
@@ -698,6 +701,14 @@ public class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test.xhtml", fsSettings);
         assertThat(doc.getContent(), containsString("Test Tika title"));
         assertThat(doc.getContent(), not(containsString("<title>Test Tika title</title>")));
+        }finally{
+        
+        if(tikaConfigIS != null){
+           tikaConfigIS.close();
+             }
+            
+        }    
+            
     }
 
     @Test
