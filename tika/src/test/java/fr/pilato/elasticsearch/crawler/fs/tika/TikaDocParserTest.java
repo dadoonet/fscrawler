@@ -702,11 +702,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), containsString("Test Tika title"));
         assertThat(doc.getContent(), not(containsString("<title>Test Tika title</title>")));
         }finally{
-        
-        if(tikaConfigIS != null){
-           tikaConfigIS.close();
+            if(tikaConfigIS != null){
+             tikaConfigIS.close();
              }
-            
         }    
             
     }
