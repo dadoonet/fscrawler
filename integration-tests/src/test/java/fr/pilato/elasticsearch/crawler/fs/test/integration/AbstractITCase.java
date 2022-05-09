@@ -93,14 +93,14 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
-    protected static String testClusterUrl;
+    protected volatile static String testClusterUrl;
     protected final static String testClusterUser = getSystemProperty("tests.cluster.user", DEFAULT_USERNAME);
     protected final static String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     protected final static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
     protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", false);
 
     protected static Elasticsearch elasticsearchWithSecurity;
-    protected static FsCrawlerManagementServiceElasticsearchImpl managementService;
+    protected volatile static FsCrawlerManagementServiceElasticsearchImpl managementService;
     protected static FsCrawlerDocumentService documentService;
 
     /**
@@ -258,7 +258,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @AfterClass
-    public static void stopServices() throws IOException {
+    public synchronized static void stopServices() throws IOException {
         staticLogger.info("Stopping integration tests against an external cluster");
         if (documentService != null) {
             documentService.close();
