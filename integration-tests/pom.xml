@@ -13,7 +13,7 @@
     <name>FSCrawler Integration Tests</name>
 
     <properties>
-        <integ.elasticsearch.version>${elasticsearch7.version}</integ.elasticsearch.version>
+        <integ.elasticsearch.version>${elasticsearch8.version}</integ.elasticsearch.version>
         <contrib.dir>${project.basedir}/../contrib</contrib.dir>
     </properties>
 
@@ -108,17 +108,17 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>de.scravy</groupId>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>waitfor-maven-plugin</artifactId>
                 <configuration>
                     <checks>
                         <check>
-                            <url>http://localhost:9200/</url>
+                            <url>https://localhost:9200/</url>
                             <statusCode>401</statusCode>
                         </check>
                         <check>
                             <url>http://localhost:3002/</url>
-                            <statusCode>200</statusCode>
+                            <statusCode>302</statusCode>
                         </check>
                     </checks>
                 </configuration>
@@ -156,7 +156,7 @@
                         </configuration>
                     </plugin>
                     <plugin>
-                        <groupId>de.scravy</groupId>
+                        <groupId>fr.pilato.elasticsearch.crawler</groupId>
                         <artifactId>waitfor-maven-plugin</artifactId>
                         <configuration>
                             <skip>true</skip>
@@ -182,7 +182,7 @@
                         </configuration>
                     </plugin>
                     <plugin>
-                        <groupId>de.scravy</groupId>
+                        <groupId>fr.pilato.elasticsearch.crawler</groupId>
                         <artifactId>waitfor-maven-plugin</artifactId>
                         <configuration>
                             <skip>${skipIntegTests}</skip>
@@ -192,14 +192,14 @@
             </build>
         </profile>
 
-        <!-- We are building a profile that can be activated from the IDE -->
+        <!-- Profile for ES7: No security. -->
         <profile>
             <id>es-7x</id>
             <properties>
                 <integ.elasticsearch.version>${elasticsearch7.version}</integ.elasticsearch.version>
             </properties>
         </profile>
-        <!-- We are building a profile that can be activated from the IDE -->
+        <!-- Profile for ES6: No enterprise search. No security. -->
         <profile>
             <id>es-6x</id>
             <properties>
@@ -211,9 +211,32 @@
                         <groupId>com.dkanejs.maven.plugins</groupId>
                         <artifactId>docker-compose-maven-plugin</artifactId>
                         <configuration>
+                            <envFile>${contrib.dir}/docker-compose-it-v6/.env</envFile>
+                            <envVars>
+                                <STACK_VERSION>${integ.elasticsearch.version}</STACK_VERSION>
+                                <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
+                                <ES_PORT>${integ.elasticsearch.port}</ES_PORT>
+                                <ENTERPRISE_SEARCH_PORT>${integ.workplace.port}</ENTERPRISE_SEARCH_PORT>
+                                <LICENSE>basic</LICENSE>
+                            </envVars>
+                            <composeFiles>
+                                <composeFile>${contrib.dir}/docker-compose-it-v6/docker-compose.yml</composeFile>
+                            </composeFiles>
                             <services>
                                 <service>elasticsearch</service>
                             </services>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                        <artifactId>waitfor-maven-plugin</artifactId>
+                        <configuration>
+                            <checks>
+                                <check>
+                                    <url>http://localhost:9200/</url>
+                                    <statusCode>401</statusCode>
+                                </check>
+                            </checks>
                         </configuration>
                     </plugin>
                 </plugins>

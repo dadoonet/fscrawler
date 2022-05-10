@@ -193,19 +193,19 @@ The following example uses a ``french`` analyzer to index the
                 },
                 "indexing_date": {
                   "type": "date",
-                  "format": "dateOptionalTime"
+                  "format": "date_optional_time"
                 },
                 "created": {
                   "type": "date",
-                  "format": "dateOptionalTime"
+                  "format": "date_optional_time"
                 },
                 "last_modified": {
                   "type": "date",
-                  "format": "dateOptionalTime"
+                  "format": "date_optional_time"
                 },
                 "last_accessed": {
                   "type": "date",
-                  "format": "dateOptionalTime"
+                  "format": "date_optional_time"
                 },
                 "checksum": {
                   "type": "keyword"
@@ -223,7 +223,7 @@ The following example uses a ``french`` analyzer to index the
                 },
                 "date": {
                   "type": "date",
-                  "format": "dateOptionalTime"
+                  "format": "date_optional_time"
                 },
                 "keywords": {
                   "type": "text"
@@ -272,15 +272,15 @@ The following example uses a ``french`` analyzer to index the
                 },
                 "created": {
                   "type": "date",
-                  "format": "dateOptionalTime"
+                  "format": "date_optional_time"
                 },
                 "print_date": {
                   "type": "date",
-                  "format": "dateOptionalTime"
+                  "format": "date_optional_time"
                 },
                 "metadata_date": {
                   "type": "date",
-                  "format": "dateOptionalTime"
+                  "format": "date_optional_time"
                 },
                 "latitude": {
                   "type": "text"

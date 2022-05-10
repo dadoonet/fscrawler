@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+
+<!DOCTYPE module PUBLIC
+  "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+  "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+
+<module name="Checker">
+  <module name="TreeWalker">
+    <property name="tabWidth" value="2"/>
+    <module name="FinalLocalVariable"/>
+    <module name="FinalParameters"/>
+    <module name="NeedBraces"/>
+    <module name="LineLength">
+      <property name="max" value="140"/>
+    </module>
+    <module name="ConstantName">
+      <property name="applyToPrivate" value="false"/>
+    </module>
+    <module name="MultipleVariableDeclarations"/>
+  </module>
+  <module name="FileTabCharacter"/>
+  <module name="NewlineAtEndOfFile"/>
+</module>

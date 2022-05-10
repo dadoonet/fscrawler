@@ -40,18 +40,23 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.logging.LoggingFeature;
 
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.nio.file.Path;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -110,6 +115,35 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return;
         }
 
+            /*
+        if (settings.getPathPrefix() != null) {
+            builder.setPathPrefix(settings.getPathPrefix());
+        }
+
+        if (settings.getUsername() != null) {
+            if (settings.getSslVerification()) {
+                builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+            } else {
+                builder.setHttpClientConfigCallback(httpClientBuilder -> {
+                    SSLContext sc;
+                    try {
+                        sc = SSLContext.getInstance("SSL");
+                        sc.init(null, trustAllCerts, new SecureRandom());
+                    } catch (KeyManagementException | NoSuchAlgorithmException e) {
+                        logger.warn("Failed to get SSL Context", e);
+                        throw new RuntimeException(e);
+                    }
+                    httpClientBuilder.setSSLStrategy(new SSLIOSessionStrategy(sc, new NullHostNameVerifier()));
+                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                    return httpClientBuilder;
+                });
+            }
+        }
+
+        return builder;
+    }
+    */
+
         // Create the client
         ClientConfig config = new ClientConfig();
         // We need to suppress this so we can do DELETE with body
@@ -117,7 +151,37 @@ public class ElasticsearchClient implements IElasticsearchClient {
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(
                 settings.getElasticsearch().getUsername(),
                 settings.getElasticsearch().getPassword());
-        client = ClientBuilder.newClient(config);
+        SSLContext sslContext = null;
+        if (settings.getElasticsearch().getSslVerification()) {
+            // TODO implement this part and add elasticsearch ssl settings
+            // If we have a truststore and a keystore, let's use it
+            /*
+            SslConfigurator sslConfig = SslConfigurator.newInstance()
+                    .trustStoreFile("./truststore_client")
+                    .trustStorePassword("secret-password-for-truststore")
+                    .keyStoreFile("./keystore_client")
+                    .keyPassword("secret-password-for-keystore");
+            sslContext = sslConfig.createSSLContext();
+            */
+        } else {
+            // Trusting all certificates. For test purposes only.
+            try {
+                sslContext = SSLContext.getInstance("SSL");
+                sslContext.init(null, trustAllCerts, new SecureRandom());
+                logger.warn("We are not doing SSL verification. It's not recommended for production.");
+            } catch (KeyManagementException | NoSuchAlgorithmException e) {
+                logger.warn("Failed to get SSL Context", e);
+                throw new RuntimeException(e);
+            }
+        }
+
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder()
+                .withConfig(config)
+                .register(feature);
+        if (sslContext != null) {
+            clientBuilder.sslContext(sslContext);
+        }
+        client =  clientBuilder.build();
         if (logger.isTraceEnabled()) {
             client
 //                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_NAME_CLIENT, ElasticsearchClient.class.getName())
@@ -125,7 +189,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
                     .property(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_ANY)
                     .property(LoggingFeature.LOGGING_FEATURE_MAX_ENTITY_SIZE_CLIENT, 8000);
         }
-        client.register(feature);
 
         try {
             String esVersion = getVersion();
@@ -290,23 +353,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 new AbstractMap.SimpleImmutableEntry<>("timeout", "5s"));
     }
 
-    private static final TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-
-        @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) {}
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers() { return null; }
+    private static final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+        @Override public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+        @Override public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+        @Override public X509Certificate[] getAcceptedIssuers() { return null; }
     }};
 
     public static class NullHostNameVerifier implements HostnameVerifier {
-
-        @Override
-        public boolean verify(String arg0, SSLSession arg1) { return true; }
-
+        @Override public boolean verify(String arg0, SSLSession arg1) { return true; }
     }
 
     @Override
@@ -365,43 +419,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
             client.close();
         }
     }
-
-    /*
-    private static RestClientBuilder buildRestClient(Elasticsearch settings) {
-        List<HttpHost> hosts = new ArrayList<>(settings.getNodes().size());
-        settings.getNodes().forEach(node -> hosts.add(HttpHost.create(node.decodedUrl())));
-
-        RestClientBuilder builder = RestClient.builder(hosts.toArray(new HttpHost[0]));
-
-        if (settings.getPathPrefix() != null) {
-            builder.setPathPrefix(settings.getPathPrefix());
-        }
-
-        if (settings.getUsername() != null) {
-            CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(settings.getUsername(), settings.getPassword()));
-            if (settings.getSslVerification()) {
-                builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
-            } else {
-                builder.setHttpClientConfigCallback(httpClientBuilder -> {
-                    SSLContext sc;
-                    try {
-                        sc = SSLContext.getInstance("SSL");
-                        sc.init(null, trustAllCerts, new SecureRandom());
-                    } catch (KeyManagementException | NoSuchAlgorithmException e) {
-                        logger.warn("Failed to get SSL Context", e);
-                        throw new RuntimeException(e);
-                    }
-                    httpClientBuilder.setSSLStrategy(new SSLIOSessionStrategy(sc, new NullHostNameVerifier()));
-                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-                    return httpClientBuilder;
-                });
-            }
-        }
-
-        return builder;
-    }
-    */
 
     @Override
     public void createIndices() throws Exception {

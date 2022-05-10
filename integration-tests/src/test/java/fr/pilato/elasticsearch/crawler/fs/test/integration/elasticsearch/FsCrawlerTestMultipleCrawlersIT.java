@@ -21,14 +21,28 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 
 /**
  * Test with multiple crawlers
  */
 public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
+
+    @Before
+    public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
+        super.cleanExistingIndex();
+        // Also clean the specific indices for this test
+        managementService.getClient().deleteIndex(getCrawlerName() + "_1");
+        managementService.getClient().deleteIndex(getCrawlerName() + "_2");
+    }
 
     @Test
     public void test_multiple_crawlers() throws Exception {

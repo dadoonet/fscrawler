@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -200,7 +201,13 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             }
 
             // We need to wait until it's done
-            countTestHelper(new ESSearchRequest().withIndex(".ent-search-engine-documents-source-" + customSourceId), 3L, null);
+            String indexPrefix = ".ent-search-engine-documents-custom-";
+            if (extractMajorVersion(client.getVersion()) < 8) {
+                // With versions before 8.0, the index name was .ent-search-engine-documents-source-*
+                indexPrefix = ".ent-search-engine-documents-source-";
+            }
+
+            countTestHelper(new ESSearchRequest().withIndex(indexPrefix + customSourceId), 3L, null);
 
             // Search using fulltext search
             {

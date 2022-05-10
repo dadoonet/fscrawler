@@ -15,6 +15,7 @@
 
     <modules>
         <module>workplacesearch-client</module>
+        <module>waitfor-maven-plugin</module>
     </modules>
 
 </project>

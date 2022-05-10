@@ -21,7 +21,7 @@
       <Logger name="fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="info" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="trace" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.service" level="info" additivity="false">
@@ -54,7 +54,7 @@
       <Logger name="org.elasticsearch" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="org.glassfish" level="trace" additivity="false">
+      <Logger name="org.glassfish" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="org.apache" level="error" additivity="false">

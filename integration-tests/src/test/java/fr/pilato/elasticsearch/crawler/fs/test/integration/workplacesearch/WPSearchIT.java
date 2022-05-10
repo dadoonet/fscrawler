@@ -67,6 +67,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                         .setUsername(testClusterUser)
                         .setPassword(testClusterPass)
+                        .setSslVerification(false)
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
@@ -119,6 +120,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                         .setUsername(testClusterUser)
                         .setPassword(testClusterPass)
+                        .setSslVerification(false)
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
@@ -165,6 +167,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                         .setUsername(testClusterUser)
                         .setPassword(testClusterPass)
+                        .setSslVerification(false)
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
@@ -286,7 +289,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
 
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
-                countTestHelper(client, sourceId, 4L, TimeValue.timeValueSeconds(5));
+                countTestHelper(client, sourceId, 4L, TimeValue.timeValueSeconds(30));
             }
 
             {

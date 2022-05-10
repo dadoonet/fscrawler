@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -115,7 +116,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         RestServer.start(fsSettings, managementService, documentService);
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
-        managementService.getClient().deleteIndex(getCrawlerName() + "*");
+        managementService.getClient().deleteIndex(getCrawlerName());
+        managementService.getClient().deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
 
         logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
     }

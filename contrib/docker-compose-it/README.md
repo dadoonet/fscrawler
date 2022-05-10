@@ -1,4 +1,4 @@
-# Developper Guide
+# Developer Guide
 
 This documentation shows how to easily start a Workplace Search cluster.
 
@@ -13,13 +13,13 @@ docker-compose up
 Wait for everything to start. It could take several minutes.
 Then you can open Kibana at http://localhost:5601 and log in with `elastic` / `changeme` account.
 
-**Note:** the cluster will start with a `basic` license. If you want to run integration tests,
-those are using some APIs which are available with a `trial` license. So run the cluster with: 
+**Note:** the cluster will start with a `trial` license to run integration tests.
+Those are using some APIs which are available with a `trial` license. If you want to just run
+with a basic (free) license, run the cluster with: 
 
 ```sh
-LICENSE_TYPE=trial docker-compose up
+LICENSE_TYPE=basic docker-compose up
 ```
-
 
 ## Configure FSCrawler
 

@@ -76,15 +76,16 @@ public class FsCopyResourcesTest extends AbstractFSCrawlerTestCase {
                     }
                 });
 
-        // We have 4 dirs for now:
+        // We have 5 dirs for now:
         // root test dir ".fscrawler-test-copy-resources"
         // "_default" dir
         // "6" for elasticsearch version 6
         // "7" for elasticsearch version 7
-        assertThat(dirCounter.get(), is(4));
+        // "8" for elasticsearch version 8
+        assertThat(dirCounter.get(), is(5));
 
         // We have 2 files that must be copied per version: _settings_folder.json and _settings.json
         // and _wpsearch_settings.json
-        assertThat(fileCounter.get(), is(5));
+        assertThat(fileCounter.get(), is(8));
     }
 }
