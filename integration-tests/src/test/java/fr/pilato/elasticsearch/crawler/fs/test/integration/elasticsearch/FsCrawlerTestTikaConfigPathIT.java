@@ -25,6 +25,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.assumeTrue;
+
 /**
  * Test tika config path crawler setting
  */
@@ -32,6 +34,7 @@ public class FsCrawlerTestTikaConfigPathIT extends AbstractFsCrawlerITCase {
 
   @Test
   public void test_tika_config_path() throws Exception {
+    assumeTrue("We are skipping this test. See discussion at https://github.com/dadoonet/fscrawler/pull/1403#issuecomment-1077912549", false);
     Fs fs = startCrawlerDefinition()
         .setTikaConfigPath(currentTestResourceDir.resolve("config/tikaConfig.xml").toString())
         .addExclude("/config/*")
