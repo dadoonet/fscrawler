@@ -1038,6 +1038,9 @@
                     <plugin>
                         <groupId>org.sonatype.ossindex.maven</groupId>
                         <artifactId>ossindex-maven-plugin</artifactId>
+                        <configuration>
+                            <cvssScoreThreshold>7.0</cvssScoreThreshold>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
