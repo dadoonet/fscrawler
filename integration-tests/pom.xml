@@ -198,6 +198,20 @@
             <properties>
                 <integ.elasticsearch.version>${elasticsearch7.version}</integ.elasticsearch.version>
             </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.dkanejs.maven.plugins</groupId>
+                        <artifactId>docker-compose-maven-plugin</artifactId>
+                        <configuration>
+                            <envFile>${contrib.dir}/docker-compose-it-v7/.env</envFile>
+                            <composeFiles>
+                                <composeFile>${contrib.dir}/docker-compose-it-v7/docker-compose.yml</composeFile>
+                            </composeFiles>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
         <!-- Profile for ES6: No enterprise search. No security. -->
         <profile>
