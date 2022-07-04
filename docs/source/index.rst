@@ -22,6 +22,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 
     FS Crawler |release| is using |Tika_version|_ and is tested against:
 
+    * |ES_version8|_.
     * |ES_version7|_.
     * |ES_version6|_.
 
