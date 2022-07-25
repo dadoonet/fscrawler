@@ -11,3 +11,9 @@ target
 /.run
 /logs/
 /venv/
+!/contrib/docker-compose-example-elasticsearch/config/idx/_status.json
+!/contrib/docker-compose-example-elasticsearch/config/_default/
+!/contrib/docker-compose-example-elasticsearch/logs/
+!/contrib/docker-compose-example-workplace/config/idx/_status.json
+!/contrib/docker-compose-example-workplace/config/_default/
+!/contrib/docker-compose-example-workplace/logs/

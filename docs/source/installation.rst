@@ -112,35 +112,158 @@ For example, to connect to a docker container named ``elasticsearch``, modify yo
 
 .. code:: yaml
 
-  name: "job_name"
-  elasticsearch:
-    nodes:
-    - url: "http://elasticsearch:9200"
+    ---
+    name: "job_name"
+    fs:
+      indexed_chars: 100%
+      lang_detect: true
+      continue_on_error: true
+      ocr:
+        language: "eng"
+        enabled: true
+        pdf_strategy: "ocr_and_text"
+    elasticsearch:
+      nodes:
+        - url: "https://elasticsearch:9200"
+      username: "elastic"
+      password: "changeme"
+      ssl_verification: false
+    rest :
+      url: "http://fscrawler:8080"
 
-And, prepare the following ``docker-compose.yml``.
+.. note::
+
+    The configuration shown above is also meant to start the REST interface. It also activates the full indexation of
+    documents, lang detection and ocr using english. You can adapt this example for your needs.
+
+And, prepare the following ``docker-compose.yml``. You will find this example in the
+``contrib/docker-compose-example-elasticsearch`` project directory.
 
 .. code:: yaml
 
-    version: '3'
+    ---
+    version: "2.2"
+
     services:
-      # Elasticsearch Cluster
+      setup:
+        image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+        volumes:
+          - certs:/usr/share/elasticsearch/config/certs
+        user: "0"
+        command: >
+          bash -c '
+            if [ x${ELASTIC_PASSWORD} == x ]; then
+              echo "Set the ELASTIC_PASSWORD environment variable in the .env file";
+              exit 1;
+            elif [ x${KIBANA_PASSWORD} == x ]; then
+              echo "Set the KIBANA_PASSWORD environment variable in the .env file";
+              exit 1;
+            fi;
+            if [ ! -f certs/ca.zip ]; then
+              echo "Creating CA";
+              bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
+              unzip config/certs/ca.zip -d config/certs;
+            fi;
+            if [ ! -f certs/certs.zip ]; then
+              echo "Creating certs";
+              echo -ne \
+              "instances:\n"\
+              "  - name: elasticsearch\n"\
+              "    dns:\n"\
+              "      - elasticsearch\n"\
+              "      - localhost\n"\
+              "    ip:\n"\
+              "      - 127.0.0.1\n"\
+              > config/certs/instances.yml;
+              bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
+              unzip config/certs/certs.zip -d config/certs;
+            fi;
+            echo "Setting file permissions"
+            chown -R root:root config/certs;
+            find . -type d -exec chmod 750 \{\} \;;
+            find . -type f -exec chmod 640 \{\} \;;
+            echo "Waiting for Elasticsearch availability";
+            until curl -s --cacert config/certs/ca/ca.crt https://elasticsearch:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
+            echo "Setting kibana_system password";
+            until curl -s -X POST --cacert config/certs/ca/ca.crt -u elastic:${ELASTIC_PASSWORD} -H "Content-Type: application/json" https://elasticsearch:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
+            echo "All done!";
+          '
+        healthcheck:
+          test: ["CMD-SHELL", "[ -f config/certs/elasticsearch/elasticsearch.crt ]"]
+          interval: 1s
+          timeout: 5s
+          retries: 120
+
       elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:$ELASTIC_VERSION
-        container_name: elasticsearch
+        depends_on:
+          setup:
+            condition: service_healthy
+        image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+        volumes:
+          - certs:/usr/share/elasticsearch/config/certs
+          - esdata:/usr/share/elasticsearch/data
+        ports:
+          - ${ES_PORT}:9200
         environment:
+          - node.name=elasticsearch
+          - cluster.name=${CLUSTER_NAME}
+          - cluster.initial_master_nodes=elasticsearch
+          - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
           - bootstrap.memory_lock=true
-          - discovery.type=single-node
-        restart: always
+          - xpack.security.enabled=true
+          - xpack.security.http.ssl.enabled=true
+          - xpack.security.http.ssl.key=certs/elasticsearch/elasticsearch.key
+          - xpack.security.http.ssl.certificate=certs/elasticsearch/elasticsearch.crt
+          - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+          - xpack.security.http.ssl.verification_mode=certificate
+          - xpack.security.transport.ssl.enabled=true
+          - xpack.security.transport.ssl.key=certs/elasticsearch/elasticsearch.key
+          - xpack.security.transport.ssl.certificate=certs/elasticsearch/elasticsearch.crt
+          - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+          - xpack.security.transport.ssl.verification_mode=certificate
+          - xpack.license.self_generated.type=${LICENSE}
+        mem_limit: ${MEM_LIMIT}
         ulimits:
           memlock:
             soft: -1
             hard: -1
+        healthcheck:
+          test:
+            [
+              "CMD-SHELL",
+              "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+            ]
+          interval: 10s
+          timeout: 10s
+          retries: 120
+
+      kibana:
+        depends_on:
+          elasticsearch:
+            condition: service_healthy
+        image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
         volumes:
-          - data:/usr/share/elasticsearch/data
+          - certs:/usr/share/kibana/config/certs
+          - kibanadata:/usr/share/kibana/data
         ports:
-          - 9200:9200
-        networks:
-          - fscrawler_net
+          - ${KIBANA_PORT}:5601
+        environment:
+          - SERVERNAME=kibana
+          - ELASTICSEARCH_HOSTS=https://elasticsearch:9200
+          - ELASTICSEARCH_USERNAME=kibana_system
+          - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+          - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+          - ENTERPRISESEARCH_HOST=http://enterprisesearch:${ENTERPRISE_SEARCH_PORT}
+        mem_limit: ${MEM_LIMIT}
+        healthcheck:
+          test:
+            [
+              "CMD-SHELL",
+              "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+            ]
+          interval: 10s
+          timeout: 10s
+          retries: 120
 
       # FSCrawler
       fscrawler:
@@ -148,43 +271,33 @@ And, prepare the following ``docker-compose.yml``.
         container_name: fscrawler
         restart: always
         volumes:
+          - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
           - ${PWD}/config:/root/.fscrawler
           - ${PWD}/logs:/usr/share/fscrawler/logs
-          - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
         depends_on:
-          - elasticsearch
-        command: fscrawler --rest idx
-        networks:
-          - fscrawler_net
+          elasticsearch:
+            condition: service_healthy
+        ports:
+          - ${FSCRAWLER_PORT}:8080
+        command: fscrawler idx --restart --rest
 
     volumes:
-      data:
+      certs:
+        driver: local
+      esdata:
+        driver: local
+      kibanadata:
         driver: local
 
-    networks:
-      fscrawler_net:
-        driver: bridge
+.. note::
 
-Then, you can run Elasticsearch.
+    The configuration shown above is also meant to start Kibana. You can skip that part if you don't need it.
 
-.. code:: sh
-
-    docker-compose up -d elasticsearch
-    docker-compose logs -f elasticsearch
-
-Wait for elasticsearch to be started:
-
-::
-
-
-
-After starting Elasticsearch, you can run FSCrawler.
+Then, you can run the full stack, including FSCrawler.
 
 .. code:: sh
 
-  docker-compose up fscrawler
-
-
+    docker-compose up -d
 
 Running as a Service on Windows
 -------------------------------

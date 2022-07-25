@@ -10,4 +10,8 @@ fs:
     pdf_strategy: "ocr_and_text"
 elasticsearch:
   nodes:
-    - url: "http://elasticsearch:9200"
+    - url: "https://elasticsearch:9200"
+  username: "elastic"
+  password: "changeme"
+  ssl_verification: false
+
