@@ -1,0 +1,19 @@
+---
+name: "idx"
+fs:
+  indexed_chars: 100%
+  lang_detect: true
+  continue_on_error: true
+  ocr:
+    language: "eng"
+    enabled: true
+    pdf_strategy: "ocr_and_text"
+elasticsearch:
+  nodes:
+    - url: "https://elasticsearch:9200"
+  username: "elastic"
+  password: "changeme"
+  ssl_verification: false
+rest :
+  url: "http://fscrawler:8080"
+
