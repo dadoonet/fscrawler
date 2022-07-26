@@ -168,18 +168,6 @@ services:
       enterprisesearch:
         condition: service_healthy
     command: fscrawler idx --restart
-#    command: fscrawler idx --restart --rest --trace
-#    ports:
-#      - ${FSCRAWLER_PORT}:8080
-#    healthcheck:
-#      test:
-#        [
-#          "CMD-SHELL",
-#          "curl -s -I http://localhost:8080/fscrawler | grep -q 'HTTP/1.1 302 Found'",
-#        ]
-#      interval: 10s
-#      timeout: 10s
-#      retries: 120
 
 volumes:
   certs:
