@@ -14,4 +14,5 @@ elasticsearch:
   username: "elastic"
   password: "changeme"
   ssl_verification: false
-
+workplace_search:
+  server: "http://enterprisesearch:3002"
