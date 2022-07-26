@@ -16,7 +16,7 @@ Fix
 Deprecated
 ----------
 
-* The `_upload` REST endpoint has been deprecated. Please now use the ``_document`` endpoint. Thanks to dadoonet.
+* The ``_upload`` REST endpoint has been deprecated. Please now use the ``_document`` endpoint. Thanks to dadoonet.
 
 Updated
 -------
