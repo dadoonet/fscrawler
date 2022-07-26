@@ -112,7 +112,7 @@ With Elasticsearch
 ~~~~~~~~~~~~~~~~~~
 
 Here is a typical ``_settings.yaml``, you can use to connect FSCrawler with Elasticsearch when running
-with docker compose::
+with docker compose:
 
 .. code:: yaml
 
@@ -307,7 +307,7 @@ With Enterprise Search (Workplace Search)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is a typical ``_settings.yaml``, you can use to connect FSCrawler with Workplace Search when running
-with docker compose::
+with docker compose:
 
 .. code:: yaml
 
