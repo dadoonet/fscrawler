@@ -155,6 +155,24 @@ services:
       timeout: 10s
       retries: 120
 
+  # Apache Httpd service (to serve local files)
+  httpd:
+    image: httpd:2.4
+    restart: on-failure
+    volumes:
+      - ../../test-documents/src/main/resources/documents/:/usr/local/apache2/htdocs/:ro
+    ports:
+      - 80:80
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
   # FSCrawler
   fscrawler:
     image: dadoonet/fscrawler:$FSCRAWLER_VERSION

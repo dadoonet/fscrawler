@@ -492,6 +492,24 @@ And, prepare the following ``docker-compose.yml``. You will find this example in
           timeout: 10s
           retries: 120
 
+      # Apache Httpd service (to serve local files)
+      httpd:
+        image: httpd:2.4
+        restart: on-failure
+        volumes:
+          - ../../test-documents/src/main/resources/documents/:/usr/local/apache2/htdocs/:ro
+        ports:
+          - 80:80
+        healthcheck:
+          test:
+            [
+              "CMD-SHELL",
+              "curl -s -I http://localhost | grep -q 'HTTP/1.1 302 Found'",
+            ]
+          interval: 10s
+          timeout: 10s
+          retries: 120
+
       # FSCrawler
       fscrawler:
         image: dadoonet/fscrawler:$FSCRAWLER_VERSION
@@ -516,7 +534,12 @@ And, prepare the following ``docker-compose.yml``. You will find this example in
       kibanadata:
         driver: local
 
-Then, you can run the full stack, including FSCrawler.
+.. note::
+
+    The configuration shown above is also meant to start a local HTTP server which will serve your local files when you
+    click on a result from the Workplace Search interface.
+
+Then, you can run the full stack, including FSCrawler and the HTTP Web Server.
 
 .. code:: sh
 
@@ -525,7 +548,7 @@ Then, you can run the full stack, including FSCrawler.
 FSCrawler will index all the documents and then exit.
 
 When the FSCrawler container has stopped, you can just open `the search interface <http://0.0.0.0:3002/ws/search/>`__
-and start to search for your local documents.
+and start to search for your local documents. You might need to be authenticated first in Kibana.
 You can also open `Kibana to access the Workplace Search configuration <http://0.0.0.0:5601/app/enterprise_search/workplace_search/sources>`
 and modify the source which has been created by FSCrawler.
 
