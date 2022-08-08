@@ -67,7 +67,7 @@ public abstract class WorkplaceSearchClientUtil {
         return name;
     }
 
-    public static String toRFC3339(Date d) {
+    public synchronized static String toRFC3339(Date d) {
         if (logger.isDebugEnabled() && d != null) {
             String format = RFC_3339.format(d);
             String finalDate = format.replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
