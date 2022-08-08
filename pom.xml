@@ -48,7 +48,7 @@
         <slf4j.version>1.7.36</slf4j.version>
         <log4j.version>2.18.0</log4j.version>
         <jansi.version>2.4.0</jansi.version>
-        <jersey.version>3.0.4</jersey.version>
+        <jersey.version>3.0.6</jersey.version>
 
         <!--
             Because elasticsearch is not using transitive dependencies, we need to be explicit here
