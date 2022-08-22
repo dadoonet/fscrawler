@@ -45,7 +45,7 @@
         <tika.version>2.4.1</tika.version>
         <jackson.version>2.13.3</jackson.version>
         <jsonpath.version>2.7.0</jsonpath.version>
-        <slf4j.version>1.7.36</slf4j.version>
+        <slf4j.version>2.0.0</slf4j.version>
         <log4j.version>2.18.0</log4j.version>
         <jansi.version>2.4.0</jansi.version>
         <jersey.version>3.0.6</jersey.version>
@@ -677,7 +677,7 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>jcl-over-slf4j</artifactId>
-                <version>1.7.36</version>
+                <version>${slf4j.version}</version>
             </dependency>
 
             <!-- Fix org.elasticsearch.client:elasticsearch-rest-high-level-client:7.16.1 vs org.apache.tika:tika-parser-scientific-module:2.1.0 transitive dependency -->
