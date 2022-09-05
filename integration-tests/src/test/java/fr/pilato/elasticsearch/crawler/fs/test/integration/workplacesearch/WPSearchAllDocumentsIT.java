@@ -30,7 +30,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.settings.WorkplaceSearch;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
-import org.apache.tika.parser.external.ExternalParser;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -146,7 +145,7 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
             runSearch("issue-418-中文名称.txt", null);
 
             // If Tesseract is not installed, we are skipping this test
-            if (ExternalParser.check("tesseract")) {
+            if (isOcrAvailable) {
                 runSearch("test-ocr.png", "words");
                 runSearch("test-ocr.pdf", "words");
             }
