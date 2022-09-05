@@ -34,6 +34,8 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.ServiceUnavailableException;
+import org.apache.tika.exception.TikaConfigException;
+import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
@@ -69,6 +71,18 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     protected String sourceName;
     protected String sourceId;
 
+    static boolean isOcrAvailable;
+
+    @BeforeClass
+    public static void setOcrAvailable() {
+        try {
+            isOcrAvailable = new TesseractOCRParser().hasTesseract();
+        } catch (TikaConfigException e) {
+            staticLogger.warn("Can not configure Tesseract for tests, so we are supposing it won't be available");
+            isOcrAvailable = false;
+        }
+    }
+
     @BeforeClass
     public static void checkWorkplaceSearchIsRunning() {
         try (WPSearchClient wpClient = createClient()) {
@@ -99,10 +113,10 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     @Before
     public void generateJobName() {
         sourceName = getRandomCrawlerName();
+        cleanExistingCustomSources(sourceName);
         sourceId = null;
     }
 
-    @Before
     @After
     public void cleanUpCustomSource() {
         if (sourceId != null) {
