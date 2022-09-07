@@ -549,9 +549,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 esSearchHit.setVersion(Integer.toUnsignedLong(document.read("$.hits.hits[" + hitNum + "]._version")));
                 try {
                     esSearchHit.setSource(extractJsonFromPath(document, "$.hits.hits[" + hitNum + "]._source"));
-                    esSearchHit.setSourceAsMap(document.read("$.hits.hits[" + hitNum + "]._source"));
-                } catch (PathNotFoundException e) {
-                    esSearchHit.setSourceAsMap(Collections.emptyMap());
+                } catch (PathNotFoundException ignored) {
+                    // When no _source, we just ignore
                 }
 
                 // Parse the highlights if any
@@ -681,7 +680,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
         hit.setId(document.read("$._id"));
         hit.setVersion(Integer.toUnsignedLong(document.read("$._version")));
         hit.setSource(extractJsonFromPath(document, "$._source"));
-        hit.setSourceAsMap(document.read("$._source"));
         return hit;
     }
 
