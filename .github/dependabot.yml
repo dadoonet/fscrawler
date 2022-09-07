@@ -1,7 +1,25 @@
 version: 2
 updates:
+# Enable version updates for Maven
 - package-ecosystem: maven
   directory: "/"
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 99
+  reviewers:
+  - dadoonet
+  assignees:
+  - dadoonet
+  labels:
+  - update
+  milestone: 27
+
+# Enable version updates for Docker
+- package-ecosystem: "docker"
+  # Look for a `Dockerfile` in the `root` directory
+  directory: "/"
+  # Check for updates once a week
   schedule:
     interval: daily
     time: "04:00"
