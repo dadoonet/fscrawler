@@ -40,7 +40,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_S
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public abstract class AbstractFsCrawlerITCase extends AbstractRestITCase {
+public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
 
     @Before
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
