@@ -27,7 +27,6 @@ public class ESSearchHit {
     private String index;
     private String id;
     private Long version;
-    private Map<String, Object> sourceAsMap;
     private String source;
     private Map<String, List<String>> storedFields;
     private final Map<String, List<String>> highlightFields = new HashMap<>();
@@ -38,16 +37,6 @@ public class ESSearchHit {
 
     public void setStoredFields(Map<String, List<String>> storedFields) {
         this.storedFields = storedFields;
-    }
-
-    @Deprecated
-    public Map<String, Object> getSourceAsMap() {
-        return sourceAsMap;
-    }
-
-    @Deprecated
-    public void setSourceAsMap(Map<String, Object> source) {
-        this.sourceAsMap = source;
     }
 
     public void setSource(String source) {

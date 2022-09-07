@@ -98,7 +98,11 @@ public class UploadApi extends RestApi {
 
         // Path
         if (id == null) {
-            id = SignTool.sign(filename);
+            if (settings.getFs().isFilenameAsId()) {
+                id = filename;
+            } else {
+                id = SignTool.sign(filename);
+            }
         } else if (id.equals("_auto_")) {
             // We are using a specific id which tells us to generate a unique _id like elasticsearch does
             id = TIME_UUID_GENERATOR.getBase64UUID();
