@@ -40,13 +40,13 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.logging.LoggingFeature;
 
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
@@ -60,7 +60,6 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -168,6 +167,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
             try {
                 sslContext = SSLContext.getInstance("SSL");
                 sslContext.init(null, trustAllCerts, new SecureRandom());
+
+                HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+                HttpsURLConnection.setDefaultHostnameVerifier(new NullHostNameVerifier());
+
                 logger.warn("We are not doing SSL verification. It's not recommended for production.");
             } catch (KeyManagementException | NoSuchAlgorithmException e) {
                 logger.warn("Failed to get SSL Context", e);
@@ -360,7 +363,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }};
 
     public static class NullHostNameVerifier implements HostnameVerifier {
-        @Override public boolean verify(String arg0, SSLSession arg1) { return true; }
+        @Override public boolean verify(String urlHostName, SSLSession session) {
+            if (!urlHostName.equalsIgnoreCase(session.getPeerHost())) {
+                logger.warn("URL host [{}] is different to SSLSession host [{}].", urlHostName, session.getPeerHost());
+            }
+            return true;
+        }
     }
 
     @Override
