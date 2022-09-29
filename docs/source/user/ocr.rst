@@ -167,15 +167,16 @@ Supported strategies are:
 .. note:: When omitted, ``ocr_and_text`` value is used. If you have performance issues, it's worth using the ``auto`` option
 instead as only documents with barely no text will go through the OCR process.
 
+
 OCR Page Seg Mode(Tesseract)
-----------------
+----------------------------
 
 Set Tesseract to only run a subset of layout analysis and assume a certain form of image. The options for N are:
 
 * ``0`` = Orientation and script detection (OSD) only.
-* ``1`` = Automatic page segmentation with OSD.
-* ``2`` = Automatic page segmentation, but no OSD, or OCR. (not implemented)<
-* ``3`` = Fully automatic page segmentation, but no OSD. (Default)
+* ``1`` = Automatic page segmentation with OSD. (Default)
+* ``2`` = Automatic page segmentation, but no OSD, or OCR. (not implemented)
+* ``3`` = Fully automatic page segmentation, but no OSD.
 * ``4`` = Assume a single column of text of variable sizes.
 * ``5`` = Assume a single uniform block of vertically aligned text.
 * ``6`` = Assume a single uniform block of text.
@@ -188,6 +189,6 @@ Set Tesseract to only run a subset of layout analysis and assume a certain form 
 * ``13`` = Raw line. Treat the image as a single text line, bypassing hacks that are Tesseract-specific.
 
 OCR Preserve Interword Spacing
-----------------
+------------------------------
 
-Spaces between the words will be deleted
+Spaces between the words will be deleted.
