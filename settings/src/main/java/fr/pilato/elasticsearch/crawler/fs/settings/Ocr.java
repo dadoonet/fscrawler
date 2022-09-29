@@ -51,7 +51,6 @@ public class Ocr {
         private boolean enabled = true;
         private String pdfStrategy = "ocr_and_text";
         private String pageSegMode = "1";
-
         private boolean preserveInterwordSpacing = false;
 
         public Builder setLanguage(String language) {
