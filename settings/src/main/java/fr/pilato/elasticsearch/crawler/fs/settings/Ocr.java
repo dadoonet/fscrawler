@@ -35,8 +35,8 @@ public class Ocr {
     // Pdf OCR Strategy
     private String pdfStrategy = "ocr_and_text";
     // PDF Page Seg Mode
-    private String pageSegMode = "1";
-    private boolean preserveInterwordSpacing = false;
+    private Integer pageSegMode = null;
+    private Boolean preserveInterwordSpacing = null;
 
     public static Builder builder() {
         return new Builder();
@@ -50,8 +50,8 @@ public class Ocr {
         private String outputType = null;
         private boolean enabled = true;
         private String pdfStrategy = "ocr_and_text";
-        private String pageSegMode = "1";
-        private boolean preserveInterwordSpacing = false;
+        private Integer pageSegMode = null;
+        private Boolean preserveInterwordSpacing = null;
 
         public Builder setLanguage(String language) {
             this.language = language;
@@ -78,12 +78,12 @@ public class Ocr {
             return this;
         }
 
-        public Builder setPageSegMode(String pageSegMode) {
+        public Builder setPageSegMode(Integer pageSegMode) {
             this.pageSegMode = pageSegMode;
             return this;
         }
 
-        public Builder setPreserveInterwordSpacing(boolean preserveInterwordSpacing) {
+        public Builder setPreserveInterwordSpacing(Boolean preserveInterwordSpacing) {
             this.preserveInterwordSpacing = preserveInterwordSpacing;
             return this;
         }
@@ -107,7 +107,7 @@ public class Ocr {
 
     }
 
-    private Ocr(String language, String path, String dataPath, String outputType, String pdfStrategy, boolean enabled, String pageSegMode, boolean preserveInterwordSpacing) {
+    private Ocr(String language, String path, String dataPath, String outputType, String pdfStrategy, boolean enabled, Integer pageSegMode, Boolean preserveInterwordSpacing) {
         this.language = language;
         this.path = path;
         this.dataPath = dataPath;
@@ -158,19 +158,19 @@ public class Ocr {
         this.enabled = enabled;
     }
 
-    public String getPageSegMode() {
+    public Integer getPageSegMode() {
         return pageSegMode;
     }
 
-    public boolean getPreserveInterwordSpacing() {
+    public Boolean getPreserveInterwordSpacing() {
         return this.preserveInterwordSpacing;
     }
 
-    public void setPreserveInterwordSpacing( boolean preserveInterwordSpacing) {
+    public void setPreserveInterwordSpacing( Boolean preserveInterwordSpacing) {
         this.preserveInterwordSpacing = preserveInterwordSpacing;
     }
 
-    public void setPageSegMode( String pageSegMode) {
+    public void setPageSegMode( Integer pageSegMode) {
         this.pageSegMode = pageSegMode;
     }
 

@@ -168,7 +168,7 @@ Supported strategies are:
 instead as only documents with barely no text will go through the OCR process.
 
 
-OCR Page Seg Mode(Tesseract)
+OCR Page Seg Mode
 ----------------------------
 
 Set Tesseract to only run a subset of layout analysis and assume a certain form of image. The options for N are:
