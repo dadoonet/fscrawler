@@ -169,12 +169,12 @@ instead as only documents with barely no text will go through the OCR process.
 
 
 OCR Page Seg Mode
-----------------------------
+-----------------
 
 Set Tesseract to only run a subset of layout analysis and assume a certain form of image. The options for N are:
 
 * ``0`` = Orientation and script detection (OSD) only.
-* ``1`` = Automatic page segmentation with OSD. (Default)
+* ``1`` = Automatic page segmentation with OSD.
 * ``2`` = Automatic page segmentation, but no OSD, or OCR. (not implemented)
 * ``3`` = Fully automatic page segmentation, but no OSD.
 * ``4`` = Assume a single column of text of variable sizes.

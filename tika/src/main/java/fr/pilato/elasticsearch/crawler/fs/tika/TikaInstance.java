@@ -172,7 +172,7 @@ public class TikaInstance {
                     logger.debug("Tesseract PageSegMode set to [{}].", fs.getOcr().getPageSegMode());
                     config.setPageSegMode("" + fs.getOcr().getPageSegMode());
                 }
-                if (fs.getOcr().getPageSegMode() != null) {
+                if (fs.getOcr().getPreserveInterwordSpacing() != null) {
                     logger.debug("Tesseract preserveInterwordSpacing set to [{}].", fs.getOcr().getPreserveInterwordSpacing());
                     config.setPreserveInterwordSpacing(fs.getOcr().getPreserveInterwordSpacing());
                 }
