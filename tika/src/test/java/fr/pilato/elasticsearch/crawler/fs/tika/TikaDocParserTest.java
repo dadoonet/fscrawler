@@ -334,7 +334,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(21));
+        assertThat(raw.entrySet(), iterableWithSize(22));
         assertThat(raw, hasEntry("dc:description", "Comments"));
         assertThat(raw, hasEntry("meta:paragraph-count", "1"));
         assertThat(raw, hasEntry("meta:word-count", "12"));
@@ -351,6 +351,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("custom:Terminé le", "2016-07-06T22:00:00Z"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));
+        assertThat(raw, hasEntry("odf:version", "1.2"));
         assertThat(raw, hasEntry("meta:keyword", "keyword1,  keyword2"));
         assertThat(raw, hasEntry("extended-properties:TotalTime", "PT0S"));
         assertThat(raw, hasEntry("cp:subject", "Test Tika Object"));
