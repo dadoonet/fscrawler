@@ -665,6 +665,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
         logger.info("Settings used for workplace search v7 : " + settings);
         assertThat(settings, is("{\n" +
                 "  \"name\": \"SOURCE_NAME\",\n" +
+                "  \"context\": \"organization\",\n" +
                 "  \"schema\": {\n" +
                 "    \"body\": \"text\",\n" +
                 "    \"comments\": \"text\",\n" +
@@ -716,10 +717,6 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "        \"label\": \"Comments\"\n" +
                 "      },\n" +
                 "      {\n" +
-                "        \"field_name\": \"mime_type\",\n" +
-                "        \"label\": \"Mime Type\"\n" +
-                "      },\n" +
-                "      {\n" +
                 "        \"field_name\": \"extension\",\n" +
                 "        \"label\": \"Extension\"\n" +
                 "      },\n" +
@@ -741,6 +738,37 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "      }\n" +
                 "    ],\n" +
                 "    \"color\": \"#000000\"\n" +
+                "  },\n" +
+                "  \"facets\":\n" +
+                "  {\n" +
+                "    \"overrides\":\n" +
+                "    [\n" +
+                "      {\n" +
+                "        \"display_name\": \"Media Type\",\n" +
+                "        \"field\": \"mime_type\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Extension\",\n" +
+                "        \"field\": \"extension\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Tags\",\n" +
+                "        \"field\": \"tags\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Created By\",\n" +
+                "        \"field\": \"created_by\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Language\",\n" +
+                "        \"field\": \"language\",\n" +
+                "        \"enabled\": true\n" +
+                "      }\n" +
+                "    ]\n" +
                 "  },\n" +
                 "  \"is_searchable\": true\n" +
                 "}\n"));
@@ -1070,6 +1098,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
         logger.info("Settings used for workplace search v8 : " + settings);
         assertThat(settings, is("{\n" +
                 "  \"name\": \"SOURCE_NAME\",\n" +
+                "  \"context\": \"organization\",\n" +
                 "  \"schema\": {\n" +
                 "    \"body\": \"text\",\n" +
                 "    \"comments\": \"text\",\n" +
@@ -1121,10 +1150,6 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "        \"label\": \"Comments\"\n" +
                 "      },\n" +
                 "      {\n" +
-                "        \"field_name\": \"mime_type\",\n" +
-                "        \"label\": \"Mime Type\"\n" +
-                "      },\n" +
-                "      {\n" +
                 "        \"field_name\": \"extension\",\n" +
                 "        \"label\": \"Extension\"\n" +
                 "      },\n" +
@@ -1146,6 +1171,37 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "      }\n" +
                 "    ],\n" +
                 "    \"color\": \"#000000\"\n" +
+                "  },\n" +
+                "  \"facets\":\n" +
+                "  {\n" +
+                "    \"overrides\":\n" +
+                "    [\n" +
+                "      {\n" +
+                "        \"display_name\": \"Media Type\",\n" +
+                "        \"field\": \"mime_type\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Extension\",\n" +
+                "        \"field\": \"extension\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Tags\",\n" +
+                "        \"field\": \"tags\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Created By\",\n" +
+                "        \"field\": \"created_by\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Language\",\n" +
+                "        \"field\": \"language\",\n" +
+                "        \"enabled\": true\n" +
+                "      }\n" +
+                "    ]\n" +
                 "  },\n" +
                 "  \"is_searchable\": true\n" +
                 "}\n"));
