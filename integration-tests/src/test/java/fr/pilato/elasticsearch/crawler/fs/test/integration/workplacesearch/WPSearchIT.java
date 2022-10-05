@@ -323,7 +323,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             {
                 // Filter (we specify a field name within a term query)
                 ESSearchResponse response = documentService.search(new ESSearchRequest().withESQuery(
-                        new ESTermQuery("author", "Mister Foo")
+                        new ESTermQuery("created_by", "Mister Foo")
                 ));
                 assertThat(response.getTotalHits(), is(1L));
                 assertThat(response.getHits(), hasSize(1));
@@ -355,7 +355,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 ESSearchResponse response = documentService.search(new ESSearchRequest().withESQuery(
                         new ESBoolQuery()
                                 .addMust(new ESTermQuery("language", "EN"))
-                                .addMust(new ESTermQuery("author", "Mister Foo"))
+                                .addMust(new ESTermQuery("created_by", "Mister Foo"))
                 ));
                 assertThat(response.getTotalHits(), is(1L));
                 assertThat(response.getHits(), hasSize(1));
@@ -373,7 +373,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                         new ESBoolQuery()
                                 .addMust(new ESTermQuery("language", "EN"))
                                 .addMust(new ESMatchQuery(null, "title"))
-                                .addMust(new ESTermQuery("author", "Mister Foo"))
+                                .addMust(new ESTermQuery("created_by", "Mister Foo"))
                 ));
                 assertThat(response.getTotalHits(), is(1L));
                 assertThat(response.getHits(), hasSize(1));
