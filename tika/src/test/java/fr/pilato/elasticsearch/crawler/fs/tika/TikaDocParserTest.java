@@ -376,7 +376,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 37 : 36));
+        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 36 : 35));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:title", "Test Tika title"));
@@ -413,10 +413,6 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z"));
-
-        if (isOcrAvailable) {
-            assertThat(raw, hasEntry("Content-Type-Parser-Override", "image/ocr-png"));
-        }
     }
 
     @Test

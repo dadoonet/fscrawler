@@ -37,6 +37,7 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.DefaultParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.gdal.GDALParser;
 import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.apache.tika.parser.pdf.PDFParser;
@@ -49,6 +50,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.apache.tika.langdetect.optimaize.OptimaizeLangDetector.getDefaultLanguageDetector;
 
@@ -140,7 +142,7 @@ public class TikaInstance {
                     defaultParser = new DefaultParser(
                             MediaTypeRegistry.getDefaultRegistry(),
                             new ServiceLoader(),
-                            Collections.singletonList(PDFParser.class));
+                            List.of(PDFParser.class, GDALParser.class));
                 } else {
                     logger.info("OCR is disabled.");
                     TesseractOCRConfig config = context.get(TesseractOCRConfig.class);
