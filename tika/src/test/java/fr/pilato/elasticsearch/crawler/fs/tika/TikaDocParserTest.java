@@ -334,7 +334,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(21));
+        assertThat(raw.entrySet(), iterableWithSize(22));
         assertThat(raw, hasEntry("dc:description", "Comments"));
         assertThat(raw, hasEntry("meta:paragraph-count", "1"));
         assertThat(raw, hasEntry("meta:word-count", "12"));
@@ -351,6 +351,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("custom:Terminé le", "2016-07-06T22:00:00Z"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));
+        assertThat(raw, hasEntry("odf:version", "1.2"));
         assertThat(raw, hasEntry("meta:keyword", "keyword1,  keyword2"));
         assertThat(raw, hasEntry("extended-properties:TotalTime", "PT0S"));
         assertThat(raw, hasEntry("cp:subject", "Test Tika Object"));
@@ -375,7 +376,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 37 : 36));
+        assertThat(raw.entrySet(), iterableWithSize(36));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:title", "Test Tika title"));
@@ -412,10 +413,6 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z"));
-
-        if (isOcrAvailable) {
-            assertThat(raw, hasEntry("Content-Type-Parser-Override", "image/ocr-png"));
-        }
     }
 
     @Test
@@ -742,7 +739,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(withOcr ? 31 : 30));
+        assertThat(raw.entrySet(), iterableWithSize(30));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.4"));
         assertThat(raw, hasEntry("xmp:CreatorTool", "Writer"));
@@ -773,10 +770,6 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:producer", "OpenOffice.org 2.1"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z"));
-
-        if (withOcr) {
-            assertThat(raw, hasEntry("Content-Type-Parser-Override", "image/ocr-png"));
-        }
     }
 
     /**
