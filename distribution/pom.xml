@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>fr.pilato.elasticsearch.crawler</groupId>
@@ -32,6 +31,8 @@
         <docker.noocr.assembly.mode>tgz</docker.noocr.assembly.mode>
         <!-- We use this tag to make easy using docker pull dadoonet/fscrawler:noocr -->
         <docker.noocr.tags.0>noocr</docker.noocr.tags.0>
+        <docker.noocr.buildx.platforms.0>linux/amd64</docker.noocr.buildx.platforms.0>
+        <docker.noocr.buildx.platforms.1>linux/arm64</docker.noocr.buildx.platforms.1>
 
         <!-- install tesseract-ocr and all language files -->
         <docker.ocr.alias>${project.artifactId}-ocr</docker.ocr.alias>
@@ -44,6 +45,8 @@
         <!-- The ocr version will be the default one for anyone trying docker pull dadoonet/fscrawler:VERSION -->
         <docker.ocr.tags.0>${project.version}</docker.ocr.tags.0>
         <docker.ocr.tags.1>latest</docker.ocr.tags.1>
+        <docker.ocr.buildx.platforms.0>linux/amd64</docker.ocr.buildx.platforms.0>
+        <docker.ocr.buildx.platforms.1>linux/arm64</docker.ocr.buildx.platforms.1>
 
         <distribution.mainClassName>fr.pilato.elasticsearch.crawler.fs.cli.FsCrawler</distribution.mainClassName>
     </properties>
@@ -163,6 +166,7 @@
                             <external>
                                 <type>properties</type>
                                 <prefix>docker.ocr</prefix>
+
                             </external>
                         </image>
                     </images>
