@@ -44,6 +44,7 @@
 
         <tika.version>2.5.0</tika.version>
         <jackson.version>2.13.4</jackson.version>
+        <jackson.databind.version>2.13.4.2</jackson.databind.version>
         <jsonpath.version>2.7.0</jsonpath.version>
         <slf4j.version>1.7.36</slf4j.version>
         <log4j.version>2.18.0</log4j.version>
@@ -577,7 +578,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
+                <version>${jackson.databind.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
