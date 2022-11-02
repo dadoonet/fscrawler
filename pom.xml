@@ -44,6 +44,7 @@
 
         <tika.version>2.5.0</tika.version>
         <jackson.version>2.13.4</jackson.version>
+        <jackson.databind.version>2.13.4.2</jackson.databind.version>
         <jsonpath.version>2.7.0</jsonpath.version>
         <slf4j.version>1.7.36</slf4j.version>
         <log4j.version>2.18.0</log4j.version>
@@ -577,7 +578,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
+                <version>${jackson.databind.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
@@ -1040,6 +1041,15 @@
                         <artifactId>ossindex-maven-plugin</artifactId>
                         <configuration>
                             <cvssScoreThreshold>7.0</cvssScoreThreshold>
+                            <excludeVulnerabilityIds>
+                                <!-- TODO Remove when upgrading one of those libs:
+                                 - org.apache.tika:tika-parser-scientific-module:2.5.0
+                                   - edu.ucar:netcdf4:4.5.5
+                                     - edu.ucar:cdm:4.5.5
+                                       - com.google.protobuf:protobuf-java:jar:2.5.0
+                                See https://issues.apache.org/jira/browse/TIKA-2536?focusedCommentId=17627609 -->
+                                <excludeVulnerabilityId>CVE-2022-3171</excludeVulnerabilityId>
+                            </excludeVulnerabilityIds>
                         </configuration>
                     </plugin>
                 </plugins>
