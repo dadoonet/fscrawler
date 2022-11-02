@@ -1041,6 +1041,15 @@
                         <artifactId>ossindex-maven-plugin</artifactId>
                         <configuration>
                             <cvssScoreThreshold>7.0</cvssScoreThreshold>
+                            <excludeVulnerabilityIds>
+                                <!-- TODO Remove when upgrading one of those libs:
+                                 - org.apache.tika:tika-parser-scientific-module:2.5.0
+                                   - edu.ucar:netcdf4:4.5.5
+                                     - edu.ucar:cdm:4.5.5
+                                       - com.google.protobuf:protobuf-java:jar:2.5.0
+                                See https://issues.apache.org/jira/browse/TIKA-2536?focusedCommentId=17627609 -->
+                                <excludeVulnerabilityId>CVE-2022-3171</excludeVulnerabilityId>
+                            </excludeVulnerabilityIds>
                         </configuration>
                     </plugin>
                 </plugins>
