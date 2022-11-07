@@ -42,7 +42,7 @@
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch8.version}</elasticsearch.version>
 
-        <tika.version>2.5.0</tika.version>
+        <tika.version>2.6.0</tika.version>
         <jackson.version>2.13.4</jackson.version>
         <jackson.databind.version>2.13.4.2</jackson.databind.version>
         <jsonpath.version>2.7.0</jsonpath.version>
