@@ -376,7 +376,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(36));
+        assertThat(raw.entrySet(), iterableWithSize(41));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:title", "Test Tika title"));
@@ -386,22 +386,26 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("access_permission:can_print_degraded", "true"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
+        assertThat(raw, hasEntry("pdf:num3DAnnotations", "0"));
         assertThat(raw, hasEntry("dcterms:created", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("dcterms:modified", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("dc:format", "application/pdf; version=1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:creator_tool", "Microsoft Word"));
+        assertThat(raw, hasEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0"));
         assertThat(raw, hasEntry("access_permission:fill_in_form", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:keywords", "keyword1, keyword2"));
         assertThat(raw, hasEntry("pdf:docinfo:modified", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("pdf:hasCollection", "false"));
         assertThat(raw, hasEntry("pdf:encrypted", "false"));
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));
+        assertThat(raw, hasEntry("pdf:containsNonEmbeddedFont", "false"));
         assertThat(raw, hasEntry("pdf:docinfo:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("pdf:hasMarkedContent", "true"));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
         assertThat(raw, hasEntry("pdf:docinfo:creator", "David Pilato"));
         assertThat(raw, hasEntry("dc:language", "en-US"));
         assertThat(raw, hasEntry("dc:subject", "keyword1, keyword2"));
+        assertThat(raw, hasEntry("pdf:totalUnmappedUnicodeChars", "0"));
         assertThat(raw, hasEntry("access_permission:extract_for_accessibility", "true"));
         assertThat(raw, hasEntry("access_permission:assemble_document", "true"));
         assertThat(raw, hasEntry("xmpTPg:NPages", "2"));
@@ -413,6 +417,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z"));
+        assertThat(raw, hasEntry("pdf:containsDamagedFont", "false"));
     }
 
     @Test
@@ -739,7 +744,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(30));
+        assertThat(raw.entrySet(), iterableWithSize(35));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.4"));
         assertThat(raw, hasEntry("xmp:CreatorTool", "Writer"));
@@ -748,16 +753,20 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("access_permission:can_print_degraded", "true"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("dc:creator", "Evangelos Vlachogiannis"));
+        assertThat(raw, hasEntry("pdf:num3DAnnotations", "0"));
         assertThat(raw, hasEntry("dcterms:created", "2007-02-23T15:56:37Z"));
         assertThat(raw, hasEntry("dc:format", "application/pdf; version=1.4"));
         assertThat(raw, hasEntry("pdf:docinfo:creator_tool", "Writer"));
+        assertThat(raw, hasEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0"));
         assertThat(raw, hasEntry("access_permission:fill_in_form", "true"));
         assertThat(raw, hasEntry("pdf:hasCollection", "false"));
         assertThat(raw, hasEntry("pdf:encrypted", "false"));
+        assertThat(raw, hasEntry("pdf:containsNonEmbeddedFont", "false"));
         assertThat(raw, hasEntry("pdf:hasMarkedContent", "false"));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
         assertThat(raw, hasEntry("pdf:docinfo:creator", "Evangelos Vlachogiannis"));
         assertThat(raw, hasEntry("pdf:producer", "OpenOffice.org 2.1"));
+        assertThat(raw, hasEntry("pdf:totalUnmappedUnicodeChars", "0"));
         assertThat(raw, hasEntry("access_permission:extract_for_accessibility", "true"));
         assertThat(raw, hasEntry("access_permission:assemble_document", "true"));
         assertThat(raw, hasEntry("xmpTPg:NPages", "1"));
@@ -770,6 +779,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:producer", "OpenOffice.org 2.1"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z"));
+        assertThat(raw, hasEntry("pdf:containsDamagedFont", "false"));
     }
 
     /**
