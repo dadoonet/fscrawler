@@ -128,16 +128,4 @@ public class JsonUtil {
     public static DocumentContext parseJsonAsDocumentContext(String json) {
         return JsonPath.using(configuration).parse(json);
     }
-
-    /**
-     * Read a field from a JSON document as a JSON String content
-     * @param context   the document context
-     * @param path      path to access the field. Like "$.field"
-     * @return          the JSON as a String
-     * @see #parseJsonAsDocumentContext(String) to get a document context
-     */
-    public static String extractJsonFromPath(DocumentContext context, String path) {
-        Map<String, Object> jsonMap = context.read(path);
-        return JsonUtil.serialize(jsonMap);
-    }
 }

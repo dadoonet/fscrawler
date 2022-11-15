@@ -723,6 +723,18 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
+    /**
+     * Read a field from a JSON document as a JSON String content
+     * @param context   the document context
+     * @param path      path to access the field. Like "$.field"
+     * @return          the JSON as a String
+     * @see fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil#parseJsonAsDocumentContext(String) to get a document context
+     */
+    private static String extractJsonFromPath(DocumentContext context, String path) {
+        Map<String, Object> jsonMap = context.read(path);
+        return serialize(jsonMap);
+    }
+
     void httpHead(String path) throws ElasticsearchClientException {
         httpCall("HEAD", path, null);
     }
