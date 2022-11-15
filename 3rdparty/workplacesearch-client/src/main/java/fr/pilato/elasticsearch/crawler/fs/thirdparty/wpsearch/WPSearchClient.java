@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
 
 import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
@@ -54,7 +53,6 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 /**
@@ -340,11 +338,11 @@ public class WPSearchClient implements Closeable {
             String json = listAllCustomSources(currentPage);
 
             // We parse the json
-            Object document = parseJson(json);
-            totalPages = JsonPath.read(document, "$.meta.page.total_pages");
+            DocumentContext document = parseJsonAsDocumentContext(json);
+            totalPages = document.read("$.meta.page.total_pages");
 
             // We compare every source
-            List<Map<String, Object>> sources = JsonPath.read(document, "$.results[*]");
+            List<Map<String, Object>> sources = document.read("$.results[*]");
 
             for (Map<String, Object> source : sources) {
                 if (FilenameUtils.wildcardMatch((String) source.get("name"), name)) {
@@ -389,8 +387,8 @@ public class WPSearchClient implements Closeable {
         logger.trace("Source [{}] created. Response: {}", sourceName, response);
 
         // We parse the json
-        Object document = parseJson(response);
-        String id = JsonPath.read(document, "$.id");
+        DocumentContext document = parseJsonAsDocumentContext(json);
+        String id = document.read("$.id");
 
         logger.debug("Source [{}/{}] created.", id, sourceName);
 

@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
@@ -55,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.frequently;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.docToJson;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
@@ -315,15 +316,15 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     protected static void checker(String json, int results, List<String> filenames, List<String> texts) {
         staticLogger.trace("{}", json);
 
-        Object document = parseJson(json);
-        assertThat(JsonPath.read(document, "$.meta.page.total_results"), is(results));
+        DocumentContext document = parseJsonAsDocumentContext(json);
+        assertThat(document.read("$.meta.page.total_results"), is(results));
 
         for (int i = 0; i < results; i++) {
-            documentChecker(JsonPath.read(document, "$.results[" + i + "]"), filenames, texts);
+            documentChecker(document.read("$.results[" + i + "]"), filenames, texts);
         }
     }
 
-    protected static void documentChecker(Object document, List<String> filenames, List<String> texts) {
+    protected static void documentChecker(DocumentContext document, List<String> filenames, List<String> texts) {
         List<String> urls = new ArrayList<>();
         List<String> titles = new ArrayList<>();
         List<String> bodies = new ArrayList<>();
@@ -353,13 +354,13 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         propertyChecker(document, "last_modified", notNullValue());
     }
 
-    private static void propertyChecker(Object document, String fieldName, Matcher<?> matcher) {
+    private static void propertyChecker(DocumentContext document, String fieldName, Matcher<?> matcher) {
         try {
             // We try the .raw field if the document is coming from the search API
-            assertThat(JsonPath.read(document, "$." + fieldName + ".raw"), matcher);
+            assertThat(document.read("$." + fieldName + ".raw"), matcher);
         } catch (PathNotFoundException e) {
             // We fall back to the field name if the document is coming from the get API
-            assertThat(JsonPath.read(document, "$." + fieldName), matcher);
+            assertThat(document.read("$." + fieldName), matcher);
         }
     }
 }

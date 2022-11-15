@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 
 import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
@@ -233,9 +232,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.debug("get version");
         String response = httpGet(null);
         // We parse the response
-        Object document = parseJson(response);
+        DocumentContext document = parseJsonAsDocumentContext(response);
         // Cache the version and the major version
-        version = JsonPath.read(document, "$.version.number");
+        version = document.read("$.version.number");
         majorVersion = extractMajorVersion(version);
 
         logger.debug("get version returns {} and {} as the major version number", version, majorVersion);
@@ -337,8 +336,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
             url = "_refresh";
         }
         String response = httpPost(url, null);
-        Object document = parseJson(response);
-        int shardsFailed = JsonPath.read(document, "$._shards.failed");
+        DocumentContext document = parseJsonAsDocumentContext(response);
+        int shardsFailed = document.read("$._shards.failed");
         if (shardsFailed > 0) {
             throw new ElasticsearchClientException("Unable to refresh index " + index + " : " + response);
         }
@@ -656,10 +655,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.debug("delete index [{}]", index);
         try {
             String response = httpDelete(index, null);
-            Object document = parseJson(response);
-            boolean acknowledged = JsonPath.read(document, "$.acknowledged");
+            DocumentContext document = parseJsonAsDocumentContext(response);
+            boolean acknowledged = document.read("$.acknowledged");
             if (!acknowledged) {
-                throw new ElasticsearchClientException("Can not remove index " + index + " : " + JsonPath.read(document, "$.error.reason"));
+                throw new ElasticsearchClientException("Can not remove index " + index + " : " + document.read("$.error.reason"));
             }
         } catch (NotFoundException e) {
             logger.debug("Index [{}] was not found", index);

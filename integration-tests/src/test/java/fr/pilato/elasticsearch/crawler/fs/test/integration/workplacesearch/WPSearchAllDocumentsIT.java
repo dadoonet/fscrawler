@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
@@ -43,7 +44,7 @@ import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClientUtil.generateDefaultCustomSourceName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -110,17 +111,17 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
             runSearch("test.doc", "sample");
 
             {
-                Object document = runSearch("test.docx", "sample");
-                assertThat(JsonPath.read(document, "$.results[*].name.raw"), notNullValue());
-                assertThat(JsonPath.read(document, "$.results[*].mime_type.raw"), notNullValue());
-                assertThat(JsonPath.read(document, "$.results[*].url.raw"), notNullValue());
-                assertThat(JsonPath.read(document, "$.results[*].size.raw"), notNullValue());
-                assertThat(JsonPath.read(document, "$.results[*].last_modified.raw"), notNullValue());
-                assertThat(JsonPath.read(document, "$.results[*].path.raw"), notNullValue());
-                assertThat(JsonPath.read(document, "$.results[*].created_at.raw"), notNullValue());
-                assertThat(JsonPath.read(document, "$.results[*].title.raw"), notNullValue());
-                assertThat(JsonPath.read(document, "$.results[*].keywords.raw"), notNullValue());
-                assertThat(JsonPath.read(document, "$.results[*].body.raw"), notNullValue());
+                DocumentContext document = runSearch("test.docx", "sample");
+                assertThat(document.read("$.results[*].name.raw"), notNullValue());
+                assertThat(document.read("$.results[*].mime_type.raw"), notNullValue());
+                assertThat(document.read("$.results[*].url.raw"), notNullValue());
+                assertThat(document.read("$.results[*].size.raw"), notNullValue());
+                assertThat(document.read("$.results[*].last_modified.raw"), notNullValue());
+                assertThat(document.read("$.results[*].path.raw"), notNullValue());
+                assertThat(document.read("$.results[*].created_at.raw"), notNullValue());
+                assertThat(document.read("$.results[*].title.raw"), notNullValue());
+                assertThat(document.read("$.results[*].keywords.raw"), notNullValue());
+                assertThat(document.read("$.results[*].body.raw"), notNullValue());
             }
             runSearch("test.html", "sample");
             runSearch("test.mp3", "tika");
@@ -133,12 +134,12 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
             runSearch("issue-221-doc1.pdf", "coucou");
             runSearch("issue-221-doc2.pdf", "FORMATIONS");
 
-            Object response = runSearch("test-fr.txt", "fichier");
-            assertThat(JsonPath.read(response, "$.results[0].language.raw"), is("fr"));
+            DocumentContext response = runSearch("test-fr.txt", "fichier");
+            assertThat(response.read("$.results[0].language.raw"), is("fr"));
             response = runSearch("test-de.txt", "Datei");
-            assertThat(JsonPath.read(response, "$.results[0].language.raw"), is("de"));
+            assertThat(response.read("$.results[0].language.raw"), is("de"));
             response = runSearch("test.txt", "contains");
-            assertThat(JsonPath.read(response, "$.results[0].language.raw"), is("en"));
+            assertThat(response.read("$.results[0].language.raw"), is("en"));
 
             runSearch("issue-369.txt", "今天天气晴好");
             runSearch("issue-400-shiftjis.txt", "elasticsearch");
@@ -157,14 +158,14 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
 
     /**
      * Run a search with optional parameters and returns a Json Document
-     * that has been parsed by JSonPath.
+     * that has been parsed by JSonPath behind the scene.
      * So it's easy then to extract values from the JSon document with:
-     * JsonPath.read(document, "$.field")
+     * document.read("$.field")
      * @param filename  optional filename (this will add a filter on the path field)
      * @param content   optional content (will run as a fulltext search query)
-     * @return the JsonPath object
+     * @return the DocumentContext object
      */
-    private Object runSearch(String filename, String content) {
+    private DocumentContext runSearch(String filename, String content) {
         logger.info(" -> Testing if file [{}] has been indexed correctly{}.", filename,
                 content == null ? "" : " and contains [" + content + "]");
 
@@ -174,11 +175,12 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
                 filters.put("name", Collections.singletonList(filename));
             }
             String json = client.search(content, filters);
-            List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
+            DocumentContext document = parseJsonAsDocumentContext(json);
+
+            List<String> ids = document.read("$.results[*].id.raw");
             assertThat(ids, hasSize(1));
 
-            // We parse the json
-            return parseJson(json);
+            return document;
         }
     }
 }

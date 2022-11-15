@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch.WPSearchClient;
 import jakarta.ws.rs.ProcessingException;
@@ -38,6 +37,7 @@ import java.util.Properties;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
@@ -155,8 +155,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(5));
 
             // We can now get the document
-            String document = client.getDocument(id);
-            documentChecker(JsonUtil.parseJson(document), List.of("foo.txt"), List.of("Foo"));
+            documentChecker(parseJsonAsDocumentContext(client.getDocument(id)), List.of("foo.txt"), List.of("Foo"));
 
             // Get a non existing document
             assertThat(client.getDocument("thisiddoesnotexist"), nullValue());
