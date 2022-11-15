@@ -38,14 +38,14 @@ import static org.hamcrest.Matchers.equalTo;
 public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for issue #5: https://github.com/dadoonet/fscrawler/issues/5 : Support JSon documents
+     * Test case for issue #5: <a href="https://github.com/dadoonet/fscrawler/issues/5">https://github.com/dadoonet/fscrawler/issues/5</a> : Support JSon documents
      */
     @Test
     public void test_json_support() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
             try {
@@ -61,14 +61,14 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for issue #5: https://github.com/dadoonet/fscrawler/issues/5 : Support JSon documents
+     * Test case for issue #5: <a href="https://github.com/dadoonet/fscrawler/issues/5">https://github.com/dadoonet/fscrawler/issues/5</a> : Support JSon documents
      */
     @Test
     public void test_json_disabled() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
             try {
@@ -96,7 +96,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for issue #237:  https://github.com/dadoonet/fscrawler/issues/237 Delete json documents
+     * Test case for issue #237:  <a href="https://github.com/dadoonet/fscrawler/issues/237">https://github.com/dadoonet/fscrawler/issues/237</a> Delete json documents
      */
     @Test
     public void test_add_as_inner_object() throws Exception {
@@ -104,7 +104,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                 .setJsonSupport(true)
                 .setAddAsInnerObject(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         assertThat("We should have 2 doc for tweet in object.text field...", awaitBusy(() -> {
             try {
@@ -120,14 +120,14 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for issue #204: https://github.com/dadoonet/fscrawler/issues/204 : JSON files are indexed twice
+     * Test case for issue #204: <a href="https://github.com/dadoonet/fscrawler/issues/204">https://github.com/dadoonet/fscrawler/issues/204</a> : JSON files are indexed twice
      */
     @Test
     public void test_json_support_and_other_files() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         assertThat("We should have 2 docs only...", awaitBusy(() -> {
             try {

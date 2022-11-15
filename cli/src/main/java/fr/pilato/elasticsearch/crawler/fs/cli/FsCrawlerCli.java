@@ -291,7 +291,7 @@ public class FsCrawlerCli {
 
         try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest)) {
             Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
-            // Let see if we want to upgrade an existing cluster to latest version
+            // Let see if we want to upgrade an existing cluster to the latest version
             if (commands.upgrade) {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
             } else {
@@ -330,7 +330,7 @@ public class FsCrawlerCli {
     private static final int BANNER_LENGTH = 100;
 
     /**
-     * This is coming from: https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler
+     * This is coming from: <a href="https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler">https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler</a>
      */
     private static final String ASCII_ART = "" +
             "    ,---,.  .--.--.     ,----..                                     ,--,                      \n" +

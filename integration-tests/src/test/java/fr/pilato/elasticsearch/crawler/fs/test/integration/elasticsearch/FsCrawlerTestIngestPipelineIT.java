@@ -32,7 +32,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
 
 /**
  * Test crawler with ingest pipelines
@@ -40,7 +39,7 @@ import static org.junit.Assume.assumeThat;
 public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for #234: https://github.com/dadoonet/fscrawler/issues/234 : Support ingest pipeline processing
+     * Test case for #234: <a href="https://github.com/dadoonet/fscrawler/issues/234">https://github.com/dadoonet/fscrawler/issues/234</a> : Support ingest pipeline processing
      */
     @Test
     public void test_ingest_pipeline() throws Exception {
@@ -63,7 +62,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);
 
-        startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+        crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest()
@@ -76,7 +75,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for #392: https://github.com/dadoonet/fscrawler/issues/392 : Support ingest pipeline processing
+     * Test case for #392: <a href="https://github.com/dadoonet/fscrawler/issues/392">https://github.com/dadoonet/fscrawler/issues/392</a> : Support ingest pipeline processing
      */
     @Test
     public void test_ingest_pipeline_392() throws Exception {
@@ -108,7 +107,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);
 
-        startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+        crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
@@ -116,7 +115,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for #490: https://github.com/dadoonet/fscrawler/issues/490 : Missing ES pipeline
+     * Test case for #490: <a href="https://github.com/dadoonet/fscrawler/issues/490">https://github.com/dadoonet/fscrawler/issues/490</a> : Missing ES pipeline
      */
     @Test
     public void test_ingest_missing_pipeline_490() throws Exception {
@@ -126,7 +125,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         elasticsearch.setPipeline(crawlerName);
 
         try {
-            startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+            crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
             fail("We should have caught a RuntimeException");
         } catch (RuntimeException e) {
             assertThat(e.getMessage(), containsString("You defined pipeline:" + crawlerName + ", but it does not exist."));

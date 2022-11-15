@@ -40,7 +40,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_defaults() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have one file
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
@@ -53,7 +53,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_default_metadata() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -76,19 +76,19 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_filename_analyzer() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We should have one doc
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")), 1L, null);
     }
 
     /**
-     * Test case for #183: https://github.com/dadoonet/fscrawler/issues/183 : Optimize document and folder mappings
+     * Test case for #183: <a href="https://github.com/dadoonet/fscrawler/issues/183">https://github.com/dadoonet/fscrawler/issues/183</a> : Optimize document and folder mappings
      * We want to make sure we can highlight documents even if we don't store fields
      */
     @Test
     public void test_highlight_documents() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);

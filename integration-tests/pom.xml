@@ -129,7 +129,7 @@
                 <artifactId>junit4-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <!-- There is no unit test so we can skip that execution -->
+                        <!-- There is no unit test, so we can skip that execution -->
                         <id>unit-tests</id>
                         <phase>none</phase>
                     </execution>

@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.jayway.jsonpath.JsonPath;
+import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
@@ -83,12 +84,12 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             sourceId = getSourceIdFromSourceName(defaultCustomSourceName);
             assertThat("Custom source id should be found for source " + defaultCustomSourceName, sourceId, notNullValue());
 
-            startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            crawler = startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
                 String json = countTestHelper(client, sourceId, 1L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
-                // We can check the meta data to check the custom source id
+                // We can check the metadata to check the custom source id
                 assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(sourceId));
 
                 // We can check the content
@@ -132,12 +133,12 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
         try (FsCrawlerDocumentService documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings)) {
             documentService.start();
 
-            startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            crawler = startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
                 String json = countTestHelper(client, sourceId, 1L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
-                // We can check the meta data to check the custom source id
+                // We can check the metadata to check the custom source id
                 assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(sourceId));
 
                 // We can check the content
@@ -182,12 +183,12 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             sourceId = getSourceIdFromSourceName(sourceName);
             assertThat("Custom source id should be found for source " + sourceName, sourceId, notNullValue());
 
-            startCrawler(getCrawlerName(), sourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            crawler = startCrawler(getCrawlerName(), sourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
                 String json = countTestHelper(client, sourceId, 1L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
-                // We can check the meta data to check the custom source id
+                // We can check the metadata to check the custom source id
                 assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(sourceId));
 
                 // We can check the content
@@ -429,12 +430,12 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             sourceId = getSourceIdFromSourceName(defaultCustomSourceName);
             assertThat("Custom source id should be found for source " + defaultCustomSourceName, sourceId, notNullValue());
 
-            startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
+            crawler = startCrawler(crawlerName, sourceId, fsSettings, TimeValue.timeValueSeconds(10));
             try (WPSearchClient client = createClient()) {
                 // We need to wait until it's done
                 String json = countTestHelper(client, sourceId, 2L, TimeValue.timeValueSeconds(1));
                 Object document = parseJson(json);
-                // We can check the meta data to check the custom source id
+                // We can check the metadata to check the custom source id
                 assertThat(JsonPath.read(document, "$.results[0]._meta.content_source_id"), is(sourceId));
 
                 // We can check the content

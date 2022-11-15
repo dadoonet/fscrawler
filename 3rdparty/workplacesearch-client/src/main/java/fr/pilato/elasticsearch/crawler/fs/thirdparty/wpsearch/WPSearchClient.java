@@ -129,6 +129,7 @@ public class WPSearchClient implements Closeable {
      * @param host  If we need to change the default host
      * @return the current instance
      */
+    @SuppressWarnings("JavadocLinkAsPlainText")
     public WPSearchClient withHost(String host) {
         this.host = host;
         return this;
@@ -167,7 +168,7 @@ public class WPSearchClient implements Closeable {
 
         // Create the client
         ClientConfig config = new ClientConfig();
-        // We need to suppress this so we can do DELETE with body
+        // We need to suppress this, so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(username, password);
         client = ClientBuilder.newClient(config);
@@ -381,7 +382,7 @@ public class WPSearchClient implements Closeable {
         int worplaceSearchVersion = FsCrawlerUtil.extractMajorVersion(version);
         String json = readJsonFile(jobMappingDir, rootDir, worplaceSearchVersion, INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
 
-        // We need to replace the place holder values
+        // We need to replace the placeholder values
         json = json.replaceAll("SOURCE_NAME", sourceName);
 
         String response = post(DEFAULT_WS_ENDPOINT, "sources/", json, String.class);
@@ -447,8 +448,7 @@ public class WPSearchClient implements Closeable {
 
     <T> T get(String urlForApi, String path, Class<T> clazz) {
         logger.debug("Calling GET {}{}", urlForApi, path);
-        try {
-            Response response = prepareHttpCall(urlForApi, path).build("GET").invoke();
+        try (Response response = prepareHttpCall(urlForApi, path).build("GET").invoke()) {
             logger.trace("Response headers: {}", response.getHeaders());
             T entity = response.readEntity(clazz);
             logger.trace("Response entity: {}", entity);

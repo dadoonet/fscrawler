@@ -89,7 +89,10 @@ public class FsCrawlerBulkProcessor<
         if (executor != null) {
             logger.debug("Closing BulkProcessor");
             executor.shutdown();
-            executor.awaitTermination(10, TimeUnit.SECONDS);
+            if(!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                logger.warn("We waited for the bulk processor shutdown but it did not close properly. " +
+                        "We might be missing some documents.");
+            }
             logger.debug("BulkProcessor is now closed");
         }
 

@@ -35,14 +35,14 @@ import static org.hamcrest.Matchers.is;
 public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for #155: https://github.com/dadoonet/fscrawler/issues/155 : New option: do not index folders
+     * Test case for #155: <a href="https://github.com/dadoonet/fscrawler/issues/155">https://github.com/dadoonet/fscrawler/issues/155</a> : New option: do not index folders
      */
     @Test
     public void test_ignore_folders() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setIndexFolders(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have two files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);

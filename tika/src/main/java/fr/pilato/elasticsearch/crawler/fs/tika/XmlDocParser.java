@@ -63,7 +63,7 @@ public class XmlDocParser {
     }
 
     /**
-     * Extracting XML content. See #185: https://github.com/dadoonet/fscrawler/issues/185
+     * Extracting XML content. See #185: <a href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a>
      * @param inputStream The XML Stream
      * @return The XML Content as a map
      */

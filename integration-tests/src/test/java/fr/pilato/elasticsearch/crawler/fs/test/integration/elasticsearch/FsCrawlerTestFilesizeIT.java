@@ -46,7 +46,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIndexedChars(new Percentage(7))
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -63,7 +63,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIndexedChars(Percentage.parse("0.1%"))
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -80,13 +80,13 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIndexedChars(new Percentage(-1))
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             Object document = JsonUtil.parseJson(hit.getSource());
 
-            // Our original text should not be truncated so we must have its end extracted
+            // Our original text should not be truncated, so we must have its end extracted
             assertThat(JsonPath.read(document, "$.content"), containsString("haecque non diu sunt perpetrata."));
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.file.indexed_chars"));
         }
@@ -94,7 +94,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_filesize() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -107,7 +107,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setAddFilesize(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -123,7 +123,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIgnoreAbove(ByteSizeValue.parseBytesSizeValue("10kb"))
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }

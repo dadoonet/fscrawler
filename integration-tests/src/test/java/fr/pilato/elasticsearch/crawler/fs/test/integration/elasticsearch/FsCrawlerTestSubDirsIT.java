@@ -48,7 +48,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_subdirs() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have two files
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
@@ -66,7 +66,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_subdirs_deep_tree() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have 7 files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
@@ -136,7 +136,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
             Files.copy(sourceFile, newDir.resolve("sample.txt"));
         }
 
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have x files (<- whoa that's funny Mulder!)
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), subdirs+1, null);

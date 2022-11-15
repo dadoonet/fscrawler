@@ -76,7 +76,7 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     }
 
     @Override
-    public String getVersion() throws IOException {
+    public String getVersion() {
         throw new RuntimeException("Not implemented yet");
     }
 
@@ -137,13 +137,13 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException {
+    public boolean exists(String index, String id) {
         logger.debug("Search if document {} exists", id);
         return client.exists(id);
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException {
+    public ESSearchHit get(String index, String id) {
         logger.debug("Getting {}/{}", index, id);
         String json = client.get(id);
 
@@ -163,7 +163,7 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
 
     /**
      * We extract the {@link ESMatchQuery} from the {@link ESQuery}.
-     * We ignore totally the {@link ESTermQuery} if any and we fail for the others.
+     * We ignore totally the {@link ESTermQuery} if any, and we fail for the others.
      * @param query the query to transform as a fulltext search content
      * @return a fulltext search content
      */
@@ -195,7 +195,7 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     /**
      * We extract the {@link ESTermQuery} from the {@link ESQuery}.
      * It also supports the {@link ESBoolQuery}.
-     * We ignore totally the {@link ESMatchQuery} if any and we fail for the others.
+     * We ignore totally the {@link ESMatchQuery} if any, and we fail for the others.
      * @param query the query to transform as filter
      * @return the filter to apply
      */

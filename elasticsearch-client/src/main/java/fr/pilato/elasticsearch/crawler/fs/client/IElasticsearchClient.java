@@ -39,9 +39,8 @@ public interface IElasticsearchClient extends Closeable {
 
     /**
      * Start the client and its internal resources. This must be called before any operation can be performed.
-     * @throws IOException in case of communication error with the cluster
      */
-    void start() throws IOException, ElasticsearchClientException;
+    void start() throws ElasticsearchClientException;
 
     /**
      * Get the list of the active nodes. Could be use in an admin status API.
@@ -51,9 +50,8 @@ public interface IElasticsearchClient extends Closeable {
 
     /**
      * Get version about the node it's connected to
-     * @throws IOException in case of communication error with the cluster
      */
-    String getVersion() throws IOException, ElasticsearchClientException;
+    String getVersion() throws ElasticsearchClientException;
 
     /**
      * Get the major version about the node it's connected to
@@ -65,39 +63,34 @@ public interface IElasticsearchClient extends Closeable {
      * @param index index name
      * @param ignoreExistingIndex don't fail if the index already exists
      * @param indexSettings index settings if any
-     * @throws IOException In case of error
      */
-    void createIndex(String index, boolean ignoreExistingIndex, String indexSettings) throws IOException, ElasticsearchClientException;
+    void createIndex(String index, boolean ignoreExistingIndex, String indexSettings) throws ElasticsearchClientException;
 
     /**
      * Check if an index exists
      * @param index index name
      * @return true if the index exists, false otherwise
-     * @throws IOException In case of error
      */
-    boolean isExistingIndex(String index) throws IOException, ElasticsearchClientException;
+    boolean isExistingIndex(String index) throws ElasticsearchClientException;
 
     /**
      * Check if a pipeline exists
      * @param pipeline pipeline name
      * @return true if the pipeline exists, false otherwise
-     * @throws IOException In case of error
      */
-    boolean isExistingPipeline(String pipeline) throws IOException, ElasticsearchClientException;
+    boolean isExistingPipeline(String pipeline) throws ElasticsearchClientException;
 
     /**
      * Refresh an index
      * @param index index name
-     * @throws IOException In case of error
      */
-    void refresh(String index) throws IOException, ElasticsearchClientException;
+    void refresh(String index) throws ElasticsearchClientException;
 
     /**
      * Wait for an index to become at least yellow (all primaries assigned)
      * @param index index name
-     * @throws IOException In case of error
      */
-    void waitForHealthyIndex(String index) throws IOException, ElasticsearchClientException;
+    void waitForHealthyIndex(String index) throws ElasticsearchClientException;
 
     /**
      * Index a document (might use a BulkProcessor behind the scenes)
@@ -124,7 +117,7 @@ public interface IElasticsearchClient extends Closeable {
      * @param json      Document to index
      * @param pipeline  Pipeline (can be null)
      */
-    void indexSingle(String index, String id, String json, String pipeline) throws IOException, ElasticsearchClientException;
+    void indexSingle(String index, String id, String json, String pipeline) throws ElasticsearchClientException;
 
     /**
      * Delete a document using a BulkProcessor behind the scenes
@@ -152,20 +145,18 @@ public interface IElasticsearchClient extends Closeable {
      * Run a search
      * @param request Search Request
      * @return A search response object
-     * @throws IOException In case of error
      */
-    ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException;
+    ESSearchResponse search(ESSearchRequest request) throws ElasticsearchClientException;
 
     /**
      * Remove an index
      * @param index Index name
-     * @throws IOException In case of error
      */
-    void deleteIndex(String index) throws IOException, ElasticsearchClientException;
+    void deleteIndex(String index) throws ElasticsearchClientException;
 
     /**
      * Flush any pending Bulk operation. Used for tests only.
-     * Note that flushing means immediate execution of the bulk but it does
+     * Note that flushing means immediate execution of the bulk, but it does
      * not wait for the bulk to be fully executed.
      */
     void flush();
@@ -175,28 +166,26 @@ public interface IElasticsearchClient extends Closeable {
      * @param method        HTTP method
      * @param endpoint      Endpoint
      * @param jsonEntity    Json entity if any
-     * @throws IOException In case of error
      * @return the response from the server
      */
-    String performLowLevelRequest(String method, String endpoint, String jsonEntity) throws IOException, ElasticsearchClientException;
+    @SuppressWarnings("UnusedReturnValue")
+    String performLowLevelRequest(String method, String endpoint, String jsonEntity) throws ElasticsearchClientException;
 
     /**
      * Get a document by its ID
      * @param index Index name
      * @param id    Document id
      * @return A Search Hit
-     * @throws IOException In case of error
      */
-    ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException;
+    ESSearchHit get(String index, String id) throws ElasticsearchClientException;
 
     /**
      * Check that a document exists
      * @param index Index name
      * @param id    Document id
      * @return true if it exists, false otherwise
-     * @throws IOException In case of error
      */
-    boolean exists(String index, String id) throws IOException, ElasticsearchClientException;
+    boolean exists(String index, String id) throws ElasticsearchClientException;
 
     /**
      * Send a _bulk request to Elasticsearch

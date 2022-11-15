@@ -75,7 +75,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     @Test
     public void testGetSourceById() throws Exception {
         try (WPSearchClient client = createClient()) {
-            // We first create a source so we can use it later.
+            // We first create a source, so we can use it later.
             String id = client.createCustomSource(sourceName);
 
             // This is what we want to test actually
@@ -87,7 +87,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     @Test
     public void testGetSourceByName() throws Exception {
         try (WPSearchClient client = createClient()) {
-            // We first create a source so we can use it later.
+            // We first create a source, so we can use it later.
             String id = client.createCustomSource(sourceName);
 
             // This is what we want to test actually
@@ -113,7 +113,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             // We need to wait until it's done
             String json = countTestHelper(client, customSourceId, 4L, TimeValue.timeValueSeconds(5));
 
-            // We read the ids of the documents so we can remove them then
+            // We read the ids of the documents, so we can remove them then
             List<String> ids = JsonPath.read(json, "$.results[*].id.raw");
 
             // Search for some specific use cases
@@ -166,7 +166,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     @Test
     public void testSearch() throws Exception {
         try (WPSearchClient client = createClient()) {
-            // We first create a source so we can use it later.
+            // We first create a source, so we can use it later.
             String customSourceId = client.createCustomSource(sourceName);
             client.configureCustomSource(customSourceId, sourceName);
 
@@ -246,7 +246,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
     @Test
     public void testSendAndRemoveADocument() throws Exception {
         try (WPSearchClient client = createClient()) {
-            // We first create a source so we can use it later.
+            // We first create a source, so we can use it later.
             String customSourceId = client.createCustomSource(sourceName);
             client.configureCustomSource(customSourceId, sourceName);
 

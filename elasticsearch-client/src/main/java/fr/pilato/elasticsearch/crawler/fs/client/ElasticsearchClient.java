@@ -102,13 +102,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
             initialHosts.add(node.decodedUrl());
         });
         if (hosts.size() == 1) {
-            // We have only one node so we won't have to select a specific one but the only one.
+            // We have only one node, so we won't have to select a specific one but the only one.
             currentNode = 0;
         }
     }
 
     @Override
-    public void start() throws IOException, ElasticsearchClientException {
+    public void start() throws ElasticsearchClientException {
         if (client != null) {
             // The client has already been initialized. Let's skip this again
             return;
@@ -145,7 +145,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         // Create the client
         ClientConfig config = new ClientConfig();
-        // We need to suppress this so we can do DELETE with body
+        // We need to suppress this, so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(
                 settings.getElasticsearch().getUsername(),
@@ -448,7 +448,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException {
+    public ESSearchResponse search(ESSearchRequest request) throws ElasticsearchClientException {
 
         String url = "";
 
@@ -677,7 +677,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException {
+    public ESSearchHit get(String index, String id) throws ElasticsearchClientException {
         logger.debug("get document [{}/{}]", index, id);
         String response = httpGet(index + "/" + INDEX_TYPE_DOC + "/" + id);
 
@@ -692,7 +692,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException, ElasticsearchClientException {
+    public boolean exists(String index, String id) throws ElasticsearchClientException {
         logger.debug("get document [{}/{}]", index, id);
         try {
             httpHead(index + "/" + INDEX_TYPE_DOC + "/" + id);
@@ -728,15 +728,19 @@ public class ElasticsearchClient implements IElasticsearchClient {
         httpCall("HEAD", path, null);
     }
 
-    String httpGet(String path, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    @SafeVarargs
+    final String httpGet(String path, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         return httpCall("GET", path, null, params);
     }
 
-    String httpPost(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    @SafeVarargs
+    final String httpPost(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         return httpCall("POST", path, data, params);
     }
 
-    String httpPut(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    @SuppressWarnings("UnusedReturnValue")
+    @SafeVarargs
+    final String httpPut(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         return httpCall("PUT", path, data, params);
     }
 
@@ -744,6 +748,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return httpCall("DELETE", path, data);
     }
 
+    @SafeVarargs
     private String httpCall(String method, String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         String node = getNode();
         logger.trace("Calling {} {}/{} with params {}", method, node, path == null ? "" : path, params);

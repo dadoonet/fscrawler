@@ -26,7 +26,7 @@ import java.util.Objects;
 public class ESTermsAggregation {
     private final String name;
     private final String field;
-    private List<ESTermsBucket> buckets = new ArrayList<>();
+    private final List<ESTermsBucket> buckets = new ArrayList<>();
 
     public ESTermsAggregation(String name, String field) {
         this.name = name;

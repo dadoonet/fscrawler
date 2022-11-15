@@ -47,7 +47,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_check_dates() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         logger.info(" ---> Creating a new file second.txt");
         Files.write(currentTestResourceDir.resolve("second.txt"), "This is a second file".getBytes());

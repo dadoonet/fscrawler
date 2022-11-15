@@ -41,7 +41,7 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setAttributesSupport(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());

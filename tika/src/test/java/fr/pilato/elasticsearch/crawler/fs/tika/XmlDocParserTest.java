@@ -43,7 +43,7 @@ public class XmlDocParserTest extends DocParserTestCase {
         assertThat(doc, is("{\"object\":[{\"id\":\"1\",\"name\":\"foo\"},{\"id\":\"2\",\"name\":\"bar\"}]}"));
     }
 
-    private String extractFromFile(String filename) throws IOException {
+    private String extractFromFile(String filename) {
         InputStream data = getBinaryContent(filename);
         return XmlDocParser.generate(data);
     }

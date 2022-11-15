@@ -108,7 +108,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/163
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
      */
     @Test
     public void testXmlIssue163() throws IOException, ElasticsearchClientException {
@@ -180,7 +180,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/229
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/229">https://github.com/dadoonet/fscrawler/issues/229</a>
      */
     @Test
     public void testProtectedDocument229() throws IOException, ElasticsearchClientException {
@@ -188,7 +188,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/221
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
      */
     @Test
     public void testProtectedDocument221() throws IOException, ElasticsearchClientException {

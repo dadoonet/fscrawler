@@ -104,6 +104,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         }
     }
 
+    @SuppressWarnings("EmptyMethod")
     @BeforeClass
     public static void cleanAllTestResources() {
         // Just for dev only. In case we need to remove tons of workplace search custom sources at once
