@@ -387,7 +387,7 @@ public class WPSearchClient implements Closeable {
         logger.trace("Source [{}] created. Response: {}", sourceName, response);
 
         // We parse the json
-        DocumentContext document = parseJsonAsDocumentContext(json);
+        DocumentContext document = parseJsonAsDocumentContext(response);
         String id = document.read("$.id");
 
         logger.debug("Source [{}/{}] created.", id, sourceName);

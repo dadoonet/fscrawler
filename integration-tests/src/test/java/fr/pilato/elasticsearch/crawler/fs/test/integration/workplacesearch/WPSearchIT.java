@@ -247,7 +247,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
             ESSearchHit hit = documentService.get(null, id);
 
             assertThat(hit, notNullValue());
-            documentChecker(parseJsonAsDocumentContext(hit.getSource()), List.of("foo.txt"), List.of("Foo"));
+            documentChecker(parseJsonAsDocumentContext(hit.getSource()), "$", List.of("foo.txt"), List.of("Foo"));
         } catch (FsCrawlerIllegalConfigurationException e) {
             Assume.assumeNoException("We don't have a compatible client for this version of the stack.", e);
         }
@@ -297,7 +297,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(4));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(parseJsonAsDocumentContext(hit.getSource()),
+                    documentChecker(parseJsonAsDocumentContext(hit.getSource()), "$",
                             Arrays.asList("foo.txt", "bar.txt", "baz.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Bar", "Baz", "Foo Bar Baz"));
                 }
@@ -312,7 +312,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(2));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(parseJsonAsDocumentContext(hit.getSource()),
+                    documentChecker(parseJsonAsDocumentContext(hit.getSource()), "$",
                             Arrays.asList("foo.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Foo Bar Baz"));
                 }
@@ -327,7 +327,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(1));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(parseJsonAsDocumentContext(hit.getSource()),
+                    documentChecker(parseJsonAsDocumentContext(hit.getSource()), "$",
                             Arrays.asList("foo.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Foo Bar Baz"));
                 }
@@ -342,7 +342,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(2));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(parseJsonAsDocumentContext(hit.getSource()),
+                    documentChecker(parseJsonAsDocumentContext(hit.getSource()), "$",
                             Arrays.asList("foo.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Foo Bar Baz"));
                 }
@@ -359,7 +359,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(1));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(parseJsonAsDocumentContext(hit.getSource()),
+                    documentChecker(parseJsonAsDocumentContext(hit.getSource()), "$",
                             Arrays.asList("foo.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Foo Bar Baz"));
                 }
@@ -377,7 +377,7 @@ public class WPSearchIT extends AbstractWorkplaceSearchITCase {
                 assertThat(response.getHits(), hasSize(1));
                 for (ESSearchHit hit : response.getHits()) {
                     assertThat(hit, notNullValue());
-                    documentChecker(parseJsonAsDocumentContext(hit.getSource()),
+                    documentChecker(parseJsonAsDocumentContext(hit.getSource()), "$",
                             Arrays.asList("foo.txt", "foobarbaz.txt"),
                             Arrays.asList("Foo", "Foo Bar Baz"));
                 }

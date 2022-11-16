@@ -155,7 +155,7 @@ public class WPSearchClientIT extends AbstractWorkplaceSearchITCase {
             countTestHelper(client, customSourceId, 1L, TimeValue.timeValueSeconds(5));
 
             // We can now get the document
-            documentChecker(parseJsonAsDocumentContext(client.getDocument(id)), List.of("foo.txt"), List.of("Foo"));
+            documentChecker(parseJsonAsDocumentContext(client.getDocument(id)), "$", List.of("foo.txt"), List.of("Foo"));
 
             // Get a non existing document
             assertThat(client.getDocument("thisiddoesnotexist"), nullValue());
