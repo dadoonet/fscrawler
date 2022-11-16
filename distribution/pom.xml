@@ -14,7 +14,7 @@
 
     <properties>
         <!-- Global configuration parameters for docker -->
-        <!-- By default, build docker images on each modules. -->
+        <!-- By default, build docker images on each module. -->
         <!--suppress UnresolvedMavenProperty -->
         <docker.skip>${env.DOCKER_SKIP}</docker.skip>
         <docker.verbose>build</docker.verbose>
@@ -23,7 +23,7 @@
         <module.name>es7</module.name>
 
         <!-- Docker Image Definitions -->
-        <!-- standard install with no ocr -->
+        <!-- standard installation with no ocr -->
         <docker.noocr.alias>${project.artifactId}-noocr</docker.noocr.alias>
         <docker.noocr.name>${docker.username}/fscrawler:${project.version}-noocr</docker.noocr.name>
         <docker.noocr.cacheFrom>${docker.noocr.name}</docker.noocr.cacheFrom>
@@ -100,12 +100,12 @@
                 <artifactId>junit4-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <!-- There is no unit test so we can skip that execution -->
+                        <!-- There is no unit test, so we can skip that execution -->
                         <id>unit-tests</id>
                         <phase>none</phase>
                     </execution>
                     <execution>
-                        <!-- There is no integration test so we can skip that execution -->
+                        <!-- There is no integration test, so we can skip that execution -->
                         <id>integration-tests</id>
                         <phase>none</phase>
                     </execution>
@@ -176,7 +176,7 @@
                             <goal>build</goal>
                         </goals>
                     </execution>
-                    <!-- Push the docker images during the deploy phase -->
+                    <!-- Push the docker images during the "deploy" phase -->
                     <execution>
                         <id>docker-push</id>
                         <phase>deploy</phase>
@@ -185,12 +185,12 @@
                         </goals>
                     </execution>
                     <execution>
-                        <!-- There is no integration test so we can skip that execution -->
+                        <!-- There is no integration test, so we can skip that execution -->
                         <id>start-elasticsearch</id>
                         <phase>none</phase>
                     </execution>
                     <execution>
-                        <!-- There is no integration test so we can skip that execution -->
+                        <!-- There is no integration test, so we can skip that execution -->
                         <id>stop-elasticsearch</id>
                         <phase>none</phase>
                     </execution>

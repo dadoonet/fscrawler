@@ -37,14 +37,14 @@ import static org.hamcrest.Matchers.equalTo;
 public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for issue #7: https://github.com/dadoonet/fscrawler/issues/7 : Use filename as ID
+     * Test case for issue #7: <a href="https://github.com/dadoonet/fscrawler/issues/7">https://github.com/dadoonet/fscrawler/issues/7</a> : Use filename as ID
      */
     @Test
     public void test_filename_as_id() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setFilenameAsId(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
@@ -56,7 +56,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for #336: https://github.com/dadoonet/fscrawler/issues/336
+     * Test case for #336: <a href="https://github.com/dadoonet/fscrawler/issues/336">https://github.com/dadoonet/fscrawler/issues/336</a>
      */
     @Test
     public void test_remove_deleted_with_filename_as_id() throws Exception {
@@ -64,7 +64,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
                 .setRemoveDeleted(true)
                 .setFilenameAsId(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);

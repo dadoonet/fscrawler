@@ -69,7 +69,7 @@ public class FSCrawlerLogger {
     }
 
     /**
-     * Print the metadata in an useful format so they can be easily used in tests
+     * Print the metadata in a useful format, so they can be easily used in tests
      * @param message   message to print
      * @param params    parameters if any
      */

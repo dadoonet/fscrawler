@@ -14,7 +14,6 @@ public interface IWorkplaceSearchClient extends Closeable {
     /**
      * Remove a document from Workplace Search
      * @param id the document id
-     * @return true if removed, false if not found or in case of error
      */
     void delete(String id);
 

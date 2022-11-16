@@ -31,7 +31,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * This class checks at startup if everything is correctly set.
- * We are using a class for it so it's easier to track checks within a single place
+ * We are using a class for it, so it's easier to track checks within a single place
  */
 public class BootstrapChecks {
 

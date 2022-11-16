@@ -34,14 +34,14 @@ import org.junit.Test;
 public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for issue #185: https://github.com/dadoonet/fscrawler/issues/185 : Add xml_support setting
+     * Test case for issue #185: <a href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a> : Add xml_support setting
      */
     @Test
     public void test_xml_enabled() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setXmlSupport(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
 
         countTestHelper(new ESSearchRequest()

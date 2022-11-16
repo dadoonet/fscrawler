@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * This code is an adaptation from elasticsearch codebase.
  *
- * These are essentially flake ids (http://boundary.com/blog/2012/01/12/flake-a-decentralized-k-ordered-unique-id-generator-in-erlang) but
+ * These are essentially flake ids (<a href="http://boundary.com/blog/2012/01/12/flake-a-decentralized-k-ordered-unique-id-generator-in-erlang">http://boundary.com/blog/2012/01/12/flake-a-decentralized-k-ordered-unique-id-generator-in-erlang</a>) but
  *  we use 6 (not 8) bytes for timestamp, and use 3 (not 2) bytes for sequence number. */
 
 public class TimeBasedUUIDGenerator {
@@ -58,7 +58,7 @@ public class TimeBasedUUIDGenerator {
         }
         for (byte b : address) {
             if (b != 0x00) {
-                return true; // If any of the bytes are non zero assume a good address
+                return true; // If any of the bytes are nonzero assume a good address
             }
         }
         return false;

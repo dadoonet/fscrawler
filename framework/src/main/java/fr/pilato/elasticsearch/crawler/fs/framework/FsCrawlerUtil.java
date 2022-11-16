@@ -182,7 +182,7 @@ public class FsCrawlerUtil {
 
         boolean isIndexable = isIndexable(filename, includes, excludes);
 
-        // It can happen that we a dir "foo" which does not match the include name like "*.txt"
+        // It can happen that we have a dir "foo" which does not match the included name like "*.txt"
         // We need to go in it unless it has been explicitly excluded by the user
         if (directory && !isExcluded(filename, excludes)) {
             isIndexable = true;
@@ -456,7 +456,7 @@ public class FsCrawlerUtil {
     /**
      * Copy default resources files which are available as project resources under
      * fr.pilato.elasticsearch.crawler.fs._default package to a given configuration path
-     * under a _default sub directory.
+     * under a _default subdirectory.
      * @param configPath The config path which is by default .fscrawler
      * @throws IOException If copying does not work
      */
@@ -501,7 +501,7 @@ public class FsCrawlerUtil {
 
     /**
      * Copy files from a source to a target
-     * under a _default sub directory.
+     * under a _default subdirectory.
      * @param source The source dir
      * @param target The target dir
      * @param options Potential options
@@ -629,7 +629,7 @@ public class FsCrawlerUtil {
 
     /**
      * Compare if a file size is strictly under a given limit
-     * @param limit Limit. If null, we consider that there is no limit and we return true.
+     * @param limit Limit. If null, we consider that there is no limit, and we return true.
      * @param fileSizeAsBytes File size
      * @return true if under the limit. false otherwise.
      */

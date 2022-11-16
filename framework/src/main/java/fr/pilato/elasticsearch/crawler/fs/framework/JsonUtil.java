@@ -121,34 +121,11 @@ public class JsonUtil {
     }
 
     /**
-     * Parse a JSON Document using JSON Path
-     * @param json  json to parse
-     * @return an Object which can be used as an input for {@link com.jayway.jsonpath.JsonPath#read(Object, String, Predicate...)}
-     * @deprecated Use {@link #parseJsonAsDocumentContext(String)} instead
-     */
-    @Deprecated
-    public static Object parseJson(String json) {
-        return configuration.jsonProvider().parse(json);
-    }
-
-    /**
      * Parse a JSON Document using JSON Path and return a DocumentContext
      * @param json  json to parse
      * @return an Object which can be used as an input for {@link com.jayway.jsonpath.DocumentContext#read(String, Predicate...)}
      */
     public static DocumentContext parseJsonAsDocumentContext(String json) {
         return JsonPath.using(configuration).parse(json);
-    }
-
-    /**
-     * Read a field from a JSON document as a JSON String content
-     * @param context   the document context
-     * @param path      path to access the field. Like "$.field"
-     * @return          the JSON as a String
-     * @see #parseJsonAsDocumentContext(String) to get a document context
-     */
-    public static String extractJsonFromPath(DocumentContext context, String path) {
-        Map<String, Object> jsonMap = context.read(path);
-        return JsonUtil.serialize(jsonMap);
     }
 }

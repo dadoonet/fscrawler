@@ -42,7 +42,7 @@ public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setFollowSymlinks(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
@@ -58,7 +58,7 @@ public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setFollowSymlinks(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);

@@ -21,8 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerOperation;
 
-import java.util.Map;
-
 public abstract class ElasticsearchOperation implements FsCrawlerOperation<ElasticsearchOperation> {
     private final Operation operation;
     private final String index;
@@ -59,11 +57,9 @@ public abstract class ElasticsearchOperation implements FsCrawlerOperation<Elast
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("ElasticsearchOperation{");
-        sb.append("operation=").append(operation);
-        sb.append(", index='").append(index).append('\'');
-        sb.append(", id='").append(id).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return "ElasticsearchOperation{" + "operation=" + operation +
+                ", index='" + index + '\'' +
+                ", id='" + id + '\'' +
+                '}';
     }
 }

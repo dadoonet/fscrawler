@@ -30,6 +30,6 @@ A clear and concise description of what you expected to happen.
 
 **Attachment**
 
-If the bug is related to a given file, please share this file so we can reuse it in tests
+If the bug is related to a given file, please share this file, so we can reuse it in tests
 to reproduce the problem and may be use it in our integration tests.
 

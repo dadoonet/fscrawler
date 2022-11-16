@@ -35,7 +35,7 @@ import static org.hamcrest.Matchers.is;
 public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for #227: https://github.com/dadoonet/fscrawler/issues/227 : Add support for run only once
+     * Test case for #227: <a href="https://github.com/dadoonet/fscrawler/issues/227">https://github.com/dadoonet/fscrawler/issues/227</a> : Add support for run only once
      */
     @Test
     public void test_single_loop() throws Exception {
@@ -54,7 +54,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for #227: https://github.com/dadoonet/fscrawler/issues/227 : Add support for run only once
+     * Test case for #227: <a href="https://github.com/dadoonet/fscrawler/issues/227">https://github.com/dadoonet/fscrawler/issues/227</a> : Add support for run only once
      */
     @Test
     public void test_two_loops() throws Exception {

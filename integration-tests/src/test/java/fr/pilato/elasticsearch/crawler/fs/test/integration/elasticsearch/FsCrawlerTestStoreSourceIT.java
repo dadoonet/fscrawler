@@ -41,7 +41,7 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setStoreSource(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -52,7 +52,7 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_do_not_store_source() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
@@ -69,7 +69,7 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
                 .setStoreSource(true)
                 .setIndexContent(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {

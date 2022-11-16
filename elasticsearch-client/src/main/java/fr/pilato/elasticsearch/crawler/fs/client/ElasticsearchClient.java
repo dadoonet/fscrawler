@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 
 import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
@@ -102,13 +101,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
             initialHosts.add(node.decodedUrl());
         });
         if (hosts.size() == 1) {
-            // We have only one node so we won't have to select a specific one but the only one.
+            // We have only one node, so we won't have to select a specific one but the only one.
             currentNode = 0;
         }
     }
 
     @Override
-    public void start() throws IOException, ElasticsearchClientException {
+    public void start() throws ElasticsearchClientException {
         if (client != null) {
             // The client has already been initialized. Let's skip this again
             return;
@@ -145,7 +144,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         // Create the client
         ClientConfig config = new ClientConfig();
-        // We need to suppress this so we can do DELETE with body
+        // We need to suppress this, so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(
                 settings.getElasticsearch().getUsername(),
@@ -233,9 +232,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.debug("get version");
         String response = httpGet(null);
         // We parse the response
-        Object document = parseJson(response);
+        DocumentContext document = parseJsonAsDocumentContext(response);
         // Cache the version and the major version
-        version = JsonPath.read(document, "$.version.number");
+        version = document.read("$.version.number");
         majorVersion = extractMajorVersion(version);
 
         logger.debug("get version returns {} and {} as the major version number", version, majorVersion);
@@ -337,8 +336,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
             url = "_refresh";
         }
         String response = httpPost(url, null);
-        Object document = parseJson(response);
-        int shardsFailed = JsonPath.read(document, "$._shards.failed");
+        DocumentContext document = parseJsonAsDocumentContext(response);
+        int shardsFailed = document.read("$._shards.failed");
         if (shardsFailed > 0) {
             throw new ElasticsearchClientException("Unable to refresh index " + index + " : " + response);
         }
@@ -448,7 +447,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException {
+    public ESSearchResponse search(ESSearchRequest request) throws ElasticsearchClientException {
 
         String url = "";
 
@@ -656,10 +655,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.debug("delete index [{}]", index);
         try {
             String response = httpDelete(index, null);
-            Object document = parseJson(response);
-            boolean acknowledged = JsonPath.read(document, "$.acknowledged");
+            DocumentContext document = parseJsonAsDocumentContext(response);
+            boolean acknowledged = document.read("$.acknowledged");
             if (!acknowledged) {
-                throw new ElasticsearchClientException("Can not remove index " + index + " : " + JsonPath.read(document, "$.error.reason"));
+                throw new ElasticsearchClientException("Can not remove index " + index + " : " + document.read("$.error.reason"));
             }
         } catch (NotFoundException e) {
             logger.debug("Index [{}] was not found", index);
@@ -677,7 +676,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException {
+    public ESSearchHit get(String index, String id) throws ElasticsearchClientException {
         logger.debug("get document [{}/{}]", index, id);
         String response = httpGet(index + "/" + INDEX_TYPE_DOC + "/" + id);
 
@@ -692,7 +691,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException, ElasticsearchClientException {
+    public boolean exists(String index, String id) throws ElasticsearchClientException {
         logger.debug("get document [{}/{}]", index, id);
         try {
             httpHead(index + "/" + INDEX_TYPE_DOC + "/" + id);
@@ -724,19 +723,35 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
+    /**
+     * Read a field from a JSON document as a JSON String content
+     * @param context   the document context
+     * @param path      path to access the field. Like "$.field"
+     * @return          the JSON as a String
+     * @see fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil#parseJsonAsDocumentContext(String) to get a document context
+     */
+    private static String extractJsonFromPath(DocumentContext context, String path) {
+        Map<String, Object> jsonMap = context.read(path);
+        return serialize(jsonMap);
+    }
+
     void httpHead(String path) throws ElasticsearchClientException {
         httpCall("HEAD", path, null);
     }
 
-    String httpGet(String path, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    @SafeVarargs
+    final String httpGet(String path, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         return httpCall("GET", path, null, params);
     }
 
-    String httpPost(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    @SafeVarargs
+    final String httpPost(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         return httpCall("POST", path, data, params);
     }
 
-    String httpPut(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    @SuppressWarnings("UnusedReturnValue")
+    @SafeVarargs
+    final String httpPut(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         return httpCall("PUT", path, data, params);
     }
 
@@ -744,6 +759,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return httpCall("DELETE", path, data);
     }
 
+    @SafeVarargs
     private String httpCall(String method, String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         String node = getNode();
         logger.trace("Calling {} {}/{} with params {}", method, node, path == null ? "" : path, params);

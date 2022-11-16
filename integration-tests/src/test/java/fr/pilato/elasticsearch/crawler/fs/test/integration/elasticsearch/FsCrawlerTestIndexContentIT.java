@@ -32,14 +32,14 @@ import org.junit.Test;
 public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test for #103: https://github.com/dadoonet/fscrawler/issues/103
+     * Test for #103: <a href="https://github.com/dadoonet/fscrawler/issues/103">https://github.com/dadoonet/fscrawler/issues/103</a>
      */
     @Test
     public void test_index_content() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setIndexContent(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);

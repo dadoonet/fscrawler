@@ -51,7 +51,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,7 +77,7 @@ public class TikaInstance {
     }
 
     /**
-     * This initialize if needed a parser and a parse context for tika
+     * This initializes if needed a parser and a parse context for tika
      * @param fs fs settings
      */
     private static void initTika(Fs fs) {

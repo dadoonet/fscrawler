@@ -38,11 +38,11 @@ import static org.hamcrest.Matchers.notNullValue;
 public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for issue #439: https://github.com/dadoonet/fscrawler/issues/439 : Date Mapping issue in RAW field
+     * Test case for issue #439: <a href="https://github.com/dadoonet/fscrawler/issues/439">https://github.com/dadoonet/fscrawler/issues/439</a> : Date Mapping issue in RAW field
      */
     @Test
     public void test_mapping() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We don't really care here about the fact that one document has been indexed
         // But let's add manually some documents
@@ -79,7 +79,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
             // Sometimes we explicitly disable it but this is also the default value
             builder.setRawMetadata(false);
         }
-        startCrawler(getCrawlerName(), builder.build(), endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), builder.build(), endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.meta.raw"));
@@ -91,7 +91,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setRawMetadata(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(JsonPath.read(hit.getSource(), "$.meta.raw"), notNullValue());

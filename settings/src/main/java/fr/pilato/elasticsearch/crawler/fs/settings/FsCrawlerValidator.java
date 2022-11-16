@@ -51,11 +51,11 @@ public class FsCrawlerValidator {
             settings.setElasticsearch(Elasticsearch.DEFAULT());
         }
         if (settings.getElasticsearch().getIndex() == null) {
-            // When index is not set, we fallback to the config name
+            // When index is not set, we fall back to the config name
             settings.getElasticsearch().setIndex(settings.getName());
         }
         if (settings.getElasticsearch().getIndexFolder() == null) {
-            // When index for folders is not set, we fallback to the config name + _folder
+            // When index for folders is not set, we fall back to the config name + _folder
             settings.getElasticsearch().setIndexFolder(settings.getName() + INDEX_SUFFIX_FOLDER);
         }
 
@@ -98,13 +98,13 @@ public class FsCrawlerValidator {
             return true;
         }
 
-        // Checking That we don't try to have xml or json but we don't want to index their content
+        // Checking That we don't try to have xml or json, but we don't want to index their content
         if ((settings.getFs().isJsonSupport() || settings.getFs().isXmlSupport()) && !settings.getFs().isIndexContent()) {
             logger.error("Json or Xml indexation is activated but you disabled indexing content which does not make sense. Disabling crawler");
             return true;
         }
 
-        // We just warn the user if he is running on windows but want to get attributes
+        // We just warn the user if he is running on Windows but want to get attributes
         if (OsValidator.WINDOWS && settings.getFs().isAttributesSupport()) {
             logger.info("attributes_support is set to true but getting group is not available on [{}].", OsValidator.OS);
         }

@@ -30,12 +30,12 @@ import org.junit.Test;
 public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for #230: https://github.com/dadoonet/fscrawler/issues/230 : Add support for compressed files
+     * Test case for #230: <a href="https://github.com/dadoonet/fscrawler/issues/230">https://github.com/dadoonet/fscrawler/issues/230</a> : Add support for compressed files
      * It's a long job, so we let it run up to 2 minutes
      */
     @Test
     public void test_zip() throws Exception {
-        startCrawler(getCrawlerName(), startCrawlerDefinition().build(), endCrawlerDefinition(getCrawlerName()), null, null,
+        crawler = startCrawler(getCrawlerName(), startCrawlerDefinition().build(), endCrawlerDefinition(getCrawlerName()), null, null,
                 TimeValue.timeValueMinutes(2));
 
         // We expect to have one file

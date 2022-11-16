@@ -43,7 +43,6 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
@@ -63,7 +62,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/162
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/162">https://github.com/dadoonet/fscrawler/issues/162</a>
      */
     @Test
     public void testLangDetect162() throws IOException {
@@ -81,7 +80,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/221
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
      */
     @Test
     public void testPdfIssue221() throws IOException {
@@ -117,7 +116,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/163
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
      */
     @Test
     public void testXmlIssue163() throws IOException {
@@ -276,7 +275,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test for #87: https://github.com/dadoonet/fscrawler/issues/87
+     * Test for #87: <a href="https://github.com/dadoonet/fscrawler/issues/87">https://github.com/dadoonet/fscrawler/issues/87</a>
      */
     @Test
     public void testExtractFromMp3() throws IOException {
@@ -576,7 +575,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void testOcr() throws IOException, TikaConfigException {
+    public void testOcr() throws IOException {
         assumeTrue("Tesseract is not installed so we are skipping this test", isOcrAvailable);
 
         // Test with OCR On (default)
@@ -672,7 +671,7 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .build();
         doc = extractFromFile("test-ocr-heb.pdf", fsSettings);
         try {
-            // This test requires to have the hebrew language pack so we don't fail the test but just log
+            // This test requires to have the hebrew language pack, so we don't fail the test but just log
             assertThat(doc.getContent(), containsString("המבודדים מתקבלים"));
         } catch (AssertionError e) {
             logger.info("We were not able to get the Hebrew content with OCR. May be the language pack was not installed?");
@@ -680,7 +679,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void testCustomTikaConfig() throws IOException, URISyntaxException {
+    public void testCustomTikaConfig() throws IOException {
         InputStream tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.xml");
         Path testTikaConfig = rootTmpDir.resolve("tika-config");
         if (Files.notExists(testTikaConfig)) {
@@ -719,8 +718,8 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/1097.
-     * Related to https://issues.apache.org/jira/browse/TIKA-3364.
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/1097">https://github.com/dadoonet/fscrawler/issues/1097</a>.
+     * Related to <a href="https://issues.apache.org/jira/browse/TIKA-3364">https://issues.apache.org/jira/browse/TIKA-3364</a>.
      * @throws IOException In case something goes wrong
      */
     @Test
@@ -783,7 +782,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/834.
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/834">https://github.com/dadoonet/fscrawler/issues/834</a>.
      * @throws IOException In case something goes wrong
      */
     @Test

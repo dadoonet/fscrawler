@@ -41,7 +41,7 @@ public class WPSearchEngine implements Engine<WPSearchOperation, WPSearchBulkReq
     @Override
     public WPSearchBulkResponse bulk(WPSearchBulkRequest request) {
 
-        // We need to split the request bu custom id in case we have multiple ones
+        // We need to split the request by custom id in case we have multiple ones
         // the custom id is actually extracted from the index name
         Map<String, List<Map<String, Object>>> operationsBySource = new HashMap<>();
         for (WPSearchOperation operation : request.getOperations()) {

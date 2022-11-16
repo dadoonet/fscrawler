@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
@@ -37,7 +37,7 @@ import java.util.List;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiLettersOfLengthBetween;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -48,15 +48,14 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_subdirs() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have two files
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
 
         // We check that the subdir document has his meta path data correctly set
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object document = parseJson(hit.getSource());
-            assertThat(JsonPath.read(document, "$.path.virtual"), isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
+            assertThat(parseJsonAsDocumentContext(hit.getSource()).read("$.path.virtual"), isOneOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt"));
         }
 
         // Try to search within part of the full path, ie subdir
@@ -66,7 +65,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_subdirs_deep_tree() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have 7 files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
@@ -89,7 +88,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName()).withSort("path.virtual"));
         assertThat(response.getTotalHits(), is(7L));
 
-        Object document = parseJson(response.getJson());
+        DocumentContext document = parseJsonAsDocumentContext(response.getJson());
 
         int i = 0;
         pathHitTester(document, i++, "/test_subdirs_deep_tree/roottxtfile.txt", is("/roottxtfile.txt"));
@@ -105,7 +104,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER).withSort("path.virtual"));
         assertThat(response.getTotalHits(), is(7L));
 
-        document = parseJson(response.getJson());
+        document = parseJsonAsDocumentContext(response.getJson());
 
         i = 0;
         folderHitTester(document, i++, "/test_subdirs_deep_tree", is("/"), "test_subdirs_deep_tree");
@@ -136,7 +135,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
             Files.copy(sourceFile, newDir.resolve("sample.txt"));
         }
 
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have x files (<- whoa that's funny Mulder!)
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), subdirs+1, null);
@@ -162,7 +161,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
                 .withSort("path.virtual"));
         assertThat(response.getTotalHits(), is(subdirs+1));
 
-        Object document = parseJson(response.getJson());
+        DocumentContext document = parseJsonAsDocumentContext(response.getJson());
 
         for (int i = 0; i < subdirs; i++) {
             pathHitTester(document, i, "sample.txt", endsWith("/" + "sample.txt"));
@@ -183,16 +182,16 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
-    private void folderHitTester(Object document, int position, String expectedReal, Matcher<String> expectedVirtual,
+    private void folderHitTester(DocumentContext document, int position, String expectedReal, Matcher<String> expectedVirtual,
                                  String expectedFilename) {
         pathHitTester(document, position, expectedReal, expectedVirtual);
-        assertThat(JsonPath.read(document, "$.hits.hits[" + position + "]._source.file.filename"), is(expectedFilename));
-        assertThat(JsonPath.read(document, "$.hits.hits[" + position + "]._source.file.content_type"), is(Folder.CONTENT_TYPE));
+        assertThat(document.read("$.hits.hits[" + position + "]._source.file.filename"), is(expectedFilename));
+        assertThat(document.read("$.hits.hits[" + position + "]._source.file.content_type"), is(Folder.CONTENT_TYPE));
     }
 
-    private void pathHitTester(Object document, int position, String expectedReal, Matcher<String> expectedVirtual) {
-        String real = JsonPath.read(document, "$.hits.hits[" + position + "]._source.path.real");
-        String virtual = JsonPath.read(document, "$.hits.hits[" + position + "]._source.path.virtual");
+    private void pathHitTester(DocumentContext document, int position, String expectedReal, Matcher<String> expectedVirtual) {
+        String real = document.read("$.hits.hits[" + position + "]._source.path.real");
+        String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");
         logger.debug(" - {}, {}", real, virtual);
         assertThat("path.real[" + position + "]", real, endsWith(expectedReal));
         assertThat("path.virtual[" + position + "]", virtual, expectedVirtual);

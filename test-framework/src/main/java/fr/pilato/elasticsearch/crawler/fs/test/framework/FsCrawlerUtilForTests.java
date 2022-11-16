@@ -43,7 +43,7 @@ class FsCrawlerUtilForTests {
     /**
      * Copy default resources files which are available as project resources under
      * fr.pilato.elasticsearch.crawler.fs._default package to a given configuration path
-     * under a _default sub directory.
+     * under a _default subdirectory.
      * @param configPath The config path which is by default .fscrawler
      * @throws IOException If copying does not work
      */

@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
@@ -26,10 +27,10 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -40,7 +41,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_defaults() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have one file
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
@@ -53,42 +54,42 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_default_metadata() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            Object document = JsonUtil.parseJson(hit.getSource());
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(document, "$.attachment"));
+            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            expectThrows(PathNotFoundException.class, () -> document.read("$.attachment"));
 
-            assertThat(JsonPath.read(document, "$.file.filename"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.content_type"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.url"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.filesize"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.indexing_date"), notNullValue());
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(document, "$.file.indexed_chars"));
-            assertThat(JsonPath.read(document, "$.file.created"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.last_modified"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.last_accessed"), notNullValue());
+            assertThat(document.read("$.file.filename"), notNullValue());
+            assertThat(document.read("$.file.content_type"), notNullValue());
+            assertThat(document.read("$.file.url"), notNullValue());
+            assertThat(document.read("$.file.filesize"), notNullValue());
+            assertThat(document.read("$.file.indexing_date"), notNullValue());
+            expectThrows(PathNotFoundException.class, () -> document.read("$.file.indexed_chars"));
+            assertThat(document.read("$.file.created"), notNullValue());
+            assertThat(document.read("$.file.last_modified"), notNullValue());
+            assertThat(document.read("$.file.last_accessed"), notNullValue());
 
-            assertThat(JsonPath.read(document, "$.meta.title"), notNullValue());
+            assertThat(document.read("$.meta.title"), notNullValue());
         }
     }
 
     @Test
     public void test_filename_analyzer() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We should have one doc
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")), 1L, null);
     }
 
     /**
-     * Test case for #183: https://github.com/dadoonet/fscrawler/issues/183 : Optimize document and folder mappings
+     * Test case for #183: <a href="https://github.com/dadoonet/fscrawler/issues/183">https://github.com/dadoonet/fscrawler/issues/183</a> : Optimize document and folder mappings
      * We want to make sure we can highlight documents even if we don't store fields
      */
     @Test
     public void test_highlight_documents() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);

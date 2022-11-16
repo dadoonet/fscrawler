@@ -25,7 +25,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.Arrays;
 
 /**
- * This Listener implements a simple and naive retry mechanism. When a document is rejected because of a es_rejected_execution_exception
+ * This Listener implements a simple and naive retry mechanism. When a document is rejected because of an es_rejected_execution_exception
  * the same document is sent again to the bulk processor.
  */
 public class FsCrawlerRetryBulkProcessorListener<
