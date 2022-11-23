@@ -22,6 +22,7 @@
         <module>crawler</module>
         <module>rest</module>
         <module>docs</module>
+        <module>contrib</module>
     </modules>
     <name>FSCrawler</name>
     <url>https://github.com/dadoonet/fscrawler/</url>
@@ -37,7 +38,7 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch8.version>8.5.1</elasticsearch8.version>
+        <elasticsearch8.version>8.5.2</elasticsearch8.version>
         <elasticsearch7.version>7.17.7</elasticsearch7.version>
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch8.version}</elasticsearch.version>
