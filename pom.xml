@@ -22,6 +22,7 @@
         <module>crawler</module>
         <module>rest</module>
         <module>docs</module>
+        <module>contrib</module>
     </modules>
     <name>FSCrawler</name>
     <url>https://github.com/dadoonet/fscrawler/</url>
