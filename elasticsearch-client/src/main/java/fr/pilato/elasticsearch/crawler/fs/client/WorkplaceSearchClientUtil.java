@@ -96,7 +96,7 @@ public abstract class WorkplaceSearchClientUtil {
         document.put("tags", doc.getMeta().getKeywords());
         // We use the name of the file if no title has been found in the document metadata
         document.put("title", FsCrawlerUtil.isNullOrEmpty(doc.getMeta().getTitle()) ? doc.getFile().getFilename() : doc.getMeta().getTitle());
-        document.put("type", "File");
+        document.put("type", "file");
         document.put("url", urlPrefix + doc.getPath().getVirtual());
 
         // File/Document Fields
