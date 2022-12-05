@@ -415,6 +415,13 @@
                             </goals>
                         </execution>
                     </executions>
+                    <configuration>
+                        <excludeVulnerabilityIds>
+                            <!-- won't be fixed by SnakeYaml team
+                             https://bitbucket.org/snakeyaml/snakeyaml/issues/561/cve-2022-1471-vulnerability-in -->
+                            <excludeVulnerabilityId>CVE-2022-1471</excludeVulnerabilityId>
+                        </excludeVulnerabilityIds>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.sonatype.plugins</groupId>
