@@ -33,7 +33,7 @@ Start FSCrawler
    # On Linux/Mac
    bin/fscrawler resumes
    # On Windows
-   .\bin\fscrawler resumes
+   .\bin\fscrawler\ resumes
 
 * It will ask "Do you want to create it (Y/N)?". Answer ``Y``.
 * Go to the FSCrawler configuration folder to edit the job configuration. The FSCrawler configuration folder named
@@ -45,7 +45,7 @@ Start FSCrawler
    # On Linux/Mac
    cd ~/.fscrawler/resumes
    # On Windows
-   cd C:\Users\myuser\resumes
+   cd C:\Users\myuser\.fscrawler\resumes
 
 * Edit the ``_settings.yaml`` file which is in this folder and change the ``url`` value to your folder
   which contains the resumes you would like to index:
