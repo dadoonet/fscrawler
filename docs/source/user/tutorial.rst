@@ -45,7 +45,7 @@ Start FSCrawler
    # On Linux/Mac
    cd ~/.fscrawler/resumes
    # On Windows
-   cd C:\Users\myuser\resumes
+   cd C:\Users\myuser\.fscrawler\resumes
 
 * Edit the ``_settings.yaml`` file which is in this folder and change the ``url`` value to your folder
   which contains the resumes you would like to index:
