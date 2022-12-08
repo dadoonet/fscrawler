@@ -977,7 +977,7 @@
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-client</artifactId>
-                <version>9.4.49.v20220914</version>
+                <version>9.4.50.v20221201</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
