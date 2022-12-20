@@ -420,6 +420,9 @@
                             <!-- won't be fixed by SnakeYaml team
                              https://bitbucket.org/snakeyaml/snakeyaml/issues/561/cve-2022-1471-vulnerability-in -->
                             <excludeVulnerabilityId>CVE-2022-1471</excludeVulnerabilityId>
+                            <!-- TODO Remove with Jackson 2.15.0
+                             https://ossindex.sonatype.org/vulnerability/sonatype-2022-6438 -->
+                            <excludeVulnerabilityId>sonatype-2022-6438</excludeVulnerabilityId>
                         </excludeVulnerabilityIds>
                     </configuration>
                 </plugin>
