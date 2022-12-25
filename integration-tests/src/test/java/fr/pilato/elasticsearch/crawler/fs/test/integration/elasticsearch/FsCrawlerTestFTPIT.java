@@ -62,7 +62,9 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
 
     @After
     public void shutDown() {
-        fakeFtpServer.stop();
+        if (fakeFtpServer != null) {
+            fakeFtpServer.stop();
+        }
     }
 
     @Test
