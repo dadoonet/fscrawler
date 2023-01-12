@@ -9,19 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: 📣 Deprecation notice
-        run: echo "We will most likely run integration tests only with security so this build will be removed."
-      - name: Cache Maven packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-      - name: Set up JDK 15 and Maven Central Repository
+      - name: Set up JDK 17 and Maven Central Repository
         uses: actions/setup-java@v2
         with:
-          java-version: '15'
+          java-version: '17'
           distribution: 'adopt'
+          cache: 'maven'
           server-id: sonatype-nexus-snapshots
           server-username: MAVEN_USERNAME
           server-password: MAVEN_CENTRAL_TOKEN
@@ -41,17 +34,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Cache Maven packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-      - name: Set up JDK 15 and Maven Central Repository
+      - name: Set up JDK 17 and Maven Central Repository
         uses: actions/setup-java@v2
         with:
-          java-version: '15'
+          java-version: '17'
           distribution: 'adopt'
+          cache: 'maven'
           server-id: sonatype-nexus-snapshots
           server-username: MAVEN_USERNAME
           server-password: MAVEN_CENTRAL_TOKEN
@@ -70,21 +58,3 @@ jobs:
           MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-#  build-security:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Set up JDK 15
-#        uses: actions/setup-java@v2
-#        with:
-#          java-version: '15'
-#          distribution: 'adopt'
-#      - name: Cache Maven packages
-#        uses: actions/cache@v2
-#        with:
-#          path: ~/.m2
-#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: ${{ runner.os }}-m2
-#      - name: Build the project and run tests with security
-#        run: mvn --batch-mode verify -Psecurity -DskipTests
