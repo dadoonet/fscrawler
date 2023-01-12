@@ -19,7 +19,7 @@ jobs:
           token: ${{ secrets.PAT }}
           ref: ${{ github.head_ref }}
       - name: Update resources with Maven
-        run: mvn -B resources:resources
+        run: mvn -B  generate-resources
       - name: Update files if needed
         uses: stefanzweifel/git-auto-commit-action@v4
   # We build the project but the docker images and run all the tests
