@@ -39,6 +39,7 @@ public class Elasticsearch {
     private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
     private String index;
     private String indexFolder;
+    private String indexStatus;
     private int bulkSize = 100;
     private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
     private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
@@ -53,12 +54,13 @@ public class Elasticsearch {
 
     }
 
-    private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
-                          TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline,
-                          String pathPrefix, boolean sslVerification) {
+    private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, String indexStatus, int bulkSize,
+            TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline,
+            String pathPrefix, boolean sslVerification) {
         this.nodes = nodes;
         this.index = index;
         this.indexFolder = indexFolder;
+        this.indexStatus = indexStatus;
         this.bulkSize = bulkSize;
         this.flushInterval = flushInterval;
         this.byteSize = byteSize;
@@ -73,8 +75,10 @@ public class Elasticsearch {
         return new Builder();
     }
 
-    // Using here a method instead of a constant as sadly FSCrawlerValidator can modify this object
-    // TODO fix that: a validator should not modify the original object but return a modified copy
+    // Using here a method instead of a constant as sadly FSCrawlerValidator can
+    // modify this object
+    // TODO fix that: a validator should not modify the original object but return a
+    // modified copy
     public static Elasticsearch DEFAULT() {
         return Elasticsearch.builder().build();
     }
@@ -97,6 +101,14 @@ public class Elasticsearch {
 
     public void setIndexFolder(String indexFolder) {
         this.indexFolder = indexFolder;
+    }
+
+    public String getIndexStatus() {
+        return indexStatus;
+    }
+
+    public void setIndexStatus(String indexStatus) {
+        this.indexStatus = indexStatus;
     }
 
     public int getBulkSize() {
@@ -158,6 +170,7 @@ public class Elasticsearch {
         private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
         private String index;
         private String indexFolder;
+        private String indexStatus;
         private int bulkSize = 100;
         private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
         private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
@@ -179,6 +192,11 @@ public class Elasticsearch {
 
         public Builder setIndexFolder(String indexFolder) {
             this.indexFolder = indexFolder;
+            return this;
+        }
+
+        public Builder setIndexStatus(String indexStatus) {
+            this.indexStatus = indexStatus;
             return this;
         }
 
@@ -223,26 +241,38 @@ public class Elasticsearch {
         }
 
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password, pipeline, pathPrefix, sslVerification);
+            return new Elasticsearch(nodes, index, indexFolder, indexStatus, bulkSize, flushInterval, byteSize,
+                    username, password,
+                    pipeline, pathPrefix, sslVerification);
         }
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         Elasticsearch that = (Elasticsearch) o;
 
-        if (bulkSize != that.bulkSize) return false;
-        if (!Objects.equals(nodes, that.nodes)) return false;
-        if (!Objects.equals(index, that.index)) return false;
-        if (!Objects.equals(indexFolder, that.indexFolder)) return false;
-        if (!Objects.equals(username, that.username)) return false;
+        if (bulkSize != that.bulkSize)
+            return false;
+        if (!Objects.equals(nodes, that.nodes))
+            return false;
+        if (!Objects.equals(index, that.index))
+            return false;
+        if (!Objects.equals(indexFolder, that.indexFolder))
+            return false;
+        if (!Objects.equals(username, that.username))
+            return false;
         // We can't really test the password as it may be obfuscated
-        if (!Objects.equals(pipeline, that.pipeline)) return false;
-        if (!Objects.equals(pathPrefix, that.pathPrefix)) return false;
-        if (!Objects.equals(sslVerification, that.sslVerification)) return false;
+        if (!Objects.equals(pipeline, that.pipeline))
+            return false;
+        if (!Objects.equals(pathPrefix, that.pathPrefix))
+            return false;
+        if (!Objects.equals(sslVerification, that.sslVerification))
+            return false;
         return Objects.equals(flushInterval, that.flushInterval);
 
     }
@@ -257,7 +287,7 @@ public class Elasticsearch {
         result = 31 * result + (pathPrefix != null ? pathPrefix.hashCode() : 0);
         result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
-        result = 31 * result + (sslVerification? 1: 0);
+        result = 31 * result + (sslVerification ? 1 : 0);
         return result;
     }
 

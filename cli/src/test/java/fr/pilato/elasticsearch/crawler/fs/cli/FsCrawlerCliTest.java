@@ -19,8 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import fr.pilato.elasticsearch.crawler.fs.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -65,7 +65,8 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
             if (Files.isDirectory(path)) {
                 try {
                     printLs(path);
-                } catch (IOException ignored) { }
+                } catch (IOException ignored) {
+                }
             } else {
                 staticLogger.debug("{}", path);
             }
@@ -78,11 +79,10 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
 
         // We generate a fake status first in metadata dir
         FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(metadataDir);
-        FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir);
+        FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir, fsSettingsFileHandler.read(jobName));
 
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
-
 
         fsSettingsFileHandler.write(FsSettings.builder(jobName).build());
         fsJobFileHandler.write(jobName, FsJob.builder().build());

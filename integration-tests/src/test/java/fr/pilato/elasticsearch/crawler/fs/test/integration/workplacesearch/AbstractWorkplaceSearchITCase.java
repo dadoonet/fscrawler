@@ -23,9 +23,9 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.File;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.Meta;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -65,7 +65,8 @@ import static org.junit.Assume.assumeNoException;
 public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITCase {
 
     private final static String DEFAULT_TEST_WPSEARCH_URL = "http://127.0.0.1:3002";
-    protected final static String testWorkplaceUrl = getSystemProperty("tests.workplace.url", DEFAULT_TEST_WPSEARCH_URL);
+    protected final static String testWorkplaceUrl = getSystemProperty("tests.workplace.url",
+            DEFAULT_TEST_WPSEARCH_URL);
     protected final static String testWorkplaceUser = getSystemProperty("tests.workplace.user", testClusterUser);
     protected final static String testWorkplacePass = getSystemProperty("tests.workplace.pass", testClusterPass);
 
@@ -96,8 +97,11 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
                 assumeNoException("We can not run the Workplace Search tests against this cluster. " +
                         "Check that you have workplace search running at " + testWorkplaceUrl, e);
             } else {
-                staticLogger.error("We got an unexpected exception when running the Workplace Search tests against this cluster. " +
-                        "Check that you have workplace search running at {}", testWorkplaceUrl);
+                staticLogger.error(
+                        "We got an unexpected exception when running the Workplace Search tests against this cluster. "
+                                +
+                                "Check that you have workplace search running at {}",
+                        testWorkplaceUrl);
                 staticLogger.error("Stacktrace:", e);
                 fail("We got an unexpected exception when running the Workplace Search tests against this cluster. " +
                         "Check that you have workplace search running at " + testWorkplaceUrl);
@@ -108,7 +112,8 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     @SuppressWarnings("EmptyMethod")
     @BeforeClass
     public static void cleanAllTestResources() {
-        // Just for dev only. In case we need to remove tons of workplace search custom sources at once
+        // Just for dev only. In case we need to remove tons of workplace search custom
+        // sources at once
         // cleanExistingCustomSources(testCrawlerPrefix + "*");
     }
 
@@ -129,7 +134,8 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         }
     }
 
-    protected FsCrawlerImpl startCrawler(final String jobName, final String customSourceId, FsSettings fsSettings, TimeValue duration)
+    protected FsCrawlerImpl startCrawler(final String jobName, final String customSourceId, FsSettings fsSettings,
+            TimeValue duration)
             throws Exception {
         logger.info("  --> starting crawler [{}]", jobName);
 
@@ -143,7 +149,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         // We wait up to X seconds before considering a failing test
         assertThat("Job meta file [" + jobName + "] should exists in ~/.fscrawler...", awaitBusy(() -> {
             try {
-                new FsJobFileHandler(metadataDir).read(jobName);
+                new FsJobFileHandler(metadataDir, fsSettings).read(jobName);
                 return true;
             } catch (IOException e) {
                 return false;
@@ -160,16 +166,18 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     }
 
     /**
-     * Check that we have the expected number of docs or at least one if expected is null
+     * Check that we have the expected number of docs or at least one if expected is
+     * null
      *
-     * @param wpClient  Elasticsearch request to run.
-     * @param sourceId  The custom source id if any
-     * @param expected  expected number of docs. Null if at least 1.
-     * @param timeout   Time before we declare a failure
+     * @param wpClient Elasticsearch request to run.
+     * @param sourceId The custom source id if any
+     * @param expected expected number of docs. Null if at least 1.
+     * @param timeout  Time before we declare a failure
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    public static String countTestHelper(final WPSearchClient wpClient, final String sourceId, final Long expected, final TimeValue timeout) throws Exception {
+    public static String countTestHelper(final WPSearchClient wpClient, final String sourceId, final Long expected,
+            final TimeValue timeout) throws Exception {
 
         final String[] response = new String[1];
 
@@ -182,7 +190,8 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
             // Let's search for entries
             try {
                 refresh();
-                response[0] = wpClient.search(null, sourceId == null ? null : Collections.singletonMap("content_source_id", List.of(sourceId)));
+                response[0] = wpClient.search(null,
+                        sourceId == null ? null : Collections.singletonMap("content_source_id", List.of(sourceId)));
             } catch (RuntimeException | IOException | ElasticsearchClientException e) {
                 staticLogger.warn("error caught", e);
                 return -1;
@@ -270,7 +279,8 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         }
     }
 
-    protected static Map<String, Object> fakeDocumentAsMap(String id, String text, String lang, String filename, String... tags) {
+    protected static Map<String, Object> fakeDocumentAsMap(String id, String text, String lang, String filename,
+            String... tags) {
         return docToJson(id, fakeDocument(text, lang, filename, tags), "http://127.0.0.1");
     }
 
@@ -283,7 +293,8 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         // Index main metadata
         Meta meta = new Meta();
 
-        // Sometimes we won't generate a title but will let the system create a title from the filename
+        // Sometimes we won't generate a title but will let the system create a title
+        // from the filename
         if (frequently()) {
             meta.setTitle("Title for " + text);
         }
@@ -324,7 +335,8 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         }
     }
 
-    protected static void documentChecker(DocumentContext document, String prefix, List<String> filenames, List<String> texts) {
+    protected static void documentChecker(DocumentContext document, String prefix, List<String> filenames,
+            List<String> texts) {
         List<String> urls = new ArrayList<>();
         List<String> titles = new ArrayList<>();
         List<String> bodies = new ArrayList<>();
