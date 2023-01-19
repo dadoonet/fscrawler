@@ -62,7 +62,8 @@ public class FsJobFileHandler extends MetaFileHandler {
     }
 
     /**
-     * We read settings in ~/.fscrawler/{job_name}/_status.json
+     * We read settings in ~/.fscrawler/{job_name}/_status.json or from
+     * Elasticsearch (with local file fallback)
      * 
      * @param jobname is the job_name
      * @return Status status file
@@ -80,6 +81,13 @@ public class FsJobFileHandler extends MetaFileHandler {
         }
     }
 
+    /**
+     * Read status from Elasticsearch by using _id = joname
+     * 
+     * @param jobname is the job_name
+     * @return Status status file
+     * @throws IOException in case of error while reading
+     */
     private FsJob readFromEs(String jobname) throws IOException {
         var index = getStatusIndex(jobname);
 
@@ -102,7 +110,8 @@ public class FsJobFileHandler extends MetaFileHandler {
     }
 
     /**
-     * We write settings to ~/.fscrawler/{job_name}/_status.json
+     * We write settings to ~/.fscrawler/{job_name}/_status.json or to Elasticsearch
+     * in addition
      * 
      * @param jobname is the job_name
      * @param job     Status file to write
@@ -116,6 +125,13 @@ public class FsJobFileHandler extends MetaFileHandler {
         }
     }
 
+    /**
+     * Writes status to Elasticsearch with _id = jobname
+     * 
+     * @param jobname is the job_name
+     * @param job     Status file to write
+     * @throws IOException in case of error while reading
+     */
     private void writeToEs(String jobname, FsJob job) throws IOException {
         var index = getStatusIndex(jobname);
 
@@ -135,14 +151,19 @@ public class FsJobFileHandler extends MetaFileHandler {
      * @throws IOException in case of error while removing
      */
     public void clean(String jobname) throws IOException {
-        // removeFile(jobname, FILENAME);
-        cleanEs(jobname);
+        removeFile(jobname, FILENAME);
 
         if (useEs) {
             cleanEs(jobname);
         }
     }
 
+    /**
+     * Cleans Status in Elasticsearch by deleting the document with _id = jobname
+     * 
+     * @param jobname is the job_name
+     * @throws IOException in case of error while removing
+     */
     private void cleanEs(String jobname) throws IOException {
         client.delete(getStatusIndex(jobname), jobname);
     }
