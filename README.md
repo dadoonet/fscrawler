@@ -48,6 +48,12 @@ You need to install a version matching your Elasticsearch version:
 
 The guide has been moved to [ReadTheDocs](https://fscrawler.readthedocs.io/en/latest/).
 
+## Contribute
+
+Works on my machine - and yours ! Spin up pre-configured, standardized dev environments of this repository, by clicking on the button below.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#/https://github.com/dadoonet/fscrawler)
+
 # License
 
 Read more about the [License](https://fscrawler.readthedocs.io/en/latest/index.html#license).

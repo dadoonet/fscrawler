@@ -1,0 +1,11 @@
+tasks:
+  - name: Setup & Build
+    init: mvn clean package -DskipTests #To build it faster (without tests)
+    command: |
+      echo "FSCrawler documentation available here:"
+      echo "https://fscrawler.readthedocs.io/en/latest/dev/build.html"
+      echo "Gitpod ready, happy coding !"
+vscode:
+  extensions:
+    # Extension Pack for Java (redhat.java, mvn, debugger, test runner)
+    - "vscjava.vscode-java-pack"
