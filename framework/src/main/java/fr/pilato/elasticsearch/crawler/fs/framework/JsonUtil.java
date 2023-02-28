@@ -36,6 +36,11 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Predicate;
 import com.jayway.jsonpath.spi.json.JsonSmartJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JsonSmartMappingProvider;
+import com.arakelian.jq.ImmutableJqLibrary;
+import com.arakelian.jq.ImmutableJqRequest;
+import com.arakelian.jq.JqLibrary;
+import com.arakelian.jq.JqRequest;
+import com.arakelian.jq.JqResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,6 +56,7 @@ public class JsonUtil {
             .mappingProvider(new JsonSmartMappingProvider())
             .build();
 
+    private static final JqLibrary library = ImmutableJqLibrary.of();
 
     static {
         SimpleModule fscrawler = new SimpleModule("FsCrawler", new Version(2, 0, 0, null,
@@ -117,6 +123,21 @@ public class JsonUtil {
             return mapper.readValue(stream, new TypeReference<>() {});
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static String transform(String json, String transform) {
+        final JqRequest request = ImmutableJqRequest.builder()
+                .lib(library)
+                .input(json)
+                .filter(transform)
+                .build();
+
+        final JqResponse response = request.execute();
+        if (response.hasErrors()) {
+            throw new IllegalArgumentException(response.getErrors().get(0));
+        } else {
+            return response.getOutput();
         }
     }
 

@@ -26,6 +26,7 @@ import org.junit.Test;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertTrue;
 
 public class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
@@ -60,4 +61,39 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
         assertThat(context.read("$.attributes.owner"), is("dpilato"));
         assertThat(context.read("$.attributes.permissions"), is(644));
     }
+
+    @Test
+    public void testJqTransform() {
+        String json = "{\n" +
+                "   \"content\":\"Some Text\",\n" +
+                "   \"file\":{\n" +
+                "      \"extension\":\"txt\",\n" +
+                "      \"content_type\":\"text/plain; charset=ISO-8859-1\",\n" +
+                "      \"created\":\"2022-02-08T21:57:51.000+00:00\",\n" +
+                "      \"last_modified\":\"2022-02-08T21:57:51.394+00:00\",\n" +
+                "      \"last_accessed\":\"2022-02-08T21:57:51.394+00:00\",\n" +
+                "      \"indexing_date\":\"2022-02-08T21:57:52.033+00:00\",\n" +
+                "      \"filesize\":12230,\n" +
+                "      \"filename\":\"roottxtfile.txt\",\n" +
+                "      \"url\":\"file:///var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n"
+                +
+                "   },\n" +
+                "   \"path\":{\n" +
+                "      \"root\":\"e366ee2f42db246720b82a82fdb4e15e\",\n" +
+                "      \"virtual\":\"/roottxtfile.txt\",\n" +
+                "      \"real\":\"/var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n"
+                +
+                "   },\n" +
+                "   \"attributes\":{\n" +
+                "      \"owner\":\"dpilato\",\n" +
+                "      \"group\":\"staff\",\n" +
+                "      \"permissions\":644\n" +
+                "   }\n" +
+                "}";
+
+        var result = JsonUtil.transform(json, "del(.content)");
+        assertTrue(!result.contains("\"content\":\"Some Text\""));
+
+    }
+
 }

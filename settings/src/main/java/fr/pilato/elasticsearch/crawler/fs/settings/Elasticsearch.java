@@ -48,14 +48,15 @@ public class Elasticsearch {
     private String pipeline;
     private String pathPrefix;
     private boolean sslVerification = true;
+    private String jsonTransform = null;
 
     public Elasticsearch() {
 
     }
 
     private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
-                          TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline,
-                          String pathPrefix, boolean sslVerification) {
+            TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline,
+            String pathPrefix, boolean sslVerification, String jsonTransform) {
         this.nodes = nodes;
         this.index = index;
         this.indexFolder = indexFolder;
@@ -67,6 +68,7 @@ public class Elasticsearch {
         this.pipeline = pipeline;
         this.pathPrefix = pathPrefix;
         this.sslVerification = sslVerification;
+        this.jsonTransform = jsonTransform;
     }
 
     public static Builder builder() {
@@ -153,6 +155,14 @@ public class Elasticsearch {
         this.sslVerification = sslVerification;
     }
 
+    public String getJsonTransform() {
+        return jsonTransform;
+    }
+
+    public void setJsonTransform(String jsonTransform) {
+        this.jsonTransform = jsonTransform;
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     public static class Builder {
         private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
@@ -166,6 +176,7 @@ public class Elasticsearch {
         private String pipeline = null;
         private String pathPrefix = null;
         private boolean sslVerification = true;
+        private String jsonTransform = null;
 
         public Builder setNodes(List<ServerUrl> nodes) {
             this.nodes = nodes;
@@ -222,8 +233,14 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setJsonTransform(String jsonTransform) {
+            this.jsonTransform = jsonTransform;
+            return this;
+        }
+
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password, pipeline, pathPrefix, sslVerification);
+            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password,
+                    pipeline, pathPrefix, sslVerification, jsonTransform);
         }
     }
 
@@ -243,6 +260,7 @@ public class Elasticsearch {
         if (!Objects.equals(pipeline, that.pipeline)) return false;
         if (!Objects.equals(pathPrefix, that.pathPrefix)) return false;
         if (!Objects.equals(sslVerification, that.sslVerification)) return false;
+        if (!Objects.equals(jsonTransform, that.jsonTransform)) return false;
         return Objects.equals(flushInterval, that.flushInterval);
 
     }
@@ -258,6 +276,7 @@ public class Elasticsearch {
         result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
         result = 31 * result + (sslVerification? 1: 0);
+        result = 31 * result + (jsonTransform != null ? jsonTransform.hashCode() : 0);
         return result;
     }
 
@@ -273,6 +292,7 @@ public class Elasticsearch {
                 ", pipeline='" + pipeline + '\'' +
                 ", pathPrefix='" + pathPrefix + '\'' +
                 ", sslVerification='" + sslVerification + '\'' +
+                ", jsonTransform='" + jsonTransform + '\'' +
                 '}';
     }
 }

@@ -32,6 +32,8 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.ssl_verification``| ``true``                  | :ref:`credentials`              |
 +-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.json_transform``  | ``null``                  | `JQ transformation`             |
++-----------------------------------+---------------------------+---------------------------------+
 
 Index settings
 ^^^^^^^^^^^^^^
@@ -830,3 +832,19 @@ Or run some aggregations on top of them, like:
      }
    }
 
+.. _transformations:
+
+Transformations
+^^^^^^^^^^^^^^^
+
+.. warning::
+
+      Transformations depend on `java-jq`, which bridges to the native `jq` library. The current release does not support CPU architectures like `aarch64` on linux.
+
+Deletes the content field before indexing the document
+
+.. code:: yaml
+
+    name: "test"
+    elasticsearch:
+      json_transform: ". | del(.content)"
