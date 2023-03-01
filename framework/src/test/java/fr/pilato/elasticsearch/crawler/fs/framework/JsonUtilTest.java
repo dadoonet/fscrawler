@@ -26,7 +26,9 @@ import org.junit.Test;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeThat;
 
 public class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
@@ -43,12 +45,14 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
                 "      \"indexing_date\":\"2022-02-08T21:57:52.033+00:00\",\n" +
                 "      \"filesize\":12230,\n" +
                 "      \"filename\":\"roottxtfile.txt\",\n" +
-                "      \"url\":\"file:///var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n" +
+                "      \"url\":\"file:///var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n"
+                +
                 "   },\n" +
                 "   \"path\":{\n" +
                 "      \"root\":\"e366ee2f42db246720b82a82fdb4e15e\",\n" +
                 "      \"virtual\":\"/roottxtfile.txt\",\n" +
-                "      \"real\":\"/var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n" +
+                "      \"real\":\"/var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n"
+                +
                 "   },\n" +
                 "   \"attributes\":{\n" +
                 "      \"owner\":\"dpilato\",\n" +
@@ -64,6 +68,13 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testJqTransform() {
+
+        String arch = System.getProperty("os.arch");
+        String name = System.getProperty("os.name");
+
+        assumeThat("JQ transforms skipped because of platform", name + "/" + arch,
+                isOneOf("win/x86", "linux/x86", "linux/amd64", /* "linux/aarch64", */ "mac/x86_64"));
+
         String json = "{\n" +
                 "   \"content\":\"Some Text\",\n" +
                 "   \"file\":{\n" +
