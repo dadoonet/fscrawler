@@ -156,7 +156,7 @@ public class JsonUtil {
 
     /**
      * Parse a JSON Document using JSON Path and return a DocumentContext
-     * @param json json to parse
+     * @param json  json to parse
      * @return an Object which can be used as an input for {@link com.jayway.jsonpath.DocumentContext#read(String, Predicate...)}
      */
     public static DocumentContext parseJsonAsDocumentContext(String json) {
