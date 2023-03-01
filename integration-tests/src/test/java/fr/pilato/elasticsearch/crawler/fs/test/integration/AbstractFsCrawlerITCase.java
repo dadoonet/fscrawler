@@ -20,7 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
@@ -90,14 +90,17 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         return startCrawler(jobName, startCrawlerDefinition().build(), endCrawlerDefinition(jobName), null);
     }
 
-    protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
+    protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server)
+            throws Exception {
         return startCrawler(jobName, fs, elasticsearch, server, null, TimeValue.timeValueSeconds(10));
     }
 
-    protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest,
-                                         TimeValue duration)
+    protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server,
+            Rest rest,
+            TimeValue duration)
             throws Exception {
-        return startCrawler(jobName, FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(), duration);
+        return startCrawler(jobName, FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs)
+                .setServer(server).setRest(rest).build(), duration);
     }
 
     protected FsCrawlerImpl startCrawler(final String jobName, FsSettings fsSettings, TimeValue duration)
@@ -114,7 +117,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         // We wait up to X seconds before considering a failing test
         assertThat("Job meta file should exists in ~/.fscrawler...", awaitBusy(() -> {
             try {
-                new FsJobFileHandler(metadataDir).read(jobName);
+                new FsJobFileHandler(metadataDir, fsSettings).read(jobName);
                 return true;
             } catch (IOException e) {
                 return false;

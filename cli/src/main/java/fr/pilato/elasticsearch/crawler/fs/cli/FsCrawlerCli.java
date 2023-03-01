@@ -22,7 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.cli;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
@@ -102,7 +102,6 @@ public class FsCrawlerCli {
         boolean help;
     }
 
-
     public static void main(String[] args) throws Exception {
         // create a scanner so we can read the command-line input
         Scanner scanner = new Scanner(System.in);
@@ -122,13 +121,15 @@ public class FsCrawlerCli {
                 // If the user did not enter any job name, nothing will be displayed
                 if (commands.jobName == null) {
                     banner();
-                    logger.warn("--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
+                    logger.warn(
+                            "--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
                     jCommander.usage();
                     return;
                 }
                 // We don't write anything on the console anymore
                 if (console != null) {
-                    console.addFilter(LevelMatchFilter.newBuilder().setLevel(Level.ALL).setOnMatch(Filter.Result.DENY).build());
+                    console.addFilter(
+                            LevelMatchFilter.newBuilder().setLevel(Level.ALL).setOnMatch(Filter.Result.DENY).build());
                 }
             } else {
                 if (console != null) {
@@ -164,7 +165,8 @@ public class FsCrawlerCli {
         // Create the config dir if needed
         FsCrawlerUtil.createDirIfMissing(configDir);
 
-        // We copy default mapping and settings to the default settings dir .fscrawler/_default/
+        // We copy default mapping and settings to the default settings dir
+        // .fscrawler/_default/
         copyDefaultResources(configDir);
 
         FsSettings fsSettings;
@@ -181,7 +183,7 @@ public class FsCrawlerCli {
 
             if (!files.isEmpty()) {
                 for (int i = 0; i < files.size(); i++) {
-                    FSCrawlerLogger.console("[{}] - {}", i+1, files.get(i));
+                    FSCrawlerLogger.console("[{}] - {}", i + 1, files.get(i));
                 }
                 int chosenFile = 0;
                 while (chosenFile <= 0 || chosenFile > files.size()) {
@@ -199,15 +201,16 @@ public class FsCrawlerCli {
             jobName = commands.jobName.get(0);
         }
 
-        // If we ask to reinit, we need to clean the status for the job
-        if (commands.restart) {
-            logger.debug("Cleaning existing status for job [{}]...", jobName);
-            new FsJobFileHandler(configDir).clean(jobName);
-        }
-
         try {
-            logger.debug("Starting job [{}]...", jobName);
             fsSettings = fsSettingsFileHandler.read(jobName);
+
+            // If we ask to reinit, we need to clean the status for the job
+            if (commands.restart) {
+                logger.debug("Cleaning existing status for job [{}]...", jobName);
+                new FsJobFileHandler(configDir, fsSettings).clean(jobName);
+            }
+
+            logger.debug("Starting job [{}]...", jobName);
 
             // Check default settings
             if (fsSettings.getFs() == null) {
@@ -215,10 +218,12 @@ public class FsCrawlerCli {
             }
 
             if (fsSettings.getServer() != null) {
-                if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && fsSettings.getServer().getPort() == PROTOCOL.SSH_PORT) {
+                if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP)
+                        && fsSettings.getServer().getPort() == PROTOCOL.SSH_PORT) {
                     fsSettings.getServer().setPort(PROTOCOL.FTP_PORT);
                 }
-                if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && StringUtils.isEmpty(fsSettings.getServer().getUsername())) {
+                if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP)
+                        && StringUtils.isEmpty(fsSettings.getServer().getUsername())) {
                     fsSettings.getServer().setUsername("anonymous");
                 }
             }
@@ -262,7 +267,8 @@ public class FsCrawlerCli {
                 fsSettingsFileHandler.write(fsSettings);
 
                 Path config = configDir.resolve(jobName).resolve(FsSettingsFileHandler.SETTINGS_YAML);
-                FSCrawlerLogger.console("Settings have been created in [{}]. Please review and edit before relaunch", config);
+                FSCrawlerLogger.console("Settings have been created in [{}]. Please review and edit before relaunch",
+                        config);
             }
 
             return;
@@ -330,7 +336,8 @@ public class FsCrawlerCli {
     private static final int BANNER_LENGTH = 100;
 
     /**
-     * This is coming from: <a href="https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler">https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler</a>
+     * This is coming from: <a href=
+     * "https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler">https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler</a>
      */
     private static final String ASCII_ART = "" +
             "    ,---,.  .--.--.     ,----..                                     ,--,                      \n" +
@@ -350,13 +357,13 @@ public class FsCrawlerCli {
     private static void banner() {
         FSCrawlerLogger.console(
                 separatorLine(",", ".") +
-                centerAsciiArt() +
-                separatorLine("+", "+") +
-                bannerLine("You know, for Files!") +
-                bannerLine("Made from France with Love") +
-                bannerLine("Source: https://github.com/dadoonet/fscrawler/") +
-                bannerLine("Documentation: https://fscrawler.readthedocs.io/") +
-                separatorLine("`", "'"));
+                        centerAsciiArt() +
+                        separatorLine("+", "+") +
+                        bannerLine("You know, for Files!") +
+                        bannerLine("Made from France with Love") +
+                        bannerLine("Source: https://github.com/dadoonet/fscrawler/") +
+                        bannerLine("Documentation: https://fscrawler.readthedocs.io/") +
+                        separatorLine("`", "'"));
     }
 
     private static String centerAsciiArt() {
@@ -386,30 +393,37 @@ public class FsCrawlerCli {
 
     private static void checkForDeprecatedResources(Path configDir, String elasticsearchVersion) throws IOException {
         try {
-            // If we are able to read an old configuration file, we should tell the user to check the documentation
+            // If we are able to read an old configuration file, we should tell the user to
+            // check the documentation
             readDefaultJsonVersionedFile(configDir, extractMajorVersion(elasticsearchVersion), "doc");
-            logger.warn("We found old configuration index settings: [{}/_default/doc.json]. You should look at the documentation" +
-                    " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
+            logger.warn(
+                    "We found old configuration index settings: [{}/_default/doc.json]. You should look at the documentation"
+                            +
+                            " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
                     configDir);
         } catch (IllegalArgumentException ignored) {
-            // If we can't find the deprecated resource, it will throw an exception which needs to be ignored.
+            // If we can't find the deprecated resource, it will throw an exception which
+            // needs to be ignored.
         }
         try {
-            // If we are able to read an old configuration file, we should tell the user to check the documentation
+            // If we are able to read an old configuration file, we should tell the user to
+            // check the documentation
             readDefaultJsonVersionedFile(configDir, extractMajorVersion(elasticsearchVersion), "folder");
-            logger.warn("We found old configuration index settings: [{}/_default/folder.json]. You should look at the documentation" +
-                    " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
+            logger.warn(
+                    "We found old configuration index settings: [{}/_default/folder.json]. You should look at the documentation"
+                            +
+                            " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
                     configDir);
         } catch (IllegalArgumentException ignored) {
-            // If we can't find the deprecated resource, it will throw an exception which needs to be ignored.
+            // If we can't find the deprecated resource, it will throw an exception which
+            // needs to be ignored.
         }
     }
 
     private static void sleep() {
         try {
             Thread.sleep(CLOSE_POLLING_WAIT_MS);
-        }
-        catch(InterruptedException ignored) {
+        } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
         }
     }
