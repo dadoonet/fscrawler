@@ -839,7 +839,7 @@ Transformations
 
 .. warning::
 
-      Transformations depend on `java-jq`, which bridges to the native `jq` library. The current release does not support CPU architectures like `aarch64` on linux.
+      Transformations depend on `java-jq`, which bridges to the native (embedded) `jq` library. The current release does not support CPU architectures like `aarch64` on linux, macos and windows.
 
 Deletes the content field before indexing the document
 

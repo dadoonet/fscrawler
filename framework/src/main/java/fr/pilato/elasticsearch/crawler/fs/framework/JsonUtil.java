@@ -46,6 +46,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class JsonUtil {
 
     public static final ObjectMapper prettyMapper;
@@ -57,6 +60,8 @@ public class JsonUtil {
             .build();
 
     private static final JqLibrary library = ImmutableJqLibrary.of();
+
+    private static final Logger logger = LogManager.getLogger(JsonUtil.class);
 
     static {
         SimpleModule fscrawler = new SimpleModule("FsCrawler", new Version(2, 0, 0, null,
@@ -120,31 +125,42 @@ public class JsonUtil {
 
     public static Map<String, Object> asMap(InputStream stream) {
         try {
-            return mapper.readValue(stream, new TypeReference<>() {});
+            return mapper.readValue(stream, new TypeReference<>() {
+            });
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public static String transform(String json, String transform) {
-        final JqRequest request = ImmutableJqRequest.builder()
-                .lib(library)
-                .input(json)
-                .filter(transform)
-                .build();
 
-        final JqResponse response = request.execute();
-        if (response.hasErrors()) {
-            throw new IllegalArgumentException(response.getErrors().get(0));
-        } else {
-            return response.getOutput();
+        try {
+            final JqRequest request = ImmutableJqRequest.builder()
+                    .lib(library)
+                    .input(json)
+                    .filter(transform)
+                    .build();
+
+            final JqResponse response = request.execute();
+            if (response.hasErrors()) {
+                logger.warn(response.getErrors().get(0));
+                throw new IllegalArgumentException(response.getErrors().get(0));
+            } else {
+                return response.getOutput();
+            }
+        } catch (IllegalStateException e) { // Architecture unsupported
+            logger.error("Architecture unspported by java-jq - JQ transformation are not available", e);
+            throw e;
         }
+
     }
 
     /**
      * Parse a JSON Document using JSON Path and return a DocumentContext
-     * @param json  json to parse
-     * @return an Object which can be used as an input for {@link com.jayway.jsonpath.DocumentContext#read(String, Predicate...)}
+     * 
+     * @param json json to parse
+     * @return an Object which can be used as an input for
+     *         {@link com.jayway.jsonpath.DocumentContext#read(String, Predicate...)}
      */
     public static DocumentContext parseJsonAsDocumentContext(String json) {
         return JsonPath.using(configuration).parse(json);
