@@ -125,8 +125,7 @@ public class JsonUtil {
 
     public static Map<String, Object> asMap(InputStream stream) {
         try {
-            return mapper.readValue(stream, new TypeReference<>() {
-            });
+            return mapper.readValue(stream, new TypeReference<>() {});
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -159,8 +158,7 @@ public class JsonUtil {
      * Parse a JSON Document using JSON Path and return a DocumentContext
      * 
      * @param json json to parse
-     * @return an Object which can be used as an input for
-     *         {@link com.jayway.jsonpath.DocumentContext#read(String, Predicate...)}
+     * @return an Object which can be used as an input for {@link com.jayway.jsonpath.DocumentContext#read(String, Predicate...)}
      */
     public static DocumentContext parseJsonAsDocumentContext(String json) {
         return JsonPath.using(configuration).parse(json);

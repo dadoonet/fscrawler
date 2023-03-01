@@ -45,14 +45,12 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
                 "      \"indexing_date\":\"2022-02-08T21:57:52.033+00:00\",\n" +
                 "      \"filesize\":12230,\n" +
                 "      \"filename\":\"roottxtfile.txt\",\n" +
-                "      \"url\":\"file:///var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n"
-                +
+                "      \"url\":\"file:///var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n" +
                 "   },\n" +
                 "   \"path\":{\n" +
                 "      \"root\":\"e366ee2f42db246720b82a82fdb4e15e\",\n" +
                 "      \"virtual\":\"/roottxtfile.txt\",\n" +
-                "      \"real\":\"/var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n"
-                +
+                "      \"real\":\"/var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n" +
                 "   },\n" +
                 "   \"attributes\":{\n" +
                 "      \"owner\":\"dpilato\",\n" +
@@ -86,14 +84,12 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
                 "      \"indexing_date\":\"2022-02-08T21:57:52.033+00:00\",\n" +
                 "      \"filesize\":12230,\n" +
                 "      \"filename\":\"roottxtfile.txt\",\n" +
-                "      \"url\":\"file:///var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n"
-                +
+                "      \"url\":\"file:///var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n" +
                 "   },\n" +
                 "   \"path\":{\n" +
                 "      \"root\":\"e366ee2f42db246720b82a82fdb4e15e\",\n" +
                 "      \"virtual\":\"/roottxtfile.txt\",\n" +
-                "      \"real\":\"/var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n"
-                +
+                "      \"real\":\"/var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n" +
                 "   },\n" +
                 "   \"attributes\":{\n" +
                 "      \"owner\":\"dpilato\",\n" +

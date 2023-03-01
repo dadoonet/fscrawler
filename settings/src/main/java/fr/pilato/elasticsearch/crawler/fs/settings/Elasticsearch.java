@@ -54,9 +54,7 @@ public class Elasticsearch {
 
     }
 
-    private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
-            TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline,
-            String pathPrefix, boolean sslVerification, String jsonTransform) {
+    private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize, TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline, String pathPrefix, boolean sslVerification, String jsonTransform) {
         this.nodes = nodes;
         this.index = index;
         this.indexFolder = indexFolder;
@@ -239,8 +237,7 @@ public class Elasticsearch {
         }
 
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password,
-                    pipeline, pathPrefix, sslVerification, jsonTransform);
+            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password, pipeline, pathPrefix, sslVerification, jsonTransform);
         }
     }
 
