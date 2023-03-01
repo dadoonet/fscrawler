@@ -34,15 +34,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.transform;
 
 public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocumentService {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerDocumentServiceElasticsearchImpl.class);
 
     private final IElasticsearchClient client;
+    private final String transformation;
 
     public FsCrawlerDocumentServiceElasticsearchImpl(Path config, FsSettings settings) {
         this.client = new ElasticsearchClient(config, settings);
+        this.transformation = settings.getElasticsearch().getJsonTransform();
+
+        if (transformation != null) {
+            logger.debug("Elasticsearch Document Service configured with JSON transformation");
+        }
     }
 
     public IElasticsearchClient getClient() {
@@ -78,6 +85,9 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
 
     @Override
     public void indexRawJson(String index, String id, String json, String pipeline) {
+        if (transformation != null) {
+            json = transform(json, transformation);
+        }
         logger.debug("Indexing {}/{}?pipeline={}", index, id, pipeline);
         client.indexRawJson(index, id, json, pipeline);
     }

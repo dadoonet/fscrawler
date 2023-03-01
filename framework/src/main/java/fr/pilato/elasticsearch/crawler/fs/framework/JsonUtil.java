@@ -36,10 +36,18 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Predicate;
 import com.jayway.jsonpath.spi.json.JsonSmartJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JsonSmartMappingProvider;
+import com.arakelian.jq.ImmutableJqLibrary;
+import com.arakelian.jq.ImmutableJqRequest;
+import com.arakelian.jq.JqLibrary;
+import com.arakelian.jq.JqRequest;
+import com.arakelian.jq.JqResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class JsonUtil {
 
@@ -51,6 +59,9 @@ public class JsonUtil {
             .mappingProvider(new JsonSmartMappingProvider())
             .build();
 
+    private static final JqLibrary library = ImmutableJqLibrary.of();
+
+    private static final Logger logger = LogManager.getLogger(JsonUtil.class);
 
     static {
         SimpleModule fscrawler = new SimpleModule("FsCrawler", new Version(2, 0, 0, null,
@@ -118,6 +129,29 @@ public class JsonUtil {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String transform(String json, String transform) {
+
+        try {
+            final JqRequest request = ImmutableJqRequest.builder()
+                    .lib(library)
+                    .input(json)
+                    .filter(transform)
+                    .build();
+
+            final JqResponse response = request.execute();
+            if (response.hasErrors()) {
+                logger.warn(response.getErrors().get(0));
+                throw new IllegalArgumentException(response.getErrors().get(0));
+            } else {
+                return response.getOutput();
+            }
+        } catch (IllegalStateException e) { // Architecture unsupported
+            logger.error("Architecture unspported by java-jq - JQ transformation are not available", e);
+            throw e;
+        }
+
     }
 
     /**
