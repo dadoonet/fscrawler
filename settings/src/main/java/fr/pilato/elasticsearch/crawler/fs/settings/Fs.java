@@ -59,6 +59,7 @@ public class Fs {
     private ByteSizeValue ignoreAbove = null;
     private boolean followSymlinks = false;
     private String tikaConfigPath = null;
+    private Pipeline pipeline = Pipeline.DEFAULT;
 
     public static Builder builder() {
         return new Builder();
@@ -93,6 +94,7 @@ public class Fs {
         private ByteSizeValue ignoreAbove = null;
         private boolean followSymlinks = false;
         private String tikaConfigPath = null;
+        private Pipeline pipeline = Pipeline.DEFAULT;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -253,11 +255,16 @@ public class Fs {
             return this;
         }
 
+        public Builder setPipeline(Pipeline pipeline) {
+            this.pipeline = pipeline;
+            return this;
+        }
+
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
                     checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks,
-                    tikaConfigPath);
+                    tikaConfigPath, pipeline);
         }
     }
 
@@ -269,7 +276,7 @@ public class Fs {
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
                boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove, boolean followSymlinks,
-               String tikaConfigPath) {
+               String tikaConfigPath, Pipeline pipeline) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -294,6 +301,7 @@ public class Fs {
         this.ignoreAbove = ignoreAbove;
         this.followSymlinks = followSymlinks;
         this.tikaConfigPath = tikaConfigPath;
+        this.pipeline = pipeline;
     }
 
     public String getUrl() {
@@ -501,7 +509,15 @@ public class Fs {
     }
 
     public void setTikaConfigPath(String tikaConfigPath) {
-      this.tikaConfigPath = tikaConfigPath;
+        this.tikaConfigPath = tikaConfigPath;
+    }
+    
+    public Pipeline getPipeline() {
+        return pipeline;
+    }
+
+    public void setPipeline(Pipeline pipeline) {
+        this.pipeline = pipeline;
     }
 
     @Override

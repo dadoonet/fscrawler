@@ -37,7 +37,6 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
-import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,6 +54,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
@@ -73,7 +73,8 @@ public abstract class FsParserAbstract extends FsParser {
     private final Integer loop;
     private final MessageDigest messageDigest;
     private final String pathSeparator;
-
+    private ProcessingPipeline pipeline;
+    
     private ScanStatistic stats;
 
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
@@ -96,6 +97,16 @@ public abstract class FsParserAbstract extends FsParser {
             }
         } else {
             messageDigest = null;
+        }
+
+        // Look for a custom processing pipeline
+        try {
+            Class<?> clazz = FsParserAbstract.class.getClassLoader().loadClass(fsSettings.getFs().getPipeline().getClassName());
+            pipeline = (ProcessingPipeline) clazz.getDeclaredConstructor().newInstance();
+            pipeline.init(new ProcessingPipeline.Config(fsSettings, documentService, messageDigest, Collections.emptyMap()));
+            logger.info("Created processing pipeline {}", this.pipeline.getClass().getName());
+        } catch (Exception e) {
+            throw new RuntimeException("Could not create processing pipeline " + fsSettings.getFs().getPipeline().getClassName() + ". giving up");
         }
 
         pathSeparator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
@@ -434,32 +445,28 @@ public abstract class FsParserAbstract extends FsParser {
             } else if (fsSettings.getFs().isXmlSupport()) {
                 // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
                 doc.setObject(XmlDocParser.generateMap(inputStream));
-            } else {
+            }
+            // } else {
                 // Extracting content with Tika
-                TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
-            }
+                // TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
 
-            // We index the data structure
-            if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
-                if (!closed) {
-                    FSCrawlerLogger.documentDebug(id,
-                            computeVirtualPathName(stats.getRootPath(), fullFilename),
-                            "Indexing content");
-                    documentService.index(
-                            fsSettings.getElasticsearch().getIndex(),
-                            id,
-                            doc,
-                            fsSettings.getElasticsearch().getPipeline());
-                } else {
-                    logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                            fsSettings.getElasticsearch().getIndex(), id);
-                }
-            } else {
-                logger.debug("We ignore file [{}] because it does not match all the patterns {}", filename,
-                        fsSettings.getFs().getFilters());
-            }
+                FsCrawlerContext context = new FsCrawlerContext.Builder()
+                        .withId(id)
+                        .withFileModel(fileAbstractModel)
+                        .withFullFilename(fullFilename)
+                        .withFilePath(dirname)
+                        .withInputStream(inputStream)
+                        .withDoc(doc)
+                        .withStats(stats)
+                        .build();
+
+                // Do various parsing such as Tika etc.
+                // The last thing the pipeline will do is index to ES
+                pipeline.processFile(context);
+            // }
+
         } else {
-            if (fsSettings.getFs().isJsonSupport()) {
+                if (fsSettings.getFs().isJsonSupport()) {
                 FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
                         computeVirtualPathName(stats.getRootPath(), fullFilename),
                         "Indexing json content");
