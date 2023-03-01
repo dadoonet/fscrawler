@@ -54,7 +54,9 @@ public class Elasticsearch {
 
     }
 
-    private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize, TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline, String pathPrefix, boolean sslVerification, String jsonTransform) {
+    private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
+            TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline,
+            String pathPrefix, boolean sslVerification, String jsonTransform) {
         this.nodes = nodes;
         this.index = index;
         this.indexFolder = indexFolder;
