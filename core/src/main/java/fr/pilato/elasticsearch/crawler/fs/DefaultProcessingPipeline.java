@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 
+
 /**
  * The processing pipeline that will be used if not overridden.
  *
@@ -35,6 +36,8 @@ public class DefaultProcessingPipeline implements ProcessingPipeline {
     protected Config config;
     protected TikaProcessor tika;
     protected EsIndexProcessor es;
+    protected TagsProcessor tags;
+    protected UpdateIdProcessor id;
 
     /**
      * Parse the file with Tika and index to ES.
@@ -45,6 +48,8 @@ public class DefaultProcessingPipeline implements ProcessingPipeline {
     public void processFile(FsCrawlerContext ctx) {
         logger.debug("Starting processing of file {}", ctx.getFullFilename());
         extractTextWithTika(ctx);
+        updateTags(ctx);
+        updateId(ctx);
         indexToEs(ctx);
     }
 
@@ -67,10 +72,26 @@ public class DefaultProcessingPipeline implements ProcessingPipeline {
         tika.process(ctx);
     }
 
+    /**
+     * Overrides tags using {@link TagsProcessor} and config from ctx
+     */
+    protected void updateTags(FsCrawlerContext ctx) {
+        tags.process(ctx);
+    }
+
+        /**
+     * Overrides _id using {@link UpdateIdProcesser}
+     */
+    protected void updateId(FsCrawlerContext ctx) {
+        id.process(ctx);
+    }
+
     @Override
     public void init(Config config) throws IOException {
         this.config = config;
         tika = new TikaProcessor(config.getFsSettings(), config.getMessageDigest());
         es = new EsIndexProcessor(config.getFsSettings(), config.getDocumentService());
+        tags = new TagsProcessor();
+        id = new UpdateIdProcessor();
     }
 }

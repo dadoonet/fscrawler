@@ -54,6 +54,22 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Scanner;
 
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.exporter.otlp.metrics.OtlpGrpcMetricExporter;
+import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
+import io.opentelemetry.sdk.metrics.SdkMeterProvider;
+import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
+import io.opentelemetry.sdk.resources.Resource;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
+import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
+
+
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 
 /**
@@ -104,6 +120,9 @@ public class FsCrawlerCli {
 
 
     public static void main(String[] args) throws Exception {
+
+        setupOtel();
+        
         // create a scanner so we can read the command-line input
         Scanner scanner = new Scanner(System.in);
 
@@ -412,5 +431,15 @@ public class FsCrawlerCli {
         catch(InterruptedException ignored) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private static void setupOtel() {
+
+  OpenTelemetrySdk sdk = AutoConfiguredOpenTelemetrySdk.initialize()
+    .getOpenTelemetrySdk();
+
+// OpenTelemetry openTelemetry = sdk.builder()
+//   .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+//   .buildAndRegisterGlobal();
     }
 }

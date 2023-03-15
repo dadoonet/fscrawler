@@ -20,7 +20,13 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import fr.pilato.elasticsearch.crawler.fs.FsCrawlerContext;
+import fr.pilato.elasticsearch.crawler.fs.FsParserAbstract;
+import fr.pilato.elasticsearch.crawler.fs.ProcessingPipeline;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
+import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -50,6 +56,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.Collections;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
@@ -61,7 +68,8 @@ public class DocumentApi extends RestApi {
     private final FsSettings settings;
     private final MessageDigest messageDigest;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
-
+    private ProcessingPipeline pipeline;
+    
     DocumentApi(FsSettings settings, FsCrawlerDocumentService documentService) {
         this.settings = settings;
         this.documentService = documentService;
@@ -71,6 +79,16 @@ public class DocumentApi extends RestApi {
                     null : MessageDigest.getInstance(settings.getFs().getChecksum());
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("This should never happen as we checked that previously");
+        }
+
+        // Look for a custom processing pipeline
+        try {
+            Class<?> clazz = DocumentApi.class.getClassLoader().loadClass(settings.getFs().getPipeline().getClassName());
+            pipeline = (ProcessingPipeline) clazz.getDeclaredConstructor().newInstance();
+            pipeline.init(new ProcessingPipeline.Config(settings, documentService, messageDigest, Collections.emptyMap()));
+            logger.info("Created processing pipeline {}", this.pipeline.getClass().getName());
+        } catch (Exception e) {
+            throw new RuntimeException("Could not create processing pipeline " + settings.getFs().getPipeline().getClassName() + ". giving up");
         }
     }
 
@@ -195,22 +213,40 @@ public class DocumentApi extends RestApi {
         // Path
 
         // Read the file content
-        TikaDocParser.generate(settings, filecontent, filename, filename, doc, messageDigest, filesize);
+        // TikaDocParser.generate(settings, filecontent, filename, filename, doc, messageDigest, filesize);
+
+        // build FileAbstractModel
+        var fam = new FileAbstractModel(filename,
+                false,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                filesize,
+                null,
+                null,
+                0);
+
+        FsCrawlerContext context = new FsCrawlerContext.Builder()
+        .withId(id)
+        .withFileModel(fam)
+        .withFullFilename(filename)
+        .withFilePath(filename)
+        .withInputStream(filecontent)
+        .withDoc(doc)
+        .withStats(new ScanStatistic(settings.getFs().getUrl()))
+        .withTags(tags)
+        .build();
+
+        // Do various parsing such as Tika etc.
+        // The last thing the pipeline will do is index to ES
+        pipeline.processFile(context);
 
         // Elasticsearch entity coordinates (we use the first node address)
         ServerUrl node = settings.getElasticsearch().getNodes().get(0);
         String url = node.getUrl() + "/" + index + "/_doc/" + id;
-        if (Boolean.parseBoolean(simulate)) {
-            logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].", filename, url);
-        } else {
-            logger.debug("Sending document [{}] to elasticsearch.", filename);
-            final Doc mergedDoc = this.getMergedJsonDoc(doc, tags);
-            documentService.index(
-                    index,
-                    id,
-                    mergedDoc,
-                    settings.getElasticsearch().getPipeline());
-        }
 
         UploadResponse response = new UploadResponse();
         response.setOk(true);
@@ -260,21 +296,5 @@ public class DocumentApi extends RestApi {
         return response;
     }
 
-    private Doc getMergedJsonDoc(Doc doc, InputStream tags) throws BadRequestException {
-        if (tags == null) {
-            return doc;
-        }
 
-        try {
-            JsonNode tagsNode = mapper.readTree(tags);
-            JsonNode docNode = mapper.convertValue(doc, JsonNode.class);
-
-            JsonNode mergedNode = FsCrawlerUtil.merge(tagsNode, docNode);
-
-            return mapper.treeToValue(mergedNode, Doc.class);
-        } catch (Exception e) {
-            logger.error("Error parsing tags", e);
-            throw new BadRequestException("Error parsing tags", e);
-        }
-    }
 }

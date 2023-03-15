@@ -21,17 +21,21 @@ package fr.pilato.elasticsearch.crawler.fs;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import io.opentelemetry.context.Scope;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandles;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.transform;
 
 /**
  * Pulls {@link fr.pilato.elasticsearch.crawler.fs.beans.Doc} from context,
  * merges it with 'extraDoc' if it exists and then indexes it to Elasticsearch
  */
-public class EsIndexProcessor implements Processor {
+public class EsIndexProcessor extends ProcessorAbstract {
     private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
     private final FsSettings fsSettings;
     private final FsCrawlerDocumentService documentService;
@@ -43,26 +47,40 @@ public class EsIndexProcessor implements Processor {
 
     @Override
     public void process(FsCrawlerContext ctx) throws ProcessingException {
+        var span = tracer.spanBuilder("es-index").startSpan();
+        Scope scope = span.makeCurrent();
+        
         var doc = ctx.getDoc();
         var filename = ctx.getFile().getName();
         var fullFilename = ctx.getFullFilename();
         var id = ctx.getId();
         var stats = ctx.getScanStatistic();
 
+        var postTransform = fsSettings.getFs().getPipeline().getPostTransform();
+
         // We index the data structure
-        if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
+        if(isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
                 FSCrawlerLogger.documentDebug(id,
                         computeVirtualPathName(stats.getRootPath(), fullFilename),
                         "Indexing content");
-                documentService.index(
+
+                var serializedData = serialize(doc);
+
+                if (postTransform != null) {
+                    serializedData = transform(serializedData, postTransform);
+                }
+
+                documentService.indexRawJson(
                         fsSettings.getElasticsearch().getIndex(),
                         id,
-                        doc,
+                        serializedData,
                         fsSettings.getElasticsearch().getPipeline());
         } else {
             logger.debug("We ignore file [{}] because it does not match all the patterns {}", filename,
                     fsSettings.getFs().getFilters());
         }
+        
+        span.end();
 
     }
 }

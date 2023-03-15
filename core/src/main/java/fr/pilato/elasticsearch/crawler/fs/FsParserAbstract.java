@@ -38,6 +38,9 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Tracer;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -76,6 +79,8 @@ public abstract class FsParserAbstract extends FsParser {
     private ProcessingPipeline pipeline;
     
     private ScanStatistic stats;
+
+    Tracer tracer = GlobalOpenTelemetry.getTracer("fs-crawler");
 
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
         this.fsSettings = fsSettings;
@@ -123,10 +128,18 @@ public abstract class FsParserAbstract extends FsParser {
         logger.info("FS crawler started for [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
+        var span = tracer
+                .spanBuilder("crawl")
+                .setAttribute("name", fsSettings.getName())
+                .setAttribute("url", fsSettings.getFs().getUrl())
+                .startSpan();
+        span.makeCurrent();
+            
         closed = false;
         while (true) {
             if (closed) {
                 logger.debug("FS crawler thread [{}] is now marked as closed...", fsSettings.getName());
+                span.end();
                 return;
             }
 
@@ -184,6 +197,7 @@ public abstract class FsParserAbstract extends FsParser {
             if (loop > 0 && run >= loop) {
                 logger.info("FS crawler is stopping after {} run{}", run, run > 1 ? "s" : "");
                 closed = true;
+                span.end();
                 return;
             }
 
@@ -393,6 +407,14 @@ public abstract class FsParserAbstract extends FsParser {
         final String extension = fileAbstractModel.getExtension();
         final long size = fileAbstractModel.getSize();
 
+        var span = tracer
+                .spanBuilder("file")
+                .setAttribute("folder", dirname)
+                .setAttribute("file", filename)
+                .startSpan();
+
+        span.makeCurrent();
+
         logger.debug("fetching content from [{}],[{}]", dirname, filename);
         String fullFilename = computeRealPathName(dirname, filename);
 
@@ -466,7 +488,7 @@ public abstract class FsParserAbstract extends FsParser {
             // }
 
         } else {
-                if (fsSettings.getFs().isJsonSupport()) {
+            if (fsSettings.getFs().isJsonSupport()) {
                 FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
                         computeVirtualPathName(stats.getRootPath(), fullFilename),
                         "Indexing json content");
@@ -498,6 +520,8 @@ public abstract class FsParserAbstract extends FsParser {
                 }
             }
         }
+        
+        span.end();
     }
 
     private String generateIdFromFilename(String filename, String filepath) throws NoSuchAlgorithmException {

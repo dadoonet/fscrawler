@@ -30,8 +30,9 @@ public class Pipeline {
 
     public Pipeline() { }
 
-    private Pipeline(String className) {
+    private Pipeline(String className, String postTransform) {
         this.className = className;
+        this.postTransform = postTransform;
     }
 
     private static Builder builder() {
@@ -45,6 +46,18 @@ public class Pipeline {
     public String getClassName() {
         return className;
     }
+
+    // Custom Serializer
+    private String postTransform = null;
+
+    public void setPostTransform(String postTransform) {
+        this.postTransform = postTransform;
+    }
+
+    public String getPostTransform() {
+        return postTransform;
+    }
+ 
 
     @Override
     public boolean equals(Object o) {
@@ -63,14 +76,20 @@ public class Pipeline {
 
     public static class Builder {
         private String className;
+        private String postTransform;
 
         public Builder addClass(String className) {
             this.className = className;
             return this;
         }
 
+        public Builder addTransform(String postTransform) {
+            this.postTransform = postTransform;
+            return this;
+        }
+
         public Pipeline build() {
-            return new Pipeline(className);
+            return new Pipeline(className, postTransform);
         }
     }
 }

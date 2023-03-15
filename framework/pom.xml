@@ -69,6 +69,13 @@
             <artifactId>json-path</artifactId>
         </dependency>
 
+        <!-- JQ dependencies -->
+        <dependency>
+            <groupId>com.arakelian</groupId>
+            <artifactId>java-jq</artifactId>
+            <version>1.3.0</version>
+        </dependency>
+
         <!-- Logging dependencies -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

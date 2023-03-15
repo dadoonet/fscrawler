@@ -33,12 +33,13 @@ import java.util.Map;
 public class FsCrawlerContext {
     private final FileAbstractModel file;
     private final String filepath;
-    private final InputStream inputStream;
+    private InputStream inputStream;
     private final String fullFilename;
     private final Map<String, Object> extraDoc;
-    private final String id;
+    private String id;
     private Doc doc;
     private final ScanStatistic stats;
+    private final InputStream tags;
 
     public FsCrawlerContext(Builder builder) {
         this.file = builder.file;
@@ -49,6 +50,7 @@ public class FsCrawlerContext {
         this.id = builder.id;
         this.extraDoc = builder.extraDoc;
         this.stats = builder.stats;
+        this.tags = builder.tags;
     }
 
     public FileAbstractModel getFile() {
@@ -59,12 +61,23 @@ public class FsCrawlerContext {
         return filepath;
     }
 
-    public void setDoc() {
-        this.doc = new Doc();
+    public void setDoc(Doc doc) {
+        if (doc == null) {
+            this.doc = new Doc();
+        } else {
+            this.doc = doc;
+        }
+        
     }
 
     public Doc getDoc() {
         return doc;
+    }
+
+    public void setInputStream(InputStream inputStream) {
+        if (doc != null) {
+            this.inputStream = inputStream;
+        }
     }
 
     public InputStream getInputStream() {
@@ -83,8 +96,16 @@ public class FsCrawlerContext {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public ScanStatistic getScanStatistic() {
         return stats;
+    }
+
+    public InputStream getTags() {
+        return tags;
     }
 
 
@@ -97,6 +118,7 @@ public class FsCrawlerContext {
         private Map<String, Object> extraDoc = new HashMap<>();
         private String id;
         private ScanStatistic stats;
+        private InputStream tags;
         
 
         public Builder withFileModel(FileAbstractModel file) {
@@ -141,6 +163,11 @@ public class FsCrawlerContext {
 
         public FsCrawlerContext build() {
             return new FsCrawlerContext(this);
+        }
+
+        public Builder withTags(InputStream tags) {
+            this.tags = tags;
+            return this;
         }
 
     }

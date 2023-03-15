@@ -20,6 +20,9 @@ package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,10 +37,11 @@ import java.security.MessageDigest;
  *     <li>Output: Doc with the parsed text and metadata</li>
  * </ul>
  */
-public class TikaProcessor implements Processor {
+public class TikaProcessor extends ProcessorAbstract {
     private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
     private FsSettings fsSettings;
     private MessageDigest messageDigest;
+
 
     public TikaProcessor(FsSettings fsSettings, MessageDigest messageDigest) {
         this.fsSettings = fsSettings;
@@ -46,7 +50,9 @@ public class TikaProcessor implements Processor {
 
     @Override
     public void process(FsCrawlerContext ctx) throws ProcessingException {
-        try {
+        var span = tracer.spanBuilder("tika").startSpan();
+        try (Scope scope = span.makeCurrent()) {
+            
             long startTime = System.currentTimeMillis();
             TikaDocParser.generate(
                     fsSettings,
@@ -61,6 +67,8 @@ public class TikaProcessor implements Processor {
 
         } catch (IOException e) {
             throw new ProcessingException(e);
+        } finally {
+            span.end();
         }
     }
 }
