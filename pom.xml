@@ -625,6 +625,13 @@
                 <artifactId>json-path</artifactId>
                 <version>${jsonpath.version}</version>
             </dependency>
+            <!-- https://ossindex.sonatype.org/vulnerability/CVE-2023-1370 -->
+            <dependency>
+                <groupId>net.minidev</groupId>
+                <artifactId>json-smart</artifactId>
+                <version>2.4.10</version>
+            </dependency>
+
             <!--
             Because elasticsearch is not using transitive dependencies, we need to be explicit here
             -->
