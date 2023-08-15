@@ -30,7 +30,7 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.attributes_support``  | ``false``             | `Adding file attributes`_       |
 +----------------------------+-----------------------+---------------------------------+
-| ``fs.raw_metadata``        | ``false``             | `Disabling raw metadata`_       |
+| ``fs.raw_metadata``        | ``false``             | `Enabling raw metadata`_        |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.filename_as_id``      | ``false``             | :ref:`filename-as-id`           |
 +----------------------------+-----------------------+---------------------------------+
@@ -408,8 +408,8 @@ and ``attributes.permissions``, you can set ``attributes_support`` to ``true``.
     On Windows systems, ``attributes.group`` and ``attributes.permissions`` are
     not generated.
 
-Disabling raw metadata
-^^^^^^^^^^^^^^^^^^^^^^
+Enabling raw metadata
+^^^^^^^^^^^^^^^^^^^^^
 
 FSCrawler can extract all found metadata within a ``meta.raw`` object in addition
 to the standard metadata fields.
