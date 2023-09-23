@@ -30,9 +30,9 @@ By default, it will log everything in the ``logs`` directory inside the installa
 Two log files are generated:
 
 * One is used to log FSCrawler code execution, named ``fscrawler.log``. It's automatically
-rotated every day or after 20mb of logs and gzipped. Logs are removed after 7 days.
+  rotated every day or after 20mb of logs and gzipped. Logs are removed after 7 days.
 * One is used to trace all information about documents, named ``documents.log``. It's automatically
-rotated every day or after 20mb of logs and gzipped. Logs are removed after 7 days.
+  rotated every day or after 20mb of logs and gzipped. Logs are removed after 7 days.
 
 You can change this strategy by modifying the ``config/log4j2.xml`` file.
 Please read `Log4J2 documentation <https://logging.apache.org/log4j/2.x/manual/index.html>`_ on how to configure Log4J.
