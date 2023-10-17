@@ -510,7 +510,7 @@ Path prefix
 ^^^^^^^^^^^
 
 .. versionadded:: 2.7 If your elasticsearch is running behind a proxy with url rewriting,
-you might have to specify a path prefix. This can be done with ``path_prefix`` setting:
+    you might have to specify a path prefix. This can be done with ``path_prefix`` setting:
 
 .. code:: yaml
 
