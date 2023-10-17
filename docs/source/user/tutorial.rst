@@ -16,7 +16,7 @@ Install Elastic stack
 ^^^^^^^^^^^^^^^^^^^^^
 
 * Download `Elasticsearch <https://www.elastic.co/downloads/elasticsearch>`_
-* Download `Kibana <https://www.elastic.co/downloads/kibana>`_
+* Download `Kibana <https://www.elastic.co/downloads/kibana>`__
 * Start Elasticsearch server
 * Start Kibana server
 * Check that Kibana is running by opening http://localhost:5601
@@ -86,7 +86,7 @@ FSCrawler should index all the documents inside your directory.
 Create Index pattern
 ^^^^^^^^^^^^^^^^^^^^
 
-* Open `Kibana <http://localhost:5601>`_
+* Open `Kibana <http://localhost:5601>`__
 * Go to the `Management <http://0.0.0.0:5601/app/kibana#/management/>`_ page
 * Open the `Index Patterns <http://0.0.0.0:5601/app/kibana#/management/kibana/index_patterns?_g=()>`_ page
   under Kibana settings.

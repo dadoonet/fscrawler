@@ -8,7 +8,7 @@ to have Python3 installed.
 
 Assuming you have `Python3 <https://www.python.org/>`_ already, install `Sphinx <http://www.sphinx-doc.org/>`_::
 
-    $ pip install sphinx sphinx-autobuild sphinx_rtd_theme recommonmark
+    $ pip install -r docs/requirements.txt
 
 Go to the ``docs`` directory and build the html documentation::
 
@@ -25,3 +25,8 @@ Then just edit the documentation and look for your changes at http://127.0.0.1:8
 
 To learn more about the reStructuredText format, please look at the
 `basic guide <http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_.
+
+To update the requirements file if you changed the ``requirements.in`` file, run::
+
+    $ cd docs
+    $ pip-compile requirements.in

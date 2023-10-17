@@ -237,7 +237,7 @@ to the index, set option `Add as Inner Object`_
 which stores additional metadata and the XML contents under field
 ``object``.
 
-.. code:: json
+.. code:: yaml
 
    name: "test"
    fs:
