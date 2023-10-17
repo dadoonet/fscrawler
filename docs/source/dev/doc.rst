@@ -25,3 +25,8 @@ Then just edit the documentation and look for your changes at http://127.0.0.1:8
 
 To learn more about the reStructuredText format, please look at the
 `basic guide <http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_.
+
+To update the requirements file if you changed the ``requirements.in`` file, run::
+
+    $ cd docs
+    $ pip-compile requirements.in
