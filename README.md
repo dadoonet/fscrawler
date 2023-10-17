@@ -10,16 +10,21 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 * Remote file system over SSH/FTP crawling.
 * REST interface to let you "upload" your binary documents to elasticsearch.
 
+## Latest versions
+
 Current "most stable" versions are:
 
 | Elasticsearch | FS Crawler    | Released   | Docs                                                                          |
 |---------------|---------------|------------|-------------------------------------------------------------------------------|
 | 6.x, 7.x, 8.x | 2.10-SNAPSHOT |            | [2.10-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)                  |
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler-distribution/badge.svg?style=flat-square)](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler-distribution/)
+![Docker Pulls](https://img.shields.io/docker/pulls/dadoonet/fscrawler)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/dadoonet/fscrawler/2.10-SNAPSHOT?label=Docker%20image%20size)
+![Docker Image Version (latest semver)](https://img.shields.io/docker/v/dadoonet/fscrawler)
 
 ## Build and Quality Status
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler-distribution/badge.svg?style=flat-square)](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler-distribution/)
 [![Build](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml/badge.svg)](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml)
 [![Documentation Status](https://readthedocs.org/projects/fscrawler/badge/?version=latest)](https://fscrawler.readthedocs.io/en/latest/?badge=latest)
 
@@ -35,7 +40,22 @@ Current "most stable" versions are:
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
 
+## GitHub stats
+
+![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/dadoonet/fscrawler/latest/master)
+![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/t/dadoonet/fscrawler)
+![GitHub last commit](https://img.shields.io/github/last-commit/dadoonet/fscrawler)
+![GitHub contributors](https://img.shields.io/github/contributors/dadoonet/fscrawler)
+
+![GitHub issues](https://img.shields.io/github/issues/dadoonet/fscrawler)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/dadoonet/fscrawler)
+![GitHub Release Date](https://img.shields.io/github/release-date/dadoonet/fscrawler)
+
+## Documentation
+
 The guide has been moved to [ReadTheDocs](https://fscrawler.readthedocs.io/en/latest/).
+
+![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/dadoonet)
 
 ## Contribute
 
@@ -45,7 +65,9 @@ Works on my machine - and yours ! Spin up pre-configured, standardized dev envir
 
 # License
 
-Read more about the [License](https://fscrawler.readthedocs.io/en/latest/index.html#license).
+![GitHub](https://img.shields.io/github/license/dadoonet/fscrawler)
+
+Read more about the [Apache2 License](https://fscrawler.readthedocs.io/en/latest/index.html#license).
 
 # Thanks
 
