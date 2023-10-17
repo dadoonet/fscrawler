@@ -59,3 +59,7 @@ Read more about the [License](https://fscrawler.readthedocs.io/en/latest/index.h
 # Thanks
 
 Thanks to [JetBrains](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!
+
+Thanks to SonarCloud for the free analysis!
+
+[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
