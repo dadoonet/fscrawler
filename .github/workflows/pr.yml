@@ -31,19 +31,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 17
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'adopt'
         cache: 'maven'
-    - name: Docker Layer Caching
-      uses: satackey/action-docker-layer-caching@v0.0.11
-      # Ignore the failure of a step and avoid terminating the job.
-      continue-on-error: true
+    - name: Cache Docker images
+      uses: ScribeMD/docker-cache@0.3.6
       with:
-        key: fscrawler-docker-cache-{hash}
-        restore-keys: |
-          fscrawler-docker-cache-
+        key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+      continue-on-error: true
     - name: Display Maven information
       run: mvn --version
     - name: Build but the docker images
@@ -56,19 +53,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'adopt'
           cache: 'maven'
-      - name: Docker Layer Caching
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
+      - name: Cache Docker images
+        uses: ScribeMD/docker-cache@0.3.6
         with:
-          key: fscrawler-docker-cache-{hash}
-          restore-keys: |
-            fscrawler-docker-cache-
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+        continue-on-error: true
       - name: Run all the unit tests
         run: mvn --batch-mode install -Ddocker.skip -DskipIntegTests
 
@@ -79,19 +73,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'adopt'
           cache: 'maven'
-      - name: Docker Layer Caching
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
+      - name: Cache Docker images
+        uses: ScribeMD/docker-cache@0.3.6
         with:
-          key: fscrawler-docker-cache-{hash}
-          restore-keys: |
-            fscrawler-docker-cache-
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+        continue-on-error: true
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests
 
@@ -102,19 +93,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'adopt'
           cache: 'maven'
-      - name: Docker Layer Caching
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
+      - name: Cache Docker images
+        uses: ScribeMD/docker-cache@0.3.6
         with:
-          key: fscrawler-docker-cache-{hash}
-          restore-keys: |
-            fscrawler-docker-cache-
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+        continue-on-error: true
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-7x
 
@@ -125,19 +113,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'adopt'
           cache: 'maven'
-      - name: Docker Layer Caching
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
+      - name: Cache Docker images
+        uses: ScribeMD/docker-cache@0.3.6
         with:
-          key: fscrawler-docker-cache-{hash}
-          restore-keys: |
-            fscrawler-docker-cache-
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+        continue-on-error: true
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-6x
 
@@ -148,18 +133,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'adopt'
           cache: 'maven'
-      - name: Docker Layer Caching
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
+      - name: Cache Docker images
+        uses: ScribeMD/docker-cache@0.3.6
         with:
-          key: fscrawler-docker-cache-{hash}
-          restore-keys: |
-            fscrawler-docker-cache-
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+        continue-on-error: true
       - name: Build the docker images
         run: mvn --batch-mode install -DskipTests
