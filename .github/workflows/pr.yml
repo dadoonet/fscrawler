@@ -6,24 +6,6 @@ name: Build Pull Requests
 on: [pull_request]
 
 jobs:
-  # We update files if needed
-  update-files:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT || github.token }}
-          ref: ${{ github.head_ref }}
-      - name: Update resources with Maven
-        run: mvn -B  generate-resources
-      - name: Update files if needed
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: Automatically update versions
   # We build the project but the docker images and run all the tests
   build:
     runs-on: ubuntu-latest
