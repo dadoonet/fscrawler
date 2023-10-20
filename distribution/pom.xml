@@ -172,22 +172,6 @@
                     </images>
                 </configuration>
                 <executions>
-                    <!-- Generate the docker images during the package phase -->
-                    <execution>
-                        <id>docker-build</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>build</goal>
-                        </goals>
-                    </execution>
-                    <!-- Push the docker images during the "deploy" phase -->
-                    <execution>
-                        <id>docker-push</id>
-                        <phase>deploy</phase>
-                        <goals>
-                            <goal>push</goal>
-                        </goals>
-                    </execution>
                     <execution>
                         <!-- There is no integration test, so we can skip that execution -->
                         <id>start-elasticsearch</id>
