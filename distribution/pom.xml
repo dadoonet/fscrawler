@@ -17,7 +17,6 @@
         <!-- By default, build docker images on each module. -->
         <!--suppress UnresolvedMavenProperty -->
         <docker.skip>${env.DOCKER_SKIP}</docker.skip>
-        <docker.verbose>build</docker.verbose>
         <docker.username>dadoonet</docker.username>
         <!-- The following assumes that each submodule will be overwritten. -->
         <module.name>es7</module.name>
@@ -172,6 +171,22 @@
                     </images>
                 </configuration>
                 <executions>
+                    <!-- Generate the docker images during the "install" phase -->
+                    <execution>
+                        <id>docker-build</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                    <!-- Push the docker images during the "deploy" phase -->
+                    <execution>
+                        <id>docker-push</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
                     <execution>
                         <!-- There is no integration test, so we can skip that execution -->
                         <id>start-elasticsearch</id>
