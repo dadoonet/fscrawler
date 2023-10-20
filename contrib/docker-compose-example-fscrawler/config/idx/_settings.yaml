@@ -1,0 +1,5 @@
+---
+name: "idx"
+rest :
+  url: "http://fscrawler:8080"
+

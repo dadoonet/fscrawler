@@ -24,6 +24,7 @@ import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
@@ -47,6 +48,7 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 
+import java.io.Console;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -71,32 +73,32 @@ public class FsCrawlerCli {
         List<String> jobName;
 
         @Parameter(names = "--config_dir", description = "Config directory. Default to ~/.fscrawler")
-        private String configDir = null;
+        String configDir = null;
 
         @Parameter(names = "--username", description = "Elasticsearch username when running with security.")
-        private String username = null;
+        String username = null;
 
         @Parameter(names = "--loop", description = "Number of scan loop before exiting.")
-        private Integer loop = -1;
+        Integer loop = -1;
 
         @Parameter(names = "--restart", description = "Restart fscrawler job like if it never ran before. " +
                 "This does not clean elasticsearch indices.")
-        private boolean restart = false;
+        boolean restart = false;
 
         @Parameter(names = "--rest", description = "Start REST Layer")
-        private boolean rest = false;
+        boolean rest = false;
 
         @Parameter(names = "--upgrade", description = "Upgrade elasticsearch indices from one old version to the last version.")
-        private boolean upgrade = false;
+        boolean upgrade = false;
 
         @Parameter(names = "--debug", description = "Debug mode")
-        private boolean debug = false;
+        boolean debug = false;
 
         @Parameter(names = "--trace", description = "Trace mode")
-        private boolean trace = false;
+        boolean trace = false;
 
         @Parameter(names = "--silent", description = "Silent mode")
-        private boolean silent = false;
+        boolean silent = false;
 
         @Parameter(names = "--help", description = "display current help", help = true)
         boolean help;
@@ -104,28 +106,52 @@ public class FsCrawlerCli {
 
 
     public static void main(String[] args) throws Exception {
-        // create a scanner so we can read the command-line input
-        Scanner scanner = new Scanner(System.in);
+        FsCrawlerCommand command = commandParser(args);
 
+        if (command != null) {
+            // We change the log level if needed
+            changeLoggerContext(command);
+
+            // Display the welcome banner
+            banner();
+
+            // We can now launch the crawler
+            runner(command);
+        }
+    }
+
+    static FsCrawlerCommand commandParser(String[] args) {
         FsCrawlerCommand commands = new FsCrawlerCommand();
         JCommander jCommander = new JCommander(commands);
         jCommander.parse(args);
 
+        // Check the expected parameters when in silent mode
+        if (commands.silent) {
+            if (commands.jobName == null) {
+                banner();
+                logger.warn("--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
+                jCommander.usage();
+                throw new FsCrawlerIllegalConfigurationException("No job specified while in silent mode.");
+            }
+        }
+
+        if (commands.help) {
+            jCommander.usage();
+            return null;
+        }
+
+        return commands;
+    }
+
+    static void changeLoggerContext(FsCrawlerCommand command) {
         // Change debug level if needed
-        if (commands.debug || commands.trace || commands.silent) {
+        if (command.debug || command.trace || command.silent) {
             LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
             Configuration config = ctx.getConfiguration();
             LoggerConfig loggerConfig = config.getLoggerConfig("fr.pilato.elasticsearch.crawler.fs");
             ConsoleAppender console = config.getAppender("Console");
 
-            if (commands.silent) {
-                // If the user did not enter any job name, nothing will be displayed
-                if (commands.jobName == null) {
-                    banner();
-                    logger.warn("--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
-                    jCommander.usage();
-                    return;
-                }
+            if (command.silent) {
                 // We don't write anything on the console anymore
                 if (console != null) {
                     console.addFilter(LevelMatchFilter.newBuilder().setLevel(Level.ALL).setOnMatch(Filter.Result.DENY).build());
@@ -133,32 +159,128 @@ public class FsCrawlerCli {
             } else {
                 if (console != null) {
                     console.addFilter(LevelRangeFilter.createFilter(
-                            commands.debug ? Level.TRACE : Level.ALL,
+                            command.debug ? Level.TRACE : Level.ALL,
                             Level.ALL,
                             Filter.Result.DENY,
                             Filter.Result.ACCEPT));
                 }
             }
 
-            loggerConfig.setLevel(commands.debug ? Level.DEBUG : Level.TRACE);
+            loggerConfig.setLevel(command.debug ? Level.DEBUG : Level.TRACE);
             ctx.updateLoggers();
         }
+    }
 
-        banner();
+    /**
+     * Reinit the logger context to remove all filters
+     */
+    static void reinitLoggerContext() {
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        Configuration config = ctx.getConfiguration();
+        ConsoleAppender console = config.getAppender("Console");
+        if (console != null) {
+            Filter filter = console.getFilter();
+            console.removeFilter(filter);
+        }
 
-        if (commands.help) {
-            jCommander.usage();
-            return;
+        LoggerConfig loggerConfig = config.getLoggerConfig("fr.pilato.elasticsearch.crawler.fs");
+        if (loggerConfig != null) {
+            loggerConfig.setLevel(Level.INFO);
+        }
+    }
+
+    /**
+     * Load settings from the given directory and job name
+     * @param configDir the config dir
+     * @param jobName   the job name
+     * @return  the settings if found, null otherwise
+     * @throws IOException  In case of IO problem
+     */
+    static FsSettings loadSettings(Path configDir, String jobName) throws IOException {
+        try {
+            return new FsSettingsFileHandler(configDir).read(jobName);
+        } catch (NoSuchFileException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Modify existing settings with correct default values when not set.
+     *
+     * @param fsSettings    the settings to modify
+     * @param usernameCli   the username coming from the CLI if any
+     */
+    static void modifySettings(FsSettings fsSettings, String usernameCli) {
+        // Check default settings
+        if (fsSettings.getFs() == null) {
+            fsSettings.setFs(Fs.DEFAULT);
+        }
+
+        if (fsSettings.getServer() != null) {
+            // It's a dirty hack. The default port if not set is 22 (SSH), but if protocol is FTP, we should use 21 as a default port
+            if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && fsSettings.getServer().getPort() == PROTOCOL.SSH_PORT) {
+                fsSettings.getServer().setPort(PROTOCOL.FTP_PORT);
+            }
+            // For FTP, we set a default username if not set
+            if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && StringUtils.isEmpty(fsSettings.getServer().getUsername())) {
+                fsSettings.getServer().setUsername("anonymous");
+            }
+        }
+
+        if (fsSettings.getElasticsearch() == null) {
+            fsSettings.setElasticsearch(Elasticsearch.DEFAULT());
+        }
+
+        // Overwrite settings with command line values
+        if (fsSettings.getElasticsearch().getUsername() == null && usernameCli != null) {
+            fsSettings.getElasticsearch().setUsername(usernameCli);
+        }
+    }
+
+    /**
+     * Create a job if needed
+     * @param jobName the job name
+     * @param configDir the config dir
+     * @param scanner the scanner to read user input
+     * @throws IOException In case of IO problem
+     */
+    static void createJob(String jobName, Path configDir, Scanner scanner) throws IOException {
+        FSCrawlerLogger.console("job [{}] does not exist", jobName);
+
+        String yesno = null;
+        while (!"y".equalsIgnoreCase(yesno) && !"n".equalsIgnoreCase(yesno)) {
+            FSCrawlerLogger.console("Do you want to create it (Y/N)?");
+            yesno = scanner.next();
+        }
+
+        if ("y".equalsIgnoreCase(yesno)) {
+            FsSettings fsSettings = FsSettings.builder(jobName)
+                    .setFs(Fs.DEFAULT)
+                    .setElasticsearch(Elasticsearch.DEFAULT())
+                    .build();
+            new FsSettingsFileHandler(configDir).write(fsSettings);
+
+            Path config = configDir.resolve(jobName).resolve(FsSettingsFileHandler.SETTINGS_YAML);
+            FSCrawlerLogger.console("Settings have been created in [{}]. Please review and edit before relaunch", config);
+        }
+    }
+
+    static void runner(FsCrawlerCommand command) throws IOException {
+        // create a scanner so we can read the command-line input
+        Console con = System.console();
+        Scanner scanner = null;
+        if (con != null) {
+            scanner = new Scanner(con.reader());
         }
 
         BootstrapChecks.check();
 
         Path configDir;
 
-        if (commands.configDir == null) {
+        if (command.configDir == null) {
             configDir = MetaFileHandler.DEFAULT_ROOT;
         } else {
-            configDir = Paths.get(commands.configDir);
+            configDir = Paths.get(command.configDir);
         }
 
         // Create the config dir if needed
@@ -168,11 +290,15 @@ public class FsCrawlerCli {
         copyDefaultResources(configDir);
 
         FsSettings fsSettings;
-        FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(configDir);
 
         String jobName;
 
-        if (commands.jobName == null) {
+        if (command.jobName == null) {
+            if (scanner == null) {
+                logger.error("No job specified. Exiting.");
+                System.exit(1);
+            }
+
             // The user did not enter a job name.
             // We can list available jobs for him
             FSCrawlerLogger.console("No job specified. Here is the list of existing jobs:");
@@ -196,82 +322,41 @@ public class FsCrawlerCli {
             }
 
         } else {
-            jobName = commands.jobName.get(0);
+            jobName = command.jobName.get(0);
         }
 
         // If we ask to reinit, we need to clean the status for the job
-        if (commands.restart) {
+        if (command.restart) {
             logger.debug("Cleaning existing status for job [{}]...", jobName);
             new FsJobFileHandler(configDir).clean(jobName);
         }
 
-        try {
-            logger.debug("Starting job [{}]...", jobName);
-            fsSettings = fsSettingsFileHandler.read(jobName);
+        logger.debug("Starting job [{}]...", jobName);
+        fsSettings = loadSettings(configDir, jobName);
 
-            // Check default settings
-            if (fsSettings.getFs() == null) {
-                fsSettings.setFs(Fs.DEFAULT);
-            }
-
-            if (fsSettings.getServer() != null) {
-                if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && fsSettings.getServer().getPort() == PROTOCOL.SSH_PORT) {
-                    fsSettings.getServer().setPort(PROTOCOL.FTP_PORT);
-                }
-                if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && StringUtils.isEmpty(fsSettings.getServer().getUsername())) {
-                    fsSettings.getServer().setUsername("anonymous");
-                }
-            }
-
-            if (fsSettings.getElasticsearch() == null) {
-                fsSettings.setElasticsearch(Elasticsearch.DEFAULT());
-            }
-
-            String username = commands.username;
-            if (fsSettings.getElasticsearch().getUsername() != null) {
-                username = fsSettings.getElasticsearch().getUsername();
-            }
-
-            if (username != null && fsSettings.getElasticsearch().getPassword() == null) {
-                FSCrawlerLogger.console("Password for {}:", username);
-                String password = scanner.next();
-                fsSettings.getElasticsearch().setUsername(username);
-                fsSettings.getElasticsearch().setPassword(password);
-            }
-
-        } catch (NoSuchFileException e) {
+        if (fsSettings == null) {
+            logger.debug("job [{}] does not exist.", jobName);
             // We can only have a dialog with the end user if we are not silent
-            if (commands.silent) {
-                logger.error("job [{}] does not exist. Exiting as we are in silent mode.", jobName);
-                return;
+            if (command.silent || scanner == null) {
+                logger.error("job [{}] does not exist. Exiting as we are in silent mode or no input available.", jobName);
+                System.exit(2);
             }
 
-            FSCrawlerLogger.console("job [{}] does not exist", jobName);
-
-            String yesno = null;
-            while (!"y".equalsIgnoreCase(yesno) && !"n".equalsIgnoreCase(yesno)) {
-                FSCrawlerLogger.console("Do you want to create it (Y/N)?");
-                yesno = scanner.next();
-            }
-
-            if ("y".equalsIgnoreCase(yesno)) {
-                fsSettings = FsSettings.builder(commands.jobName.get(0))
-                        .setFs(Fs.DEFAULT)
-                        .setElasticsearch(Elasticsearch.DEFAULT())
-                        .build();
-                fsSettingsFileHandler.write(fsSettings);
-
-                Path config = configDir.resolve(jobName).resolve(FsSettingsFileHandler.SETTINGS_YAML);
-                FSCrawlerLogger.console("Settings have been created in [{}]. Please review and edit before relaunch", config);
-            }
-
+            createJob(jobName, configDir, scanner);
             return;
+        }
+
+        modifySettings(fsSettings, command.username);
+        if (fsSettings.getElasticsearch().getUsername() != null && fsSettings.getElasticsearch().getPassword() == null && scanner != null) {
+            FSCrawlerLogger.console("Password for {}:", fsSettings.getElasticsearch().getUsername());
+            String password = scanner.next();
+            fsSettings.getElasticsearch().setPassword(password);
         }
 
         if (logger.isTraceEnabled()) {
             logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toYaml(fsSettings));
         }
-        if (FsCrawlerValidator.validateSettings(logger, fsSettings, commands.rest)) {
+        if (FsCrawlerValidator.validateSettings(logger, fsSettings, command.rest)) {
             // We don't go further as we have critical errors
             return;
         }
@@ -280,19 +365,19 @@ public class FsCrawlerCli {
         if (fsSettings.getWorkplaceSearch() != null) {
             logger.info("Workplace Search integration is an experimental feature. " +
                     "As is it is not fully implemented and settings might change in the future.");
-            if (commands.loop == -1 || commands.loop > 1) {
+            if (command.loop == -1 || command.loop > 1) {
                 logger.warn("Workplace Search integration does not support yet watching a directory. " +
-                        "It will be able to run only once and exit. We manually force from --loop {} to --loop 1. " +
-                        "If you want to remove this message next time, please start FSCrawler with --loop 1",
-                        commands.loop);
-                commands.loop = 1;
+                                "It will be able to run only once and exit. We manually force from --loop {} to --loop 1. " +
+                                "If you want to remove this message next time, please start FSCrawler with --loop 1",
+                        command.loop);
+                command.loop = 1;
             }
         }
 
-        try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, commands.loop, commands.rest)) {
+        try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, command.loop, command.rest)) {
             Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
             // Let see if we want to upgrade an existing cluster to the latest version
-            if (commands.upgrade) {
+            if (command.upgrade) {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
             } else {
                 if (!startEsClient(fsCrawler)) {
@@ -302,7 +387,7 @@ public class FsCrawlerCli {
                 checkForDeprecatedResources(configDir, elasticsearchVersion);
 
                 // Start the REST Server if needed
-                if (commands.rest) {
+                if (command.rest) {
                     RestServer.start(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService());
                 }
 
