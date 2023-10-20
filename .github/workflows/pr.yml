@@ -39,7 +39,7 @@ jobs:
     - name: Cache Docker images
       uses: ScribeMD/docker-cache@0.3.6
       with:
-        key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+        key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
       continue-on-error: true
     - name: Display Maven information
       run: mvn --version
@@ -61,7 +61,7 @@ jobs:
       - name: Cache Docker images
         uses: ScribeMD/docker-cache@0.3.6
         with:
-          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run all the unit tests
         run: mvn --batch-mode install -Ddocker.skip -DskipIntegTests
@@ -81,7 +81,7 @@ jobs:
       - name: Cache Docker images
         uses: ScribeMD/docker-cache@0.3.6
         with:
-          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests
@@ -101,7 +101,7 @@ jobs:
       - name: Cache Docker images
         uses: ScribeMD/docker-cache@0.3.6
         with:
-          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-7x
@@ -121,7 +121,7 @@ jobs:
       - name: Cache Docker images
         uses: ScribeMD/docker-cache@0.3.6
         with:
-          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-6x
@@ -141,7 +141,7 @@ jobs:
       - name: Cache Docker images
         uses: ScribeMD/docker-cache@0.3.6
         with:
-          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles(paths) }}
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Build the docker images
         run: mvn --batch-mode install -DskipTests
