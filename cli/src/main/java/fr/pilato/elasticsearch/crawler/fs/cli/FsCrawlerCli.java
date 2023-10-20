@@ -189,12 +189,6 @@ public class FsCrawlerCli {
         }
     }
 
-    static void exit(String logMessage, Object... params) {
-        reinitLoggerContext();
-        logger.error(logMessage, params);
-        System.exit(0);
-    }
-
     /**
      * Load settings from the given directory and job name
      * @param configDir the config dir
@@ -301,7 +295,8 @@ public class FsCrawlerCli {
 
         if (command.jobName == null) {
             if (scanner == null) {
-                exit("No job specified. Exiting.");
+                logger.error("No job specified. Exiting.");
+                System.exit(1);
             }
 
             // The user did not enter a job name.
@@ -343,7 +338,8 @@ public class FsCrawlerCli {
             logger.debug("job [{}] does not exist.", jobName);
             // We can only have a dialog with the end user if we are not silent
             if (command.silent || scanner == null) {
-                exit("job [{}] does not exist. Exiting as we are in silent mode or no input available.", jobName);
+                logger.error("job [{}] does not exist. Exiting as we are in silent mode or no input available.", jobName);
+                System.exit(2);
             }
 
             createJob(jobName, configDir, scanner);
