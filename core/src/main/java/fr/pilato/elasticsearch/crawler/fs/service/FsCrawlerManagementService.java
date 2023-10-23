@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.service;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
-import fr.pilato.elasticsearch.crawler.fs.beans.Path;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -50,7 +49,7 @@ public interface FsCrawlerManagementService extends FsCrawlerService {
      * @param id id of the directory
      * @param folder Folder to store
      */
-    void storeVisitedDirectory(String indexFolder, String id, Folder folder) throws IOException;
+    void storeVisitedDirectory(String indexFolder, String id, Folder folder);
 
 
     /**

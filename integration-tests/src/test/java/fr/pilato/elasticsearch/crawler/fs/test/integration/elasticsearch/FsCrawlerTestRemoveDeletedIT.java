@@ -51,7 +51,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setRemoveDeleted(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
@@ -69,7 +69,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setRemoveDeleted(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
@@ -83,14 +83,14 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for #95: https://github.com/dadoonet/fscrawler/issues/95 : Folder index is not getting delete on delete of folder
+     * Test case for #95: <a href="https://github.com/dadoonet/fscrawler/issues/95">https://github.com/dadoonet/fscrawler/issues/95</a> : Folder index is not getting delete on delete of folder
      */
     @Test
     public void test_remove_folder_deleted_enabled() throws Exception {
         Fs fs = startCrawlerDefinition()
                 .setRemoveDeleted(true)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have 7 docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, currentTestResourceDir);
@@ -108,12 +108,12 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/110
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/110">https://github.com/dadoonet/fscrawler/issues/110</a>
      * @throws Exception In case something is wrong
      */
     @Test
     public void test_rename_file() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We should have one doc first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
@@ -129,12 +129,12 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/379
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/379">https://github.com/dadoonet/fscrawler/issues/379</a>
      * @throws Exception In case something is wrong
      */
     @Test
     public void test_move_file() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We should have one doc first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
@@ -160,13 +160,13 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for #136: https://github.com/dadoonet/fscrawler/issues/136 : Moving existing files does not index new files
+     * Test case for #136: <a href="https://github.com/dadoonet/fscrawler/issues/136">https://github.com/dadoonet/fscrawler/issues/136</a> : Moving existing files does not index new files
      */
     @Test
     public void test_moving_files() throws Exception {
         String filename = "oldfile.txt";
 
-        startCrawler();
+        crawler = startCrawler();
 
         // Let's first create some files
         logger.info(" ---> Creating a file [{}]", filename);
@@ -195,11 +195,11 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for issue #60: https://github.com/dadoonet/fscrawler/issues/60 : new files are not added
+     * Test case for issue #60: <a href="https://github.com/dadoonet/fscrawler/issues/60">https://github.com/dadoonet/fscrawler/issues/60</a> : new files are not added
      */
     @Test
     public void test_add_new_file() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We should have one doc first
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);

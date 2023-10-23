@@ -1,21 +1,23 @@
 {
   "name": "SOURCE_NAME",
+  "context": "organization",
   "schema": {
-    "title": "text",
-    "name": "text",
     "body": "text",
-    "url": "text",
-    "author": "text",
-    "keywords": "text",
-    "language": "text",
     "comments": "text",
-    "mime_type": "text",
+    "tags": "text",
+    "title": "text",
+    "type": "text",
+    "url": "text",
     "extension": "text",
+    "mime_type": "text",
+    "path": "text",
     "size": "number",
+    "created_by": "text",
+    "name": "text",
+    "language": "text",
     "text_size": "number",
-    "last_modified": "date",
     "created_at": "date",
-    "path": "text"
+    "last_modified": "date"
   },
   "display": {
     "title_field": "title",
@@ -23,15 +25,15 @@
     "description_field": "body",
     "url_field": "url",
     "media_type_field": "mime_type",
-    "created_by_field": "author",
+    "created_by_field": "created_by",
     "detail_fields": [
       {
-        "field_name": "author",
+        "field_name": "created_by",
         "label": "Author"
       },
       {
-        "field_name": "keywords",
-        "label": "Keywords"
+        "field_name": "tags",
+        "label": "Tags"
       },
       {
         "field_name": "language",
@@ -48,10 +50,6 @@
       {
         "field_name": "comments",
         "label": "Comments"
-      },
-      {
-        "field_name": "mime_type",
-        "label": "Mime Type"
       },
       {
         "field_name": "extension",
@@ -75,6 +73,37 @@
       }
     ],
     "color": "#000000"
+  },
+  "facets":
+  {
+    "overrides":
+    [
+      {
+        "display_name": "Media Type",
+        "field": "mime_type",
+        "enabled": true
+      },
+      {
+        "display_name": "Extension",
+        "field": "extension",
+        "enabled": true
+      },
+      {
+        "display_name": "Tags",
+        "field": "tags",
+        "enabled": true
+      },
+      {
+        "display_name": "Created By",
+        "field": "created_by",
+        "enabled": true
+      },
+      {
+        "display_name": "Language",
+        "field": "language",
+        "enabled": true
+      }
+    ]
   },
   "is_searchable": true
 }

@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.service;
 
 import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
@@ -47,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDocumentService {
 
@@ -76,7 +78,7 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     }
 
     @Override
-    public String getVersion() throws IOException {
+    public String getVersion() {
         throw new RuntimeException("Not implemented yet");
     }
 
@@ -121,15 +123,15 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
         String json = client.search(toWorkplaceSearchQuery(request.getESQuery()),
                 toWorkplaceSearchFilters(request.getESQuery()));
 
-        Object document = JsonUtil.parseJson(json);
+        DocumentContext document = parseJsonAsDocumentContext(json);
         ESSearchResponse response = new ESSearchResponse(json);
 
-        int totalHits = JsonPath.read(document, "$.meta.page.total_results");
+        int totalHits = document.read("$.meta.page.total_results");
         response.setTotalHits(totalHits);
         for (int i = 0; i < totalHits; i++) {
             ESSearchHit hit = new ESSearchHit();
             // We read the hit and transform it again as a json document using Jackson
-            hit.setSource(mapper.writeValueAsString(JsonPath.read(document, "$.results[" + i + "]")));
+            hit.setSource(mapper.writeValueAsString(document.read("$.results[" + i + "]")));
             response.addHit(hit);
         }
 
@@ -137,13 +139,13 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     }
 
     @Override
-    public boolean exists(String index, String id) throws IOException {
+    public boolean exists(String index, String id) {
         logger.debug("Search if document {} exists", id);
         return client.exists(id);
     }
 
     @Override
-    public ESSearchHit get(String index, String id) throws IOException {
+    public ESSearchHit get(String index, String id) {
         logger.debug("Getting {}/{}", index, id);
         String json = client.get(id);
 
@@ -163,7 +165,7 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
 
     /**
      * We extract the {@link ESMatchQuery} from the {@link ESQuery}.
-     * We ignore totally the {@link ESTermQuery} if any and we fail for the others.
+     * We ignore totally the {@link ESTermQuery} if any, and we fail for the others.
      * @param query the query to transform as a fulltext search content
      * @return a fulltext search content
      */
@@ -195,7 +197,7 @@ public class FsCrawlerDocumentServiceWorkplaceSearchImpl implements FsCrawlerDoc
     /**
      * We extract the {@link ESTermQuery} from the {@link ESQuery}.
      * It also supports the {@link ESBoolQuery}.
-     * We ignore totally the {@link ESMatchQuery} if any and we fail for the others.
+     * We ignore totally the {@link ESMatchQuery} if any, and we fail for the others.
      * @param query the query to transform as filter
      * @return the filter to apply
      */

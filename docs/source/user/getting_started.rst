@@ -68,7 +68,7 @@ something! ;-)
 
 .. code:: json
 
-   GET docs/doc/_search
+   // GET docs/doc/_search
    {
      "query" : {
        "query_string": {

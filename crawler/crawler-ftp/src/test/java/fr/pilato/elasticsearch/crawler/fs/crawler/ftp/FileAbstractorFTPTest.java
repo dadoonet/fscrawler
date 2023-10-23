@@ -210,6 +210,7 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
             } else if (file.getName().equals("none.txt")) {
                 assertThat(file.getPermissions(), is(0));
                 boolean errorOccurred = false;
+                //noinspection EmptyTryBlock
                 try (InputStream ignored = ftp.getInputStream(file)) {
                 } catch (IOException e) {
                     errorOccurred = true;

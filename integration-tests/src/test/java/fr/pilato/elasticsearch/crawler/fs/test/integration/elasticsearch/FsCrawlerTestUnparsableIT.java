@@ -38,18 +38,18 @@ import static org.junit.Assume.assumeTrue;
 public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test for #105: https://github.com/dadoonet/fscrawler/issues/105
+     * Test for #105: <a href="https://github.com/dadoonet/fscrawler/issues/105">https://github.com/dadoonet/fscrawler/issues/105</a>
      */
     @Test
     public void test_unparsable() throws Exception {
-        startCrawler();
+        crawler = startCrawler();
 
         // We expect to have two files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/362
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/362">https://github.com/dadoonet/fscrawler/issues/362</a>
      * @throws Exception In case something is wrong
      */
     @Test
@@ -68,7 +68,7 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIndexContent(false)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We should have one doc first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);

@@ -665,22 +665,24 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
         logger.info("Settings used for workplace search v7 : " + settings);
         assertThat(settings, is("{\n" +
                 "  \"name\": \"SOURCE_NAME\",\n" +
+                "  \"context\": \"organization\",\n" +
                 "  \"schema\": {\n" +
-                "    \"title\": \"text\",\n" +
-                "    \"name\": \"text\",\n" +
                 "    \"body\": \"text\",\n" +
-                "    \"url\": \"text\",\n" +
-                "    \"author\": \"text\",\n" +
-                "    \"keywords\": \"text\",\n" +
-                "    \"language\": \"text\",\n" +
                 "    \"comments\": \"text\",\n" +
-                "    \"mime_type\": \"text\",\n" +
+                "    \"tags\": \"text\",\n" +
+                "    \"title\": \"text\",\n" +
+                "    \"type\": \"text\",\n" +
+                "    \"url\": \"text\",\n" +
                 "    \"extension\": \"text\",\n" +
+                "    \"mime_type\": \"text\",\n" +
+                "    \"path\": \"text\",\n" +
                 "    \"size\": \"number\",\n" +
+                "    \"created_by\": \"text\",\n" +
+                "    \"name\": \"text\",\n" +
+                "    \"language\": \"text\",\n" +
                 "    \"text_size\": \"number\",\n" +
-                "    \"last_modified\": \"date\",\n" +
                 "    \"created_at\": \"date\",\n" +
-                "    \"path\": \"text\"\n" +
+                "    \"last_modified\": \"date\"\n" +
                 "  },\n" +
                 "  \"display\": {\n" +
                 "    \"title_field\": \"title\",\n" +
@@ -688,15 +690,15 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "    \"description_field\": \"body\",\n" +
                 "    \"url_field\": \"url\",\n" +
                 "    \"media_type_field\": \"mime_type\",\n" +
-                "    \"created_by_field\": \"author\",\n" +
+                "    \"created_by_field\": \"created_by\",\n" +
                 "    \"detail_fields\": [\n" +
                 "      {\n" +
-                "        \"field_name\": \"author\",\n" +
+                "        \"field_name\": \"created_by\",\n" +
                 "        \"label\": \"Author\"\n" +
                 "      },\n" +
                 "      {\n" +
-                "        \"field_name\": \"keywords\",\n" +
-                "        \"label\": \"Keywords\"\n" +
+                "        \"field_name\": \"tags\",\n" +
+                "        \"label\": \"Tags\"\n" +
                 "      },\n" +
                 "      {\n" +
                 "        \"field_name\": \"language\",\n" +
@@ -713,10 +715,6 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "      {\n" +
                 "        \"field_name\": \"comments\",\n" +
                 "        \"label\": \"Comments\"\n" +
-                "      },\n" +
-                "      {\n" +
-                "        \"field_name\": \"mime_type\",\n" +
-                "        \"label\": \"Mime Type\"\n" +
                 "      },\n" +
                 "      {\n" +
                 "        \"field_name\": \"extension\",\n" +
@@ -740,6 +738,37 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "      }\n" +
                 "    ],\n" +
                 "    \"color\": \"#000000\"\n" +
+                "  },\n" +
+                "  \"facets\":\n" +
+                "  {\n" +
+                "    \"overrides\":\n" +
+                "    [\n" +
+                "      {\n" +
+                "        \"display_name\": \"Media Type\",\n" +
+                "        \"field\": \"mime_type\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Extension\",\n" +
+                "        \"field\": \"extension\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Tags\",\n" +
+                "        \"field\": \"tags\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Created By\",\n" +
+                "        \"field\": \"created_by\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Language\",\n" +
+                "        \"field\": \"language\",\n" +
+                "        \"enabled\": true\n" +
+                "      }\n" +
+                "    ]\n" +
                 "  },\n" +
                 "  \"is_searchable\": true\n" +
                 "}\n"));
@@ -1069,22 +1098,24 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
         logger.info("Settings used for workplace search v8 : " + settings);
         assertThat(settings, is("{\n" +
                 "  \"name\": \"SOURCE_NAME\",\n" +
+                "  \"context\": \"organization\",\n" +
                 "  \"schema\": {\n" +
-                "    \"title\": \"text\",\n" +
-                "    \"name\": \"text\",\n" +
                 "    \"body\": \"text\",\n" +
-                "    \"url\": \"text\",\n" +
-                "    \"author\": \"text\",\n" +
-                "    \"keywords\": \"text\",\n" +
-                "    \"language\": \"text\",\n" +
                 "    \"comments\": \"text\",\n" +
-                "    \"mime_type\": \"text\",\n" +
+                "    \"tags\": \"text\",\n" +
+                "    \"title\": \"text\",\n" +
+                "    \"type\": \"text\",\n" +
+                "    \"url\": \"text\",\n" +
                 "    \"extension\": \"text\",\n" +
+                "    \"mime_type\": \"text\",\n" +
+                "    \"path\": \"text\",\n" +
                 "    \"size\": \"number\",\n" +
+                "    \"created_by\": \"text\",\n" +
+                "    \"name\": \"text\",\n" +
+                "    \"language\": \"text\",\n" +
                 "    \"text_size\": \"number\",\n" +
-                "    \"last_modified\": \"date\",\n" +
                 "    \"created_at\": \"date\",\n" +
-                "    \"path\": \"text\"\n" +
+                "    \"last_modified\": \"date\"\n" +
                 "  },\n" +
                 "  \"display\": {\n" +
                 "    \"title_field\": \"title\",\n" +
@@ -1092,15 +1123,15 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "    \"description_field\": \"body\",\n" +
                 "    \"url_field\": \"url\",\n" +
                 "    \"media_type_field\": \"mime_type\",\n" +
-                "    \"created_by_field\": \"author\",\n" +
+                "    \"created_by_field\": \"created_by\",\n" +
                 "    \"detail_fields\": [\n" +
                 "      {\n" +
-                "        \"field_name\": \"author\",\n" +
+                "        \"field_name\": \"created_by\",\n" +
                 "        \"label\": \"Author\"\n" +
                 "      },\n" +
                 "      {\n" +
-                "        \"field_name\": \"keywords\",\n" +
-                "        \"label\": \"Keywords\"\n" +
+                "        \"field_name\": \"tags\",\n" +
+                "        \"label\": \"Tags\"\n" +
                 "      },\n" +
                 "      {\n" +
                 "        \"field_name\": \"language\",\n" +
@@ -1117,10 +1148,6 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "      {\n" +
                 "        \"field_name\": \"comments\",\n" +
                 "        \"label\": \"Comments\"\n" +
-                "      },\n" +
-                "      {\n" +
-                "        \"field_name\": \"mime_type\",\n" +
-                "        \"label\": \"Mime Type\"\n" +
                 "      },\n" +
                 "      {\n" +
                 "        \"field_name\": \"extension\",\n" +
@@ -1144,6 +1171,37 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "      }\n" +
                 "    ],\n" +
                 "    \"color\": \"#000000\"\n" +
+                "  },\n" +
+                "  \"facets\":\n" +
+                "  {\n" +
+                "    \"overrides\":\n" +
+                "    [\n" +
+                "      {\n" +
+                "        \"display_name\": \"Media Type\",\n" +
+                "        \"field\": \"mime_type\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Extension\",\n" +
+                "        \"field\": \"extension\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Tags\",\n" +
+                "        \"field\": \"tags\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Created By\",\n" +
+                "        \"field\": \"created_by\",\n" +
+                "        \"enabled\": true\n" +
+                "      },\n" +
+                "      {\n" +
+                "        \"display_name\": \"Language\",\n" +
+                "        \"field\": \"language\",\n" +
+                "        \"enabled\": true\n" +
+                "      }\n" +
+                "    ]\n" +
                 "  },\n" +
                 "  \"is_searchable\": true\n" +
                 "}\n"));

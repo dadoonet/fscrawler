@@ -25,10 +25,10 @@ import java.util.List;
 import java.util.Map;
 
 public class ESSearchResponse {
-    private List<ESSearchHit> hits = new ArrayList<>();
+    private final List<ESSearchHit> hits = new ArrayList<>();
     private long totalHits;
-    private Map<String, ESTermsAggregation> aggregations = new HashMap<>();
-    private String json;
+    private final Map<String, ESTermsAggregation> aggregations = new HashMap<>();
+    private final String json;
 
     public ESSearchResponse(String json) {
         this.json = json;

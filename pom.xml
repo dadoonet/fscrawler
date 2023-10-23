@@ -22,6 +22,7 @@
         <module>crawler</module>
         <module>rest</module>
         <module>docs</module>
+        <module>contrib</module>
     </modules>
     <name>FSCrawler</name>
     <url>https://github.com/dadoonet/fscrawler/</url>
@@ -37,28 +38,28 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch8.version>8.4.1</elasticsearch8.version>
-        <elasticsearch7.version>7.17.6</elasticsearch7.version>
+        <elasticsearch8.version>8.10.4</elasticsearch8.version>
+        <elasticsearch7.version>7.17.14</elasticsearch7.version>
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch8.version}</elasticsearch.version>
 
-        <tika.version>2.4.1</tika.version>
-        <jackson.version>2.13.4</jackson.version>
-        <jsonpath.version>2.7.0</jsonpath.version>
-        <slf4j.version>1.7.36</slf4j.version>
-        <log4j.version>2.18.0</log4j.version>
-        <jansi.version>2.4.0</jansi.version>
-        <jersey.version>3.0.8</jersey.version>
+        <tika.version>2.9.1</tika.version>
+        <jackson.version>2.15.3</jackson.version>
+        <jsonpath.version>2.8.0</jsonpath.version>
+        <slf4j.version>2.0.9</slf4j.version>
+        <log4j.version>2.21.0</log4j.version>
+        <jansi.version>2.4.1</jansi.version>
+        <jersey.version>3.1.3</jersey.version>
 
         <!--
             Because elasticsearch is not using transitive dependencies, we need to be explicit here
         -->
         <commons-logging.version>1.2</commons-logging.version>
-        <commons-codec.version>1.15</commons-codec.version>
-        <snakeyaml.version>1.33</snakeyaml.version>
-        <httpclient.version>4.5.13</httpclient.version>
+        <commons-codec.version>1.16.0</commons-codec.version>
+        <snakeyaml.version>2.2</snakeyaml.version>
+        <httpclient.version>4.5.14</httpclient.version>
         <httpasyncclient.version>4.1.5</httpasyncclient.version>
-        <httpcore.version>4.4.15</httpcore.version>
+        <httpcore.version>4.4.16</httpcore.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
@@ -142,7 +143,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.10.1</version>
+                    <version>3.11.0</version>
                     <configuration>
                         <release>${java.compiler.version}</release>
                         <encoding>UTF-8</encoding>
@@ -155,17 +156,17 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-help-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.4.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.1.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.3.1</version>
                     <configuration>
                         <propertiesEncoding>UTF-8</propertiesEncoding>
                     </configuration>
@@ -173,7 +174,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.12.0</version>
+                    <version>2.16.1</version>
                     <configuration>
                         <generateBackupPoms>false</generateBackupPoms>
                     </configuration>
@@ -181,7 +182,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.2</version>
+                    <version>3.3.0</version>
                     <configuration>
                         <skipIfEmpty>true</skipIfEmpty>
                     </configuration>
@@ -189,7 +190,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.6.0</version>
                 </plugin>
                 <plugin>
                     <groupId>com.carrotsearch.randomizedtesting</groupId>
@@ -267,7 +268,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.22.2</version>
+                    <version>3.1.2</version>
                     <executions>
                         <execution>
                             <id>default-test</id>
@@ -280,7 +281,7 @@
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.40.2</version>
+                    <version>0.43.2</version>
                 </plugin>
 
                 <!-- For IT using Docker Compose -->
@@ -370,12 +371,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.4.2</version>
+                    <version>3.6.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.0.0-M3</version>
+                    <version>3.4.1</version>
                     <configuration>
                         <rules>
                             <requireJavaVersion>
@@ -399,7 +400,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.sonatype.ossindex.maven</groupId>
@@ -414,6 +415,13 @@
                             </goals>
                         </execution>
                     </executions>
+                    <configuration>
+                        <excludeVulnerabilityIds>
+                            <!-- won't be fixed by SnakeYaml team
+                             https://bitbucket.org/snakeyaml/snakeyaml/issues/561/cve-2022-1471-vulnerability-in -->
+                            <excludeVulnerabilityId>CVE-2022-1471</excludeVulnerabilityId>
+                        </excludeVulnerabilityIds>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.sonatype.plugins</groupId>
@@ -455,17 +463,17 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.4.1</version>
+                    <version>3.6.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.2.1</version>
+                    <version>3.3.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -614,6 +622,13 @@
                 <artifactId>json-path</artifactId>
                 <version>${jsonpath.version}</version>
             </dependency>
+            <!-- https://ossindex.sonatype.org/vulnerability/CVE-2023-1370 -->
+            <dependency>
+                <groupId>net.minidev</groupId>
+                <artifactId>json-smart</artifactId>
+                <version>2.5.0</version>
+            </dependency>
+
             <!--
             Because elasticsearch is not using transitive dependencies, we need to be explicit here
             -->
@@ -626,7 +641,7 @@
             <dependency>
                 <groupId>com.fasterxml.woodstox</groupId>
                 <artifactId>woodstox-core</artifactId>
-                <version>6.3.1</version>
+                <version>6.5.1</version>
             </dependency>
 
             <!-- This is needed to compile on my machine :( -->
@@ -638,7 +653,7 @@
             <dependency>
                 <groupId>jakarta.activation</groupId>
                 <artifactId>jakarta.activation-api</artifactId>
-                <version>2.1.0</version>
+                <version>2.1.2</version>
             </dependency>
             <!-- This is needed to compile on my machine :( -->
             <dependency>
@@ -652,6 +667,13 @@
                 <version>2.3.1</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-parent</artifactId>
+                <version>${tika.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.apache.tika</groupId>
                 <artifactId>tika-core</artifactId>
@@ -673,6 +695,13 @@
                 <version>${tika.version}</version>
             </dependency>
 
+            <!-- Fix CVE-2023-32697 -->
+            <dependency>
+                <groupId>org.xerial</groupId>
+                <artifactId>sqlite-jdbc</artifactId>
+                <version>3.43.2.1</version>
+            </dependency>
+
             <!-- Fix tika-parsers-standard-package 2.0.0 vs tika-parser-scientific-module:2.0.0 transitive dependency -->
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -684,14 +713,14 @@
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna</artifactId>
-                <version>5.12.1</version>
+                <version>5.13.0</version>
             </dependency>
 
             <!-- Fix json-path 2.6.0 vs tika 1.27 transitive dependency -->
             <dependency>
                 <groupId>org.ow2.asm</groupId>
                 <artifactId>asm</artifactId>
-                <version>9.3</version>
+                <version>9.6</version>
             </dependency>
 
             <!-- Because of CVE-2019-5427 and CVE-2019-13990. Comes from tika-parser-scientific-module:2.0.0 dep -->
@@ -705,7 +734,7 @@
             <dependency>
                 <groupId>org.jsoup</groupId>
                 <artifactId>jsoup</artifactId>
-                <version>1.15.3</version>
+                <version>1.16.2</version>
             </dependency>
 
             <!-- Version conflict between
@@ -716,7 +745,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>31.1-jre</version>
+                <version>32.1.3-jre</version>
             </dependency>
 
             <!-- Version conflict between
@@ -735,7 +764,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.12.0</version>
+                <version>3.13.0</version>
             </dependency>
 
             <!-- Version conflict between
@@ -745,7 +774,7 @@
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
-                <version>2.11.2</version>
+                <version>2.12.5</version>
             </dependency>
 
             <!-- For Language detection -->
@@ -766,12 +795,12 @@
             <dependency>
                 <groupId>commons-net</groupId>
                 <artifactId>commons-net</artifactId>
-                <version>3.8.0</version>
+                <version>3.10.0</version>
             </dependency>
             <dependency>
                 <groupId>org.mockftpserver</groupId>
                 <artifactId>MockFtpServer</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.0</version>
                 <scope>test</scope>
                 <exclusions>
                     <exclusion>
@@ -825,7 +854,7 @@
                 <artifactId>jersey-common</artifactId>
                 <version>${jersey.version}</version>
             </dependency>
-            <!-- Some Jersey transitive dependencies are using a 1.3.4 version so we need to be explicit -->
+            <!-- Some Jersey transitive dependencies are using a 1.3.4 version, so we need to be explicit -->
             <dependency>
                 <groupId>jakarta.annotation</groupId>
                 <artifactId>jakarta.annotation-api</artifactId>
@@ -900,7 +929,7 @@
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.11.0</version>
+                <version>2.14.0</version>
             </dependency>
 
             <!-- Used by elasticsearch client and tika parsers -->
@@ -962,7 +991,7 @@
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-client</artifactId>
-                <version>9.4.49.v20220914</version>
+                <version>9.4.53.v20231009</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

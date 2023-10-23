@@ -24,7 +24,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.format1
 
 @SuppressWarnings("WeakerAccess")
 public class TimeValue {
-    /** How many nano-seconds in one milli-second */
+    /** How many nanoseconds in one millisecond */
     public static final long NSEC_PER_MSEC = 1000000;
 
     public static TimeValue timeValueNanos(long nanos) {

@@ -82,12 +82,12 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         return generateElasticsearchConfig(indexDocName, indexFolderName, 1, null, null);
     }
 
-    protected void startCrawler() throws Exception {
-        startCrawler(getCrawlerName());
+    protected FsCrawlerImpl startCrawler() throws Exception {
+        return startCrawler(getCrawlerName());
     }
 
-    private void startCrawler(final String jobName) throws Exception {
-        startCrawler(jobName, startCrawlerDefinition().build(), endCrawlerDefinition(jobName), null);
+    private FsCrawlerImpl startCrawler(final String jobName) throws Exception {
+        return startCrawler(jobName, startCrawlerDefinition().build(), endCrawlerDefinition(jobName), null);
     }
 
     protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
@@ -97,8 +97,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest,
                                          TimeValue duration)
             throws Exception {
-        startCrawler(jobName, FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(), duration);
-        return crawler;
+        return startCrawler(jobName, FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(), duration);
     }
 
     protected FsCrawlerImpl startCrawler(final String jobName, FsSettings fsSettings, TimeValue duration)

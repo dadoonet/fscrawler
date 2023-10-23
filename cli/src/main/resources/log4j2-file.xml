@@ -10,6 +10,10 @@
    </Properties>
 
    <Appenders>
+      <Console name="Console" target="SYSTEM_OUT" follow="true">
+         <PatternLayout pattern="%d{ABSOLUTE} %highlight{%-5p} [%c{1.}] %m%n"/>
+      </Console>
+
       <RollingFile name="RollingFile" fileName="${sys:LOG_DIR}/fscrawler.log"
                    filePattern="${sys:LOG_DIR}/fscrawler-%d{yyyy-MM-dd}-%i.log.gz">
          <PatternLayout pattern="%d{ABSOLUTE} %highlight{%-5p} [%c{1.}] %m%n"/>
@@ -33,6 +37,7 @@
    <Loggers>
       <!-- This logger is used for the console -->
       <Logger name="fscrawler.console" level="info" additivity="false">
+         <AppenderRef ref="Console" />
          <AppenderRef ref="RollingFile" />
       </Logger>
 
@@ -43,6 +48,7 @@
 
       <!-- This logger is used to log FSCrawler code execution -->
       <Logger name="fr.pilato.elasticsearch.crawler.fs" level="${sys:LOG_LEVEL}" additivity="false">
+         <AppenderRef ref="Console" />
          <AppenderRef ref="RollingFile" />
       </Logger>
 

@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
@@ -44,7 +45,7 @@ import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -108,7 +109,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/163
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
      */
     @Test
     public void testXmlIssue163() throws IOException, ElasticsearchClientException {
@@ -129,18 +130,18 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     public void testExtractFromDocx() throws IOException, ElasticsearchClientException {
         ESSearchResponse response = runSearch("test.docx", "sample");
         for (ESSearchHit hit : response.getHits()) {
-            Object document = parseJson(hit.getSource());
-            assertThat(JsonPath.read(document, "$.file.filename"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.content_type"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.url"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.filesize"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.indexing_date"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.created"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.last_modified"), notNullValue());
-            assertThat(JsonPath.read(document, "$.file.last_accessed"), notNullValue());
+            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            assertThat(document.read("$.file.filename"), notNullValue());
+            assertThat(document.read("$.file.content_type"), notNullValue());
+            assertThat(document.read("$.file.url"), notNullValue());
+            assertThat(document.read("$.file.filesize"), notNullValue());
+            assertThat(document.read("$.file.indexing_date"), notNullValue());
+            assertThat(document.read("$.file.created"), notNullValue());
+            assertThat(document.read("$.file.last_modified"), notNullValue());
+            assertThat(document.read("$.file.last_accessed"), notNullValue());
 
-            assertThat(JsonPath.read(document, "$.meta.title"), notNullValue());
-            assertThat(JsonPath.read(document, "$.meta.keywords"), notNullValue());
+            assertThat(document.read("$.meta.title"), notNullValue());
+            assertThat(document.read("$.meta.keywords"), notNullValue());
         }
     }
 
@@ -180,7 +181,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/229
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/229">https://github.com/dadoonet/fscrawler/issues/229</a>
      */
     @Test
     public void testProtectedDocument229() throws IOException, ElasticsearchClientException {
@@ -188,7 +189,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/221
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
      */
     @Test
     public void testProtectedDocument221() throws IOException, ElasticsearchClientException {

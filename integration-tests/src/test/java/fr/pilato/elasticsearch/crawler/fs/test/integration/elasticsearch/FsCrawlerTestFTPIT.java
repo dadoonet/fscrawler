@@ -62,7 +62,9 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
 
     @After
     public void shutDown() {
-        fakeFtpServer.stop();
+        if (fakeFtpServer != null) {
+            fakeFtpServer.stop();
+        }
     }
 
     @Test
@@ -74,7 +76,7 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
                 .setProtocol(Server.PROTOCOL.FTP)
                 .setPort(port)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
@@ -89,7 +91,7 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
                 .setProtocol(Server.PROTOCOL.FTP)
                 .setPort(port)
                 .build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }

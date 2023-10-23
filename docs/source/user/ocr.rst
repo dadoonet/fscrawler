@@ -165,8 +165,7 @@ Supported strategies are:
 * ``ocr_and_text``: OCR and text extraction is performed.
 
 .. note:: When omitted, ``ocr_and_text`` value is used. If you have performance issues, it's worth using the ``auto`` option
-instead as only documents with barely no text will go through the OCR process.
-
+    instead as only documents with barely no text will go through the OCR process.
 
 OCR Page Seg Mode
 -----------------

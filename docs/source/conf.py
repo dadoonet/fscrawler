@@ -16,7 +16,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import os
-import ConfigParser
+import configparser
 from datetime import date
 from os.path import join, dirname
 
@@ -38,12 +38,12 @@ author = u'David Pilato'
 # built documents.
 #
 
-config = ConfigParser.RawConfigParser()
+config = configparser.ConfigParser()
 config.read(join(dirname(__file__), "fscrawler.ini"))
 
 # development versions always have the suffix '-SNAPSHOT'
 def read_version(full_version=True):
-    raw_version = config.get('FsCrawler', 'Version');
+    raw_version = config.get('FsCrawler', 'Version')
     return raw_version if full_version else raw_version.replace("-SNAPSHOT", "")
 
 version = read_version(full_version=False)
@@ -89,7 +89,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+#language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -206,16 +206,6 @@ epub_copyright = copyright
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
 
-
-# -- Extension configuration -------------------------------------------------
-
-from recommonmark.parser import CommonMarkParser
-
-source_parsers = {
-    '.md': CommonMarkParser,
-}
-
-source_suffix = ['.rst', '.md']
 
 # -- Options for todo extension ----------------------------------------------
 

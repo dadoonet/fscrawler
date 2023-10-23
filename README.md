@@ -10,48 +10,71 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 * Remote file system over SSH/FTP crawling.
 * REST interface to let you "upload" your binary documents to elasticsearch.
 
-You need to install a version matching your Elasticsearch version:
+## Latest versions
 
-|    Elasticsearch   | FS Crawler    | Released   | Docs                                                                          |
-|--------------------|---------------|------------|-------------------------------------------------------------------------------|
-| 6.x, 7.x           | 2.10-SNAPSHOT |            | [2.10-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)                  |
-| 6.x, 7.x           | **2.9**       | 2022-01-10 | [2.9](https://fscrawler.readthedocs.io/en/fscrawler-2.9/)                     |
-| 6.x, 7.x           | 2.8           | 2021-12-13 | [2.8](https://fscrawler.readthedocs.io/en/fscrawler-2.8/)                     |
-| 6.x, 7.x           | 2.7           | 2021-08-05 | [2.7](https://fscrawler.readthedocs.io/en/fscrawler-2.7/)                     |
-| 2.x, 5.x, 6.x      | 2.6           | 2019-01-09 | [2.6](https://fscrawler.readthedocs.io/en/fscrawler-2.6)                      |
-| 2.x, 5.x, 6.x      | 2.5           | 2018-08-04 | [2.5](https://fscrawler.readthedocs.io/en/fscrawler-2.5)                      |
-| 2.x, 5.x, 6.x      | 2.4           | 2017-08-11 | [2.4](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.4/README.md)     |
-| 2.x, 5.x, 6.x      | 2.3           | 2017-07-10 | [2.3](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.3/README.md)     |
-| 1.x, 2.x, 5.x      | 2.2           | 2017-02-03 | [2.2](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.2/README.md)     |
-| 1.x, 2.x, 5.x      | 2.1           | 2016-07-26 | [2.1](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.1/README.md)     |
-|    es-2.0          | 2.0.0         | 2015-10-30 | [2.0.0](https://github.com/dadoonet/fscrawler/blob/fscrawler-2.0.0/README.md) |
+Current "most stable" versions are:
+
+| Elasticsearch | FS Crawler    | Released   | Docs                                                                          |
+|---------------|---------------|------------|-------------------------------------------------------------------------------|
+| 6.x, 7.x, 8.x | 2.10-SNAPSHOT |            | [2.10-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)                  |
+
+[![Maven Central](https://img.shields.io/maven-central/v/fr.pilato.elasticsearch.crawler/fscrawler-distribution)](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
+![GitHub Release Date](https://img.shields.io/github/release-date/dadoonet/fscrawler)
+[![Maven metadata URL](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fs01.oss.sonatype.org%2Fcontent%2Frepositories%2Fsnapshots%2Ffr%2Fpilato%2Felasticsearch%2Fcrawler%2Ffscrawler-distribution%2Fmaven-metadata.xml&label=Latest%20SNAPSHOT&link=https%3A%2F%2Fs01.oss.sonatype.org%2Fcontent%2Frepositories%2Fsnapshots%2Ffr%2Fpilato%2Felasticsearch%2Fcrawler%2Ffscrawler-distribution%2F)](https://s01.oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
+![GitHub last commit](https://img.shields.io/github/last-commit/dadoonet/fscrawler)
+
+![Docker Pulls](https://img.shields.io/docker/pulls/dadoonet/fscrawler)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/dadoonet/fscrawler/2.10-SNAPSHOT?label=Docker%20image%20size)
+![Docker Image Version (latest semver)](https://img.shields.io/docker/v/dadoonet/fscrawler)
 
 ## Build and Quality Status
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler-distribution/badge.svg?style=flat-square)](https://maven-badges.herokuapp.com/maven-central/fr.pilato.elasticsearch.crawler/fscrawler-distribution/)
 [![Build](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml/badge.svg)](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml)
 [![Documentation Status](https://readthedocs.org/projects/fscrawler/badge/?version=latest)](https://fscrawler.readthedocs.io/en/latest/?badge=latest)
-[![Code Quality: Java](https://img.shields.io/lgtm/grade/java/g/dadoonet/fscrawler.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/dadoonet/fscrawler/context:java)
-[![Total Alerts](https://img.shields.io/lgtm/alerts/g/dadoonet/fscrawler.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/dadoonet/fscrawler/alerts)
 
-[![Lines](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=ncloc)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
-[![Duplicated Lines](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=duplicated_lines_density)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
-[![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=sqale_rating)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
-[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=sqale_index)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
-[![Reliability](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=reliability_rating)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
 
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=vulnerabilities)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent&resolved=false&types=VULNERABILITY)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=bugs)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
-[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=alert_status)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=code_smells)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=fr.pilato.elasticsearch.crawler:fscrawler-parent&metric=coverage)](https://sonarcloud.io/project/issues?id=fr.pilato.elasticsearch.crawler%3Afscrawler-parent)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=bugs)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
+
+## GitHub stats
+
+![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/dadoonet/fscrawler/latest/master)
+![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/t/dadoonet/fscrawler)
+![GitHub contributors](https://img.shields.io/github/contributors/dadoonet/fscrawler)
+
+![GitHub issues](https://img.shields.io/github/issues/dadoonet/fscrawler)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/dadoonet/fscrawler)
+
+## Documentation
 
 The guide has been moved to [ReadTheDocs](https://fscrawler.readthedocs.io/en/latest/).
 
+![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/dadoonet)
+
+## Contribute
+
+Works on my machine - and yours ! Spin up pre-configured, standardized dev environments of this repository, by clicking on the button below.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#/https://github.com/dadoonet/fscrawler)
+
 # License
 
-Read more about the [License](https://fscrawler.readthedocs.io/en/latest/index.html#license).
+![GitHub](https://img.shields.io/github/license/dadoonet/fscrawler)
+
+Read more about the [Apache2 License](https://fscrawler.readthedocs.io/en/latest/index.html#license).
 
 # Thanks
 
 Thanks to [JetBrains](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!
+
+Thanks to SonarCloud for the free analysis!
+
+[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)

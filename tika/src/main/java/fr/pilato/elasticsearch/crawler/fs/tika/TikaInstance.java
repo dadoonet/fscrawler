@@ -32,11 +32,14 @@ import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.exception.ZeroByteFileException;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.DefaultParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.ParserDecorator;
+import org.apache.tika.parser.gdal.GDALParser;
 import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.apache.tika.parser.pdf.PDFParser;
@@ -48,7 +51,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.apache.tika.langdetect.optimaize.OptimaizeLangDetector.getDefaultLanguageDetector;
 
@@ -72,7 +77,7 @@ public class TikaInstance {
     }
 
     /**
-     * This initialize if needed a parser and a parse context for tika
+     * This initializes if needed a parser and a parse context for tika
      * @param fs fs settings
      */
     private static void initTika(Fs fs) {
@@ -101,6 +106,13 @@ public class TikaInstance {
                 PDFParser pdfParser = new PDFParser();
                 DefaultParser defaultParser;
                 TesseractOCRParser ocrParser;
+                Set<MediaType> exclude = new HashSet<>();
+                exclude.add(MediaType.image("png"));
+                exclude.add(MediaType.image("jpeg"));
+                exclude.add(MediaType.image("bmp"));
+                exclude.add(MediaType.image("gif"));
+
+                Parser gdalParser = ParserDecorator.withoutTypes(new GDALParser(), exclude);
 
                 // To solve https://issues.apache.org/jira/browse/TIKA-3364
                 // PDF content might be extracted multiple times.
@@ -140,7 +152,7 @@ public class TikaInstance {
                     defaultParser = new DefaultParser(
                             MediaTypeRegistry.getDefaultRegistry(),
                             new ServiceLoader(),
-                            Collections.singletonList(PDFParser.class));
+                            List.of(PDFParser.class, GDALParser.class));
                 } else {
                     logger.info("OCR is disabled.");
                     TesseractOCRConfig config = context.get(TesseractOCRConfig.class);
@@ -154,7 +166,7 @@ public class TikaInstance {
                             new ServiceLoader(),
                             Arrays.asList(PDFParser.class, TesseractOCRParser.class));
                 }
-                parser = new AutoDetectParser(defaultParser, pdfParser);
+                parser = new AutoDetectParser(defaultParser, pdfParser, gdalParser);
             }
         }
     }

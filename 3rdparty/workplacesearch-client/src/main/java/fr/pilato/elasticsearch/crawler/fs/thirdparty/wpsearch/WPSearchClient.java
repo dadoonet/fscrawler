@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch;
 
 import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
@@ -54,7 +53,6 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJson;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 /**
@@ -129,6 +127,7 @@ public class WPSearchClient implements Closeable {
      * @param host  If we need to change the default host
      * @return the current instance
      */
+    @SuppressWarnings("JavadocLinkAsPlainText")
     public WPSearchClient withHost(String host) {
         this.host = host;
         return this;
@@ -167,7 +166,7 @@ public class WPSearchClient implements Closeable {
 
         // Create the client
         ClientConfig config = new ClientConfig();
-        // We need to suppress this so we can do DELETE with body
+        // We need to suppress this, so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(username, password);
         client = ClientBuilder.newClient(config);
@@ -339,11 +338,11 @@ public class WPSearchClient implements Closeable {
             String json = listAllCustomSources(currentPage);
 
             // We parse the json
-            Object document = parseJson(json);
-            totalPages = JsonPath.read(document, "$.meta.page.total_pages");
+            DocumentContext document = parseJsonAsDocumentContext(json);
+            totalPages = document.read("$.meta.page.total_pages");
 
             // We compare every source
-            List<Map<String, Object>> sources = JsonPath.read(document, "$.results[*]");
+            List<Map<String, Object>> sources = document.read("$.results[*]");
 
             for (Map<String, Object> source : sources) {
                 if (FilenameUtils.wildcardMatch((String) source.get("name"), name)) {
@@ -381,15 +380,15 @@ public class WPSearchClient implements Closeable {
         int worplaceSearchVersion = FsCrawlerUtil.extractMajorVersion(version);
         String json = readJsonFile(jobMappingDir, rootDir, worplaceSearchVersion, INDEX_WORKPLACE_SEARCH_SETTINGS_FILE);
 
-        // We need to replace the place holder values
+        // We need to replace the placeholder values
         json = json.replaceAll("SOURCE_NAME", sourceName);
 
         String response = post(DEFAULT_WS_ENDPOINT, "sources/", json, String.class);
         logger.trace("Source [{}] created. Response: {}", sourceName, response);
 
         // We parse the json
-        Object document = parseJson(response);
-        String id = JsonPath.read(document, "$.id");
+        DocumentContext document = parseJsonAsDocumentContext(response);
+        String id = document.read("$.id");
 
         logger.debug("Source [{}/{}] created.", id, sourceName);
 
@@ -447,8 +446,7 @@ public class WPSearchClient implements Closeable {
 
     <T> T get(String urlForApi, String path, Class<T> clazz) {
         logger.debug("Calling GET {}{}", urlForApi, path);
-        try {
-            Response response = prepareHttpCall(urlForApi, path).build("GET").invoke();
+        try (Response response = prepareHttpCall(urlForApi, path).build("GET").invoke()) {
             logger.trace("Response headers: {}", response.getHeaders());
             T entity = response.readEntity(clazz);
             logger.trace("Response entity: {}", entity);

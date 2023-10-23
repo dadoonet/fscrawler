@@ -43,7 +43,6 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
@@ -63,7 +62,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/162
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/162">https://github.com/dadoonet/fscrawler/issues/162</a>
      */
     @Test
     public void testLangDetect162() throws IOException {
@@ -81,7 +80,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/221
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
      */
     @Test
     public void testPdfIssue221() throws IOException {
@@ -117,7 +116,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/163
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
      */
     @Test
     public void testXmlIssue163() throws IOException {
@@ -276,7 +275,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test for #87: https://github.com/dadoonet/fscrawler/issues/87
+     * Test for #87: <a href="https://github.com/dadoonet/fscrawler/issues/87">https://github.com/dadoonet/fscrawler/issues/87</a>
      */
     @Test
     public void testExtractFromMp3() throws IOException {
@@ -334,7 +333,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(21));
+        assertThat(raw.entrySet(), iterableWithSize(22));
         assertThat(raw, hasEntry("dc:description", "Comments"));
         assertThat(raw, hasEntry("meta:paragraph-count", "1"));
         assertThat(raw, hasEntry("meta:word-count", "12"));
@@ -351,6 +350,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("custom:Terminé le", "2016-07-06T22:00:00Z"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));
+        assertThat(raw, hasEntry("odf:version", "1.2"));
         assertThat(raw, hasEntry("meta:keyword", "keyword1,  keyword2"));
         assertThat(raw, hasEntry("extended-properties:TotalTime", "PT0S"));
         assertThat(raw, hasEntry("cp:subject", "Test Tika Object"));
@@ -375,7 +375,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(isOcrAvailable ? 37 : 36));
+        assertThat(raw.entrySet(), iterableWithSize(41));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:title", "Test Tika title"));
@@ -385,22 +385,26 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("access_permission:can_print_degraded", "true"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
+        assertThat(raw, hasEntry("pdf:num3DAnnotations", "0"));
         assertThat(raw, hasEntry("dcterms:created", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("dcterms:modified", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("dc:format", "application/pdf; version=1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:creator_tool", "Microsoft Word"));
+        assertThat(raw, hasEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0"));
         assertThat(raw, hasEntry("access_permission:fill_in_form", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:keywords", "keyword1, keyword2"));
         assertThat(raw, hasEntry("pdf:docinfo:modified", "2016-07-07T08:37:42Z"));
         assertThat(raw, hasEntry("pdf:hasCollection", "false"));
         assertThat(raw, hasEntry("pdf:encrypted", "false"));
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));
+        assertThat(raw, hasEntry("pdf:containsNonEmbeddedFont", "false"));
         assertThat(raw, hasEntry("pdf:docinfo:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("pdf:hasMarkedContent", "true"));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
         assertThat(raw, hasEntry("pdf:docinfo:creator", "David Pilato"));
         assertThat(raw, hasEntry("dc:language", "en-US"));
         assertThat(raw, hasEntry("dc:subject", "keyword1, keyword2"));
+        assertThat(raw, hasEntry("pdf:totalUnmappedUnicodeChars", "0"));
         assertThat(raw, hasEntry("access_permission:extract_for_accessibility", "true"));
         assertThat(raw, hasEntry("access_permission:assemble_document", "true"));
         assertThat(raw, hasEntry("xmpTPg:NPages", "2"));
@@ -412,10 +416,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z"));
-
-        if (isOcrAvailable) {
-            assertThat(raw, hasEntry("Content-Type-Parser-Override", "image/ocr-png"));
-        }
+        assertThat(raw, hasEntry("pdf:containsDamagedFont", "false"));
     }
 
     @Test
@@ -574,7 +575,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void testOcr() throws IOException, TikaConfigException {
+    public void testOcr() throws IOException {
         assumeTrue("Tesseract is not installed so we are skipping this test", isOcrAvailable);
 
         // Test with OCR On (default)
@@ -670,7 +671,7 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .build();
         doc = extractFromFile("test-ocr-heb.pdf", fsSettings);
         try {
-            // This test requires to have the hebrew language pack so we don't fail the test but just log
+            // This test requires to have the hebrew language pack, so we don't fail the test but just log
             assertThat(doc.getContent(), containsString("המבודדים מתקבלים"));
         } catch (AssertionError e) {
             logger.info("We were not able to get the Hebrew content with OCR. May be the language pack was not installed?");
@@ -678,7 +679,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void testCustomTikaConfig() throws IOException, URISyntaxException {
+    public void testCustomTikaConfig() throws IOException {
         InputStream tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.xml");
         Path testTikaConfig = rootTmpDir.resolve("tika-config");
         if (Files.notExists(testTikaConfig)) {
@@ -717,8 +718,8 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/1097.
-     * Related to https://issues.apache.org/jira/browse/TIKA-3364.
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/1097">https://github.com/dadoonet/fscrawler/issues/1097</a>.
+     * Related to <a href="https://issues.apache.org/jira/browse/TIKA-3364">https://issues.apache.org/jira/browse/TIKA-3364</a>.
      * @throws IOException In case something goes wrong
      */
     @Test
@@ -742,7 +743,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(withOcr ? 31 : 30));
+        assertThat(raw.entrySet(), iterableWithSize(35));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.4"));
         assertThat(raw, hasEntry("xmp:CreatorTool", "Writer"));
@@ -751,16 +752,20 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("access_permission:can_print_degraded", "true"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("dc:creator", "Evangelos Vlachogiannis"));
+        assertThat(raw, hasEntry("pdf:num3DAnnotations", "0"));
         assertThat(raw, hasEntry("dcterms:created", "2007-02-23T15:56:37Z"));
         assertThat(raw, hasEntry("dc:format", "application/pdf; version=1.4"));
         assertThat(raw, hasEntry("pdf:docinfo:creator_tool", "Writer"));
+        assertThat(raw, hasEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0"));
         assertThat(raw, hasEntry("access_permission:fill_in_form", "true"));
         assertThat(raw, hasEntry("pdf:hasCollection", "false"));
         assertThat(raw, hasEntry("pdf:encrypted", "false"));
+        assertThat(raw, hasEntry("pdf:containsNonEmbeddedFont", "false"));
         assertThat(raw, hasEntry("pdf:hasMarkedContent", "false"));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
         assertThat(raw, hasEntry("pdf:docinfo:creator", "Evangelos Vlachogiannis"));
         assertThat(raw, hasEntry("pdf:producer", "OpenOffice.org 2.1"));
+        assertThat(raw, hasEntry("pdf:totalUnmappedUnicodeChars", "0"));
         assertThat(raw, hasEntry("access_permission:extract_for_accessibility", "true"));
         assertThat(raw, hasEntry("access_permission:assemble_document", "true"));
         assertThat(raw, hasEntry("xmpTPg:NPages", "1"));
@@ -773,14 +778,11 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("access_permission:can_modify", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:producer", "OpenOffice.org 2.1"));
         assertThat(raw, hasEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z"));
-
-        if (withOcr) {
-            assertThat(raw, hasEntry("Content-Type-Parser-Override", "image/ocr-png"));
-        }
+        assertThat(raw, hasEntry("pdf:containsDamagedFont", "false"));
     }
 
     /**
-     * Test case for https://github.com/dadoonet/fscrawler/issues/834.
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/834">https://github.com/dadoonet/fscrawler/issues/834</a>.
      * @throws IOException In case something goes wrong
      */
     @Test

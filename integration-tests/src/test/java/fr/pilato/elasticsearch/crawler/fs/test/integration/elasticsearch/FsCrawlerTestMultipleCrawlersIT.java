@@ -29,8 +29,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-
 /**
  * Test with multiple crawlers
  */

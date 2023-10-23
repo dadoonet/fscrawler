@@ -1,0 +1,29 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Update Pull Requests files
+
+on: [pull_request]
+
+jobs:
+  # We update files if needed (only if we are in the same repository)
+  update-files:
+    if: github.event.pull_request.base.repo.full_name == github.event.pull_request.head.repo.full_name
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT || github.token }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Update resources with Maven
+        run: mvn -B  generate-resources
+      - name: Update files if needed
+        uses: EndBug/add-and-commit@v9
+        with:
+          default_author: github_actions
+          message: Automatically update versions

@@ -110,7 +110,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
      * more readable.
-     * The temp folder which is used as a root is automatically cleaned after the test so we don't have to worry
+     * The temp folder which is used as a root is automatically cleaned after the test, so we don't have to worry
      * about it.
      */
     @Before
@@ -174,7 +174,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Copy test documents to the test dir so we will be able to run tests against them
+     * Copy test documents to the test dir, so we will be able to run tests against them
      * @param target            target directory.
      * @param sourceDirName     source subdir name where files will be copied or extracted to.
      * @param marker            one of the filename which is available in the classpath which contains

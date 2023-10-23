@@ -27,6 +27,7 @@ import org.junit.Test;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 
 public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
+    @SuppressWarnings("resource")
     @Test(expected = RuntimeException.class)
     public void test_checksum_non_existing_algorithm() {
         FsSettings fsSettings = FsSettings.builder("test_checksum_non_existing_algorithm")
@@ -36,8 +37,9 @@ public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Test case for issue #185: https://github.com/dadoonet/fscrawler/issues/185 : Add xml_support setting
+     * Test case for issue #185: <a href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a> : Add xml_support setting
      */
+    @SuppressWarnings("resource")
     @Test(expected = RuntimeException.class)
     public void test_xml_and_json_enabled() {
         FsSettings fsSettings = FsSettings.builder("test_xml_and_json_enabled")

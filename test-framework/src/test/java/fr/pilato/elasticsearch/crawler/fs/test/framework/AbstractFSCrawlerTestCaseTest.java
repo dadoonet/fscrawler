@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.framework;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 

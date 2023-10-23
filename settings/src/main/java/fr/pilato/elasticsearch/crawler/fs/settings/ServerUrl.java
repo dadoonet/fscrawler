@@ -27,7 +27,7 @@ import java.util.Objects;
 
 /**
  * This class represents a ServerUrl which is basically just a String which
- * can be either a url or a cloud id.
+ * can be either an url or a cloud id.
  * This is used in the Elasticsearch.Node class.
  */
 public class ServerUrl {
@@ -43,7 +43,7 @@ public class ServerUrl {
 
     public ServerUrl(String urlOrCloudId) {
         // We check if the String starts with https:// or http://
-        // In which case this is a URL, otherwise its a cloud id
+        // In which case this is a URL, otherwise it's a cloud id
         String asLowerCase = urlOrCloudId.toLowerCase();
         if (asLowerCase.startsWith("http://") || asLowerCase.startsWith("https://")) {
             this.url = urlOrCloudId;
@@ -54,11 +54,11 @@ public class ServerUrl {
 
     /**
      * Decode a cloudId to a Node representation. This helps when using
-     * official elasticsearch as a service: https://cloud.elastic.co
+     * official elasticsearch as a service: <a href="https://cloud.elastic.co">https://cloud.elastic.co</a>
      * The cloudId can be found from the cloud console.
      *
      * @param cloudId The cloud ID to decode.
-     * @return A Node running on https://address
+     * @return A Node running on <a href="https://address">https://address</a>
      */
     public static String decodeCloudId(String cloudId) {
         // 1. Ignore anything before `:`.

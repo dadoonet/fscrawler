@@ -24,7 +24,7 @@ import java.util.List;
 
 public class ESBoolQuery extends ESQuery {
 
-    List<ESQuery> mustClauses = new ArrayList<>();
+    final List<ESQuery> mustClauses = new ArrayList<>();
 
     public ESBoolQuery() {
         super(null);

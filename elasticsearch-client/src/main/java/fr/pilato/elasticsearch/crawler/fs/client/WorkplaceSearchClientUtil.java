@@ -88,29 +88,34 @@ public abstract class WorkplaceSearchClientUtil {
         // Id
         document.put("id", id);
 
-        // Index content
+        // General Fields
+        // https://www.elastic.co/guide/en/workplace-search/current/workplace-search-custom-api-sources.html#_general_fields
         document.put("body", doc.getContent());
-
-        // Index main metadata
+        document.put("comments", doc.getMeta().getComments());
+        // description field is not set
+        document.put("tags", doc.getMeta().getKeywords());
         // We use the name of the file if no title has been found in the document metadata
         document.put("title", FsCrawlerUtil.isNullOrEmpty(doc.getMeta().getTitle()) ? doc.getFile().getFilename() : doc.getMeta().getTitle());
-        document.put("author", doc.getMeta().getAuthor());
-        document.put("keywords", doc.getMeta().getKeywords());
-        document.put("language", doc.getMeta().getLanguage());
-        document.put("comments", doc.getMeta().getComments());
-
-        // Index main file attributes
-        document.put("name", doc.getFile().getFilename());
-        document.put("mime_type", doc.getFile().getContentType());
-        document.put("extension", doc.getFile().getExtension());
-        document.put("size", doc.getFile().getFilesize());
-        document.put("text_size", doc.getFile().getIndexedChars());
-        document.put("last_modified", toRFC3339(doc.getFile().getLastModified()));
-        document.put("created_at", toRFC3339(doc.getFile().getCreated()));
-
-        // Index main path attributes
+        document.put("type", "file");
         document.put("url", urlPrefix + doc.getPath().getVirtual());
+
+        // File/Document Fields
+        // https://www.elastic.co/guide/en/workplace-search/current/workplace-search-custom-api-sources.html#_filedocument_fields
+        document.put("extension", doc.getFile().getExtension());
+        document.put("mime_type", doc.getFile().getContentType());
         document.put("path", doc.getPath().getReal());
+        document.put("size", doc.getFile().getFilesize());
+
+        // People/Human Fields
+        // https://www.elastic.co/guide/en/workplace-search/current/workplace-search-custom-api-sources.html#_peoplehuman_fields
+        document.put("created_by", doc.getMeta().getAuthor());
+
+        // Non Workplace Search Standard Fields
+        document.put("name", doc.getFile().getFilename());
+        document.put("language", doc.getMeta().getLanguage());
+        document.put("text_size", doc.getFile().getIndexedChars());
+        document.put("created_at", toRFC3339(doc.getFile().getCreated()));
+        document.put("last_modified", toRFC3339(doc.getFile().getLastModified()));
 
         return document;
     }

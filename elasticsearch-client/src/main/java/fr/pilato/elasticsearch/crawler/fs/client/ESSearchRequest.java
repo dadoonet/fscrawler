@@ -28,9 +28,9 @@ public class ESSearchRequest {
     private String sort;
     private Integer size;
     private ESQuery ESQuery;
-    private List<String> storedFields = new ArrayList<>();
-    private List<String> highlighters = new ArrayList<>();
-    private List<ESTermsAggregation> aggregations = new ArrayList<>();
+    private final List<String> storedFields = new ArrayList<>();
+    private final List<String> highlighters = new ArrayList<>();
+    private final List<ESTermsAggregation> aggregations = new ArrayList<>();
 
     public String getIndex() {
         return index;

@@ -34,12 +34,12 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_S
 public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test for #83: https://github.com/dadoonet/fscrawler/issues/83
+     * Test for #83: <a href="https://github.com/dadoonet/fscrawler/issues/83">https://github.com/dadoonet/fscrawler/issues/83</a>
      */
     @Test
     public void test_time_value() throws Exception {
         Fs fs = startCrawlerDefinition(TimeValue.timeValueHours(1)).build();
-        startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
@@ -48,7 +48,7 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_bulk_flush() throws Exception {
         Fs fs = startCrawlerDefinition().build();
-        startCrawler(getCrawlerName(), fs,
+        crawler = startCrawler(getCrawlerName(), fs,
                 generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
                         100, TimeValue.timeValueSeconds(2), ByteSizeValue.parseBytesSizeValue("100b")), null);
 
