@@ -63,7 +63,9 @@ public interface IElasticsearchClient extends Closeable {
      * @param index index name
      * @param ignoreExistingIndex don't fail if the index already exists
      * @param indexSettings index settings if any
+     * @deprecated use index templates instead
      */
+    @Deprecated
     void createIndex(String index, boolean ignoreExistingIndex, String indexSettings) throws ElasticsearchClientException;
 
     /**
