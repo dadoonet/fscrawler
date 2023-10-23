@@ -9,7 +9,6 @@ jobs:
   # We build the project but the docker images and run all the tests
   build:
     runs-on: ubuntu-latest
-    needs: update-files
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 17
