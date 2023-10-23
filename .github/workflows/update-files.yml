@@ -6,8 +6,9 @@ name: Update Pull Requests files
 on: [pull_request]
 
 jobs:
-  # We update files if needed
+  # We update files if needed (only if we are in the same repository)
   update-files:
+    if: github.event.pull_request.base.repo.full_name == github.event.pull_request.head.repo.full_name
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -16,6 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.PAT || github.token }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
       - name: Update resources with Maven
