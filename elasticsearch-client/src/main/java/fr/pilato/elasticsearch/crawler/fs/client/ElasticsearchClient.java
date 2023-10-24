@@ -517,13 +517,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     private void loadAndPushComponentTemplate(int version, String name) throws IOException, ElasticsearchClientException {
         logger.trace("Loading component template [{}]", name);
-        String json = loadResourceFile(CLASSPATH_RESOURCES_ROOT + version + "/_component_templates/" + name + ".json");
+        String json = loadResourceFile(version + "/_component_templates/" + name + ".json");
         pushComponentTemplate(name, json);
     }
 
     private void loadAndPushIndexTemplate(int version, String name, String index) throws IOException, ElasticsearchClientException {
         logger.trace("Loading index template [{}]", name);
-        String json = loadResourceFile(CLASSPATH_RESOURCES_ROOT + version + "/_index_templates/" + name + ".json");
+        String json = loadResourceFile(version + "/_index_templates/" + name + ".json");
 
         // We need to replace the placeholder values
         json = json.replaceAll("INDEX_NAME", index);
@@ -537,7 +537,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * @return The content of the file
      */
     private static String loadResourceFile(String source) throws IOException {
-        URL resource = FsSettings.class.getResource(source);
+        URL resource = ElasticsearchClient.class.getResource(source);
         File file = FileUtils.toFile(resource);
         logger.error("source: {}, resource: {}, file: {}", source, resource, file);
         return FileUtils.readFileToString(Objects.requireNonNull(file), "UTF-8");

@@ -105,7 +105,7 @@ by setting ``push_templates`` to ``false``:
      push_templates: false
 
 If you want to know what are the component templates and index templates
-that will be created, you can get them from `the source <https://github.com/dadoonet/fscrawler/blob/master/settings/src/main/resources/fr/pilato/elasticsearch/crawler/fs/_default/8>`__.
+that will be created, you can get them from `the source <https://github.com/dadoonet/fscrawler/blob/master/elasticsearch-client/src/main/resources/fr/pilato/elasticsearch/crawler/fs/client/8>`__.
 
 Creating your own mapping (analyzers)
 """""""""""""""""""""""""""""""""""""
