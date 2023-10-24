@@ -37,6 +37,7 @@ import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
@@ -61,6 +62,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -253,6 +255,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * @param indexSettings index settings if any
      */
     @Override
+    @Deprecated
     public void createIndex(String index, boolean ignoreExistingIndex, String indexSettings) throws ElasticsearchClientException {
         String realIndexSettings = indexSettings;
         logger.debug("create index [{}]", index);
@@ -284,6 +287,30 @@ public class ElasticsearchClient implements IElasticsearchClient {
             } else {
                 throw new ElasticsearchClientException("Error while creating index " + index, e);
             }
+        }
+    }
+
+    @Override
+    public void pushComponentTemplate(String name, String json) throws ElasticsearchClientException {
+        logger.debug("push component template [{}]", name);
+        String url = "_component_template/" + name;
+        logger.trace("component template: [{}]", json);
+        try {
+            httpPut(url, json);
+        } catch (WebApplicationException e) {
+            throw new ElasticsearchClientException("Error while creating component template " + name, e);
+        }
+    }
+
+    @Override
+    public void pushIndexTemplate(String name, String json) throws ElasticsearchClientException {
+        logger.debug("push index template [{}]", name);
+        String url = "_index_template/" + name;
+        logger.trace("index template: [{}]", json);
+        try {
+            httpPut(url, json);
+        } catch (WebApplicationException e) {
+            throw new ElasticsearchClientException("Error while creating index template " + name, e);
         }
     }
 
@@ -427,8 +454,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    @Override
-    public void createIndices() throws Exception {
+    /**
+     * Creates needed indices. This is only called for ES < 7 cluster.
+     * @deprecated only used with ES < 7
+     * @throws Exception in case of error
+     */
+    @Deprecated
+    private void createIndices() throws Exception {
         Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
 
         // If needed, we create the new settings for this files index
@@ -444,6 +476,66 @@ public class ElasticsearchClient implements IElasticsearchClient {
         } else {
             createIndex(settings.getElasticsearch().getIndexFolder(), true, null);
         }
+    }
+
+    @Override
+    public void createIndexAndComponentTemplates() throws Exception {
+        if (majorVersion < 7) {
+            logger.warn("We are running on a version of Elasticsearch {} which is lower than 7.0. " +
+                    "We will not create index templates nor component templates.", version);
+            logger.warn("Instead we will create indices based on files on disk (Deprecated).");
+            createIndices();
+            return;
+        }
+
+        if (settings.getElasticsearch().isPushTemplates()) {
+            logger.debug("Creating/updating component templates");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_alias");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_shards");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_total_fields");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attributes");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attachment");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_meta");
+
+            logger.debug("Creating/updating index templates");
+            // If needed, we create the new settings for this files index
+            if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
+                loadAndPushIndexTemplate(majorVersion, "fscrawler_docs", settings.getElasticsearch().getIndex());
+            }
+
+            // If needed, we create the new settings for this folder index
+            if (settings.getFs().isIndexFolders()) {
+                loadAndPushIndexTemplate(majorVersion, "fscrawler_folders", settings.getElasticsearch().getIndexFolder());
+            }
+        }
+    }
+
+    private void loadAndPushComponentTemplate(int version, String name) throws IOException, ElasticsearchClientException {
+        logger.trace("Loading component template [{}]", name);
+        String json = loadResourceFile(CLASSPATH_RESOURCES_ROOT + version + "/_component_templates/" + name + ".json");
+        pushComponentTemplate(name, json);
+    }
+
+    private void loadAndPushIndexTemplate(int version, String name, String index) throws IOException, ElasticsearchClientException {
+        logger.trace("Loading index template [{}]", name);
+        String json = loadResourceFile(CLASSPATH_RESOURCES_ROOT + version + "/_index_templates/" + name + ".json");
+
+        // We need to replace the placeholder values
+        json = json.replaceAll("INDEX_NAME", index);
+
+        pushIndexTemplate(name + "_" + index, json);
+    }
+
+    /**
+     * Reads a resource file from the classpath or from a JAR.
+     * @param source The target
+     * @return The content of the file
+     */
+    private static String loadResourceFile(String source) throws IOException {
+        return FileUtils.readFileToString(Objects.requireNonNull(FileUtils.toFile(FsSettings.class.getResource(source))), "UTF-8");
     }
 
     @Override

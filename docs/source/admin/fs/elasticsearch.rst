@@ -14,6 +14,8 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.index_folder``    | job name + ``_folder``    | `Index settings for folders`_   |
 +-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.push_templates``  | ``true``                  | :ref:`mappings`                 |
++-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.bulk_size``       | ``100``                   | `Bulk settings`_                |
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.flush_interval``  | ``"5s"``                  | `Bulk settings`_                |
@@ -67,304 +69,68 @@ the crawler name (``name`` property) plus ``_folder`` suffix, like
 Mappings
 ~~~~~~~~
 
-When FSCrawler needs to create the doc index, it applies some default
-settings and mappings which are read from
-``~/.fscrawler/_default/7/_settings.json``. You can read its content
-from `the
-source <https://github.com/dadoonet/fscrawler/blob/master/settings/src/main/resources/fr/pilato/elasticsearch/crawler/fs/_default/7/_settings.json>`__.
+.. versionadded:: 2.10
 
-Settings define an analyzer named ``fscrawler_path`` which uses a `path
-hierarchy
-tokenizer <https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pathhierarchy-tokenizer.html>`__.
+FSCrawler defines the following `Component Templates <https://www.elastic.co/guide/en/elasticsearch/reference/current/index-templates.html>`__
+to define the index settings and mappings:
 
-FSCrawler applies as well a mapping automatically for the folders which can also be
-read from `the source <https://github.com/dadoonet/fscrawler/blob/master/settings/src/main/resources/fr/pilato/elasticsearch/crawler/fs/_default/7/_settings_folder.json>`__.
+- ``fscrawler_alias``: defines the alias ``fscrawler`` so you can search using this alias.
+- ``fscrawler_settings_shards``: defines the number of shards to use for the index.
+- ``fscrawler_settings_total_fields``: defines the maximum number of fields for the index.
+- ``fscrawler_mapping_attributes``: defines the mapping for the ``attributes`` field.
+- ``fscrawler_mapping_file``: defines the mapping for the ``file`` field.
+- ``fscrawler_mapping_path``: defines an define an analyzer named ``fscrawler_path`` which
+    uses a `path hierarchy tokenizer <https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pathhierarchy-tokenizer.html>`__
+    and the mapping for the ``path`` field.
+- ``fscrawler_mapping_attachment``: defines the mapping for the ``attachment`` field.
+- ``fscrawler_mapping_content``: defines the mapping for the ``content`` field.
+- ``fscrawler_mapping_meta``: defines the mapping for the ``meta`` field.
 
-You can also display the index mapping being used with Kibana:
+You can see the content of those templates by running:
 
 ::
 
-   GET docs/_mapping
-   GET docs_folder/_mapping
+   GET _component_template/fscrawler*
 
-Or fall back to the command line:
+Then, FSCrawler applies those templates to the indices being created.
 
-.. code:: sh
+You can stop FSCrawler creating/updating the index templates for you
+by setting ``push_templates`` to ``false``:
 
-   curl 'http://localhost:9200/docs/_mapping?pretty'
-   curl 'http://localhost:9200/docs_folder/_mapping?pretty'
+.. code:: yaml
 
-.. note::
+   name: "test"
+   elasticsearch:
+     push_templates: false
 
-    FSCrawler is actually applying default index settings depending on the
-    elasticsearch version it is connected to.
-    The default settings definitions are stored in ``~/.fscrawler/_default/_mappings``:
-
-    -  ``6/_settings.json``: for elasticsearch 6.x series document index settings
-    -  ``6/_settings_folder.json``: for elasticsearch 6.x series folder index settings
-    -  ``7/_settings.json``: for elasticsearch 7.x series document index settings
-    -  ``7/_settings_folder.json``: for elasticsearch 7.x series folder index settings
+If you want to know what are the component templates and index templates
+that will be created, you can get them from `the source <https://github.com/dadoonet/fscrawler/blob/master/settings/src/main/resources/fr/pilato/elasticsearch/crawler/fs/_default/8>`__.
 
 Creating your own mapping (analyzers)
 """""""""""""""""""""""""""""""""""""
 
 If you want to define your own index settings and mapping to set
-analyzers for example, you can either create the index and push the
-mapping or define a ``~/.fscrawler/_default/7/_settings.json`` document
-which contains the index settings and mappings you wish **before
-starting the FSCrawler**.
+analyzers for example, you can update the needed component template
+**before starting the FSCrawler**.
 
 The following example uses a ``french`` analyzer to index the
 ``content`` field.
 
 .. code:: json
 
+    PUT _component_template/fscrawler_mapping_content
     {
-      "settings": {
-        "number_of_shards": 1,
-        "index.mapping.total_fields.limit": 2000,
-        "analysis": {
-          "analyzer": {
-            "fscrawler_path": {
-              "tokenizer": "fscrawler_path"
-            }
-          },
-          "tokenizer": {
-            "fscrawler_path": {
-              "type": "path_hierarchy"
-            }
-          }
-        }
-      },
-      "mappings": {
-        "_doc": {
-          "dynamic_templates": [
-            {
-              "raw_as_text": {
-                "path_match": "meta.raw.*",
-                "mapping": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
-                }
-              }
-            }
-          ],
+      "template": {
+        "mappings": {
           "properties": {
-            "attachment": {
-              "type": "binary",
-              "doc_values": false
-            },
-            "attributes": {
-              "properties": {
-                "group": {
-                  "type": "keyword"
-                },
-                "owner": {
-                  "type": "keyword"
-                }
-              }
-            },
             "content": {
               "type": "text",
               "analyzer": "french"
-            },
-            "file": {
-              "properties": {
-                "content_type": {
-                  "type": "keyword"
-                },
-                "filename": {
-                  "type": "keyword",
-                  "store": true
-                },
-                "extension": {
-                  "type": "keyword"
-                },
-                "filesize": {
-                  "type": "long"
-                },
-                "indexed_chars": {
-                  "type": "long"
-                },
-                "indexing_date": {
-                  "type": "date",
-                  "format": "date_optional_time"
-                },
-                "created": {
-                  "type": "date",
-                  "format": "date_optional_time"
-                },
-                "last_modified": {
-                  "type": "date",
-                  "format": "date_optional_time"
-                },
-                "last_accessed": {
-                  "type": "date",
-                  "format": "date_optional_time"
-                },
-                "checksum": {
-                  "type": "keyword"
-                },
-                "url": {
-                  "type": "keyword",
-                  "index": false
-                }
-              }
-            },
-            "meta": {
-              "properties": {
-                "author": {
-                  "type": "text"
-                },
-                "date": {
-                  "type": "date",
-                  "format": "date_optional_time"
-                },
-                "keywords": {
-                  "type": "text"
-                },
-                "title": {
-                  "type": "text"
-                },
-                "language": {
-                  "type": "keyword"
-                },
-                "format": {
-                  "type": "text"
-                },
-                "identifier": {
-                  "type": "text"
-                },
-                "contributor": {
-                  "type": "text"
-                },
-                "coverage": {
-                  "type": "text"
-                },
-                "modifier": {
-                  "type": "text"
-                },
-                "creator_tool": {
-                  "type": "keyword"
-                },
-                "publisher": {
-                  "type": "text"
-                },
-                "relation": {
-                  "type": "text"
-                },
-                "rights": {
-                  "type": "text"
-                },
-                "source": {
-                  "type": "text"
-                },
-                "type": {
-                  "type": "text"
-                },
-                "description": {
-                  "type": "text"
-                },
-                "created": {
-                  "type": "date",
-                  "format": "date_optional_time"
-                },
-                "print_date": {
-                  "type": "date",
-                  "format": "date_optional_time"
-                },
-                "metadata_date": {
-                  "type": "date",
-                  "format": "date_optional_time"
-                },
-                "latitude": {
-                  "type": "text"
-                },
-                "longitude": {
-                  "type": "text"
-                },
-                "altitude": {
-                  "type": "text"
-                },
-                "rating": {
-                  "type": "byte"
-                },
-                "comments": {
-                  "type": "text"
-                }
-              }
-            },
-            "path": {
-              "properties": {
-                "real": {
-                  "type": "keyword",
-                  "fields": {
-                    "tree": {
-                      "type": "text",
-                      "analyzer": "fscrawler_path",
-                      "fielddata": true
-                    },
-                    "fulltext": {
-                      "type": "text"
-                    }
-                  }
-                },
-                "root": {
-                  "type": "keyword"
-                },
-                "virtual": {
-                  "type": "keyword",
-                  "fields": {
-                    "tree": {
-                      "type": "text",
-                      "analyzer": "fscrawler_path",
-                      "fielddata": true
-                    },
-                    "fulltext": {
-                      "type": "text"
-                    }
-                  }
-                }
-              }
             }
           }
         }
       }
     }
-
-Note that if you want to push manually the mapping to elasticsearch you
-can use the classic REST calls:
-
-::
-
-   # Create index (don't forget to add the fscrawler_path analyzer)
-   PUT docs
-   {
-     // Same index settings as previously seen
-   }
-
-Define explicit mapping/settings per job
-""""""""""""""""""""""""""""""""""""""""
-
-Let’s say you created a job named ``job_name`` and you are sending
-documents against an elasticsearch cluster running version ``6.x``.
-
-If you create the following files, they will be picked up at job start
-time instead of the :ref:`default ones <mappings>`:
-
--  ``~/.fscrawler/{job_name}/_mappings/7/_settings.json``
--  ``~/.fscrawler/{job_name}/_mappings/7/_settings_folder.json``
-
-.. tip::
-    You can do the same for other elasticsearch versions with:
-
-    -  ``~/.fscrawler/{job_name}/_mappings/6/_settings.json`` for 6.x series
-    -  ``~/.fscrawler/{job_name}/_mappings/6/_settings_folder.json`` for 6.x series
 
 Replace existing mapping
 """"""""""""""""""""""""
@@ -745,7 +511,7 @@ FSCrawler may create the following fields depending on configuration and availab
 | ``external``               | Additional tags                        | ``{ "tenantId": 22, "projectId": 33 }``      |                                                                     |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
 
-For more information about meta data, please read the `TikaCoreProperties <https://tika.apache.org/1.18/api/org/apache/tika/metadata/TikaCoreProperties.html>`__.
+For more information about meta data, please read the `TikaCoreProperties <https://tika.apache.org/2.9.0/api/org/apache/tika/metadata/TikaCoreProperties.html>`__.
 
 Here is a typical JSON document generated by the crawler:
 

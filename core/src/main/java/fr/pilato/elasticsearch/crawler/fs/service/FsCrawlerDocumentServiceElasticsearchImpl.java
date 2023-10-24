@@ -68,7 +68,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
 
     @Override
     public void createSchema() throws Exception {
-        client.createIndices();
+        client.createIndexAndComponentTemplates();
     }
 
     @Override
@@ -95,7 +95,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public void refresh(String index) throws IOException, ElasticsearchClientException {
+    public void refresh(String index) throws ElasticsearchClientException {
         logger.debug("Refreshing {}", index);
         client.refresh(index);
     }
