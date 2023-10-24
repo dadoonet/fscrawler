@@ -37,7 +37,6 @@ import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
@@ -51,10 +50,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ConnectException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -64,13 +63,14 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+import java.util.stream.StreamSupport;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.*;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 
 /**
  * Elasticsearch Client for Clusters running v7.
@@ -537,10 +537,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * @return The content of the file
      */
     private static String loadResourceFile(String source) throws IOException {
-        URL resource = ElasticsearchClient.class.getResource(source);
-        File file = FileUtils.toFile(resource);
-        logger.error("source: {}, resource: {}, file: {}", source, resource, file);
-        return FileUtils.readFileToString(Objects.requireNonNull(file), "UTF-8");
+        try (BufferedReader buffer = new BufferedReader(new InputStreamReader(
+                ElasticsearchClient.class.getResourceAsStream(source)))) {
+            return StreamSupport.stream(buffer.lines().spliterator(), false)
+                    .reduce((a, b) -> a + "\n" + b)
+                    .orElse(null);
+        }
     }
 
     @Override
