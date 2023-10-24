@@ -51,8 +51,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -535,7 +537,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * @return The content of the file
      */
     private static String loadResourceFile(String source) throws IOException {
-        return FileUtils.readFileToString(Objects.requireNonNull(FileUtils.toFile(FsSettings.class.getResource(source))), "UTF-8");
+        URL resource = FsSettings.class.getResource(source);
+        File file = FileUtils.toFile(resource);
+        logger.error("source: {}, resource: {}, file: {}", source, resource, file);
+        return FileUtils.readFileToString(Objects.requireNonNull(file), "UTF-8");
     }
 
     @Override
