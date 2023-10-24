@@ -2,11 +2,6 @@
   "index_patterns": [
     "INDEX_NAME"
   ],
-  "template": {
-    "aliases": {
-      "fscrawler": { }
-    }
-  },
   "priority": 500,
   "composed_of": [
     "fscrawler_alias",
