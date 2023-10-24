@@ -79,9 +79,10 @@ to define the index settings and mappings:
 - ``fscrawler_settings_total_fields``: defines the maximum number of fields for the index.
 - ``fscrawler_mapping_attributes``: defines the mapping for the ``attributes`` field.
 - ``fscrawler_mapping_file``: defines the mapping for the ``file`` field.
-- ``fscrawler_mapping_path``: defines an define an analyzer named ``fscrawler_path`` which
-    uses a `path hierarchy tokenizer <https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pathhierarchy-tokenizer.html>`__
-    and the mapping for the ``path`` field.
+- ``fscrawler_mapping_path``: defines an define an analyzer named ``fscrawler_path`` which uses a
+  `path hierarchy tokenizer <https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pathhierarchy-tokenizer.html>`__
+  and the mapping for the ``path`` field.
+
 - ``fscrawler_mapping_attachment``: defines the mapping for the ``attachment`` field.
 - ``fscrawler_mapping_content``: defines the mapping for the ``content`` field.
 - ``fscrawler_mapping_meta``: defines the mapping for the ``meta`` field.
