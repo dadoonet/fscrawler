@@ -29,6 +29,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -55,7 +56,10 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
         // The folder index should not exist
         try {
             documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
-            fail("We should not be able to read the folder index");
+            // If we have an answer, it means that we are running on version 6
+            ESSearchResponse response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
+            assertThat(response.getTotalHits(), is(0L));
+            assertThat(extractMajorVersion(documentService.getVersion()), is(6));
         } catch (ElasticsearchClientException e) {
             assertThat(e.getMessage(), is("index " + getCrawlerName() + INDEX_SUFFIX_FOLDER + " does not exist."));
         }
