@@ -632,7 +632,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.trace("Elasticsearch query to run: {}", query);
 
         try {
-
             String response = httpPost(url, query, new AbstractMap.SimpleImmutableEntry<>("version", "true"));
             ESSearchResponse esSearchResponse = new ESSearchResponse(response);
 
