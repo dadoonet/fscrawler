@@ -398,79 +398,79 @@ FSCrawler may create the following fields depending on configuration and availab
 | ``attachment``             | BASE64 encoded binary file             | BASE64 Encoded document                      |                                                                     |
 |                            |                                        |                                              |                                                                     |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.author``            | Author if any in                       | ``"David Pilato"``                           | `CREATOR <https://tika.apache.org/1.18/api/org/apache/tika/         |
+| ``meta.author``            | Author if any in                       | ``"David Pilato"``                           | `CREATOR <https://tika.apache.org/2.9.1/api/org/apache/tika/         |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#CREATOR>`__                        |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.title``             | Title if any in document metadata      | ``"My document title"``                      | `TITLE <https://tika.apache.org/1.18/api/org/apache/tika/           |
+| ``meta.title``             | Title if any in document metadata      | ``"My document title"``                      | `TITLE <https://tika.apache.org/2.9.1/api/org/apache/tika/           |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#TITLE>`__                          |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.date``              | Last modified date                     | ``"2013-04-04T15:21:35"``                    | `MODIFIED <https://tika.apache.org/1.18/api/org/apache/tika/        |
+| ``meta.date``              | Last modified date                     | ``"2013-04-04T15:21:35"``                    | `MODIFIED <https://tika.apache.org/2.9.1/api/org/apache/tika/        |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#MODIFIED>`__                       |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.keywords``          | Keywords if any in document metadata   | ``["fs","elasticsearch"]``                   | `KEYWORDS <https://tika.apache.org/1.18/api/org/apache/tika/        |
+| ``meta.keywords``          | Keywords if any in document metadata   | ``["fs","elasticsearch"]``                   | `KEYWORDS <https://tika.apache.org/2.9.1/api/org/apache/tika/        |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#KEYWORDS>`__                       |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.language``          | Language (can be detected)             | ``"fr"``                                     | `LANGUAGE <https://tika.apache.org/1.18/api/org/apache/tika/        |
+| ``meta.language``          | Language (can be detected)             | ``"fr"``                                     | `LANGUAGE <https://tika.apache.org/2.9.1/api/org/apache/tika/        |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#LANGUAGE>`__                       |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.format``            | Format of the media                    | ``"application/pdf; version=1.6"``           | `FORMAT <https://tika.apache.org/1.18/api/org/apache/tika/          |
+| ``meta.format``            | Format of the media                    | ``"application/pdf; version=1.6"``           | `FORMAT <https://tika.apache.org/2.9.1/api/org/apache/tika/          |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#FORMAT>`__                         |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.identifier``        | URL/DOI/ISBN for example               | ``"FOOBAR"``                                 | `IDENTIFIER <https://tika.apache.org/1.18/api/org/apache/tika/      |
+| ``meta.identifier``        | URL/DOI/ISBN for example               | ``"FOOBAR"``                                 | `IDENTIFIER <https://tika.apache.org/2.9.1/api/org/apache/tika/      |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#IDENTIFIER>`__                     |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.contributor``       | Contributor                            | ``"foo bar"``                                | `CONTRIBUTOR <https://tika.apache.org/1.18/api/org/apache/tika/     |
+| ``meta.contributor``       | Contributor                            | ``"foo bar"``                                | `CONTRIBUTOR <https://tika.apache.org/2.9.1/api/org/apache/tika/     |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#CONTRIBUTOR>`__                    |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.coverage``          | Coverage                               | ``"FOOBAR"``                                 | `COVERAGE <https://tika.apache.org/1.18/api/org/apache/tika/        |
+| ``meta.coverage``          | Coverage                               | ``"FOOBAR"``                                 | `COVERAGE <https://tika.apache.org/2.9.1/api/org/apache/tika/        |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#COVERAGE>`__                       |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.modifier``          | Last author                            | ``"David Pilato"``                           | `MODIFIER <https://tika.apache.org/1.18/api/org/apache/tika/        |
+| ``meta.modifier``          | Last author                            | ``"David Pilato"``                           | `MODIFIER <https://tika.apache.org/2.9.1/api/org/apache/tika/        |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#MODIFIER>`__                       |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.creator_tool``      | Tool used to create the resource       | ``"HTML2PDF- TCPDF"``                        | `CREATOR_TOOL <https://tika.apache.org/1.18/api/org/apache/tika/    |
+| ``meta.creator_tool``      | Tool used to create the resource       | ``"HTML2PDF- TCPDF"``                        | `CREATOR_TOOL <https://tika.apache.org/2.9.1/api/org/apache/tika/    |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#CREATOR_TOOL>`__                   |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.publisher``         | Publisher: person, organisation,       | ``"elastic"``                                | `PUBLISHER <https://tika.apache.org/1.18/api/org/apache/tika/       |
+| ``meta.publisher``         | Publisher: person, organisation,       | ``"elastic"``                                | `PUBLISHER <https://tika.apache.org/2.9.1/api/org/apache/tika/       |
 |                            | service                                |                                              | metadata/TikaCoreProperties.html#PUBLISHER>`__                      |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.relation``          | Related resource                       | ``"FOOBAR"``                                 | `RELATION <https://tika.apache.org/1.18/api/org/apache/tika/        |
+| ``meta.relation``          | Related resource                       | ``"FOOBAR"``                                 | `RELATION <https://tika.apache.org/2.9.1/api/org/apache/tika/        |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#RELATION>`__                       |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.rights``            | Information about rights               | ``"CC-BY-ND"``                               | `RIGHTS <https://tika.apache.org/1.18/api/org/apache/tika/          |
+| ``meta.rights``            | Information about rights               | ``"CC-BY-ND"``                               | `RIGHTS <https://tika.apache.org/2.9.1/api/org/apache/tika/          |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#RIGHTS>`__                         |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.source``            | Source for the current document        | ``"FOOBAR"``                                 | `SOURCE <https://tika.apache.org/1.18/api/org/apache/tika/          |
+| ``meta.source``            | Source for the current document        | ``"FOOBAR"``                                 | `SOURCE <https://tika.apache.org/2.9.1/api/org/apache/tika/          |
 |                            | (derivated)                            |                                              | metadata/TikaCoreProperties.html#SOURCE>`__                         |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.type``              | Nature or genre of the content         | ``"Image"``                                  | `TYPE <https://tika.apache.org/1.18/api/org/apache/tika/            |
+| ``meta.type``              | Nature or genre of the content         | ``"Image"``                                  | `TYPE <https://tika.apache.org/2.9.1/api/org/apache/tika/            |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#TYPE>`__                           |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.description``       | An account of the content              | ``"This is a description"``                  | `DESCRIPTION <https://tika.apache.org/1.18/api/org/apache/tika/     |
+| ``meta.description``       | An account of the content              | ``"This is a description"``                  | `DESCRIPTION <https://tika.apache.org/2.9.1/api/org/apache/tika/     |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#DESCRIPTION>`__                    |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.created``           | Date of creation                       | ``"2013-04-04T15:21:35"``                    | `CREATED <https://tika.apache.org/1.18/api/org/apache/tika/         |
+| ``meta.created``           | Date of creation                       | ``"2013-04-04T15:21:35"``                    | `CREATED <https://tika.apache.org/2.9.1/api/org/apache/tika/         |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#CREATED>`__                        |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.print_date``        | When was the doc last printed?         | ``"2013-04-04T15:21:35"``                    | `PRINT_DATE <https://tika.apache.org/1.18/api/org/apache/tika/      |
+| ``meta.print_date``        | When was the doc last printed?         | ``"2013-04-04T15:21:35"``                    | `PRINT_DATE <https://tika.apache.org/2.9.1/api/org/apache/tika/      |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#PRINT_DATE>`__                     |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.metadata_date``     | Last modification of metadata          | ``"2013-04-04T15:21:35"``                    | `METADATA_DATE <https://tika.apache.org/1.18/api/org/apache/tika/   |
+| ``meta.metadata_date``     | Last modification of metadata          | ``"2013-04-04T15:21:35"``                    | `METADATA_DATE <https://tika.apache.org/2.9.1/api/org/apache/tika/   |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#METADATA_DATE>`__                  |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.latitude``          | The WGS84 Latitude of the Point        | ``"N 48° 51' 45.81''"``                      | `LATITUDE <https://tika.apache.org/1.18/api/org/apache/tika/        |
+| ``meta.latitude``          | The WGS84 Latitude of the Point        | ``"N 48° 51' 45.81''"``                      | `LATITUDE <https://tika.apache.org/2.9.1/api/org/apache/tika/        |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#LATITUDE>`__                       |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.longitude``         | The WGS84 Longitude of the Point       | ``"E 2° 17'15.331''"``                       | `LONGITUDE <https://tika.apache.org/1.18/api/org/apache/tika/       |
+| ``meta.longitude``         | The WGS84 Longitude of the Point       | ``"E 2° 17'15.331''"``                       | `LONGITUDE <https://tika.apache.org/2.9.1/api/org/apache/tika/       |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#LONGITUDE>`__                      |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.altitude``          | The WGS84 Altitude of the Point        | ``""``                                       | `ALTITUDE <https://tika.apache.org/1.18/api/org/apache/tika/        |
+| ``meta.altitude``          | The WGS84 Altitude of the Point        | ``""``                                       | `ALTITUDE <https://tika.apache.org/2.9.1/api/org/apache/tika/        |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#ALTITUDE>`__                       |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.rating``            | A user-assigned rating -1, [0..5]      | ``0``                                        | `RATING <https://tika.apache.org/1.18/api/org/apache/tika/          |
+| ``meta.rating``            | A user-assigned rating -1, [0..5]      | ``0``                                        | `RATING <https://tika.apache.org/2.9.1/api/org/apache/tika/          |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#RATING>`__                         |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
-| ``meta.comments``          | Comments                               | ``"Comments"``                               | `COMMENTS <https://tika.apache.org/1.18/api/org/apache/tika/        |
+| ``meta.comments``          | Comments                               | ``"Comments"``                               | `COMMENTS <https://tika.apache.org/2.9.1/api/org/apache/tika/        |
 |                            |                                        |                                              | metadata/TikaCoreProperties.html#COMMENTS>`__                       |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
 | ``meta.raw``               | An object with all raw metadata        | ``"meta.raw.channels": "2"``                 |                                                                     |
@@ -512,7 +512,7 @@ FSCrawler may create the following fields depending on configuration and availab
 | ``external``               | Additional tags                        | ``{ "tenantId": 22, "projectId": 33 }``      |                                                                     |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
 
-For more information about meta data, please read the `TikaCoreProperties <https://tika.apache.org/2.9.0/api/org/apache/tika/metadata/TikaCoreProperties.html>`__.
+For more information about meta data, please read the `TikaCoreProperties <https://tika.apache.org/2.9.1/api/org/apache/tika/metadata/TikaCoreProperties.html>`__.
 
 Here is a typical JSON document generated by the crawler:
 
