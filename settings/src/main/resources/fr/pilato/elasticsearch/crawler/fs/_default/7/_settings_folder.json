@@ -23,6 +23,18 @@
           "filename": {
             "type": "keyword",
             "store": true
+          },
+          "created": {
+            "type": "date",
+            "format": "date_optional_time"
+          },
+          "last_modified": {
+            "type": "date",
+            "format": "date_optional_time"
+          },
+          "last_accessed": {
+            "type": "date",
+            "format": "date_optional_time"
           }
         }
       },
