@@ -61,8 +61,6 @@ public class Folder {
         file.setLastModified(Date.from(modification.atZone(ZoneId.systemDefault()).toInstant()));
         file.setCreated(Date.from(creation.atZone(ZoneId.systemDefault()).toInstant()));
         file.setLastAccessed(Date.from(lastAccess.atZone(ZoneId.systemDefault()).toInstant()));
-
-
     }
 
     public Path getPath() {
