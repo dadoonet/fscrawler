@@ -1,0 +1,12 @@
+{
+  "template": {
+    "mappings": {
+      "properties": {
+        "attachment": {
+          "type": "binary",
+          "doc_values": false
+        }
+      }
+    }
+  }
+}

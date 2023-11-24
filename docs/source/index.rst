@@ -24,7 +24,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 
     * |ES_version8|_.
     * |ES_version7|_.
-    * |ES_version6|_.
+    * |ES_version6|_. (Deprecated)
 
 .. toctree::
    :caption: Installation Guide

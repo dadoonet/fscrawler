@@ -49,6 +49,11 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
           cache: 'maven'
+      - name: Cache Docker images
+        uses: ScribeMD/docker-cache@0.3.6
+        with:
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
+        continue-on-error: true
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests
 
@@ -64,6 +69,11 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
           cache: 'maven'
+      - name: Cache Docker images
+        uses: ScribeMD/docker-cache@0.3.6
+        with:
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
+        continue-on-error: true
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-7x
 
@@ -79,6 +89,11 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
           cache: 'maven'
+      - name: Cache Docker images
+        uses: ScribeMD/docker-cache@0.3.6
+        with:
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
+        continue-on-error: true
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-6x
 

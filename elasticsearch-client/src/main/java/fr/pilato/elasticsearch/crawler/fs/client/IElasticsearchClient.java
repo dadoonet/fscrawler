@@ -23,7 +23,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -63,8 +62,26 @@ public interface IElasticsearchClient extends Closeable {
      * @param index index name
      * @param ignoreExistingIndex don't fail if the index already exists
      * @param indexSettings index settings if any
+     * @deprecated use index templates instead
      */
+    @Deprecated
     void createIndex(String index, boolean ignoreExistingIndex, String indexSettings) throws ElasticsearchClientException;
+
+    /**
+     * Create or update a component template
+     * @param name  component template name
+     * @param json  template definition
+     * @throws ElasticsearchClientException in case of error
+     */
+    void pushComponentTemplate(String name, String json) throws ElasticsearchClientException;
+
+    /**
+     * Create or update an index template
+     * @param name  index template name
+     * @param json  template definition
+     * @throws ElasticsearchClientException in case of error
+     */
+    void pushIndexTemplate(String name, String json) throws ElasticsearchClientException;
 
     /**
      * Check if an index exists
@@ -134,12 +151,10 @@ public interface IElasticsearchClient extends Closeable {
     void deleteSingle(String index, String id) throws ElasticsearchClientException;
 
     /**
-     * Create all needed indices
+     * Create all needed component and index templates
      * @throws Exception in case of error
-     * @deprecated replace with an index template
      */
-    @Deprecated
-    void createIndices() throws Exception;
+    void createIndexAndComponentTemplates() throws Exception;
 
     /**
      * Run a search

@@ -67,14 +67,14 @@ public class ElasticsearchClientIT extends AbstractITCase {
     private final IElasticsearchClient esClient = managementService.getClient();
 
     @Before
-    public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
+    public void cleanExistingIndex() throws ElasticsearchClientException {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
         esClient.deleteIndex(getCrawlerName());
         esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
     }
 
     @Test
-    public void testDeleteIndex() throws IOException, ElasticsearchClientException {
+    public void testDeleteIndex() throws ElasticsearchClientException {
         esClient.deleteIndex("does-not-exist-index");
         esClient.createIndex(getCrawlerName(), false, null);
         assertThat(esClient.isExistingIndex(getCrawlerName()), is(true));
@@ -83,7 +83,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testWaitForHealthyIndex() throws IOException, ElasticsearchClientException {
+    public void testWaitForHealthyIndex() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
         try {
@@ -95,14 +95,14 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testCreateIndex() throws IOException, ElasticsearchClientException {
+    public void testCreateIndex() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         boolean exists = esClient.isExistingIndex(getCrawlerName());
         assertThat(exists, is(true));
     }
 
     @Test
-    public void testCreateIndexWithSettings() throws IOException, ElasticsearchClientException {
+    public void testCreateIndexWithSettings() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, "{\n" +
                 "  \"settings\": {\n" +
                 "    \"number_of_shards\": 1,\n" +
@@ -114,13 +114,13 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testRefresh() throws IOException, ElasticsearchClientException {
+    public void testRefresh() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.refresh(getCrawlerName());
     }
 
     @Test
-    public void testCreateIndexAlreadyExistsShouldFail() throws IOException, ElasticsearchClientException {
+    public void testCreateIndexAlreadyExistsShouldFail() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
         try {
@@ -132,14 +132,14 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testCreateIndexAlreadyExistsShouldBeIgnored() throws IOException, ElasticsearchClientException {
+    public void testCreateIndexAlreadyExistsShouldBeIgnored() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
         esClient.createIndex(getCrawlerName(), true, null);
     }
 
     @Test
-    public void testCreateIndexWithErrors() throws IOException {
+    public void testCreateIndexWithErrors() {
         try {
             esClient.createIndex(getCrawlerName(), false, "{this is wrong}");
             fail("we should reject creation of an already existing index");
@@ -149,7 +149,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testSearch() throws IOException, ElasticsearchClientException {
+    public void testSearch() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, "{\n" +
                 "  \"mappings\": {\n" +
                 "    \"properties\": {\n" +
@@ -363,7 +363,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testFindVersion() throws IOException, ElasticsearchClientException {
+    public void testFindVersion() throws ElasticsearchClientException {
         String version = esClient.getVersion();
         logger.info("Current elasticsearch version: [{}]", version);
 
@@ -375,7 +375,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testPipeline() throws IOException, ElasticsearchClientException {
+    public void testPipeline() throws ElasticsearchClientException {
         String crawlerName = getCrawlerName();
 
         // Create an empty ingest pipeline
@@ -406,7 +406,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testBulk() throws IOException, ElasticsearchClientException {
+    public void testBulk() throws ElasticsearchClientException {
         {
             long nbItems = RandomizedTest.randomLongBetween(5, 20);
 
@@ -502,7 +502,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
 
             esClient.createIndex(getCrawlerName(), false, indexSettings);
 
-            long nbItems = RandomizedTest.randomLongBetween(5, 20);
+            long nbItems = RandomizedTest.randomLongBetween(6, 20);
 
             ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
 
@@ -538,7 +538,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testDeleteSingle() throws IOException, ElasticsearchClientException {
+    public void testDeleteSingle() throws ElasticsearchClientException {
         esClient.indexSingle(getCrawlerName(), "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
         esClient.indexSingle(getCrawlerName(), "2", "{ \"foo\": { \"bar\": \"baz\" } }", null);
         esClient.indexSingle(getCrawlerName(), "3", "{ \"number\": 1 }", null);
@@ -567,7 +567,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void testExists() throws IOException, ElasticsearchClientException {
+    public void testExists() throws ElasticsearchClientException {
         esClient.indexSingle(getCrawlerName(), "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
         esClient.refresh(getCrawlerName());
         assertThat(esClient.exists(getCrawlerName(), "1"), is(true));
