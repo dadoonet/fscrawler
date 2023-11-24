@@ -28,7 +28,8 @@ public abstract class ElasticsearchOperation implements FsCrawlerOperation<Elast
 
     enum Operation {
         INDEX,
-        DELETE
+        DELETE,
+        UPDATE
     }
 
     public ElasticsearchOperation(Operation operation, String index, String id) {

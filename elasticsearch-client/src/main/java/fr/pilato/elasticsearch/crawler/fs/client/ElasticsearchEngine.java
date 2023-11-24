@@ -43,6 +43,7 @@ public class ElasticsearchEngine implements Engine<ElasticsearchOperation, Elast
         request.getOperations().forEach(r -> {
             StringBuilder bulkRequest = new StringBuilder();
             // Header
+            // TODO r.getOperation() must return "update"
             bulkRequest.append("{\"")
                     .append(r.getOperation().toString().toLowerCase(Locale.ROOT))
                     .append("\":{\"_index\":\"")

@@ -379,7 +379,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void indexRawJson(String index, String id, String json, String pipeline) {
         logger.trace("JSon indexed : {}", json);
+        if (this.settings.getElasticsearch().getUseUpdateApi()){
+            bulkProcessor.add(new ElasticsearchUpdateOperation(index, id, pipeline, json));
+        } else { 
         bulkProcessor.add(new ElasticsearchIndexOperation(index, id, pipeline, json));
+        }
     }
 
     @Override
