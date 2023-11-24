@@ -1,0 +1,51 @@
+{
+  "template": {
+    "mappings": {
+      "properties": {
+        "file": {
+          "properties": {
+            "content_type": {
+              "type": "keyword"
+            },
+            "filename": {
+              "type": "keyword",
+              "store": true
+            },
+            "extension": {
+              "type": "keyword"
+            },
+            "filesize": {
+              "type": "long"
+            },
+            "indexed_chars": {
+              "type": "long"
+            },
+            "indexing_date": {
+              "type": "date",
+              "format": "date_optional_time"
+            },
+            "created": {
+              "type": "date",
+              "format": "date_optional_time"
+            },
+            "last_modified": {
+              "type": "date",
+              "format": "date_optional_time"
+            },
+            "last_accessed": {
+              "type": "date",
+              "format": "date_optional_time"
+            },
+            "checksum": {
+              "type": "keyword"
+            },
+            "url": {
+              "type": "keyword",
+              "index": false
+            }
+          }
+        }
+      }
+    }
+  }
+}
