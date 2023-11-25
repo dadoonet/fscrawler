@@ -302,6 +302,18 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "          \"filename\": {\n" +
                 "            \"type\": \"keyword\",\n" +
                 "            \"store\": true\n" +
+                "          },\n" +
+                "          \"created\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
+                "          },\n" +
+                "          \"last_modified\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
+                "          },\n" +
+                "          \"last_accessed\": {\n" +
+                "            \"type\": \"date\",\n" +
+                "            \"format\": \"date_optional_time\"\n" +
                 "          }\n" +
                 "        }\n" +
                 "      },\n" +
