@@ -50,7 +50,6 @@ public class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
                 "--rest",
                 "--upgrade",
                 "--restart",
-                "--debug",
                 "jobName"
         };
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
@@ -61,8 +60,6 @@ public class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
         assertThat(command.rest, is(true));
         assertThat(command.upgrade, is(true));
         assertThat(command.restart, is(true));
-        assertThat(command.debug, is(true));
-        assertThat(command.trace, is(false));
         assertThat(command.silent, is(false));
         assertThat(command.jobName.get(0), is("jobName"));
     }
