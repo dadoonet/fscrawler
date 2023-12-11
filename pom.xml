@@ -713,7 +713,7 @@
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna</artifactId>
-                <version>5.13.0</version>
+                <version>5.14.0</version>
             </dependency>
 
             <!-- Fix json-path 2.6.0 vs tika 1.27 transitive dependency -->
