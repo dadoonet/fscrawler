@@ -129,9 +129,9 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getElasticsearch().getIndex(), is("test"));
         assertThat(settings.getElasticsearch().getIndexFolder(), is("test_folder"));
         assertThat(settings.getElasticsearch().getNodes(), iterableWithSize(1));
-        assertThat(settings.getElasticsearch().getNodes().get(0).getUrl(), is("http://127.0.0.1:9200"));
+        assertThat(settings.getElasticsearch().getNodes().get(0).getUrl(), is("https://127.0.0.1:9200"));
         assertThat(settings.getElasticsearch().getNodes().get(0).getCloudId(), is(nullValue()));
-        assertThat(settings.getElasticsearch().getNodes().get(0).decodedUrl(), is("http://127.0.0.1:9200"));
+        assertThat(settings.getElasticsearch().getNodes().get(0).decodedUrl(), is("https://127.0.0.1:9200"));
 
         assertThat(settings.getElasticsearch().getUsername(), is(nullValue()));
         assertThat(settings.getElasticsearch().getPassword(), is(nullValue()));

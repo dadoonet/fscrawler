@@ -220,8 +220,10 @@ Node settings
 ^^^^^^^^^^^^^
 
 FSCrawler is using elasticsearch REST layer to send data to your
-running cluster. By default, it connects to ``http://127.0.0.1:9200``
-which is the default when running a local node on your machine.
+running cluster. By default, it connects to ``https://127.0.0.1:9200``
+which is the default when running a local node on your machine. 
+Note that using ``https`` requires SSL Configuration set up.
+For more information, read  :ref:`ssl`.
 
 Of course, in production, you would probably change this and connect to
 a production cluster:
@@ -231,7 +233,7 @@ a production cluster:
    name: "test"
    elasticsearch:
      nodes:
-     - url: "http://mynode1.mycompany.com:9200"
+     - url: "https://mynode1.mycompany.com:9200"
 
 If you are using `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
 you can just use the ``Cloud ID`` which is available in the Cloud Console and paste it:
@@ -257,12 +259,12 @@ You can define multiple nodes:
    name: "test"
    elasticsearch:
      nodes:
-     - url: "http://mynode1.mycompany.com:9200"
-     - url: "http://mynode2.mycompany.com:9200"
-     - url: "http://mynode3.mycompany.com:9200"
+     - url: "https://mynode1.mycompany.com:9200"
+     - url: "https://mynode2.mycompany.com:9200"
+     - url: "https://mynode3.mycompany.com:9200"
 
 .. note::
-    .. versionadded:: 2.2 you can use HTTPS instead of default HTTP.
+    .. versionadded:: 2.2 you can use HTTPS instead of HTTP.
 
     .. code:: yaml
 
