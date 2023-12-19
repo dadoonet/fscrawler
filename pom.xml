@@ -38,28 +38,17 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch8.version>8.11.2</elasticsearch8.version>
-        <elasticsearch7.version>7.17.14</elasticsearch7.version>
+        <elasticsearch8.version>8.11.3</elasticsearch8.version>
+        <elasticsearch7.version>7.17.16</elasticsearch7.version>
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch8.version}</elasticsearch.version>
 
         <tika.version>2.9.1</tika.version>
-        <jackson.version>2.15.3</jackson.version>
+        <jackson.version>2.16.0</jackson.version>
         <jsonpath.version>2.8.0</jsonpath.version>
-        <slf4j.version>2.0.9</slf4j.version>
         <log4j.version>2.22.0</log4j.version>
         <jansi.version>2.4.1</jansi.version>
         <jersey.version>3.1.5</jersey.version>
-
-        <!--
-            Because elasticsearch is not using transitive dependencies, we need to be explicit here
-        -->
-        <commons-logging.version>1.3.0</commons-logging.version>
-        <commons-codec.version>1.16.0</commons-codec.version>
-        <snakeyaml.version>2.2</snakeyaml.version>
-        <httpclient.version>4.5.14</httpclient.version>
-        <httpasyncclient.version>4.1.5</httpasyncclient.version>
-        <httpcore.version>4.4.16</httpcore.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
@@ -415,13 +404,6 @@
                             </goals>
                         </execution>
                     </executions>
-                    <configuration>
-                        <excludeVulnerabilityIds>
-                            <!-- won't be fixed by SnakeYaml team
-                             https://bitbucket.org/snakeyaml/snakeyaml/issues/561/cve-2022-1471-vulnerability-in -->
-                            <excludeVulnerabilityId>CVE-2022-1471</excludeVulnerabilityId>
-                        </excludeVulnerabilityIds>
-                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.sonatype.plugins</groupId>
@@ -617,31 +599,20 @@
                 <artifactId>jackson-module-jaxb-annotations</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path</artifactId>
                 <version>${jsonpath.version}</version>
             </dependency>
-            <!-- https://ossindex.sonatype.org/vulnerability/CVE-2023-1370 -->
+            <!--
+                JSON Path 2.8.0 brings json-smart 2.4.1
+             https://ossindex.sonatype.org/vulnerability/CVE-2023-1370
+             -->
             <dependency>
                 <groupId>net.minidev</groupId>
                 <artifactId>json-smart</artifactId>
                 <version>2.5.0</version>
-            </dependency>
-
-            <!--
-            Because elasticsearch is not using transitive dependencies, we need to be explicit here
-            -->
-            <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
-            </dependency>
-            <!-- this is needed for Tika 1.27 vs Jackson 2.12.3 -->
-            <dependency>
-                <groupId>com.fasterxml.woodstox</groupId>
-                <artifactId>woodstox-core</artifactId>
-                <version>6.5.1</version>
             </dependency>
 
             <!-- This is needed to compile on my machine :( -->
@@ -695,46 +666,11 @@
                 <version>${tika.version}</version>
             </dependency>
 
-            <!-- Fix CVE-2023-32697 -->
-            <dependency>
-                <groupId>org.xerial</groupId>
-                <artifactId>sqlite-jdbc</artifactId>
-                <version>3.44.1.0</version>
-            </dependency>
-
-            <!-- Fix tika-parsers-standard-package 2.0.0 vs tika-parser-scientific-module:2.0.0 transitive dependency -->
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>jcl-over-slf4j</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-
-            <!-- Fix org.elasticsearch.client:elasticsearch-rest-high-level-client:7.16.1 vs org.apache.tika:tika-parser-scientific-module:2.1.0 transitive dependency -->
-            <dependency>
-                <groupId>net.java.dev.jna</groupId>
-                <artifactId>jna</artifactId>
-                <version>5.14.0</version>
-            </dependency>
-
-            <!-- Fix json-path 2.6.0 vs tika 1.27 transitive dependency -->
+            <!-- Fix json-path 2.8.0 vs tika 2.9.1 transitive dependency -->
             <dependency>
                 <groupId>org.ow2.asm</groupId>
                 <artifactId>asm</artifactId>
                 <version>9.6</version>
-            </dependency>
-
-            <!-- Because of CVE-2019-5427 and CVE-2019-13990. Comes from tika-parser-scientific-module:2.0.0 dep -->
-            <dependency>
-                <groupId>org.quartz-scheduler</groupId>
-                <artifactId>quartz</artifactId>
-                <version>2.3.2</version>
-            </dependency>
-
-            <!-- Because of CVE-2021-37714 and CVE-2015-6748 - this comes from Tika 2.1.0 -->
-            <dependency>
-                <groupId>org.jsoup</groupId>
-                <artifactId>jsoup</artifactId>
-                <version>1.17.1</version>
             </dependency>
 
             <!-- Version conflict between
@@ -750,16 +686,6 @@
 
             <!-- Version conflict between
             org.apache.tika:tika-parsers-standard-package:2.1.0 deps
-            org.apache.tika:tika-parser-scientific-module:2.1.0 deps
-            -->
-            <dependency>
-                <groupId>org.jdom</groupId>
-                <artifactId>jdom2</artifactId>
-                <version>2.0.6.1</version>
-            </dependency>
-
-            <!-- Version conflict between
-            org.apache.tika:tika-parsers-standard-package:2.1.0 deps
             -->
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -767,10 +693,7 @@
                 <version>3.14.0</version>
             </dependency>
 
-            <!-- Version conflict between
-            org.elasticsearch.client:elasticsearch-rest-high-level-client:7.14.1 deps
-            org.apache.tika:tika-parser-scientific-module:2.1.0 deps
-            -->
+            <!-- Too old in org.apache.tika:tika-parser-scientific-module:2.9.1 deps -->
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
@@ -849,17 +772,7 @@
                 <artifactId>jersey-client</artifactId>
                 <version>${jersey.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.glassfish.jersey.core</groupId>
-                <artifactId>jersey-common</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-            <!-- Some Jersey transitive dependencies are using a 1.3.4 version, so we need to be explicit -->
-            <dependency>
-                <groupId>jakarta.annotation</groupId>
-                <artifactId>jakarta.annotation-api</artifactId>
-                <version>2.1.1</version>
-            </dependency>
+
             <!-- Logging dependencies -->
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
@@ -910,59 +823,18 @@
                 <optional>true</optional>
             </dependency>
             <!--
-                Because elasticsearch is not using transitive dependencies, we need to be explicit here
+                Too old version otherwise (From Tika 2.9.1 and log4j-jcl 2.22.0)
             -->
             <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
-                <version>${commons-logging.version}</version>
-            </dependency>
-            <!--
-                Because of json-path  which is using a higher version, we need to be explicit here
-            -->
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
+                <version>1.3.0</version>
             </dependency>
 
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>2.15.1</version>
-            </dependency>
-
-            <!-- Used by elasticsearch client and tika parsers -->
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient</artifactId>
-                <version>${httpclient.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpasyncclient</artifactId>
-                <version>${httpasyncclient.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpcore</artifactId>
-                <version>${httpcore.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpcore-nio</artifactId>
-                <version>${httpcore.version}</version>
-            </dependency>
-            <!-- Used by htmlunit client and tika parsers -->
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpmime</artifactId>
-                <version>${httpclient.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-codec</groupId>
-                <artifactId>commons-codec</artifactId>
-                <version>${commons-codec.version}</version>
             </dependency>
 
             <!-- Test dependencies -->
@@ -980,18 +852,6 @@
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
                 <artifactId>randomizedtesting-runner</artifactId>
                 <version>2.8.1</version>
-            </dependency>
-            <!-- CVE Temporary Fix -->
-            <dependency>
-                <groupId>org.bouncycastle</groupId>
-                <artifactId>bcprov-jdk15on</artifactId>
-                <version>1.70</version>
-            </dependency>
-            <!-- CVE Temporary Fix -->
-            <dependency>
-                <groupId>org.eclipse.jetty.websocket</groupId>
-                <artifactId>websocket-client</artifactId>
-                <version>9.4.53.v20231009</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
