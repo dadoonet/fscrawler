@@ -223,6 +223,16 @@ If you want to skip the check, you can run with ``-Dossindex.fail=false``::
 
         mvn clean install -Dossindex.fail=false
 
+If a CVE needs a temporary exclusion, you can add it to the ``excludeVulnerabilityIds`` list
+of the ``ossindex`` maven plugin in the ``pom.xml`` file::
+
+    <configuration>
+        <excludeVulnerabilityIds>
+            <!-- LINK TO CVE and COMMENT -->
+            <excludeVulnerabilityId>CVE-2022-1471</excludeVulnerabilityId>
+        </excludeVulnerabilityIds>
+    </configuration>
+
 Docker build
 ^^^^^^^^^^^^
 
