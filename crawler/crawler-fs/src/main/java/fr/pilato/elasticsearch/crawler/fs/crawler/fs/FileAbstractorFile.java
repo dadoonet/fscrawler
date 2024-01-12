@@ -30,7 +30,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -89,6 +91,20 @@ public class FileAbstractorFile extends FileAbstractor<File> {
     public Collection<FileAbstractModel> getFiles(String dir) {
         logger.debug("Listing local files from {}", dir);
 
+        // TODO Replace with
+        /*
+        try {
+            Files.list(Paths.get(dir))
+                    .filter(p -> fsSettings.getFs().isFollowSymlinks() || !Files.isSymbolicLink(p))
+                    // We can add the filter directly here
+                    // .filter(s -> s.toString().endsWith(".xml"))
+                    .sorted()
+                    .forEach(p -> result.add(toFileAbstractModel(dir, p.toFile())));
+        } catch (IOException e) {
+            // Logger
+        }
+        */
+
         File[] files = new File(dir).listFiles(file -> {
             if (fsSettings.getFs().isFollowSymlinks()) return true;
             return !Files.isSymbolicLink(file.toPath());
@@ -96,6 +112,9 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         Collection<FileAbstractModel> result;
 
         if (files != null) {
+            // For tests purposes, we want to sort the list in a predictible way
+            Arrays.sort(files);
+
             result = new ArrayList<>(files.length);
 
             // Iterate other files
