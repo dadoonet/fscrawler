@@ -202,22 +202,11 @@ public class FsCrawlerUtil {
 
         // No rules ? Fine, we index everything
         if (excludes == null || excludes.isEmpty()) {
-            logger.trace("no rules");
+            logger.trace("no rules = no exclusion");
             return false;
         }
 
-        // Exclude rules : we know that whatever includes rules are, we should exclude matching files
-        for (String exclude : excludes) {
-            String regex = exclude.toLowerCase().replace("?", ".?").replace("*", ".*?");
-            logger.trace("regex is [{}]", regex);
-            if (filename.toLowerCase().matches(regex)) {
-                logger.trace("does match exclude regex");
-                return true;
-            }
-        }
-
-        logger.trace("does not match any exclude pattern");
-        return false;
+        return isMatching(filename, excludes, "exclusion");
     }
 
     /**
@@ -231,20 +220,28 @@ public class FsCrawlerUtil {
 
         // No rules ? Fine, we index everything
         if (includes == null || includes.isEmpty()) {
-            logger.trace("no include rules");
+            logger.trace("no rules = include all");
             return true;
         }
 
-        for (String include : includes) {
-            String regex = include.toLowerCase().replace("?", ".?").replace("*", ".*?");
-            logger.trace("regex is [{}]", regex);
-            if (filename.toLowerCase().matches(regex)) {
-                logger.trace("does match include regex");
+        return isMatching(filename, includes, "inclusion");
+    }
+
+    public static boolean isMatching(String filename, List<String> matches, String type) {
+        logger.debug("checking {} for filename = [{}], matches = [{}]", type, filename, matches);
+
+        for (String match : matches) {
+            String regex = match.toLowerCase().replace("?", ".?").replace("*", ".*");
+            String filenameLowerCase = filename.toLowerCase();
+            if (filenameLowerCase.matches(regex)) {
+                logger.trace("✅ [{}] does match {} regex [{}] (was [{}])", filenameLowerCase, type, regex, match);
                 return true;
+            } else {
+                logger.trace("❌ [{}] does not match {} regex [{}] (was [{}])", filenameLowerCase, type, regex, match);
             }
         }
 
-        logger.trace("does not match any include pattern");
+        logger.trace("does not match any pattern for {}", type);
         return false;
     }
 
@@ -271,10 +268,10 @@ public class FsCrawlerUtil {
             Pattern pattern = Pattern.compile(filter, Pattern.MULTILINE | Pattern.UNIX_LINES);
             logger.trace("Testing filter [{}]", filter);
             if (!pattern.matcher(content).find()) {
-                logger.trace("Filter [{}] is not matching.", filter);
+                logger.trace("Filter [{}] is not matching.", filter);
                 return false;
             } else {
-                logger.trace("Filter [{}] is matching.", filter);
+                logger.trace("Filter [{}] is matching.", filter);
             }
         }
 
