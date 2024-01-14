@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -33,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
+import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler.SETTINGS_YAML;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -94,5 +96,22 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         FsCrawlerCli.main(args);
 
         assertThat(Files.exists(jobDir.resolve(FsJobFileHandler.FILENAME)), is(false));
+    }
+
+    @Test(expected = JsonParseException.class)
+    public void testWithWrongSettingsFile() throws Exception {
+        String jobName = "fscrawler_wrong_settings";
+
+        Path jobDir = metadataDir.resolve(jobName);
+        Files.createDirectories(jobDir);
+        Files.writeString(jobDir.resolve(SETTINGS_YAML), "" +
+                "name: \"test\"\n" +
+                "fs:\n" +
+                "  url: \"/path/to/docs\"\n" +
+                // Wrong indentation
+                " follow_symlink: false\n");
+
+        String[] args = { "--config_dir", metadataDir.toString(), "--loop", "1", jobName };
+        FsCrawlerCli.main(args);
     }
 }
