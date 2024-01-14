@@ -91,10 +91,12 @@ public class FsCrawlerCli {
         @Parameter(names = "--upgrade", description = "Upgrade elasticsearch indices from one old version to the last version.")
         boolean upgrade = false;
 
-        @Parameter(names = "--debug", description = "Debug mode")
+        @Deprecated
+        @Parameter(names = "--debug", description = "Debug mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\" instead)")
         boolean debug = false;
 
-        @Parameter(names = "--trace", description = "Trace mode")
+        @Deprecated
+        @Parameter(names = "--trace", description = "Trace mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=trace\" instead)")
         boolean trace = false;
 
         @Parameter(names = "--silent", description = "Silent mode")
@@ -109,6 +111,15 @@ public class FsCrawlerCli {
         FsCrawlerCommand command = commandParser(args);
 
         if (command != null) {
+            if (command.debug) {
+                // Deprecated command line option
+                logger.warn("--debug option has been deprecated. Use FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\" instead.");
+            }
+            if (command.trace) {
+                // Deprecated command line option
+                logger.warn("--trace option has been deprecated. Use FS_JAVA_OPTS=\"-DLOG_LEVEL=trace\" instead.");
+            }
+
             // We change the log level if needed
             changeLoggerContext(command);
 

@@ -5,8 +5,6 @@ CLI options
 
 -  ``--help`` displays help
 -  ``--silent`` runs in silent mode. No output is generated on the console.
--  ``--debug`` runs in debug mode. This applies to log files only. See also :ref:`logger`.
--  ``--trace`` runs in trace mode (more verbose than debug). This applies to log files only. See also :ref:`logger`.
 -  ``--config_dir`` defines directory where jobs are stored instead of
    default ``~/.fscrawler``.
 -  ``--username`` defines the username to use when using an secured
