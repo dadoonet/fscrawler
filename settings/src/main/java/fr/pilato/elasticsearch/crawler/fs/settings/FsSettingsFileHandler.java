@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 /**
@@ -46,7 +47,7 @@ public class FsSettingsFileHandler extends MetaFileHandler {
         try {
             // We try the yml first
             return readAsYaml(jobname);
-        } catch (IOException e) {
+        } catch (NoSuchFileException e) {
             // Then we try json
             return readAsJson(jobname);
         }

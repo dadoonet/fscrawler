@@ -332,7 +332,12 @@ public class FsCrawlerCli {
         }
 
         logger.debug("Starting job [{}]...", jobName);
-        fsSettings = loadSettings(configDir, jobName);
+        try {
+            fsSettings = loadSettings(configDir, jobName);
+        } catch (Exception e) {
+            logger.fatal("Cannot parse the configuration file: {}", e.getMessage());
+            throw e;
+        }
 
         if (fsSettings == null) {
             logger.debug("job [{}] does not exist.", jobName);
