@@ -20,7 +20,7 @@ FS_HOME=`dirname "$SCRIPT"`/..
 
 # make FS_HOME absolute
 FS_HOME=`cd "$FS_HOME"; pwd`
-FS_CLASSPATH="$FS_HOME/lib/*"
+FS_CLASSPATH="$FS_HOME/lib/*:$FS_HOME/external/*"
 
 if [ -x "$JAVA_HOME/bin/java" ]; then
     JAVA="$JAVA_HOME/bin/java"

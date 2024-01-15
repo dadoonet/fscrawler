@@ -49,10 +49,11 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
    :caption: Administration Guide
    :maxdepth: 3
 
-   admin/status
+   admin/layout
    admin/cli-options
    admin/jvm-settings
    admin/logger
+   admin/status
    admin/fs/index
    admin/fs/simple
    admin/fs/local-fs
@@ -111,9 +112,9 @@ Incompatible 3rd party library licenses
 =======================================
 
 To support JPEG 2000 (JPX/JP2) images, you need to manually add |JPEG2000_version|_ library to
-the ``lib`` directory::
+the ``external`` directory::
 
-    cd lib
+    cd external
     wget https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/1.4.0/jai-imageio-jpeg2000-1.4.0.jar
 
 See
