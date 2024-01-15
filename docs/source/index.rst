@@ -110,12 +110,11 @@ License
 Incompatible 3rd party library licenses
 =======================================
 
-Some libraries are not Apache2 compatible. Therefore they are not
-packaged with FSCrawler so you need to download and add manually them to
-the ``lib`` directory:
+To support JPEG 2000 (JPX/JP2) images, you need to manually add |JPEG2000_version|_ library to
+the ``lib`` directory::
 
--  for TIFF images, you need to add |Tiff_version|_ library
--  for JPEG 2000 (JPX) images, you need to add |JPEG2000_version|_ library
+    cd lib
+    wget https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/1.4.0/jai-imageio-jpeg2000-1.4.0.jar
 
 See
 `pdfbox documentation <https://pdfbox.apache.org/2.0/dependencies.html#jai-image-io>`__

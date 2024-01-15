@@ -53,7 +53,6 @@
 
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
-        <tiff.version>1.4.0</tiff.version>
         <jpeg.version>1.4.0</jpeg.version>
 
         <!-- To skip Tests -->

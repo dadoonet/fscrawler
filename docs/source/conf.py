@@ -221,7 +221,6 @@ rst_prolog = rst_prolog + """
 .. |ES_version6| replace:: Elasticsearch {fmt_es_version6}
 .. |ES_version7| replace:: Elasticsearch {fmt_es_version7}
 .. |ES_version8| replace:: Elasticsearch {fmt_es_version8}
-.. |Tiff_version| replace:: jai-imageio-core:{fmt_tiff_version}
 .. |JPEG2000_version| replace:: jai-imageio-jpeg2000:{fmt_jpeg_version}
 .. |Download_URL| replace:: Sonatype
 .. |Maven_Central| replace:: Maven Central
@@ -235,7 +234,6 @@ rst_prolog = rst_prolog + """
 .. _ES_version6: https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
 .. _ES_version7: https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
 .. _ES_version8: https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
-.. _Tiff_version: https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/{fmt_tiff_version}/
 .. _JPEG2000_version: https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{fmt_jpeg_version}/
 .. _Download_URL: {fmt_downloadUrl}
 .. _Maven_Central: https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/
@@ -245,7 +243,6 @@ fmt_tika_version=config.get('3rdParty', 'TikaVersion'),
 fmt_es_version6=config.get('3rdParty', 'ElasticsearchVersion6'),
 fmt_es_version7=config.get('3rdParty', 'ElasticsearchVersion7'),
 fmt_es_version8=config.get('3rdParty', 'ElasticsearchVersion8'),
-fmt_tiff_version=config.get('3rdParty', 'TiffVersion'),
 fmt_jpeg_version=config.get('3rdParty', 'JpegVersion'),
 fmt_downloadUrl=downloadUrl,
 fmt_release=release
