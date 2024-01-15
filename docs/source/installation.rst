@@ -27,7 +27,7 @@ Download FSCrawler
 
         You can also download a **SNAPSHOT** version from |Sonatype|_.
 
-See `Directory layout`_ to know more about the content of the distribution.
+See :ref:`layout` to know more about the content of the distribution.
 
 .. _docker:
 
