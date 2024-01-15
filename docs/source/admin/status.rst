@@ -1,5 +1,5 @@
 Status files
-------------
+============
 
 Once the crawler is running, it will write status information and
 statistics in:

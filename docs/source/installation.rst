@@ -27,22 +27,7 @@ Download FSCrawler
 
         You can also download a **SNAPSHOT** version from |Sonatype|_.
 
-The distribution contains:
-
-::
-
-   $ tree
-   .
-   ├── LICENSE
-   ├── NOTICE
-   ├── README.md
-   ├── bin
-   │   ├── fscrawler
-   │   └── fscrawler.bat
-   ├── config
-   │   └── log4j2.xml
-   └── lib
-       ├── ... All needed jars
+See :ref:`layout` to know more about the content of the distribution.
 
 .. _docker:
 
@@ -72,7 +57,10 @@ You can run FSCrawler with:
 
 .. code:: sh
 
-   docker run -it --rm -v ~/.fscrawler:/root/.fscrawler -v ~/tmp:/tmp/es:ro dadoonet/fscrawler fscrawler job_name
+   docker run -it --rm \
+        -v ~/.fscrawler:/root/.fscrawler \
+        -v ~/tmp:/tmp/es:ro \
+        dadoonet/fscrawler fscrawler job_name
 
 On the first run, if the job does not exist yet in ``~/.fscrawler``, FSCrawler will ask you if you want to create it:
 
@@ -90,6 +78,18 @@ On the first run, if the job does not exist yet in ``~/.fscrawler``, FSCrawler w
     Remember to change the URL of your elasticsearch instance as the container won't be able to see it
     running under the default ``127.0.0.1``. You will need to use the actual IP address of the host.
 
+If you need to add a 3rd party library (jar) or your Tika custom jar, you can put it in a ``external`` directory and
+mount it as well:
+
+.. code:: sh
+
+   docker run -it --rm \
+        -v ~/.fscrawler:/root/.fscrawler \
+        -v ~/tmp:/tmp/es:ro \
+        -v "$PWD/external:/usr/share/fscrawler/external" \
+        dadoonet/fscrawler fscrawler job_name
+
+.. _docker-compose:
 
 Using docker compose
 --------------------
@@ -104,6 +104,8 @@ In this section, the following directory layout is assumed:
   │       └── _settings.yaml
   ├── data
   │   └── <your files>
+  ├── external
+  │   └── <3rd party jars if needed>
   ├── logs
   │   └── <fscrawler logs>
   └── docker-compose.yml
@@ -278,6 +280,7 @@ And, prepare the following ``docker-compose.yml``. You will find this example in
           - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
           - ${PWD}/config:/root/.fscrawler
           - ${PWD}/logs:/usr/share/fscrawler/logs
+          - ${PWD}/external:/usr/share/fscrawler/external
         depends_on:
           elasticsearch:
             condition: service_healthy
@@ -519,6 +522,7 @@ And, prepare the following ``docker-compose.yml``. You will find this example in
           - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
           - ${PWD}/config:/root/.fscrawler
           - ${PWD}/logs:/usr/share/fscrawler/logs
+          - ${PWD}/external:/usr/share/fscrawler/external
         depends_on:
           enterprisesearch:
             condition: service_healthy

@@ -37,7 +37,7 @@ set JAVA_OPTS=%JAVA_OPTS% -Dlog4j2.formatMsgNoLookups=true
 REM If the user defined FS_JAVA_OPTS, we will use it to start the crawler
 set JAVA_OPTS=%JAVA_OPTS% %FS_JAVA_OPTS%
 
-set FS_CLASSPATH=%FS_HOME%/lib/*
+set FS_CLASSPATH="%FS_HOME%/lib/*";"%FS_HOME%/external/*"
 
 SET params='%*'
 
@@ -69,7 +69,7 @@ FOR /F "usebackq tokens=1* delims= " %%A IN (!params!) DO (
 	)
 )
 
-%JAVA% %JAVA_OPTS% -cp "%FS_CLASSPATH%" "${distribution.mainClassName}" !newparams!
+%JAVA% %JAVA_OPTS% -cp %FS_CLASSPATH% "${distribution.mainClassName}" !newparams!
 REM Return to original directory
 POPD
 ENDLOCAL
