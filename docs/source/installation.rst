@@ -89,6 +89,8 @@ mount it as well:
         -v "$PWD/external:/usr/share/fscrawler/external" \
         dadoonet/fscrawler fscrawler job_name
 
+.. _docker-compose:
+
 Using docker compose
 --------------------
 

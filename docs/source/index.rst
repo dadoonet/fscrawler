@@ -119,7 +119,7 @@ the ``external`` directory::
 
 See
 `pdfbox documentation <https://pdfbox.apache.org/2.0/dependencies.html#jai-image-io>`__
-for more details.
+for more details about the license details.
 
 Special thanks
 ==============

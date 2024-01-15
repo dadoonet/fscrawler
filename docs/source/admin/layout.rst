@@ -25,7 +25,11 @@ The directory layout of the project is as follows:
 
 The ``bin`` directory contains the scripts to run FSCrawler.
 
-The ``config`` directory contains the configuration files. See `Configuring the logger`_.
+The ``lib`` directory contains the FSCrawler jar file and all the dependencies.
+
+.. versionadded:: 2.10
+
+The ``config`` directory contains the configuration files. See :ref:`logger`.
 
 The ``external`` directory contains the external libraries you could add to FSCrawler. For example, if you want to
 add the ``jai-imageio-jpeg2000`` library to add support for JPEG2000 images, you can download it from
@@ -42,8 +46,6 @@ As this directory is empty by default, you can also mount it when using Docker i
         -v "$PWD/external:/usr/share/fscrawler/external" \
         dadoonet/fscrawler fscrawler job_name
 
-See also `Using docker`_ and `Using docker compose`_.
+See also :ref:`docker` and :ref:`docker-compose`.
 
-The ``lib`` directory contains the FSCrawler jar file and all the dependencies.
-
-The ``logs`` directory contains the log files. See `Configuring the logger`_.
+The ``logs`` directory contains the log files. See :ref:`logger`.
