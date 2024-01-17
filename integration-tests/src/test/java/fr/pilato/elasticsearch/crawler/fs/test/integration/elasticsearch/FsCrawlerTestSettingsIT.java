@@ -50,7 +50,7 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition().build();
         crawler = startCrawler(getCrawlerName(), fs,
                 generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
-                        100, TimeValue.timeValueSeconds(2), ByteSizeValue.parseBytesSizeValue("100b")), null);
+                        100, TimeValue.timeValueSeconds(2), ByteSizeValue.parseBytesSizeValue("100b"), false), null);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }

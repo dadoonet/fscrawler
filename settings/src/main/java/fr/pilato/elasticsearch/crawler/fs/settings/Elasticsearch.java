@@ -42,7 +42,18 @@ public class Elasticsearch {
     private int bulkSize = 100;
     private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
     private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
+    private String apiKey;
+    /**
+     * Username
+     * @deprecated Use apiKey instead
+     */
+    @Deprecated
     private String username;
+    /**
+     * Password
+     * @deprecated Use apiKey instead
+     */
+    @Deprecated
     @JsonIgnore
     private String password;
     private String pipeline;
@@ -55,7 +66,7 @@ public class Elasticsearch {
     }
 
     private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
-                          TimeValue flushInterval, ByteSizeValue byteSize, String username, String password, String pipeline,
+                          TimeValue flushInterval, ByteSizeValue byteSize, String apiKey, String username, String password, String pipeline,
                           String pathPrefix, boolean sslVerification, boolean pushTemplates) {
         this.nodes = nodes;
         this.index = index;
@@ -63,6 +74,7 @@ public class Elasticsearch {
         this.bulkSize = bulkSize;
         this.flushInterval = flushInterval;
         this.byteSize = byteSize;
+        this.apiKey = apiKey;
         this.username = username;
         this.password = password;
         this.pipeline = pipeline;
@@ -113,11 +125,26 @@ public class Elasticsearch {
         return byteSize;
     }
 
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
     public String getUsername() {
         return username;
     }
 
+    /**
+     * Provide the username to connect to Elasticsearch
+     * @param username The username
+     * @deprecated Use {@link #setApiKey(String)} instead
+     */
+    @Deprecated
     public void setUsername(String username) {
+        logger.warn("username is deprecated. Use apiKey instead.");
         this.username = username;
     }
 
@@ -126,12 +153,15 @@ public class Elasticsearch {
         return password;
     }
 
-    public boolean getSslVerification() {
-        return sslVerification;
-    }
-
+    /**
+     * Provide the password to connect to Elasticsearch
+     * @param password The password
+     * @deprecated Use {@link #setApiKey(String)} instead
+     */
+    @Deprecated
     @JsonProperty
     public void setPassword(String password) {
+        logger.warn("password is deprecated. Use apiKey instead.");
         this.password = password;
     }
 
@@ -149,6 +179,10 @@ public class Elasticsearch {
 
     public void setPathPrefix(String pathPrefix) {
         this.pathPrefix = pathPrefix;
+    }
+
+    public boolean isSslVerification() {
+        return sslVerification;
     }
 
     public void setSslVerification(boolean sslVerification) {
@@ -177,6 +211,7 @@ public class Elasticsearch {
         private String pathPrefix = null;
         private boolean sslVerification = true;
         private boolean pushTemplates = true;
+        private String apiKey = null;
 
         public Builder setNodes(List<ServerUrl> nodes) {
             this.nodes = nodes;
@@ -208,12 +243,33 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setApiKey(String apiKey) {
+            this.apiKey = apiKey;
+            return this;
+        }
+
+        /**
+         * Set the username (for tests only)
+         * @deprecated Use apiKey instead
+         * @param username  Username
+         * @return the current builder
+         */
+        @Deprecated
         public Builder setUsername(String username) {
+            logger.warn("username is deprecated. Use apiKey instead.");
             this.username = username;
             return this;
         }
 
+        /**
+         * Set the password (for tests only)
+         * @deprecated Use apiKey instead
+         * @param password  Password
+         * @return the current builder
+         */
+        @Deprecated
         public Builder setPassword(String password) {
+            logger.warn("password is deprecated. Use apiKey instead.");
             this.password = password;
             return this;
         }
@@ -239,7 +295,8 @@ public class Elasticsearch {
         }
 
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, username, password,
+            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, apiKey,
+                    username, password,
                     pipeline, pathPrefix, sslVerification, pushTemplates);
         }
     }

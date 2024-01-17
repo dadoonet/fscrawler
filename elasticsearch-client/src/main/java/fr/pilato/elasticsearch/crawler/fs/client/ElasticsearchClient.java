@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
@@ -35,6 +36,7 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
@@ -94,6 +96,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private int majorVersion;
     private int currentNode = -1;
     private int currentRun = -1;
+    private String apiKeyHeader = null;
 
     public ElasticsearchClient(Path config, FsSettings settings) {
         this.config = config;
@@ -150,11 +153,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
         ClientConfig config = new ClientConfig();
         // We need to suppress this, so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
-        HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(
-                settings.getElasticsearch().getUsername(),
-                settings.getElasticsearch().getPassword());
+
         SSLContext sslContext = null;
-        if (settings.getElasticsearch().getSslVerification()) {
+        if (settings.getElasticsearch().isSslVerification()) {
             // TODO implement this part and add elasticsearch ssl settings
             // If we have a truststore and a keystore, let's use it
             /*
@@ -182,8 +183,17 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
 
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
-                .withConfig(config)
-                .register(feature);
+                .withConfig(config);
+
+        // If we have an ApiKey, let's use it. Otherwise, we will use basic auth
+        if (FsCrawlerUtil.isNullOrEmpty(settings.getElasticsearch().getApiKey())) {
+            HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(
+                    settings.getElasticsearch().getUsername(),
+                    settings.getElasticsearch().getPassword());
+            clientBuilder.register(feature);
+        } else {
+            apiKeyHeader = "ApiKey " + settings.getElasticsearch().getApiKey();
+        }
         if (sslContext != null) {
             clientBuilder.sslContext(sslContext);
         }
@@ -809,6 +819,39 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return response;
     }
 
+    @Override
+    public String generateApiKey(String keyName) throws ElasticsearchClientException {
+        String request = "{\"name\":\"" + keyName + "\"}";
+        logger.debug("delete any existing api key for [{}]", keyName);
+        httpDelete("/_security/api_key", request);
+
+        logger.debug("generate an api key for [{}]", keyName);
+        String response = httpPost("/_security/api_key", request);
+
+        // Parse the response
+        DocumentContext document = parseJsonAsDocumentContext(response);
+        String key = document.read("$.api_key");
+        String encodedApiKey = document.read("$.encoded");
+
+        logger.debug("generated key for [{}]: [{}]", keyName, key);
+        logger.debug("encoded key for [{}]: [{}]", keyName, encodedApiKey);
+        return encodedApiKey;
+    }
+
+    @Override
+    public String generateElasticsearchToken() throws ElasticsearchClientException {
+        String request = "{\"grant_type\":\"client_credentials\"}";
+        logger.debug("generate an Elasticsearch Access Token");
+        String response = httpPost("/_security/oauth2/token", request);
+
+        // Parse the response
+        DocumentContext document = parseJsonAsDocumentContext(response);
+        String token = document.read("$.access_token");
+
+        logger.debug("generated Elasticsearch Access Token: [{}]", token);
+        return token;
+    }
+
     private void createIndex(Path jobMappingDir, int elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
         try {
             // If needed, we create the new settings for this files index
@@ -956,8 +999,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         Invocation.Builder builder = target
                 .request(MediaType.APPLICATION_JSON)
-                .header("Content-Type", "application/json");
-        builder.header("User-Agent", USER_AGENT);
+                .header(HttpHeaders.CONTENT_TYPE, "application/json");
+        builder.header(HttpHeaders.USER_AGENT, USER_AGENT);
+        if (apiKeyHeader != null) {
+            builder.header(HttpHeaders.AUTHORIZATION, apiKeyHeader);
+        }
 
         return builder;
     }

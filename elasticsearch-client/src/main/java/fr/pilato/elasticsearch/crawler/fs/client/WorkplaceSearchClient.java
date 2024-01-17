@@ -58,10 +58,17 @@ public class WorkplaceSearchClient implements IWorkplaceSearchClient {
         Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
         wpSearchClient = new WPSearchClient(config, jobMappingDir)
             .withHost(settings.getWorkplaceSearch().getServer().decodedUrl())
-            .withUsername(settings.getWorkplaceSearch().getUsername(), settings.getElasticsearch().getUsername())
-            .withPassword(settings.getWorkplaceSearch().getPassword(), settings.getElasticsearch().getPassword())
             .withBulkSize(settings.getWorkplaceSearch().getBulkSize())
             .withFlushInterval(settings.getWorkplaceSearch().getFlushInterval());
+
+        if (settings.getWorkplaceSearch().getElasticsearchToken() != null) {
+            // Using Elasticsearch Access Token
+            wpSearchClient.withElasticsearchToken(settings.getWorkplaceSearch().getElasticsearchToken());
+        } else {
+            wpSearchClient
+                    .withUsername(settings.getWorkplaceSearch().getUsername(), settings.getElasticsearch().getUsername())
+                    .withPassword(settings.getWorkplaceSearch().getPassword(), settings.getElasticsearch().getPassword());
+        }
         wpSearchClient.start();
 
         try {

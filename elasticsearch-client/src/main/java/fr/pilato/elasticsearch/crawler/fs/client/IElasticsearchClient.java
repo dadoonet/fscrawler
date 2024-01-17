@@ -208,4 +208,18 @@ public interface IElasticsearchClient extends Closeable {
      * @return  the outcome
      */
     String bulk(String ndjson) throws ElasticsearchClientException;
+
+    /**
+     * Generate an API key (for tests purposes only)
+     * @param keyName   the name of the key
+     * @return  the generated API key BASE64 encoded of key:value
+     */
+    String generateApiKey(String keyName) throws ElasticsearchClientException;
+
+
+    /**
+     * Generate an Elasticsearch Token (for tests purposes only)
+     * @return  the generated access token
+     */
+    String generateElasticsearchToken() throws ElasticsearchClientException;
 }

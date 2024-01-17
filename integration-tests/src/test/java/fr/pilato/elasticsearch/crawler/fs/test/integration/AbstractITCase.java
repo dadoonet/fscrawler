@@ -98,14 +98,18 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
     protected static String testClusterUrl;
+    @Deprecated
     protected final static String testClusterUser = getSystemProperty("tests.cluster.user", DEFAULT_USERNAME);
+    @Deprecated
     protected final static String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
+    protected static String testAccessToken = getSystemProperty("tests.cluster.accessToken", null);
     protected final static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
     protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", false);
 
     protected static Elasticsearch elasticsearchWithSecurity;
-    protected static FsCrawlerManagementServiceElasticsearchImpl managementService;
-    protected static FsCrawlerDocumentService documentService;
+    protected static FsCrawlerManagementServiceElasticsearchImpl managementService = null;
+    protected static FsCrawlerDocumentService documentService = null;
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -238,16 +242,19 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         staticLogger.info("Starting a client against [{}]", testClusterUrl);
         // We build the elasticsearch Client based on the parameters
-        elasticsearchWithSecurity = Elasticsearch.builder()
+        Elasticsearch.Builder builder = Elasticsearch.builder()
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
-                .setUsername(testClusterUser)
-                .setPassword(testClusterPass)
-                .setSslVerification(false)
-                .build();
+                .setSslVerification(false);
+        if (testApiKey != null) {
+            builder.setApiKey(testApiKey);
+        } else {
+            builder.setUsername(testClusterUser);
+            builder.setPassword(testClusterPass);
+        }
+        elasticsearchWithSecurity = builder.build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
 
         documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
-
         try {
             documentService.start();
         } catch (ElasticsearchClientException e) {
@@ -258,25 +265,51 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 testClusterUrl=DEFAULT_TEST_CLUSTER_HTTP_URL;
                 staticLogger.info("Starting a client against [{}]", testClusterUrl);
                 // We build the elasticsearch Client based on the parameters
-                elasticsearchWithSecurity = Elasticsearch.builder()
+                Elasticsearch.Builder builderForOlderService = Elasticsearch.builder()
                         .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
-                        .setUsername(testClusterUser)
-                        .setPassword(testClusterPass)
-                        .setSslVerification(false)
-                        .build();
+                        .setSslVerification(false);
+                if (testApiKey != null) {
+                    builderForOlderService.setApiKey(testApiKey);
+                } else {
+                    builderForOlderService.setUsername(testClusterUser);
+                    builderForOlderService.setPassword(testClusterPass);
+                }
+                elasticsearchWithSecurity = builderForOlderService.build();
                 fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
-                documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
-                documentService.start();
+                documentService.close();
+                documentService = null;
             }
+        }
+
+        // If an ApiKey was not provided, we need to generate one and recreate the services
+        if (testApiKey == null) {
+            // We make sure the cluster is running
+            managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
+            managementService.start();
+            // Generate the Api-Key
+            testApiKey = managementService.getClient().generateApiKey("fscrawler");
+            managementService.close();
+            managementService = null;
+
+            staticLogger.info("Restarting the services using the generated key [{}]", testApiKey);
         }
 
         // We make sure the cluster is running
         try {
-            managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-            managementService.start();
+            if (documentService == null) {
+                documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
+                documentService.start();
+            }
+            if (managementService == null) {
+                managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
+                managementService.start();
+            }
 
             String version = managementService.getVersion();
             staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
+
+            staticLogger.info("Generating an access token to use with Workplace Search");
+            testAccessToken = managementService.getClient().generateElasticsearchToken();
         } catch (ConnectException e) {
             // If we have an exception here, let's ignore the test
             staticLogger.warn("Integration tests are skipped: [{}]", e.getMessage());
@@ -310,7 +343,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static final String testCrawlerPrefix = "fscrawler_";
 
     protected static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
-                                                               TimeValue timeValue, ByteSizeValue byteSize) {
+                                                               TimeValue timeValue, ByteSizeValue byteSize,
+                                                               boolean useLoginPassword) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                 .setBulkSize(bulkSize);
@@ -329,8 +363,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             builder.setByteSize(byteSize);
         }
 
-        builder.setUsername(testClusterUser);
-        builder.setPassword(testClusterPass);
+        if (useLoginPassword) {
+            builder.setUsername(testClusterUser);
+            builder.setPassword(testClusterPass);
+        } else {
+            builder.setApiKey(testApiKey);
+        }
+
         builder.setSslVerification(false);
 
         return builder.build();

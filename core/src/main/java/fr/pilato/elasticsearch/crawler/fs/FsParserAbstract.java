@@ -223,6 +223,8 @@ public abstract class FsParserAbstract extends FsParser {
                 .setDeleted(stats.getNbDocDeleted())
                 .build();
         fsJobFileHandler.write(jobName, fsJob);
+        logger.debug("Updating job metadata after run for [{}]: lastrun [{}], indexed [{}], deleted [{}]",
+                jobName, scanDate, stats.getNbDocScan(), stats.getNbDocDeleted());
     }
 
     private void addFilesRecursively(FileAbstractor<?> path, String filepath, LocalDateTime lastScanDate)
@@ -310,6 +312,8 @@ public abstract class FsParserAbstract extends FsParser {
                         logger.debug("  - ignored file/dir: {}", filename);
                     }
                 }
+
+                logger.trace("End of parsing the folder [{}]", filepath);
             }
         }
 

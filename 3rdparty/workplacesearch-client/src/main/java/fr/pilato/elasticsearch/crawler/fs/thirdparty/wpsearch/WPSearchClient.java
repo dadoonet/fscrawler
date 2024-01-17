@@ -32,6 +32,7 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.io.FilenameUtils;
@@ -72,8 +73,11 @@ public class WPSearchClient implements Closeable {
 
     private Client client;
     private String host = DEFAULT_HOST;
+    @Deprecated
     private String username;
+    @Deprecated
     private String password;
+    private String elasticsearchToken;
     private int bulkSize;
     private TimeValue flushInterval;
 
@@ -83,6 +87,7 @@ public class WPSearchClient implements Closeable {
     private final Path rootDir;
     private final Path jobMappingDir;
     private String version;
+    private String elasticsearchTokenHeader = null;
 
     /**
      * Create a client
@@ -97,7 +102,9 @@ public class WPSearchClient implements Closeable {
      * @param username Username
      * @param defaultValue default value to use for username. Defaults to Elasticsearch username.
      * @return the current instance
+     * @deprecated use {@link #withElasticsearchToken(String)} instead
      */
+    @Deprecated
     public WPSearchClient withUsername(String username, String defaultValue) {
         if (username != null) {
             this.username = username;
@@ -108,17 +115,30 @@ public class WPSearchClient implements Closeable {
     }
 
     /**
-     * If needed we can allow passing a specific password. Defaults to "changeme".
+     * If needed we can allow passing a specific password.
      * @param password Password
      * @param defaultValue default value to use for password. Defaults to Elasticsearch password.
      * @return the current instance
+     * @deprecated use {@link #withElasticsearchToken(String)} instead
      */
+    @Deprecated
     public WPSearchClient withPassword(String password, String defaultValue) {
         if (password != null) {
             this.password = password;
         } else {
             this.password = defaultValue;
         }
+        return this;
+    }
+
+    /**
+     * Defines the Elasticsearch Token. Defaults to null.
+     * @see <a href="https://www.elastic.co/guide/en/elasticsearch/reference/8.12/security-api-get-token.html">Get Token API</a>
+     * @param  elasticsearchToken  The Elasticsearch Token
+     * @return the current instance
+     */
+    public WPSearchClient withElasticsearchToken(String elasticsearchToken) {
+        this.elasticsearchToken = elasticsearchToken;
         return this;
     }
 
@@ -168,8 +188,19 @@ public class WPSearchClient implements Closeable {
         ClientConfig config = new ClientConfig();
         // We need to suppress this, so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
-        HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(username, password);
-        client = ClientBuilder.newClient(config);
+
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder()
+                .withConfig(config);
+
+        // If we have an ApiKey, let's use it. Otherwise, we will use basic auth
+        if (FsCrawlerUtil.isNullOrEmpty(elasticsearchToken)) {
+            HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(username, password);
+            clientBuilder.register(feature);
+        } else {
+            elasticsearchTokenHeader = "Bearer " + elasticsearchToken;
+        }
+
+        client = clientBuilder.build();
         if (logger.isTraceEnabled()) {
             client
 //                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_NAME_CLIENT, WPSearchClient.class.getName())
@@ -177,7 +208,6 @@ public class WPSearchClient implements Closeable {
                     .property(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_ANY)
                     .property(LoggingFeature.LOGGING_FEATURE_MAX_ENTITY_SIZE_CLIENT, 8000);
         }
-        client.register(feature);
 
         // Create the BulkProcessor instance
         bulkProcessor = new FsCrawlerBulkProcessor.Builder<>(
@@ -194,6 +224,7 @@ public class WPSearchClient implements Closeable {
             logger.info("Wokplace Search Client connected to a service running version {}", version);
         } catch (Exception e) {
             logger.warn("failed to create workplace search client on {}, disabling crawler...", host);
+            logger.debug("failed to create workplace search client on {}: {}", host, e.getMessage());
             throw e;
         }
 
@@ -493,9 +524,11 @@ public class WPSearchClient implements Closeable {
 
         Invocation.Builder builder = target
                 .request(MediaType.APPLICATION_JSON)
-                .header("Content-Type", "application/json");
-
-        builder.header("User-Agent", USER_AGENT);
+                .header(HttpHeaders.CONTENT_TYPE, "application/json");
+        builder.header(HttpHeaders.USER_AGENT, USER_AGENT);
+        if (elasticsearchTokenHeader != null) {
+            builder.header(HttpHeaders.AUTHORIZATION, elasticsearchTokenHeader);
+        }
 
         return builder;
     }

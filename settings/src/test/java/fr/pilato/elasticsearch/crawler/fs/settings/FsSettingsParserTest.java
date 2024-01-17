@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
@@ -57,8 +56,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private static final Elasticsearch ELASTICSEARCH_EMPTY = Elasticsearch.builder().build();
     private static final Elasticsearch ELASTICSEARCH_FULL = Elasticsearch.builder()
             .setNodes(Collections.singletonList(new ServerUrl("http://127.0.0.1")))
-            .setUsername("elastic")
-            .setPassword("changeme")
+            .setApiKey("A-BASE64-ENCODED-STRING-CONTAINING-THE-API-KEY")
             .setBulkSize(1000)
             .setByteSize(ByteSizeValue.parseBytesSizeValue("10mb"))
             .setFlushInterval(TimeValue.timeValueSeconds(5))
@@ -68,8 +66,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private static final WorkplaceSearch WORKPLACE_SEARCH_EMPTY = WorkplaceSearch.builder().build();
     private static final WorkplaceSearch WORKPLACE_SEARCH_FULL = WorkplaceSearch.builder()
             .setServer(new ServerUrl("https://127.0.0.1:3002"))
-            .setUsername("elastic")
-            .setUsername("changeme")
+            .setElasticsearchToken("A-BASE64-ENCODED-STRING-CONTAINING-THE-API-KEY")
             .setId("ID")
             .setName("My local files on /tmp/es")
             .setUrlPrefix("https://127.0.0.1")
@@ -314,53 +311,5 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
                         .setRest(REST_FULL)
                         .build()
         );
-    }
-
-    @Test
-    public void testPasswordIsReadableFromJsonSettings() throws IOException {
-        String json = "{\n" +
-                "  \"name\" : \"test_password_is_readable\",\n" +
-                "  \"fs\" : {\n" +
-                "    \"url\" : \"/path/to/docs\"\n" +
-                "  },\n" +
-                "  \"server\" : {\n" +
-                "    \"username\" : \"dadoonet\",\n" +
-                "    \"password\" : \"" + SERVER_FULL.getPassword() + "\"\n" +
-                "  },\n" +
-                "  \"elasticsearch\" : {\n" +
-                "    \"username\" : \"username\",\n" +
-                "    \"password\" : \"" + ELASTICSEARCH_FULL.getPassword() + "\"\n" +
-                "  }\n" +
-                "}";
-
-        logger.info("-> testing settings: [{}]", json);
-        checkPasswordSettings(FsSettingsParser.fromJson(json));
-    }
-
-    @Test
-    public void testPasswordIsReadableFromYamlSettings() throws IOException {
-        String yaml =
-                "name: \"test_password_is_readable\"\n" +
-                "fs:\n" +
-                "  url: \"/path/to/docs\"\n" +
-                "server:\n" +
-                "  username: \"dadoonet\"\n" +
-                "  password: \"" + SERVER_FULL.getPassword() + "\"\n" +
-                "elasticsearch:\n" +
-                "  username: \"username\"\n" +
-                "  password: \"" + ELASTICSEARCH_FULL.getPassword() + "\"\n";
-
-        logger.info("-> testing settings: [{}]", yaml);
-        checkPasswordSettings(FsSettingsParser.fromYaml(yaml));
-    }
-
-    private void checkPasswordSettings(FsSettings settings) throws JsonProcessingException {
-        assertThat(settings.getElasticsearch().getPassword(), is(ELASTICSEARCH_FULL.getPassword()));
-        assertThat(settings.getServer().getPassword(), is(SERVER_FULL.getPassword()));
-
-        // Generate the YAML and check that we don't render the passwords
-        String filteredYaml = FsSettingsParser.toYaml(settings);
-        assertThat(filteredYaml, not(containsString(ELASTICSEARCH_FULL.getPassword())));
-        assertThat(filteredYaml, not(containsString(SERVER_FULL.getPassword())));
     }
 }
