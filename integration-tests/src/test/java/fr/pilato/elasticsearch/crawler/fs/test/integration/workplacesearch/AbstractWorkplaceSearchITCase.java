@@ -221,12 +221,8 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
         staticLogger.info("  --> creating the workplace search custom source client for [{}]", host);
         Path jobMappingDir = rootTmpDir.resolve("wpsearch").resolve("_mappings");
         WPSearchClient client = new WPSearchClient(metadataDir, jobMappingDir)
-                .withHost(host);
-        if (testAccessToken != null) {
-            client.withElasticsearchToken(testAccessToken);
-        } else {
-            client.withUsername(null, testWorkplaceUser).withPassword(null, testWorkplacePass);
-        }
+                .withHost(host)
+                .withAccessToken(testAccessToken);
         client.start();
         return client;
     }

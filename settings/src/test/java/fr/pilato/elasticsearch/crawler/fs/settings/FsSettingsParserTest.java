@@ -66,7 +66,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private static final WorkplaceSearch WORKPLACE_SEARCH_EMPTY = WorkplaceSearch.builder().build();
     private static final WorkplaceSearch WORKPLACE_SEARCH_FULL = WorkplaceSearch.builder()
             .setServer(new ServerUrl("https://127.0.0.1:3002"))
-            .setElasticsearchToken("A-BASE64-ENCODED-STRING-CONTAINING-THE-API-KEY")
+            .setAccessToken("A-BASE64-ENCODED-STRING-CONTAINING-THE-API-KEY")
             .setId("ID")
             .setName("My local files on /tmp/es")
             .setUrlPrefix("https://127.0.0.1")

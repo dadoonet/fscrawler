@@ -78,7 +78,10 @@ public class FsCrawlerCli {
         @Parameter(names = "--api_key", description = "Elasticsearch api key. See https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html")
         String apiKey = null;
 
-        @Parameter(names = "--username", description = "Elasticsearch username when running with security.  (Deprecated - use --api_key instead)")
+        @Parameter(names = "--access_token", description = "Elasticsearch access token. See https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-get-token.html")
+        String accessToken = null;
+
+        @Parameter(names = "--username", description = "Elasticsearch username. (Deprecated - use --api_key or --access_token instead)")
         @Deprecated
         String username = null;
 
@@ -222,11 +225,12 @@ public class FsCrawlerCli {
     /**
      * Modify existing settings with correct default values when not set.
      *
-     * @param fsSettings    the settings to modify
-     * @param usernameCli   the username coming from the CLI if any (deprecated)
-     * @param apiKeyCli     the api key coming from the CLI if any
+     * @param fsSettings        the settings to modify
+     * @param usernameCli       the username coming from the CLI if any (deprecated)
+     * @param apiKeyCli         the api key coming from the CLI if any
+     * @param accessTokenCli    the access token coming from the CLI if any
      */
-    static void modifySettings(FsSettings fsSettings, String usernameCli, String apiKeyCli) {
+    static void modifySettings(FsSettings fsSettings, String usernameCli, String apiKeyCli, String accessTokenCli) {
         // Check default settings
         if (fsSettings.getFs() == null) {
             fsSettings.setFs(Fs.DEFAULT);
@@ -256,6 +260,11 @@ public class FsCrawlerCli {
         // Overwrite settings with command line values
         if (fsSettings.getElasticsearch().getApiKey() == null && apiKeyCli != null) {
             fsSettings.getElasticsearch().setApiKey(apiKeyCli);
+        }
+
+        // Overwrite settings with command line values
+        if (fsSettings.getElasticsearch().getAccessToken() == null && accessTokenCli != null) {
+            fsSettings.getElasticsearch().setAccessToken(accessTokenCli);
         }
     }
 
@@ -373,7 +382,7 @@ public class FsCrawlerCli {
             return;
         }
 
-        modifySettings(fsSettings, command.username, command.apiKey);
+        modifySettings(fsSettings, command.username, command.apiKey, command.accessToken);
         if (fsSettings.getElasticsearch().getUsername() != null && fsSettings.getElasticsearch().getPassword() == null && scanner != null) {
             FSCrawlerLogger.console("Password for {}:", fsSettings.getElasticsearch().getUsername());
             String password = scanner.next();

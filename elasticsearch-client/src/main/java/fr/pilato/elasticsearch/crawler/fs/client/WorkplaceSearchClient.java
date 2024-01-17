@@ -61,9 +61,12 @@ public class WorkplaceSearchClient implements IWorkplaceSearchClient {
             .withBulkSize(settings.getWorkplaceSearch().getBulkSize())
             .withFlushInterval(settings.getWorkplaceSearch().getFlushInterval());
 
-        if (settings.getWorkplaceSearch().getElasticsearchToken() != null) {
+        if (settings.getWorkplaceSearch().getAccessToken() != null) {
+            // Using Workplace Search Access Token
+            wpSearchClient.withAccessToken(settings.getWorkplaceSearch().getAccessToken());
+        } else if (settings.getElasticsearch().getAccessToken() != null) {
             // Using Elasticsearch Access Token
-            wpSearchClient.withElasticsearchToken(settings.getWorkplaceSearch().getElasticsearchToken());
+            wpSearchClient.withAccessToken(settings.getElasticsearch().getAccessToken());
         } else {
             wpSearchClient
                     .withUsername(settings.getWorkplaceSearch().getUsername(), settings.getElasticsearch().getUsername())

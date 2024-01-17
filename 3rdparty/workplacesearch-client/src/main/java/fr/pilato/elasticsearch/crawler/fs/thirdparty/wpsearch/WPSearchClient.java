@@ -77,7 +77,7 @@ public class WPSearchClient implements Closeable {
     private String username;
     @Deprecated
     private String password;
-    private String elasticsearchToken;
+    private String accessToken;
     private int bulkSize;
     private TimeValue flushInterval;
 
@@ -87,7 +87,7 @@ public class WPSearchClient implements Closeable {
     private final Path rootDir;
     private final Path jobMappingDir;
     private String version;
-    private String elasticsearchTokenHeader = null;
+    private String authorizationHeader = null;
 
     /**
      * Create a client
@@ -102,7 +102,7 @@ public class WPSearchClient implements Closeable {
      * @param username Username
      * @param defaultValue default value to use for username. Defaults to Elasticsearch username.
      * @return the current instance
-     * @deprecated use {@link #withElasticsearchToken(String)} instead
+     * @deprecated use {@link #withAccessToken(String)} instead
      */
     @Deprecated
     public WPSearchClient withUsername(String username, String defaultValue) {
@@ -119,7 +119,7 @@ public class WPSearchClient implements Closeable {
      * @param password Password
      * @param defaultValue default value to use for password. Defaults to Elasticsearch password.
      * @return the current instance
-     * @deprecated use {@link #withElasticsearchToken(String)} instead
+     * @deprecated use {@link #withAccessToken(String)} instead
      */
     @Deprecated
     public WPSearchClient withPassword(String password, String defaultValue) {
@@ -132,13 +132,13 @@ public class WPSearchClient implements Closeable {
     }
 
     /**
-     * Defines the Elasticsearch Token. Defaults to null.
+     * Defines the Access Token. Defaults to null.
      * @see <a href="https://www.elastic.co/guide/en/elasticsearch/reference/8.12/security-api-get-token.html">Get Token API</a>
-     * @param  elasticsearchToken  The Elasticsearch Token
+     * @param  accessToken  The Access Token
      * @return the current instance
      */
-    public WPSearchClient withElasticsearchToken(String elasticsearchToken) {
-        this.elasticsearchToken = elasticsearchToken;
+    public WPSearchClient withAccessToken(String accessToken) {
+        this.accessToken = accessToken;
         return this;
     }
 
@@ -193,11 +193,11 @@ public class WPSearchClient implements Closeable {
                 .withConfig(config);
 
         // If we have an ApiKey, let's use it. Otherwise, we will use basic auth
-        if (FsCrawlerUtil.isNullOrEmpty(elasticsearchToken)) {
+        if (FsCrawlerUtil.isNullOrEmpty(accessToken)) {
             HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(username, password);
             clientBuilder.register(feature);
         } else {
-            elasticsearchTokenHeader = "Bearer " + elasticsearchToken;
+            authorizationHeader = "Bearer " + accessToken;
         }
 
         client = clientBuilder.build();
@@ -526,8 +526,8 @@ public class WPSearchClient implements Closeable {
                 .request(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.CONTENT_TYPE, "application/json");
         builder.header(HttpHeaders.USER_AGENT, USER_AGENT);
-        if (elasticsearchTokenHeader != null) {
-            builder.header(HttpHeaders.AUTHORIZATION, elasticsearchTokenHeader);
+        if (authorizationHeader != null) {
+            builder.header(HttpHeaders.AUTHORIZATION, authorizationHeader);
         }
 
         return builder;
@@ -536,7 +536,7 @@ public class WPSearchClient implements Closeable {
     @Override
     public String toString() {
         return "WPSearchClient{" +
-                ", host='" + host + '\'' +
+                " host='" + host + '\'' +
                 '}';
     }
 }

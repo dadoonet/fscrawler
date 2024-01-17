@@ -96,7 +96,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private int majorVersion;
     private int currentNode = -1;
     private int currentRun = -1;
-    private String apiKeyHeader = null;
+    private String authorizationHeader = null;
 
     public ElasticsearchClient(Path config, FsSettings settings) {
         this.config = config;
@@ -185,14 +185,16 @@ public class ElasticsearchClient implements IElasticsearchClient {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .withConfig(config);
 
-        // If we have an ApiKey, let's use it. Otherwise, we will use basic auth
-        if (FsCrawlerUtil.isNullOrEmpty(settings.getElasticsearch().getApiKey())) {
+        // If we have an Api Key or an Access Token, let's use it. Otherwise, we will use basic auth
+        if (!FsCrawlerUtil.isNullOrEmpty(settings.getElasticsearch().getApiKey())) {
+            authorizationHeader = "ApiKey " + settings.getElasticsearch().getApiKey();
+        } else if (!FsCrawlerUtil.isNullOrEmpty(settings.getElasticsearch().getAccessToken())) {
+            authorizationHeader = "Bearer " + settings.getElasticsearch().getAccessToken();
+        } else {
             HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(
                     settings.getElasticsearch().getUsername(),
                     settings.getElasticsearch().getPassword());
             clientBuilder.register(feature);
-        } else {
-            apiKeyHeader = "ApiKey " + settings.getElasticsearch().getApiKey();
         }
         if (sslContext != null) {
             clientBuilder.sslContext(sslContext);
@@ -1001,8 +1003,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 .request(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.CONTENT_TYPE, "application/json");
         builder.header(HttpHeaders.USER_AGENT, USER_AGENT);
-        if (apiKeyHeader != null) {
-            builder.header(HttpHeaders.AUTHORIZATION, apiKeyHeader);
+        if (authorizationHeader != null) {
+            builder.header(HttpHeaders.AUTHORIZATION, authorizationHeader);
         }
 
         return builder;

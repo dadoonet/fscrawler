@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
@@ -82,7 +81,7 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
-                        .setElasticsearchToken(testAccessToken)
+                        .setAccessToken(testAccessToken)
                         .setBulkSize(5)
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())

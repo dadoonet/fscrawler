@@ -43,15 +43,16 @@ public class Elasticsearch {
     private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
     private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
     private String apiKey;
+    private String accessToken;
     /**
      * Username
-     * @deprecated Use apiKey instead
+     * @deprecated Use apiKey or accessToken instead
      */
     @Deprecated
     private String username;
     /**
      * Password
-     * @deprecated Use apiKey instead
+     * @deprecated Use apiKey or accessToken instead
      */
     @Deprecated
     @JsonIgnore
@@ -66,7 +67,8 @@ public class Elasticsearch {
     }
 
     private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
-                          TimeValue flushInterval, ByteSizeValue byteSize, String apiKey, String username, String password, String pipeline,
+                          TimeValue flushInterval, ByteSizeValue byteSize, String apiKey, String accessToken,
+                          String username, String password, String pipeline,
                           String pathPrefix, boolean sslVerification, boolean pushTemplates) {
         this.nodes = nodes;
         this.index = index;
@@ -74,6 +76,7 @@ public class Elasticsearch {
         this.bulkSize = bulkSize;
         this.flushInterval = flushInterval;
         this.byteSize = byteSize;
+        this.accessToken = accessToken;
         this.apiKey = apiKey;
         this.username = username;
         this.password = password;
@@ -133,6 +136,14 @@ public class Elasticsearch {
         this.apiKey = apiKey;
     }
 
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
     public String getUsername() {
         return username;
     }
@@ -140,7 +151,7 @@ public class Elasticsearch {
     /**
      * Provide the username to connect to Elasticsearch
      * @param username The username
-     * @deprecated Use {@link #setApiKey(String)} instead
+     * @deprecated Use {@link #setApiKey(String)} or {@link #setAccessToken(String)} instead
      */
     @Deprecated
     public void setUsername(String username) {
@@ -156,7 +167,7 @@ public class Elasticsearch {
     /**
      * Provide the password to connect to Elasticsearch
      * @param password The password
-     * @deprecated Use {@link #setApiKey(String)} instead
+     * @deprecated Use {@link #setApiKey(String)} or {@link #setAccessToken(String)} instead
      */
     @Deprecated
     @JsonProperty
@@ -212,6 +223,7 @@ public class Elasticsearch {
         private boolean sslVerification = true;
         private boolean pushTemplates = true;
         private String apiKey = null;
+        private String accessToken = null;
 
         public Builder setNodes(List<ServerUrl> nodes) {
             this.nodes = nodes;
@@ -248,11 +260,16 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setAccessToken(String accessToken) {
+            this.accessToken = accessToken;
+            return this;
+        }
+
         /**
          * Set the username (for tests only)
-         * @deprecated Use apiKey instead
          * @param username  Username
          * @return the current builder
+         * @deprecated Use {@link #setApiKey(String)} or {@link #setAccessToken(String)} instead
          */
         @Deprecated
         public Builder setUsername(String username) {
@@ -263,9 +280,9 @@ public class Elasticsearch {
 
         /**
          * Set the password (for tests only)
-         * @deprecated Use apiKey instead
          * @param password  Password
          * @return the current builder
+         * @deprecated Use {@link #setApiKey(String)} or {@link #setAccessToken(String)} instead
          */
         @Deprecated
         public Builder setPassword(String password) {
@@ -295,7 +312,7 @@ public class Elasticsearch {
         }
 
         public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, apiKey,
+            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, apiKey, accessToken,
                     username, password,
                     pipeline, pathPrefix, sslVerification, pushTemplates);
         }
@@ -312,6 +329,8 @@ public class Elasticsearch {
         if (!Objects.equals(nodes, that.nodes)) return false;
         if (!Objects.equals(index, that.index)) return false;
         if (!Objects.equals(indexFolder, that.indexFolder)) return false;
+        if (!Objects.equals(apiKey, that.apiKey)) return false;
+        if (!Objects.equals(accessToken, that.accessToken)) return false;
         if (!Objects.equals(username, that.username)) return false;
         // We can't really test the password as it may be obfuscated
         if (!Objects.equals(pipeline, that.pipeline)) return false;
@@ -328,6 +347,8 @@ public class Elasticsearch {
         result = 31 * result + (index != null ? index.hashCode() : 0);
         result = 31 * result + (indexFolder != null ? indexFolder.hashCode() : 0);
         result = 31 * result + (username != null ? username.hashCode() : 0);
+        result = 31 * result + (apiKey != null ? apiKey.hashCode() : 0);
+        result = 31 * result + (accessToken != null ? accessToken.hashCode() : 0);
         result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
         result = 31 * result + (pathPrefix != null ? pathPrefix.hashCode() : 0);
         result = 31 * result + bulkSize;

@@ -246,8 +246,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                 .setSslVerification(false);
         if (testApiKey != null) {
+            staticLogger.debug("using api key [{}]", testApiKey);
             builder.setApiKey(testApiKey);
+        } else if (testAccessToken != null) {
+            staticLogger.debug("using access token [{}]", testAccessToken);
+            builder.setAccessToken(testAccessToken);
         } else {
+            staticLogger.debug("using login/password [{}]/[{}]", testClusterUser, testClusterPass);
             builder.setUsername(testClusterUser);
             builder.setPassword(testClusterPass);
         }
@@ -257,6 +262,19 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
         try {
             documentService.start();
+
+            // We make sure the cluster is running
+            managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
+            managementService.start();
+
+            // Generate the Api-Key
+            if (testApiKey == null) {
+                testApiKey = managementService.getClient().generateApiKey("fscrawler");
+            }
+
+            if (testAccessToken == null) {
+                testAccessToken = managementService.getClient().generateElasticsearchToken();
+            }
         } catch (ElasticsearchClientException e) {
             if ((e.getCause() instanceof SocketException ||
                     (e.getCause() instanceof ProcessingException && e.getCause().getCause() instanceof SSLException))
@@ -268,30 +286,15 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 Elasticsearch.Builder builderForOlderService = Elasticsearch.builder()
                         .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                         .setSslVerification(false);
-                if (testApiKey != null) {
-                    builderForOlderService.setApiKey(testApiKey);
-                } else {
-                    builderForOlderService.setUsername(testClusterUser);
-                    builderForOlderService.setPassword(testClusterPass);
-                }
+
+                // For older versions, we want to test using login/password
+                builderForOlderService.setUsername(testClusterUser);
+                builderForOlderService.setPassword(testClusterPass);
                 elasticsearchWithSecurity = builderForOlderService.build();
                 fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
                 documentService.close();
                 documentService = null;
             }
-        }
-
-        // If an ApiKey was not provided, we need to generate one and recreate the services
-        if (testApiKey == null) {
-            // We make sure the cluster is running
-            managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-            managementService.start();
-            // Generate the Api-Key
-            testApiKey = managementService.getClient().generateApiKey("fscrawler");
-            managementService.close();
-            managementService = null;
-
-            staticLogger.info("Restarting the services using the generated key [{}]", testApiKey);
         }
 
         // We make sure the cluster is running
@@ -307,9 +310,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
             String version = managementService.getVersion();
             staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
-
-            staticLogger.info("Generating an access token to use with Workplace Search");
-            testAccessToken = managementService.getClient().generateElasticsearchToken();
         } catch (ConnectException e) {
             // If we have an exception here, let's ignore the test
             staticLogger.warn("Integration tests are skipped: [{}]", e.getMessage());

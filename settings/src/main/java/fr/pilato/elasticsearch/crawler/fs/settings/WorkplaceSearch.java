@@ -34,7 +34,7 @@ public class WorkplaceSearch {
 
     private ServerUrl server = DEFAULT_SERVER;
     private String id;
-    private String elasticsearchToken;
+    private String accessToken;
     private String username;
     @JsonIgnore
     private String password;
@@ -47,12 +47,12 @@ public class WorkplaceSearch {
 
     }
 
-    public WorkplaceSearch(ServerUrl server, String id, String name, String elasticsearchToken, String username, String password,
+    public WorkplaceSearch(ServerUrl server, String id, String name, String accessToken, String username, String password,
                            String urlPrefix, int bulkSize, TimeValue flushInterval) {
         this.server = server;
         this.id = id;
         this.name = name;
-        this.elasticsearchToken = elasticsearchToken;
+        this.accessToken = accessToken;
         this.username = username;
         this.password = password;
         this.urlPrefix = urlPrefix;
@@ -86,12 +86,12 @@ public class WorkplaceSearch {
         this.id = id;
     }
 
-    public void setElasticsearchToken(String elasticsearchToken) {
-        this.elasticsearchToken = elasticsearchToken;
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
     }
 
-    public String getElasticsearchToken() {
-        return elasticsearchToken;
+    public String getAccessToken() {
+        return accessToken;
     }
 
     public String getUsername() {
@@ -101,7 +101,7 @@ public class WorkplaceSearch {
     /**
      * Provide the username to connect to Workplace Search
      * @param username The username
-     * @deprecated Use {@link #setElasticsearchToken(String)} instead
+     * @deprecated Use {@link #setAccessToken(String)} instead
      */
     @Deprecated
     public void setUsername(String username) {
@@ -116,7 +116,7 @@ public class WorkplaceSearch {
     /**
      * Provide the password to connect to Workplace Search
      * @param password The password
-     * @deprecated Use {@link #setElasticsearchToken(String)} instead
+     * @deprecated Use {@link #setAccessToken(String)} instead
      */
     @Deprecated
     public void setPassword(String password) {
@@ -160,7 +160,7 @@ public class WorkplaceSearch {
         private ServerUrl server = DEFAULT_SERVER;
         private String id;
         private String name;
-        private String elasticsearchToken;
+        private String accessToken;
         private String username;
         private String password;
         private String urlPrefix = DEFAULT_URL_PREFIX;
@@ -197,11 +197,11 @@ public class WorkplaceSearch {
 
         /**
          * Provide the Elasticsearch Token to connect to Workplace Search
-         * @param elasticsearchToken The Elasticsearch Token
+         * @param accessToken The Elasticsearch Token
          * @return the builder
          */
-        public Builder setElasticsearchToken(String elasticsearchToken) {
-            this.elasticsearchToken = elasticsearchToken;
+        public Builder setAccessToken(String accessToken) {
+            this.accessToken = accessToken;
             return this;
         }
 
@@ -209,7 +209,7 @@ public class WorkplaceSearch {
          * Provide the username to connect to Workplace Search
          * @param username The username
          * @return the builder
-         * @deprecated Use {@link #setElasticsearchToken(String)} instead
+         * @deprecated Use {@link #setAccessToken(String)} instead
          */
         @Deprecated
         public Builder setUsername(String username) {
@@ -221,7 +221,7 @@ public class WorkplaceSearch {
          * Provide the password to connect to Workplace Search
          * @param password The password
          * @return the builder
-         * @deprecated Use {@link #setElasticsearchToken(String)} instead
+         * @deprecated Use {@link #setAccessToken(String)} instead
          */
         @Deprecated
         public Builder setPassword(String password) {
@@ -245,7 +245,7 @@ public class WorkplaceSearch {
         }
 
         public WorkplaceSearch build() {
-            return new WorkplaceSearch(server, id, name, elasticsearchToken, username, password, urlPrefix, bulkSize, flushInterval);
+            return new WorkplaceSearch(server, id, name, accessToken, username, password, urlPrefix, bulkSize, flushInterval);
         }
     }
 
@@ -256,14 +256,14 @@ public class WorkplaceSearch {
         WorkplaceSearch that = (WorkplaceSearch) o;
         return Objects.equals(server, that.server) &&
                 Objects.equals(id, that.id) &&
-                Objects.equals(elasticsearchToken, that.elasticsearchToken) &&
+                Objects.equals(accessToken, that.accessToken) &&
                 Objects.equals(username, that.username) &&
                 Objects.equals(urlPrefix, that.urlPrefix);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(server, id, elasticsearchToken, username, urlPrefix);
+        return Objects.hash(server, id, accessToken, username, urlPrefix);
     }
 
     @Override
