@@ -269,7 +269,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
             // Generate the Api-Key
             if (testApiKey == null) {
-                testApiKey = managementService.getClient().generateApiKey("fscrawler");
+                testApiKey = managementService.getClient().generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
             }
 
             if (testAccessToken == null) {
