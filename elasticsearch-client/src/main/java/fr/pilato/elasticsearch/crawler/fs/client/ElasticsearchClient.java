@@ -56,6 +56,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -63,6 +64,7 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -832,11 +834,18 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         // Parse the response
         DocumentContext document = parseJsonAsDocumentContext(response);
-        String key = document.read("$.api_key");
-        String encodedApiKey = document.read("$.encoded");
+        String id = document.read("$.id");
+        String encodedApiKey;
+        try {
+            encodedApiKey = document.read("$.encoded");
+        } catch (PathNotFoundException e) {
+            // We are probably running with a version 6 which does not provide the encoded key
+            String key = document.read("$.api_key");
+            String generatedIdWithKey = id + ":" + key;
+            encodedApiKey = Base64.getEncoder().encodeToString(generatedIdWithKey.getBytes(StandardCharsets.UTF_8));
+        }
 
-        logger.debug("generated key for [{}]: [{}]", keyName, key);
-        logger.debug("encoded key for [{}]: [{}]", keyName, encodedApiKey);
+        logger.debug("generated key [{}] for [{}]: [{}]", id, keyName, encodedApiKey);
         return encodedApiKey;
     }
 

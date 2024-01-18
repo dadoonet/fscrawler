@@ -581,7 +581,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
-                .setApiKey(testApiKey)
+                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -601,7 +601,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                         new ServerUrl(testClusterUrl),
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
-                .setApiKey(testApiKey)
+                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -634,7 +634,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl("http://127.0.0.1:9207")))
-                .setApiKey(testApiKey)
+                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -654,7 +654,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
         // Build a client with a non-running node
         Elasticsearch elasticsearch = Elasticsearch.builder()
                 .setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")))
-                .setApiKey(testApiKey)
+                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();

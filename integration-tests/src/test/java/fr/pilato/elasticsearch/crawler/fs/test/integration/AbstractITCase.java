@@ -242,21 +242,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         staticLogger.info("Starting a client against [{}]", testClusterUrl);
         // We build the elasticsearch Client based on the parameters
-        Elasticsearch.Builder builder = Elasticsearch.builder()
+        elasticsearchWithSecurity = Elasticsearch.builder()
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
-                .setSslVerification(false);
-        if (testApiKey != null) {
-            staticLogger.debug("using api key [{}]", testApiKey);
-            builder.setApiKey(testApiKey);
-        } else if (testAccessToken != null) {
-            staticLogger.debug("using access token [{}]", testAccessToken);
-            builder.setAccessToken(testAccessToken);
-        } else {
-            staticLogger.debug("using login/password [{}]/[{}]", testClusterUser, testClusterPass);
-            builder.setUsername(testClusterUser);
-            builder.setPassword(testClusterPass);
-        }
-        elasticsearchWithSecurity = builder.build();
+                .setSslVerification(false)
+                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
+                .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
 
         documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
@@ -367,7 +357,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             builder.setUsername(testClusterUser);
             builder.setPassword(testClusterPass);
         } else {
-            builder.setApiKey(testApiKey);
+            builder.setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass);
         }
 
         builder.setSslVerification(false);

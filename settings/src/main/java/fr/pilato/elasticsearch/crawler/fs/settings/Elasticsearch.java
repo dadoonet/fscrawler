@@ -291,6 +291,31 @@ public class Elasticsearch {
             return this;
         }
 
+        /**
+         * Set the credentials depending on what is available.
+         * This is a helper method to set either apiKey, accessToken or username/password.
+         * @param apiKey        API Key (omitted if null)
+         * @param accessToken   Access Token (omitted if null)
+         * @param username      Username (omitted if null)
+         * @param password      Password (omitted if null)
+         * @return the current builder
+         */
+        public Builder setCredentials(String apiKey, String accessToken, String username, String password) {
+            if (apiKey != null) {
+                logger.trace("using api key [{}]", apiKey);
+                this.setApiKey(apiKey);
+            } else if (accessToken != null) {
+                logger.trace("using access token [{}]", accessToken);
+                this.setAccessToken(accessToken);
+            } else if (username != null && password != null) {
+                logger.trace("using login/password [{}]/[{}]", username, password);
+                this.setUsername(username);
+                this.setPassword(password);
+            }
+
+            return this;
+        }
+
         public Builder setPipeline(String pipeline) {
             this.pipeline = pipeline;
             return this;
