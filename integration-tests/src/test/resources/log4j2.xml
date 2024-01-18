@@ -18,7 +18,7 @@
       <Logger name="fr.pilato.elasticsearch.crawler.fs.FsParserAbstract" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="trace" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.service" level="info" additivity="false">
