@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.workplacesearch;
 
 import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
@@ -75,13 +74,14 @@ public class WPSearchAllDocumentsIT extends AbstractWorkplaceSearchITCase {
         FsSettings fsSettings = FsSettings.builder("fscrawler_workplacesearch_test_all_documents")
                 .setElasticsearch(generateElasticsearchConfig("fscrawler_workplacesearch_test_all_documents",
                         "fscrawler_workplacesearch_test_all_documents_folder",
-                        5, TimeValue.timeValueSeconds(1), null))
+                        5, TimeValue.timeValueSeconds(1), null, true))
                 .setFs(Fs.builder()
                         .setUrl(testResourceTarget.toString())
                         .setLangDetect(true)
                         .build())
                 .setWorkplaceSearch(WorkplaceSearch.builder()
                         .setServer(new ServerUrl(testWorkplaceUrl))
+                        .setAccessToken(testAccessToken)
                         .setBulkSize(5)
                         .setFlushInterval(TimeValue.timeValueSeconds(1))
                         .build())

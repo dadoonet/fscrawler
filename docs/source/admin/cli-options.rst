@@ -7,8 +7,12 @@ CLI options
 -  ``--silent`` runs in silent mode. No output is generated on the console.
 -  ``--config_dir`` defines directory where jobs are stored instead of
    default ``~/.fscrawler``.
--  ``--username`` defines the username to use when using an secured
-   version of elasticsearch cluster. Read :ref:`credentials`.
+-  ``--api_key`` defines the Elasticsearch Api Key to use.
+   Do not use with ``--username`` or ``--access_token``. Read :ref:`credentials`.
+-  ``--access_token`` defines the Elasticsearch Access Token to use.
+   Do not use with ``--username`` or ``--api_key``. Read :ref:`credentials`.
+-  ``--username`` defines the username to use (Deprecated).
+   Do not use with ``--api_key`` or ``--access_token``. Read :ref:`credentials`.
 -  ``--loop x`` defines the number of runs we want before exiting. See `Loop`_.
 -  ``--restart`` restart a job from scratch. See `Restart`_.
 -  ``--rest`` starts the REST service. See `Rest`_.

@@ -83,14 +83,16 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         FsSettings settings = fsSettingsFileHandler.read("modify_settings_no_username");
         assertThat(settings.getFs(), nullValue());
         assertThat(settings.getElasticsearch(), nullValue());
-        modifySettings(settings, null);
+        modifySettings(settings, null, null, null);
         assertThat(settings.getFs(), notNullValue());
         assertThat(settings.getElasticsearch(), notNullValue());
         assertThat(settings.getElasticsearch().getUsername(), nullValue());
+        assertThat(settings.getElasticsearch().getApiKey(), nullValue());
+        assertThat(settings.getElasticsearch().getAccessToken(), nullValue());
     }
 
     @Test
-    public void testModifySettingsWithUsername() throws IOException {
+    public void testModifySettingsWithUsernameDeprecated() throws IOException {
         FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(metadataDir);
         Path jobDir = metadataDir.resolve("modify_settings_with_username");
         Files.createDirectories(jobDir);
@@ -99,10 +101,48 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         FsSettings settings = fsSettingsFileHandler.read("modify_settings_with_username");
         assertThat(settings.getFs(), nullValue());
         assertThat(settings.getElasticsearch(), nullValue());
-        modifySettings(settings, "elastic");
+        modifySettings(settings, "elastic", null, null);
         assertThat(settings.getFs(), notNullValue());
         assertThat(settings.getElasticsearch(), notNullValue());
         assertThat(settings.getElasticsearch().getUsername(), is("elastic"));
+        assertThat(settings.getElasticsearch().getApiKey(), nullValue());
+        assertThat(settings.getElasticsearch().getAccessToken(), nullValue());
+    }
+
+    @Test
+    public void testModifySettingsWithApiKey() throws IOException {
+        FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(metadataDir);
+        Path jobDir = metadataDir.resolve("modify_settings_with_username");
+        Files.createDirectories(jobDir);
+
+        Files.writeString(jobDir.resolve(SETTINGS_YAML), "name: \"modify_settings_with_username\"");
+        FsSettings settings = fsSettingsFileHandler.read("modify_settings_with_username");
+        assertThat(settings.getFs(), nullValue());
+        assertThat(settings.getElasticsearch(), nullValue());
+        modifySettings(settings, null, "my_api_key_base64_encoded", null);
+        assertThat(settings.getFs(), notNullValue());
+        assertThat(settings.getElasticsearch(), notNullValue());
+        assertThat(settings.getElasticsearch().getUsername(), nullValue());
+        assertThat(settings.getElasticsearch().getApiKey(), is("my_api_key_base64_encoded"));
+        assertThat(settings.getElasticsearch().getAccessToken(), nullValue());
+    }
+
+    @Test
+    public void testModifySettingsWithAccessToken() throws IOException {
+        FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(metadataDir);
+        Path jobDir = metadataDir.resolve("modify_settings_with_username");
+        Files.createDirectories(jobDir);
+
+        Files.writeString(jobDir.resolve(SETTINGS_YAML), "name: \"modify_settings_with_username\"");
+        FsSettings settings = fsSettingsFileHandler.read("modify_settings_with_username");
+        assertThat(settings.getFs(), nullValue());
+        assertThat(settings.getElasticsearch(), nullValue());
+        modifySettings(settings, null, null, "my_access_token");
+        assertThat(settings.getFs(), notNullValue());
+        assertThat(settings.getElasticsearch(), notNullValue());
+        assertThat(settings.getElasticsearch().getUsername(), nullValue());
+        assertThat(settings.getElasticsearch().getApiKey(), nullValue());
+        assertThat(settings.getElasticsearch().getAccessToken(), is("my_access_token"));
     }
 
     @Test
@@ -122,10 +162,12 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getServer(), notNullValue());
         assertThat(settings.getServer().getPort(), is(Server.PROTOCOL.SSH_PORT));
         assertThat(settings.getServer().getUsername(), nullValue());
-        modifySettings(settings, "elastic");
+        modifySettings(settings, null, "my_api_key_base64_encoded", null);
         assertThat(settings.getFs(), notNullValue());
         assertThat(settings.getElasticsearch(), notNullValue());
-        assertThat(settings.getElasticsearch().getUsername(), is("elastic"));
+        assertThat(settings.getElasticsearch().getUsername(), nullValue());
+        assertThat(settings.getElasticsearch().getApiKey(), is("my_api_key_base64_encoded"));
+        assertThat(settings.getElasticsearch().getAccessToken(), nullValue());
         assertThat(settings.getServer().getPort(), is(Server.PROTOCOL.FTP_PORT));
         assertThat(settings.getServer().getUsername(), is("anonymous"));
     }
@@ -147,10 +189,12 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getServer(), notNullValue());
         assertThat(settings.getServer().getPort(), is(Server.PROTOCOL.SSH_PORT));
         assertThat(settings.getServer().getUsername(), nullValue());
-        modifySettings(settings, "elastic");
+        modifySettings(settings, null, "my_api_key_base64_encoded", null);
         assertThat(settings.getFs(), notNullValue());
         assertThat(settings.getElasticsearch(), notNullValue());
-        assertThat(settings.getElasticsearch().getUsername(), is("elastic"));
+        assertThat(settings.getElasticsearch().getUsername(), nullValue());
+        assertThat(settings.getElasticsearch().getApiKey(), is("my_api_key_base64_encoded"));
+        assertThat(settings.getElasticsearch().getAccessToken(), nullValue());
         assertThat(settings.getServer().getPort(), is(Server.PROTOCOL.SSH_PORT));
         assertThat(settings.getServer().getUsername(), nullValue());
     }

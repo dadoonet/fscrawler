@@ -79,7 +79,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     private Elasticsearch endCrawlerDefinition(String indexDocName, String indexFolderName) {
-        return generateElasticsearchConfig(indexDocName, indexFolderName, 1, null, null);
+        return generateElasticsearchConfig(indexDocName, indexFolderName, 1, null, null, false);
     }
 
     protected FsCrawlerImpl startCrawler() throws Exception {
@@ -91,7 +91,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
-        return startCrawler(jobName, fs, elasticsearch, server, null, TimeValue.timeValueSeconds(10));
+        return startCrawler(jobName, fs, elasticsearch, server, null, TimeValue.timeValueSeconds(30));
     }
 
     protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest,

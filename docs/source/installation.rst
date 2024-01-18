@@ -553,7 +553,7 @@ FSCrawler will index all the documents and then exit.
 
 When the FSCrawler container has stopped, you can just open `the search interface <http://0.0.0.0:3002/ws/search/>`__
 and start to search for your local documents. You might need to be authenticated first in Kibana.
-You can also open `Kibana to access the Workplace Search configuration <http://0.0.0.0:5601/app/enterprise_search/workplace_search/sources>`
+You can also open `Kibana to access the Workplace Search configuration <http://0.0.0.0:5601/app/enterprise_search/workplace_search/sources>`__
 and modify the source which has been created by FSCrawler.
 
 Running as a Service on Windows
