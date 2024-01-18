@@ -28,6 +28,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
@@ -825,28 +827,36 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     @Override
     public String generateApiKey(String keyName) throws ElasticsearchClientException {
-        String request = "{\"name\":\"" + keyName + "\"}";
-        logger.debug("delete any existing api key for [{}]", keyName);
-        httpDelete("/_security/api_key", request);
-
-        logger.debug("generate an api key for [{}]", keyName);
-        String response = httpPost("/_security/api_key", request);
-
-        // Parse the response
-        DocumentContext document = parseJsonAsDocumentContext(response);
-        String id = document.read("$.id");
-        String encodedApiKey;
         try {
-            encodedApiKey = document.read("$.encoded");
-        } catch (PathNotFoundException e) {
-            // We are probably running with a version 6 which does not provide the encoded key
-            String key = document.read("$.api_key");
-            String generatedIdWithKey = id + ":" + key;
-            encodedApiKey = Base64.getEncoder().encodeToString(generatedIdWithKey.getBytes(StandardCharsets.UTF_8));
-        }
+            String request = "{\"name\":\"" + keyName + "\"}";
+            logger.debug("delete any existing api key for [{}]", keyName);
+            httpDelete("/_security/api_key", request);
 
-        logger.debug("generated key [{}] for [{}]: [{}]", id, keyName, encodedApiKey);
-        return encodedApiKey;
+            logger.debug("generate an api key for [{}]", keyName);
+            String response = httpPost("/_security/api_key", request);
+
+            // Parse the response
+            DocumentContext document = parseJsonAsDocumentContext(response);
+            String id = document.read("$.id");
+            String encodedApiKey;
+            try {
+                encodedApiKey = document.read("$.encoded");
+            } catch (PathNotFoundException e) {
+                // We are probably running with a version 6 which does not provide the encoded key
+                String key = document.read("$.api_key");
+                String generatedIdWithKey = id + ":" + key;
+                encodedApiKey = Base64.getEncoder().encodeToString(generatedIdWithKey.getBytes(StandardCharsets.UTF_8));
+            }
+
+            logger.debug("generated key [{}] for [{}]: [{}]", id, keyName, encodedApiKey);
+            return encodedApiKey;
+        } catch (ElasticsearchClientException e) {
+            logger.warn("ElasticsearchClientException: failed to generate an api key for [{}]: [{}]", keyName, e.getMessage());
+            throw e;
+        } catch (BadRequestException e) {
+            logger.warn("BadRequestException: failed to generate an api key for [{}]: [{}]", keyName, e.getMessage());
+            throw e;
+        }
     }
 
     @Override
@@ -925,6 +935,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
             String response = callBuilder.method(method, Entity.json(data), String.class);
             logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
             return response;
+        } catch (ClientErrorException e) {
+            logger.warn("Error while running {} {}/{}: {}", method, node, path == null ? "" : path, e.getResponse().readEntity(String.class));
+            throw e;
         } catch (WebApplicationException e) {
             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
                 logger.warn("Error on server side. {} -> {}",
