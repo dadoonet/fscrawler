@@ -164,6 +164,13 @@ public class DocumentApi extends RestApi {
         // Create the Doc object
         Doc doc = new Doc();
 
+        if (d == null) {
+            UploadResponse response = new UploadResponse();
+            response.setOk(false);
+            response.setMessage("No file has been sent or you are not using [file] as the field name.");
+            return response;
+        }
+
         String filename = new String(d.getFileName().getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
         long filesize = d.getSize();
 
