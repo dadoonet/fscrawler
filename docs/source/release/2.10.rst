@@ -9,22 +9,28 @@ New
 * Add option to set path to custom tika config file. Thanks to iadcode.
 * Support for Index Templates. Thanks to dadoonet.
 * Support for Aliases. You can now index in an alias. Thanks to dadoonet.
+* Support for Access Token and Api Keys instead of Basic Authentication. Thanks to dadoonet.
+* Add support for Workplace Search. Thanks to dadoonet.
+* Allow loading external jars. This adds a new ``external`` directory from where jars can be loaded
+to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. Thanks to dadoonet.
 
 Fix
 ---
 
 * ``fs.ocr.enabled`` was always false. Thanks to ywjung.
+* Do not hide YAML parsing errors. Thanks to dadoonet.
 
 Deprecated
 ----------
 
 * The ``_upload`` REST endpoint has been deprecated. Please now use the ``_document`` endpoint. Thanks to dadoonet.
 * Support for Elasticsearch 6.x is deprecated. Thanks to dadoonet.
+* Support for Basic Authentication is deprecated. Thanks to dadoonet.
 
 Updated
 -------
 
-* Add full support for Elasticsearch 8.x, 7.17.x, 6.8.x. Thanks to dadoonet.
+* Add full support for Elasticsearch |ES_version8|_, |ES_version7|_, |ES_version6|_. Thanks to dadoonet.
 * Update to Tika |Tika_version|_. Thanks to dadoonet.
 
 Removed
