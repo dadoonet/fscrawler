@@ -12,7 +12,7 @@ New
 * Support for Access Token and Api Keys instead of Basic Authentication. Thanks to dadoonet.
 * Add support for Workplace Search. Thanks to dadoonet.
 * Allow loading external jars. This adds a new ``external`` directory from where jars can be loaded
-to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. Thanks to dadoonet.
+  to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. Thanks to dadoonet.
 
 Fix
 ---

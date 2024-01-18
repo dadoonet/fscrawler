@@ -92,6 +92,12 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
      bulk_size: 1000
      flush_interval: "5s"
      byte_size: "10mb"
+     # choose one of the 3 following options:
+     # 1 - Using access token
+     access_token: "dGhpcyBpcyBub3QgYSByZWFsIHRva2VuIGJ1dCBpdCBpcyBvbmx5IHRlc3QgZGF0YS4gZG8gbm90IHRyeSB0byByZWFkIHRva2VuIQ=="
+     # 2 - Using Api Key
+     api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+     # 3 - Using username/password (not recommended / deprecated)
      username: "elastic"
      password: "password"
      # optional, defaults to "docs"
