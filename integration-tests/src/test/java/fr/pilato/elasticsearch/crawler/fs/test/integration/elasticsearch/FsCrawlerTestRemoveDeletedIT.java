@@ -123,6 +123,10 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         // We create a copy of a file
         Files.move(currentTestResourceDir.resolve("roottxtfile.txt"),
                 currentTestResourceDir.resolve("renamed_roottxtfile.txt"));
+        // We need to "touch" the file we just moved otherwise it won't be seen as a new file
+        // This might depend on the OS where the code is running though
+        // Or there's a timing issue...
+        Files.setLastModifiedTime(currentTestResourceDir.resolve("renamed_roottxtfile.txt"), FileTime.from(Instant.now()));
 
         // We expect to have one file only with a new name
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.filename", "renamed_roottxtfile.txt")), 1L, currentTestResourceDir);

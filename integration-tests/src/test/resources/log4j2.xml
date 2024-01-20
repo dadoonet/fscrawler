@@ -15,13 +15,10 @@
       <Logger name="fr.pilato.elasticsearch.crawler.fs.FsCrawler" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.FsParserAbstract" level="debug" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.FsParserAbstract" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="trace" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.service" level="info" additivity="false">
@@ -31,6 +28,9 @@
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.thirdparty.wpsearch" level="info" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.client.WorkplaceSearchClient" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.rest" level="info" additivity="false">

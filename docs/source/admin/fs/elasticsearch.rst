@@ -28,6 +28,10 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.path_prefix``     | ``null``                  | `Path prefix`_                  |
 +-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.api_key``         | ``null``                  | `API Key`_                      |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.access_token``    | ``null``                  | `Access Token`_                 |
++-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.username``        | ``null``                  | :ref:`credentials`              |
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.password``        | ``null``                  | :ref:`credentials`              |
@@ -298,10 +302,109 @@ Path prefix
 Using Credentials (Security)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+If you have a secured cluster, you can use several methods to connect
+to it:
+
+- `API Key <https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html>`__
+- `Access Token <https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-token.html>`__
+- `Basic Authentication <https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-authenticate.html>`__ (not recommended / deprecated)
+
+API Key
+~~~~~~~
+
+.. versionadded:: 2.10
+
+Let's create an API Key named ``fscrawler``:
+
+.. code:: json
+
+    POST /_security/api_key
+    {
+      "name": "fscrawler"
+    }
+
+This gives something like:
+
+.. code:: json
+
+    {
+      "id": "VuaCfGcBCdbkQm-e5aOx",
+      "name": "fscrawler",
+      "expiration": 1544068612110,
+      "api_key": "ui2lp2axTNmsyakw9tvNnw",
+      "encoded": "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+    }
+
+Then you can use the encoded API Key in FSCrawler settings:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+
+.. _credentials-access-token:
+
+Access Token
+~~~~~~~~~~~~
+
+.. versionadded:: 2.10
+
+Let's create an API Key named ``fscrawler``:
+
+.. code:: json
+
+    POST /_security/oauth2/token
+    {
+      "grant_type" : "client_credentials"
+    }
+
+This gives something like:
+
+.. code:: json
+
+    {
+      "access_token" : "dGhpcyBpcyBub3QgYSByZWFsIHRva2VuIGJ1dCBpdCBpcyBvbmx5IHRlc3QgZGF0YS4gZG8gbm90IHRyeSB0byByZWFkIHRva2VuIQ==",
+      "type" : "Bearer",
+      "expires_in" : 1200,
+      "authentication" : {
+        "username" : "test_admin",
+        "roles" : [
+          "superuser"
+        ],
+        "full_name" : null,
+        "email" : null,
+        "metadata" : { },
+        "enabled" : true,
+        "authentication_realm" : {
+          "name" : "file",
+          "type" : "file"
+        },
+        "lookup_realm" : {
+          "name" : "file",
+          "type" : "file"
+        },
+        "authentication_type" : "realm"
+      }
+    }
+
+Then you can use the generated Access Token in FSCrawler settings:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     access_token: "dGhpcyBpcyBub3QgYSByZWFsIHRva2VuIGJ1dCBpdCBpcyBvbmx5IHRlc3QgZGF0YS4gZG8gbm90IHRyeSB0byByZWFkIHRva2VuIQ=="
+
+Basic Authentication (deprecated)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. versionadded:: 2.2
 
-If you secured your elasticsearch cluster, you can provide
-``username`` and ``password`` to FSCrawler:
+The best practice is to use `API Key`_ or `Access Token`_. But if you have no other choice,
+you can still use Basic Authentication.
+
+You can provide the ``username`` and ``password`` to FSCrawler:
 
 .. code:: yaml
 
@@ -311,8 +414,7 @@ If you secured your elasticsearch cluster, you can provide
      password: "changeme"
 
 .. warning::
-    For the current version, the elasticsearch password is stored in
-    plain text in your job setting file.
+    Be aware that the elasticsearch password is stored in plain text in your job setting file.
 
     A better practice is to only set the username or pass it with
     ``--username elastic`` option when starting FSCrawler.
@@ -323,7 +425,11 @@ If you secured your elasticsearch cluster, you can provide
 
        22:46:42,528 INFO  [f.p.e.c.f.FsCrawler] Password for elastic:
 
-If you want to use another user than the default ``elastic``, you will need to give him some permissions:
+
+User permissions
+~~~~~~~~~~~~~~~~
+
+If you want to use another user than the default ``elastic`` (which is admin), you will need to give him some permissions:
 
 * ``cluster:monitor``
 * ``indices:fsc/all``

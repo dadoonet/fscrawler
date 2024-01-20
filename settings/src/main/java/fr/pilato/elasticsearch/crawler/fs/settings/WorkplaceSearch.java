@@ -34,6 +34,7 @@ public class WorkplaceSearch {
 
     private ServerUrl server = DEFAULT_SERVER;
     private String id;
+    private String accessToken;
     private String username;
     @JsonIgnore
     private String password;
@@ -46,11 +47,12 @@ public class WorkplaceSearch {
 
     }
 
-    public WorkplaceSearch(ServerUrl server, String id, String name, String username, String password, String urlPrefix,
-                           int bulkSize, TimeValue flushInterval) {
+    public WorkplaceSearch(ServerUrl server, String id, String name, String accessToken, String username, String password,
+                           String urlPrefix, int bulkSize, TimeValue flushInterval) {
         this.server = server;
         this.id = id;
         this.name = name;
+        this.accessToken = accessToken;
         this.username = username;
         this.password = password;
         this.urlPrefix = urlPrefix;
@@ -84,11 +86,26 @@ public class WorkplaceSearch {
         this.id = id;
     }
 
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
     public String getUsername() {
         return username;
     }
 
+    /**
+     * Provide the username to connect to Workplace Search
+     * @param username The username
+     * @deprecated Use {@link #setAccessToken(String)} instead
+     */
+    @Deprecated
     public void setUsername(String username) {
+        logger.warn("username is deprecated. Use apiKey instead.");
         this.username = username;
     }
 
@@ -96,7 +113,14 @@ public class WorkplaceSearch {
         return password;
     }
 
+    /**
+     * Provide the password to connect to Workplace Search
+     * @param password The password
+     * @deprecated Use {@link #setAccessToken(String)} instead
+     */
+    @Deprecated
     public void setPassword(String password) {
+        logger.warn("password is deprecated. Use apiKey instead.");
         this.password = password;
     }
 
@@ -136,6 +160,7 @@ public class WorkplaceSearch {
         private ServerUrl server = DEFAULT_SERVER;
         private String id;
         private String name;
+        private String accessToken;
         private String username;
         private String password;
         private String urlPrefix = DEFAULT_URL_PREFIX;
@@ -170,11 +195,35 @@ public class WorkplaceSearch {
             return this;
         }
 
+        /**
+         * Provide the Elasticsearch Token to connect to Workplace Search
+         * @param accessToken The Elasticsearch Token
+         * @return the builder
+         */
+        public Builder setAccessToken(String accessToken) {
+            this.accessToken = accessToken;
+            return this;
+        }
+
+        /**
+         * Provide the username to connect to Workplace Search
+         * @param username The username
+         * @return the builder
+         * @deprecated Use {@link #setAccessToken(String)} instead
+         */
+        @Deprecated
         public Builder setUsername(String username) {
             this.username = username;
             return this;
         }
 
+        /**
+         * Provide the password to connect to Workplace Search
+         * @param password The password
+         * @return the builder
+         * @deprecated Use {@link #setAccessToken(String)} instead
+         */
+        @Deprecated
         public Builder setPassword(String password) {
             this.password = password;
             return this;
@@ -196,7 +245,7 @@ public class WorkplaceSearch {
         }
 
         public WorkplaceSearch build() {
-            return new WorkplaceSearch(server, id, name, username, password, urlPrefix, bulkSize, flushInterval);
+            return new WorkplaceSearch(server, id, name, accessToken, username, password, urlPrefix, bulkSize, flushInterval);
         }
     }
 
@@ -207,13 +256,14 @@ public class WorkplaceSearch {
         WorkplaceSearch that = (WorkplaceSearch) o;
         return Objects.equals(server, that.server) &&
                 Objects.equals(id, that.id) &&
+                Objects.equals(accessToken, that.accessToken) &&
                 Objects.equals(username, that.username) &&
                 Objects.equals(urlPrefix, that.urlPrefix);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(server, id, username, urlPrefix);
+        return Objects.hash(server, id, accessToken, username, urlPrefix);
     }
 
     @Override

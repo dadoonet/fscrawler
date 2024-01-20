@@ -581,8 +581,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
-                .setUsername(testClusterUser)
-                .setPassword(testClusterPass)
+                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -602,8 +601,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                         new ServerUrl(testClusterUrl),
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
-                .setUsername(testClusterUser)
-                .setPassword(testClusterPass)
+                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -636,8 +634,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl("http://127.0.0.1:9207")))
-                .setUsername(testClusterUser)
-                .setPassword(testClusterPass)
+                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -657,8 +654,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
         // Build a client with a non-running node
         Elasticsearch elasticsearch = Elasticsearch.builder()
                 .setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")))
-                .setUsername(testClusterUser)
-                .setPassword(testClusterPass)
+                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -690,5 +686,23 @@ public class ElasticsearchClientIT extends AbstractITCase {
         } catch (NotAuthorizedException ex) {
             assertThat(ex.getMessage(), containsString("HTTP 401 Unauthorized"));
         }
+    }
+
+    @Test
+    public void createApiKey() throws ElasticsearchClientException {
+        // This is not a critical one as this code is only used in tests
+        try {
+            String key = esClient.generateApiKey("fscrawler-es-client-test");
+            assertThat(key, notNullValue());
+        } catch (Exception e) {
+            logger.warn("Can not create an API Key. You are probably using a version of Elasticsearch which does not support API Keys. " +
+                    "This is not a critical one as this code is only used in tests. So we skip it.", e);
+        }
+    }
+
+    @Test
+    public void createElasticsearchAccessToken() throws ElasticsearchClientException {
+        String token = esClient.generateElasticsearchToken();
+        assertThat(token, notNullValue());
     }
 }

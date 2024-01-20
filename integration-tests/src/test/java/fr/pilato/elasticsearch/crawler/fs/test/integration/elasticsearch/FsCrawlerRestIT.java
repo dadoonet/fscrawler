@@ -32,12 +32,17 @@ import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
+import jakarta.ws.rs.core.MediaType;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
@@ -279,5 +284,27 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat(JsonPath.read(hit.getSource(), "$.meta.raw.resourceName"), is("another-file-name.txt"));
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.external"));
         });
+    }
+
+    @Test
+    public void testUploadUsingWrongFieldName() {
+        Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        if (Files.notExists(from)) {
+            staticLogger.error("file [{}] should exist before we start tests", from);
+            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+        }
+
+        Map<String, Object> params = new HashMap<>();
+        FileDataBodyPart filePart = new FileDataBodyPart("anotherfieldname", from.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataMultiPart mp = new FormDataMultiPart();
+        mp.bodyPart(filePart);
+        if (staticLogger.isDebugEnabled()) {
+            staticLogger.debug("Rest response: {}", post(target, "/_document", mp, String.class, debugOption));
+        }
+
+        UploadResponse response = post(target, "/_document", mp, UploadResponse.class, params);
+
+        assertThat(response.isOk(), is(false));
+        assertThat(response.getMessage(), containsString("No file has been sent or you are not using [file] as the field name."));
     }
 }

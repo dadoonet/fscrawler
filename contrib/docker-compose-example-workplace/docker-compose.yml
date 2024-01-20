@@ -182,6 +182,7 @@ services:
       - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
       - ${PWD}/config:/root/.fscrawler
       - ${PWD}/logs:/usr/share/fscrawler/logs
+      - ${PWD}/external:/usr/share/fscrawler/external
     depends_on:
       enterprisesearch:
         condition: service_healthy

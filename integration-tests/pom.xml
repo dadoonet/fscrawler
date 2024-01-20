@@ -213,7 +213,7 @@
                 </plugins>
             </build>
         </profile>
-        <!-- Profile for ES6: No enterprise search. No security. -->
+        <!-- Profile for ES6: No enterprise search.-->
         <profile>
             <id>es-6x</id>
             <properties>
@@ -231,7 +231,6 @@
                                 <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
                                 <ES_PORT>${integ.elasticsearch.port}</ES_PORT>
                                 <ENTERPRISE_SEARCH_PORT>${integ.workplace.port}</ENTERPRISE_SEARCH_PORT>
-                                <LICENSE>basic</LICENSE>
                             </envVars>
                             <composeFiles>
                                 <composeFile>${contrib.dir}/docker-compose-it-v6/docker-compose.yml</composeFile>

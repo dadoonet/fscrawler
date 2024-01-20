@@ -86,6 +86,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
 
     @BeforeClass
     public static void checkWorkplaceSearchIsRunning() {
+        staticLogger.debug("  --> checking that we can connect to workplace search at {}", testWorkplaceUrl);
         try (WPSearchClient wpClient = createClient()) {
             wpClient.getVersion();
         } catch (ServiceUnavailableException e) {
@@ -217,18 +218,18 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
     }
 
     protected static WPSearchClient createClient(String host) {
-        staticLogger.info("  --> creating the workplace search custom source client");
+        staticLogger.info("  --> creating the workplace search custom source client for [{}]", host);
         Path jobMappingDir = rootTmpDir.resolve("wpsearch").resolve("_mappings");
         WPSearchClient client = new WPSearchClient(metadataDir, jobMappingDir)
                 .withHost(host)
-                .withUsername(null, testWorkplaceUser)
-                .withPassword(null, testWorkplacePass);
+                .withAccessToken(testAccessToken);
         client.start();
         return client;
     }
 
     protected static void cleanExistingCustomSources(String sourceName) {
         if (!testKeepData) {
+            staticLogger.info("  --> cleaning the workplace search custom source [{}]", sourceName);
             try (WPSearchClient client = createClient()) {
                 List<String> sourceIds = client.getCustomSourcesByName(sourceName);
                 for (String sourceId : sourceIds) {
@@ -240,6 +241,7 @@ public abstract class AbstractWorkplaceSearchITCase extends AbstractFsCrawlerITC
 
     protected static void cleanExistingCustomSource(String sourceId) {
         if (!testKeepData) {
+            staticLogger.info("  --> cleaning the workplace search custom source [{}]", sourceId);
             try (WPSearchClient client = createClient()) {
                 client.removeCustomSource(sourceId);
             }

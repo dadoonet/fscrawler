@@ -3,7 +3,7 @@
 Configuring the logger
 ======================
 
-In addition to the :ref:`cli-options`, FSCrawler comes with a default logger configuration which can be found in the
+FSCrawler comes with a default logger configuration which can be found in the
 FSCrawler installation dir as ``config/log4j2.xml`` file.
 
 You can modify it to suit your needs. It will be automatically reloaded every 30 seconds.

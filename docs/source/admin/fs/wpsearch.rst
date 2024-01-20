@@ -29,25 +29,27 @@ FSCrawler can now send documents to `Workplace Search <https://www.elastic.co/wo
 
 Here is a list of Workplace Search settings (under ``workplace_search.`` prefix):
 
-+-------------------------------------+--------------------------------+---------------------------------+
-| Name                                | Default value                  | Documentation                   |
-+=====================================+================================+=================================+
-| ``workplace_search.id``             | None                           | `Custom Source ID`_             |
-+-------------------------------------+--------------------------------+---------------------------------+
-| ``workplace_search.name``           | Local files for job + Job Name | `Custom Source Name`_           |
-+-------------------------------------+--------------------------------+---------------------------------+
-| ``workplace_search.username``       | same as for elasticsearch      | `Secrets`_                      |
-+-------------------------------------+--------------------------------+---------------------------------+
-| ``workplace_search.password``       | same as for elasticsearch      | `Secrets`_                      |
-+-------------------------------------+--------------------------------+---------------------------------+
-| ``workplace_search.server``         | ``http://127.0.0.1:3002``      | `Server`_                       |
-+-------------------------------------+--------------------------------+---------------------------------+
-| ``workplace_search.bulk_size``      | ``100``                        | `Bulk settings`_                |
-+-------------------------------------+--------------------------------+---------------------------------+
-| ``workplace_search.flush_interval`` | ``"5s"``                       | `Bulk settings`_                |
-+-------------------------------------+--------------------------------+---------------------------------+
-| ``workplace_search.url_prefix``     | ``http://127.0.0.1``           | `Documents Repository URL`_     |
-+-------------------------------------+--------------------------------+---------------------------------+
++-------------------------------------+--------------------------------+--------------------------------------+
+| Name                                | Default value                  | Documentation                        |
++=====================================+================================+======================================+
+| ``workplace_search.id``             | None                           | `Custom Source ID`_                  |
++-------------------------------------+--------------------------------+--------------------------------------+
+| ``workplace_search.name``           | Local files for job + Job Name | `Custom Source Name`_                |
++-------------------------------------+--------------------------------+--------------------------------------+
+| ``workplace_search.access_token``   | same as for elasticsearch      | `Access Token`_                      |
++-------------------------------------+--------------------------------+--------------------------------------+
+| ``workplace_search.username``       | same as for elasticsearch      | `Basic Authentication (deprecated)`_ |
++-------------------------------------+--------------------------------+--------------------------------------+
+| ``workplace_search.password``       | same as for elasticsearch      | `Basic Authentication (deprecated)`_ |
++-------------------------------------+--------------------------------+--------------------------------------+
+| ``workplace_search.server``         | ``http://127.0.0.1:3002``      | `Server`_                            |
++-------------------------------------+--------------------------------+--------------------------------------+
+| ``workplace_search.bulk_size``      | ``100``                        | `Bulk settings`_                     |
++-------------------------------------+--------------------------------+--------------------------------------+
+| ``workplace_search.flush_interval`` | ``"5s"``                       | `Bulk settings`_                     |
++-------------------------------------+--------------------------------+--------------------------------------+
+| ``workplace_search.url_prefix``     | ``http://127.0.0.1``           | `Documents Repository URL`_          |
++-------------------------------------+--------------------------------+--------------------------------------+
 
 .. note::
 
@@ -57,8 +59,46 @@ Here is a list of Workplace Search settings (under ``workplace_search.`` prefix)
 Secrets
 ^^^^^^^
 
-FSCrawler is using the username/password capabilities of the Workplace Search API.
-The default values are the ones you defined in Elasticsearch configuration (see :ref:`elasticsearch-settings`).
+FSCrawler is exposing 2 authentification methods of the Workplace Search API:
+
+- `Access Token <https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-token.html>`__. See `Access Token`_ section below.
+- `Basic Authentication <https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-authenticate.html>`__. See `Basic Authentication (deprecated)`_ section below.
+
+By default, FSCrawler will use the same credentials as the ones used to connect to Elasticsearch.
+
+Access Token
+~~~~~~~~~~~~
+
+.. versionadded:: 2.10
+
+The :ref:`credentials-access-token` section explains how to create an Access Token in Elasticsearch.
+By default, FSCrawler will use the same Access Token as the one defined to connect to Elasticsearch.
+
+So the following settings will work out of the box for Workplace Search:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     access_token: "dGhpcyBpcyBub3QgYSByZWFsIHRva2VuIGJ1dCBpdCBpcyBvbmx5IHRlc3QgZGF0YS4gZG8gbm90IHRyeSB0byByZWFkIHRva2VuIQ=="
+
+But if you need to generate a specific Access Token for Workplace Search, you can declare it as follows:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     access_token: "Paste your Elasticsearch Access Token here"
+   workplace_search:
+    access_token: "Paste your Workplace Search Access Token here"
+
+Basic Authentication (deprecated)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The best practice is to use `Access Token`_. But if you have no other choice,
+you can still use Basic Authentication.
+
+The default values are the ones you defined in Elasticsearch configuration (see :ref:`credentials`).
 So the following settings will just work:
 
 .. code:: yaml

@@ -213,7 +213,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         void check(ESSearchHit hit);
     }
 
-    private static final Map<String, Object> debugOption = new HashMap<>();
+    protected static final Map<String, Object> debugOption = new HashMap<>();
 
     static {
         debugOption.put("debug", true);
