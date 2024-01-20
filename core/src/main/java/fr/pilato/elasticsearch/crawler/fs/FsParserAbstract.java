@@ -530,12 +530,14 @@ public abstract class FsParserAbstract extends FsParser {
         String rootdir = path.substring(0, path.lastIndexOf(pathSeparator));
 
         File folderInfo = new File(path);
-        LocalDateTime creationTime = getCreationTime(folderInfo);
-        LocalDateTime modificationTime = getModificationTime(folderInfo);
-        LocalDateTime lastAccessTime = getLastAccessTime(folderInfo);
 
-        Folder folder = new Folder(name, SignTool.sign(rootdir), path, computeVirtualPathName(stats.getRootPath(),
-                path), creationTime, modificationTime, lastAccessTime);
+        Folder folder = new Folder(name,
+                SignTool.sign(rootdir),
+                path,
+                computeVirtualPathName(stats.getRootPath(), path),
+                getCreationTime(folderInfo),
+                getModificationTime(folderInfo),
+                getLastAccessTime(folderInfo));
 
         indexDirectory(SignTool.sign(path), folder);
     }

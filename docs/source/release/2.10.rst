@@ -13,6 +13,7 @@ New
 * Add support for Workplace Search. Thanks to dadoonet.
 * Allow loading external jars. This adds a new ``external`` directory from where jars can be loaded
   to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. Thanks to dadoonet.
+* Add temporal informations in folder index. Thanks to bdauvissat
 
 Fix
 ---
@@ -38,5 +39,5 @@ Removed
 
 * Remove the specific distributions depending on Elastic version. Thanks to dadoonet.
 
-Thanks to ``@dadoonet``, ``@ywjung``, ``@iadcode``
+Thanks to ``@dadoonet``, ``@ywjung``, ``@iadcode``, ``@bdauvissat``
 for this release!
