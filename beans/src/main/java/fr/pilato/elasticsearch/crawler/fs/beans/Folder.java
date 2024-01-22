@@ -19,6 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
+import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
 /**
  * Represents a folder we have visited
  */
@@ -41,8 +45,12 @@ public class Folder {
      * @param root      Root of the folder
      * @param real      The full path to the folder
      * @param virtual   The virtual path from the root
+     * @param creation  Creation time of the forlder
+     * @param modification Modification time of the folder
+     * @param lastAccess Last access time for the folder
      */
-    public Folder(String name, String root, String real, String virtual) {
+    public Folder(String name, String root, String real, String virtual, LocalDateTime creation, LocalDateTime modification,
+                  LocalDateTime lastAccess) {
         path = new Path();
         path.setRoot(root);
         path.setReal(real);
@@ -50,6 +58,9 @@ public class Folder {
         file = new File();
         file.setFilename(name);
         file.setContentType(CONTENT_TYPE);
+        file.setLastModified(Date.from(modification.atZone(ZoneId.systemDefault()).toInstant()));
+        file.setCreated(Date.from(creation.atZone(ZoneId.systemDefault()).toInstant()));
+        file.setLastAccessed(Date.from(lastAccess.atZone(ZoneId.systemDefault()).toInstant()));
     }
 
     public Path getPath() {

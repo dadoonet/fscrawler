@@ -42,10 +42,7 @@ import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -531,7 +528,16 @@ public abstract class FsParserAbstract extends FsParser {
     private void indexDirectory(String path) throws Exception {
         String name = path.substring(path.lastIndexOf(pathSeparator) + 1);
         String rootdir = path.substring(0, path.lastIndexOf(pathSeparator));
-        Folder folder = new Folder(name, SignTool.sign(rootdir), path, computeVirtualPathName(stats.getRootPath(), path));
+
+        File folderInfo = new File(path);
+
+        Folder folder = new Folder(name,
+                SignTool.sign(rootdir),
+                path,
+                computeVirtualPathName(stats.getRootPath(), path),
+                getCreationTime(folderInfo),
+                getModificationTime(folderInfo),
+                getLastAccessTime(folderInfo));
 
         indexDirectory(SignTool.sign(path), folder);
     }
