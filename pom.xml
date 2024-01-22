@@ -46,7 +46,7 @@
         <tika.version>2.9.1</tika.version>
         <jackson.version>2.16.1</jackson.version>
         <!-- Remove CVE-2023-51074 exclusion when upgrading jsonpath -->
-        <jsonpath.version>2.8.0</jsonpath.version>
+        <jsonpath.version>2.9.0</jsonpath.version>
         <log4j.version>2.22.1</log4j.version>
         <jansi.version>2.4.1</jansi.version>
         <jersey.version>3.1.5</jersey.version>
