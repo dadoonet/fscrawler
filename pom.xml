@@ -45,7 +45,6 @@
 
         <tika.version>2.9.1</tika.version>
         <jackson.version>2.16.1</jackson.version>
-        <!-- Remove CVE-2023-51074 exclusion when upgrading jsonpath -->
         <jsonpath.version>2.9.0</jsonpath.version>
         <log4j.version>2.22.1</log4j.version>
         <jansi.version>2.4.1</jansi.version>
@@ -404,16 +403,6 @@
                             </goals>
                         </execution>
                     </executions>
-                    <configuration>
-                        <excludeVulnerabilityIds>
-                            <!--
-                            TODO: Remove this exclusion when upgrading jsonpath
-                            com.jayway.jsonpath:json-path:jar:2.8.0:compile; https://ossindex.sonatype.org/component/pkg:maven/com.jayway.jsonpath/json-path@2.8.0?utm_source=ossindex-client&utm_medium=integration&utm_content=1.8.1
-                            [CVE-2023-51074] CWE-121: Stack-based Buffer Overflow (7.8); https://ossindex.sonatype.org/vulnerability/CVE-2023-51074?component-type=maven&component-name=com.jayway.jsonpath%2Fjson-path&utm_source=ossindex-client&utm_medium=integration&utm_content=1.8.1
-                            -->
-                            <excludeVulnerabilityId>CVE-2023-51074</excludeVulnerabilityId>
-                        </excludeVulnerabilityIds>
-                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.sonatype.plugins</groupId>
