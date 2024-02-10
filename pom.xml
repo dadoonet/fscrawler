@@ -308,6 +308,7 @@
                             <value>5</value>
                             <unit>MINUTES</unit>
                         </wait>
+                        <followLogs>true</followLogs>
                         <removeOrphans>true</removeOrphans>
                         <removeVolumes>true</removeVolumes>
                     </configuration>
