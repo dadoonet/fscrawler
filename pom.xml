@@ -274,32 +274,42 @@
 
                 <!-- For IT using Docker Compose -->
                 <plugin>
-                    <groupId>com.dkanejs.maven.plugins</groupId>
+                    <groupId>io.brachu</groupId>
                     <artifactId>docker-compose-maven-plugin</artifactId>
-                    <version>4.0.0</version>
+                    <version>1.0.0</version>
                     <configuration>
-                        <envFile>${contrib.dir}/docker-compose-it/.env</envFile>
-                        <envVars>
-                            <STACK_VERSION>${integ.elasticsearch.version}</STACK_VERSION>
+                        <projectName>fscrawler-it</projectName>
+                        <!--workDir>src/test/resources</workDir-->
+                        <file>${contrib.dir}/docker-compose-it/docker-compose.yml</file>
+                        <env>
+                            <!-- Some flexible settings -->
+                            <STACK_VERSION>${elasticsearch8.version}</STACK_VERSION>
                             <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
                             <ES_PORT>${integ.elasticsearch.port}</ES_PORT>
                             <ENTERPRISE_SEARCH_PORT>${integ.workplace.port}</ENTERPRISE_SEARCH_PORT>
                             <LICENSE>trial</LICENSE>
-                        </envVars>
-                        <composeFiles>
-                            <composeFile>${contrib.dir}/docker-compose-it/docker-compose.yml</composeFile>
-                        </composeFiles>
-                        <services>
+
+                            <!-- Some static settings -->
+                            <KIBANA_PASSWORD>changeme</KIBANA_PASSWORD>
+                            <CLUSTER_NAME>docker-cluster</CLUSTER_NAME>
+                            <KIBANA_PORT>5601</KIBANA_PORT>
+                            <ENCRYPTION_KEYS>q3t6w9z$CzF)J@McQfTjWnZr4u7x!A%D</ENCRYPTION_KEYS>
+                            <MEM_LIMIT>1073741824</MEM_LIMIT>
+                        </env>
+                        <startServices>
                             <service>elasticsearch</service>
                             <service>enterprisesearch</service>
-                        </services>
-                        <ignorePullFailures>true</ignorePullFailures>
+                        </startServices>
+                        <stopServices>
+                            <service>elasticsearch</service>
+                            <service>enterprisesearch</service>
+                        </stopServices>
+                        <wait>
+                            <value>60</value>
+                            <unit>SECONDS</unit>
+                        </wait>
                         <removeOrphans>true</removeOrphans>
                         <removeVolumes>true</removeVolumes>
-<!--                        <awaitCmd>foo.sh</awaitCmd>-->
-<!--                        <awaitCmdArgs>foo,bar</awaitCmdArgs>-->
-<!--                        <awaitTimeout>60</awaitTimeout>-->
-                        <detachedMode>true</detachedMode>
                     </configuration>
                     <executions>
                         <execution>
