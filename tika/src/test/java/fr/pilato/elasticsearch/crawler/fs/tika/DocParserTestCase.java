@@ -25,6 +25,14 @@ import java.io.InputStream;
 
 public class DocParserTestCase extends AbstractFSCrawlerTestCase {
     InputStream getBinaryContent(String filename) {
-        return getClass().getResourceAsStream("/documents/" + filename);
+        return getBinaryContent("/documents", filename);
+    }
+
+    InputStream getBinaryContent(String root, String filename) {
+        if (root == null) {
+            // We try in the same classpath
+            return getClass().getResourceAsStream(filename);
+        }
+        return getClass().getResourceAsStream(root + "/" + filename);
     }
 }
