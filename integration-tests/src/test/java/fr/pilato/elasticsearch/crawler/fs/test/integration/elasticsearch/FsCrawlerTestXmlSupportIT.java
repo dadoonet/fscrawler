@@ -57,4 +57,27 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
             logger.info("{}", hit.getSource());
         }
     }
+
+    /**
+     * Test case for issue #1753: <a href="https://github.com/dadoonet/fscrawler/issues/1753">https://github.com/dadoonet/fscrawler/issues/1753</a> :
+     * invalid json generated from XML
+     */
+    @Test
+    public void test_xml_not_readable() throws Exception {
+        Fs fs = startCrawlerDefinition()
+                .setXmlSupport(true)
+                .build();
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+
+        countTestHelper(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withESQuery(new ESMatchQuery("Tag.$", "Content")),
+                1L, null);
+
+        logger.info("XML documents converted to:");
+        for (ESSearchHit hit : response.getHits()) {
+            logger.info("{}", hit.getSource());
+        }
+    }
 }

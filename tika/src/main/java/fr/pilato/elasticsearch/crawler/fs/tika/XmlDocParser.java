@@ -41,7 +41,7 @@ public class XmlDocParser {
     private static final ObjectMapper xmlMapper;
 
     static {
-        xmlMapper = new XmlMapper();
+        xmlMapper = XmlMapper.xmlBuilder().nameForTextElement("$").build();
     }
 
     public static String generate(InputStream inputStream) {

@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import org.junit.Test;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -30,7 +29,7 @@ import static org.hamcrest.Matchers.is;
 public class XmlDocParserTest extends DocParserTestCase {
 
     @Test
-    public void testXml() throws IOException {
+    public void testXml() {
         String doc = extractFromFile("issue-163.xml");
         assertThat(doc, is("{\"version\":\"1.0\",\"subscription-update\":{\"subscriptionid\":\"0\",\"requestid\":\"0\"," +
                 "\"last_push\":\"2016-06-03 06:21:34\",\"current_push\":\"2016-06-03 06:21:37\",\"exec\":\"0.002\"," +
@@ -38,9 +37,21 @@ public class XmlDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void testXmlNestedObjects() throws IOException {
+    public void testXmlNestedObjects() {
         String doc = extractFromFile("issue-592.xml");
         assertThat(doc, is("{\"object\":[{\"id\":\"1\",\"name\":\"foo\"},{\"id\":\"2\",\"name\":\"bar\"}]}"));
+    }
+
+    @Test
+    public void testXmlNotReadable() {
+        String doc = extractFromFile(null, "issue-1753.xml");
+        assertThat(doc, is("{\"Tag\":{\"attr\":\"false\",\"$\":\"Content\"}}"));
+    }
+
+
+    private String extractFromFile(String root, String filename) {
+        InputStream data = getBinaryContent(root, filename);
+        return XmlDocParser.generate(data);
     }
 
     private String extractFromFile(String filename) {
