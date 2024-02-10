@@ -305,7 +305,7 @@
                             <service>enterprisesearch</service>
                         </stopServices>
                         <wait>
-                            <value>60</value>
+                            <value>120</value>
                             <unit>SECONDS</unit>
                         </wait>
                         <removeOrphans>true</removeOrphans>
