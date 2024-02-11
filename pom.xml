@@ -305,10 +305,10 @@
                             <service>enterprisesearch</service>
                         </stopServices>
                         <wait>
-                            <value>5</value>
+                            <value>10</value>
                             <unit>MINUTES</unit>
                         </wait>
-                        <followLogs>true</followLogs>
+                        <followLogs>false</followLogs>
                         <removeOrphans>true</removeOrphans>
                         <removeVolumes>true</removeVolumes>
                     </configuration>
