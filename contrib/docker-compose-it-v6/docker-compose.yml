@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "2.2"
 services:
 
   elasticsearch:
@@ -19,5 +19,15 @@ services:
       memlock:
         soft: -1
         hard: -1
-    ports: ["$ES_PORT:$ES_PORT"]
+    ports:
+      - ${ES_PORT}:9200
     restart: always
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s http://localhost:9200 | grep -q 'missing authentication'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
