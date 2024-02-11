@@ -101,22 +101,6 @@
                 <groupId>io.brachu</groupId>
                 <artifactId>docker-compose-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>de.scravy</groupId>
-                <artifactId>waitfor-maven-plugin</artifactId>
-                <configuration>
-                    <checks>
-                        <check>
-                            <url>https://localhost:9200/</url>
-                            <statusCode>401</statusCode>
-                        </check>
-                        <check>
-                            <url>http://localhost:3002/</url>
-                            <statusCode>302</statusCode>
-                        </check>
-                    </checks>
-                </configuration>
-            </plugin>
 
             <plugin>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
@@ -149,13 +133,6 @@
                             <skip>true</skip>
                         </configuration>
                     </plugin>
-                    <plugin>
-                        <groupId>de.scravy</groupId>
-                        <artifactId>waitfor-maven-plugin</artifactId>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -171,13 +148,6 @@
                     <plugin>
                         <groupId>io.brachu</groupId>
                         <artifactId>docker-compose-maven-plugin</artifactId>
-                        <configuration>
-                            <skip>${skipIntegTests}</skip>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>de.scravy</groupId>
-                        <artifactId>waitfor-maven-plugin</artifactId>
                         <configuration>
                             <skip>${skipIntegTests}</skip>
                         </configuration>
@@ -235,18 +205,6 @@
                             <stopServices>
                                 <service>elasticsearch</service>
                             </stopServices>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>de.scravy</groupId>
-                        <artifactId>waitfor-maven-plugin</artifactId>
-                        <configuration>
-                            <checks>
-                                <check>
-                                    <url>http://localhost:9200/</url>
-                                    <statusCode>401</statusCode>
-                                </check>
-                            </checks>
                         </configuration>
                     </plugin>
                 </plugins>

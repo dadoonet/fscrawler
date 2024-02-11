@@ -73,6 +73,8 @@
         <tests.workplace.pass>${tests.cluster.pass}</tests.workplace.pass>
         <tests.rest.port>8080</tests.rest.port>
 
+        <tests.docker.logs>true</tests.docker.logs>
+
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
         <tests.timezone>random</tests.timezone>
@@ -305,10 +307,10 @@
                             <service>enterprisesearch</service>
                         </stopServices>
                         <wait>
-                            <value>15</value>
+                            <value>5</value>
                             <unit>MINUTES</unit>
                         </wait>
-                        <followLogs>true</followLogs>
+                        <followLogs>${tests.docker.logs}</followLogs>
                         <removeOrphans>true</removeOrphans>
                         <removeVolumes>true</removeVolumes>
                     </configuration>
@@ -326,41 +328,6 @@
                             <phase>post-integration-test</phase>
                             <goals>
                                 <goal>down</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>de.scravy</groupId>
-                    <artifactId>waitfor-maven-plugin</artifactId>
-                    <version>1.4</version>
-                    <configuration>
-                        <quiet>true</quiet>
-                        <chatty>false</chatty>
-                        <insecure>true</insecure>
-                        <redirect>false</redirect>
-                        <timeoutSeconds>600</timeoutSeconds>
-                        <checkEveryMillis>1000</checkEveryMillis>
-                        <!-- Each module should use its own checks like below -->
-                        <!--
-                        <checks>
-                            <check>
-                                <url>https://localhost:9200/</url>
-                                <statusCode>401</statusCode>
-                            </check>
-                            <check>
-                                <url>http://localhost:3002/</url>
-                                <statusCode>302</statusCode>
-                            </check>
-                        </checks>
-                        -->
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>wait-for-environment-to-be-up</id>
-                            <phase>pre-integration-test</phase>
-                            <goals>
-                                <goal>waitfor</goal>
                             </goals>
                         </execution>
                     </executions>
