@@ -300,10 +300,12 @@
                         </env>
                         <startServices>
                             <service>elasticsearch</service>
+                            <service>kibana</service>
                             <service>enterprisesearch</service>
                         </startServices>
                         <stopServices>
                             <service>elasticsearch</service>
+                            <service>kibana</service>
                             <service>enterprisesearch</service>
                         </stopServices>
                         <wait>
