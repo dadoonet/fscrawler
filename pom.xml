@@ -321,7 +321,6 @@
                             <id>up</id>
                             <phase>pre-integration-test</phase>
                             <goals>
-                                <goal>down</goal>
                                 <goal>up</goal>
                             </goals>
                         </execution>
