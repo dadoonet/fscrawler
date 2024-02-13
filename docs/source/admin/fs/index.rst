@@ -100,7 +100,7 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
      # 3 - Using username/password (not recommended / deprecated)
      username: "elastic"
      password: "password"
-     # optional, defaults to "docs"
+     # optional, defaults to ``name``-property
      index: "test_docs"
      # optional, defaults to "test_folders", used when es.index_folders is set to true
      index_folder: "test_fold"
