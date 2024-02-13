@@ -40,8 +40,7 @@ Index settings for documents
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, FSCrawler will index your data in an index which name is
-the same as the crawler name (``name`` property) plus ``_doc`` suffix,
-like ``test_doc``. You can change it by setting ``index`` field:
+the same as the crawler name (``name`` property). You can change it by setting ``index`` field:
 
 .. code:: yaml
 
