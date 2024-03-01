@@ -397,19 +397,6 @@ public class FsCrawlerCli {
             return;
         }
 
-        // We add a special case here in case someone tries to use workplace search
-        if (fsSettings.getWorkplaceSearch() != null) {
-            logger.info("Workplace Search integration is an experimental feature. " +
-                    "As is it is not fully implemented and settings might change in the future.");
-            if (command.loop == -1 || command.loop > 1) {
-                logger.warn("Workplace Search integration does not support yet watching a directory. " +
-                                "It will be able to run only once and exit. We manually force from --loop {} to --loop 1. " +
-                                "If you want to remove this message next time, please start FSCrawler with --loop 1",
-                        command.loop);
-                command.loop = 1;
-            }
-        }
-
         try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, command.loop, command.rest)) {
             Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
             // Let see if we want to upgrade an existing cluster to the latest version

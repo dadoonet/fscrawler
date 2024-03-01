@@ -88,31 +88,6 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         assertThat(settings.getRest(), notNullValue());
     }
 
-    @Test
-    public void testSettingsValidationWithWorkplaceSearch() {
-        // Checking default values
-        FsSettings settings = buildSettings(Fs.builder().build(), null);
-        settings.setWorkplaceSearch(WorkplaceSearch.builder().build());
-        assertThat(settings.getFs().getUrl(), is(Fs.DEFAULT_DIR));
-
-        // Check that the default fs.remove_deleted is true
-        assertThat(settings.getFs().isRemoveDeleted(), is(true));
-
-        assertThat(FsCrawlerValidator.validateSettings(logger, settings, false), is(false));
-        assertThat(settings.getFs().getUrl(), is(Fs.DEFAULT_DIR));
-        assertThat(settings.getElasticsearch().getNodes(), hasItem(Elasticsearch.NODE_DEFAULT));
-        assertThat(settings.getElasticsearch().getIndex(), is(getCurrentTestName()));
-        assertThat(settings.getElasticsearch().getIndexFolder(), is(getCurrentTestName() + INDEX_SUFFIX_FOLDER));
-        assertThat(settings.getServer(), nullValue());
-        assertThat(settings.getRest(), nullValue());
-        assertThat(settings.getWorkplaceSearch(), notNullValue());
-        assertThat(settings.getWorkplaceSearch().getServer(), is(WorkplaceSearch.DEFAULT_SERVER));
-        assertThat(settings.getWorkplaceSearch().getUrlPrefix(), is(WorkplaceSearch.DEFAULT_URL_PREFIX));
-
-        // Check that after the validation of settings we have modified fs.remove_deleted to false
-        assertThat(settings.getFs().isRemoveDeleted(), is(false));
-    }
-
     private FsSettings buildSettings(Fs fs, Server server) {
         FsSettings.Builder settingsBuilder = FsSettings.builder(getCurrentTestName());
         settingsBuilder.setFs(fs == null ? Fs.DEFAULT : fs);

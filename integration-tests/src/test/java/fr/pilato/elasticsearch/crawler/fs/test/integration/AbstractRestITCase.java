@@ -30,7 +30,6 @@ import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -101,14 +100,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         FsCrawlerValidator.validateSettings(logger, fsSettings, true);
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-
-        if (fsSettings.getWorkplaceSearch() == null) {
-            // The documentService is using the esSearch instance
-            this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
-        } else {
-            // The documentService is using the wpSearch instance
-            this.documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(metadataDir, fsSettings);
-        }
+        this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
 
         managementService.start();
         documentService.start();
