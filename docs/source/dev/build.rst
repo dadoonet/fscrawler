@@ -53,6 +53,38 @@ But you need first to specify the Maven profile to use and rebuild the project.
 * ``es-7x`` for Elasticsearch 7.x
 * ``es-6x`` for Elasticsearch 6.x
 
+Running Elastic stack with docker compose
+"""""""""""""""""""""""""""""""""""""""""
+
+If you want to start manually the Elastic stack before launching the tests, you can do that manually::
+
+    cd integration-tests
+    mvn docker-compose:up
+
+You can also specify the profile to use::
+
+    # With an Elastic 7.x version
+    mvn docker-compose:up -Pes-7x
+
+    # With an Elastic 6.x version
+    mvn docker-compose:up -Pes-6x
+
+To stop the cluster, run::
+
+    cd integration-tests
+    mvn docker-compose:down
+
+    # With an Elastic 7.x version
+    mvn docker-compose:down -Pes-7x
+
+    # With an Elastic 6.x version
+    mvn docker-compose:down -Pes-6x
+
+If you need to see the logs from docker, use the ``tests.docker.logs`` property::
+
+    mvn docker-compose:up -Dtests.docker.logs=true
+
+
 Run a specific test from your Terminal
 """"""""""""""""""""""""""""""""""""""
 
