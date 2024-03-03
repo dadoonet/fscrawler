@@ -294,9 +294,6 @@
                         <ignorePullFailures>true</ignorePullFailures>
                         <removeOrphans>true</removeOrphans>
                         <removeVolumes>true</removeVolumes>
-<!--                        <awaitCmd>foo.sh</awaitCmd>-->
-<!--                        <awaitCmdArgs>foo,bar</awaitCmdArgs>-->
-<!--                        <awaitTimeout>60</awaitTimeout>-->
                         <detachedMode>true</detachedMode>
                     </configuration>
                     <executions>

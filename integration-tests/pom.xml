@@ -216,13 +216,6 @@
                         <artifactId>docker-compose-maven-plugin</artifactId>
                         <configuration>
                             <envFile>${contrib.dir}/docker-compose-it-v6/.env</envFile>
-<!-- TODO REMOVE ?
-                            <envVars>
-                                <STACK_VERSION>${integ.elasticsearch.version}</STACK_VERSION>
-                                <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
-                                <ES_PORT>${integ.elasticsearch.port}</ES_PORT>
-                            </envVars>
--->
                             <composeFiles>
                                 <composeFile>${contrib.dir}/docker-compose-it-v6/docker-compose.yml</composeFile>
                             </composeFiles>
