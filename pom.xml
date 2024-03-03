@@ -12,7 +12,6 @@
         <module>settings</module>
         <module>test-documents</module>
         <module>beans</module>
-        <module>3rdparty</module>
         <module>elasticsearch-client</module>
         <module>core</module>
         <module>integration-tests</module>
@@ -291,14 +290,10 @@
                         </composeFiles>
                         <services>
                             <service>elasticsearch</service>
-                            <service>enterprisesearch</service>
                         </services>
                         <ignorePullFailures>true</ignorePullFailures>
                         <removeOrphans>true</removeOrphans>
                         <removeVolumes>true</removeVolumes>
-<!--                        <awaitCmd>foo.sh</awaitCmd>-->
-<!--                        <awaitCmdArgs>foo,bar</awaitCmdArgs>-->
-<!--                        <awaitTimeout>60</awaitTimeout>-->
                         <detachedMode>true</detachedMode>
                     </configuration>
                     <executions>
@@ -336,10 +331,6 @@
                             <check>
                                 <url>https://localhost:9200/</url>
                                 <statusCode>401</statusCode>
-                            </check>
-                            <check>
-                                <url>http://localhost:3002/</url>
-                                <statusCode>302</statusCode>
                             </check>
                         </checks>
                         -->

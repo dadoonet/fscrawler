@@ -63,16 +63,6 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             .setIndex("docs")
             .setPipeline("pipeline-id-if-any")
             .build();
-    private static final WorkplaceSearch WORKPLACE_SEARCH_EMPTY = WorkplaceSearch.builder().build();
-    private static final WorkplaceSearch WORKPLACE_SEARCH_FULL = WorkplaceSearch.builder()
-            .setServer(new ServerUrl("https://127.0.0.1:3002"))
-            .setAccessToken("A-BASE64-ENCODED-STRING-CONTAINING-THE-API-KEY")
-            .setId("ID")
-            .setName("My local files on /tmp/es")
-            .setUrlPrefix("https://127.0.0.1")
-            .setBulkSize(100)
-            .setFlushInterval(TimeValue.timeValueSeconds(30))
-            .build();
     private static final Server SERVER_EMPTY = Server.builder().build();
     private static final Server SERVER_FULL = Server.builder()
             .setHostname("127.0.0.1")
@@ -265,24 +255,6 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testParseSettingsEmptyWorkplaceSearch() throws IOException {
-        settingsTester(
-                FsSettings.builder(getCurrentTestName())
-                        .setWorkplaceSearch(WORKPLACE_SEARCH_EMPTY)
-                        .build()
-        );
-    }
-
-    @Test
-    public void testParseSettingsWorkplaceSearch() throws IOException {
-        settingsTester(
-                FsSettings.builder(getCurrentTestName())
-                        .setWorkplaceSearch(WORKPLACE_SEARCH_FULL)
-                        .build()
-        );
-    }
-
-    @Test
     public void testParseSettingsEmptyServer() throws IOException {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
@@ -305,7 +277,6 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         settingsTester(
                 FsSettings.builder(getCurrentTestName())
                         .setElasticsearch(ELASTICSEARCH_FULL)
-                        .setWorkplaceSearch(WORKPLACE_SEARCH_FULL)
                         .setServer(SERVER_FULL)
                         .setFs(FS_FULL)
                         .setRest(REST_FULL)

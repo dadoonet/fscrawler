@@ -23,7 +23,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceWorkplaceSearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
@@ -70,14 +69,7 @@ public class FsCrawlerImpl implements AutoCloseable {
         this.rest = rest;
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(config, settings);
-
-        if (settings.getWorkplaceSearch() == null) {
-            // The documentService is using the esSearch instance
-            this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(config, settings);
-        } else {
-            // The documentService is using the wpSearch instance
-            this.documentService = new FsCrawlerDocumentServiceWorkplaceSearchImpl(config, settings);
-        }
+        this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(config, settings);
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance

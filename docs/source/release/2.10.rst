@@ -10,7 +10,6 @@ New
 * Support for Index Templates. Thanks to dadoonet.
 * Support for Aliases. You can now index in an alias. Thanks to dadoonet.
 * Support for Access Token and Api Keys instead of Basic Authentication. Thanks to dadoonet.
-* Add support for Workplace Search. Thanks to dadoonet.
 * Allow loading external jars. This adds a new ``external`` directory from where jars can be loaded
   to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. Thanks to dadoonet.
 * Add temporal informations in folder index. Thanks to bdauvissat

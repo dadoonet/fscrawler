@@ -100,12 +100,6 @@
             <plugin>
                 <groupId>com.dkanejs.maven.plugins</groupId>
                 <artifactId>docker-compose-maven-plugin</artifactId>
-                <configuration>
-                    <services>
-                        <service>elasticsearch</service>
-                        <service>enterprisesearch</service>
-                    </services>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>de.scravy</groupId>
@@ -115,10 +109,6 @@
                         <check>
                             <url>https://localhost:9200/</url>
                             <statusCode>401</statusCode>
-                        </check>
-                        <check>
-                            <url>http://localhost:3002/</url>
-                            <statusCode>302</statusCode>
                         </check>
                     </checks>
                 </configuration>
@@ -192,7 +182,7 @@
             </build>
         </profile>
 
-        <!-- Profile for ES7: No security. -->
+        <!-- Profile for ES7 -->
         <profile>
             <id>es-7x</id>
             <properties>
@@ -213,7 +203,7 @@
                 </plugins>
             </build>
         </profile>
-        <!-- Profile for ES6: No enterprise search.-->
+        <!-- Profile for ES6: no https -->
         <profile>
             <id>es-6x</id>
             <properties>
@@ -226,18 +216,9 @@
                         <artifactId>docker-compose-maven-plugin</artifactId>
                         <configuration>
                             <envFile>${contrib.dir}/docker-compose-it-v6/.env</envFile>
-                            <envVars>
-                                <STACK_VERSION>${integ.elasticsearch.version}</STACK_VERSION>
-                                <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
-                                <ES_PORT>${integ.elasticsearch.port}</ES_PORT>
-                                <ENTERPRISE_SEARCH_PORT>${integ.workplace.port}</ENTERPRISE_SEARCH_PORT>
-                            </envVars>
                             <composeFiles>
                                 <composeFile>${contrib.dir}/docker-compose-it-v6/docker-compose.yml</composeFile>
                             </composeFiles>
-                            <services>
-                                <service>elasticsearch</service>
-                            </services>
                         </configuration>
                     </plugin>
                     <plugin>

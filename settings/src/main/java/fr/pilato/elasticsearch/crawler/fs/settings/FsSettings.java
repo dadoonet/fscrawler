@@ -28,19 +28,17 @@ public class FsSettings {
     private Fs fs;
     private Server server;
     private Elasticsearch elasticsearch;
-    private WorkplaceSearch workplaceSearch;
     private Rest rest;
 
     public FsSettings() {
 
     }
 
-    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch, WorkplaceSearch workplaceSearch, Rest rest) {
+    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch, Rest rest) {
         this.name = name;
         this.fs = fs;
         this.server = server;
         this.elasticsearch = elasticsearch;
-        this.workplaceSearch = workplaceSearch;
         this.rest = rest;
     }
 
@@ -53,7 +51,6 @@ public class FsSettings {
         private Fs fs = Fs.DEFAULT;
         private Server server = null;
         private Elasticsearch elasticsearch = Elasticsearch.DEFAULT();
-        private WorkplaceSearch workplaceSearch = null;
         private Rest rest = null;
 
         private Builder setName(String name) {
@@ -76,18 +73,13 @@ public class FsSettings {
             return this;
         }
 
-        public Builder setWorkplaceSearch(WorkplaceSearch workplaceSearch) {
-            this.workplaceSearch = workplaceSearch;
-            return this;
-        }
-
         public Builder setRest(Rest rest) {
             this.rest = rest;
             return this;
         }
 
         public FsSettings build() {
-            return new FsSettings(name, fs, server, elasticsearch, workplaceSearch, rest);
+            return new FsSettings(name, fs, server, elasticsearch, rest);
         }
     }
 
@@ -123,14 +115,6 @@ public class FsSettings {
         this.elasticsearch = elasticsearch;
     }
 
-    public void setWorkplaceSearch(WorkplaceSearch workplaceSearch) {
-        this.workplaceSearch = workplaceSearch;
-    }
-
-    public WorkplaceSearch getWorkplaceSearch() {
-        return workplaceSearch;
-    }
-
     public Rest getRest() {
         return rest;
     }
@@ -150,7 +134,6 @@ public class FsSettings {
         if (!Objects.equals(fs, that.fs)) return false;
         if (!Objects.equals(server, that.server)) return false;
         if (!Objects.equals(rest, that.rest)) return false;
-        if (!Objects.equals(workplaceSearch, that.workplaceSearch)) return false;
         return Objects.equals(elasticsearch, that.elasticsearch);
 
     }
@@ -162,7 +145,6 @@ public class FsSettings {
         result = 31 * result + (server != null ? server.hashCode() : 0);
         result = 31 * result + (rest != null ? rest.hashCode() : 0);
         result = 31 * result + (elasticsearch != null ? elasticsearch.hashCode() : 0);
-        result = 31 * result + (workplaceSearch != null ? workplaceSearch.hashCode() : 0);
         return result;
     }
 
@@ -172,7 +154,6 @@ public class FsSettings {
                 ", fs=" + fs +
                 ", server=" + server +
                 ", elasticsearch=" + elasticsearch +
-                ", enterpriseSearch=" + workplaceSearch +
                 ", rest=" + rest +
                 '}';
     }
