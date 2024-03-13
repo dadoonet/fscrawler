@@ -31,12 +31,6 @@
             <artifactId>fscrawler-beans</artifactId>
         </dependency>
 
-        <!-- Workplace search client -->
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-workplacesearch-client</artifactId>
-        </dependency>
-
         <!-- Rest Http Client -->
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>

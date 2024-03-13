@@ -84,12 +84,6 @@
             <artifactId>fscrawler-elasticsearch-client</artifactId>
         </dependency>
 
-        <!-- Our Workplace Search Client -->
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-workplacesearch-client</artifactId>
-        </dependency>
-
         <!-- For REST Server -->
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
