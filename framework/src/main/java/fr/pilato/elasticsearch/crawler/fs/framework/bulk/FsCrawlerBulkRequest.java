@@ -22,19 +22,22 @@ package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 import java.util.ArrayList;
 import java.util.List;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchDeleteOperation;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
+
 public abstract class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
 
-    private final List<T> operations = new ArrayList<>();
+    private final List<Object> operations = new ArrayList<>();
 
     public int numberOfActions() {
         return operations.size();
     }
 
-    public void add(T request) {
+    public void add(Object request) {
         operations.add(request);
     }
-
-    public List<T> getOperations() {
+    
+    public List<Object> getOperations() {
         return operations;
     }
 }

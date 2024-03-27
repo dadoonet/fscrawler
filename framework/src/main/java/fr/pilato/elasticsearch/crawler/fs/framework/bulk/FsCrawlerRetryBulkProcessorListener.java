@@ -56,8 +56,8 @@ public class FsCrawlerRetryBulkProcessorListener<
                             item.getOperation(), item.getFailureMessage());
                     // Find request
                     boolean requestFound = false;
-                    for (O operation : request.getOperations()) {
-                        if (operation.compareTo(item.getOperation()) == 0) {
+                    for (Object operation : request.getOperations()) {
+                        if (((Comparable<O>) operation).compareTo(item.getOperation()) == 0) {
                             this.bulkProcessor.add(operation);
                             requestFound = true;
                             logger.debug("Document [{}] found. Can be retried.", item.getOperation());

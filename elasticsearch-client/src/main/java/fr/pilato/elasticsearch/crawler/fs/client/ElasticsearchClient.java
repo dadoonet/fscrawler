@@ -235,6 +235,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 ElasticsearchBulkRequest::new)
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(settings.getElasticsearch().getFlushInterval())
+                .setByteSize(settings.getElasticsearch().getByteSize())
                 .build();
     }
 
@@ -422,9 +423,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void indexRawJson(String index, String id, String json, String pipeline) {
         logger.trace("JSon indexed : {}", json);
+      //modified code starts
         bulkProcessor.add(new ElasticsearchIndexOperation(index, id, pipeline, json));
+      //modified code ends
     }
-
+  
+    
+    
     @Override
     public void indexSingle(String index, String id, String json, String pipeline) throws ElasticsearchClientException {
         logger.trace("JSon indexed : {}", json);

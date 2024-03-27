@@ -19,7 +19,12 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchDeleteOperation;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -43,6 +48,7 @@ public class FsCrawlerBulkProcessor<
     private static final Logger logger = LogManager.getLogger(FsCrawlerBulkProcessor.class);
 
     private final int bulkActions;
+    private final ByteSizeValue byteSize;
     private final Listener<O, Req, Res> listener;
     private final Engine<O, Req, Res> engine;
     private Req bulkRequest;
@@ -50,13 +56,19 @@ public class FsCrawlerBulkProcessor<
     private final ScheduledExecutorService executor;
     private volatile boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
-
+    //modified code starts
+    private int totalByteSize= 0;
+    private int lastJsonSize = 0;
+    //modified code ends
+    
     public FsCrawlerBulkProcessor(Engine<O, Req, Res> engine,
                                    Listener<O, Req, Res> listener,
                                    int bulkActions,
                                    TimeValue flushInterval,
+                                   ByteSizeValue byteSize,
                                    Supplier<Req> requestSupplier) {
-        this.engine = engine;
+        this.byteSize = byteSize;
+		this.engine = engine;
         this.listener = listener;
         this.bulkActions = bulkActions;
         this.requestSupplier = requestSupplier;
@@ -107,12 +119,23 @@ public class FsCrawlerBulkProcessor<
      * @param request   request to add
      * @return this so we can link methods.
      */
-    public synchronized FsCrawlerBulkProcessor<O, Req, Res> add(O request) {
-        ensureOpen();
-        bulkRequest.add(request);
-        executeIfNeeded();
+    public synchronized FsCrawlerBulkProcessor<O, Req, Res> add(Object request) {
+    	
+        ensureOpen();      
+        //modified code starts
+        if(request.getClass().getSimpleName().equals("ElasticsearchIndexOperation")) {
+        	//
+        	addingByteSize(((ElasticsearchIndexOperation) request).getJson());
+        	executeIfNeeded(request);
+        } else {
+        	bulkRequest.add(request);
+        	executeIfNeededForRemainingCases();
+        }
+      //modified code ends
+        
         return this;
     }
+    
 
     private void ensureOpen() {
         if (closed) {
@@ -120,7 +143,27 @@ public class FsCrawlerBulkProcessor<
         }
     }
 
-    private void executeIfNeeded() {
+    private void executeIfNeeded(Object request) {
+        ensureOpen();
+        //for ByteSize comparison
+        if (compareWithByteSize(byteSize.getBytes(),totalByteSize)) {
+        	logger.trace("crossed barrier of bytes size");
+            execute();
+            totalByteSize = lastJsonSize;
+            //adding last file
+            bulkRequest.add(request);
+        } else if (isOverTheLimit()) {
+        	//for bulk size comparison
+        	bulkRequest.add(request);
+        	logger.trace("crossed barrier of bulk size");
+        	execute();
+        	totalByteSize = 0;
+        } else {
+        	bulkRequest.add(request);
+        }
+    }
+    
+    private void executeIfNeededForRemainingCases() {
         ensureOpen();
         if (isOverTheLimit()) {
             execute();
@@ -154,8 +197,23 @@ public class FsCrawlerBulkProcessor<
     }
 
     private boolean isOverTheLimit() {
-        return (bulkActions != -1) && (bulkRequest.numberOfActions() >= bulkActions);
+        return (bulkActions != -1) && (bulkRequest.numberOfActions() >= (bulkActions-1));
     }
+    
+    //modified code starts
+    //adding byte size of each file in a variable named total byte size
+    private void addingByteSize(String jsonObj) {
+    	byte[] bytes = jsonObj.getBytes();
+    	logger.trace("current file size is :{}", bytes.length);
+    	lastJsonSize = bytes.length;
+        totalByteSize += bytes.length;
+        logger.trace("after adding new file total size is :{}", totalByteSize);
+    }
+    //comparing bulk byteSize with total byte size
+    private boolean compareWithByteSize(long limit, int totalSize) {
+    	return (totalSize >= limit);
+    }
+    //modified code ends
 
     public Listener<O, Req, Res> getListener() {
         return listener;
@@ -171,6 +229,7 @@ public class FsCrawlerBulkProcessor<
 
         private int bulkActions;
         private TimeValue flushInterval;
+        private ByteSizeValue byteSize;
         private final Engine<O, Req, Res> engine;
         private final Listener<O, Req, Res> listener;
         private final Supplier<Req> requestSupplier;
@@ -190,9 +249,14 @@ public class FsCrawlerBulkProcessor<
             this.flushInterval = flushInterval;
             return this;
         }
+        
+        public Builder<O, Req, Res> setByteSize(ByteSizeValue byteSizeValue) {
+            this.byteSize = byteSizeValue;
+            return this;
+        }
 
         public FsCrawlerBulkProcessor<O, Req, Res> build() {
-            return new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, flushInterval, requestSupplier);
+            return new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, flushInterval, byteSize, requestSupplier);
         }
     }
 

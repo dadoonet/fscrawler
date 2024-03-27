@@ -44,9 +44,9 @@ public class ElasticsearchEngine implements Engine<ElasticsearchOperation, Elast
             StringBuilder bulkRequest = new StringBuilder();
             // Header
             bulkRequest.append("{\"")
-                    .append(r.getOperation().toString().toLowerCase(Locale.ROOT))
+                    .append(((ElasticsearchOperation) r).getOperation().toString().toLowerCase(Locale.ROOT))
                     .append("\":{\"_index\":\"")
-                    .append(r.getIndex())
+                    .append(((ElasticsearchOperation) r).getIndex())
                     .append("\"");
 
             if (elasticsearchClient.getMajorVersion() < 7) {
@@ -57,7 +57,7 @@ public class ElasticsearchEngine implements Engine<ElasticsearchOperation, Elast
             }
 
             bulkRequest.append(",\"_id\":\"")
-                    .append(r.getId())
+                    .append(((ElasticsearchOperation) r).getId())
                     .append("\"");
 
             if (r instanceof ElasticsearchIndexOperation && ((ElasticsearchIndexOperation) r).getPipeline() != null) {
