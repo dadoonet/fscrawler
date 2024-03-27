@@ -19,15 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchDeleteOperation;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
-import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.Executors;
@@ -35,6 +26,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 
 /**
  * Bulk processor
@@ -123,7 +121,7 @@ public class FsCrawlerBulkProcessor<
     	
         ensureOpen();      
         //modified code starts
-        if(request.getClass().getSimpleName().equals("ElasticsearchIndexOperation")) {
+        if(request instanceof ElasticsearchIndexOperation) {
         	//
         	addingByteSize(((ElasticsearchIndexOperation) request).getJson());
         	executeIfNeeded(request);
