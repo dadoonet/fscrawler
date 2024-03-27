@@ -50,7 +50,7 @@ jobs:
           distribution: 'adopt'
           cache: 'maven'
       - name: Cache Docker images
-        uses: ScribeMD/docker-cache@0.4.0
+        uses: ScribeMD/docker-cache@0.5.0
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
@@ -70,7 +70,7 @@ jobs:
           distribution: 'adopt'
           cache: 'maven'
       - name: Cache Docker images
-        uses: ScribeMD/docker-cache@0.4.0
+        uses: ScribeMD/docker-cache@0.5.0
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
@@ -90,7 +90,7 @@ jobs:
           distribution: 'adopt'
           cache: 'maven'
       - name: Cache Docker images
-        uses: ScribeMD/docker-cache@0.4.0
+        uses: ScribeMD/docker-cache@0.5.0
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
@@ -110,7 +110,7 @@ jobs:
           distribution: 'adopt'
           cache: 'maven'
       - name: Cache Docker images
-        uses: ScribeMD/docker-cache@0.4.0
+        uses: ScribeMD/docker-cache@0.5.0
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
