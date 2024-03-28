@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +31,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
-
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 /**
  * Bulk processor
  */
@@ -43,6 +44,7 @@ public class FsCrawlerBulkProcessor<
     private static final Logger logger = LogManager.getLogger(FsCrawlerBulkProcessor.class);
 
     private final int bulkActions;
+    private final ByteSizeValue byteSize;
     private final Listener<O, Req, Res> listener;
     private final Engine<O, Req, Res> engine;
     private Req bulkRequest;
@@ -50,15 +52,18 @@ public class FsCrawlerBulkProcessor<
     private final ScheduledExecutorService executor;
     private volatile boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
-
+    private int totalByteSize = 0;
+    private int lastJsonSize = 0;
     public FsCrawlerBulkProcessor(Engine<O, Req, Res> engine,
                                    Listener<O, Req, Res> listener,
                                    int bulkActions,
                                    TimeValue flushInterval,
+                                   ByteSizeValue byteSize,
                                    Supplier<Req> requestSupplier) {
         this.engine = engine;
         this.listener = listener;
         this.bulkActions = bulkActions;
+        this.byteSize = byteSize;
         this.requestSupplier = requestSupplier;
         this.bulkRequest = requestSupplier.get();
         this.listener.setBulkProcessor(this);
@@ -108,10 +113,11 @@ public class FsCrawlerBulkProcessor<
      * @return this so we can link methods.
      */
     public synchronized FsCrawlerBulkProcessor<O, Req, Res> add(O request) {
-        ensureOpen();
-        bulkRequest.add(request);
-        executeIfNeeded();
-        return this;
+    	ensureOpen();
+    	String jsonValue = serialize(request);
+    	addingByteSize(jsonValue);
+    	executeIfNeededWithByteCheck(request);
+    	return this;
     }
 
     private void ensureOpen() {
@@ -119,7 +125,25 @@ public class FsCrawlerBulkProcessor<
             throw new IllegalStateException("bulk process already closed");
         }
     }
-
+    
+    private void executeIfNeededWithByteCheck(O request) {
+    	ensureOpen();
+    	if (compareWithByteSize(byteSize.getBytes(), totalByteSize)) {
+    		logger.trace("crossed byte size limit of {}", byteSize);
+    		execute();
+    		totalByteSize = lastJsonSize;
+    		bulkRequest.add(request);
+    		} 
+    	else if (bulkSizeLimitCheck()) {
+    		bulkRequest.add(request);
+    		logger.trace("crossed bulk size limit of {}", bulkActions);
+    		execute();
+    		totalByteSize = 0;
+    	} else {
+    		bulkRequest.add(request);
+    		executeIfNeeded();
+    	}
+    }
     private void executeIfNeeded() {
         ensureOpen();
         if (isOverTheLimit()) {
@@ -156,7 +180,21 @@ public class FsCrawlerBulkProcessor<
     private boolean isOverTheLimit() {
         return (bulkActions != -1) && (bulkRequest.numberOfActions() >= bulkActions);
     }
-
+    
+    private boolean bulkSizeLimitCheck() {
+    	return (bulkActions != -1) && (bulkRequest.numberOfActions() >= (bulkActions - 1));
+    }
+    
+    private void addingByteSize(String jsonObj) {
+    	byte[] bytes = jsonObj.getBytes();
+    	lastJsonSize = bytes.length;
+    	totalByteSize += bytes.length;
+    }
+    
+    private boolean compareWithByteSize(long limit, int totalSize) {
+    	return (totalSize >= limit);
+    }
+	
     public Listener<O, Req, Res> getListener() {
         return listener;
     }
@@ -171,6 +209,7 @@ public class FsCrawlerBulkProcessor<
 
         private int bulkActions;
         private TimeValue flushInterval;
+        private ByteSizeValue byteSize;
         private final Engine<O, Req, Res> engine;
         private final Listener<O, Req, Res> listener;
         private final Supplier<Req> requestSupplier;
@@ -190,9 +229,14 @@ public class FsCrawlerBulkProcessor<
             this.flushInterval = flushInterval;
             return this;
         }
-
+        
+        public Builder<O, Req, Res> setByteSize(ByteSizeValue byteSizeValue) {
+        	this.byteSize = byteSizeValue;
+        	return this;
+        }
+        
         public FsCrawlerBulkProcessor<O, Req, Res> build() {
-            return new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, flushInterval, requestSupplier);
+            return new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, flushInterval, byteSize, requestSupplier);
         }
     }
 

@@ -235,6 +235,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 ElasticsearchBulkRequest::new)
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(settings.getElasticsearch().getFlushInterval())
+                .setByteSize(settings.getElasticsearch().getByteSize())
                 .build();
     }
 
