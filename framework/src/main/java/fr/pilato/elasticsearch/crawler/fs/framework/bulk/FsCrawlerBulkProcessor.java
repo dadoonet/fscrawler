@@ -114,15 +114,9 @@ public class FsCrawlerBulkProcessor<
      */
     public synchronized FsCrawlerBulkProcessor<O, Req, Res> add(O request) {
     	ensureOpen();
-    	if (request.getClass().getSimpleName().equals("ElasticsearchIndexOperation")) {
-    		String JsonValue = serialize(request);
-    		addingByteSize(JsonValue);
-    		executeIfNeededWithByteCheck(request);
-    	} 
-    	else {
-    		bulkRequest.add(request);
-    		executeIfNeeded();
-    	}
+    	String jsonValue = serialize(request);
+    	addingByteSize(jsonValue);
+    	executeIfNeededWithByteCheck(request);
     	return this;
     }
 
@@ -147,6 +141,7 @@ public class FsCrawlerBulkProcessor<
     		totalByteSize = 0;
     	} else {
     		bulkRequest.add(request);
+    		executeIfNeeded();
     	}
     }
     private void executeIfNeeded() {
