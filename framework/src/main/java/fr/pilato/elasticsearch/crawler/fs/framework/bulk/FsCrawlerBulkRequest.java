@@ -24,17 +24,17 @@ import java.util.List;
 
 public abstract class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
 
-    private final List<Object> operations = new ArrayList<>();
+    private final List<T> operations = new ArrayList<>();
 
     public int numberOfActions() {
         return operations.size();
     }
 
-    public void add(Object request) {
+    public void add(T request) {
         operations.add(request);
     }
-    
-    public List<Object> getOperations() {
+
+    public List<T> getOperations() {
         return operations;
     }
 }

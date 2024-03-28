@@ -19,6 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.Executors;
@@ -26,14 +31,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
-import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 /**
  * Bulk processor
  */
@@ -54,21 +52,18 @@ public class FsCrawlerBulkProcessor<
     private final ScheduledExecutorService executor;
     private volatile boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
-    //modified code starts
-    private int totalByteSize= 0;
+    private int totalByteSize = 0;
     private int lastJsonSize = 0;
-    //modified code ends
-    
     public FsCrawlerBulkProcessor(Engine<O, Req, Res> engine,
                                    Listener<O, Req, Res> listener,
                                    int bulkActions,
                                    TimeValue flushInterval,
                                    ByteSizeValue byteSize,
                                    Supplier<Req> requestSupplier) {
-        this.byteSize = byteSize;
-		this.engine = engine;
+        this.engine = engine;
         this.listener = listener;
         this.bulkActions = bulkActions;
+        this.byteSize = byteSize;
         this.requestSupplier = requestSupplier;
         this.bulkRequest = requestSupplier.get();
         this.listener.setBulkProcessor(this);
@@ -117,51 +112,39 @@ public class FsCrawlerBulkProcessor<
      * @param request   request to add
      * @return this so we can link methods.
      */
-    public synchronized FsCrawlerBulkProcessor<O, Req, Res> add(Object request) {
-    	
-        ensureOpen();      
-        //modified code starts
-        if(request instanceof ElasticsearchIndexOperation) {
-        	//
-        	addingByteSize(((ElasticsearchIndexOperation) request).getJson());
-        	executeIfNeeded(request);
-        } else {
-        	bulkRequest.add(request);
-        	executeIfNeededForRemainingCases();
-        }
-      //modified code ends
-        
-        return this;
+    public synchronized FsCrawlerBulkProcessor<O, Req, Res> add(O request) {
+    	ensureOpen();
+    	String jsonValue = serialize(request);
+    	addingByteSize(jsonValue);
+    	executeIfNeededWithByteCheck(request);
+    	return this;
     }
-    
 
     private void ensureOpen() {
         if (closed) {
             throw new IllegalStateException("bulk process already closed");
         }
     }
-
-    private void executeIfNeeded(Object request) {
-        ensureOpen();
-        //for ByteSize comparison
-        if (compareWithByteSize(byteSize.getBytes(),totalByteSize)) {
-        	logger.trace("crossed barrier of bytes size");
-            execute();
-            totalByteSize = lastJsonSize;
-            //adding last file
-            bulkRequest.add(request);
-        } else if (isOverTheLimit()) {
-        	//for bulk size comparison
-        	bulkRequest.add(request);
-        	logger.trace("crossed barrier of bulk size");
-        	execute();
-        	totalByteSize = 0;
-        } else {
-        	bulkRequest.add(request);
-        }
-    }
     
-    private void executeIfNeededForRemainingCases() {
+    private void executeIfNeededWithByteCheck(O request) {
+    	ensureOpen();
+    	if (compareWithByteSize(byteSize.getBytes(), totalByteSize)) {
+    		logger.trace("crossed byte size limit of {}", byteSize);
+    		execute();
+    		totalByteSize = lastJsonSize;
+    		bulkRequest.add(request);
+    		} 
+    	else if (bulkSizeLimitCheck()) {
+    		bulkRequest.add(request);
+    		logger.trace("crossed bulk size limit of {}", bulkActions);
+    		execute();
+    		totalByteSize = 0;
+    	} else {
+    		bulkRequest.add(request);
+    		executeIfNeeded();
+    	}
+    }
+    private void executeIfNeeded() {
         ensureOpen();
         if (isOverTheLimit()) {
             execute();
@@ -195,24 +178,23 @@ public class FsCrawlerBulkProcessor<
     }
 
     private boolean isOverTheLimit() {
-        return (bulkActions != -1) && (bulkRequest.numberOfActions() >= (bulkActions-1));
+        return (bulkActions != -1) && (bulkRequest.numberOfActions() >= bulkActions);
     }
     
-    //modified code starts
-    //adding byte size of each file in a variable named total byte size
+    private boolean bulkSizeLimitCheck() {
+    	return (bulkActions != -1) && (bulkRequest.numberOfActions() >= (bulkActions - 1));
+    }
+    
     private void addingByteSize(String jsonObj) {
     	byte[] bytes = jsonObj.getBytes();
-    	logger.trace("current file size is :{}", bytes.length);
     	lastJsonSize = bytes.length;
-        totalByteSize += bytes.length;
-        logger.trace("after adding new file total size is :{}", totalByteSize);
+    	totalByteSize += bytes.length;
     }
-    //comparing bulk byteSize with total byte size
+    
     private boolean compareWithByteSize(long limit, int totalSize) {
     	return (totalSize >= limit);
     }
-    //modified code ends
-
+	
     public Listener<O, Req, Res> getListener() {
         return listener;
     }
@@ -249,10 +231,10 @@ public class FsCrawlerBulkProcessor<
         }
         
         public Builder<O, Req, Res> setByteSize(ByteSizeValue byteSizeValue) {
-            this.byteSize = byteSizeValue;
-            return this;
+        	this.byteSize = byteSizeValue;
+        	return this;
         }
-
+        
         public FsCrawlerBulkProcessor<O, Req, Res> build() {
             return new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, flushInterval, byteSize, requestSupplier);
         }
