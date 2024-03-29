@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +44,7 @@ public class FsCrawlerBulkProcessor<
     private static final Logger logger = LogManager.getLogger(FsCrawlerBulkProcessor.class);
 
     private final int bulkActions;
+    private final ByteSizeValue byteSize;
     private final Listener<O, Req, Res> listener;
     private final Engine<O, Req, Res> engine;
     private Req bulkRequest;
@@ -55,12 +57,14 @@ public class FsCrawlerBulkProcessor<
                                    Listener<O, Req, Res> listener,
                                    int bulkActions,
                                    TimeValue flushInterval,
+                                   ByteSizeValue byteSize,
                                    Supplier<Req> requestSupplier) {
         this.engine = engine;
         this.listener = listener;
         this.bulkActions = bulkActions;
+        this.byteSize = byteSize;
         this.requestSupplier = requestSupplier;
-        this.bulkRequest = requestSupplier.get();
+        this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         this.listener.setBulkProcessor(this);
 
         if (flushInterval != null) {
@@ -119,10 +123,10 @@ public class FsCrawlerBulkProcessor<
             throw new IllegalStateException("bulk process already closed");
         }
     }
-
+    
     private void executeIfNeeded() {
         ensureOpen();
-        if (isOverTheLimit()) {
+        if (bulkRequest.isOverTheLimit()) {
             execute();
         }
     }
@@ -136,7 +140,7 @@ public class FsCrawlerBulkProcessor<
 
     private void execute() {
         final Req bulkRequest = this.bulkRequest;
-        this.bulkRequest = requestSupplier.get();
+        this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         final long executionId = executionIdGen.incrementAndGet();
 
         // execute in a blocking fashion...
@@ -153,10 +157,13 @@ public class FsCrawlerBulkProcessor<
         }
     }
 
-    private boolean isOverTheLimit() {
-        return (bulkActions != -1) && (bulkRequest.numberOfActions() >= bulkActions);
+    Req supplyRequestWithLimits(Supplier<Req> requestSupplier, int bulkActions, ByteSizeValue byteSize) {
+        Req bulkRequest = requestSupplier.get();
+        bulkRequest.maxNumberOfActions(bulkActions);
+        bulkRequest.maxBulkSize(byteSize);
+        return bulkRequest;
     }
-
+    
     public Listener<O, Req, Res> getListener() {
         return listener;
     }
@@ -171,6 +178,7 @@ public class FsCrawlerBulkProcessor<
 
         private int bulkActions;
         private TimeValue flushInterval;
+        private ByteSizeValue byteSize;
         private final Engine<O, Req, Res> engine;
         private final Listener<O, Req, Res> listener;
         private final Supplier<Req> requestSupplier;
@@ -190,9 +198,14 @@ public class FsCrawlerBulkProcessor<
             this.flushInterval = flushInterval;
             return this;
         }
-
+        
+        public Builder<O, Req, Res> setByteSize(ByteSizeValue byteSizeValue) {
+        	this.byteSize = byteSizeValue;
+        	return this;
+        }
+        
         public FsCrawlerBulkProcessor<O, Req, Res> build() {
-            return new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, flushInterval, requestSupplier);
+            return new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, flushInterval, byteSize, requestSupplier);
         }
     }
 

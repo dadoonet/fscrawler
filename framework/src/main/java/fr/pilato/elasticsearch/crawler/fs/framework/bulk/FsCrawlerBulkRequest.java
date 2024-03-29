@@ -19,22 +19,60 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+
 public abstract class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
 
+    private final Logger logger = LogManager.getLogger(FsCrawlerBulkRequest.class);
+
     private final List<T> operations = new ArrayList<>();
+    private int totalByteSize = 0;
+    private int maxNumberOfActions;
+    private ByteSizeValue maxBulkSize;
 
     public int numberOfActions() {
         return operations.size();
     }
 
+    public int totalByteSize() {
+        return totalByteSize;
+    }
+
+    public void maxNumberOfActions(int maxNumberOfActions) {
+        this.maxNumberOfActions = maxNumberOfActions;
+    }
+
+    public void maxBulkSize(ByteSizeValue maxBulkSize) {
+        this.maxBulkSize = maxBulkSize;
+    }
+
     public void add(T request) {
         operations.add(request);
+        // There's a cost of serializing the request. We need to take it into account
+        // and only compute the size if we need to.
+        if (maxBulkSize != null && maxBulkSize.getBytes() > 0) {
+            // TODO may be we should just add the serialized request to the T object as an optional payload?
+            String jsonValue = serialize(request);
+            byte[] bytes = jsonValue.getBytes();
+            totalByteSize += bytes.length;
+        }
     }
 
     public List<T> getOperations() {
         return operations;
+    }
+
+    boolean isOverTheLimit() {
+        logger.trace("Checking if we need to flush the bulk processor: [{}] >= [{}] actions, [{}] >= [{}] bytes",
+                numberOfActions(), maxNumberOfActions, totalByteSize(), maxBulkSize != null ? maxBulkSize.getBytes() : null);
+        return (maxBulkSize != null && maxBulkSize.getBytes() > 0 && totalByteSize >= maxBulkSize.getBytes()) ||
+                (maxNumberOfActions > 0 && numberOfActions() >= maxNumberOfActions);
     }
 }
