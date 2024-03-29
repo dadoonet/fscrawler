@@ -31,7 +31,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+
 /**
  * Bulk processor
  */
@@ -52,8 +52,7 @@ public class FsCrawlerBulkProcessor<
     private final ScheduledExecutorService executor;
     private volatile boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
-    private int totalByteSize = 0;
-    private int lastJsonSize = 0;
+
     public FsCrawlerBulkProcessor(Engine<O, Req, Res> engine,
                                    Listener<O, Req, Res> listener,
                                    int bulkActions,
@@ -65,7 +64,7 @@ public class FsCrawlerBulkProcessor<
         this.bulkActions = bulkActions;
         this.byteSize = byteSize;
         this.requestSupplier = requestSupplier;
-        this.bulkRequest = requestSupplier.get();
+        this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         this.listener.setBulkProcessor(this);
 
         if (flushInterval != null) {
@@ -113,11 +112,10 @@ public class FsCrawlerBulkProcessor<
      * @return this so we can link methods.
      */
     public synchronized FsCrawlerBulkProcessor<O, Req, Res> add(O request) {
-    	ensureOpen();
-    	String jsonValue = serialize(request);
-    	addingByteSize(jsonValue);
-    	executeIfNeededWithByteCheck(request);
-    	return this;
+        ensureOpen();
+        bulkRequest.add(request);
+        executeIfNeeded();
+        return this;
     }
 
     private void ensureOpen() {
@@ -126,27 +124,9 @@ public class FsCrawlerBulkProcessor<
         }
     }
     
-    private void executeIfNeededWithByteCheck(O request) {
-    	ensureOpen();
-    	if (compareWithByteSize(byteSize.getBytes(), totalByteSize)) {
-    		logger.trace("crossed byte size limit of {}", byteSize);
-    		execute();
-    		totalByteSize = lastJsonSize;
-    		bulkRequest.add(request);
-    		} 
-    	else if (bulkSizeLimitCheck()) {
-    		bulkRequest.add(request);
-    		logger.trace("crossed bulk size limit of {}", bulkActions);
-    		execute();
-    		totalByteSize = 0;
-    	} else {
-    		bulkRequest.add(request);
-    		executeIfNeeded();
-    	}
-    }
     private void executeIfNeeded() {
         ensureOpen();
-        if (isOverTheLimit()) {
+        if (bulkRequest.isOverTheLimit()) {
             execute();
         }
     }
@@ -160,7 +140,7 @@ public class FsCrawlerBulkProcessor<
 
     private void execute() {
         final Req bulkRequest = this.bulkRequest;
-        this.bulkRequest = requestSupplier.get();
+        this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         final long executionId = executionIdGen.incrementAndGet();
 
         // execute in a blocking fashion...
@@ -177,24 +157,13 @@ public class FsCrawlerBulkProcessor<
         }
     }
 
-    private boolean isOverTheLimit() {
-        return (bulkActions != -1) && (bulkRequest.numberOfActions() >= bulkActions);
+    Req supplyRequestWithLimits(Supplier<Req> requestSupplier, int bulkActions, ByteSizeValue byteSize) {
+        Req bulkRequest = requestSupplier.get();
+        bulkRequest.maxNumberOfActions(bulkActions);
+        bulkRequest.maxBulkSize(byteSize);
+        return bulkRequest;
     }
     
-    private boolean bulkSizeLimitCheck() {
-    	return (bulkActions != -1) && (bulkRequest.numberOfActions() >= (bulkActions - 1));
-    }
-    
-    private void addingByteSize(String jsonObj) {
-    	byte[] bytes = jsonObj.getBytes();
-    	lastJsonSize = bytes.length;
-    	totalByteSize += bytes.length;
-    }
-    
-    private boolean compareWithByteSize(long limit, int totalSize) {
-    	return (totalSize >= limit);
-    }
-	
     public Listener<O, Req, Res> getListener() {
         return listener;
     }

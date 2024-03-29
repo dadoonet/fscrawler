@@ -9,7 +9,7 @@
       </Console>
    </Appenders>
    <Loggers>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.framework" level="trace" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.framework" level="debug" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.test" level="info" additivity="false">
