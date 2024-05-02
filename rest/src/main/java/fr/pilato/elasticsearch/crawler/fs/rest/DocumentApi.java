@@ -178,6 +178,7 @@ public class DocumentApi extends RestApi {
         doc.getFile().setFilename(filename);
         doc.getFile().setExtension(FilenameUtils.getExtension(filename).toLowerCase());
         doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
+        doc.getFile().setFilesize(filesize);
         // File
 
         // Path
