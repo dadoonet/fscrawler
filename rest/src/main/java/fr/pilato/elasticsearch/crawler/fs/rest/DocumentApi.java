@@ -208,11 +208,11 @@ public class DocumentApi extends RestApi {
         // Elasticsearch entity coordinates (we use the first node address)
         ServerUrl node = settings.getElasticsearch().getNodes().get(0);
         String url = node.getUrl() + "/" + index + "/_doc/" + id;
+        final Doc mergedDoc = this.getMergedJsonDoc(doc, tags);
         if (Boolean.parseBoolean(simulate)) {
             logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].", filename, url);
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
-            final Doc mergedDoc = this.getMergedJsonDoc(doc, tags);
             documentService.index(
                     index,
                     id,
@@ -227,7 +227,7 @@ public class DocumentApi extends RestApi {
 
         if (logger.isDebugEnabled() || Boolean.parseBoolean(debug)) {
             // We send the content back if debug is on or if we got in the query explicitly a debug command
-            response.setDoc(doc);
+            response.setDoc(mergedDoc);
         }
 
         return response;
