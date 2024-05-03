@@ -224,6 +224,11 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 .timeValueMinutes(2));
         for (ESSearchHit hit : response.getHits()) {
             assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
+            int filesize = JsonPath.read(hit.getSource(), "$.file.filesize");
+            if (filesize <= 0) {
+                logger.warn("File [{}] has a size of [{}]",
+                        JsonPath.read(hit.getSource(), "$.file.filename"), filesize);
+            }
             assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), greaterThan(0));
         }
     }
