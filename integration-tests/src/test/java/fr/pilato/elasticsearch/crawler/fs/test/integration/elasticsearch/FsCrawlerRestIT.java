@@ -149,7 +149,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         assertThat(response.getHits().get(0).getId(), is("1234"));
-        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), notNullValue());
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), greaterThan(0));
     }
 
     @Test
@@ -224,7 +224,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 .timeValueMinutes(2));
         for (ESSearchHit hit : response.getHits()) {
             assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
-            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), notNullValue());
+            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), greaterThan(0));
         }
     }
 
@@ -249,7 +249,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         checkDocument("add_external.txt", hit -> {
             assertThat(JsonPath.read(hit.getSource(), "$.content"), containsString("This file content will be extracted"));
             assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
-            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), notNullValue());
+            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), greaterThan(0));
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.meta"));
             assertThat(JsonPath.read(hit.getSource(), "$.external.tenantId"), is(23));
             assertThat(JsonPath.read(hit.getSource(), "$.external.company"), is("shoe company"));
@@ -265,7 +265,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         checkDocument("replace_content_and_external.txt", hit -> {
             assertThat(JsonPath.read(hit.getSource(), "$.content"), is("OVERWRITTEN CONTENT"));
             assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
-            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), notNullValue());
+            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), greaterThan(0));
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.meta"));
             assertThat(JsonPath.read(hit.getSource(), "$.external.tenantId"), is(23));
             assertThat(JsonPath.read(hit.getSource(), "$.external.company"), is("shoe company"));
@@ -281,7 +281,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         checkDocument("replace_content_only.txt", hit -> {
             assertThat(JsonPath.read(hit.getSource(), "$.content"), is("OVERWRITTEN CONTENT"));
             assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
-            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), notNullValue());
+            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), greaterThan(0));
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.meta"));
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.external"));
         });
