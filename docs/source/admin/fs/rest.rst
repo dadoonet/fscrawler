@@ -143,7 +143,7 @@ You will get back your document as it has been stored by elasticsearch:
      }
    }
 
-If you started FSCrawler in debug mode with ``--debug`` or if you pass
+If you started FSCrawler in debug mode or if you pass
 ``debug=true`` query parameter, then the response will be much more
 complete:
 
@@ -278,6 +278,15 @@ The field ``external`` doesn't necessarily be a flat structure. This is a more a
         ]
       }
     }
+
+You can use this technique to add for example the filesize of the file your are uploading::
+
+.. code:: sh
+
+    echo "This is my text" > test.txt
+    curl -F "file=@test.txt" \
+      -F "tags={\"file\":{\"filesize\":$(ls -l test.txt | awk '{print $5}')}}" \
+      "http://127.0.0.1:8080/fscrawler/_document"
 
 .. attention:: Only standard :ref:`FSCrawler fields <generated_fields>` can be set outside ``external`` field name.
 
