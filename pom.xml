@@ -851,7 +851,7 @@
     <distributionManagement>
         <snapshotRepository>
             <id>sonatype-nexus-snapshots</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+            <url>${env.OSSRH_URL}</url>
         </snapshotRepository>
         <repository>
             <id>sonatype-nexus-staging</id>
@@ -872,7 +872,7 @@
         <repository>
             <id>oss-snapshots</id>
             <name>Sonatype OSS Snapshots</name>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+            <url>${env.OSSRH_URL}</url>
             <releases><enabled>false</enabled></releases>
             <snapshots><enabled>true</enabled></snapshots>
         </repository>
