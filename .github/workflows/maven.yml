@@ -53,6 +53,7 @@ jobs:
       - name: Deploy with Maven
         run: mvn --batch-mode deploy -DskipTests
         env:
+          OSSRH_URL: ${{ secrets.OSSRH_URL }}
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
