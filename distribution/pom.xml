@@ -174,15 +174,15 @@
                     <!-- Generate the docker images during the "install" phase -->
                     <execution>
                         <id>docker-build</id>
-                        <phase>install</phase>
+                        <phase>package</phase>
                         <goals>
-                            <goal>push</goal>
+                            <goal>build</goal>
                         </goals>
                     </execution>
                     <!-- Push the docker images during the "deploy" phase -->
                     <execution>
                         <id>docker-push</id>
-                        <phase>deploy</phase>
+                        <phase>install</phase>
                         <goals>
                             <goal>push</goal>
                         </goals>
