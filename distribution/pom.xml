@@ -17,7 +17,7 @@
         <!-- By default, build docker images on each module. -->
         <!--suppress UnresolvedMavenProperty -->
         <docker.skip>${env.DOCKER_SKIP}</docker.skip>
-        <docker.username>${{secrets.DOCKER_USERNAME}}</docker.username>
+        <docker.username>${{env.DOCKER_USERNAME}}</docker.username>
         <!-- The following assumes that each submodule will be overwritten. -->
         <module.name>es7</module.name>
 
