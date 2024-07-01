@@ -29,7 +29,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Build the project
-        run: mvn --batch-mode package -DskipTests 
+        run: mvn --batch-mode isntall -DskipTests 
         env:
           OSSRH_URL: ${{ secrets.OSSRH_URL }}
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
@@ -62,7 +62,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Deploy with Maven
-        run: mvn --batch-mode isntall -DskipTests
+        run: mvn --batch-mode package -DskipTests
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}
