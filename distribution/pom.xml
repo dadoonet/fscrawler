@@ -176,7 +176,7 @@
                         <id>docker-build</id>
                         <phase>install</phase>
                         <goals>
-                            <goal>build</goal>
+                            <goal>push</goal>
                         </goals>
                     </execution>
                     <!-- Push the docker images during the "deploy" phase -->
