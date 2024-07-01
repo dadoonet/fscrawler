@@ -89,7 +89,7 @@
         <env.SONATYPE_PASS></env.SONATYPE_PASS>
         <sonatype.username>${env.SONATYPE_USER}</sonatype.username>
         <sonatype.password>${env.SONATYPE_PASS}</sonatype.password>
-
+        <env.OSSRH_URL>${OSSRH_URL}</env.OSSRH_URL>
         <!-- For DockerHub to push images -->
         <!--suppress UnresolvedMavenProperty -->
         <env.DOCKER_USERNAME>${DOCKER_USERNAME}</env.DOCKER_USERNAME>
