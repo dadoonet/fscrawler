@@ -25,6 +25,12 @@ jobs:
         continue-on-error: true
       - name: Build the project
         run: mvn --batch-mode install -DskipTests -Ddocker.skip
+        env:
+          OSSRH_URL: ${{ secrets.OSSRH_URL }}
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
 
   deploy:
     needs: build
