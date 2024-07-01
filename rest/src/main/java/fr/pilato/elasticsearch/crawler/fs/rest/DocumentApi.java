@@ -92,7 +92,7 @@ public class DocumentApi extends RestApi {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setRequestMethod("GET");
         int responseCode = connection.getResponseCode();
-
+ 
         if (responseCode == HttpURLConnection.HTTP_OK) {
             long fileSize = connection.getContentLengthLong();
 
