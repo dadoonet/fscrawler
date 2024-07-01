@@ -8,12 +8,14 @@ RUN set -ex \
     gettext-base \
     procps \
     curl \
+    zip \
+    unzip \
+    net-tools \
     ${langsPkg} \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
+COPY --from=hengyunabc/arthas:latest /opt/arthas /opt/arthas
 COPY maven /usr/share/fscrawler
 RUN set -ex \
     && ln -sn /usr/share/fscrawler/bin/fscrawler /usr/bin/
-
 WORKDIR /usr/share/fscrawler
