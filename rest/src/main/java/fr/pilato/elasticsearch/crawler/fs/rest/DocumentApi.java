@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
+
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -42,8 +43,11 @@ import org.apache.commons.io.FilenameUtils;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -72,6 +76,61 @@ public class DocumentApi extends RestApi {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("This should never happen as we checked that previously");
         }
+    }
+
+    
+    @Path("/url")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public UploadResponse addUrlDocument(
+            @QueryParam("debug") String debug,
+            @QueryParam("simulate") String simulate,
+            @FormDataParam("id") String formId,
+            @FormDataParam("index") String formIndex,
+            @HeaderParam("id") String headerId,
+            @HeaderParam("index") String headerIndex,
+            @QueryParam("id") String queryParamId,
+            @QueryParam("index") String queryParamIndex,
+            @QueryParam("url") String url) throws IOException, NoSuchAlgorithmException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod("GET");
+        int responseCode = connection.getResponseCode();
+ 
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            long fileSize = connection.getContentLengthLong();
+
+            String dispositionHeader = connection.getHeaderField("Content-Disposition");
+            String fileName = getFileNameFromDisposition(dispositionHeader);
+
+            try (InputStream in = connection.getInputStream();
+                 FileOutputStream out = new FileOutputStream(fileName)) {
+                byte[] buffer = new byte[4096];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+                logger.debug("fileName:{} ,size: {}", fileName, fileSize);
+                String id = formId != null ? formId : headerId != null ? headerId : queryParamId;
+                String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
+                return uploadToDocumentService(debug, simulate, id, index, null, in, null);
+            }
+        } else {
+            logger.debug("Failed to fetch file. Server returned HTTP code: {}", responseCode);
+            UploadResponse response = new UploadResponse();
+            response.setOk(false);
+            response.setMessage("Failed to fetch file. ");
+            return response;
+        }
+    }
+
+    private static String getFileNameFromDisposition(String dispositionHeader) {
+        if (dispositionHeader != null && dispositionHeader.contains("filename=")) {
+            String contentDisposition = dispositionHeader.substring(dispositionHeader.indexOf("filename=") + 9);
+            contentDisposition = contentDisposition.replace("\"", "");
+            return contentDisposition;
+        }
+        return "default_filename.ext";
     }
 
     @POST

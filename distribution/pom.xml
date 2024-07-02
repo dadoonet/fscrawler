@@ -17,7 +17,7 @@
         <!-- By default, build docker images on each module. -->
         <!--suppress UnresolvedMavenProperty -->
         <docker.skip>${env.DOCKER_SKIP}</docker.skip>
-        <docker.username>dadoonet</docker.username>
+        <docker.username>${env.DOCKER_USERNAME}</docker.username>
         <!-- The following assumes that each submodule will be overwritten. -->
         <module.name>es7</module.name>
 
@@ -174,7 +174,7 @@
                     <!-- Generate the docker images during the "install" phase -->
                     <execution>
                         <id>docker-build</id>
-                        <phase>install</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>build</goal>
                         </goals>
@@ -182,7 +182,7 @@
                     <!-- Push the docker images during the "deploy" phase -->
                     <execution>
                         <id>docker-push</id>
-                        <phase>deploy</phase>
+                        <phase>install</phase>
                         <goals>
                             <goal>push</goal>
                         </goals>
