@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Archiver-Version: Plexus Archiver
+Created-By: Apache Maven
+Built-By: David Pilato
+Build-Jdk: 1.6.0_17
+Plugin-Class: fr.pilato.elasticsearch.crawler.plugins.welcome.WelcomePlugin
+Plugin-Id: welcome-plugin
+Plugin-Provider: David Pilato
+Plugin-Version: 0.0.1

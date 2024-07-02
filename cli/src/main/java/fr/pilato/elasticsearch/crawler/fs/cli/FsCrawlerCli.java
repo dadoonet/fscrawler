@@ -47,6 +47,8 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
+import org.pf4j.DefaultPluginManager;
+import org.pf4j.PluginManager;
 
 import java.io.Console;
 import java.io.IOException;
@@ -129,6 +131,11 @@ public class FsCrawlerCli {
 
             // Display the welcome banner
             banner();
+
+            // Load all plugins
+            PluginManager pluginManager = new DefaultPluginManager();
+            pluginManager.loadPlugins();
+            pluginManager.startPlugins();
 
             // We can now launch the crawler
             runner(command);
