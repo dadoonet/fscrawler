@@ -73,6 +73,10 @@
          <AppenderRef ref="Console"/>
          <AppenderRef ref="RollingFile" />
       </Logger>
+      <Logger name="org.pf4j" level="debug" additivity="false">
+         <AppenderRef ref="Console" />
+         <AppenderRef ref="RollingFile" />
+      </Logger>
 
       <Root level="warn">
          <AppenderRef ref="Console" />
