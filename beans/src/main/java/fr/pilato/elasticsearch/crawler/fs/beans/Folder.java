@@ -19,9 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import java.util.Date;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 
 /**
  * Represents a folder we have visited
@@ -58,9 +58,9 @@ public class Folder {
         file = new File();
         file.setFilename(name);
         file.setContentType(CONTENT_TYPE);
-        file.setLastModified(Date.from(modification.atZone(ZoneId.systemDefault()).toInstant()));
-        file.setCreated(Date.from(creation.atZone(ZoneId.systemDefault()).toInstant()));
-        file.setLastAccessed(Date.from(lastAccess.atZone(ZoneId.systemDefault()).toInstant()));
+        file.setLastModified(localDateTimeToDate(modification));
+        file.setCreated(localDateTimeToDate(creation));
+        file.setLastAccessed(localDateTimeToDate(lastAccess));
     }
 
     public Path getPath() {
