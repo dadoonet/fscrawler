@@ -194,13 +194,15 @@ parameter:
    echo "This is my text" > test.txt
    curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_document?debug=true&simulate=true"
 
+
 REST: fetch documents from a URL
+~~~~~~~~~~~~~~~
 
 The url is a file download , and By passing a URL address, the result can be generated like uploading a file
 
 .. code:: sh
 
-curl  'http://127.0.0.1:8080/fscrawler/_document/url?debug=true&simulate=true&url=http://example.com/demo.docx'  
+   curl  'http://127.0.0.1:8080/fscrawler/_document/url?debug=true&simulate=true&url=http://example.com/demo.docx'
 
 
 Document ID
