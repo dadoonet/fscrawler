@@ -92,10 +92,18 @@ public class DocumentApi extends RestApi {
             @HeaderParam("index") String headerIndex,
             @QueryParam("id") String queryParamId,
             @QueryParam("index") String queryParamIndex,
+            @QueryParam("url") String queryUrl,
             @FormDataParam("fileName") String fileName,
             @FormDataParam("url") String url) throws IOException, NoSuchAlgorithmException {
+        String requestUrl = queryUrl != null ? queryUrl : url;
 
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        if (requestUrl == null || requestUrl == "") {
+            UploadResponse response = new UploadResponse();
+            response.setOk(false);
+            response.setMessage("Please set the url address in the queryParam or formData .");
+            return response;
+        }
+        HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
         connection.setRequestMethod("GET");
         int responseCode = connection.getResponseCode();
 
@@ -390,7 +398,8 @@ public class DocumentApi extends RestApi {
         String url = node.getUrl() + "/" + index + "/_doc/" + id;
         final Doc mergedDoc = this.getMergedJsonDoc(doc, tags);
         if (Boolean.parseBoolean(simulate)) {
-            logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].", filename, url);
+            logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].", filename,
+                    url);
         } else {
             logger.debug("Sending document [{}] to elasticsearch.", filename);
             documentService.index(
@@ -439,7 +448,8 @@ public class DocumentApi extends RestApi {
             response.setFilename(filename);
         } catch (Exception e) {
             response.setOk(false);
-            response.setMessage("Can not remove document [" + index + "/" + (filename == null ? id : filename) + "]: " + e.getMessage());
+            response.setMessage("Can not remove document [" + index + "/" + (filename == null ? id : filename) + "]: "
+                    + e.getMessage());
             response.setIndex(index);
             response.setId(id);
             response.setFilename(filename);
