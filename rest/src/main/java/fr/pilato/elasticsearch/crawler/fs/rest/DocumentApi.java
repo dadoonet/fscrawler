@@ -22,6 +22,8 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -43,7 +45,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -78,7 +79,7 @@ public class DocumentApi extends RestApi {
         }
     }
 
-    
+
     @Path("/url")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -92,29 +93,33 @@ public class DocumentApi extends RestApi {
             @HeaderParam("index") String headerIndex,
             @QueryParam("id") String queryParamId,
             @QueryParam("index") String queryParamIndex,
-            @QueryParam("url") String url) throws IOException, NoSuchAlgorithmException {
+            @FormDataParam("fileName") String fileName,
+            @FormDataParam("url") String url) throws IOException, NoSuchAlgorithmException {
+
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setRequestMethod("GET");
         int responseCode = connection.getResponseCode();
- 
+
         if (responseCode == HttpURLConnection.HTTP_OK) {
             long fileSize = connection.getContentLengthLong();
 
             String dispositionHeader = connection.getHeaderField("Content-Disposition");
-            String fileName = getFileNameFromDisposition(dispositionHeader);
-
-            try (InputStream in = connection.getInputStream();
-                 FileOutputStream out = new FileOutputStream(fileName)) {
-                byte[] buffer = new byte[4096];
-                int read;
-                while ((read = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, read);
-                }
-                logger.debug("fileName:{} ,size: {}", fileName, fileSize);
-                String id = formId != null ? formId : headerId != null ? headerId : queryParamId;
-                String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
-                return uploadToDocumentService(debug, simulate, id, index, null, in, null);
+            if (fileName == null || fileName.length() == 0) {
+                fileName = getFileNameFromDisposition(dispositionHeader);
             }
+            InputStream in = connection.getInputStream();
+
+            logger.warn(fileName);
+            logger.warn("fileName:{} ,size: {}", fileName, fileSize);
+            String id = formId != null ? formId : headerId != null ? headerId : queryParamId;
+            String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
+
+            String filename = new String(fileName.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+            UploadResponse uploadResponse = uploadToDocumentService(debug, simulate, id, index, null, in, filename
+                    , fileSize);
+            uploadResponse.getDoc().getFile().setFilesize(fileSize);
+            uploadResponse.getDoc().getFile().setFilename(fileName);
+            return uploadResponse;
         } else {
             logger.debug("Failed to fetch file. Server returned HTTP code: {}", responseCode);
             UploadResponse response = new UploadResponse();
@@ -122,6 +127,123 @@ public class DocumentApi extends RestApi {
             response.setMessage("Failed to fetch file. ");
             return response;
         }
+
+    }
+
+    /**
+     * 获取到文件
+     *
+     * @param debug
+     * @param simulate
+     * @param id
+     * @param index
+     * @param tags
+     * @param filecontent
+     * @param filename
+     * @param fileSize
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     */
+    private UploadResponse uploadToDocumentService(
+            String debug,
+            String simulate,
+            String id,
+            String index,
+            InputStream tags,
+            InputStream filecontent, String filename, long fileSize) throws IOException, NoSuchAlgorithmException {
+
+        logger.debug("uploadToDocumentService({}, {}, {}, {}, ...)", debug, simulate, id, index);
+
+        // Create the Doc object
+        Doc doc = new Doc();
+
+
+        // File
+        doc.getFile().setFilename(filename);
+        doc.getFile().setExtension(FilenameUtils.getExtension(filename).toLowerCase());
+        doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
+        doc.getFile().setFilesize(fileSize);
+        // File
+
+        //index
+        if (index == null) {
+            index = settings.getElasticsearch().getIndex();
+        }
+
+        // Path
+        if (id == null) {
+            if (settings.getFs().isFilenameAsId()) {
+                id = filename;
+            } else {
+                id = SignTool.sign(filename);
+            }
+        } else if (id.equals("_auto_")) {
+            // We are using a specific id which tells us to generate a unique _id like elasticsearch does
+            id = TIME_UUID_GENERATOR.getBase64UUID();
+        } else {
+            logger.debug("get elasticsearch({}, {},  ...)", index, id);
+            //有了id值的
+            // Elasticsearch entity coordinates (we use the first node address)
+            ServerUrl node = settings.getElasticsearch().getNodes().get(0);
+            String url = node.getUrl() + "/" + index + "/_doc/" + id;
+            try {
+                boolean exist = documentService.exists(index, id);
+                if (exist) {
+                    ESSearchHit esSearchHit = documentService.get(index, id);
+                    String source = esSearchHit.getSource();
+                    JsonNode tagsNode = mapper.readTree(source);
+                    JsonNode docNode = mapper.convertValue(doc, JsonNode.class);
+                    JsonNode mergedNode = FsCrawlerUtil.merge(tagsNode, docNode);
+                    doc = mapper.treeToValue(mergedNode, Doc.class);
+                    UploadResponse response = new UploadResponse();
+                    response.setOk(true);
+                    response.setFilename(filename);
+                    response.setUrl(url);
+                    response.setDoc(doc);
+                    return response;
+                }
+            } catch (ElasticsearchClientException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+
+        doc.getPath().setVirtual(filename);
+        doc.getPath().setReal(filename);
+        // Path
+
+        // Read the file content
+        TikaDocParser.generate(settings, filecontent, filename, filename, doc, messageDigest, fileSize);
+
+        // Elasticsearch entity coordinates (we use the first node address)
+        ServerUrl node = settings.getElasticsearch().getNodes().get(0);
+        String url = node.getUrl() + "/" + index + "/_doc/" + id;
+        final Doc mergedDoc = this.getMergedJsonDoc(doc, tags);
+        if (Boolean.parseBoolean(simulate)) {
+            logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].", filename,
+                    url);
+        } else {
+            logger.debug("Sending document [{}] to elasticsearch.", filename);
+            documentService.index(
+                    index,
+                    id,
+                    mergedDoc,
+                    settings.getElasticsearch().getPipeline());
+        }
+
+        UploadResponse response = new UploadResponse();
+        response.setOk(true);
+        response.setFilename(filename);
+        response.setUrl(url);
+
+        if (logger.isDebugEnabled() || Boolean.parseBoolean(debug)) {
+            // We send the content back if debug is on or if we got in the query explicitly a debug command
+            response.setDoc(mergedDoc);
+        }
+
+        return response;
     }
 
     private static String getFileNameFromDisposition(String dispositionHeader) {
@@ -240,6 +362,11 @@ public class DocumentApi extends RestApi {
         doc.getFile().setFilesize(filesize);
         // File
 
+        //index
+        if (index == null) {
+            index = settings.getElasticsearch().getIndex();
+        }
+
         // Path
         if (id == null) {
             if (settings.getFs().isFilenameAsId()) {
@@ -250,12 +377,34 @@ public class DocumentApi extends RestApi {
         } else if (id.equals("_auto_")) {
             // We are using a specific id which tells us to generate a unique _id like elasticsearch does
             id = TIME_UUID_GENERATOR.getBase64UUID();
+        } else {
+            logger.debug("get elasticsearch({}, {},  ...)", index, id);
+            //有了id值的
+            // Elasticsearch entity coordinates (we use the first node address)
+            ServerUrl node = settings.getElasticsearch().getNodes().get(0);
+            String url = node.getUrl() + "/" + index + "/_doc/" + id;
+            try {
+                boolean exist = documentService.exists(index, id);
+                if (exist) {
+                    ESSearchHit esSearchHit = documentService.get(index, id);
+                    String source = esSearchHit.getSource();
+                    JsonNode tagsNode = mapper.readTree(source);
+                    JsonNode docNode = mapper.convertValue(doc, JsonNode.class);
+                    JsonNode mergedNode = FsCrawlerUtil.merge(tagsNode, docNode);
+                    doc = mapper.treeToValue(mergedNode, Doc.class);
+                    UploadResponse response = new UploadResponse();
+                    response.setOk(true);
+                    response.setFilename(filename);
+                    response.setUrl(url);
+                    response.setDoc(doc);
+                    return response;
+                }
+            } catch (ElasticsearchClientException e) {
+                e.printStackTrace();
+            }
+
         }
 
-        //index
-        if (index == null) {
-            index = settings.getElasticsearch().getIndex();
-        }
 
         doc.getPath().setVirtual(filename);
         doc.getPath().setReal(filename);
