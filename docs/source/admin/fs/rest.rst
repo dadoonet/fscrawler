@@ -194,6 +194,18 @@ parameter:
    echo "This is my text" > test.txt
    curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_document?debug=true&simulate=true"
 
+
+REST: fetch documents from a URL
+~~~~~~~~~~~~~~~
+
+If you want to get back the extracted content and its metadata but
+without indexing into elasticsearch you can use ``simulate=true`` query
+parameter:
+
+.. code:: sh
+
+   curl  'http://127.0.0.1:8080/fscrawler/_document/url?debug=true&simulate=false'  --form 'url="http://example.com/demo.docx"'
+
 Document ID
 ~~~~~~~~~~~
 
