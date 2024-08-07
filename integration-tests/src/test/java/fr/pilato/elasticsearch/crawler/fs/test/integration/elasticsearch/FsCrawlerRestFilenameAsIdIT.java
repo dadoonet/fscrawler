@@ -44,7 +44,7 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
         return FsSettings.builder(getCrawlerName())
                 .setFs(Fs.builder().setFilenameAsId(true).build())
                 .setRest(new Rest("http://127.0.0.1:" + testRestPort + "/fscrawler"))
-                .setElasticsearch(elasticsearchWithSecurity)
+                .setElasticsearch(elasticsearchConfiguration)
                 .build();
     }
 

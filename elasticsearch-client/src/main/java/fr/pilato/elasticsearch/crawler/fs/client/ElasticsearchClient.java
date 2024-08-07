@@ -187,11 +187,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .withConfig(config);
 
-        // If we have an Api Key or an Access Token, let's use it. Otherwise, we will use basic auth
+        // If we have an Api Key let's use it. Otherwise, we will use basic auth
         if (!FsCrawlerUtil.isNullOrEmpty(settings.getElasticsearch().getApiKey())) {
             authorizationHeader = "ApiKey " + settings.getElasticsearch().getApiKey();
-        } else if (!FsCrawlerUtil.isNullOrEmpty(settings.getElasticsearch().getAccessToken())) {
-            authorizationHeader = "Bearer " + settings.getElasticsearch().getAccessToken();
         } else {
             HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(
                     settings.getElasticsearch().getUsername(),
@@ -848,20 +846,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         logger.debug("generated key [{}] for [{}]: [{}]", id, keyName, encodedApiKey);
         return encodedApiKey;
-    }
-
-    @Override
-    public String generateElasticsearchToken() throws ElasticsearchClientException {
-        String request = "{\"grant_type\":\"client_credentials\"}";
-        logger.debug("generate an Elasticsearch Access Token");
-        String response = httpPost("/_security/oauth2/token", request);
-
-        // Parse the response
-        DocumentContext document = parseJsonAsDocumentContext(response);
-        String token = document.read("$.access_token");
-
-        logger.debug("generated Elasticsearch Access Token: [{}]", token);
-        return token;
     }
 
     private void createIndex(Path jobMappingDir, int elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {

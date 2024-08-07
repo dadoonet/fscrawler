@@ -581,7 +581,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
-                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
+                .setCredentials(testApiKey, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -601,7 +601,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                         new ServerUrl(testClusterUrl),
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
-                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
+                .setCredentials(testApiKey, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -634,7 +634,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl("http://127.0.0.1:9207")))
-                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
+                .setCredentials(testApiKey, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -654,7 +654,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
         // Build a client with a non-running node
         Elasticsearch elasticsearch = Elasticsearch.builder()
                 .setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")))
-                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
+                .setCredentials(testApiKey, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -695,14 +695,9 @@ public class ElasticsearchClientIT extends AbstractITCase {
             String key = esClient.generateApiKey("fscrawler-es-client-test");
             assertThat(key, notNullValue());
         } catch (Exception e) {
-            logger.warn("Can not create an API Key. You are probably using a version of Elasticsearch which does not support API Keys. " +
+            // creating derived api keys requires an explicit role descriptor that is empty (has no privileges)
+            logger.warn("Can not create an API Key. " +
                     "This is not a critical one as this code is only used in tests. So we skip it.", e);
         }
-    }
-
-    @Test
-    public void createElasticsearchAccessToken() throws ElasticsearchClientException {
-        String token = esClient.generateElasticsearchToken();
-        assertThat(token, notNullValue());
     }
 }
