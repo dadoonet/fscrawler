@@ -689,7 +689,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
     }
 
     @Test
-    public void createApiKey() throws ElasticsearchClientException {
+    public void createApiKey() {
         // This is not a critical one as this code is only used in tests
         try {
             String key = esClient.generateApiKey("fscrawler-es-client-test");
