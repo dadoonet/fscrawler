@@ -91,7 +91,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private final static String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
-    private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
     protected static String testClusterUrl = null;
     @Deprecated
@@ -99,7 +98,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     @Deprecated
     protected final static String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
-    protected final static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
     protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
 
     protected static Elasticsearch elasticsearchConfiguration;

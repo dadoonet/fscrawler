@@ -37,6 +37,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -53,9 +54,9 @@ import static org.hamcrest.Matchers.*;
 @SuppressWarnings("ALL")
 public class FsCrawlerRestIT extends AbstractRestITCase {
 
-    public FsSettings getFsSettings() {
+    public FsSettings getFsSettings() throws IOException {
         return FsSettings.builder(getCrawlerName())
-                .setRest(new Rest("http://127.0.0.1:" + testRestPort + "/fscrawler"))
+                .setRest(new Rest("http://127.0.0.1:" + getRestPort() + "/fscrawler"))
                 .setElasticsearch(elasticsearchConfiguration)
                 .build();
     }

@@ -38,10 +38,8 @@ The final artifacts are available in ``distribution/target``.
 Integration tests
 ^^^^^^^^^^^^^^^^^
 
-When running from the command line with ``mvn`` integration tests are ran against all supported versions.
-This is done by running a Docker instance of elasticsearch using the expected version.
-
-A HTTP server is also started on port 8080 during the integration tests, alternatively the assigned port can be set with `-Dtests.rest.port=8090` argument.
+When running from the command line with ``mvn`` integration tests are ran against a real
+Elasticsearch instance launched using Docker (via `Testcontainers <https://java.testcontainers.org/modules/elasticsearch/>`_).
 
 Run tests from your IDE
 """""""""""""""""""""""
@@ -135,10 +133,12 @@ You can change this by using ``tests.cluster.pass`` option::
 Changing the REST port
 """"""""""""""""""""""
 
-By default, FS crawler will run the integration tests using port ``8080`` for the REST service.
+By default, FS crawler will run the integration tests using a randomly chosen port for the REST service.
 You can change this by using ``tests.rest.port`` option::
 
     mvn verify -Dtests.rest.port=8280
+
+When set to ``0`` (default value), the port is assigned randomly.
 
 Randomized testing
 """"""""""""""""""

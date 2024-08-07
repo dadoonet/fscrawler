@@ -49,6 +49,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -65,6 +66,9 @@ import static org.hamcrest.Matchers.is;
 
 public abstract class AbstractRestITCase extends AbstractITCase {
 
+    private final static int DEFAULT_TEST_REST_PORT = 0;
+    private static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
+
     protected static WebTarget target;
     protected static Client client;
 
@@ -72,7 +76,24 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     private FsCrawlerManagementServiceElasticsearchImpl managementService;
     protected FsCrawlerDocumentService documentService;
 
-    public abstract FsSettings getFsSettings();
+    /**
+     * Get the Rest Port. It could be set externally. If 0,
+     * we will try to find a free port randomly
+     * @return the rest port to use
+     */
+    protected static int getRestPort() throws IOException {
+        if (testRestPort <= 0) {
+            // Find any available TCP port if 0 or check that the port is available
+            try (ServerSocket serverSocket = new ServerSocket(testRestPort)) {
+                testRestPort = serverSocket.getLocalPort();
+                staticLogger.info("Using random rest port [{}]", testRestPort);
+            }
+        }
+
+        return testRestPort;
+    }
+
+    public abstract FsSettings getFsSettings() throws IOException;
     @Before
     public void copyTags() throws IOException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
@@ -170,7 +191,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     }
 
     @BeforeClass
-    public static void startRestClient() {
+    public static void startRestClient() throws IOException {
         // create the client
         client = ClientBuilder.newBuilder()
                 .register(MultiPartFeature.class)
@@ -178,7 +199,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
                 .register(JacksonFeature.class)
                 .build();
 
-        target = client.target("http://127.0.0.1:" + testRestPort + "/fscrawler");
+        target = client.target("http://127.0.0.1:" + getRestPort() + "/fscrawler");
     }
 
     @AfterClass
