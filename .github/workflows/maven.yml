@@ -9,11 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 17 and Maven Central Repository
+      - name: Set up JDK 21 and Maven Central Repository
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'adopt'
+          java-version: '21'
+          distribution: 'temurin'
           cache: 'maven'
           server-id: sonatype-nexus-snapshots
           server-username: MAVEN_USERNAME
@@ -31,11 +31,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 17 and Maven Central Repository
+      - name: Set up JDK 21 and Maven Central Repository
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'adopt'
+          java-version: '21'
+          distribution: 'temurin'
           cache: 'maven'
           server-id: sonatype-nexus-snapshots
           server-username: MAVEN_USERNAME
