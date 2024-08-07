@@ -56,7 +56,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     public FsSettings getFsSettings() {
         return FsSettings.builder(getCrawlerName())
                 .setRest(new Rest("http://127.0.0.1:" + testRestPort + "/fscrawler"))
-                .setElasticsearch(elasticsearchWithSecurity)
+                .setElasticsearch(elasticsearchConfiguration)
                 .build();
     }
 

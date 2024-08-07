@@ -37,8 +37,8 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch8.version>8.14.1</elasticsearch8.version>
-        <elasticsearch7.version>7.17.19</elasticsearch7.version>
+        <elasticsearch8.version>8.14.3</elasticsearch8.version>
+        <elasticsearch7.version>7.17.23</elasticsearch7.version>
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch8.version}</elasticsearch.version>
 
@@ -62,14 +62,11 @@
         <contrib.dir>${project.basedir}/contrib</contrib.dir>
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.elasticsearch.port>9200</integ.elasticsearch.port>
-        <integ.workplace.port>3002</integ.workplace.port>
         <tests.cluster.url></tests.cluster.url>
         <tests.cluster.cloud_id></tests.cluster.cloud_id>
+        <tests.cluster.apiKey></tests.cluster.apiKey>
         <tests.cluster.user>elastic</tests.cluster.user>
         <tests.cluster.pass>changeme</tests.cluster.pass>
-        <tests.workplace.url></tests.workplace.url>
-        <tests.workplace.user>${tests.cluster.user}</tests.workplace.user>
-        <tests.workplace.pass>${tests.cluster.pass}</tests.workplace.pass>
         <tests.rest.port>8080</tests.rest.port>
 
         <!-- Randomized testing framework -->
@@ -204,12 +201,11 @@
                             <java.awt.headless>true</java.awt.headless>
                             <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
                             <tests.cluster.cloud_id>${tests.cluster.cloud_id}</tests.cluster.cloud_id>
+                            <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
                             <tests.cluster.user>${tests.cluster.user}</tests.cluster.user>
                             <tests.cluster.pass>${tests.cluster.pass}</tests.cluster.pass>
-                            <tests.workplace.url>${tests.workplace.url}</tests.workplace.url>
-                            <tests.workplace.user>${tests.workplace.user}</tests.workplace.user>
-                            <tests.workplace.pass>${tests.workplace.pass}</tests.workplace.pass>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
+                            <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
                             <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
                         </systemProperties>
                     </configuration>
@@ -269,81 +265,6 @@
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
                     <version>0.45.0</version>
-                </plugin>
-
-                <!-- For IT using Docker Compose -->
-                <plugin>
-                    <groupId>com.dkanejs.maven.plugins</groupId>
-                    <artifactId>docker-compose-maven-plugin</artifactId>
-                    <version>4.0.0</version>
-                    <configuration>
-                        <envFile>${contrib.dir}/docker-compose-it/.env</envFile>
-                        <envVars>
-                            <STACK_VERSION>${integ.elasticsearch.version}</STACK_VERSION>
-                            <ELASTIC_PASSWORD>${tests.cluster.pass}</ELASTIC_PASSWORD>
-                            <ES_PORT>${integ.elasticsearch.port}</ES_PORT>
-                            <ENTERPRISE_SEARCH_PORT>${integ.workplace.port}</ENTERPRISE_SEARCH_PORT>
-                            <LICENSE>trial</LICENSE>
-                        </envVars>
-                        <composeFiles>
-                            <composeFile>${contrib.dir}/docker-compose-it/docker-compose.yml</composeFile>
-                        </composeFiles>
-                        <services>
-                            <service>elasticsearch</service>
-                        </services>
-                        <ignorePullFailures>true</ignorePullFailures>
-                        <removeOrphans>true</removeOrphans>
-                        <removeVolumes>true</removeVolumes>
-                        <detachedMode>true</detachedMode>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>up</id>
-                            <phase>pre-integration-test</phase>
-                            <goals>
-                                <goal>down</goal>
-                                <goal>up</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>down</id>
-                            <phase>post-integration-test</phase>
-                            <goals>
-                                <goal>down</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>de.scravy</groupId>
-                    <artifactId>waitfor-maven-plugin</artifactId>
-                    <version>1.4</version>
-                    <configuration>
-                        <quiet>true</quiet>
-                        <chatty>false</chatty>
-                        <insecure>true</insecure>
-                        <redirect>false</redirect>
-                        <timeoutSeconds>600</timeoutSeconds>
-                        <checkEveryMillis>1000</checkEveryMillis>
-                        <!-- Each module should use its own checks like below -->
-                        <!--
-                        <checks>
-                            <check>
-                                <url>https://localhost:9200/</url>
-                                <statusCode>401</statusCode>
-                            </check>
-                        </checks>
-                        -->
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>wait-for-environment-to-be-up</id>
-                            <phase>pre-integration-test</phase>
-                            <goals>
-                                <goal>waitfor</goal>
-                            </goals>
-                        </execution>
-                    </executions>
                 </plugin>
 
                 <!-- Generate the release zip file (run during package step) -->
@@ -844,6 +765,12 @@
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
                 <artifactId>randomizedtesting-runner</artifactId>
                 <version>2.8.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>elasticsearch</artifactId>
+                <version>1.20.1</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

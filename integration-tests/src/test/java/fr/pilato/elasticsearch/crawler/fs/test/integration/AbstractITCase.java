@@ -43,7 +43,6 @@ import org.junit.BeforeClass;
 import javax.net.ssl.SSLException;
 import java.io.File;
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
@@ -68,20 +67,18 @@ import static org.junit.Assume.assumeThat;
 
 /**
  * Integration tests expect to have an elasticsearch instance running on http://127.0.0.1:9200.
+ * Otherwise, a TestContainer instance will be started.
  *
  * Note that all existing data in this cluster might be removed
  *
  * If you want to run tests against a remote cluster, please launch tests using
  * tests.cluster.url property:
  *
- * mvn clean install -Dtests.cluster.url=http://127.0.0.1:9200
+ * mvn verify -Dtests.cluster.url=http://127.0.0.1:9200
  *
- * If the cluster is running with security you may want to overwrite the username and password
- * with tests.cluster.user and tests.cluster.password:
+ * All integration tests might be skipped using:
  *
- * mvn clean install -Dtests.cluster.user=elastic -Dtests.cluster.pass=changeme
- *
- * All integration tests might be skipped if the cluster is not running
+ * mvn verify -DskipIntegTests
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
@@ -92,24 +89,24 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
     private final static String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
-    private final static String DEFAULT_TEST_CLUSTER_HTTP_URL = "http://127.0.0.1:9200";
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
     private final static Integer DEFAULT_TEST_REST_PORT = 8080;
 
-    protected static String testClusterUrl;
+    protected static String testClusterUrl = null;
     @Deprecated
     protected final static String testClusterUser = getSystemProperty("tests.cluster.user", DEFAULT_USERNAME);
     @Deprecated
     protected final static String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
-    protected static String testAccessToken = getSystemProperty("tests.cluster.accessToken", null);
     protected final static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
-    protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", false);
+    protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
 
-    protected static Elasticsearch elasticsearchWithSecurity;
+    protected static Elasticsearch elasticsearchConfiguration;
     protected static FsCrawlerManagementServiceElasticsearchImpl managementService = null;
     protected static FsCrawlerDocumentService documentService = null;
+
+    private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -228,83 +225,80 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
-        String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
-        if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
-            testClusterUrl = decodeCloudId(testClusterCloudId);
-            staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
-        } else {
-            testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
-            if (testClusterUrl.isEmpty()) {
-                // When running from Maven CLI, tests.cluster.url is empty and not null...
-                testClusterUrl = DEFAULT_TEST_CLUSTER_URL;
+        if (testClusterUrl == null) {
+            String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
+            if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
+                testClusterUrl = decodeCloudId(testClusterCloudId);
+                staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
+            } else {
+                testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
+                if (testClusterUrl.isEmpty()) {
+                    // When running from Maven CLI, tests.cluster.url is empty and not null...
+                    testClusterUrl = DEFAULT_TEST_CLUSTER_URL;
+                }
             }
         }
 
+        FsSettings fsSettings = startClient();
+        if (fsSettings == null) {
+            staticLogger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
+            testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
+            fsSettings = startClient();
+        }
+
+        assumeThat("Integration tests are skipped because we have not been able to find an Elasticsearch cluster",
+                fsSettings, notNullValue());
+
+        // We create and start the managementService
+        managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
+        managementService.start();
+
+        // If the Api Key is not provided, we want to generate it and use in all the tests
+        if (testApiKey == null) {
+            // Generate the Api-Key
+            testApiKey = managementService.getClient().generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
+
+            // Stop all the services
+            documentService.close();
+            managementService.close();
+
+            // Start the documentService with the Api Key
+            fsSettings = startClient();
+
+            // Start the managementService with the Api Key
+            managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
+            managementService.start();
+        }
+
+        String version = managementService.getVersion();
+        staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
+    }
+
+    private static FsSettings startClient() throws IOException, ElasticsearchClientException {
         staticLogger.info("Starting a client against [{}]", testClusterUrl);
         // We build the elasticsearch Client based on the parameters
-        elasticsearchWithSecurity = Elasticsearch.builder()
+        elasticsearchConfiguration = Elasticsearch.builder()
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                 .setSslVerification(false)
-                .setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass)
+                .setCredentials(testApiKey, testClusterUser, testClusterPass)
                 .build();
-        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
+        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchConfiguration).build();
 
         documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
         try {
             documentService.start();
-
-            // We make sure the cluster is running
-            managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-            managementService.start();
-
-            // Generate the Api-Key
-            if (testApiKey == null) {
-                testApiKey = managementService.getClient().generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
-            }
-
-            if (testAccessToken == null) {
-                testAccessToken = managementService.getClient().generateElasticsearchToken();
-            }
+            return fsSettings;
         } catch (ElasticsearchClientException e) {
+            staticLogger.info("Elasticsearch is not running on [{}]", testClusterUrl);
             if ((e.getCause() instanceof SocketException ||
                     (e.getCause() instanceof ProcessingException && e.getCause().getCause() instanceof SSLException))
-                            && testClusterUrl.equals(DEFAULT_TEST_CLUSTER_URL)) {
-                staticLogger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http");
-                testClusterUrl=DEFAULT_TEST_CLUSTER_HTTP_URL;
-                staticLogger.info("Starting a client against [{}]", testClusterUrl);
-                // We build the elasticsearch Client based on the parameters
-                Elasticsearch.Builder builderForOlderService = Elasticsearch.builder()
-                        .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
-                        .setSslVerification(false);
-
-                // For older versions, we want to test using login/password
-                builderForOlderService.setUsername(testClusterUser);
-                builderForOlderService.setPassword(testClusterPass);
-                elasticsearchWithSecurity = builderForOlderService.build();
-                fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchWithSecurity).build();
-                documentService.close();
-                documentService = null;
+                    && testClusterUrl.toLowerCase().startsWith("https")) {
+                staticLogger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http.");
+                testClusterUrl = testClusterUrl.replace("https", "http");
+                return startClient();
             }
         }
-
-        // We make sure the cluster is running
-        try {
-            if (documentService == null) {
-                documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
-                documentService.start();
-            }
-            if (managementService == null) {
-                managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-                managementService.start();
-            }
-
-            String version = managementService.getVersion();
-            staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
-        } catch (ConnectException e) {
-            // If we have an exception here, let's ignore the test
-            staticLogger.warn("Integration tests are skipped: [{}]", e.getMessage());
-            assumeThat("Integration tests are skipped", e.getMessage(), not(containsString("Connection refused")));
-        }
+        return null;
     }
 
     @AfterClass
@@ -357,7 +351,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             builder.setUsername(testClusterUser);
             builder.setPassword(testClusterPass);
         } else {
-            builder.setCredentials(testApiKey, testAccessToken, testClusterUser, testClusterPass);
+            builder.setCredentials(testApiKey, testClusterUser, testClusterPass);
         }
 
         builder.setSslVerification(false);

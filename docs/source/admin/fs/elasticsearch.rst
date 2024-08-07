@@ -30,8 +30,6 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.api_key``         | ``null``                  | `API Key`_                      |
 +-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.access_token``    | ``null``                  | `Access Token`_                 |
-+-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.username``        | ``null``                  | :ref:`credentials`              |
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.password``        | ``null``                  | :ref:`credentials`              |
@@ -305,7 +303,6 @@ If you have a secured cluster, you can use several methods to connect
 to it:
 
 - `API Key <https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html>`__
-- `Access Token <https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-token.html>`__
 - `Basic Authentication <https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-authenticate.html>`__ (not recommended / deprecated)
 
 API Key
@@ -341,59 +338,6 @@ Then you can use the encoded API Key in FSCrawler settings:
    name: "test"
    elasticsearch:
      api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
-
-.. _credentials-access-token:
-
-Access Token
-~~~~~~~~~~~~
-
-.. versionadded:: 2.10
-
-Let's create an API Key named ``fscrawler``:
-
-.. code:: json
-
-    POST /_security/oauth2/token
-    {
-      "grant_type" : "client_credentials"
-    }
-
-This gives something like:
-
-.. code:: json
-
-    {
-      "access_token" : "dGhpcyBpcyBub3QgYSByZWFsIHRva2VuIGJ1dCBpdCBpcyBvbmx5IHRlc3QgZGF0YS4gZG8gbm90IHRyeSB0byByZWFkIHRva2VuIQ==",
-      "type" : "Bearer",
-      "expires_in" : 1200,
-      "authentication" : {
-        "username" : "test_admin",
-        "roles" : [
-          "superuser"
-        ],
-        "full_name" : null,
-        "email" : null,
-        "metadata" : { },
-        "enabled" : true,
-        "authentication_realm" : {
-          "name" : "file",
-          "type" : "file"
-        },
-        "lookup_realm" : {
-          "name" : "file",
-          "type" : "file"
-        },
-        "authentication_type" : "realm"
-      }
-    }
-
-Then you can use the generated Access Token in FSCrawler settings:
-
-.. code:: yaml
-
-   name: "test"
-   elasticsearch:
-     access_token: "dGhpcyBpcyBub3QgYSByZWFsIHRva2VuIGJ1dCBpdCBpcyBvbmx5IHRlc3QgZGF0YS4gZG8gbm90IHRyeSB0byByZWFkIHRva2VuIQ=="
 
 Basic Authentication (deprecated)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
