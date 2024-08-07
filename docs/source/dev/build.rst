@@ -27,8 +27,7 @@ To build the project, run::
 
     mvn clean package
 
-The final artifacts are available in ``distribution/esX/target`` directory where ``X`` is the
-elasticsearch major version target.
+The final artifacts are available in ``distribution/target``.
 
 .. tip::
 
@@ -47,11 +46,25 @@ A HTTP server is also started on port 8080 during the integration tests, alterna
 Run tests from your IDE
 """""""""""""""""""""""
 
-To run integration tests from your IDE, you need to start tests in ``fscrawler-it-common`` module.
-But you need first to specify the Maven profile to use and rebuild the project.
+To run integration tests from your IDE, you need to start tests in ``fscrawler-it`` module.
+But you can specify the Maven profile to use and rebuild the project.
 
 * ``es-7x`` for Elasticsearch 7.x
 * ``es-6x`` for Elasticsearch 6.x
+
+Faster integration tests
+""""""""""""""""""""""""
+
+As we are using `Testcontainers <https://java.testcontainers.org/modules/elasticsearch/>`_,
+we can `reuse <https://java.testcontainers.org/features/reuse/>`_ the Elasticsearch container instead of having to restart
+one everytime.
+
+.. note:: You need to explicitly `enable this feature <https://java.testcontainers.org/features/reuse/>`_.
+
+If you run from the IDE, reusing containers is the default behavior. But if you run the CLI, you need
+to set ``tests.leaveTemporary`` to ``true``::
+
+    mvn verify -Dtests.leaveTemporary=true
 
 Run a specific test from your Terminal
 """"""""""""""""""""""""""""""""""""""
@@ -68,22 +81,28 @@ cluster, you need to provide a ``tests.cluster.url`` value. This will skip launc
 
 To run the test suite against an elasticsearch instance running locally, just run::
 
-    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 -Dtests.cluster.url=http://localhost:9200
+    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it -Dtests.cluster.url=http://localhost:9200
 
 .. tip::
 
     If you want to run against a version 6, run::
 
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v6 -Dtests.cluster.url=http://localhost:9200
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it -Dtests.cluster.url=http://localhost:9200
 
 .. hint::
 
-    If you are using a secured instance, use ``tests.cluster.user``, ``tests.cluster.pass`` and ``tests.cluster.url``::
+    If you are using a secured instance, use ``tests.cluster.user``, ``tests.cluster.apiKey``::
 
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
+            -Dtests.cluster.apiKey=APIKEYHERE \
+            -Dtests.cluster.url=https://127.0.0.1:9200 \
+
+    If you don't have an API Key, use ``tests.cluster.user``, ``tests.cluster.pass`` and ``tests.cluster.url``::
+
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
-            -Dtests.cluster.url=http://127.0.0.1:9200 \
+            -Dtests.cluster.url=https://127.0.0.1:9200 \
 
 .. hint::
 
@@ -91,16 +110,14 @@ To run the test suite against an elasticsearch instance running locally, just ru
     `Elasticsearch service by Elastic <https://www.elastic.co/cloud/elasticsearch-service>`_,
     you can also use ``tests.cluster.url`` to set where elasticsearch is running::
 
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
-            -Dtests.cluster.user=elastic \
-            -Dtests.cluster.pass=changeme \
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
+            -Dtests.cluster.apiKey=APIKEYHERE \
             -Dtests.cluster.url=https://XYZ.es.io:9243
 
     Or even easier, you can use the ``Cloud ID`` available on you Cloud Console::
 
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
-            -Dtests.cluster.user=elastic \
-            -Dtests.cluster.pass=changeme \
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
+            -Dtests.cluster.apiKey=APIKEYHERE \
             -Dtests.cluster.cloud_id=fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==
 
 Using security feature
@@ -114,51 +131,6 @@ Secured tests are using by default ``changeme`` as the password.
 You can change this by using ``tests.cluster.pass`` option::
 
     mvn verify -Dtests.cluster.pass=mystrongpassword
-
-
-Testing Workplace Search connector
-""""""""""""""""""""""""""""""""""
-
-.. versionadded:: 2.7
-
-The Workplace Search integration is automatically tested when running the integration tests.
-The maven process will start both elasticsearch and enterprise search nodes. Note that this
-could take several minutes before to have it up and running.
-
-To test the Workplace Search connector against an existing cluster, you can provide the ``tests.cluster.url`` setting.
-This will skip launching the containers and all the test suite will run against this external cluster::
-
-    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
-        -Dtests.cluster.url=http://localhost:9200 \
-        -Dtests.cluster.user=elastic \
-        -Dtests.cluster.pass=changeme \
-        -Dtests.workplace.url=http://localhost:3002
-
-.. note::
-
-    By default, ``tests.workplace.user`` and ``tests.workplace.pass`` are using the same values as for
-    ``tests.cluster.user`` and ``tests.cluster.pass``. But if you want to use another username and password
-    to connect to workplace search, you can override the settings::
-
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
-            -Dtests.cluster.url=http://localhost:9200 \
-            -Dtests.cluster.user=elastic \
-            -Dtests.cluster.pass=changeme \
-            -Dtests.workplace.url=http://localhost:3002
-            -Dtests.workplace.user=enterprise_search \
-            -Dtests.workplace.pass=changeme
-
-To run Workplace Search tests against the
-`Enterprise Search service by Elastic <https://www.elastic.co/workplace-search>`_,
-you can also use something like::
-
-    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it-v7 \
-        -Dtests.cluster.url=https://ALIAS.es.eu-west-3.aws.elastic-cloud.com:9243 \
-        -Dtests.cluster.user=elastic \
-        -Dtests.cluster.pass=changeme \
-        -Dtests.workplace.url=https://ALIAS.ent.eu-west-3.aws.elastic-cloud.com \
-        -Dtests.workplace.user=enterprise_search \
-        -Dtests.workplace.pass=changeme
 
 Changing the REST port
 """"""""""""""""""""""
