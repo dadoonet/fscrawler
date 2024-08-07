@@ -62,7 +62,7 @@ public class RestServer {
             // create and start a new instance of grizzly http server
             // exposing the Jersey application at BASE_URI
             httpServer = GrizzlyHttpServerFactory.createHttpServer(URI.create(settings.getRest().getUrl()), rc);
-            logger.info("FS crawler Rest service started on [{}]", settings.getRest().getUrl());
+            logger.info("FSCrawler Rest service started on [{}]", settings.getRest().getUrl());
         }
     }
 

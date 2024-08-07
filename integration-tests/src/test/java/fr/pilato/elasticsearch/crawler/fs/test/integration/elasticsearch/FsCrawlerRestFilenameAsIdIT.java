@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -40,10 +41,10 @@ import static org.hamcrest.Matchers.is;
 @SuppressWarnings("ALL")
 public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
 
-    public FsSettings getFsSettings() {
+    public FsSettings getFsSettings() throws IOException {
         return FsSettings.builder(getCrawlerName())
                 .setFs(Fs.builder().setFilenameAsId(true).build())
-                .setRest(new Rest("http://127.0.0.1:" + testRestPort + "/fscrawler"))
+                .setRest(new Rest("http://127.0.0.1:" + getRestPort() + "/fscrawler"))
                 .setElasticsearch(elasticsearchConfiguration)
                 .build();
     }

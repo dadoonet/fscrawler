@@ -67,7 +67,7 @@
         <tests.cluster.apiKey></tests.cluster.apiKey>
         <tests.cluster.user>elastic</tests.cluster.user>
         <tests.cluster.pass>changeme</tests.cluster.pass>
-        <tests.rest.port>8080</tests.rest.port>
+        <tests.rest.port>0</tests.rest.port>
 
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
