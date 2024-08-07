@@ -57,13 +57,23 @@ import static org.junit.Assert.fail;
 @TimeoutSuite(millis = 5 * 60 * 1000)
 @ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
 @ThreadLeakLingering(linger = 5000) // 5 sec lingering
-@ThreadLeakFilters(filters = AbstractFSCrawlerTestCase.TestContainerThreadFilter.class)
+@ThreadLeakFilters(filters = {
+        AbstractFSCrawlerTestCase.TestContainerThreadFilter.class,
+        AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class
+})
 public abstract class AbstractFSCrawlerTestCase {
 
     public static class TestContainerThreadFilter implements ThreadFilter {
         @Override
         public boolean reject(Thread t) {
             return t.getThreadGroup() != null && "testcontainers".equals(t.getThreadGroup().getName());
+        }
+    }
+
+    public static class JNACleanerThreadFilter implements ThreadFilter {
+        @Override
+        public boolean reject(Thread t) {
+            return "JNA Cleaner".equals(t.getName());
         }
     }
 
