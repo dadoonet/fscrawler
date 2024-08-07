@@ -76,17 +76,6 @@ class TestContainerHelper {
         return url;
     }
 
-    /**
-     * Stop the container if running
-     */
-    void stopServices() {
-        if (elasticsearch != null) {
-            log.info("Stopping elasticsearch container running at {}", elasticsearch.getHttpHostAddress());
-            elasticsearch.stop();
-            elasticsearch = null;
-        }
-    }
-
     public byte[] getCertAsBytes() {
         return certAsBytes;
     }
