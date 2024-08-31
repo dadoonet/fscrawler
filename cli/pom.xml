@@ -40,4 +40,13 @@
 
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.carrotsearch.randomizedtesting</groupId>
+                <artifactId>junit4-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
