@@ -55,7 +55,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1
 
   # We run integration tests with elastic stack 7
   it-es7:
@@ -75,7 +75,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-7x
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-7x -Dtests.parallelism=1
 
   # We run integration tests with elastic stack 6
   it-es6:
@@ -95,7 +95,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-6x
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-6x -Dtests.parallelism=1
 
   # We run this job in parallel after the build
   build-docker:
