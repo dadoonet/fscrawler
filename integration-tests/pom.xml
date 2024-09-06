@@ -111,6 +111,11 @@
                         <phase>none</phase>
                     </execution>
                 </executions>
+                <!--
+                <configuration>
+                    <argLine>-verbose:class</argLine>
+                </configuration>
+                -->
             </plugin>
         </plugins>
     </build>

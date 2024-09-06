@@ -61,20 +61,8 @@ public class FsCrawlerSshClient implements AutoCloseable {
     public void close() throws Exception {
         logger.debug("Closing FsCrawlerSshClient");
         if (sshClient != null) {
-            if (session != null) {
-                if (sftpClient != null) {
-                    logger.trace("Closing SFTP Client");
-                    sftpClient.close();
-                    sftpClient = null;
-                }
-                logger.trace("Closing SSH Session");
-                session.close();
-                session = null;
-            }
             logger.trace("Closing SSH Client");
-            sshClient.stop();
             sshClient.close();
-            sshClient = null;
         }
     }
 
