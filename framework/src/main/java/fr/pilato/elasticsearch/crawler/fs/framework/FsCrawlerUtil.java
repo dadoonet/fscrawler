@@ -26,7 +26,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.CopyOption;
@@ -48,8 +47,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 
 public class FsCrawlerUtil {
@@ -538,32 +535,6 @@ public class FsCrawlerUtil {
                 // The file already exists we just ignore it
             }
             return FileVisitResult.CONTINUE;
-        }
-    }
-
-    /**
-     * Unzip a jar file
-     * @param jarFile Jar file url like /path/to/foo.jar
-     * @param destination Directory where we want to extract the content to
-     * @throws IOException In case of any IO problem
-     */
-    public static void unzip(String jarFile, Path destination) throws IOException {
-        try (JarFile jar = new JarFile(jarFile)) {
-            Enumeration<JarEntry> enumEntries = jar.entries();
-            while (enumEntries.hasMoreElements()) {
-                JarEntry file = enumEntries.nextElement();
-                File f = new File(destination + File.separator + file.getName());
-                if (file.isDirectory()) {
-                    f.mkdir();
-                    continue;
-                }
-
-                try (InputStream is = jar.getInputStream(file); FileOutputStream fos = new FileOutputStream(f)) {
-                    while (is.available() > 0) {
-                        fos.write(is.read());
-                    }
-                }
-            }
         }
     }
 

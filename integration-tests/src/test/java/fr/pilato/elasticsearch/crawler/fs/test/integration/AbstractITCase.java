@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.ProcessingException;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
@@ -41,10 +42,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import javax.net.ssl.SSLException;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.SocketException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,9 +53,12 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
@@ -213,14 +217,36 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 String jarFileWithProtocol = fileInJar.substring(0, i);
                 // We remove the "file:" protocol
                 String jarFile = jarFileWithProtocol.substring("file:".length());
-
-                staticLogger.info("-> Unzipping test documents from [{}] to [{}]", jarFile, target);
-                unzip(jarFile, target);
+                unzip(Path.of(jarFile), target, Charset.defaultCharset());
                 break;
             }
             default :
                 fail("Unknown protocol for IT document sources: " + resource.getProtocol());
                 break;
+        }
+    }
+
+    private static void unzip(Path zip, Path outputFolder, Charset charset) throws IOException {
+        staticLogger.info("-> Unzipping test documents from [{}] to [{}]", zip, outputFolder);
+
+        try (ZipFile zipFile = new ZipFile(zip.toFile(), ZipFile.OPEN_READ, charset)) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                Path entryPath = outputFolder.resolve(entry.getName());
+                if (entryPath.normalize().startsWith(outputFolder.normalize())) {
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(entryPath);
+                    } else {
+                        Files.createDirectories(entryPath.getParent());
+                        try (InputStream in = zipFile.getInputStream(entry)) {
+                            try (OutputStream out = new FileOutputStream(entryPath.toFile())) {
+                                IOUtils.copy(in, out);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
