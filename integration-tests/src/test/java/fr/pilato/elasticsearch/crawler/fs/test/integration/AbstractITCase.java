@@ -210,7 +210,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 // We are running our tests from the CLI most likely and documents are provided within a JAR as a dependency
                 String fileInJar = resource.getPath();
                 int i = fileInJar.indexOf("!/");
-                String jarFile = fileInJar.substring(0, i);
+                String jarFileWithProtocol = fileInJar.substring(0, i);
+                // We remove the "file:" protocol
+                String jarFile = jarFileWithProtocol.substring("file:".length());
 
                 staticLogger.info("-> Unzipping test documents from [{}] to [{}]", jarFile, target);
                 unzip(jarFile, target);
@@ -222,60 +224,55 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
     }
 
-    static boolean byPass = false;
-
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
-        if (!byPass) {
-
-            if (testClusterUrl == null) {
-                String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
-                if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
-                    testClusterUrl = decodeCloudId(testClusterCloudId);
-                    staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
-                } else {
-                    testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
-                    if (testClusterUrl.isEmpty()) {
-                        // When running from Maven CLI, tests.cluster.url is empty and not null...
-                        testClusterUrl = DEFAULT_TEST_CLUSTER_URL;
-                    }
+        if (testClusterUrl == null) {
+            String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
+            if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
+                testClusterUrl = decodeCloudId(testClusterCloudId);
+                staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
+            } else {
+                testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
+                if (testClusterUrl.isEmpty()) {
+                    // When running from Maven CLI, tests.cluster.url is empty and not null...
+                    testClusterUrl = DEFAULT_TEST_CLUSTER_URL;
                 }
             }
+        }
 
-            FsSettings fsSettings = startClient();
-            if (fsSettings == null) {
-                staticLogger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
-                testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
-                fsSettings = startClient();
-            }
+        FsSettings fsSettings = startClient();
+        if (fsSettings == null) {
+            staticLogger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
+            testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
+            fsSettings = startClient();
+        }
 
-            assumeThat("Integration tests are skipped because we have not been able to find an Elasticsearch cluster",
-                    fsSettings, notNullValue());
+        assumeThat("Integration tests are skipped because we have not been able to find an Elasticsearch cluster",
+                fsSettings, notNullValue());
 
-            // We create and start the managementService
+        // We create and start the managementService
+        managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
+        managementService.start();
+
+        // If the Api Key is not provided, we want to generate it and use in all the tests
+        if (testApiKey == null) {
+            // Generate the Api-Key
+            testApiKey = managementService.getClient().generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
+
+            // Stop all the services
+            documentService.close();
+            managementService.close();
+
+            // Start the documentService with the Api Key
+            fsSettings = startClient();
+
+            // Start the managementService with the Api Key
             managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
             managementService.start();
-
-            // If the Api Key is not provided, we want to generate it and use in all the tests
-            if (testApiKey == null) {
-                // Generate the Api-Key
-                testApiKey = managementService.getClient().generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
-
-                // Stop all the services
-                documentService.close();
-                managementService.close();
-
-                // Start the documentService with the Api Key
-                fsSettings = startClient();
-
-                // Start the managementService with the Api Key
-                managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-                managementService.start();
-            }
-
-            String version = managementService.getVersion();
-            staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
         }
+
+        String version = managementService.getVersion();
+        staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
     }
 
     private static FsSettings startClient() throws IOException, ElasticsearchClientException {
