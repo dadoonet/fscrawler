@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.ProcessingException;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
@@ -41,10 +42,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import javax.net.ssl.SSLException;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.SocketException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,9 +53,12 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
@@ -66,7 +70,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 /**
- * Integration tests expect to have an elasticsearch instance running on http://127.0.0.1:9200.
+ * Integration tests expect to have an elasticsearch instance running on https://127.0.0.1:9200.
  * Otherwise, a TestContainer instance will be started.
  *
  * Note that all existing data in this cluster might be removed
@@ -74,7 +78,7 @@ import static org.junit.Assume.assumeThat;
  * If you want to run tests against a remote cluster, please launch tests using
  * tests.cluster.url property:
  *
- * mvn verify -Dtests.cluster.url=http://127.0.0.1:9200
+ * mvn verify -Dtests.cluster.url=https://127.0.0.1:9200
  *
  * All integration tests might be skipped using:
  *
@@ -99,6 +103,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected final static String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
     protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
+    protected final static boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
 
     protected static Elasticsearch elasticsearchConfiguration;
     protected static FsCrawlerManagementServiceElasticsearchImpl managementService = null;
@@ -209,15 +214,39 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 // We are running our tests from the CLI most likely and documents are provided within a JAR as a dependency
                 String fileInJar = resource.getPath();
                 int i = fileInJar.indexOf("!/");
-                String jarFile = fileInJar.substring(0, i);
-
-                staticLogger.info("-> Unzipping test documents from [{}] to [{}]", jarFile, target);
-                unzip(jarFile, target);
+                String jarFileWithProtocol = fileInJar.substring(0, i);
+                // We remove the "file:" protocol
+                String jarFile = jarFileWithProtocol.substring("file:".length());
+                unzip(Path.of(jarFile), target, Charset.defaultCharset());
                 break;
             }
             default :
                 fail("Unknown protocol for IT document sources: " + resource.getProtocol());
                 break;
+        }
+    }
+
+    private static void unzip(Path zip, Path outputFolder, Charset charset) throws IOException {
+        staticLogger.info("-> Unzipping test documents from [{}] to [{}]", zip, outputFolder);
+
+        try (ZipFile zipFile = new ZipFile(zip.toFile(), ZipFile.OPEN_READ, charset)) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                Path entryPath = outputFolder.resolve(entry.getName());
+                if (entryPath.normalize().startsWith(outputFolder.normalize())) {
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(entryPath);
+                    } else {
+                        Files.createDirectories(entryPath.getParent());
+                        try (InputStream in = zipFile.getInputStream(entry)) {
+                            try (OutputStream out = new FileOutputStream(entryPath.toFile())) {
+                                IOUtils.copy(in, out);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -508,5 +537,4 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
         });
     }
-
 }

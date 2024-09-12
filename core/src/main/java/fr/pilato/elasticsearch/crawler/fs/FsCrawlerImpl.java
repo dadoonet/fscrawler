@@ -50,20 +50,16 @@ public class FsCrawlerImpl implements AutoCloseable {
 
     private final FsSettings settings;
     private final boolean rest;
-    private final Path config;
     private final Integer loop;
-
-    private Thread fsCrawlerThread;
 
     private final FsCrawlerDocumentService documentService;
     private final FsCrawlerManagementService managementService;
-
-    private FsParser fsParser;
+    private final FsParser fsParser;
+    private final Thread fsCrawlerThread;
 
     public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
         FsCrawlerUtil.createDirIfMissing(config);
 
-        this.config = config;
         this.settings = settings;
         this.loop = loop;
         this.rest = rest;
@@ -84,6 +80,29 @@ public class FsCrawlerImpl implements AutoCloseable {
         } catch (IOException e) {
             throw new RuntimeException("Can not create the job config directory", e);
         }
+
+        // Create the fsParser instance depending on the settings
+        if (loop != 0) {
+            // What is the protocol used?
+            if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
+                // Local FS
+                fsParser = new FsParserLocal(settings, config, managementService, documentService, loop);
+            } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
+                // Remote SSH FS
+                fsParser = new FsParserSsh(settings, config, managementService, documentService, loop);
+            } else if (Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
+                // Remote FTP FS
+                fsParser = new FsParserFTP(settings, config, managementService, documentService, loop);
+            } else {
+                // Non supported protocol
+                throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +
+                        Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH);
+            }
+        } else {
+            // We start a No-OP parser
+            fsParser = new FsParserNoop(settings);
+        }
+        fsCrawlerThread = new Thread(fsParser, "fs-crawler");
     }
 
     public FsCrawlerDocumentService getDocumentService() {
@@ -109,32 +128,10 @@ public class FsCrawlerImpl implements AutoCloseable {
         documentService.start();
         documentService.createSchema();
 
-        // Start the crawler thread - but not if only in rest mode
-        if (loop != 0) {
-            // What is the protocol used?
-            if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
-                // Local FS
-                fsParser = new FsParserLocal(settings, config, managementService, documentService, loop);
-            } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
-                // Remote SSH FS
-                fsParser = new FsParserSsh(settings, config, managementService, documentService, loop);
-            } else if (Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
-                // Remote FTP FS
-                fsParser = new FsParserFTP(settings, config, managementService, documentService, loop);
-            } else {
-                // Non supported protocol
-                throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +
-                        Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH);
-            }
-        } else {
-            // We start a No-OP parser
-            fsParser = new FsParserNoop(settings);
-        }
-
-        fsCrawlerThread = new Thread(fsParser, "fs-crawler");
         fsCrawlerThread.start();
     }
 
+    @Override
     public void close() throws InterruptedException, IOException {
         logger.debug("Closing FS crawler [{}]", settings.getName());
 

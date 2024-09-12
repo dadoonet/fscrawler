@@ -18,10 +18,10 @@
             <artifactId>fscrawler-crawler-abstract</artifactId>
         </dependency>
 
-        <!--Dependency for parsing remote ssh directory [http://www.jcraft.com/jsch/]-->
+        <!-- Dependency for parsing remote ssh directory https://github.com/apache/mina-sshd/ -->
         <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-sftp</artifactId>
         </dependency>
     </dependencies>
 

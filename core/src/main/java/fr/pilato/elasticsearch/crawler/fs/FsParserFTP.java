@@ -33,7 +33,7 @@ public class FsParserFTP extends FsParserAbstract {
         super(fsSettings, config, managementService, documentService, loop);
     }
 
-    protected FileAbstractor<?> buildFileAbstractor() {
+    protected FileAbstractor<?> buildFileAbstractor(FsSettings fsSettings) {
         return new FileAbstractorFTP(fsSettings);
     }
 }

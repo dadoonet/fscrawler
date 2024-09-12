@@ -85,12 +85,6 @@
             <artifactId>tika-langdetect-optimaize</artifactId>
         </dependency>
 
-        <!--Dependency for parsing remote ssh directory [http://www.jcraft.com/jsch/]-->
-        <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-        </dependency>
-
         <!-- Test dependencies -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>

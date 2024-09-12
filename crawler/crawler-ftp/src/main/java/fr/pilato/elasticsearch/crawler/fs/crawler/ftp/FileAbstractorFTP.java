@@ -177,8 +177,10 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
     @Override
     public void close() throws IOException {
-        ftp.logout();
-        ftp.disconnect();
+        if (ftp.isConnected()) {
+            ftp.logout();
+            ftp.disconnect();
+        }
     }
 
     private void openFTPConnection() throws IOException {
