@@ -8,7 +8,6 @@ target
 .project
 .idea
 *.iml
-/.run
 /logs/
 /venv/
 /contrib/docker-compose-example-elasticsearch/config/idx/_status.json
