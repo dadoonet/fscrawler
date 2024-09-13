@@ -116,35 +116,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return;
         }
 
-            /*
-        if (settings.getPathPrefix() != null) {
-            builder.setPathPrefix(settings.getPathPrefix());
-        }
-
-        if (settings.getUsername() != null) {
-            if (settings.getSslVerification()) {
-                builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
-            } else {
-                builder.setHttpClientConfigCallback(httpClientBuilder -> {
-                    SSLContext sc;
-                    try {
-                        sc = SSLContext.getInstance("SSL");
-                        sc.init(null, trustAllCerts, new SecureRandom());
-                    } catch (KeyManagementException | NoSuchAlgorithmException e) {
-                        logger.warn("Failed to get SSL Context", e);
-                        throw new RuntimeException(e);
-                    }
-                    httpClientBuilder.setSSLStrategy(new SSLIOSessionStrategy(sc, new NullHostNameVerifier()));
-                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-                    return httpClientBuilder;
-                });
-            }
-        }
-
-        return builder;
-    }
-    */
-
         // Create the client
         ClientConfig config = new ClientConfig();
         // We need to suppress this, so we can do DELETE with body
@@ -196,7 +167,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         if (sslContext != null) {
             clientBuilder.sslContext(sslContext);
         }
-        client =  clientBuilder.build();
+        client = clientBuilder.build();
         if (logger.isTraceEnabled()) {
             client
 //                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_NAME_CLIENT, ElasticsearchClient.class.getName())
@@ -914,8 +885,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @SafeVarargs
-    private String httpCall(String method, String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    private String httpCall(String method, String localPath, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         String node = getNode();
+        String path = localPath;
+        if (settings.getElasticsearch().getPathPrefix() != null) {
+            path = settings.getElasticsearch().getPathPrefix() + "/" + localPath;
+        }
         logger.trace("Calling {} {}/{} with params {}", method, node, path == null ? "" : path, params);
         try {
             Invocation.Builder callBuilder = prepareHttpCall(node, path, params);
