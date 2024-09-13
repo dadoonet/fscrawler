@@ -446,28 +446,28 @@ And then, you can specify this file in the ``elasticsearch.ca_certificate`` opti
     For example, if you have a root CA chain certificate or Elasticsearch server certificate
     in DER format (it's a binary format using a ``.cer`` extension), you need to:
 
-1. Logon to server (or client machine) where FSCrawler is running
-2. Run:
+    1. Logon to server (or client machine) where FSCrawler is running
+    2. Run:
 
-.. code:: sh
+    .. code:: sh
 
-    keytool -import -alias <alias name> -keystore "<JAVA_HOME>\lib\security\cacerts" -file <Path of Elasticsearch Server certificate or Root certificate>
+        keytool -import -alias <alias name> -keystore "<JAVA_HOME>\lib\security\cacerts" -file <Path of Elasticsearch Server certificate or Root certificate>
 
-It will prompt you for the password. Enter the certificate password like ``changeit``.
+    It will prompt you for the password. Enter the certificate password like ``changeit``.
 
-3. Make changes to FSCrawler ``_settings.json`` file to connect to your Elasticsearch server over HTTPS:
+    3. Make changes to FSCrawler ``_settings.json`` file to connect to your Elasticsearch server over HTTPS:
 
-.. code:: yaml
+    .. code:: yaml
 
-    name: "test"
-    elasticsearch:
-     api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
-     nodes:
-     - url: "https://localhost:9243"
+        name: "test"
+        elasticsearch:
+         api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+         nodes:
+         - url: "https://localhost:9243"
 
-.. tip::
+    .. tip::
 
-    If you can not find ``keytool``, it probably means that you did not add your ``JAVA_HOME/bin`` directory to your path.
+        If you can not find ``keytool``, it probably means that you did not add your ``JAVA_HOME/bin`` directory to your path.
 
 .. _generated_fields:
 
