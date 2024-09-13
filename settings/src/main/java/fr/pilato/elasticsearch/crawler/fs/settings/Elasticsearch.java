@@ -61,6 +61,7 @@ public class Elasticsearch {
     private String pathPrefix;
     private boolean sslVerification = true;
     private boolean pushTemplates = true;
+    private String caCertificate;
 
     public Elasticsearch() {
 
@@ -69,7 +70,9 @@ public class Elasticsearch {
     private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
                           TimeValue flushInterval, ByteSizeValue byteSize, String apiKey,
                           String username, String password, String pipeline,
-                          String pathPrefix, boolean sslVerification, boolean pushTemplates) {
+                          String pathPrefix, boolean sslVerification,
+                          String caCertificate,
+                          boolean pushTemplates) {
         this.nodes = nodes;
         this.index = index;
         this.indexFolder = indexFolder;
@@ -82,6 +85,7 @@ public class Elasticsearch {
         this.pipeline = pipeline;
         this.pathPrefix = pathPrefix;
         this.sslVerification = sslVerification;
+        this.caCertificate = caCertificate;
         this.pushTemplates = pushTemplates;
     }
 
@@ -199,6 +203,14 @@ public class Elasticsearch {
         this.pushTemplates = pushTemplates;
     }
 
+    public String getCaCertificate() {
+        return caCertificate;
+    }
+
+    public void setCaCertificate(String caCertificate) {
+        this.caCertificate = caCertificate;
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     public static class Builder {
         private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
@@ -212,6 +224,7 @@ public class Elasticsearch {
         private String pipeline = null;
         private String pathPrefix = null;
         private boolean sslVerification = true;
+        private String caCertificate;
         private boolean pushTemplates = true;
         private String apiKey = null;
 
@@ -312,6 +325,11 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setCaCertificate(String caCertificate) {
+            this.caCertificate = caCertificate;
+            return this;
+        }
+
         public Builder setPushTemplates(boolean pushTemplates) {
             this.pushTemplates = pushTemplates;
             return this;
@@ -320,7 +338,9 @@ public class Elasticsearch {
         public Elasticsearch build() {
             return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, apiKey,
                     username, password,
-                    pipeline, pathPrefix, sslVerification, pushTemplates);
+                    pipeline, pathPrefix,
+                    sslVerification, caCertificate,
+                    pushTemplates);
         }
     }
 
@@ -341,6 +361,7 @@ public class Elasticsearch {
         if (!Objects.equals(pipeline, that.pipeline)) return false;
         if (!Objects.equals(pathPrefix, that.pathPrefix)) return false;
         if (!Objects.equals(sslVerification, that.sslVerification)) return false;
+        if (!Objects.equals(caCertificate, that.caCertificate)) return false;
         if (!Objects.equals(pushTemplates, that.pushTemplates)) return false;
         return Objects.equals(flushInterval, that.flushInterval);
 
@@ -357,6 +378,7 @@ public class Elasticsearch {
         result = 31 * result + (pathPrefix != null ? pathPrefix.hashCode() : 0);
         result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
+        result = 31 * result + (caCertificate != null ? caCertificate.hashCode() : 0);
         result = 31 * result + (sslVerification? 1: 0);
         result = 31 * result + (pushTemplates? 1: 0);
         return result;
@@ -374,6 +396,7 @@ public class Elasticsearch {
                 ", pipeline='" + pipeline + '\'' +
                 ", pathPrefix='" + pathPrefix + '\'' +
                 ", sslVerification='" + sslVerification + '\'' +
+                ", caCertificatePath='" + caCertificate + '\'' +
                 ", pushTemplates='" + pushTemplates + '\'' +
                 '}';
     }

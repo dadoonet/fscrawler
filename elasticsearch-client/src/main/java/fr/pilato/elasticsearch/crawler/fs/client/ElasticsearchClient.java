@@ -46,21 +46,15 @@ import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.logging.LoggingFeature;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import javax.net.ssl.*;
+import java.io.*;
 import java.net.ConnectException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -158,16 +152,19 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         SSLContext sslContext = null;
         if (settings.getElasticsearch().isSslVerification()) {
-            // TODO implement this part and add elasticsearch ssl settings
-            // If we have a truststore and a keystore, let's use it
-            /*
-            SslConfigurator sslConfig = SslConfigurator.newInstance()
-                    .trustStoreFile("./truststore_client")
-                    .trustStorePassword("secret-password-for-truststore")
-                    .keyStoreFile("./keystore_client")
-                    .keyPassword("secret-password-for-keystore");
-            sslContext = sslConfig.createSSLContext();
-            */
+            String caCertificatePath = settings.getElasticsearch().getCaCertificate();
+            if (caCertificatePath != null) {
+                try {
+                    File certFile = new File(caCertificatePath);
+                    sslContext = sslContextFromHttpCaCrt(certFile);
+                    logger.debug("Using provided CA Certificate from [{}]", caCertificatePath);
+                    HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+                    HttpsURLConnection.setDefaultHostnameVerifier(new NullHostNameVerifier());
+                } catch (IOException e) {
+                    logger.warn("Failed to load the CA certificate", e);
+                    throw new RuntimeException(e);
+                }
+            }
         } else {
             // Trusting all certificates. For test purposes only.
             try {
@@ -235,6 +232,26 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 .setFlushInterval(settings.getElasticsearch().getFlushInterval())
                 .setByteSize(settings.getElasticsearch().getByteSize())
                 .build();
+    }
+
+    private static SSLContext sslContextFromHttpCaCrt(File file) throws IOException {
+        try(InputStream in = new FileInputStream(file)) {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            Certificate certificate = cf.generateCertificate(in);
+
+            final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(null, null);
+            keyStore.setCertificateEntry("elasticsearch-ca", certificate);
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(keyStore);
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, tmf.getTrustManagers(), null);
+            return sslContext;
+        } catch (CertificateException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public List<String> getAvailableNodes() {

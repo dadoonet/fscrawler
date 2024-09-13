@@ -24,7 +24,7 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.pipeline``        | ``null``                  | :ref:`ingest_node`              |
 +-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.nodes``           | ``http://127.0.0.1:9200`` | `Node settings`_                |
+| ``elasticsearch.nodes``           | ``https://127.0.0.1:9200``| `Node settings`_                |
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.path_prefix``     | ``null``                  | `Path prefix`_                  |
 +-----------------------------------+---------------------------+---------------------------------+
@@ -34,7 +34,9 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.password``        | ``null``                  | :ref:`credentials`              |
 +-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.ssl_verification``| ``true``                  | :ref:`credentials`              |
+| ``elasticsearch.ssl_verification``| ``true``                  | :ref:`ssl`                      |
++-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.ca_certificate``  | ``null``                  | :ref:`ssl`                      |
 +-----------------------------------+---------------------------+---------------------------------+
 
 Index settings
@@ -274,7 +276,7 @@ You can define multiple nodes:
          nodes:
          - url: "https://CLUSTERID.eu-west-1.aws.found.io:9243"
 
-    For more information, read :ref:`ssl`.
+    For more information about HTTPS and SSL, read :ref:`ssl`.
 
 Path prefix
 ^^^^^^^^^^^
@@ -404,20 +406,52 @@ Then, you can assign this role to the user who will be defined within the ``user
 SSL Configuration
 ^^^^^^^^^^^^^^^^^
 
-In order to ingest documents to Elasticsearch over HTTPS based connection, you need to perform additional configuration
-steps:
+In order to ingest documents to Elasticsearch over HTTPS based connection, you obviously need to set the URL
+to ``https://your-server-address``. If your server is using a certificate that has been signed
+by a Certificate Authority, then you're good to go. For example, that's the case if you are running Elasticsearch
+from cloud.elastic.co.
 
-.. important::
+But if you are using a self signed certificate, which is the case in development mode, you need to either
+ignore the ssl check (not recommended) or provide the certificate to the Elasticsearch client.
 
-    Prerequisite: you need to have root CA chain certificate or Elasticsearch server certificate
-    in DER format. DER format files have a ``.cer`` extension. Certificate verification can be disabled by option ``ssl_verification: false``
+To bypass the SSL Certificate verification, you can use the ``ssl_verification`` option:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+     ssl_verification: false
+
+If you are running Elasticsearch from a Docker container, you can copy the self-signed certificate
+generated in ``/usr/share/elasticsearch/config/certs/http_ca.crt`` to your local machine:
+
+.. code:: sh
+
+    docker cp CONTAINER_NAME:/usr/share/elasticsearch/config/certs/http_ca.crt /path/to/certificate
+
+And then, you can specify this file in the ``elasticsearch.ca_certificate`` option:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+     ca_certificate: /path/to/certificate/http_ca.crt
+
+.. note::
+
+    You can also import your certificate into ``<JAVA_HOME>\lib\security\cacerts``.
+
+    For example, if you have a root CA chain certificate or Elasticsearch server certificate
+    in DER format (it's a binary format using a ``.cer`` extension), you need to:
 
 1. Logon to server (or client machine) where FSCrawler is running
 2. Run:
 
 .. code:: sh
 
-    keytool -import -alias <alias name> -keystore " <JAVA_HOME>\lib\security\cacerts" -file <Path of Elasticsearch Server certificate or Root certificate>
+    keytool -import -alias <alias name> -keystore "<JAVA_HOME>\lib\security\cacerts" -file <Path of Elasticsearch Server certificate or Root certificate>
 
 It will prompt you for the password. Enter the certificate password like ``changeit``.
 
@@ -427,8 +461,9 @@ It will prompt you for the password. Enter the certificate password like ``chang
 
     name: "test"
     elasticsearch:
-      nodes:
-      - url: "https://localhost:9243"
+     api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+     nodes:
+     - url: "https://localhost:9243"
 
 .. tip::
 

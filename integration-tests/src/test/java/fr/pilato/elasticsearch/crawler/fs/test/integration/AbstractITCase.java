@@ -104,6 +104,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
     protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
     protected final static boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
+    private static String testCaCertificate = null;
 
     protected static Elasticsearch elasticsearchConfiguration;
     protected static FsCrawlerManagementServiceElasticsearchImpl managementService = null;
@@ -270,6 +271,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         if (fsSettings == null) {
             staticLogger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
             testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
+            // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
+            if (testContainerHelper.getCertAsBytes() != null) {
+                Path clusterCaCrtPath = rootTmpDir.resolve("cluster-ca.crt");
+                Files.write(clusterCaCrtPath, testContainerHelper.getCertAsBytes());
+                testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
+            }
             fsSettings = startClient();
         }
 
@@ -302,11 +309,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     private static FsSettings startClient() throws IOException, ElasticsearchClientException {
-        staticLogger.info("Starting a client against [{}]", testClusterUrl);
+        staticLogger.info("Starting a client against [{}] with [{}] as a CA certificate", testClusterUrl, testCaCertificate);
         // We build the elasticsearch Client based on the parameters
         elasticsearchConfiguration = Elasticsearch.builder()
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
-                .setSslVerification(false)
+                .setSslVerification(true)
+                .setCaCertificate(testCaCertificate)
                 .setCredentials(testApiKey, testClusterUser, testClusterPass)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchConfiguration).build();
@@ -341,6 +349,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             managementService = null;
             staticLogger.info("Management service stopped");
         }
+        testCaCertificate = null;
     }
 
     @Before
