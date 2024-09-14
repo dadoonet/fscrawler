@@ -17,21 +17,27 @@ OCR settings
 
 Here is a list of OCR settings (under ``fs.ocr`` prefix)`:
 
-+-------------------------+------------------+------------------------------------+
-| Name                    |   Default value  | Documentation                      |
-+=========================+==================+====================================+
-| ``fs.ocr.enabled``      | ``true``         | `Disable/Enable OCR`_              |
-+-------------------------+------------------+------------------------------------+
-| ``fs.ocr.language``     | ``"eng"``        | `OCR Language`_                    |
-+-------------------------+------------------+------------------------------------+
-| ``fs.ocr.path``         | ``null``         | `OCR Path`_                        |
-+-------------------------+------------------+------------------------------------+
-| ``fs.ocr.data_path``    | ``null``         | `OCR Data Path`_                   |
-+-------------------------+------------------+------------------------------------+
-| ``fs.ocr.output_type``  | ``txt``          | `OCR Output Type`_                 |
-+-------------------------+------------------+------------------------------------+
-| ``fs.ocr.pdf_strategy`` | ``ocr_and_text`` | `OCR PDF Strategy`_                |
-+-------------------------+------------------+------------------------------------+
++---------------------------------------+------------------+-----------------------------------+
+| Name                                  |   Default value  | Documentation                     |
++=======================================+==================+===================================+
+| ``fs.ocr.enabled``                    | ``true``         | `Disable/Enable OCR`_             |
++---------------------------------------+------------------+-----------------------------------+
+| ``fs.ocr.language``                   | ``"eng"``        | `OCR Language`_                   |
++---------------------------------------+------------------+-----------------------------------+
+| ``fs.ocr.path``                       | ``null``         | `OCR Path`_                       |
++---------------------------------------+------------------+-----------------------------------+
+| ``fs.ocr.data_path``                  | ``null``         | `OCR Data Path`_                  |
++---------------------------------------+----+-------------+-----------------------------------+
+| ``fs.ocr.output_type``                | ``txt``          | `OCR Output Type`_                |
++---------------------------------------+------------------+-----------------------------------+
+| ``fs.ocr.pdf_strategy``               | ``ocr_and_text`` | `OCR PDF Strategy`_               |
++---------------------------------------+------------------+-----------------------------------+
+| ``fs.ocr.page_seg_mode``              | ``1``            | `OCR Page Seg Mode`_              |
++---------------------------------------+------------------+-----------------------------------+
+| ``fs.ocr.preserve_interword_spacing`` | ``false``        | `OCR Preserve Interword Spacing`_ |
++---------------------------------------+------------------*-----------------------------------+
+
+
 
 Disable/Enable OCR
 ------------------
@@ -160,3 +166,28 @@ Supported strategies are:
 
 .. note:: When omitted, ``ocr_and_text`` value is used. If you have performance issues, it's worth using the ``auto`` option
     instead as only documents with barely no text will go through the OCR process.
+
+OCR Page Seg Mode
+-----------------
+
+Set Tesseract to only run a subset of layout analysis and assume a certain form of image. The options for N are:
+
+* ``0`` = Orientation and script detection (OSD) only.
+* ``1`` = Automatic page segmentation with OSD.
+* ``2`` = Automatic page segmentation, but no OSD, or OCR. (not implemented)
+* ``3`` = Fully automatic page segmentation, but no OSD.
+* ``4`` = Assume a single column of text of variable sizes.
+* ``5`` = Assume a single uniform block of vertically aligned text.
+* ``6`` = Assume a single uniform block of text.
+* ``7`` = Treat the image as a single text line.
+* ``8`` = Treat the image as a single word.
+* ``9`` = Treat the image as a single word in a circle.
+* ``10`` = Treat the image as a single character.
+* ``11`` = Sparse text. Find as much text as possible in no particular order.
+* ``12`` = Sparse text with OSD.
+* ``13`` = Raw line. Treat the image as a single text line, bypassing hacks that are Tesseract-specific.
+
+OCR Preserve Interword Spacing
+------------------------------
+
+Spaces between the words will be deleted.

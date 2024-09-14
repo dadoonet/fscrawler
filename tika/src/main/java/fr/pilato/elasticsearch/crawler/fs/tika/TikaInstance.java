@@ -180,6 +180,14 @@ public class TikaInstance {
                 TesseractOCRConfig config = new TesseractOCRConfig();
                 logger.debug("Tesseract Language set to [{}].", fs.getOcr().getLanguage());
                 config.setLanguage(fs.getOcr().getLanguage());
+                if (fs.getOcr().getPageSegMode() != null) {
+                    logger.debug("Tesseract PageSegMode set to [{}].", fs.getOcr().getPageSegMode());
+                    config.setPageSegMode("" + fs.getOcr().getPageSegMode());
+                }
+                if (fs.getOcr().getPreserveInterwordSpacing() != null) {
+                    logger.debug("Tesseract preserveInterwordSpacing set to [{}].", fs.getOcr().getPreserveInterwordSpacing());
+                    config.setPreserveInterwordSpacing(fs.getOcr().getPreserveInterwordSpacing());
+                }
                 if (fs.getOcr().getOutputType() != null) {
                     logger.debug("Tesseract Output Type set to [{}].", fs.getOcr().getOutputType());
                     config.setOutputType(fs.getOcr().getOutputType());

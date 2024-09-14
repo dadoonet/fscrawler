@@ -34,6 +34,9 @@ public class Ocr {
     private boolean enabled = true;
     // Pdf OCR Strategy
     private String pdfStrategy = "ocr_and_text";
+    // PDF Page Seg Mode
+    private Integer pageSegMode = null;
+    private Boolean preserveInterwordSpacing = null;
 
     public static Builder builder() {
         return new Builder();
@@ -47,6 +50,8 @@ public class Ocr {
         private String outputType = null;
         private boolean enabled = true;
         private String pdfStrategy = "ocr_and_text";
+        private Integer pageSegMode = null;
+        private Boolean preserveInterwordSpacing = null;
 
         public Builder setLanguage(String language) {
             this.language = language;
@@ -73,6 +78,16 @@ public class Ocr {
             return this;
         }
 
+        public Builder setPageSegMode(Integer pageSegMode) {
+            this.pageSegMode = pageSegMode;
+            return this;
+        }
+
+        public Builder setPreserveInterwordSpacing(Boolean preserveInterwordSpacing) {
+            this.preserveInterwordSpacing = preserveInterwordSpacing;
+            return this;
+        }
+
         /**
          * Set the PDF Strategy.
          * @param pdfStrategy the PDF Strategy. Could be "no_ocr", "ocr_only" or "ocr_and_text"
@@ -83,7 +98,7 @@ public class Ocr {
         }
 
         public Ocr build() {
-            return new Ocr(language, path, dataPath, outputType, pdfStrategy, enabled);
+            return new Ocr(language, path, dataPath, outputType, pdfStrategy, enabled, pageSegMode, preserveInterwordSpacing);
         }
 
     }
@@ -92,13 +107,15 @@ public class Ocr {
 
     }
 
-    private Ocr(String language, String path, String dataPath, String outputType, String pdfStrategy, boolean enabled) {
+    private Ocr(String language, String path, String dataPath, String outputType, String pdfStrategy, boolean enabled, Integer pageSegMode, Boolean preserveInterwordSpacing) {
         this.language = language;
         this.path = path;
         this.dataPath = dataPath;
         this.outputType = outputType;
         this.pdfStrategy = pdfStrategy;
         this.enabled = enabled;
+        this.pageSegMode = pageSegMode;
+        this.preserveInterwordSpacing = preserveInterwordSpacing;
     }
 
     public String getLanguage() {
@@ -141,6 +158,22 @@ public class Ocr {
         this.enabled = enabled;
     }
 
+    public Integer getPageSegMode() {
+        return pageSegMode;
+    }
+
+    public Boolean getPreserveInterwordSpacing() {
+        return this.preserveInterwordSpacing;
+    }
+
+    public void setPreserveInterwordSpacing( Boolean preserveInterwordSpacing) {
+        this.preserveInterwordSpacing = preserveInterwordSpacing;
+    }
+
+    public void setPageSegMode( Integer pageSegMode) {
+        this.pageSegMode = pageSegMode;
+    }
+
     /**
      * Get the PDF Strategy. Could be "no_ocr", "auto", "ocr_only" or "ocr_and_text" (default)
      * @return the PDF Strategy
@@ -167,12 +200,14 @@ public class Ocr {
                 Objects.equals(path, ocr.path) &&
                 Objects.equals(dataPath, ocr.dataPath) &&
                 Objects.equals(outputType, ocr.outputType) &&
-                Objects.equals(pdfStrategy, ocr.pdfStrategy);
+                Objects.equals(pdfStrategy, ocr.pdfStrategy) &&
+                Objects.equals(pageSegMode, ocr.pageSegMode) &&
+                Objects.equals(preserveInterwordSpacing, ocr.preserveInterwordSpacing);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(language, path, dataPath, outputType, enabled, pdfStrategy);
+        return Objects.hash(language, path, dataPath, outputType, enabled, pdfStrategy, pageSegMode, preserveInterwordSpacing);
     }
 
     @Override
@@ -183,6 +218,8 @@ public class Ocr {
                 ", outputType='" + outputType + '\'' +
                 ", enabled=" + enabled +
                 ", pdfStrategy='" + pdfStrategy + '\'' +
+                ", pageSegMode='" + pageSegMode + '\'' +
+                ", preserveInterwordSpacing='" + preserveInterwordSpacing + '\'' +
                 '}';
     }
 }
