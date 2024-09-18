@@ -9,7 +9,7 @@
         <version>2.10-SNAPSHOT</version>
     </parent>
 
-    <artifactId>fscrawler-welcome-plugin</artifactId>
-    <description>FSCrawler Welcome Plugin</description>
+    <artifactId>fscrawler-fs-local-plugin</artifactId>
+    <description>FSCrawler Local Plugin</description>
 
 </project>

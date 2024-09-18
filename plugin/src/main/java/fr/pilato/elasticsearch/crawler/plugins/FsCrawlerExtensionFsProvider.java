@@ -16,14 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package fr.pilato.elasticsearch.crawler.plugins.welcome;
+package fr.pilato.elasticsearch.crawler.plugins;
 
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
+import org.pf4j.ExtensionPoint;
 
-public class WelcomePlugin extends FsCrawlerPlugin {
-    @Override
-    protected String getName() {
-        return "welcome";
-    }
+import java.io.IOException;
+import java.io.InputStream;
 
+public interface FsCrawlerExtensionFsProvider extends ExtensionPoint {
+    void settings(String settings);
+    void start();
+    void stop() throws Exception;
+    String getType();
+    InputStream readFile() throws IOException;
 }

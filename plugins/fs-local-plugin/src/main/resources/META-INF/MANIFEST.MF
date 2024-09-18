@@ -1,0 +1,7 @@
+Plugin-Class: fr.pilato.elasticsearch.crawler.plugins.fs.local.FsLocalPlugin
+Plugin-Id: ${project.artifactId}
+Plugin-Version: ${project.version}
+Plugin-Requires: ${project.version}
+Plugin-Description: ${project.description}
+Plugin-Provider: FSCrawler project
+Plugin-License: Apache License 2.0
