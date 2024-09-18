@@ -12,6 +12,7 @@
         <module>settings</module>
         <module>test-documents</module>
         <module>beans</module>
+        <module>plugin</module>
         <module>elasticsearch-client</module>
         <module>core</module>
         <module>plugins</module>
@@ -467,9 +468,31 @@
                 <artifactId>fscrawler-rest</artifactId>
                 <version>2.10-SNAPSHOT</version>
             </dependency>
+
+            <!-- FSCrawler plugins -->
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
-                <artifactId>plugins</artifactId>
+                <artifactId>fscrawler-plugins</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-welcome-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-fs-local-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-fs-s3-plugin</artifactId>
                 <version>2.10-SNAPSHOT</version>
             </dependency>
 

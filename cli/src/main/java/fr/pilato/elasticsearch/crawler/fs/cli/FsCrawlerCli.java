@@ -36,6 +36,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -47,8 +48,6 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
-import org.pf4j.DefaultPluginManager;
-import org.pf4j.PluginManager;
 
 import java.io.Console;
 import java.io.IOException;
@@ -68,6 +67,7 @@ public class FsCrawlerCli {
     private static final long CLOSE_POLLING_WAIT_MS = 100;
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerCli.class);
+    private static FsCrawlerPluginsManager pluginsManager;
 
     @SuppressWarnings("CanBeFinal")
     public static class FsCrawlerCommand {
@@ -133,9 +133,8 @@ public class FsCrawlerCli {
             banner();
 
             // Load all plugins
-            PluginManager pluginManager = new DefaultPluginManager();
-            pluginManager.loadPlugins();
-            pluginManager.startPlugins();
+            pluginsManager = new FsCrawlerPluginsManager();
+            pluginsManager.loadPlugins();
 
             // We can now launch the crawler
             runner(command);
@@ -394,6 +393,8 @@ public class FsCrawlerCli {
             // We don't go further as we have critical errors
             return;
         }
+
+        pluginsManager.startPlugins();
 
         try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, command.loop, command.rest)) {
             Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));

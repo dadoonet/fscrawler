@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package fr.pilato.elasticsearch.crawler.fs.framework;
+package fr.pilato.elasticsearch.crawler.plugins;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

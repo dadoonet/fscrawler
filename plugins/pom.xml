@@ -9,10 +9,14 @@
         <version>2.10-SNAPSHOT</version>
     </parent>
 
-    <artifactId>plugins</artifactId>
+    <artifactId>fscrawler-plugins</artifactId>
     <packaging>pom</packaging>
+
     <modules>
         <module>welcome-plugin</module>
+        <module>fs-local-plugin</module>
+        <module>fs-s3-plugin</module>
+        <module>plugins-test</module>
     </modules>
 
     <dependencies>
@@ -20,6 +24,38 @@
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-framework</artifactId>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-plugin</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-test-framework</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>com.carrotsearch.randomizedtesting</groupId>
+                <artifactId>junit4-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- There is no unit test, so we can skip that execution -->
+                        <id>unit-tests</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

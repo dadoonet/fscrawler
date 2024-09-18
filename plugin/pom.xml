@@ -5,11 +5,17 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>fr.pilato.elasticsearch.crawler</groupId>
-        <artifactId>fscrawler-plugins</artifactId>
+        <artifactId>fscrawler-parent</artifactId>
         <version>2.10-SNAPSHOT</version>
     </parent>
 
-    <artifactId>fscrawler-welcome-plugin</artifactId>
-    <description>FSCrawler Welcome Plugin</description>
+    <artifactId>fscrawler-plugin</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-settings</artifactId>
+        </dependency>
+    </dependencies>
 
 </project>
