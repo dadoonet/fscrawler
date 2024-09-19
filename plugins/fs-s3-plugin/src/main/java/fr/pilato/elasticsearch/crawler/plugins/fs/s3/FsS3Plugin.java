@@ -99,5 +99,15 @@ public class FsS3Plugin extends FsCrawlerPlugin {
                 throw new FsCrawlerIllegalConfigurationException(e.getMessage());
             }
         }
+
+        @Override
+        public String getFilename() {
+            throw new RuntimeException("Not implemented yet");
+        }
+
+        @Override
+        public long getFilesize() throws IOException {
+            throw new RuntimeException("Not implemented yet");
+        }
     }
 }

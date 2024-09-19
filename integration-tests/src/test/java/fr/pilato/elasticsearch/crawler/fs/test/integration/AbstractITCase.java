@@ -33,6 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import jakarta.ws.rs.ProcessingException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
@@ -109,6 +110,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static Elasticsearch elasticsearchConfiguration;
     protected static FsCrawlerManagementServiceElasticsearchImpl managementService = null;
     protected static FsCrawlerDocumentService documentService = null;
+    protected static FsCrawlerPluginsManager pluginsManager;
 
     private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
 
@@ -253,6 +255,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
+        // Load all plugins
+        pluginsManager = new FsCrawlerPluginsManager();
+        pluginsManager.loadPlugins();
+        pluginsManager.startPlugins();
+
         if (testClusterUrl == null) {
             String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
             if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
@@ -348,6 +355,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             managementService.close();
             managementService = null;
             staticLogger.info("Management service stopped");
+        }
+        if (pluginsManager != null) {
+            pluginsManager.close();
         }
         testCaCertificate = null;
     }

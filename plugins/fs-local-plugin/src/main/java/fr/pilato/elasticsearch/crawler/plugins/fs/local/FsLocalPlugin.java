@@ -40,7 +40,7 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
 
     @Extension
     public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract {
-        private String url;
+        private Path path;
 
         @Override
         public void start() {
@@ -59,13 +59,24 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
 
         @Override
         public InputStream readFile() throws IOException {
-            return Files.newInputStream(Path.of(url));
+            return Files.newInputStream(path);
+        }
+
+        @Override
+        public String getFilename() {
+            return path.getFileName().toString();
+        }
+
+        @Override
+        public long getFilesize() throws IOException {
+            return Files.size(path);
         }
 
         @Override
         protected void parseSettings() throws PathNotFoundException {
-            url = document.read("$.local.url");
+            String url = document.read("$.local.url");
             logger.debug("Reading local file from [{}]", url);
+            path = Path.of(url);
         }
     }
 }

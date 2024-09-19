@@ -25,7 +25,7 @@ import org.pf4j.PluginManager;
 
 import java.util.HashMap;
 
-public class FsCrawlerPluginsManager {
+public class FsCrawlerPluginsManager implements AutoCloseable {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerPluginsManager.class);
     private final PluginManager pluginManager;
@@ -42,16 +42,22 @@ public class FsCrawlerPluginsManager {
     }
 
     public void startPlugins() {
-        logger.debug("Stating plugins");
+        logger.debug("Starting plugins");
         pluginManager.startPlugins();
 
         for (FsCrawlerExtensionFsProvider extension : pluginManager.getExtensions(FsCrawlerExtensionFsProvider.class)) {
-            logger.debug("Loading FsCrawlerExtensionFsProvider extension for type [{}]", extension.getType());
+            logger.debug("Found FsCrawlerExtensionFsProvider extension for type [{}]", extension.getType());
             fsProviders.put(extension.getType(), extension);
         }
     }
 
+    public void close() {
+        logger.debug("Stopping plugins");
+        pluginManager.stopPlugins();
+    }
+
     public FsCrawlerExtensionFsProvider findFsProvider(String type) {
+        logger.debug("Load extension for type [{}]", type);
         return fsProviders.get(type);
     }
 }
