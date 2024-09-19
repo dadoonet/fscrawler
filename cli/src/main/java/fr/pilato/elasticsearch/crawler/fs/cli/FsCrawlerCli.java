@@ -397,7 +397,7 @@ public class FsCrawlerCli {
         pluginsManager.startPlugins();
 
         try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, command.loop, command.rest)) {
-            Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
+            Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler, pluginsManager));
             // Let see if we want to upgrade an existing cluster to the latest version
             if (command.upgrade) {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
@@ -410,7 +410,7 @@ public class FsCrawlerCli {
 
                 // Start the REST Server if needed
                 if (command.rest) {
-                    RestServer.start(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService());
+                    RestServer.start(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService(), pluginsManager);
                 }
 
                 // We just have to wait until the process is stopped

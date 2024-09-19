@@ -128,4 +128,13 @@ public class JsonUtil {
     public static DocumentContext parseJsonAsDocumentContext(String json) {
         return JsonPath.using(configuration).parse(json);
     }
+
+    /**
+     * Parse a JSON Document using JSON Path and return a DocumentContext
+     * @param jsonStream  json stream to parse
+     * @return an Object which can be used as an input for {@link com.jayway.jsonpath.DocumentContext#read(String, Predicate...)}
+     */
+    public static DocumentContext parseJsonAsDocumentContext(InputStream jsonStream) {
+        return JsonPath.using(configuration).parse(jsonStream);
+    }
 }

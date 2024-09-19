@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
-public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerExtensionFsProvider, AutoCloseable {
+public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerExtensionFsProvider {
     private static final Logger logger = LogManager.getLogger(FsCrawlerExtensionFsProviderAbstract.class);
     protected DocumentContext document;
 

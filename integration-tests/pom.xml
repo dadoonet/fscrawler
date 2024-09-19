@@ -54,6 +54,18 @@
             <artifactId>elasticsearch</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Load all known plugins -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-fs-local-plugin</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-fs-s3-plugin</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

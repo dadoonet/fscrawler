@@ -41,7 +41,7 @@ public class UploadApi extends RestApi {
     private final DocumentApi documentApi;
 
     UploadApi(FsSettings settings, FsCrawlerDocumentService documentService) {
-        documentApi = new DocumentApi(settings, documentService);
+        documentApi = new DocumentApi(settings, documentService, null);
     }
 
     @POST

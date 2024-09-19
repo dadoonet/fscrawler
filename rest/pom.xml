@@ -80,6 +80,12 @@
             <artifactId>jackson-module-jaxb-annotations</artifactId>
         </dependency>
 
+        <!-- Our plugins -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-plugin</artifactId>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>

@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 import com.carrotsearch.randomizedtesting.ThreadFilter;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -98,7 +99,7 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
         createBucket("bar.txt", "Hello Bar world!");
 
         logger.info("Starting Test");
-        try (FsS3Plugin.FsCrawlerExtensionFsProviderS3 provider = new FsS3Plugin.FsCrawlerExtensionFsProviderS3()) {
+        try (FsCrawlerExtensionFsProvider provider = new FsS3Plugin.FsCrawlerExtensionFsProviderS3()) {
             provider.settings("{\n" +
                     "  \"type\": \"s3\",\n" +
                     "  \"s3\": {\n" +

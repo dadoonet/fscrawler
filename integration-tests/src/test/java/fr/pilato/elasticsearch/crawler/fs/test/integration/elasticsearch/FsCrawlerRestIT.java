@@ -35,6 +35,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
 import jakarta.ws.rs.core.MediaType;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -320,5 +321,99 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         assertThat(response.isOk(), is(false));
         assertThat(response.getMessage(), containsString("No file has been sent or you are not using [file] as the field name."));
+    }
+
+    @Test
+    public void testUploadDocumentWithFsPlugin() throws Exception {
+        Path fromDoesNotExist = rootTmpDir.resolve("resources").resolve("documents").resolve("foobar").resolve("foobar.txt");
+        Path fromExists = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        if (Files.notExists(fromExists)) {
+            staticLogger.error("file [{}] should exist before we start tests", fromExists);
+            throw new RuntimeException(fromExists + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        if (Files.exists(fromDoesNotExist)) {
+            staticLogger.error("file [{}] should not exist before we start tests", fromDoesNotExist);
+            throw new RuntimeException(fromDoesNotExist + " exists. Check your JUnit tests.");
+        }
+
+        // We try with a document that does not exist
+        String json = "{\n" +
+                "  \"type\": \"local\",\n" +
+                "  \"local\": {\n" +
+                "    \"url\": \"" + fromDoesNotExist + "\"\n" +
+                "  }\n" +
+                "}";
+        UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
+        assertThat(uploadResponse.isOk(), is(false));
+        assertThat(uploadResponse.getMessage(), containsString("NoSuchFileException"));
+        assertThat(uploadResponse.getMessage(), containsString(fromDoesNotExist.toString()));
+
+        // We try with an existing document
+        json = "{\n" +
+                "  \"type\": \"local\",\n" +
+                "  \"local\": {\n" +
+                "    \"url\": \"" + fromExists + "\"\n" +
+                "  }\n" +
+                "}";
+        uploadResponse = post(target, "/_document", json, UploadResponse.class);
+        assertThat(uploadResponse.isOk(), is(true));
+
+        // We wait until we have our document
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("test.txt"));
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (30));
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString ("This file contains some words."));
+    }
+
+
+    @Test @Ignore
+    public void testUploadDocumentWithS3Plugin() throws Exception {
+        Path fromDoesNotExist = rootTmpDir.resolve("resources").resolve("documents").resolve("foobar").resolve("foobar.txt");
+        Path fromExists = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        if (Files.notExists(fromExists)) {
+            staticLogger.error("file [{}] should exist before we start tests", fromExists);
+            throw new RuntimeException(fromExists + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        if (Files.exists(fromDoesNotExist)) {
+            staticLogger.error("file [{}] should not exist before we start tests", fromDoesNotExist);
+            throw new RuntimeException(fromDoesNotExist + " exists. Check your JUnit tests.");
+        }
+
+        // We try with a document that does not exist
+        String json = "{\n" +
+                "  \"type\": \"s3\",\n" +
+                "  \"s3\": {\n" +
+                "    \"url\": \"http://s3.amazonaws.com/\",\n" +
+                "    \"bucket\": \"foo\",\n" +
+                "    \"object\": \"" + fromDoesNotExist + "\",\n" +
+                "    \"access_key\": \"ACCESS\",\n" +
+                "    \"secret_key\": \"SECRET\" \n" +
+                "  }\n" +
+                "}";
+
+        UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
+        assertThat(uploadResponse.isOk(), is(false));
+        assertThat(uploadResponse.getMessage(), containsString("NoSuchFileException"));
+        assertThat(uploadResponse.getMessage(), containsString(fromDoesNotExist.toString()));
+
+        // We try with an existing document
+        json = "{\n" +
+                "  \"type\": \"s3\",\n" +
+                "  \"s3\": {\n" +
+                "    \"url\": \"http://s3.amazonaws.com/\",\n" +
+                "    \"bucket\": \"foo\",\n" +
+                "    \"object\": \"" + fromExists + "\",\n" +
+                "    \"access_key\": \"ACCESS\",\n" +
+                "    \"secret_key\": \"SECRET\" \n" +
+                "  }\n" +
+                "}";
+        uploadResponse = post(target, "/_document", json, UploadResponse.class);
+        assertThat(uploadResponse.isOk(), is(true));
+
+        // We wait until we have our document
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("test.txt"));
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (30));
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString ("This file contains some words."));
     }
 }

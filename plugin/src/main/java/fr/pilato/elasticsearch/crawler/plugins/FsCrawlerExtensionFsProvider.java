@@ -23,10 +23,12 @@ import org.pf4j.ExtensionPoint;
 import java.io.IOException;
 import java.io.InputStream;
 
-public interface FsCrawlerExtensionFsProvider extends ExtensionPoint {
+public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoCloseable {
     void settings(String settings);
     void start();
     void stop() throws Exception;
     String getType();
     InputStream readFile() throws IOException;
+    String getFilename();
+    long getFilesize() throws IOException;
 }

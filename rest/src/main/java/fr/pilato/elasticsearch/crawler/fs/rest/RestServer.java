@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -42,8 +43,10 @@ public class RestServer {
      * @param settings FSCrawler settings
      * @param managementService The management service
      * @param documentService The document service
+     * @param pluginsManager The plugins manager instance
      */
-    public static void start(FsSettings settings, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService) {
+    public static void start(FsSettings settings, FsCrawlerManagementService managementService,
+                             FsCrawlerDocumentService documentService, FsCrawlerPluginsManager pluginsManager) {
         // We create the service only one
         if (httpServer == null) {
             // create a resource config that scans for JAX-RS resources and providers
@@ -51,7 +54,7 @@ public class RestServer {
             final ResourceConfig rc = new ResourceConfig()
                     .registerInstances(
                             new ServerStatusApi(managementService, settings),
-                            new DocumentApi(settings, documentService),
+                            new DocumentApi(settings, documentService, pluginsManager),
                             new UploadApi(settings, documentService))
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)

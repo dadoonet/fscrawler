@@ -126,7 +126,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         managementService.start();
         documentService.start();
 
-        RestServer.start(fsSettings, managementService, documentService);
+        RestServer.start(fsSettings, managementService, documentService, pluginsManager);
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
         managementService.getClient().deleteIndex(getCrawlerName());
@@ -164,6 +164,13 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         return targetPath.request(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(mp, mp.getMediaType()), clazz);
+    }
+
+    public static <T> T post(WebTarget target, String path, String json, Class<T> clazz) {
+        WebTarget targetPath = target.path(path);
+        return targetPath.request(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(json, MediaType.APPLICATION_JSON), clazz);
     }
 
     public static <T> T put(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
