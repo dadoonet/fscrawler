@@ -21,16 +21,16 @@
       <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.crawler.ssh" level="trace" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.crawler.ssh" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.service" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.plugins" level="debug" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.plugins" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.rest" level="debug" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.rest" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.tika" level="info" additivity="false">
@@ -42,7 +42,7 @@
       <Logger name="fr.pilato.elasticsearch.crawler.fs.test" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.test.integration" level="trace" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.test.integration" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.test.unit" level="info" additivity="false">
@@ -67,6 +67,9 @@
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="org.apache.sshd" level="info" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="okhttp3" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">

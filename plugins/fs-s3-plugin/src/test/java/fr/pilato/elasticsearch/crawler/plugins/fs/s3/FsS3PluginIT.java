@@ -53,7 +53,7 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     private static String s3Password = "minioadmin";
 
     @Before
-    public void startMinioContainer() throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public void startMinioContainer() {
         staticLogger.info("Starting Minio");
         container = new MinIOContainer("minio/minio");
         container.start();

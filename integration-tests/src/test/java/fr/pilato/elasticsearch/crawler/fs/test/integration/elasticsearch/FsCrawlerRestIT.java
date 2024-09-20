@@ -35,7 +35,6 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
 import jakarta.ws.rs.core.MediaType;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -52,7 +51,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-@SuppressWarnings("ALL")
 public class FsCrawlerRestIT extends AbstractRestITCase {
 
     public FsSettings getFsSettings() throws IOException {
@@ -366,45 +364,34 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
 
-    @Test @Ignore
+    @Test
     public void testUploadDocumentWithS3Plugin() throws Exception {
-        Path fromDoesNotExist = rootTmpDir.resolve("resources").resolve("documents").resolve("foobar").resolve("foobar.txt");
-        Path fromExists = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
-        if (Files.notExists(fromExists)) {
-            staticLogger.error("file [{}] should exist before we start tests", fromExists);
-            throw new RuntimeException(fromExists + " doesn't seem to exist. Check your JUnit tests.");
-        }
-        if (Files.exists(fromDoesNotExist)) {
-            staticLogger.error("file [{}] should not exist before we start tests", fromDoesNotExist);
-            throw new RuntimeException(fromDoesNotExist + " exists. Check your JUnit tests.");
-        }
-
         // We try with a document that does not exist
         String json = "{\n" +
                 "  \"type\": \"s3\",\n" +
                 "  \"s3\": {\n" +
-                "    \"url\": \"http://s3.amazonaws.com/\",\n" +
-                "    \"bucket\": \"foo\",\n" +
-                "    \"object\": \"" + fromDoesNotExist + "\",\n" +
-                "    \"access_key\": \"ACCESS\",\n" +
-                "    \"secret_key\": \"SECRET\" \n" +
+                "    \"url\": \"" + s3Url +"\",\n" +
+                "    \"bucket\": \"documents\",\n" +
+                "    \"object\": \"foobar/foobar.txt\",\n" +
+                "    \"access_key\": \"" + s3Username + "\",\n" +
+                "    \"secret_key\": \"" + s3Password + "\" \n" +
                 "  }\n" +
                 "}";
 
         UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
         assertThat(uploadResponse.isOk(), is(false));
-        assertThat(uploadResponse.getMessage(), containsString("NoSuchFileException"));
-        assertThat(uploadResponse.getMessage(), containsString(fromDoesNotExist.toString()));
+        assertThat(uploadResponse.getMessage(), containsString("FsCrawlerIllegalConfigurationException"));
+        assertThat(uploadResponse.getMessage(), containsString("The specified key does not exist"));
 
         // We try with an existing document
         json = "{\n" +
                 "  \"type\": \"s3\",\n" +
                 "  \"s3\": {\n" +
-                "    \"url\": \"http://s3.amazonaws.com/\",\n" +
-                "    \"bucket\": \"foo\",\n" +
-                "    \"object\": \"" + fromExists + "\",\n" +
-                "    \"access_key\": \"ACCESS\",\n" +
-                "    \"secret_key\": \"SECRET\" \n" +
+                "    \"url\": \"" + s3Url +"\",\n" +
+                "    \"bucket\": \"documents\",\n" +
+                "    \"object\": \"roottxtfile.txt\",\n" +
+                "    \"access_key\": \"" + s3Username + "\",\n" +
+                "    \"secret_key\": \"" + s3Password + "\" \n" +
                 "  }\n" +
                 "}";
         uploadResponse = post(target, "/_document", json, UploadResponse.class);
@@ -412,8 +399,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("test.txt"));
-        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (30));
-        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString ("This file contains some words."));
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("roottxtfile.txt"));
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (560));
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString ("Nihil est enim virtute amabilius"));
     }
 }
