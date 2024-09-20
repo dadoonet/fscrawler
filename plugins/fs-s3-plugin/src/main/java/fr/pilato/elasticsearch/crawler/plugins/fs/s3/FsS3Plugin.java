@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfiguratio
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
 import io.minio.errors.*;
 import org.apache.logging.log4j.LogManager;
@@ -93,21 +94,30 @@ public class FsS3Plugin extends FsCrawlerPlugin {
                     .build();
             try {
                 return minioClient.getObject(getObjectArgs);
-            } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
-                     InvalidResponseException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
-                logger.fatal("Failed to read file", e);
+            } catch (MinioException | InvalidKeyException | NoSuchAlgorithmException e) {
+                logger.debug("Failed to read file", e);
                 throw new FsCrawlerIllegalConfigurationException(e.getMessage());
             }
         }
 
         @Override
         public String getFilename() {
-            throw new RuntimeException("Not implemented yet");
+            return object;
         }
 
         @Override
         public long getFilesize() throws IOException {
-            throw new RuntimeException("Not implemented yet");
+            logger.debug("Reading S3 filesize for file [{}] from bucket [{}/{}]", object, url, bucket);
+            GetObjectArgs getObjectArgs = GetObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(object)
+                    .build();
+            try (GetObjectResponse response = minioClient.getObject(getObjectArgs)) {
+                return response.headers().byteCount();
+            } catch (MinioException | InvalidKeyException | NoSuchAlgorithmException e) {
+                logger.debug("Failed to read file", e);
+                throw new FsCrawlerIllegalConfigurationException(e.getMessage());
+            }
         }
     }
 }

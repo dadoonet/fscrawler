@@ -92,7 +92,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
 
-    private static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
+    protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
     private final static String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
