@@ -16,7 +16,6 @@
         <module>welcome-plugin</module>
         <module>fs-local-plugin</module>
         <module>fs-s3-plugin</module>
-        <module>plugins-test</module>
     </modules>
 
     <dependencies>
