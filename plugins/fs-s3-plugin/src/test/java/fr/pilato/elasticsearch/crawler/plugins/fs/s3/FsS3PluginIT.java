@@ -89,14 +89,14 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
                     .build());
         } catch (Exception e) {
             staticLogger.warn("Could not create bucket [{}]; [{}]: {}", objectName, object, e.getMessage());
-            // throw new RuntimeException(e);
         }
     }
 
     @Test
     public void testMinio() throws Exception {
-        createBucket("foo.txt", "Hello Foo world!");
-        createBucket("bar.txt", "Hello Bar world!");
+        String text = "Hello Foo world!";
+        createBucket("foo.txt", text);
+        createBucket("bar.txt", "This one should be ignored.");
 
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsS3Plugin.FsCrawlerExtensionFsProviderS3()) {
@@ -113,7 +113,9 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
             provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object, is("Hello Foo world!"));
+            assertThat(object, is(text));
+            assertThat(provider.getFilename(), is("foo.txt"));
+            assertThat(provider.getFilesize(), is(16L));
         }
     }
 

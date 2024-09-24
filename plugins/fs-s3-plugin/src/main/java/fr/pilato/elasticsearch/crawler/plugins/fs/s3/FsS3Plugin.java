@@ -113,7 +113,8 @@ public class FsS3Plugin extends FsCrawlerPlugin {
                     .object(object)
                     .build();
             try (GetObjectResponse response = minioClient.getObject(getObjectArgs)) {
-                return response.headers().byteCount();
+                logger.trace("S3 response headers [{}]", response.headers());
+                return Long.parseLong(response.headers().get("Content-Length"));
             } catch (MinioException | InvalidKeyException | NoSuchAlgorithmException e) {
                 logger.debug("Failed to read file", e);
                 throw new FsCrawlerIllegalConfigurationException(e.getMessage());
