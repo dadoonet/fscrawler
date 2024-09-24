@@ -658,6 +658,13 @@
                 <version>3.25.5</version>
             </dependency>
 
+            <!-- Because of CVE-2024-7254 - this comes from Tika 2.9.2 -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>3.25.5</version>
+            </dependency>
+
             <!-- For Language detection -->
             <dependency>
                 <groupId>org.apache.tika</groupId>
