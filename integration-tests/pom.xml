@@ -71,6 +71,11 @@
             <artifactId>fscrawler-fs-s3-plugin</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-fs-http-plugin</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
