@@ -35,7 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 
 @ThreadLeakFilters(filters = {
@@ -46,58 +46,62 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
 
     private final static String text = "Hello Foo world!";
 
-    public NginxContainer<?> container;
-    private URL url;
-    private Path nginxRoot;
-
-    @Before
-    public void startNginxContainer() throws IOException {
-        staticLogger.info("Starting Nginx from {}", rootTmpDir);
-        nginxRoot = rootTmpDir.resolve("nginx-root");
-        Files.createDirectory(nginxRoot);
-        Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
-        createFile("foo.txt", text);
-        createFile("bar.txt", "This one should be ignored.");
-
-        container = new NginxContainer<>("nginx")
-                .withCopyFileToContainer(MountableFile.forHostPath(nginxRoot), "/usr/share/nginx/html")
-                .waitingFor(new HttpWaitStrategy());
-        container.start();
-        url = container.getBaseUrl("http", 80);
-        staticLogger.info("Nginx started on {}.", url);
-    }
-
-    @After
-    public void stopNginxContainer() throws Exception {
-        if (container != null) {
-            container.close();
-            container = null;
-            staticLogger.info("Nginx stopped.");
-        }
-    }
-
-    private void createFile(String objectName, String object) throws IOException {
+    private void createFile(Path root, String objectName, String object) throws IOException {
         staticLogger.info("Create fake content [{}]; [{}]", objectName, object);
-        Path file = nginxRoot.resolve(objectName);
+        Path file = root.resolve(objectName);
         Files.writeString(file, object);
     }
 
     @Test
-    public void testReadFile() throws Exception {
+    public void testReadFileFromNginx() throws Exception {
+        staticLogger.info("Starting Nginx from {}", rootTmpDir);
+        Path nginxRoot = rootTmpDir.resolve("nginx-root");
+        Files.createDirectory(nginxRoot);
+        Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
+        createFile(nginxRoot, "foo.txt", text);
+        createFile(nginxRoot, "bar.txt", "This one should be ignored.");
+
+        try (NginxContainer<?> container = new NginxContainer<>("nginx")) {
+            container.waitingFor(new HttpWaitStrategy());
+            container.start();
+            container.copyFileToContainer(MountableFile.forHostPath(nginxRoot), "/usr/share/nginx/html");
+            URL url = container.getBaseUrl("http", 80);
+            staticLogger.info("Nginx started on {}.", url);
+
+            logger.info("Starting Test");
+            try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
+                provider.settings("{\n" +
+                        "  \"type\": \"http\",\n" +
+                        "  \"http\": {\n" +
+                        "    \"url\": \"" + url + "/foo.txt\"\n" +
+                        "  }\n" +
+                        "}");
+                provider.start();
+                InputStream inputStream = provider.readFile();
+                String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                assertThat(object, is(text));
+                assertThat(provider.getFilename(), is("foo.txt"));
+                assertThat(provider.getFilesize(), is(16L));
+            }
+        }
+    }
+
+    @Test
+    public void testReadTxtFileFromElasticCo() throws Exception {
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
             provider.settings("{\n" +
                     "  \"type\": \"http\",\n" +
                     "  \"http\": {\n" +
-                    "    \"url\": \"" + url + "/foo.txt\"\n" +
+                    "    \"url\": \"https://www.elastic.co/robots.txt\"\n" +
                     "  }\n" +
                     "}");
             provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object, is(text));
-            assertThat(provider.getFilename(), is("foo.txt"));
-            assertThat(provider.getFilesize(), is(16L));
+            assertThat(object, containsString("Sitemap"));
+            assertThat(provider.getFilename(), is("robots.txt"));
+            assertThat(provider.getFilesize(), greaterThan(100L));
         }
     }
 }
