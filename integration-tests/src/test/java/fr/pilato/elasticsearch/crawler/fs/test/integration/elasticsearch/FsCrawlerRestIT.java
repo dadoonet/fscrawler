@@ -32,11 +32,14 @@ import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import fr.pilato.elasticsearch.crawler.plugins.fs.http.FsHttpPlugin;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.MinioException;
 import jakarta.ws.rs.core.MediaType;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
@@ -47,7 +50,9 @@ import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.MountableFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.InvalidKeyException;
@@ -522,7 +527,6 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (16));
             assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString(text));
 
-            /*
             // We try with an existing document running on https
             json = "{\n" +
                     "  \"type\": \"http\",\n" +
@@ -531,14 +535,13 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                     "  }\n" +
                     "}";
             uploadResponse = post(target, "/_document", json, UploadResponse.class);
-            assertThat(uploadResponse.isOk(), is(true));
+            assertThat(uploadResponse.getMessage(), nullValue());
 
             // We wait until we have our document
             response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
             assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("robots.txt"));
             assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), greaterThan(100));
             assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString("Sitemap"));
-*/
         }
     }
 }
