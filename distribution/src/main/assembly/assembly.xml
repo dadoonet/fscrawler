@@ -38,6 +38,10 @@
             </includes>
         </fileSet>
         <fileSet>
+            <directory>src/main/plugins</directory>
+            <outputDirectory>plugins</outputDirectory>
+        </fileSet>
+        <fileSet>
             <directory>src/main/external</directory>
             <outputDirectory>external</outputDirectory>
         </fileSet>
