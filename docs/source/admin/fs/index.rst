@@ -124,7 +124,5 @@ Here is a list of existing top level settings:
 | ``rest``                          | :ref:`rest-service`           |
 +-----------------------------------+-------------------------------+
 
-.. versionadded:: 2.7
-
 You can define your job settings either in ``_settings.yaml`` (using ``.yaml`` extension) or
 in ``_settings.json`` (using ``.json`` extension).

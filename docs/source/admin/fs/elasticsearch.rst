@@ -184,8 +184,6 @@ default settings using ``bulk_size``, ``byte_size`` and ``flush_interval``:
 Using Ingest Node Pipeline
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.2
-
 If you are using an elasticsearch cluster running a 5.0 or superior
 version, you can use an Ingest Node pipeline to transform documents sent
 by FSCrawler before they are actually indexed.
@@ -266,23 +264,11 @@ You can define multiple nodes:
      - url: "https://mynode2.mycompany.com:9200"
      - url: "https://mynode3.mycompany.com:9200"
 
-.. note::
-    .. versionadded:: 2.2 you can use HTTPS instead of HTTP.
-
-    .. code:: yaml
-
-       name: "test"
-       elasticsearch:
-         nodes:
-         - url: "https://CLUSTERID.eu-west-1.aws.found.io:9243"
-
-    For more information about HTTPS and SSL, read :ref:`ssl`.
-
 Path prefix
 ^^^^^^^^^^^
 
-.. versionadded:: 2.7 If your elasticsearch is running behind a proxy with url rewriting,
-    you might have to specify a path prefix. This can be done with ``path_prefix`` setting:
+If your elasticsearch is running behind a proxy with url rewriting,
+you might have to specify a path prefix. This can be done with ``path_prefix`` setting:
 
 .. code:: yaml
 
@@ -343,8 +329,6 @@ Then you can use the encoded API Key in FSCrawler settings:
 
 Basic Authentication (deprecated)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. versionadded:: 2.2
 
 The best practice is to use `API Key`_ or `Access Token`_. But if you have no other choice,
 you can still use Basic Authentication.

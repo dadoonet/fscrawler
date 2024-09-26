@@ -19,8 +19,6 @@ CLI options
 Loop
 ----
 
-.. versionadded:: 2.2
-
 ``--loop x`` defines the number of runs we want before exiting:
 
 -  ``X`` where X is a negative value means infinite, like ``-1`` (default)
@@ -33,8 +31,6 @@ If you want to scan your hard drive only once, run with ``--loop 1``.
 Restart
 -------
 
-.. versionadded:: 2.2
-
 You can tell FSCrawler that it must restart from the beginning by using
 ``--restart`` option:
 
@@ -46,8 +42,6 @@ In that case, the ``{job_name}/_status.json`` file will be removed.
 
 Rest
 ----
-
-.. versionadded:: 2.3
 
 If you want to run the :ref:`rest-service` without scanning
 your hard drive, launch with:
