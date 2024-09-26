@@ -59,6 +59,11 @@
             <artifactId>minio</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>nginx</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Load all known plugins -->
         <dependency>

@@ -36,8 +36,12 @@ import jakarta.ws.rs.core.MediaType;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.Test;
+import org.testcontainers.containers.NginxContainer;
+import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
+import org.testcontainers.utility.MountableFile;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -363,7 +367,6 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString ("This file contains some words."));
     }
 
-
     @Test
     public void testUploadDocumentWithS3Plugin() throws Exception {
         // We try with a document that does not exist
@@ -400,7 +403,79 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("roottxtfile.txt"));
-        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (560));
+        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (12230));
         assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString ("Nihil est enim virtute amabilius"));
+    }
+
+    private final static String text = "Hello Foo world!";
+
+    private void createFile(Path root, String objectName, String object) throws IOException {
+        staticLogger.debug("Create fake content [{}]; [{}]", objectName, object);
+        Path file = root.resolve(objectName);
+        Files.writeString(file, object);
+    }
+
+    @Test
+    public void testUploadDocumentWithHttpPlugin() throws Exception {
+        staticLogger.info("Starting Nginx from {}", rootTmpDir);
+        Path nginxRoot = rootTmpDir.resolve("nginx-root");
+        Files.createDirectory(nginxRoot);
+        Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
+        createFile(nginxRoot, "foo.txt", text);
+        createFile(nginxRoot, "bar.txt", "This one should be ignored.");
+
+        try (NginxContainer<?> container = new NginxContainer<>("nginx")) {
+            container.waitingFor(new HttpWaitStrategy());
+            container.start();
+            container.copyFileToContainer(MountableFile.forHostPath(nginxRoot), "/usr/share/nginx/html");
+            URL url = container.getBaseUrl("http", 80);
+            staticLogger.info("Nginx started on {}.", url);
+
+            // We try with a document that does not exist
+            String json = "{\n" +
+                    "  \"type\": \"http\",\n" +
+                    "  \"http\": {\n" +
+                    "    \"url\": \"" + url + "/doesnotexist.txt\"\n" +
+                    "  }\n" +
+                    "}";
+            UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
+            assertThat(uploadResponse.isOk(), is(false));
+            assertThat(uploadResponse.getMessage(), containsString("FileNotFoundException"));
+            assertThat(uploadResponse.getMessage(), containsString("doesnotexist.txt"));
+
+            // We try with an existing document
+            json = "{\n" +
+                    "  \"type\": \"http\",\n" +
+                    "  \"http\": {\n" +
+                    "    \"url\": \"" + url + "/foo.txt\"\n" +
+                    "  }\n" +
+                    "}";
+            uploadResponse = post(target, "/_document", json, UploadResponse.class);
+            assertThat(uploadResponse.isOk(), is(true));
+
+            // We wait until we have our document
+            ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("foo.txt"));
+            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (16));
+            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString(text));
+
+            /*
+            // We try with an existing document running on https
+            json = "{\n" +
+                    "  \"type\": \"http\",\n" +
+                    "  \"http\": {\n" +
+                    "    \"url\": \"https://www.elastic.co/robots.txt\"\n" +
+                    "  }\n" +
+                    "}";
+            uploadResponse = post(target, "/_document", json, UploadResponse.class);
+            assertThat(uploadResponse.isOk(), is(true));
+
+            // We wait until we have our document
+            response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("robots.txt"));
+            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), greaterThan(100));
+            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString("Sitemap"));
+*/
+        }
     }
 }
