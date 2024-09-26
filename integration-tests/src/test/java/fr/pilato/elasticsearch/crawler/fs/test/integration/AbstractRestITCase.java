@@ -36,10 +36,6 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElas
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.errors.*;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -54,17 +50,12 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.testcontainers.containers.MinIOContainer;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -91,11 +82,6 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     protected Path currentTestTagDir;
     private FsCrawlerManagementServiceElasticsearchImpl managementService;
     protected FsCrawlerDocumentService documentService;
-
-    private static MinIOContainer container;
-    protected static String s3Url = "http://localhost:9000";
-    protected static String s3Username = "minioadmin";
-    protected static String s3Password = "minioadmin";
 
     /**
      * Get the Rest Port. It could be set externally. If 0,
@@ -137,87 +123,6 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     }
 
     @Before
-    void startMinio() throws Exception {
-        staticLogger.info("Starting Minio");
-        container = new MinIOContainer("minio/minio");
-        container.start();
-        s3Url = container.getS3URL();
-        s3Username = container.getUserName();
-        s3Password = container.getPassword();
-        staticLogger.info("Minio started on {} with username {} and password {}. Console running at {}",
-                s3Url, s3Username, s3Password,
-                String.format("http://%s:%s", container.getHost(), container.getMappedPort(9001)));
-
-        // Upload all files to Minio
-        uploadTestResourcesToMinio(s3Url, s3Username, s3Password);
-    }
-
-    private void uploadTestResourcesToMinio(String s3Url, String s3Username, String s3Password) throws Exception {
-        Path testResourceTarget = rootTmpDir.resolve("resources");
-        String currentTestName = getCurrentTestName();
-        currentTestResourceDir = testResourceTarget.resolve(currentTestName);
-        String url = getUrl("samples", currentTestName);
-        Path from = Paths.get(url);
-
-        String bucket = "documents";
-
-        if (Files.exists(from)) {
-            staticLogger.debug("  --> Copying test resources from [{}] to Minio [{}] bucket", from, bucket);
-        } else {
-            staticLogger.debug("  --> Copying test resources from [{}] to Minio [{}] bucket", DEFAULT_RESOURCES, bucket);
-            from = DEFAULT_RESOURCES;
-        }
-
-        MinioClient minioClient = MinioClient.builder()
-                .endpoint(s3Url)
-                .credentials(s3Username, s3Password)
-                .build();
-
-        minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
-
-        Files.walkFileTree(from, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
-                new InternalFileVisitor(from, bucket, minioClient));
-
-        minioClient.close();
-        staticLogger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
-    }
-
-    private static class InternalFileVisitor extends SimpleFileVisitor<Path> {
-
-        private final Path fromPath;
-        private final String bucket;
-        private final MinioClient minioClient;
-
-        public InternalFileVisitor(Path fromPath, String bucket, MinioClient minioClient) {
-            this.fromPath = fromPath;
-            this.bucket = bucket;
-            this.minioClient = minioClient;
-        }
-
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-            staticLogger.trace("  --> Creating dir [{}] in [{}]", dir, bucket);
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            staticLogger.trace("  --> Copying [{}] to [{}]", file, bucket);
-            try {
-                minioClient.putObject(PutObjectArgs.builder()
-                                .bucket(bucket)
-                                .object(file.getFileName().toString())
-                                .stream(Files.newInputStream(file), file.toFile().length(), -1)
-                        .build());
-            } catch (MinioException | InvalidKeyException | NoSuchAlgorithmException e) {
-                throw new IOException(e);
-            }
-            return FileVisitResult.CONTINUE;
-        }
-    }
-
-
-    @Before
     public void startRestServer() throws Exception {
         FsSettings fsSettings = getFsSettings();
         fsSettings.getElasticsearch().setIndex(getCrawlerName());
@@ -248,15 +153,6 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         if (documentService != null) {
             documentService.close();
             documentService = null;
-        }
-    }
-
-    @After
-    public void stopMinio() {
-        if (container != null) {
-            container.close();
-            container = null;
-            staticLogger.info("Minio stopped.");
         }
     }
 
