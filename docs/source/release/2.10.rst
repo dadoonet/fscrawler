@@ -4,15 +4,17 @@ Version 2.10
 New
 ---
 
+* Using the REST API ``_document``, you can now fetch a document from the local dir, from an http website
+or from an S3 bucket. Thanks to dadoonet.
 * You can now remove a document in Elasticsearch using FSCrawler ``_document`` endpoint. Thanks to dadoonet.
 * Implement our own HTTP Client for Elasticsearch. Thanks to dadoonet.
 * Add option to set path to custom tika config file. Thanks to iadcode.
 * Support for Index Templates. Thanks to dadoonet.
-* Support for Aliases. You can now index in an alias. Thanks to dadoonet.
+* Support for Aliases. You can now index to an alias. Thanks to dadoonet.
 * Support for Access Token and Api Keys instead of Basic Authentication. Thanks to dadoonet.
 * Allow loading external jars. This adds a new ``external`` directory from where jars can be loaded
   to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. Thanks to dadoonet.
-* Add temporal informations in folder index. Thanks to bdauvissat
+* Add temporal information in folder index. Thanks to bdauvissat
 
 Fix
 ---
@@ -25,7 +27,7 @@ Deprecated
 
 * The ``_upload`` REST endpoint has been deprecated. Please now use the ``_document`` endpoint. Thanks to dadoonet.
 * Support for Elasticsearch 6.x is deprecated. Thanks to dadoonet.
-* Support for Basic Authentication is deprecated. Thanks to dadoonet.
+* Support for Basic Authentication is deprecated. You should use API keys instead. Thanks to dadoonet.
 
 Updated
 -------
