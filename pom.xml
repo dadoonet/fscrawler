@@ -39,7 +39,7 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch8.version>8.15.1</elasticsearch8.version>
+        <elasticsearch8.version>8.15.2</elasticsearch8.version>
         <elasticsearch7.version>7.17.23</elasticsearch7.version>
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch8.version}</elasticsearch.version>
@@ -47,7 +47,7 @@
         <pl4j.version>3.12.0</pl4j.version>
 
         <tika.version>2.9.2</tika.version>
-        <jackson.version>2.17.2</jackson.version>
+        <jackson.version>2.18.0</jackson.version>
         <jsonpath.version>2.9.0</jsonpath.version>
         <log4j.version>2.24.0</log4j.version>
         <jansi.version>2.4.1</jansi.version>
@@ -660,7 +660,7 @@
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
-                <version>3.25.5</version>
+                <version>4.28.2</version>
             </dependency>
 
             <!-- For Language detection -->
