@@ -12,8 +12,10 @@
         <module>settings</module>
         <module>test-documents</module>
         <module>beans</module>
+        <module>plugin</module>
         <module>elasticsearch-client</module>
         <module>core</module>
+        <module>plugins</module>
         <module>integration-tests</module>
         <module>distribution</module>
         <module>cli</module>
@@ -42,6 +44,8 @@
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch8.version}</elasticsearch.version>
 
+        <pl4j.version>3.12.0</pl4j.version>
+
         <tika.version>2.9.2</tika.version>
         <jackson.version>2.18.0</jackson.version>
         <jsonpath.version>2.9.0</jsonpath.version>
@@ -68,6 +72,7 @@
         <tests.cluster.user>elastic</tests.cluster.user>
         <tests.cluster.pass>changeme</tests.cluster.pass>
         <tests.rest.port>0</tests.rest.port>
+        <testcontainers.version>1.20.1</testcontainers.version>
 
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
@@ -465,6 +470,44 @@
                 <version>2.10-SNAPSHOT</version>
             </dependency>
 
+            <!-- FSCrawler plugins -->
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-plugins</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-welcome-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-fs-local-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-fs-s3-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-fs-http-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.pf4j</groupId>
+                <artifactId>pf4j</artifactId>
+                <version>${pl4j.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
@@ -774,7 +817,19 @@
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>elasticsearch</artifactId>
-                <version>1.20.1</version>
+                <version>${testcontainers.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>minio</artifactId>
+                <version>${testcontainers.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>nginx</artifactId>
+                <version>${testcontainers.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

@@ -40,7 +40,7 @@ jobs:
   # We run integration tests with elastic stack 8 (default)
   it:
     runs-on: ubuntu-latest
-    needs: build
+    needs: unit
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -60,7 +60,7 @@ jobs:
   # We run integration tests with elastic stack 7
   it-es7:
     runs-on: ubuntu-latest
-    needs: build
+    needs: unit
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -80,7 +80,7 @@ jobs:
   # We run integration tests with elastic stack 6
   it-es6:
     runs-on: ubuntu-latest
-    needs: build
+    needs: unit
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21

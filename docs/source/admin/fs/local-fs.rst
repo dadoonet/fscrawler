@@ -128,8 +128,6 @@ Define ``fs.includes`` and ``fs.excludes`` properties in your
 
 By default, FSCrawler will exclude files starting with ``~``.
 
-.. versionadded:: 2.5
-
 It also applies to directory names. So if you want to ignore ``.ignore``
 dir, just add ``.ignore`` as an excluded name. Note that ``includes`` and ``excludes``
 apply to directory names as well.
@@ -177,14 +175,10 @@ Since the includes and excludes work on the entire *path of the file* you must c
 | ``*/old-*.jpg``    | Include all jpg files that start with ``old-`` | Exclude all jpg files that start with ``old-`` |
 +--------------------+------------------------------------------------+------------------------------------------------+
 
-.. versionadded:: 2.6
-
 If a folder contains a file named ``.fscrawlerignore``, this folder and its subfolders will be entirely skipped.
 
 Filter content
 ^^^^^^^^^^^^^^
-
-.. versionadded:: 2.5
 
 You can filter out documents you would like to index by adding one or more
 regular expression that match the extracted content.
@@ -228,8 +222,6 @@ Elasticsearch will auto guess the mapping.
 Indexing XML docs
 ^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.2
-
 If you want to index XML files and convert them to JSON, you can set
 ``xml_support`` to ``true``. The content of XML files will be added
 directly under \_source. If you need to keep XML documents synchronized
@@ -266,8 +258,6 @@ you should set this option.
 
 Index folders
 ^^^^^^^^^^^^^
-
-.. versionadded:: 2.2
 
 By default FSCrawler will index folder names in the folder index. If
 you don’t want to index those folders, you can set ``index_folders`` to
@@ -574,8 +564,6 @@ metadata such as filename, date, size and path, you can set
 Continue on Error
 ^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.3
-
 By default FSCrawler will immediately stop indexing if he hits a
 Permission denied exception. If you want to just skip this File and
 continue with the rest of the directory tree you can set
@@ -589,8 +577,6 @@ continue with the rest of the directory tree you can set
 
 Language detection
 ^^^^^^^^^^^^^^^^^^
-
-.. versionadded:: 2.2
 
 You can ask for language detection using ``lang_detect`` option:
 
@@ -721,8 +707,6 @@ If you want to extract the full content, define ``indexed_chars`` to
 Ignore Above
 ^^^^^^^^^^^^
 
-.. versionadded:: 2.5
-
 By default (if ``index_content`` set to ``true``) FSCrawler will send every single file to Tika, whatever its size.
 But some files on your file system might be a way too big to be parsed.
 
@@ -758,8 +742,6 @@ such as ``MD5`` or ``SHA-1``.
 
 Follow Symlinks
 ^^^^^^^^^^^^^^^
-
-.. versionadded:: 2.7
 
 If you want FSCrawler to follow the symbolic links, you need to be explicit about it and set
 ``follow_symlink`` to ``true``. Starting from version 2.7, symbolic links are not followed anymore.

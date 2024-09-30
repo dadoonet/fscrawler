@@ -76,6 +76,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 public class ElasticsearchClient implements IElasticsearchClient {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
+    @Deprecated
     private final Path config;
     private final FsSettings settings;
     private static final String USER_AGENT = "FSCrawler-Rest-Client-" + Version.getVersion();
@@ -121,6 +122,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
         // We need to suppress this, so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
 
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder()
+                .hostnameVerifier(new NullHostNameVerifier())
+                .withConfig(config);
+
         SSLContext sslContext = null;
         if (settings.getElasticsearch().isSslVerification()) {
             String caCertificatePath = settings.getElasticsearch().getCaCertificate();
@@ -129,8 +134,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                     File certFile = new File(caCertificatePath);
                     sslContext = sslContextFromHttpCaCrt(certFile);
                     logger.debug("Using provided CA Certificate from [{}]", caCertificatePath);
-                    HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-                    HttpsURLConnection.setDefaultHostnameVerifier(new NullHostNameVerifier());
+                    clientBuilder.sslContext(sslContext);
                 } catch (IOException e) {
                     logger.warn("Failed to load the CA certificate", e);
                     throw new RuntimeException(e);
@@ -141,10 +145,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             try {
                 sslContext = SSLContext.getInstance("SSL");
                 sslContext.init(null, trustAllCerts, new SecureRandom());
-
-                HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-                HttpsURLConnection.setDefaultHostnameVerifier(new NullHostNameVerifier());
-
+                clientBuilder.sslContext(sslContext);
                 logger.warn("We are not doing SSL verification. It's not recommended for production.");
             } catch (KeyManagementException | NoSuchAlgorithmException e) {
                 logger.warn("Failed to get SSL Context", e);
@@ -152,8 +153,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
         }
 
-        ClientBuilder clientBuilder = ClientBuilder.newBuilder()
-                .withConfig(config);
 
         // If we have an Api Key let's use it. Otherwise, we will use basic auth
         if (!FsCrawlerUtil.isNullOrEmpty(settings.getElasticsearch().getApiKey())) {
@@ -836,6 +835,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return encodedApiKey;
     }
 
+    @Deprecated
     private void createIndex(Path jobMappingDir, int elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
         try {
             // If needed, we create the new settings for this files index

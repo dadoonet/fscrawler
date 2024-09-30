@@ -9,41 +9,11 @@
       </Console>
    </Appenders>
    <Loggers>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs" level="info" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.FsCrawler" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.FsParserAbstract" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.client" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.crawler.ssh" level="trace" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.service" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.rest" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.tika" level="info" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.tika" level="error" additivity="false">
          <AppenderRef ref="CONSOLE_NO_DECORATOR"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.util" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.test" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.test.integration" level="trace" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.test.unit" level="info" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="org.elasticsearch" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
@@ -63,7 +33,16 @@
       <Logger name="org.mockftpserver" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="org.apache.sshd" level="info" additivity="false">
+      <Logger name="org.apache.sshd" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="okhttp3" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="org.pf4j" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="org.pf4j" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">

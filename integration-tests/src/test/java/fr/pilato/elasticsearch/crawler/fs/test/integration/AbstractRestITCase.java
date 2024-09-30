@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import com.carrotsearch.randomizedtesting.ThreadFilter;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -33,6 +35,7 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasti
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -52,9 +55,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,6 +65,12 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDir
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+@SuppressWarnings("ALL")
+@ThreadLeakFilters(filters = {
+        AbstractFSCrawlerTestCase.TestContainerThreadFilter.class,
+        AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class,
+        AbstractRestITCase.MinioThreadFilter.class
+})
 public abstract class AbstractRestITCase extends AbstractITCase {
 
     private final static int DEFAULT_TEST_REST_PORT = 0;
@@ -94,6 +101,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     }
 
     public abstract FsSettings getFsSettings() throws IOException;
+
     @Before
     public void copyTags() throws IOException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
@@ -126,7 +134,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         managementService.start();
         documentService.start();
 
-        RestServer.start(fsSettings, managementService, documentService);
+        RestServer.start(fsSettings, managementService, documentService, pluginsManager);
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
         managementService.getClient().deleteIndex(getCrawlerName());
@@ -164,6 +172,13 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         return targetPath.request(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(mp, mp.getMediaType()), clazz);
+    }
+
+    public static <T> T post(WebTarget target, String path, String json, Class<T> clazz) {
+        WebTarget targetPath = target.path(path);
+        return targetPath.request(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(json, MediaType.APPLICATION_JSON), clazz);
     }
 
     public static <T> T put(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
@@ -350,5 +365,17 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         }
 
         return delete(target, api, DeleteResponse.class, options);
+    }
+
+    /**
+     * This is temporary until https://github.com/minio/minio-java/issues/1584 is solved
+     */
+    static public class MinioThreadFilter implements ThreadFilter {
+        @Override
+        public boolean reject(Thread t) {
+            return "Okio Watchdog".equals(t.getName())
+                    || "OkHttp TaskRunner".equals(t.getName())
+                    || "ForkJoinPool.commonPool-worker-1".equals(t.getName());
+        }
     }
 }

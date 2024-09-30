@@ -1,70 +1,129 @@
-/*
- * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. Author licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-
-package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
+package fr.pilato.elasticsearch.crawler.fs.client;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESPrefixQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESRangeQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchBulkResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchDeleteOperation;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchEngine;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexOperation;
-import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
-import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
-import org.junit.Before;
-import org.junit.Test;
+import jakarta.ws.rs.ProcessingException;
+import org.apache.commons.io.IOUtils;
+import org.junit.*;
+import org.testcontainers.containers.NginxContainer;
+import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
+import org.testcontainers.utility.MountableFile;
 
+import javax.net.ssl.SSLException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
+import java.net.SocketException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHECK_NODES_EVERY;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
+import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
+import static org.apache.commons.lang3.StringUtils.split;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
-/**
- * Test elasticsearch HTTP client
- */
-public class ElasticsearchClientIT extends AbstractITCase {
+public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
-    private final IElasticsearchClient esClient = managementService.getClient();
+    private final static String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
+    private final static String DEFAULT_USERNAME = "elastic";
+    private final static String DEFAULT_PASSWORD = "changeme";
+    private static String testClusterUrl = null;
+    private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
+    private static String testCaCertificate;
+    private static IElasticsearchClient esClient;
+
+    @BeforeClass
+    public static void startServices() throws IOException, ElasticsearchClientException {
+        if (testClusterUrl == null) {
+            String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
+            if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
+                testClusterUrl = decodeCloudId(testClusterCloudId);
+                staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
+            } else {
+                testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
+                if (testClusterUrl.isEmpty()) {
+                    // When running from Maven CLI, tests.cluster.url is empty and not null...
+                    testClusterUrl = DEFAULT_TEST_CLUSTER_URL;
+                }
+            }
+        }
+
+        esClient = startClient();
+        if (esClient == null) {
+            staticLogger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
+            testClusterUrl = testContainerHelper.startElasticsearch(true);
+            // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
+            if (testContainerHelper.getCertAsBytes() != null) {
+                Path clusterCaCrtPath = rootTmpDir.resolve("cluster-ca.crt");
+                Files.write(clusterCaCrtPath, testContainerHelper.getCertAsBytes());
+                testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
+            }
+            esClient = startClient();
+        }
+
+        assumeThat("Integration tests are skipped because we have not been able to find an Elasticsearch cluster",
+                esClient, notNullValue());
+
+        String version = esClient.getVersion();
+        staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
+    }
+
+    private static ElasticsearchClient startClient() throws IOException, ElasticsearchClientException {
+        staticLogger.info("Starting a client against [{}] with [{}] as a CA certificate", testClusterUrl, testCaCertificate);
+        // We build the elasticsearch Client based on the parameters
+        Elasticsearch elasticsearchConfiguration = Elasticsearch.builder()
+                .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
+                .setSslVerification(true)
+                .setCaCertificate(testCaCertificate)
+                .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
+                .build();
+        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchConfiguration).build();
+
+        ElasticsearchClient client = new ElasticsearchClient(null, fsSettings);
+
+        try {
+            client.start();
+            return client;
+        } catch (ElasticsearchClientException e) {
+            staticLogger.info("Elasticsearch is not running on [{}]", testClusterUrl);
+            if ((e.getCause() instanceof SocketException ||
+                    (e.getCause() instanceof ProcessingException && e.getCause().getCause() instanceof SSLException))
+                    && testClusterUrl.toLowerCase().startsWith("https")) {
+                staticLogger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http.");
+                testClusterUrl = testClusterUrl.replace("https", "http");
+                return startClient();
+            }
+        }
+        return null;
+    }
+
+    @AfterClass
+    public static void stopServices() throws IOException {
+        staticLogger.info("Stopping integration tests against an external cluster");
+        if (esClient != null) {
+            esClient.close();
+            esClient = null;
+            staticLogger.info("Document service stopped");
+        }
+        testCaCertificate = null;
+    }
 
     @Before
     public void cleanExistingIndex() throws ElasticsearchClientException {
@@ -581,11 +640,11 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
-                .setCredentials(testApiKey, testClusterUser, testClusterPass)
+                .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
-        try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
+        try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
             localClient.isExistingIndex("foo");
             localClient.isExistingIndex("bar");
@@ -601,11 +660,11 @@ public class ElasticsearchClientIT extends AbstractITCase {
                         new ServerUrl(testClusterUrl),
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
-                .setCredentials(testApiKey, testClusterUser, testClusterPass)
+                .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
-        try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
+        try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
             assertThat(localClient.getAvailableNodes(), hasSize(3));
             localClient.isExistingIndex("foo");
@@ -634,12 +693,12 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl("http://127.0.0.1:9207")))
-                .setCredentials(testApiKey, testClusterUser, testClusterPass)
+                .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
 
-        try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
+        try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
             fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
         } catch (IOException ex) {
@@ -654,12 +713,12 @@ public class ElasticsearchClientIT extends AbstractITCase {
         // Build a client with a non-running node
         Elasticsearch elasticsearch = Elasticsearch.builder()
                 .setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")))
-                .setCredentials(testApiKey, testClusterUser, testClusterPass)
+                .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
 
-        try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
+        try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
             fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
         } catch (IOException ex) {
@@ -680,7 +739,7 @@ public class ElasticsearchClientIT extends AbstractITCase {
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
 
-        try (IElasticsearchClient localClient = new ElasticsearchClient(metadataDir, fsSettings)) {
+        try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
             fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
         } catch (NotAuthorizedException ex) {
@@ -699,5 +758,37 @@ public class ElasticsearchClientIT extends AbstractITCase {
             logger.warn("Can not create an API Key. " +
                     "This is not a critical one as this code is only used in tests. So we skip it.", e);
         }
+    }
+
+    @Test
+    public void testWithHttpService() throws IOException, ElasticsearchClientException {
+        logger.debug("Starting Nginx from {}", rootTmpDir);
+
+        // First we call Elasticsearch client
+        assertThat(esClient.getVersion(), not(isEmptyOrNullString()));
+
+        Path nginxRoot = rootTmpDir.resolve("nginx-root");
+        Files.createDirectory(nginxRoot);
+        Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
+
+        try (NginxContainer<?> container = new NginxContainer<>("nginx")) {
+            container.waitingFor(new HttpWaitStrategy());
+            container.start();
+            container.copyFileToContainer(MountableFile.forHostPath(nginxRoot), "/usr/share/nginx/html");
+            URL url = container.getBaseUrl("http", 80);
+            logger.debug("Nginx started on {}.", url);
+
+            InputStream inputStream = url.openStream();;
+            String text = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            assertThat(text, containsString("Hello World!"));
+        }
+
+        // Then we call Elasticsearch client again
+        assertThat(esClient.getVersion(), not(isEmptyOrNullString()));
+    }
+
+    protected String getCrawlerName() {
+        String testName = "fscrawler_".concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
+        return testName.contains(" ") ? split(testName, " ")[0] : testName;
     }
 }

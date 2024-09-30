@@ -43,6 +43,20 @@
             <artifactId>log4j-slf4j-impl</artifactId>
         </dependency>
 
+        <!-- Built-in plugins -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-fs-local-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-fs-s3-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-fs-http-plugin</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

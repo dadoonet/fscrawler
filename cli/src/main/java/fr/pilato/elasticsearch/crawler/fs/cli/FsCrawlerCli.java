@@ -36,6 +36,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -66,6 +67,7 @@ public class FsCrawlerCli {
     private static final long CLOSE_POLLING_WAIT_MS = 100;
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerCli.class);
+    private static FsCrawlerPluginsManager pluginsManager;
 
     @SuppressWarnings("CanBeFinal")
     public static class FsCrawlerCommand {
@@ -129,6 +131,10 @@ public class FsCrawlerCli {
 
             // Display the welcome banner
             banner();
+
+            // Load all plugins
+            pluginsManager = new FsCrawlerPluginsManager();
+            pluginsManager.loadPlugins();
 
             // We can now launch the crawler
             runner(command);
@@ -388,8 +394,10 @@ public class FsCrawlerCli {
             return;
         }
 
+        pluginsManager.startPlugins();
+
         try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, command.loop, command.rest)) {
-            Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler));
+            Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler, pluginsManager));
             // Let see if we want to upgrade an existing cluster to the latest version
             if (command.upgrade) {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
@@ -402,7 +410,7 @@ public class FsCrawlerCli {
 
                 // Start the REST Server if needed
                 if (command.rest) {
-                    RestServer.start(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService());
+                    RestServer.start(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService(), pluginsManager);
                 }
 
                 // We just have to wait until the process is stopped
