@@ -358,8 +358,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
         if (pluginsManager != null) {
             pluginsManager.close();
+            pluginsManager = null;
         }
+        testClusterUrl = null;
+        testApiKey = getSystemProperty("tests.cluster.apiKey", null);
         testCaCertificate = null;
+        elasticsearchConfiguration = null;
     }
 
     @Before
