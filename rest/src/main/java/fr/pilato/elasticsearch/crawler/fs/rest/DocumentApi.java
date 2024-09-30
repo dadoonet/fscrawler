@@ -194,9 +194,6 @@ public class DocumentApi extends RestApi {
             InputStream tags,
             InputStream filecontent,
             FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
-
-        logger.debug("uploadToDocumentService({}, {}, {}, {}, ...)", debug, simulate, id, index);
-
         if (d == null) {
             UploadResponse response = new UploadResponse();
             response.setOk(false);
@@ -218,9 +215,6 @@ public class DocumentApi extends RestApi {
             InputStream filecontent,
             String filename,
             long filesize) throws IOException, NoSuchAlgorithmException {
-
-        logger.debug("uploadToDocumentService({}, {}, {}, {}, ...)", debug, simulate, id, index);
-
         // Create the Doc object
         Doc doc = new Doc();
 
