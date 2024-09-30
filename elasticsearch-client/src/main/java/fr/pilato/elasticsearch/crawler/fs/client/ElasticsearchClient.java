@@ -76,6 +76,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 public class ElasticsearchClient implements IElasticsearchClient {
 
     private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
+    @Deprecated
     private final Path config;
     private final FsSettings settings;
     private static final String USER_AGENT = "FSCrawler-Rest-Client-" + Version.getVersion();
@@ -834,6 +835,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return encodedApiKey;
     }
 
+    @Deprecated
     private void createIndex(Path jobMappingDir, int elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
         try {
             // If needed, we create the new settings for this files index
