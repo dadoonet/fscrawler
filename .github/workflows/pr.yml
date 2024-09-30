@@ -41,6 +41,8 @@ jobs:
   it:
     runs-on: ubuntu-latest
     needs: build
+    env:
+      TESTCONTAINERS_REUSE_ENABLE: true
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -61,6 +63,8 @@ jobs:
   it-es7:
     runs-on: ubuntu-latest
     needs: build
+    env:
+      TESTCONTAINERS_REUSE_ENABLE: true
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -81,6 +85,8 @@ jobs:
   it-es6:
     runs-on: ubuntu-latest
     needs: build
+    env:
+      TESTCONTAINERS_REUSE_ENABLE: true
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
