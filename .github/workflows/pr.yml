@@ -40,7 +40,7 @@ jobs:
   # We run integration tests with elastic stack 8 (default)
   it:
     runs-on: ubuntu-latest
-    needs: build
+    needs: unit
     env:
       TESTCONTAINERS_REUSE_ENABLE: true
     steps:
@@ -62,7 +62,7 @@ jobs:
   # We run integration tests with elastic stack 7
   it-es7:
     runs-on: ubuntu-latest
-    needs: build
+    needs: it
     env:
       TESTCONTAINERS_REUSE_ENABLE: true
     steps:
@@ -84,7 +84,7 @@ jobs:
   # We run integration tests with elastic stack 6
   it-es6:
     runs-on: ubuntu-latest
-    needs: build
+    needs: it-es7
     env:
       TESTCONTAINERS_REUSE_ENABLE: true
     steps:
