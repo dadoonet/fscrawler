@@ -49,27 +49,32 @@ class TestContainerHelper {
         String version = props.getProperty("version");
         String password = props.getProperty("password");
 
-        // Start the container. This step might take some time...
-        log.info("Starting testcontainers with Elasticsearch [{}].", version);
-        elasticsearch = new ElasticsearchContainer(
-                DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
-                        .withTag(version))
-                // As for 7.x clusters, there's no https, api keys are disabled by default. We force it.
-                .withEnv("xpack.security.authc.api_key.enabled", "true")
-                // For 6.x clusters, we need to activate a trial
-                .withEnv("xpack.license.self_generated.type", "trial")
-                .withReuse(keepData)
-                .withPassword(password);
-        elasticsearch.start();
+        if (elasticsearch == null) {
+            // Start the container. This step might take some time...
+            log.info("Starting testcontainers with Elasticsearch [{}].", version);
 
-        // Try to get the https certificate if exists
-        try {
-            certAsBytes = elasticsearch.copyFileFromContainer(
-                    "/usr/share/elasticsearch/config/certs/http_ca.crt",
-                    IOUtils::toByteArray);
-            log.debug("Found an https elasticsearch cert for version [{}].", version);
-        } catch (Exception e) {
-            log.warn("We did not find the https elasticsearch cert for version [{}].", version);
+            elasticsearch = new ElasticsearchContainer(
+                    DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
+                            .withTag(version))
+                    // As for 7.x clusters, there's no https, api keys are disabled by default. We force it.
+                    .withEnv("xpack.security.authc.api_key.enabled", "true")
+                    // For 6.x clusters, we need to activate a trial
+                    .withEnv("xpack.license.self_generated.type", "trial")
+                    .withReuse(keepData)
+                    .withPassword(password);
+            elasticsearch.start();
+
+            // Try to get the https certificate if exists
+            try {
+                certAsBytes = elasticsearch.copyFileFromContainer(
+                        "/usr/share/elasticsearch/config/certs/http_ca.crt",
+                        IOUtils::toByteArray);
+                log.debug("Found an https elasticsearch cert for version [{}].", version);
+            } catch (Exception e) {
+                log.warn("We did not find the https elasticsearch cert for version [{}].", version);
+            }
+        } else {
+            log.info("Testcontainers with Elasticsearch [{}] was previously started", version);
         }
 
         String url = "https://" + elasticsearch.getHttpHostAddress();
