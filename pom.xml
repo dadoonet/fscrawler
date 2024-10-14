@@ -44,7 +44,7 @@
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch8.version}</elasticsearch.version>
 
-        <pl4j.version>3.12.0</pl4j.version>
+        <pl4j.version>3.12.1</pl4j.version>
 
         <tika.version>2.9.2</tika.version>
         <jackson.version>2.18.0</jackson.version>
