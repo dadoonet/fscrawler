@@ -139,4 +139,23 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
+
+    /**
+     * Test for <a href="https://github.com/dadoonet/fscrawler/issues/1952">#1952</a>
+     * @throws Exception in case of error
+     */
+    @Test
+    public void test_ssh_with_space_in_filename() throws Exception {
+        Fs fs = startCrawlerDefinition("/").build();
+        Server server = Server.builder()
+                .setHostname(sshd.getHost())
+                .setPort(sshd.getPort())
+                .setUsername(SSH_USERNAME)
+                .setPassword(SSH_PASSWORD)
+                .setProtocol(Server.PROTOCOL.SSH)
+                .build();
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
+
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+    }
 }
