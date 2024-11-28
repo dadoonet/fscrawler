@@ -660,7 +660,7 @@
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
-                <version>4.28.3</version>
+                <version>4.29.0</version>
             </dependency>
 
             <!-- For Language detection -->
