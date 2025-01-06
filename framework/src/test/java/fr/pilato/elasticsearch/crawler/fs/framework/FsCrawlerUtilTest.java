@@ -95,13 +95,15 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     @Test
     public void testExtractMajorVersion() {
         assertThat(extractMajorVersion("7.2.0"), is(7));
+        assertThat(extractMajorVersion("8.17.1"), is(8));
         assertThat(extractMajorVersion("10.1.0"), is(10));
     }
 
     @Test
     public void testExtractMinorVersion() {
-        assertThat(extractMinorVersion("7.2.0"), is("2"));
-        assertThat(extractMinorVersion("10.1.0"), is("1"));
+        assertThat(extractMinorVersion("7.2.0"), is(2));
+        assertThat(extractMinorVersion("8.17.1"), is(17));
+        assertThat(extractMinorVersion("10.1.0"), is(1));
     }
 
     @Test

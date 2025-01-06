@@ -1,6 +1,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -8,8 +9,11 @@ import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.*;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
@@ -38,14 +42,19 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
+    protected static final Logger staticLogger = LogManager.getLogger(ElasticsearchClientIT.class);
     private final static String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
+    private static final String DOC_INDEX_NAME = "fscrawler_elasticsearch_client_i_t";
+    private static final String FOLDER_INDEX_NAME = DOC_INDEX_NAME + "_folder";
     private static String testClusterUrl = null;
     private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
+    private final static boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
     private static String testCaCertificate;
     private static IElasticsearchClient esClient;
 
@@ -65,7 +74,15 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             }
         }
 
-        esClient = startClient();
+        boolean checkCertificate = testCheckCertificate;
+        esClient = startClient(checkCertificate);
+        if (esClient == null && checkCertificate) {
+            testClusterUrl = testClusterUrl.replace("http:", "https:");
+            staticLogger.info("Trying without SSL verification on [{}].", testClusterUrl);
+            checkCertificate = false;
+            esClient = startClient(checkCertificate);
+        }
+
         if (esClient == null) {
             staticLogger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
             testClusterUrl = testContainerHelper.startElasticsearch(true);
@@ -75,7 +92,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 Files.write(clusterCaCrtPath, testContainerHelper.getCertAsBytes());
                 testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
             }
-            esClient = startClient();
+            checkCertificate = testCheckCertificate;
+            esClient = startClient(checkCertificate);
         }
 
         assumeThat("Integration tests are skipped because we have not been able to find an Elasticsearch cluster",
@@ -85,14 +103,17 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
     }
 
-    private static ElasticsearchClient startClient() throws IOException, ElasticsearchClientException {
-        staticLogger.info("Starting a client against [{}] with [{}] as a CA certificate", testClusterUrl, testCaCertificate);
+    private static ElasticsearchClient startClient(boolean sslVerification) throws ElasticsearchClientException {
+        staticLogger.info("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
+                testClusterUrl, testCaCertificate, sslVerification);
         // We build the elasticsearch Client based on the parameters
         Elasticsearch elasticsearchConfiguration = Elasticsearch.builder()
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
-                .setSslVerification(true)
+                .setSslVerification(sslVerification)
                 .setCaCertificate(testCaCertificate)
                 .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
+                .setIndex(DOC_INDEX_NAME)
+                .setIndexFolder(FOLDER_INDEX_NAME)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchConfiguration).build();
 
@@ -108,7 +129,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                     && testClusterUrl.toLowerCase().startsWith("https")) {
                 staticLogger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http.");
                 testClusterUrl = testClusterUrl.replace("https", "http");
-                return startClient();
+                return startClient(sslVerification);
             }
         }
         return null;
@@ -514,7 +535,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
             esClient.refresh(getCrawlerName());
             ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
-            assertThat(response.getTotalHits(), is(nbItems-nbItemsToDelete));
+            assertThat(response.getTotalHits(), is(nbItems - nbItemsToDelete));
         }
         {
             esClient.deleteIndex(getCrawlerName());
@@ -658,29 +679,36 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         Elasticsearch elasticsearch = Elasticsearch.builder()
                 .setNodes(List.of(
                         new ServerUrl(testClusterUrl),
+                        new ServerUrl(testClusterUrl),
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
                 .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
                 .setSslVerification(false)
+                .setIndex(DOC_INDEX_NAME)
+                .setIndexFolder(FOLDER_INDEX_NAME)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
-            assertThat(localClient.getAvailableNodes(), hasSize(3));
+            assertThat(localClient.getAvailableNodes(), hasSize(4));
             localClient.isExistingIndex("foo");
-            assertThat(localClient.getAvailableNodes(), hasSize(2));
+            assertThat(localClient.getAvailableNodes(), hasSize(3));
 
-            for (int i = 0; i < CHECK_NODES_EVERY - 3; i++) {
+            for (int i = 0; i < CHECK_NODES_EVERY - 4; i++) {
                 localClient.isExistingIndex("foo");
-                assertThat("Run " + i, localClient.getAvailableNodes(), hasSize(2));
+                assertThat("Run " + i, localClient.getAvailableNodes(), hasSize(3));
             }
 
             for (int i = 0; i < 10; i++) {
                 localClient.isExistingIndex("foo");
+                assertThat(localClient.getAvailableNodes(), hasSize(4));
+                localClient.isExistingIndex("foo");
+                assertThat("Run " + i, localClient.getAvailableNodes(), hasSize(4));
+                localClient.isExistingIndex("foo");
                 assertThat("Run " + i, localClient.getAvailableNodes(), hasSize(3));
-                for (int j = 0; j < CHECK_NODES_EVERY - 2; j++) {
+                for (int j = 0; j < CHECK_NODES_EVERY - 4; j++) {
                     localClient.isExistingIndex("foo");
-                    assertThat("Run " + i + "-" + j, localClient.getAvailableNodes(), hasSize(2));
+                    assertThat("Run " + i + "-" + j, localClient.getAvailableNodes(), hasSize(3));
                 }
             }
         }
@@ -778,13 +806,94 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             URL url = container.getBaseUrl("http", 80);
             logger.debug("Nginx started on {}.", url);
 
-            InputStream inputStream = url.openStream();;
+            InputStream inputStream = url.openStream();
+            ;
             String text = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(text, containsString("Hello World!"));
         }
 
         // Then we call Elasticsearch client again
         assertThat(esClient.getVersion(), not(isEmptyOrNullString()));
+    }
+
+    @Test
+    public void license() throws ElasticsearchClientException {
+        String license = esClient.getLicense();
+        assertThat(license, not(isEmptyOrNullString()));
+    }
+
+    @Test
+    public void testIndexFsCrawlerDocuments() throws Exception {
+        // Remove existing templates if any
+        removeIndexTemplates();
+        removeComponentTemplates();
+
+        // We push the templates to the cluster
+        esClient.createIndexAndComponentTemplates();
+
+        // We remove the exising indices
+        esClient.deleteIndex(DOC_INDEX_NAME);
+        esClient.deleteIndex(FOLDER_INDEX_NAME);
+
+        // We create a document
+        esClient.index(DOC_INDEX_NAME, "BackToTheFuture", new Doc("Marty! Let's go back to the future!"), null);
+        esClient.index(DOC_INDEX_NAME, "StarWars", new Doc("Luke. Obiwan never told you what happened to your father. I'm your father!"), null);
+        esClient.index(DOC_INDEX_NAME, "TheLordOfTheRings", new Doc("You cannot pass! I am a servant of the Secret Fire, wielder of the Flame of Anor. The dark fire will not avail you, Flame of Udun! Go back to the shadow. You shall not pass!"), null);
+
+        // We flush the bulk request
+        esClient.flush();
+
+        // We refresh the index
+        esClient.refresh(DOC_INDEX_NAME);
+
+        // We can run some queries to check that semantic search actually works as expected
+        assertThat(esClient.search(new ESSearchRequest()
+                .withIndex(DOC_INDEX_NAME)
+                .withESQuery(new ESMatchQuery("content", "father"))
+        ).getHits().get(0).getId(), is("StarWars"));
+        assertThat(esClient.search(new ESSearchRequest()
+                .withIndex(DOC_INDEX_NAME)
+                .withESQuery(new ESMatchQuery("content", "future"))
+        ).getHits().get(0).getId(), is("BackToTheFuture"));
+        assertThat(esClient.search(new ESSearchRequest()
+                .withIndex(DOC_INDEX_NAME)
+                .withESQuery(new ESMatchQuery("content", "Flame"))
+        ).getHits().get(0).getId(), is("TheLordOfTheRings"));
+
+        // We can only execute this test when semantic search is available
+        if (esClient.isSemanticSupported()) {
+            // We can run some queries to check that semantic search actually works as expected
+            assertThat(esClient.search(new ESSearchRequest()
+                    .withIndex(DOC_INDEX_NAME)
+                    .withESQuery(new ESSemanticQuery("content_semantic", "a movie from Georges Lucas"))
+            ).getHits().get(0).getId(), is("StarWars"));
+            assertThat(esClient.search(new ESSearchRequest()
+                    .withIndex(DOC_INDEX_NAME)
+                    .withESQuery(new ESSemanticQuery("content_semantic", "a movie with a delorean car"))
+            ).getHits().get(0).getId(), is("BackToTheFuture"));
+            assertThat(esClient.search(new ESSearchRequest()
+                    .withIndex(DOC_INDEX_NAME)
+                    .withESQuery(new ESSemanticQuery("content_semantic", "Frodo and Gollum"))
+            ).getHits().get(0).getId(), is("TheLordOfTheRings"));
+        }
+    }
+
+    private void removeComponentTemplates() {
+        logger.debug("Removing component templates");
+        try {
+            esClient.performLowLevelRequest("DELETE", "/_component_template/fscrawler_*", null);
+        } catch (ElasticsearchClientException | NotFoundException e) {
+            // We ignore the error
+        }
+    }
+
+    private void removeIndexTemplates() {
+        logger.debug("Removing index templates");
+        try {
+            esClient.performLowLevelRequest("DELETE", "/_index_template/fscrawler_*", null);
+        } catch (ElasticsearchClientException | NotFoundException e) {
+            // We ignore the error
+        }
     }
 
     protected String getCrawlerName() {

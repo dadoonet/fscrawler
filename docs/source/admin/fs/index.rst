@@ -104,8 +104,12 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
      index: "test_docs"
      # optional, defaults to "test_folders", used when es.index_folders is set to true
      index_folder: "test_fold"
+     # optional, defaults to "true"
+     push_templates: "true"
+     # optional, defaults to "true", used with Elasticsearch 8.17+ with a trial or enterprise license
+     semantic_search: "true"
+   # only used when started with --rest option
    rest:
-     # only is started with --rest option
      url: "http://127.0.0.1:8080/fscrawler"
 
 Here is a list of existing top level settings:

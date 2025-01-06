@@ -62,6 +62,7 @@ public class Elasticsearch {
     private boolean sslVerification = true;
     private boolean pushTemplates = true;
     private String caCertificate;
+    private boolean semanticSearch = true;
 
     public Elasticsearch() {
 
@@ -72,7 +73,7 @@ public class Elasticsearch {
                           String username, String password, String pipeline,
                           String pathPrefix, boolean sslVerification,
                           String caCertificate,
-                          boolean pushTemplates) {
+                          boolean pushTemplates, boolean semanticSearch) {
         this.nodes = nodes;
         this.index = index;
         this.indexFolder = indexFolder;
@@ -87,6 +88,7 @@ public class Elasticsearch {
         this.sslVerification = sslVerification;
         this.caCertificate = caCertificate;
         this.pushTemplates = pushTemplates;
+        this.semanticSearch = semanticSearch;
     }
 
     public static Builder builder() {
@@ -211,6 +213,14 @@ public class Elasticsearch {
         this.caCertificate = caCertificate;
     }
 
+    public boolean isSemanticSearch() {
+        return semanticSearch;
+    }
+
+    public void setSemanticSearch(boolean semanticSearch) {
+        this.semanticSearch = semanticSearch;
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     public static class Builder {
         private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
@@ -227,6 +237,7 @@ public class Elasticsearch {
         private String caCertificate;
         private boolean pushTemplates = true;
         private String apiKey = null;
+        private boolean semanticSearch = true;
 
         public Builder setNodes(List<ServerUrl> nodes) {
             this.nodes = nodes;
@@ -335,12 +346,17 @@ public class Elasticsearch {
             return this;
         }
 
+        public Builder setSemanticSearch(boolean semanticSearch) {
+            this.semanticSearch = semanticSearch;
+            return this;
+        }
+
         public Elasticsearch build() {
             return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, apiKey,
                     username, password,
                     pipeline, pathPrefix,
                     sslVerification, caCertificate,
-                    pushTemplates);
+                    pushTemplates, semanticSearch);
         }
     }
 

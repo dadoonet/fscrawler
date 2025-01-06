@@ -89,7 +89,7 @@ To run the test suite against an elasticsearch instance running locally, just ru
 
 .. hint::
 
-    If you are using a secured instance, use ``tests.cluster.user``, ``tests.cluster.apiKey``::
+    If you are using a secured instance, use ``tests.cluster.apiKey``::
 
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
             -Dtests.cluster.apiKey=APIKEYHERE \
@@ -101,6 +101,17 @@ To run the test suite against an elasticsearch instance running locally, just ru
             -Dtests.cluster.user=elastic \
             -Dtests.cluster.pass=changeme \
             -Dtests.cluster.url=https://127.0.0.1:9200 \
+
+    If the cluster is using a self generated SSL certificate, you can bypass checking the certificate by using
+    ``tests.cluster.check_ssl``::
+
+        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
+            -Dtests.cluster.apiKey=APIKEYHERE \
+            -Dtests.cluster.url=https://127.0.0.1:9200 \
+            -Dtests.cluster.check_ssl=false
+
+    But anyway, by default, the integration tests will try to run with both options, first checking the ssl certificate,
+    and then ignoring it.
 
 .. hint::
 

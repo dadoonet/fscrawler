@@ -24,6 +24,8 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.pipeline``        | ``null``                  | :ref:`ingest_node`              |
 +-----------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.semantic_search`` | ``true``                  | :ref:`semantic_search`          |
++-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.nodes``           | ``https://127.0.0.1:9200``| `Node settings`_                |
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.path_prefix``     | ``null``                  | `Path prefix`_                  |
@@ -87,7 +89,10 @@ to define the index settings and mappings:
   and the mapping for the ``path`` field.
 
 - ``fscrawler_mapping_attachment``: defines the mapping for the ``attachment`` field.
-- ``fscrawler_mapping_content``: defines the mapping for the ``content`` field.
+- ``fscrawler_mapping_content_semantic``: defines the mapping for the ``content`` field when using semantic search.
+It also creates a ``semantic_text`` field named ``content_semantic``. Please read the :ref:`semantic_search` section.
+
+- ``fscrawler_mapping_content``: defines the mapping for the ``content`` field when semantic search is not available.
 - ``fscrawler_mapping_meta``: defines the mapping for the ``meta`` field.
 
 You can see the content of those templates by running:
@@ -116,6 +121,29 @@ Creating your own mapping (analyzers)
 If you want to define your own index settings and mapping to set
 analyzers for example, you can update the needed component template
 **before starting the FSCrawler**.
+
+The following example uses a ``french`` analyzer to index the
+``content`` field and still allow using semantic search.
+
+.. code:: json
+
+    PUT _component_template/fscrawler_mapping_content_semantic
+    {
+      "template": {
+        "mappings": {
+          "properties": {
+            "content": {
+              "type": "text",
+              "analyzer": "french",
+              "copy_to": "content_semantic"
+            },
+            "content_semantic": {
+              "type": "semantic_text"
+            }
+          }
+        }
+      }
+    }
 
 The following example uses a ``french`` analyzer to index the
 ``content`` field.
@@ -147,6 +175,58 @@ mapping.
 You might to try `elasticsearch Reindex
 API <https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html>`__
 though.
+
+.. _semantic_search:
+
+Semantic search
+"""""""""""""""
+
+.. versionadded:: 2.10
+
+FSCrawler can use `semantic search <https://www.elastic.co/guide/en/elasticsearch/reference/current/semantic-search.html>`__
+to improve the search results.
+
+.. note::
+
+    Semantic search is available starting from Elasticsearch 8.17.0 and requires a trial or enterprise license.
+
+Semantic search is enabled by default when an Elasticsearch 8.17.0 or above and a trial or enterprise license are
+detected. But you can disable it by setting ``semantic_search`` to ``false``:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     semantic_search: false
+
+When activated, the ``content`` field is indexed as usual but a new field named ``content_semantic``
+is created and uses the `semantic_text <https://www.elastic.co/guide/en/elasticsearch/reference/current/semantic-text.html>`__
+field type. This field type is used to store the semantic information extracted from the content by using the defined
+inference API (defaults to `Elser model <https://www.elastic.co/guide/en/machine-learning/current/ml-nlp-elser.html>`__).
+
+You can change the model to use by changing the component template. For example, a recommended model when you have only
+english content is the Elastic `multilingual-e5-small <https://www.elastic.co/guide/en/machine-learning/current/ml-nlp-multilingual-e5-small.html>`__:
+
+.. code:: json
+
+    PUT _component_template/fscrawler_mapping_content_semantic
+    {
+      "template": {
+        "mappings": {
+          "properties": {
+            "content": {
+              "type": "text",
+              "copy_to": "content_semantic"
+            },
+            "content_semantic": {
+              "type": "semantic_text",
+              "inference_id": ".multilingual-e5-small-elasticsearch"
+            }
+          }
+        }
+      }
+    }
+
 
 Bulk settings
 ^^^^^^^^^^^^^
@@ -330,8 +410,7 @@ Then you can use the encoded API Key in FSCrawler settings:
 Basic Authentication (deprecated)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The best practice is to use `API Key`_ or `Access Token`_. But if you have no other choice,
-you can still use Basic Authentication.
+The best practice is to use `API Key`_. But if you have no other choice, you can still use Basic Authentication.
 
 You can provide the ``username`` and ``password`` to FSCrawler:
 
@@ -464,6 +543,9 @@ FSCrawler may create the following fields depending on configuration and availab
 | Field                      | Description                            | Example                                      | Javadoc                                                             |
 +============================+========================================+==============================================+=====================================================================+
 | ``content``                | Extracted content                      | ``"This is my text!"``                       |                                                                     |
++----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
+| ``content_semantic``       | Semantic version of the extracted      | Semantic representation                      |                                                                     |
+|                            | content                                |                                              |                                                                     |
 +----------------------------+----------------------------------------+----------------------------------------------+---------------------------------------------------------------------+
 | ``attachment``             | BASE64 encoded binary file             | BASE64 Encoded document                      |                                                                     |
 |                            |                                        |                                              |                                                                     |

@@ -58,7 +58,7 @@ class TestContainerHelper {
                             .withTag(version))
                     // As for 7.x clusters, there's no https, api keys are disabled by default. We force it.
                     .withEnv("xpack.security.authc.api_key.enabled", "true")
-                    // For 6.x clusters, we need to activate a trial
+                    // For 6.x clusters and for semantic search, we need to activate a trial
                     .withEnv("xpack.license.self_generated.type", "trial")
                     .withReuse(keepData)
                     .withPassword(password);

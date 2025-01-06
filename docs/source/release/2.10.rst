@@ -4,16 +4,18 @@ Version 2.10
 New
 ---
 
+* Add support for automatic semantic search when using a 8.17+ version with a trial or enterprise
+  license. See :ref:`semantic_search`. Thanks to dadoonet.
 * Using the REST API ``_document``, you can now fetch a document from the local dir, from an http website
-or from an S3 bucket. Thanks to dadoonet.
-* You can now remove a document in Elasticsearch using FSCrawler ``_document`` endpoint. Thanks to dadoonet.
+  or from an S3 bucket. See :ref:`rest-service`. Thanks to dadoonet.
+* You can now remove a document in Elasticsearch using FSCrawler ``_document`` endpoint. See :ref:`rest-service`. Thanks to dadoonet.
 * Implement our own HTTP Client for Elasticsearch. Thanks to dadoonet.
-* Add option to set path to custom tika config file. Thanks to iadcode.
-* Support for Index Templates. Thanks to dadoonet.
+* Add option to set path to custom tika config file. See :ref:`local-fs-settings`. Thanks to iadcode.
+* Support for Index Templates. See :ref:`mappings`. Thanks to dadoonet.
 * Support for Aliases. You can now index to an alias. Thanks to dadoonet.
-* Support for Access Token and Api Keys instead of Basic Authentication. Thanks to dadoonet.
+* Support for Access Token and Api Keys instead of Basic Authentication. See :ref:`credentials`. Thanks to dadoonet.
 * Allow loading external jars. This adds a new ``external`` directory from where jars can be loaded
-  to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. Thanks to dadoonet.
+  to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. See :ref:`layout`. Thanks to dadoonet.
 * Add temporal information in folder index. Thanks to bdauvissat
 
 Fix
