@@ -13,7 +13,7 @@
     <description>FSCrawler S3 Plugin</description>
 
     <properties>
-        <minio.version>8.5.14</minio.version>
+        <minio.version>8.5.15</minio.version>
     </properties>
 
     <dependencies>
