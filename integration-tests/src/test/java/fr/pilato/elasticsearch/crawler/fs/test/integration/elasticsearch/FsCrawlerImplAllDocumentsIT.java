@@ -33,6 +33,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tika.parser.external.ExternalParser;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -55,7 +57,7 @@ import static org.junit.Assume.assumeTrue;
  * Test all type of documents we have
  */
 public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
-
+    private static final Logger logger = LogManager.getLogger();
     private static FsCrawlerImpl crawler = null;
 
     @BeforeClass
@@ -70,18 +72,18 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         try {
             Files.walk(testResourceTarget)
                     .filter(Files::isRegularFile)
-                    .forEach(path -> staticLogger.debug("    - [{}]", path));
+                    .forEach(path -> logger.debug("    - [{}]", path));
             numFiles = Files.list(testResourceTarget).count();
         } catch (NoSuchFileException e) {
-            staticLogger.error("directory [{}] should exist before we can start tests.", testResourceTarget);
+            logger.error("directory [{}] should exist before we can start tests.", testResourceTarget);
             throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        staticLogger.info(" -> Removing existing index [fscrawler_test_all_documents*]");
+        logger.info(" -> Removing existing index [fscrawler_test_all_documents*]");
         managementService.getClient().deleteIndex("fscrawler_test_all_documents");
         managementService.getClient().deleteIndex("fscrawler_test_all_documents" + INDEX_SUFFIX_FOLDER);
 
-        staticLogger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
+        logger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
         crawler = new FsCrawlerImpl(metadataDir,
                 FsSettings.builder("fscrawler_test_all_documents")
@@ -103,7 +105,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     @AfterClass
     public static void stopCrawling() throws Exception {
         if (crawler != null) {
-            staticLogger.info("  --> Stopping crawler");
+            logger.info("  --> Stopping crawler");
             crawler.close();
             crawler = null;
         }

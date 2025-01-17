@@ -29,6 +29,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 
@@ -41,6 +43,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
+    private static final Logger logger = LogManager.getLogger();
 
     @Before
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
@@ -131,7 +134,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
 
     private void stopCrawler() throws InterruptedException, IOException {
         if (crawler != null) {
-            staticLogger.info("  --> Stopping crawler");
+            logger.info("  --> Stopping crawler");
             crawler.close();
             crawler = null;
         }

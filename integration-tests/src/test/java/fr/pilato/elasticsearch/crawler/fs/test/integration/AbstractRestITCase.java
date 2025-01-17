@@ -42,6 +42,8 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -72,8 +74,8 @@ import static org.hamcrest.Matchers.is;
         AbstractRestITCase.MinioThreadFilter.class
 })
 public abstract class AbstractRestITCase extends AbstractITCase {
-
-    private final static int DEFAULT_TEST_REST_PORT = 0;
+    private static final Logger logger = LogManager.getLogger();
+    private static final int DEFAULT_TEST_REST_PORT = 0;
     private static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
 
     protected static WebTarget target;
@@ -93,7 +95,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
             // Find any available TCP port if 0 or check that the port is available
             try (ServerSocket serverSocket = new ServerSocket(testRestPort)) {
                 testRestPort = serverSocket.getLocalPort();
-                staticLogger.info("Using random rest port [{}]", testRestPort);
+                logger.info("Using random rest port [{}]", testRestPort);
             }
         }
 
@@ -116,9 +118,9 @@ public abstract class AbstractRestITCase extends AbstractITCase {
 
         currentTestTagDir = testResourceTarget.resolve(currentTestName + ".tags");
         if (Files.exists(from)) {
-            staticLogger.debug("  --> Copying test resources from [{}]", from);
+            logger.debug("  --> Copying test resources from [{}]", from);
             copyDirs(from, currentTestTagDir);
-            staticLogger.debug("  --> Tags ready in [{}]", currentTestTagDir);
+            logger.debug("  --> Tags ready in [{}]", currentTestTagDir);
         }
     }
 
@@ -157,9 +159,9 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     }
 
     public static <T> T get(String path, Class<T> clazz) {
-        if (staticLogger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             String response = target.path(path).request().get(String.class);
-            staticLogger.debug("Rest response: {}", response);
+            logger.debug("Rest response: {}", response);
         }
         return target.path(path).request().get(clazz);
     }
@@ -283,10 +285,10 @@ public abstract class AbstractRestITCase extends AbstractITCase {
             // Sadly this does not work
             /*
             if (rarely()) {
-                staticLogger.info("Force index name to {} using a form field", index);
+                logger.info("Force index name to {} using a form field", index);
                 mp.field("index", index);
             } else {
-                staticLogger.info("Force index name to {} using a query string parameter", index);
+                logger.info("Force index name to {} using a query string parameter", index);
                 params.put("index", index);
             }
             */
@@ -297,10 +299,10 @@ public abstract class AbstractRestITCase extends AbstractITCase {
             // Sadly this does not work
             /*
             if (rarely()) {
-                staticLogger.info("Force id to {} using a form field", id);
+                logger.info("Force id to {} using a form field", id);
                 mp.field("id", id);
             } else {
-                staticLogger.info("Force id to {} using a query string parameter", id);
+                logger.info("Force id to {} using a query string parameter", id);
                 params.put("id", id);
             }
              */
@@ -311,8 +313,8 @@ public abstract class AbstractRestITCase extends AbstractITCase {
             mp.bodyPart(tagsFilePart);
         }
 
-        if (staticLogger.isDebugEnabled()) {
-            staticLogger.debug("Rest response: {}", post(target, api, mp, String.class, debugOption));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Rest response: {}", post(target, api, mp, String.class, debugOption));
         }
 
         return post(target, api, mp, UploadResponse.class, params);
@@ -330,10 +332,10 @@ public abstract class AbstractRestITCase extends AbstractITCase {
 
         if (index != null) {
             if (rarely()) {
-                staticLogger.info("Force index name to {} using a form field", index);
+                logger.info("Force index name to {} using a form field", index);
                 mp.field("index", index);
             } else {
-                staticLogger.info("Force index name to {} using a query string parameter", index);
+                logger.info("Force index name to {} using a query string parameter", index);
                 params.put("index", index);
             }
         }
@@ -349,18 +351,18 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     public static DeleteResponse deleteDocument(WebTarget target, String index, String id, String filename, String api) {
         if (id != null) {
             api = api + "/" + id;
-            staticLogger.info("Using id {}. Api is now {}", id, api);
+            logger.info("Using id {}. Api is now {}", id, api);
         }
 
         Map<String, Object> options = new HashMap<>();
 
         if (index != null) {
-            staticLogger.info("Using index {}", index);
+            logger.info("Using index {}", index);
             options.put("index", index);
         }
 
         if (filename != null) {
-            staticLogger.info("Using filename {}", filename);
+            logger.info("Using filename {}", filename);
             options.put("filename", filename);
         }
 

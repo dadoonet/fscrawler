@@ -32,7 +32,7 @@ import java.util.List;
 
 public class FsCrawlerJobsUtil {
 
-    private static final Logger logger = LogManager.getLogger(FsCrawlerJobsUtil.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public static List<String> listExistingJobs(Path configDir) {
         List<String> files = new ArrayList<>();

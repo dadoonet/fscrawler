@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -35,7 +36,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class BootstrapChecks {
 
-    private static final Logger logger = LogManager.getLogger(BootstrapChecks.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public static void check() {
         checkJvm();
@@ -64,7 +65,7 @@ public class BootstrapChecks {
     }
 
     private static void checkUTF8() {
-        String encoding = System.getProperty("file.encoding");
+        String encoding = Charset.defaultCharset().displayName();
         if (!encoding.equals(StandardCharsets.UTF_8.name())) {
             logger.warn("[file.encoding] should be [{}] but is [{}]", StandardCharsets.UTF_8.name(), encoding);
         }

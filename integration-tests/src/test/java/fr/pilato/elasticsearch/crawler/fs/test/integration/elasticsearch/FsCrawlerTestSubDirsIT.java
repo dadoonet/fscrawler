@@ -27,6 +27,8 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
@@ -45,6 +47,7 @@ import static org.hamcrest.Matchers.*;
  * Test crawler with subdirs
  */
 public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
+    private static final Logger logger = LogManager.getLogger();
 
     @Test
     public void test_subdirs() throws Exception {
@@ -121,7 +124,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
         long subdirs = randomLongBetween(30, 100);
 
-        staticLogger.debug("  --> Generating [{}] dirs [{}]", subdirs, currentTestResourceDir);
+        logger.debug("  --> Generating [{}] dirs [{}]", subdirs, currentTestResourceDir);
 
         Path sourceFile = currentTestResourceDir.resolve("roottxtfile.txt");
         Path mainDir = currentTestResourceDir.resolve("main_dir");
@@ -175,7 +178,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         assertThat(response.getTotalHits(), is(subdirs+2));
 
         // Let's remove the main subdir and wait...
-        staticLogger.debug("  --> Removing all dirs from [{}]", mainDir);
+        logger.debug("  --> Removing all dirs from [{}]", mainDir);
         deleteRecursively(mainDir);
 
         // We expect to have 1 doc now

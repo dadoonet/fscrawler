@@ -62,7 +62,7 @@ import static org.apache.tika.langdetect.optimaize.OptimaizeLangDetector.getDefa
  */
 public class TikaInstance {
 
-    private static final Logger logger = LogManager.getLogger(TikaInstance.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private static Parser parser;
     private static ParseContext context;

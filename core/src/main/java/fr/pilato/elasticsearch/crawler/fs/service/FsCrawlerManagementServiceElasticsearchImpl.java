@@ -42,7 +42,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 
 public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerManagementService {
 
-    private static final Logger logger = LogManager.getLogger(FsCrawlerManagementServiceElasticsearchImpl.class);
+    private static final Logger logger = LogManager.getLogger();
 
     // TODO Optimize it. We can probably use a search for a big array of filenames instead of
     // searching fo 10000 files (which is somehow limited).

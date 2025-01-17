@@ -4,13 +4,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 class TestBulkListener extends FsCrawlerSimpleBulkProcessorListener<TestOperation, TestBulkRequest, TestBulkResponse> {
-    Logger logger = LogManager.getLogger(TestBulkListener.class);
+    private static final Logger logger = LogManager.getLogger();
     TestBulkRequest latestRequest;
     int nbSuccessfulExecutions = 0;
 
     @Override
     public void beforeBulk(long executionId, TestBulkRequest request) {
-        logger.trace("Execution [{}] starting", nbSuccessfulExecutions, request.numberOfActions());
+        logger.trace("Execution [{}] starting with [{}] actions", executionId, request.numberOfActions());
         super.beforeBulk(executionId, request);
     }
 

@@ -66,7 +66,7 @@ public class FsCrawlerCli {
 
     private static final long CLOSE_POLLING_WAIT_MS = 100;
 
-    private static final Logger logger = LogManager.getLogger(FsCrawlerCli.class);
+    private static final Logger logger = LogManager.getLogger();
     private static FsCrawlerPluginsManager pluginsManager;
 
     @SuppressWarnings("CanBeFinal")

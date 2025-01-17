@@ -36,7 +36,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class FsS3Plugin extends FsCrawlerPlugin {
-    private static final Logger logger = LogManager.getLogger(FsS3Plugin.class);
+    private static final Logger logger = LogManager.getLogger();
 
     @Override
     protected String getName() {

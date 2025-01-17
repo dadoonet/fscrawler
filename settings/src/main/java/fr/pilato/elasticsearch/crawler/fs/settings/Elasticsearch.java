@@ -32,8 +32,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class Elasticsearch {
-
-    protected static final Logger logger = LogManager.getLogger(Elasticsearch.class);
+    private static final Logger logger = LogManager.getLogger();
     public static final ServerUrl NODE_DEFAULT = new ServerUrl("https://127.0.0.1:9200");
 
     private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);

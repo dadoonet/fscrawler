@@ -58,7 +58,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
 
 public abstract class FsParserAbstract extends FsParser {
-    private static final Logger logger = LogManager.getLogger(FsParserAbstract.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private static final String FSCRAWLER_IGNORE_FILENAME = ".fscrawlerignore";
 
@@ -224,7 +224,7 @@ public abstract class FsParserAbstract extends FsParser {
         // We need to round that latest date to the lower second and
         // remove 2 seconds.
         // See #82: https://github.com/dadoonet/fscrawler/issues/82
-        scanDate = scanDate.minus(2, ChronoUnit.SECONDS);
+        scanDate = scanDate.minusSeconds(2);
         FsJob fsJob = FsJob.builder()
                 .setName(jobName)
                 .setLastrun(scanDate)
@@ -523,7 +523,7 @@ public abstract class FsParserAbstract extends FsParser {
      * @param id        id of the folder
      * @param folder    path object
      */
-    private void indexDirectory(String id, Folder folder) throws IOException {
+    private void indexDirectory(String id, Folder folder) {
         if (!closed) {
             managementService.storeVisitedDirectory(fsSettings.getElasticsearch().getIndexFolder(), id, folder);
         } else {
@@ -575,7 +575,7 @@ public abstract class FsParserAbstract extends FsParser {
     /**
      * Remove a document with the document service
      */
-    private void esDelete(FsCrawlerDocumentService service, String index, String id) throws IOException {
+    private void esDelete(FsCrawlerDocumentService service, String index, String id) {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed) {
             service.delete(index, id);

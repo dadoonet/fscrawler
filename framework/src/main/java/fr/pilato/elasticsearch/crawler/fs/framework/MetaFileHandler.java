@@ -33,7 +33,7 @@ import java.nio.file.Paths;
  */
 public class MetaFileHandler {
 
-    private static final Logger logger = LogManager.getLogger(MetaFileHandler.class);
+    private static final Logger logger = LogManager.getLogger();
     public final static Path DEFAULT_ROOT = Paths.get(System.getProperty("user.home"), ".fscrawler");
 
     private final Path root;

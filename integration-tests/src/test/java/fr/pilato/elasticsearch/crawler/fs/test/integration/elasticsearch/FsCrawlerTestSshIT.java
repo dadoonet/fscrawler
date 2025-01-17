@@ -23,6 +23,8 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.config.keys.AuthorizedKeysAuthenticator;
@@ -45,9 +47,9 @@ import java.util.Collections;
  * Test crawler with SSH
  */
 public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
-
-    private final static String SSH_USERNAME = "USERNAME";
-    private final static String SSH_PASSWORD = "PASSWORD";
+    private static final Logger logger = LogManager.getLogger();
+    private static final String SSH_USERNAME = "USERNAME";
+    private static final String SSH_PASSWORD = "PASSWORD";
 
     private SshServer sshd = null;
 

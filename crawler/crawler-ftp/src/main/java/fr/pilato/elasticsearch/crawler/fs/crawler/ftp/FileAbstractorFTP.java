@@ -49,7 +49,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
-    private final Logger logger = LogManager.getLogger(FileAbstractorFTP.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private FTPClient ftp;
 

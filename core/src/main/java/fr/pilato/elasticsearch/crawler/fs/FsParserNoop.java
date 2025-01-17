@@ -24,7 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FsParserNoop extends FsParser {
-    private static final Logger logger = LogManager.getLogger(FsParserNoop.class);
+    private static final Logger logger = LogManager.getLogger();
     private final FsSettings fsSettings;
 
     public FsParserNoop(FsSettings fsSettings) {

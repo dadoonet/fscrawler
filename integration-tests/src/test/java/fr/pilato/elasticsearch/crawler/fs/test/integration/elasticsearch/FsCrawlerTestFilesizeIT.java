@@ -29,6 +29,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -42,6 +44,7 @@ import static org.hamcrest.Matchers.is;
  * Test filesize crawler setting
  */
 public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
+    private static final Logger logger = LogManager.getLogger();
 
     @Test
     public void test_indexed_chars() throws Exception {

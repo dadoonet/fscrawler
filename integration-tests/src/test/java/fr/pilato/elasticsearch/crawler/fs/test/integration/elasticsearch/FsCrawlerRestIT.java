@@ -37,6 +37,7 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.MinioException;
 import jakarta.ws.rs.core.MediaType;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
@@ -61,6 +62,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 public class FsCrawlerRestIT extends AbstractRestITCase {
+    private static final Logger logger = LogManager.getLogger();
 
     public FsSettings getFsSettings() throws IOException {
         return FsSettings.builder(getCrawlerName())
@@ -80,7 +82,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     public void testUploadAllDocuments() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
-            staticLogger.error("directory [{}] should exist before we start tests", from);
+            logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         Files.walk(from)
@@ -103,7 +105,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     public void testUploadTxtDocumentsWithDeprecatedApi() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
-            staticLogger.error("directory [{}] should exist before we start tests", from);
+            logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         AtomicInteger number = new AtomicInteger();
@@ -133,7 +135,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     public void testUploadDocumentWithId() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
-            staticLogger.error("file [{}] should exist before we start tests", from);
+            logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         UploadResponse uploadResponse = uploadFileWithId(target, from, "1234");
@@ -149,7 +151,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     public void testUploadDocumentWithIdUsingPut() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
-            staticLogger.error("file [{}] should exist before we start tests", from);
+            logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         UploadResponse uploadResponse = putDocument(target, from, null, null, "1234");
@@ -170,7 +172,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
-            staticLogger.error("directory [{}] should exist before we start tests", from);
+            logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         AtomicInteger number = new AtomicInteger();
@@ -217,7 +219,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     public void testAllDocumentsWithRestExternalIndex() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
-            staticLogger.error("directory [{}] should exist before we start tests", from);
+            logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         String index = "fscrawler_fs_custom";
@@ -312,7 +314,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     public void testUploadUsingWrongFieldName() {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
-            staticLogger.error("file [{}] should exist before we start tests", from);
+            logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
 
@@ -320,8 +322,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         FileDataBodyPart filePart = new FileDataBodyPart("anotherfieldname", from.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         FormDataMultiPart mp = new FormDataMultiPart();
         mp.bodyPart(filePart);
-        if (staticLogger.isDebugEnabled()) {
-            staticLogger.debug("Rest response: {}", post(target, "/_document", mp, String.class, debugOption));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Rest response: {}", post(target, "/_document", mp, String.class, debugOption));
         }
 
         UploadResponse response = post(target, "/_document", mp, UploadResponse.class, params);
@@ -335,11 +337,11 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         Path fromDoesNotExist = rootTmpDir.resolve("resources").resolve("documents").resolve("foobar").resolve("foobar.txt");
         Path fromExists = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(fromExists)) {
-            staticLogger.error("file [{}] should exist before we start tests", fromExists);
+            logger.error("file [{}] should exist before we start tests", fromExists);
             throw new RuntimeException(fromExists + " doesn't seem to exist. Check your JUnit tests.");
         }
         if (Files.exists(fromDoesNotExist)) {
-            staticLogger.error("file [{}] should not exist before we start tests", fromDoesNotExist);
+            logger.error("file [{}] should not exist before we start tests", fromDoesNotExist);
             throw new RuntimeException(fromDoesNotExist + " exists. Check your JUnit tests.");
         }
 

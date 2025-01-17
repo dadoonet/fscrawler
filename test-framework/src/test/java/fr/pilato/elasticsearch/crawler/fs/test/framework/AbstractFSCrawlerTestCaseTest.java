@@ -18,6 +18,8 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
@@ -29,6 +31,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
+    private static final Logger logger = LogManager.getLogger();
 
     @SuppressWarnings("ConstantConditions")
     @Test
@@ -52,7 +55,7 @@ public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
             try {
                 throw new RuntimeException("foo bar");
             } catch (RuntimeException e) {
-                staticLogger.warn("error caught", e);
+                logger.warn("error caught", e);
                 return l.getAndIncrement();
             }
         }, null, 1, TimeUnit.SECONDS);

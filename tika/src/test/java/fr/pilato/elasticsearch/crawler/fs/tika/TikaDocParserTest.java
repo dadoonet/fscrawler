@@ -23,9 +23,12 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Ocr;
-import java.net.URISyntaxException;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.junit.BeforeClass;
@@ -48,7 +51,7 @@ import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 public class TikaDocParserTest extends DocParserTestCase {
-
+    private static final Logger logger = LogManager.getLogger();
     private static boolean isOcrAvailable;
 
     @BeforeClass
@@ -56,7 +59,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         try {
             isOcrAvailable = new TesseractOCRParser().hasTesseract();
         } catch (TikaConfigException e) {
-            staticLogger.warn("Can not configure Tesseract for tests, so we are supposing it won't be available");
+            logger.warn("Can not configure Tesseract for tests, so we are supposing it won't be available");
             isOcrAvailable = false;
         }
     }

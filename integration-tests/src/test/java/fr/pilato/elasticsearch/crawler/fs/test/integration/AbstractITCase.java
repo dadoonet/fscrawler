@@ -37,6 +37,8 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import jakarta.ws.rs.ProcessingException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
@@ -84,33 +86,31 @@ import static org.junit.Assume.assumeThat;
  * <pre><code>mvn verify -DskipIntegTests</code></pre>
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
+    private static final Logger logger = LogManager.getLogger();
+    protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
+    private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
+    private static final String DEFAULT_USERNAME = "elastic";
+    private static final String DEFAULT_PASSWORD = "changeme";
+    @Deprecated
+    protected static final String testClusterUser = getSystemProperty("tests.cluster.user", DEFAULT_USERNAME);
+    @Deprecated
+    protected static final String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
+    protected static final boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
+    protected static final boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
+    private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
 
     protected static Path metadataDir = null;
-
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
 
-    protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
-    private final static String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
-    private final static String DEFAULT_USERNAME = "elastic";
-    private final static String DEFAULT_PASSWORD = "changeme";
-
     protected static String testClusterUrl = null;
-    @Deprecated
-    protected final static String testClusterUser = getSystemProperty("tests.cluster.user", DEFAULT_USERNAME);
-    @Deprecated
-    protected final static String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
-    protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
-    protected final static boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
-    protected final static boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
     private static String testCaCertificate = null;
 
     protected static Elasticsearch elasticsearchConfiguration;
     protected static FsCrawlerManagementServiceElasticsearchImpl managementService = null;
     protected static FsCrawlerDocumentService documentService = null;
     protected static FsCrawlerPluginsManager pluginsManager;
-
-    private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -127,21 +127,21 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         String currentTestName = getCurrentTestName();
         // We copy files from the src dir to the temp dir
-        staticLogger.info("  --> Launching test [{}]", currentTestName);
+        logger.info("  --> Launching test [{}]", currentTestName);
         currentTestResourceDir = testResourceTarget.resolve(currentTestName);
         String url = getUrl("samples", currentTestName);
         Path from = Paths.get(url);
 
         if (Files.exists(from)) {
-            staticLogger.debug("  --> Copying test resources from [{}]", from);
+            logger.debug("  --> Copying test resources from [{}]", from);
         } else {
-            staticLogger.debug("  --> Copying test resources from [{}]", DEFAULT_RESOURCES);
+            logger.debug("  --> Copying test resources from [{}]", DEFAULT_RESOURCES);
             from = DEFAULT_RESOURCES;
         }
 
         copyDirs(from, currentTestResourceDir);
 
-        staticLogger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
+        logger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
     }
 
     @BeforeClass
@@ -152,15 +152,15 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             Files.createDirectory(metadataDir);
         }
         copyDefaultResources(metadataDir);
-        staticLogger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
+        logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
     @AfterClass
     public static void printMetadataDirContent() throws IOException {
         // If something goes wrong while initializing, we might have no metadataDir at all.
         if (metadataDir != null) {
-            staticLogger.debug("ls -l {}", metadataDir);
-            Files.list(metadataDir).forEach(path -> staticLogger.debug("{}", path));
+            logger.debug("ls -l {}", metadataDir);
+            Files.list(metadataDir).forEach(path -> logger.debug("{}", path));
         }
     }
 
@@ -168,14 +168,14 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     public static void copyResourcesToTestDir() throws IOException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
         if (Files.notExists(testResourceTarget)) {
-            staticLogger.debug("  --> Creating test resources dir in [{}]", testResourceTarget);
+            logger.debug("  --> Creating test resources dir in [{}]", testResourceTarget);
             Files.createDirectory(testResourceTarget);
         }
 
         // We copy files from the src dir to the temp dir
         copyTestDocumentsToTargetDir(testResourceTarget, "documents", "/fscrawler-test-documents-marker.txt");
 
-        staticLogger.debug("  --> Test resources ready in [{}]:", testResourceTarget);
+        logger.debug("  --> Test resources ready in [{}]:", testResourceTarget);
     }
 
     /**
@@ -193,23 +193,23 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             case "file" : {
                 Path finalTarget = target.resolve(sourceDirName);
                 if (Files.notExists(finalTarget)) {
-                    staticLogger.debug("  --> Creating test dir named [{}]", finalTarget);
+                    logger.debug("  --> Creating test dir named [{}]", finalTarget);
                     Files.createDirectory(finalTarget);
                 }
                 // We are running our tests from the IDE most likely and documents are directly available in the classpath
                 Path source = Paths.get(resource.getPath()).getParent().resolve(sourceDirName);
                 if (Files.notExists(source)) {
-                    staticLogger.error("directory [{}] should be copied to [{}]", source, target);
+                    logger.error("directory [{}] should be copied to [{}]", source, target);
                     throw new RuntimeException(source + " doesn't seem to exist. Check your JUnit tests.");
                 }
 
-                staticLogger.info("-> Copying test documents from [{}] to [{}]", source, finalTarget);
+                logger.info("-> Copying test documents from [{}] to [{}]", source, finalTarget);
                 copyDirs(source, finalTarget);
                 break;
             }
             case "jar" : {
                 if (Files.notExists(target)) {
-                    staticLogger.debug("  --> Creating test dir named [{}]", target);
+                    logger.debug("  --> Creating test dir named [{}]", target);
                     Files.createDirectory(target);
                 }
                 // We are running our tests from the CLI most likely and documents are provided within a JAR as a dependency
@@ -228,7 +228,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     private static void unzip(Path zip, Path outputFolder, Charset charset) throws IOException {
-        staticLogger.info("-> Unzipping test documents from [{}] to [{}]", zip, outputFolder);
+        logger.info("-> Unzipping test documents from [{}] to [{}]", zip, outputFolder);
 
         try (ZipFile zipFile = new ZipFile(zip.toFile(), ZipFile.OPEN_READ, charset)) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -262,7 +262,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
             if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
                 testClusterUrl = decodeCloudId(testClusterCloudId);
-                staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
+                logger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
             } else {
                 testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
                 if (testClusterUrl.isEmpty()) {
@@ -276,13 +276,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         FsSettings fsSettings = startClient(checkCertificate);
         if (fsSettings == null && checkCertificate) {
             testClusterUrl = testClusterUrl.replace("http:", "https:");
-            staticLogger.info("Trying without SSL verification on [{}].", testClusterUrl);
+            logger.info("Trying without SSL verification on [{}].", testClusterUrl);
             checkCertificate = false;
             fsSettings = startClient(checkCertificate);
         }
 
         if (fsSettings == null) {
-            staticLogger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
+            logger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
             testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
             // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
             if (testContainerHelper.getCertAsBytes() != null) {
@@ -319,11 +319,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
 
         String version = managementService.getVersion();
-        staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
+        logger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
     }
 
     private static FsSettings startClient(boolean sslVerification) throws IOException, ElasticsearchClientException {
-        staticLogger.info("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
+        logger.info("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
                 testClusterUrl, testCaCertificate, sslVerification);
         // We build the elasticsearch Client based on the parameters
         elasticsearchConfiguration = Elasticsearch.builder()
@@ -339,11 +339,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             documentService.start();
             return fsSettings;
         } catch (ElasticsearchClientException e) {
-            staticLogger.info("Elasticsearch is not running on [{}]", testClusterUrl);
+            logger.info("Elasticsearch is not running on [{}]", testClusterUrl);
             if ((e.getCause() instanceof SocketException ||
                     (e.getCause() instanceof ProcessingException && e.getCause().getCause() instanceof SSLException))
                     && testClusterUrl.toLowerCase().startsWith("https")) {
-                staticLogger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http.");
+                logger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http.");
                 testClusterUrl = testClusterUrl.replace("https", "http");
                 return startClient(sslVerification);
             }
@@ -353,16 +353,16 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @AfterClass
     public static void stopServices() throws IOException {
-        staticLogger.info("Stopping integration tests against an external cluster");
+        logger.info("Stopping integration tests against an external cluster");
         if (documentService != null) {
             documentService.close();
             documentService = null;
-            staticLogger.info("Document service stopped");
+            logger.info("Document service stopped");
         }
         if (managementService != null) {
             managementService.close();
             managementService = null;
-            staticLogger.info("Management service stopped");
+            logger.info("Management service stopped");
         }
         if (pluginsManager != null) {
             pluginsManager.close();
@@ -449,7 +449,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        staticLogger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
+        logger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
                 expected == null ? "some" : expected, request.getIndex());
         long hits = awaitBusy(() -> {
             long totalHits;
@@ -460,16 +460,16 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 refresh();
                 response[0] = documentService.search(request);
             } catch (RuntimeException | IOException e) {
-                staticLogger.warn("error caught", e);
+                logger.warn("error caught", e);
                 return -1;
             } catch (ElasticsearchClientException e) {
                 // TODO create a NOT FOUND Exception instead
-                staticLogger.debug("error caught", e);
+                logger.debug("error caught", e);
                 return -1;
             }
             totalHits = response[0].getTotalHits();
 
-            staticLogger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+            logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
             return totalHits;
         }, expected, timeout.millis(), TimeUnit.MILLISECONDS);
@@ -482,10 +482,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
 
         if (matcher.matches(hits)) {
-            staticLogger.debug("     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
+            logger.debug("     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
             logContentOfDir(path, Level.DEBUG);
         } else {
-            staticLogger.warn("     ---> expecting [{}] but got [{}] documents in {}", expected, hits, request.getIndex());
+            logger.warn("     ---> expecting [{}] but got [{}] documents in {}", expected, hits, request.getIndex());
             logContentOfDir(path, Level.WARN);
         }
         assertThat(hits, matcher);
@@ -499,11 +499,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 stream.forEach(file -> {
                     try {
                         if (Files.isDirectory(file)) {
-                            staticLogger.log(level, " * in dir [{}] [{}]",
+                            logger.log(level, " * in dir [{}] [{}]",
                                     path.relativize(file).toString(),
                                     Files.getLastModifiedTime(file));
                         } else {
-                            staticLogger.log(level, "   - [{}] [{}]",
+                            logger.log(level, "   - [{}] [{}]",
                                     file.getFileName().toString(),
                                     Files.getLastModifiedTime(file));
                         }
@@ -511,7 +511,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     }
                 });
             } catch (IOException ex) {
-                staticLogger.error("can not read content of [{}]:", path);
+                logger.error("can not read content of [{}]:", path);
             }
         }
     }

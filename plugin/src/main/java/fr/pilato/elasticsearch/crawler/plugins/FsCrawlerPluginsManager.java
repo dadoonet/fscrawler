@@ -27,7 +27,7 @@ import java.util.HashMap;
 
 public class FsCrawlerPluginsManager implements AutoCloseable {
 
-    private static final Logger logger = LogManager.getLogger(FsCrawlerPluginsManager.class);
+    private static final Logger logger = LogManager.getLogger();
     private final PluginManager pluginManager;
     private final HashMap<String, FsCrawlerExtensionFsProvider> fsProviders;
 

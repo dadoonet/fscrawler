@@ -31,7 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class FsLocalPlugin extends FsCrawlerPlugin {
-    private static final Logger logger = LogManager.getLogger(FsLocalPlugin.class);
+    private static final Logger logger = LogManager.getLogger();
 
     @Override
     protected String getName() {

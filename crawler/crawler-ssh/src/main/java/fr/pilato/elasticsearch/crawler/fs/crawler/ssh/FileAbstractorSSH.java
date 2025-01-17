@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
-    private final Logger logger = LogManager.getLogger(FileAbstractorSSH.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final FsCrawlerSshClient fsCrawlerSshClient;
 

@@ -27,7 +27,7 @@ public class FsCrawlerSimpleBulkProcessorListener<
         REQ extends FsCrawlerBulkRequest<O>,
         RES extends FsCrawlerBulkResponse<O>
         > implements FsCrawlerBulkProcessor.Listener<O, REQ, RES> {
-    private static final Logger logger = LogManager.getLogger(FsCrawlerSimpleBulkProcessorListener.class);
+    private static final Logger logger = LogManager.getLogger();
 
     protected FsCrawlerBulkProcessor<O, REQ, RES> bulkProcessor;
 
