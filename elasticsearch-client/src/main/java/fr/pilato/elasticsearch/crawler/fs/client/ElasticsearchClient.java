@@ -135,15 +135,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
         if (settings.getElasticsearch().isSslVerification()) {
             String caCertificatePath = settings.getElasticsearch().getCaCertificate();
             if (caCertificatePath != null) {
-                try {
-                    File certFile = new File(caCertificatePath);
-                    sslContext = sslContextFromHttpCaCrt(certFile);
-                    logger.debug("Using provided CA Certificate from [{}]", caCertificatePath);
-                    clientBuilder.sslContext(sslContext);
-                } catch (IOException e) {
-                    logger.warn("Failed to load the CA certificate", e);
-                    throw new RuntimeException(e);
-                }
+                File certFile = new File(caCertificatePath);
+                sslContext = sslContextFromHttpCaCrt(certFile);
+                logger.debug("Using provided CA Certificate from [{}]", caCertificatePath);
+                clientBuilder.sslContext(sslContext);
             }
         } else {
             // Trusting all certificates. For test purposes only.
@@ -231,7 +226,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 .build();
     }
 
-    private static SSLContext sslContextFromHttpCaCrt(File file) throws IOException {
+    private static SSLContext sslContextFromHttpCaCrt(File file) {
         try(InputStream in = new FileInputStream(file)) {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             Certificate certificate = cf.generateCertificate(in);
@@ -640,72 +635,72 @@ public class ElasticsearchClient implements IElasticsearchClient {
         int size = 10;
         if (request.getSize() != null) {
             size = request.getSize();
-            body.getAndUpdate(s -> s += "\"size\":" + request.getSize());
+            body.getAndUpdate(s -> s + ("\"size\":" + request.getSize()));
             bodyEmpty = false;
         }
         if (!request.getStoredFields().isEmpty()) {
             if (!bodyEmpty) {
-                body.getAndUpdate(s -> s += ",");
+                body.getAndUpdate(s -> s + ",");
             }
-            body.getAndUpdate(s -> s += "\"stored_fields\" : [");
+            body.getAndUpdate(s -> s + "\"stored_fields\" : [");
 
             AtomicBoolean moreFields = new AtomicBoolean(false);
             request.getStoredFields().forEach(f -> {
                 if (moreFields.getAndSet(true)) {
-                    body.getAndUpdate(s -> s += ",");
+                    body.getAndUpdate(s -> s + ",");
                 }
-                body.getAndUpdate(s -> s += "\"" + f + "\"");
+                body.getAndUpdate(s -> s + ("\"" + f + "\""));
             });
-            body.getAndUpdate(s -> s += "]");
+            body.getAndUpdate(s -> s + "]");
             bodyEmpty = false;
         }
         if (request.getESQuery() != null) {
             if (!bodyEmpty) {
-                body.getAndUpdate(s -> s += ",");
+                body.getAndUpdate(s -> s + ",");
             }
-            body.getAndUpdate(s -> s += "\"query\" : {" + toElasticsearchQuery(request.getESQuery()) + "}");
+            body.getAndUpdate(s -> s + ("\"query\" : {" + toElasticsearchQuery(request.getESQuery()) + "}"));
             bodyEmpty = false;
         }
         if (!isNullOrEmpty(request.getSort())) {
             if (!bodyEmpty) {
-                body.getAndUpdate(s -> s += ",");
+                body.getAndUpdate(s -> s + ",");
             }
-            body.getAndUpdate(s -> s += "\"sort\" : [\"" + request.getSort() + "\"]");
+            body.getAndUpdate(s -> s + ("\"sort\" : [\"" + request.getSort() + "\"]"));
             bodyEmpty = false;
         }
         if (!request.getHighlighters().isEmpty()) {
             if (!bodyEmpty) {
-                body.getAndUpdate(s -> s += ",");
+                body.getAndUpdate(s -> s + ",");
             }
-            body.getAndUpdate(s -> s += "\"highlight\": { \"fields\": {");
+            body.getAndUpdate(s -> s + "\"highlight\": { \"fields\": {");
 
             AtomicBoolean moreFields = new AtomicBoolean(false);
             request.getHighlighters().forEach(f -> {
                 if (moreFields.getAndSet(true)) {
-                    body.getAndUpdate(s -> s += ",");
+                    body.getAndUpdate(s -> s + ",");
                 }
-                body.getAndUpdate(s -> s += "\"" + f + "\":{}");
+                body.getAndUpdate(s -> s + ("\"" + f + "\":{}"));
             });
-            body.getAndUpdate(s -> s += "}}");
+            body.getAndUpdate(s -> s + "}}");
             bodyEmpty = false;
         }
         if (!request.getAggregations().isEmpty()) {
             if (!bodyEmpty) {
-                body.getAndUpdate(s -> s += ",");
+                body.getAndUpdate(s -> s + ",");
             }
-            body.getAndUpdate(s -> s += "\"aggs\": {");
+            body.getAndUpdate(s -> s + "\"aggs\": {");
 
             AtomicBoolean moreFields = new AtomicBoolean(false);
             request.getAggregations().forEach(a -> {
                 if (moreFields.getAndSet(true)) {
-                    body.getAndUpdate(s -> s += ",");
+                    body.getAndUpdate(s -> s + ",");
                 }
-                body.getAndUpdate(s -> s += "\"" + a.getName() + "\":{\"terms\": {\"field\": \"" + a.getField() + "\"}}");
+                body.getAndUpdate(s -> s + ("\"" + a.getName() + "\":{\"terms\": {\"field\": \"" + a.getField() + "\"}}"));
             });
-            body.getAndUpdate(s -> s += "}");
+            body.getAndUpdate(s -> s + "}");
         }
 
-        String query = body.updateAndGet(s -> s += "}");
+        String query = body.updateAndGet(s -> s + "}");
         logger.trace("Elasticsearch query to run: {}", query);
 
         try {
@@ -885,9 +880,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public String bulk(String ndjson) throws ElasticsearchClientException {
         logger.debug("bulk a ndjson of {} characters", ndjson.length());
-
-        String response = httpPost("_bulk", ndjson);
-        return response;
+        return httpPost("_bulk", ndjson);
     }
 
     @Override
