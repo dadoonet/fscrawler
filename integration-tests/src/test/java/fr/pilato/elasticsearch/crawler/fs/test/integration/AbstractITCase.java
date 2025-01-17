@@ -38,6 +38,7 @@ import jakarta.ws.rs.ProcessingException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 import org.hamcrest.Matcher;
+import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -71,19 +72,16 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 /**
- * Integration tests expect to have an elasticsearch instance running on https://127.0.0.1:9200.
+ * Integration tests expect to have an elasticsearch instance running on <a href="https://127.0.0.1:9200">https://127.0.0.1:9200</a>.
  * Otherwise, a TestContainer instance will be started.
- *
+ * <br/>
  * Note that all existing data in this cluster might be removed
- *
+ * <br/>
  * If you want to run tests against a remote cluster, please launch tests using
  * tests.cluster.url property:
- *
- * mvn verify -Dtests.cluster.url=https://127.0.0.1:9200
- *
+ * <pre><code>mvn verify -Dtests.cluster.url=https://127.0.0.1:9200</code></pre>
  * All integration tests might be skipped using:
- *
- * mvn verify -DskipIntegTests
+ * <pre><code>mvn verify -DskipIntegTests</code></pre>
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
@@ -274,7 +272,15 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
         }
 
-        FsSettings fsSettings = startClient();
+        boolean checkCertificate = testCheckCertificate;
+        FsSettings fsSettings = startClient(checkCertificate);
+        if (fsSettings == null && checkCertificate) {
+            testClusterUrl = testClusterUrl.replace("http:", "https:");
+            staticLogger.info("Trying without SSL verification on [{}].", testClusterUrl);
+            checkCertificate = false;
+            fsSettings = startClient(checkCertificate);
+        }
+
         if (fsSettings == null) {
             staticLogger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
             testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
@@ -284,7 +290,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 Files.write(clusterCaCrtPath, testContainerHelper.getCertAsBytes());
                 testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
             }
-            fsSettings = startClient();
+            checkCertificate = testCheckCertificate;
+            fsSettings = startClient(checkCertificate);
         }
 
         assumeThat("Integration tests are skipped because we have not been able to find an Elasticsearch cluster",
@@ -304,7 +311,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             managementService.close();
 
             // Start the documentService with the Api Key
-            fsSettings = startClient();
+            fsSettings = startClient(checkCertificate);
 
             // Start the managementService with the Api Key
             managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
@@ -315,12 +322,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
     }
 
-    private static FsSettings startClient() throws IOException, ElasticsearchClientException {
-        staticLogger.info("Starting a client against [{}] with [{}] as a CA certificate", testClusterUrl, testCaCertificate);
+    private static FsSettings startClient(boolean sslVerification) throws IOException, ElasticsearchClientException {
+        staticLogger.info("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
+                testClusterUrl, testCaCertificate, sslVerification);
         // We build the elasticsearch Client based on the parameters
         elasticsearchConfiguration = Elasticsearch.builder()
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
-                .setSslVerification(true)
+                .setSslVerification(sslVerification)
                 .setCaCertificate(testCaCertificate)
                 .setCredentials(testApiKey, testClusterUser, testClusterPass)
                 .build();
@@ -337,7 +345,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     && testClusterUrl.toLowerCase().startsWith("https")) {
                 staticLogger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http.");
                 testClusterUrl = testClusterUrl.replace("https", "http");
-                return startClient();
+                return startClient(sslVerification);
             }
         }
         return null;
@@ -548,13 +556,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     public static void deleteRecursively(Path root) throws IOException {
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;
             }

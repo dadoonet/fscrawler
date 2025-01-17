@@ -599,7 +599,7 @@ public class FsCrawlerUtil {
         return Integer.parseInt(version.split("\\.")[0]);
     }
 
-    public static String extractMinorVersion(String version) {
-        return version.split("\\.")[1];
+    public static int extractMinorVersion(String version) {
+        return Integer.parseInt(version.split("\\.")[1]);
     }
 }

@@ -53,6 +53,11 @@ public interface IElasticsearchClient extends Closeable {
     String getVersion() throws ElasticsearchClientException;
 
     /**
+     * Get license about the cluster it's connected to
+     */
+    String getLicense() throws ElasticsearchClientException;
+
+    /**
      * Get the major version about the node it's connected to
      */
     int getMajorVersion();
@@ -215,4 +220,10 @@ public interface IElasticsearchClient extends Closeable {
      * @return  the generated API key BASE64 encoded of key:value
      */
     String generateApiKey(String keyName) throws ElasticsearchClientException;
+
+    /**
+     * Check if the client supports semantic search
+     * @return true if semantic is supported
+     */
+    boolean isSemanticSupported();
 }

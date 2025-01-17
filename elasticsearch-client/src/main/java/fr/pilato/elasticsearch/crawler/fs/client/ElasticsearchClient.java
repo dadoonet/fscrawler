@@ -90,10 +90,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private final List<String> initialHosts;
 
     private String version = null;
+    private String license = null;
     private int majorVersion;
+    private int minorVersion;
     private int currentNode = -1;
     private int currentRun = -1;
     private String authorizationHeader = null;
+    private boolean semanticSearch;
+    private boolean vectorSearch = false;
 
     public ElasticsearchClient(Path config, FsSettings settings) {
         this.config = config;
@@ -108,6 +112,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             // We have only one node, so we won't have to select a specific one but the only one.
             currentNode = 0;
         }
+        semanticSearch = settings.getElasticsearch().isSemanticSearch();
     }
 
     @Override
@@ -153,7 +158,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
         }
 
-
         // If we have an Api Key let's use it. Otherwise, we will use basic auth
         if (!FsCrawlerUtil.isNullOrEmpty(settings.getElasticsearch().getApiKey())) {
             authorizationHeader = "ApiKey " + settings.getElasticsearch().getApiKey();
@@ -190,6 +194,29 @@ public class ElasticsearchClient implements IElasticsearchClient {
             if (!isExistingPipeline(settings.getElasticsearch().getPipeline())) {
                 throw new RuntimeException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
                         ", but it does not exist.");
+            }
+        }
+
+        if (semanticSearch) {
+            // Check the version we are running
+            if (majorVersion >= 8 && minorVersion >= 17) {
+                logger.debug("Semantic search is enabled and we are running on a version of Elasticsearch {} " +
+                        "which is 8.17 or higher. We will try to use the semantic search features.", version);
+                license = getLicense();
+                if (!"enterprise".equals(license) && !"trial".equals(license)) {
+                    logger.warn("Semantic search is enabled but we are running Elasticsearch with a {} " +
+                            "license although we need either an enterprise or trial license." +
+                            "We will not be able to use the semantic search features ATM. We might switch later to " +
+                            "a vector embeddings generation.", license);
+                    semanticSearch = false;
+                    vectorSearch = true;
+                } else {
+                    logger.debug("Semantic search is enabled");
+                }
+            } else {
+                logger.warn("Semantic search is enabled but we are running on a version of Elasticsearch {} " +
+                        "which is lower than 8.17. We will not be able to use the semantic search features.", version);
+                semanticSearch = false;
             }
         }
 
@@ -240,9 +267,51 @@ public class ElasticsearchClient implements IElasticsearchClient {
         // Cache the version and the major version
         version = document.read("$.version.number");
         majorVersion = extractMajorVersion(version);
+        minorVersion = extractMinorVersion(version);
 
         logger.debug("get version returns {} and {} as the major version number", version, majorVersion);
         return version;
+    }
+
+    @Override
+    public String getLicense() throws ElasticsearchClientException {
+        if (license != null) {
+            return license;
+        }
+
+        // License endpoint might not be ready in IT so we retry with exponential wait time up to 1 minute
+        int retries = 0;
+        int maxRetries = 5;
+        int waitTime = 1000;
+        while (retries < maxRetries) {
+            try {
+                return getLicenseInternal();
+            } catch (NotFoundException e) {
+                logger.warn("License endpoint is not ready yet. Retrying in {}ms", waitTime);
+                try {
+                    Thread.sleep(waitTime);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+                waitTime *= 2;
+                retries++;
+            }
+        }
+
+        throw new ElasticsearchClientException("License endpoint is not ready after " + maxRetries + " retries");
+    }
+
+    private String getLicenseInternal() throws ElasticsearchClientException {
+        logger.debug("get license");
+        String response = httpGet("_license");
+
+        // We parse the response
+        DocumentContext document = parseJsonAsDocumentContext(response);
+        // Cache the license level
+        license = document.read("$.license.type");
+
+        logger.debug("get license returns {}", license);
+        return license;
     }
 
     @Override
@@ -499,13 +568,21 @@ public class ElasticsearchClient implements IElasticsearchClient {
             loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file");
             loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path");
             loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attachment");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content");
+            if (semanticSearch) {
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content_semantic");
+            } else {
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content");
+            }
             loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_meta");
 
             logger.debug("Creating/updating index templates");
             // If needed, we create the new settings for this files index
             if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
-                loadAndPushIndexTemplate(majorVersion, "fscrawler_docs", settings.getElasticsearch().getIndex());
+                if (semanticSearch) {
+                    loadAndPushIndexTemplate(majorVersion, "fscrawler_docs_semantic", settings.getElasticsearch().getIndex());
+                } else {
+                    loadAndPushIndexTemplate(majorVersion, "fscrawler_docs", settings.getElasticsearch().getIndex());
+                }
             }
 
             // If needed, we create the new settings for this folder index
@@ -710,6 +787,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
             ESMatchQuery esQuery = (ESMatchQuery) query;
             return "\"match\": { \"" + esQuery.getField() +  "\": \"" + esQuery.getValue() + "\"}";
         }
+        if (query instanceof ESSemanticQuery) {
+            ESSemanticQuery esQuery = (ESSemanticQuery) query;
+            return "\"semantic\": { \"field\":\"" + esQuery.getField() +  "\", \"query\":\"" + esQuery.getValue() + "\"}";
+        }
         if (query instanceof ESPrefixQuery) {
             ESPrefixQuery esQuery = (ESPrefixQuery) query;
             return "\"prefix\": { \"" + esQuery.getField() +  "\": \"" + esQuery.getValue() + "\"}";
@@ -835,6 +916,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return encodedApiKey;
     }
 
+    @Override
+    public boolean isSemanticSupported() {
+        return semanticSearch;
+    }
+
     @Deprecated
     private void createIndex(Path jobMappingDir, int elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
         try {
@@ -946,8 +1032,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
             if (currentNode >= hosts.size()) {
                 currentNode = 0;
             }
-            logger.debug("More than one node is available so we pick node number {} from {}.", currentNode, hosts);
-            return hosts.get(currentNode);
+
+            String node = hosts.get(currentNode);
+            logger.debug("More than one node is available so we pick node number {} from {}: {}.", currentNode, hosts, node);
+            return node;
         }
 
         // We have only one node. We just return it.

@@ -37,6 +37,7 @@ class TestContainerHelper {
 
     ElasticsearchContainer elasticsearch;
     private byte[] certAsBytes;
+    private static final long memoryInBytes = 4L * 1024L * 1024L * 1024L;
 
     /**
      * Start the container
@@ -56,10 +57,11 @@ class TestContainerHelper {
                         .withTag(version))
                 // As for 7.x clusters, there's no https, api keys are disabled by default. We force it.
                 .withEnv("xpack.security.authc.api_key.enabled", "true")
-                // For 6.x clusters, we need to activate a trial
+                // For 6.x clusters and semantic search, we need to activate a trial
                 .withEnv("xpack.license.self_generated.type", "trial")
                 .withReuse(keepData)
-                .withPassword(password);
+                .withPassword(password)
+                .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig().withMemory(memoryInBytes));
         elasticsearch.start();
 
         // Try to get the https certificate if exists
