@@ -105,6 +105,14 @@ file system and another run. Which means that if you set it to ``15m``,
 the next scan will happen on 15 minutes after the end of the current
 scan, whatever its duration.
 
+The supported units for duration are:
+
+* ``d`` for days
+* ``h`` for hours
+* ``m`` for minutes
+* ``s`` for seconds
+* ``ms`` for milliseconds
+
 .. _includes_excludes:
 
 Includes and excludes

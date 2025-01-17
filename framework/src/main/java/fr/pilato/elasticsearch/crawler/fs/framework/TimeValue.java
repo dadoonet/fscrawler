@@ -184,7 +184,7 @@ public class TimeValue {
             } else if (lowerSValue.endsWith("h")) {
                 unit = TimeUnit.HOURS;
             } else if (lowerSValue.endsWith("d")) {
-                unit = TimeUnit.HOURS;
+                unit = TimeUnit.DAYS;
             } else {
                 throw new IllegalArgumentException("Failed to parse timevalue [" + sValue + "]: unit is missing or unrecognized");
             }
