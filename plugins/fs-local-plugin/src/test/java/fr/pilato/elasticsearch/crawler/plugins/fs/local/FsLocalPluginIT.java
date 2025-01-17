@@ -21,6 +21,8 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.*;
 
 import java.io.IOException;
@@ -33,9 +35,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
+    private static final Logger logger = LogManager.getLogger();
 
     private static Path createFile(String objectName, String object) throws IOException {
-        staticLogger.info("Create fake content [{}]; [{}]", objectName, object);
+        logger.info("Create fake content [{}]; [{}]", objectName, object);
         Path file = rootTmpDir.resolve(objectName);
         Files.writeString(file, object);
         return file;

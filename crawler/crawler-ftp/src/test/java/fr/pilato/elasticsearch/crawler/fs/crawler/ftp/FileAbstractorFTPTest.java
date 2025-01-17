@@ -34,6 +34,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -47,6 +49,7 @@ import org.mockftpserver.fake.filesystem.Permissions;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
 public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
+    private static final Logger logger = LogManager.getLogger();
     private FakeFtpServer fakeFtpServer;
     private final String nestedDir = "/nested";
     private final String permissionDir = "/permission";

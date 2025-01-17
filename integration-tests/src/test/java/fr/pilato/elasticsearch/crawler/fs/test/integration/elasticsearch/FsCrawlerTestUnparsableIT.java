@@ -22,6 +22,8 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import java.nio.file.FileSystems;
@@ -36,6 +38,7 @@ import static org.junit.Assume.assumeTrue;
  * Test crawler with unparsable files
  */
 public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
+    private static final Logger logger = LogManager.getLogger();
 
     /**
      * Test for #105: <a href="https://github.com/dadoonet/fscrawler/issues/105">https://github.com/dadoonet/fscrawler/issues/105</a>

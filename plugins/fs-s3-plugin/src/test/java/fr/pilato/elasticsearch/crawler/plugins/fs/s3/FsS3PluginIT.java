@@ -27,6 +27,8 @@ import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.*;
 import org.testcontainers.containers.MinIOContainer;
 
@@ -43,6 +45,7 @@ import static org.hamcrest.Matchers.is;
         FsS3PluginIT.MinioThreadFilter.class
 })
 public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
+    private static final Logger logger = LogManager.getLogger();
     private static MinIOContainer container;
     private static String s3Url = "http://localhost:9000";
     private static String s3Username = "minioadmin";
@@ -50,26 +53,26 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
 
     @Before
     public void startMinioContainer() {
-        staticLogger.info("Starting Minio");
+        logger.info("Starting Minio");
         container = new MinIOContainer("minio/minio");
         container.start();
         s3Url = container.getS3URL();
         s3Username = container.getUserName();
         s3Password = container.getPassword();
-        staticLogger.info("Minio started on {} with username {} and password {}.", s3Url, s3Username, s3Password);
+        logger.info("Minio started on {} with username {} and password {}.", s3Url, s3Username, s3Password);
     }
 
     @After
-    public void stopMinioContainer() throws Exception {
+    public void stopMinioContainer() {
         if (container != null) {
             container.close();
             container = null;
-            staticLogger.info("Minio stopped.");
+            logger.info("Minio stopped.");
         }
     }
 
     private static void createBucket(String objectName, String object) {
-        staticLogger.info("Create fake bucket [{}]; [{}]", objectName, object);
+        logger.info("Create fake bucket [{}]; [{}]", objectName, object);
         try (MinioClient minioClient = MinioClient.builder()
                 .endpoint(s3Url)
                 .credentials(s3Username, s3Password)
@@ -84,7 +87,7 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
                     .stream(IOUtils.toInputStream(object, StandardCharsets.UTF_8), object.length(), -1)
                     .build());
         } catch (Exception e) {
-            staticLogger.warn("Could not create bucket [{}]; [{}]: {}", objectName, object, e.getMessage());
+            logger.warn("Could not create bucket [{}]; [{}]: {}", objectName, object, e.getMessage());
         }
     }
 
@@ -116,7 +119,7 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     }
 
     /**
-     * This is temporary until https://github.com/minio/minio-java/issues/1584 is solved
+     * This is temporary until <a href="https://github.com/minio/minio-java/issues/1584">https://github.com/minio/minio-java/issues/1584</a> is solved
      */
     static public class MinioThreadFilter implements ThreadFilter {
         @Override

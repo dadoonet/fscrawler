@@ -25,6 +25,8 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -36,6 +38,7 @@ import static org.hamcrest.Matchers.equalTo;
  * Test json support crawler setting
  */
 public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
+    private static final Logger logger = LogManager.getLogger();
 
     /**
      * Test case for issue #5: <a href="https://github.com/dadoonet/fscrawler/issues/5">https://github.com/dadoonet/fscrawler/issues/5</a> : Support JSon documents

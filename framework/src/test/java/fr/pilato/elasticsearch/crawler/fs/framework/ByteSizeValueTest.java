@@ -20,6 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
@@ -28,6 +30,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
+    private static final Logger logger = LogManager.getLogger();
 
     @Test
     public void testByteSizeConversion() {

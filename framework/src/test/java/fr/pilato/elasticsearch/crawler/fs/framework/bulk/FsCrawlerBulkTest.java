@@ -22,6 +22,8 @@ package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
@@ -29,6 +31,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 import static org.junit.Assert.assertEquals;
 
 public class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
+    private static final Logger logger = LogManager.getLogger();
     private static final TestBean PAYLOAD = new TestBean("bar");
     private static final int PAYLOAD_SIZE = serialize(PAYLOAD).getBytes().length + 12 /* for the json payload field overhead */;
 

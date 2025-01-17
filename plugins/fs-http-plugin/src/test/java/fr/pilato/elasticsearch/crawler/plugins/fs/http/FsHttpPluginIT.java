@@ -22,6 +22,8 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.*;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
@@ -43,18 +45,18 @@ import static org.hamcrest.Matchers.*;
         AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class
 })
 public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
-
-    private final static String text = "Hello Foo world!";
+    private static final Logger logger = LogManager.getLogger();
+    private static final String text = "Hello Foo world!";
 
     private void createFile(Path root, String objectName, String object) throws IOException {
-        staticLogger.info("Create fake content [{}]; [{}]", objectName, object);
+        logger.info("Create fake content [{}]; [{}]", objectName, object);
         Path file = root.resolve(objectName);
         Files.writeString(file, object);
     }
 
     @Test
     public void testReadFileFromNginx() throws Exception {
-        staticLogger.info("Starting Nginx from {}", rootTmpDir);
+        logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
         Files.createDirectory(nginxRoot);
         Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
@@ -66,7 +68,7 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
             container.start();
             container.copyFileToContainer(MountableFile.forHostPath(nginxRoot), "/usr/share/nginx/html");
             URL url = container.getBaseUrl("http", 80);
-            staticLogger.info("Nginx started on {}.", url);
+            logger.info("Nginx started on {}.", url);
 
             logger.info("Starting Test");
             try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {

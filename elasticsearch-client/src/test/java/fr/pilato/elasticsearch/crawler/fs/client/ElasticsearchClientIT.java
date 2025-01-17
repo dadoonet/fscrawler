@@ -42,11 +42,9 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
-import static org.junit.Assume.assumeTrue;
 
 public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
-
-    protected static final Logger staticLogger = LogManager.getLogger(ElasticsearchClientIT.class);
+    private static final Logger logger = LogManager.getLogger();
     private final static String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private final static String DEFAULT_USERNAME = "elastic";
     private final static String DEFAULT_PASSWORD = "changeme";
@@ -64,7 +62,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
             if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
                 testClusterUrl = decodeCloudId(testClusterCloudId);
-                staticLogger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
+                logger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
             } else {
                 testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
                 if (testClusterUrl.isEmpty()) {
@@ -78,13 +76,13 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient = startClient(checkCertificate);
         if (esClient == null && checkCertificate) {
             testClusterUrl = testClusterUrl.replace("http:", "https:");
-            staticLogger.info("Trying without SSL verification on [{}].", testClusterUrl);
+            logger.info("Trying without SSL verification on [{}].", testClusterUrl);
             checkCertificate = false;
             esClient = startClient(checkCertificate);
         }
 
         if (esClient == null) {
-            staticLogger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
+            logger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
             testClusterUrl = testContainerHelper.startElasticsearch(true);
             // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
             if (testContainerHelper.getCertAsBytes() != null) {
@@ -100,11 +98,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 esClient, notNullValue());
 
         String version = esClient.getVersion();
-        staticLogger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
+        logger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
     }
 
     private static ElasticsearchClient startClient(boolean sslVerification) throws ElasticsearchClientException {
-        staticLogger.info("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
+        logger.info("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
                 testClusterUrl, testCaCertificate, sslVerification);
         // We build the elasticsearch Client based on the parameters
         Elasticsearch elasticsearchConfiguration = Elasticsearch.builder()
@@ -123,11 +121,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             client.start();
             return client;
         } catch (ElasticsearchClientException e) {
-            staticLogger.info("Elasticsearch is not running on [{}]", testClusterUrl);
+            logger.info("Elasticsearch is not running on [{}]", testClusterUrl);
             if ((e.getCause() instanceof SocketException ||
                     (e.getCause() instanceof ProcessingException && e.getCause().getCause() instanceof SSLException))
                     && testClusterUrl.toLowerCase().startsWith("https")) {
-                staticLogger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http.");
+                logger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http.");
                 testClusterUrl = testClusterUrl.replace("https", "http");
                 return startClient(sslVerification);
             }
@@ -137,11 +135,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
     @AfterClass
     public static void stopServices() throws IOException {
-        staticLogger.info("Stopping integration tests against an external cluster");
+        logger.info("Stopping integration tests against an external cluster");
         if (esClient != null) {
             esClient.close();
             esClient = null;
-            staticLogger.info("Document service stopped");
+            logger.info("Document service stopped");
         }
         testCaCertificate = null;
     }
@@ -807,7 +805,6 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             logger.debug("Nginx started on {}.", url);
 
             InputStream inputStream = url.openStream();
-            ;
             String text = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(text, containsString("Hello World!"));
         }

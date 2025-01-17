@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.cli;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
@@ -47,7 +48,7 @@ import static org.hamcrest.Matchers.*;
  * We want to test FSCrawler main app
  */
 public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
-
+    private static final Logger logger = LogManager.getLogger();
     private static Path metadataDir;
 
     @BeforeClass
@@ -58,7 +59,7 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
             Files.createDirectory(metadataDir);
         }
         copyDefaultResources(metadataDir);
-        staticLogger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
+        logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
     @AfterClass
@@ -67,14 +68,14 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
     }
 
     private static void printLs(Path dir) throws IOException {
-        staticLogger.debug("ls -l {}", dir);
+        logger.debug("ls -l {}", dir);
         Files.list(dir).forEach(path -> {
             if (Files.isDirectory(path)) {
                 try {
                     printLs(path);
                 } catch (IOException ignored) { }
             } else {
-                staticLogger.debug("{}", path);
+                logger.debug("{}", path);
             }
         });
     }

@@ -24,6 +24,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -34,9 +36,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
-
+    private static final Logger logger = LogManager.getLogger();
     private static final Ocr OCR_FULL = Ocr.builder().setLanguage("eng").setOutputType("txt").build();
-
     private static final Fs FS_EMPTY = Fs.builder().build();
     private static final Fs FS_FULL = Fs.builder()
             .setUrl("/path/to/docs")

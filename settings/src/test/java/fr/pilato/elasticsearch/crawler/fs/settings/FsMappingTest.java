@@ -35,9 +35,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 
 public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
-
-    private final Logger logger = LogManager.getLogger(FsMappingTest.class);
-
+    private static final Logger logger = LogManager.getLogger();
     private static final String CLASSPATH_RESOURCES_ROOT = "/jobtest/";
 
     @BeforeClass
@@ -45,12 +43,12 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
         Path targetResourceDir = metadataDir.resolve("jobtest").resolve("_mappings");
 
         for (String filename : MAPPING_RESOURCES) {
-            staticLogger.debug("Copying [{}]...", filename);
+            logger.debug("Copying [{}]...", filename);
             Path target = targetResourceDir.resolve(filename);
             copyResourceFile(CLASSPATH_RESOURCES_ROOT + filename, target);
         }
 
-        staticLogger.debug("  --> Mappings generated in [{}]", targetResourceDir);
+        logger.debug("  --> Mappings generated in [{}]", targetResourceDir);
     }
 
     @Test

@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -30,7 +32,7 @@ import java.util.stream.Stream;
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDefaultResources;
 
 public abstract class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawlerTestCase {
-
+    private static final Logger logger = LogManager.getLogger();
     protected static Path metadataDir;
 
     @BeforeClass
@@ -41,14 +43,14 @@ public abstract class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawle
             Files.createDirectory(metadataDir);
         }
         copyDefaultResources(metadataDir);
-        staticLogger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
+        logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
     @AfterClass
     public static void printMetadataDirContent() throws IOException {
-        staticLogger.debug("ls -l {}", metadataDir);
+        logger.debug("ls -l {}", metadataDir);
         try (Stream<Path> files = Files.list(metadataDir)) {
-            files.forEach(path -> staticLogger.debug("{}", path));
+            files.forEach(path -> logger.debug("{}", path));
         }
     }
 }

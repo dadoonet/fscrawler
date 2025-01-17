@@ -29,6 +29,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -40,6 +42,7 @@ import static org.hamcrest.Matchers.is;
 
 @SuppressWarnings("ALL")
 public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
+    private static final Logger logger = LogManager.getLogger();
 
     public FsSettings getFsSettings() throws IOException {
         return FsSettings.builder(getCrawlerName())
@@ -53,7 +56,7 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
     public void testUploadOneDocument() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
-            staticLogger.error("file [{}] should exist before we start tests", from);
+            logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         UploadResponse uploadResponse = uploadFile(target, from);
@@ -70,7 +73,7 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
     public void testUploadAllDocuments() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
-            staticLogger.error("directory [{}] should exist before we start tests", from);
+            logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         Files.walk(from)

@@ -24,6 +24,8 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,6 +35,7 @@ import static org.hamcrest.Matchers.is;
  * Test loop crawler settings
  */
 public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
+    private static final Logger logger = LogManager.getLogger();
 
     /**
      * Test case for #227: <a href="https://github.com/dadoonet/fscrawler/issues/227">https://github.com/dadoonet/fscrawler/issues/227</a> : Add support for run only once
