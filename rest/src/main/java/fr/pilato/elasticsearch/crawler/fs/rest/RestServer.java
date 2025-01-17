@@ -34,9 +34,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 import java.net.URI;
 
 public class RestServer {
-
-    private static HttpServer httpServer = null;
     private static final Logger logger = LogManager.getLogger();
+    private static HttpServer httpServer = null;
 
     /**
      * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.

@@ -34,7 +34,7 @@ public class FsCrawlerRetryBulkProcessorListener<
         RES extends FsCrawlerBulkResponse<O>
         > extends FsCrawlerAdvancedBulkProcessorListener<O, REQ, RES> {
 
-    private static final Logger logger = LogManager.getLogger(FsCrawlerRetryBulkProcessorListener.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final String[] errorMessages;
 

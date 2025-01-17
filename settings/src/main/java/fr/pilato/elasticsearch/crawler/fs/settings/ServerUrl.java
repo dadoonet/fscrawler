@@ -31,9 +31,6 @@ import java.util.Objects;
  * This is used in the Elasticsearch.Node class.
  */
 public class ServerUrl {
-
-    protected static final Logger logger = LogManager.getLogger(ServerUrl.class);
-
     private String url;
     private String cloudId;
 

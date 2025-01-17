@@ -75,7 +75,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
  */
 public class ElasticsearchClient implements IElasticsearchClient {
 
-    private static final Logger logger = LogManager.getLogger(ElasticsearchClient.class);
+    private static final Logger logger = LogManager.getLogger();
     @Deprecated
     private final Path config;
     private final FsSettings settings;

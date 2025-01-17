@@ -33,6 +33,8 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
@@ -51,6 +53,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsD
 
 @Path("/_document")
 public class DocumentApi extends RestApi {
+    private static final Logger logger = LogManager.getLogger();
 
     private final FsCrawlerDocumentService documentService;
     private final FsSettings settings;

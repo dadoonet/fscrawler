@@ -26,7 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FTPUtils {
-  private static final Logger logger = LogManager.getLogger(FTPUtils.class);
+  private static final Logger logger = LogManager.getLogger();
 
   /**
    * Determines FTPFile permissions.

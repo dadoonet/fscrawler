@@ -28,7 +28,7 @@ import java.util.List;
 @SuppressWarnings("CanBeFinal")
 public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
 
-    private static final Logger logger = LogManager.getLogger(FsCrawlerBulkResponse.class);
+    private static final Logger logger = LogManager.getLogger();
 
     protected boolean errors;
     protected List<BulkItemResponse<O>> items = new ArrayList<>();

@@ -27,6 +27,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
@@ -37,7 +39,7 @@ import java.security.NoSuchAlgorithmException;
 @Path("/_upload")
 @Deprecated
 public class UploadApi extends RestApi {
-
+    private static final Logger logger = LogManager.getLogger();
     private final DocumentApi documentApi;
 
     UploadApi(FsSettings settings, FsCrawlerDocumentService documentService) {

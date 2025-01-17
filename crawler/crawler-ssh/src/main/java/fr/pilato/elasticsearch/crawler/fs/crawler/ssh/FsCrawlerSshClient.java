@@ -31,7 +31,7 @@ import java.nio.file.Paths;
 import java.security.KeyPair;
 
 public class FsCrawlerSshClient implements AutoCloseable {
-    private final Logger logger = LogManager.getLogger(FsCrawlerSshClient.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final String host;
     private final int port;
@@ -39,7 +39,6 @@ public class FsCrawlerSshClient implements AutoCloseable {
     private final String password;
     private final String pemPath;
 
-    private ClientSession session;
     private SshClient sshClient;
     private SftpClient sftpClient;
 
@@ -53,8 +52,7 @@ public class FsCrawlerSshClient implements AutoCloseable {
 
     public void open() throws Exception {
         sshClient = createSshClient();
-        session = openSshSession(sshClient, username, password, pemPath, host, port);
-        sftpClient = createSftpClient(session);
+        sftpClient = createSftpClient(openSshSession(sshClient, username, password, pemPath, host, port));
     }
 
     @Override

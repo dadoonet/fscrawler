@@ -33,7 +33,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class FsHttpPlugin extends FsCrawlerPlugin {
-    private static final Logger logger = LogManager.getLogger(FsHttpPlugin.class);
+    private static final Logger logger = LogManager.getLogger();
 
     @Override
     protected String getName() {

@@ -27,7 +27,7 @@ import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.Method;
 
 public class OsUtil {
-    private static final Logger logger = LogManager.getLogger(OsUtil.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private static final OperatingSystemMXBean osMxBean = ManagementFactory.getOperatingSystemMXBean();
 

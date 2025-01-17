@@ -33,7 +33,7 @@ import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
 public class Fs {
-    protected static final Logger logger = LogManager.getLogger(Fs.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private String url;
     private TimeValue updateRate = TimeValue.timeValueMinutes(15);

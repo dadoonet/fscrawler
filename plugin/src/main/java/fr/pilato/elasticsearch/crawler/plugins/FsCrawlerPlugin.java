@@ -27,7 +27,7 @@ import org.pf4j.Plugin;
  */
 public abstract class FsCrawlerPlugin extends Plugin {
 
-    private final Logger logger = LogManager.getLogger(FsCrawlerPlugin.class);
+    private final Logger logger = LogManager.getLogger();
 
     protected abstract String getName();
 

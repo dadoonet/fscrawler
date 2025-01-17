@@ -55,7 +55,7 @@ import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
  */
 public class TikaDocParser {
 
-    private final static Logger logger = LogManager.getLogger(TikaDocParser.class);
+    private final static Logger logger = LogManager.getLogger();
 
     public static void generate(FsSettings fsSettings, InputStream inputStream, String filename, String fullFilename, Doc doc,
                                 MessageDigest messageDigest, long filesize) throws IOException {
@@ -246,7 +246,7 @@ public class TikaDocParser {
             result.add(str.substring(pos, delPos));
             pos = delPos + 1;
         }
-        if (str.length() > 0 && pos <= str.length()) {
+        if (!str.isEmpty() && pos <= str.length()) {
             // Add rest of String, but not in case of empty input.
             result.add(str.substring(pos));
         }

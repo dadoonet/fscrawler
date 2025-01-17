@@ -29,8 +29,7 @@ import java.util.List;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 
 public abstract class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
-
-    private final Logger logger = LogManager.getLogger(FsCrawlerBulkRequest.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final List<T> operations = new ArrayList<>();
     private int totalByteSize = 0;

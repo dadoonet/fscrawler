@@ -35,7 +35,7 @@ public class FsCrawlerAdvancedBulkProcessorListener<
         REQ extends FsCrawlerBulkRequest<O>,
         RES extends FsCrawlerBulkResponse<O>
         > extends FsCrawlerSimpleBulkProcessorListener<O, REQ, RES> {
-    private static final Logger logger = LogManager.getLogger(FsCrawlerAdvancedBulkProcessorListener.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final AtomicInteger successiveErrors = new AtomicInteger(0);
 

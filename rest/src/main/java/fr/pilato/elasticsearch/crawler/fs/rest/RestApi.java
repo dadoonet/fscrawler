@@ -19,11 +19,5 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 class RestApi {
-
-    final Logger logger = LogManager.getLogger();
-
 }

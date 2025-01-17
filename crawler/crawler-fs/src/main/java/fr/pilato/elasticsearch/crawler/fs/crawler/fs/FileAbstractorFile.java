@@ -30,7 +30,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,7 +44,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getModi
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
 
 public class FileAbstractorFile extends FileAbstractor<File> {
-    private final Logger logger = LogManager.getLogger(FileAbstractorFile.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public FileAbstractorFile(FsSettings fsSettings) {
         super(fsSettings);

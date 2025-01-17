@@ -29,7 +29,7 @@ import java.util.Locale;
 import static fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient.INDEX_TYPE_DOC;
 
 public class ElasticsearchEngine implements Engine<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> {
-    private static final Logger logger = LogManager.getLogger(ElasticsearchEngine.class);
+    private static final Logger logger = LogManager.getLogger();
     private final IElasticsearchClient elasticsearchClient;
 
     public ElasticsearchEngine(IElasticsearchClient elasticsearchClient) {

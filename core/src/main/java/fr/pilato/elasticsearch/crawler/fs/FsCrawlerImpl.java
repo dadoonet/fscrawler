@@ -43,7 +43,7 @@ public class FsCrawlerImpl implements AutoCloseable {
     @Deprecated
     public static final String INDEX_TYPE_FOLDER = "folder";
 
-    private static final Logger logger = LogManager.getLogger(FsCrawlerImpl.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public static final int LOOP_INFINITE = -1;
     public static final long MAX_SLEEP_RETRY_TIME = TimeValue.timeValueSeconds(30).millis();

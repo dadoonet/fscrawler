@@ -41,7 +41,7 @@ public class FsCrawlerBulkProcessor<
         Res extends FsCrawlerBulkResponse<O>
         > implements Closeable {
 
-    private static final Logger logger = LogManager.getLogger(FsCrawlerBulkProcessor.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final int bulkActions;
     private final ByteSizeValue byteSize;
