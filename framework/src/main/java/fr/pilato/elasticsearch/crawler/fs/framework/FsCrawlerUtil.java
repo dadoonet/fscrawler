@@ -129,14 +129,21 @@ public class FsCrawlerUtil {
      * @param includes include rules, may be empty not null
      * @param excludes exclude rules, may be empty not null
      */
-    public static boolean isIndexable(boolean directory, String filename, List<String> includes, List<String> excludes) {
+    public static boolean isIndexable(final boolean directory, final String filename, final List<String> includes, final List<String> excludes) {
         logger.debug("directory = [{}], filename = [{}], includes = [{}], excludes = [{}]", directory, filename, includes, excludes);
 
-        boolean isIndexable = isIndexable(filename, includes, excludes);
+        String originalFilename = filename;
+
+        // When the current file is a directory, we need to append a / to the filename
+        if (directory && !filename.endsWith("/")) {
+            originalFilename += "/";
+        }
+
+        boolean isIndexable = isIndexable(originalFilename, includes, excludes);
 
         // It can happen that we have a dir "foo" which does not match the included name like "*.txt"
         // We need to go in it unless it has been explicitly excluded by the user
-        if (directory && !isExcluded(filename, excludes)) {
+        if (directory && !isExcluded(originalFilename, excludes)) {
             isIndexable = true;
         }
 
@@ -179,12 +186,16 @@ public class FsCrawlerUtil {
         return isMatching(filename, includes, "inclusion");
     }
 
-    public static boolean isMatching(String filename, List<String> matches, String type) {
+    public static boolean isMatching(final String filename, final List<String> matches, final String type) {
         logger.debug("checking {} for filename = [{}], matches = [{}]", type, filename, matches);
+
+        // We are using a linux style virtual path, meaning that if we have a windows path, we need to convert it
+        // to a linux path
+        String virtualPath = filename.replace("\\", "/");
 
         for (String match : matches) {
             String regex = match.toLowerCase().replace("?", ".?").replace("*", ".*");
-            String filenameLowerCase = filename.toLowerCase();
+            String filenameLowerCase = virtualPath.toLowerCase();
             if (filenameLowerCase.matches(regex)) {
                 logger.trace("✅ [{}] does match {} regex [{}] (was [{}])", filenameLowerCase, type, regex, match);
                 return true;
