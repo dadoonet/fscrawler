@@ -89,6 +89,16 @@ mount it as well:
         -v "$PWD/external:/usr/share/fscrawler/external" \
         dadoonet/fscrawler fscrawler job_name
 
+If you want to use the :ref:`rest-service`, don't forget to also expose the port:
+
+.. code:: sh
+
+   docker run -it --rm \
+        -v ~/.fscrawler:/root/.fscrawler \
+        -v ~/tmp:/tmp/es:ro \
+        -p 8080:8080 \
+        dadoonet/fscrawler fscrawler job_name
+
 .. _docker-compose:
 
 Using docker compose
