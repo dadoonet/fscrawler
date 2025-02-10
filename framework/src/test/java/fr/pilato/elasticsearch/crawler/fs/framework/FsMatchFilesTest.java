@@ -146,4 +146,20 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
         assertThat(isMatching("/filter test/should-not-exclude.docx", Collections.singletonList("*~*"), "exclusion"), is(false));
         assertThat(isMatching("/filter test/should-not-exclude.docx.exclude", Collections.singletonList("*.exclude"), "exclusion"), is(true));
     }
+
+    /**
+     * Testing with windows separator
+     * See <a href="https://github.com/dadoonet/fscrawler/issues/1974>#1974</a>
+     */
+    @Test
+    public void windowsSeparator() {
+        // We test with the Linux separator
+        assertThat(isIndexable(true, "/arbets", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(false));
+        assertThat(isIndexable(true, "/foo/arbets", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(false));
+        assertThat(isIndexable(true, "/foo", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(true));
+        // We test with the Windows separator
+        assertThat(isIndexable(true, "\\arbets", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(false));
+        assertThat(isIndexable(true, "\\foo\\arbets", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(false));
+        assertThat(isIndexable(true, "\\foo", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(true));
+    }
 }
