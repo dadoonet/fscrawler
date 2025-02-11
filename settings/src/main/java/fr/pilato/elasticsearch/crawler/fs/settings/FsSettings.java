@@ -29,17 +29,19 @@ public class FsSettings {
     private Server server;
     private Elasticsearch elasticsearch;
     private Rest rest;
+    private Tags tags;
 
     public FsSettings() {
 
     }
 
-    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch, Rest rest) {
+    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch, Rest rest, Tags tags) {
         this.name = name;
         this.fs = fs;
         this.server = server;
         this.elasticsearch = elasticsearch;
         this.rest = rest;
+        this.tags = tags;
     }
 
     public static Builder builder(String name) {
@@ -52,6 +54,7 @@ public class FsSettings {
         private Server server = null;
         private Elasticsearch elasticsearch = Elasticsearch.DEFAULT();
         private Rest rest = null;
+        private Tags tags = Tags.DEFAULT;
 
         private Builder setName(String name) {
             this.name = name;
@@ -78,8 +81,13 @@ public class FsSettings {
             return this;
         }
 
+        public Builder setTags(Tags tags) {
+            this.tags = tags;
+            return this;
+        }
+
         public FsSettings build() {
-            return new FsSettings(name, fs, server, elasticsearch, rest);
+            return new FsSettings(name, fs, server, elasticsearch, rest, tags);
         }
     }
 
@@ -123,6 +131,14 @@ public class FsSettings {
         this.rest = rest;
     }
 
+    public Tags getTags() {
+        return tags;
+    }
+
+    public void setTags(Tags tags) {
+        this.tags = tags;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -134,6 +150,7 @@ public class FsSettings {
         if (!Objects.equals(fs, that.fs)) return false;
         if (!Objects.equals(server, that.server)) return false;
         if (!Objects.equals(rest, that.rest)) return false;
+        if (!Objects.equals(tags, that.tags)) return false;
         return Objects.equals(elasticsearch, that.elasticsearch);
 
     }
@@ -144,6 +161,7 @@ public class FsSettings {
         result = 31 * result + (fs != null ? fs.hashCode() : 0);
         result = 31 * result + (server != null ? server.hashCode() : 0);
         result = 31 * result + (rest != null ? rest.hashCode() : 0);
+        result = 31 * result + (tags != null ? tags.hashCode() : 0);
         result = 31 * result + (elasticsearch != null ? elasticsearch.hashCode() : 0);
         return result;
     }
@@ -155,6 +173,7 @@ public class FsSettings {
                 ", server=" + server +
                 ", elasticsearch=" + elasticsearch +
                 ", rest=" + rest +
+                ", tags=" + tags +
                 '}';
     }
 }
