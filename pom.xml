@@ -46,7 +46,7 @@
 
         <pl4j.version>3.13.0</pl4j.version>
 
-        <tika.version>2.9.2</tika.version>
+        <tika.version>3.1.0</tika.version>
         <jackson.version>2.18.2</jackson.version>
         <jsonpath.version>2.9.0</jsonpath.version>
         <log4j.version>2.24.3</log4j.version>
