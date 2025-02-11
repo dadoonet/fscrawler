@@ -91,6 +91,10 @@
         <env.SONATYPE_PASS></env.SONATYPE_PASS>
         <sonatype.username>${env.SONATYPE_USER}</sonatype.username>
         <sonatype.password>${env.SONATYPE_PASS}</sonatype.password>
+        <ossindex.score>7.0</ossindex.score>
+        <!-- When we need to disable a specific CVE -->
+        <!-- TODO: Remove this when the CVE is fixed -->
+        <ossindex.exclude>CVE-2024-57699</ossindex.exclude>
 
         <!-- For DockerHub to push images -->
         <!--suppress UnresolvedMavenProperty -->
@@ -561,6 +565,7 @@
             <dependency>
                 <groupId>net.minidev</groupId>
                 <artifactId>json-smart</artifactId>
+                <!-- TODO Remove <ossindex.exclude>CVE-2024-57699</ossindex.exclude> when json-smart 252 is released -->
                 <version>2.5.1</version>
             </dependency>
 
@@ -907,7 +912,8 @@
                         <groupId>org.sonatype.ossindex.maven</groupId>
                         <artifactId>ossindex-maven-plugin</artifactId>
                         <configuration>
-                            <cvssScoreThreshold>7.0</cvssScoreThreshold>
+                            <cvssScoreThreshold>${ossindex.score}</cvssScoreThreshold>
+                            <excludeVulnerabilityIdsCsv>${ossindex.exclude}</excludeVulnerabilityIdsCsv>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -927,6 +933,8 @@
                         <groupId>org.sonatype.ossindex.maven</groupId>
                         <artifactId>ossindex-maven-plugin</artifactId>
                         <configuration>
+                            <cvssScoreThreshold>${ossindex.score}</cvssScoreThreshold>
+                            <excludeVulnerabilityIdsCsv>${ossindex.exclude}</excludeVulnerabilityIdsCsv>
                             <clientConfiguration>
                                 <authConfiguration>
                                     <username>${sonatype.username}</username>
