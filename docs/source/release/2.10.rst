@@ -1,6 +1,12 @@
 Version 2.10
 ============
 
+Breaking changes
+----------------
+
+* If you want to exclude a specific folder, you need to use a wildcard character at the end of the folder name.
+  For example, to exclude the folder ``/tmp/foo``, you need to use ``/tmp/foo/*``. Thanks to dadoonet.
+
 New
 ---
 
