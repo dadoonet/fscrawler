@@ -57,6 +57,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
    admin/fs/index
    admin/fs/simple
    admin/fs/local-fs
+   admin/fs/tags
    admin/fs/ssh
    admin/fs/ftp
    admin/fs/elasticsearch
