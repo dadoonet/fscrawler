@@ -62,7 +62,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);
 
-        crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+        crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null, null);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest()
@@ -107,7 +107,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
         elasticsearch.setPipeline(crawlerName);
 
-        crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+        crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null, null);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
@@ -125,7 +125,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         elasticsearch.setPipeline(crawlerName);
 
         try {
-            crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null);
+            crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null, null);
             fail("We should have caught a RuntimeException");
         } catch (RuntimeException e) {
             assertThat(e.getMessage(), containsString("You defined pipeline:" + crawlerName + ", but it does not exist."));

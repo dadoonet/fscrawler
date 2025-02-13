@@ -33,7 +33,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .addFilter(".*foo.*")
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
@@ -42,7 +42,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .addFilter("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$")
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
@@ -52,7 +52,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
                 .addFilter("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$")
                 .addFilter(".*foo.*")
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 }

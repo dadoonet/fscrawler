@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.*;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -44,7 +45,12 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
         assumeTrue("We don't run this test when semantic search is not available",
                 managementService.getClient().isSemanticSupported());
 
-        crawler = startCrawler();
+        crawler = startCrawler(getCrawlerName(),
+                startCrawlerDefinition().build(),
+                generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
+                        1, null, null, false, true),
+                null,
+                null);
 
         // We expect to have 3 files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);

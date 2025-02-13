@@ -46,8 +46,8 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
     public void test_multiple_crawlers() throws Exception {
         Fs fs1 = startCrawlerDefinition(currentTestResourceDir.resolve("crawler1").toString()).build();
         Fs fs2 = startCrawlerDefinition(currentTestResourceDir.resolve("crawler2").toString()).build();
-        FsCrawlerImpl crawler1 = startCrawler(getCrawlerName() + "_1", fs1, endCrawlerDefinition(getCrawlerName() + "_1"), null);
-        FsCrawlerImpl crawler2 = startCrawler(getCrawlerName() + "_2", fs2, endCrawlerDefinition(getCrawlerName() + "_2"), null);
+        FsCrawlerImpl crawler1 = startCrawler(getCrawlerName() + "_1", fs1, endCrawlerDefinition(getCrawlerName() + "_1"), null, null);
+        FsCrawlerImpl crawler2 = startCrawler(getCrawlerName() + "_2", fs2, endCrawlerDefinition(getCrawlerName() + "_2"), null, null);
         // We should have one doc in index 1...
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_1"), 1L, null);
         // We should have one doc in index 2...

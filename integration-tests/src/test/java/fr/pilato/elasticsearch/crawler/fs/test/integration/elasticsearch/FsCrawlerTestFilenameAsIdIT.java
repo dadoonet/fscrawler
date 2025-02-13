@@ -47,7 +47,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setFilenameAsId(true)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
@@ -67,7 +67,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
                 .setRemoveDeleted(true)
                 .setFilenameAsId(true)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);

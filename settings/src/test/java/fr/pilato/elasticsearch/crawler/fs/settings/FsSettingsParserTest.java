@@ -83,6 +83,8 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
         logger.info("-> testing settings: [{}]", yaml);
         FsSettings generated = FsSettingsParser.fromYaml(yaml);
+
+        logger.info("-> comparing with settings: [{}]", FsSettingsParser.toYaml(generated));
         assertThat(generated, is(source));
     }
 

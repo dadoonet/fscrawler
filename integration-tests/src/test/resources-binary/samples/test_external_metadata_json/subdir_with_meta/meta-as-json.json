@@ -1,0 +1,27 @@
+{
+  "external": {
+    "tenantId" : 23,
+    "company": "shoe company",
+    "projectId": 34,
+    "project": "business development",
+    "daysOpen": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "products": [
+      {
+        "brand": "nike",
+        "size": 41,
+        "sub": "Air MAX"
+      },
+      {
+        "brand": "reebok",
+        "size": 43,
+        "sub": "Pump"
+      }
+    ]
+  }
+}

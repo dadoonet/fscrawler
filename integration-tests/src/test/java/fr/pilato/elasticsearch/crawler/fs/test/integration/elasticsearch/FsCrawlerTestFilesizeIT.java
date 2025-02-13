@@ -51,7 +51,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIndexedChars(new Percentage(7))
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -68,7 +68,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIndexedChars(Percentage.parse("0.1%"))
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -85,7 +85,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIndexedChars(new Percentage(-1))
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -112,7 +112,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setAddFilesize(false)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -128,7 +128,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIgnoreAbove(ByteSizeValue.parseBytesSizeValue("10kb"))
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }

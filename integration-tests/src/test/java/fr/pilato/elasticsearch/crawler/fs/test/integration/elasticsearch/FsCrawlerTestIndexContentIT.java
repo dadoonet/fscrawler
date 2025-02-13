@@ -39,7 +39,7 @@ public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIndexContent(false)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);

@@ -26,12 +26,9 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import java.io.IOException;
-
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 
@@ -48,7 +45,7 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setIndexFolders(false)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         // We expect to have two files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);

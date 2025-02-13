@@ -122,7 +122,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
                 .setPassword(SSH_PASSWORD)
                 .setProtocol(Server.PROTOCOL.SSH)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server, null);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
@@ -137,7 +137,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
                 .setPemPath(rootTmpDir.resolve("private.key").toFile().getAbsolutePath())
                 .setProtocol(Server.PROTOCOL.SSH)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server, null);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }

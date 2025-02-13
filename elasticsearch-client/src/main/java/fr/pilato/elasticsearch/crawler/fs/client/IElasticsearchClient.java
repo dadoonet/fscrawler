@@ -162,6 +162,13 @@ public interface IElasticsearchClient extends Closeable {
     void createIndexAndComponentTemplates() throws Exception;
 
     /**
+     * Delete an index template (only needed for tests)
+     * @param indexTemplate Index template name
+     * @throws ElasticsearchClientException in case of error
+     */
+    void deleteIndexTemplate(String indexTemplate) throws ElasticsearchClientException;
+
+    /**
      * Run a search
      * @param request Search Request
      * @return A search response object

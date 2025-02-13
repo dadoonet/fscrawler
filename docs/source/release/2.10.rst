@@ -5,7 +5,7 @@ New
 ---
 
 * Add support for automatic semantic search when using a 8.17+ version with a trial or enterprise
-  license. See :ref:`semantic_search`. Thanks to dadoonet.
+  license. See :ref:`semantic_search`. **Warning**: this might slow down the ingestion process. Thanks to dadoonet.
 * Using the REST API ``_document``, you can now fetch a document from the local dir, from an http website
   or from an S3 bucket. See :ref:`rest-service`. Thanks to dadoonet.
 * You can now remove a document in Elasticsearch using FSCrawler ``_document`` endpoint. See :ref:`rest-service`. Thanks to dadoonet.
@@ -17,6 +17,7 @@ New
 * Allow loading external jars. This adds a new ``external`` directory from where jars can be loaded
   to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. See :ref:`layout`. Thanks to dadoonet.
 * Add temporal information in folder index. Thanks to bdauvissat
+* Add support for external metadata files while crawling, defaults to ``.meta.yml``. See :ref:`tags` Thanks to dadoonet.
 
 Fix
 ---

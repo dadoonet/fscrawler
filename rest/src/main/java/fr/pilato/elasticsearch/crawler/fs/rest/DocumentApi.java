@@ -19,10 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -47,8 +45,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
+import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.getMergedJsonDoc;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 @Path("/_document")
@@ -255,7 +253,7 @@ public class DocumentApi extends RestApi {
         // Elasticsearch entity coordinates (we use the first node address)
         ServerUrl node = settings.getElasticsearch().getNodes().get(0);
         String url = node.getUrl() + "/" + index + "/_doc/" + id;
-        final Doc mergedDoc = this.getMergedJsonDoc(doc, tags);
+        final Doc mergedDoc = getMergedJsonDoc(doc, tags);
         if (Boolean.parseBoolean(simulate)) {
             logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].", filename, url);
         } else {
@@ -313,23 +311,5 @@ public class DocumentApi extends RestApi {
         }
 
         return response;
-    }
-
-    private Doc getMergedJsonDoc(Doc doc, InputStream tags) throws BadRequestException {
-        if (tags == null) {
-            return doc;
-        }
-
-        try {
-            JsonNode tagsNode = mapper.readTree(tags);
-            JsonNode docNode = mapper.convertValue(doc, JsonNode.class);
-
-            JsonNode mergedNode = FsCrawlerUtil.merge(tagsNode, docNode);
-
-            return mapper.treeToValue(mergedNode, Doc.class);
-        } catch (Exception e) {
-            logger.error("Error parsing tags", e);
-            throw new BadRequestException("Error parsing tags", e);
-        }
     }
 }
