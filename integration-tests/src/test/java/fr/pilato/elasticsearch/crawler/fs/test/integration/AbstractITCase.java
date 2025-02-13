@@ -386,7 +386,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     protected static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
                                                                TimeValue timeValue, ByteSizeValue byteSize,
-                                                               boolean useLoginPassword) {
+                                                               boolean useLoginPassword, boolean useSemantic) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                 .setBulkSize(bulkSize);
@@ -414,7 +414,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         builder.setSslVerification(false);
 
-        builder.setSemanticSearch(false);
+        builder.setSemanticSearch(useSemantic);
 
         return builder.build();
     }
