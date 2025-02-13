@@ -44,7 +44,7 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setXmlSupport(true)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
 
         countTestHelper(new ESSearchRequest()
@@ -70,7 +70,7 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setXmlSupport(true)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
         countTestHelper(new ESSearchRequest()

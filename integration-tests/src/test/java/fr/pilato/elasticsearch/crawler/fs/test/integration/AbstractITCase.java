@@ -414,6 +414,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         builder.setSslVerification(false);
 
+        builder.setSemanticSearch(false);
+
         return builder.build();
     }
 

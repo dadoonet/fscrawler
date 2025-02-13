@@ -19,12 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
+import fr.pilato.elasticsearch.crawler.fs.beans.*;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FileAbstractorFile;
@@ -39,17 +34,18 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -71,6 +67,7 @@ public abstract class FsParserAbstract extends FsParser {
     private final MessageDigest messageDigest;
     private final String pathSeparator;
     private final FileAbstractor<?> fileAbstractor;
+    private final String metadataFilename;
 
     private ScanStatistic stats;
 
@@ -103,6 +100,13 @@ public abstract class FsParserAbstract extends FsParser {
         }
 
         fileAbstractor = buildFileAbstractor(fsSettings);
+
+        if (fsSettings.getTags() != null && !StringUtils.isEmpty(fsSettings.getTags().getMetaFilename())) {
+            metadataFilename = fsSettings.getTags().getMetaFilename();
+            logger.debug("We are going to use [{}] as meta file if found whil crawling dirs", metadataFilename);
+        } else {
+            metadataFilename = null;
+        }
     }
 
     protected abstract FileAbstractor<?> buildFileAbstractor(FsSettings fsSettings);
@@ -251,6 +255,7 @@ public abstract class FsParserAbstract extends FsParser {
 
         if (children != null) {
             boolean ignoreFolder = false;
+            InputStream metadata = null;
             for (FileAbstractModel child : children) {
                 // We check if we have a .fscrawlerignore file within this folder in which case
                 // we want to ignore all files and subdirs
@@ -259,12 +264,25 @@ public abstract class FsParserAbstract extends FsParser {
                     ignoreFolder = true;
                     break;
                 }
+
+                // We check if we have a .meta.yml file (or equivalent) within this folder in which case
+                // we want to merge its content with the current file metadata
+                if (child.getName().equalsIgnoreCase(metadataFilename)) {
+                    logger.debug("We found a [{}] file in folder: [{}]", metadataFilename, filepath);
+                    metadata = fileAbstractor.getInputStream(child);
+                }
             }
 
             if (!ignoreFolder) {
                 for (FileAbstractModel child : children) {
                     logger.trace("FileAbstractModel = {}", child);
                     String filename = child.getName();
+
+                    // If the filename is the expected metadata file, we skip it
+                    if (filename.equalsIgnoreCase(metadataFilename)) {
+                        logger.trace("Skipping metadata file [{}]", filename);
+                        continue;
+                    }
 
                     String virtualFileName = computeVirtualPathName(stats.getRootPath(), computeRealPathName(filepath, filename));
 
@@ -284,7 +302,7 @@ public abstract class FsParserAbstract extends FsParser {
                                         if (fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource()) {
                                             inputStream = fileAbstractor.getInputStream(child);
                                         }
-                                        indexFile(child, stats, filepath, inputStream, child.getSize());
+                                        indexFile(child, stats, filepath, inputStream, child.getSize(), metadata);
                                         stats.addFile();
                                     } catch (Exception e) {
                                         if (fsSettings.getFs().isContinueOnError()) {
@@ -386,7 +404,7 @@ public abstract class FsParserAbstract extends FsParser {
      * Index a file
      */
     private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
-                           long filesize) throws Exception {
+                           long filesize, InputStream externalTags) throws Exception {
         final String filename = fileAbstractModel.getName();
         final LocalDateTime created = fileAbstractModel.getCreationDate();
         final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();
@@ -451,8 +469,10 @@ public abstract class FsParserAbstract extends FsParser {
                 TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
             }
 
+            Doc mergedDoc = DocUtils.getMergedDoc(doc, metadataFilename, externalTags);
+
             // We index the data structure
-            if (isIndexable(doc.getContent(), fsSettings.getFs().getFilters())) {
+            if (isIndexable(mergedDoc.getContent(), fsSettings.getFs().getFilters())) {
                 if (!closed) {
                     FSCrawlerLogger.documentDebug(id,
                             computeVirtualPathName(stats.getRootPath(), fullFilename),
@@ -460,7 +480,7 @@ public abstract class FsParserAbstract extends FsParser {
                     documentService.index(
                             fsSettings.getElasticsearch().getIndex(),
                             id,
-                            doc,
+                            mergedDoc,
                             fsSettings.getElasticsearch().getPipeline());
                 } else {
                     logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",

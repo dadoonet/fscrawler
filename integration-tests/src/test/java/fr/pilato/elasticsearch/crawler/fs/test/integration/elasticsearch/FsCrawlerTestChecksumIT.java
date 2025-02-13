@@ -50,7 +50,7 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setChecksum("MD5")
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(JsonPath.read(hit.getSource(), "$.file.checksum"), is("caa71e1914ecbcf5ae4f46cf85de8648"));
@@ -68,7 +68,7 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setChecksum("SHA-1")
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(JsonPath.read(hit.getSource(), "$.file.checksum"), is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));

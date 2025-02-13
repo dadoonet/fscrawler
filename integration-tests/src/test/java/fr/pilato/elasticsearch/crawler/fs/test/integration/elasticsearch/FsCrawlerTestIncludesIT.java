@@ -33,7 +33,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .addInclude("*/*_include\\.txt")
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 
@@ -42,7 +42,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .addInclude("*/*\\.txt")
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         // We expect to have seven files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
@@ -54,7 +54,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
                 .addExclude("*/\\.ignore")
                 .addExclude("/subdir/sub*")
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);

@@ -19,10 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -49,7 +47,6 @@ import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.getMergedJsonDoc;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 @Path("/_document")

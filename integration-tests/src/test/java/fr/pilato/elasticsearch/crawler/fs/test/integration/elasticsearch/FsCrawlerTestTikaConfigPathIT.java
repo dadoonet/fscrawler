@@ -39,7 +39,7 @@ public class FsCrawlerTestTikaConfigPathIT extends AbstractFsCrawlerITCase {
         .setTikaConfigPath(currentTestResourceDir.resolve("config/tikaConfig.xml").toString())
         .addExclude("/config/*")
         .build();
-    crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+    crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
     countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     countTestHelper(new ESSearchRequest()

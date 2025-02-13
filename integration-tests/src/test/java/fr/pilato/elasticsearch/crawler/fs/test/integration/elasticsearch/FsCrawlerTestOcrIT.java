@@ -86,7 +86,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                             .build())
                     .build();
 
-            crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+            crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
             // We expect to have one file
             ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
@@ -111,7 +111,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                             .build())
                     .build();
 
-            crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+            crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
             // We expect to have one file
             ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);

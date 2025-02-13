@@ -24,11 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import fr.pilato.elasticsearch.crawler.fs.settings.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -50,6 +46,11 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
         managementService.getClient().deleteIndex(getCrawlerName());
         managementService.getClient().deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+
+        logger.info(" -> Removing existing index templates [{}*]", getCrawlerName());
+        managementService.getClient().deleteIndexTemplate("fscrawler_docs_" + getCrawlerName());
+        managementService.getClient().deleteIndexTemplate("fscrawler_docs_semantic_" + getCrawlerName());
+        managementService.getClient().deleteIndexTemplate("fscrawler_folders_" + getCrawlerName());
     }
 
     @After
@@ -90,17 +91,23 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     private FsCrawlerImpl startCrawler(final String jobName) throws Exception {
-        return startCrawler(jobName, startCrawlerDefinition().build(), endCrawlerDefinition(jobName), null);
+        return startCrawler(jobName, startCrawlerDefinition().build(), endCrawlerDefinition(jobName), null, null);
     }
 
-    protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server) throws Exception {
-        return startCrawler(jobName, fs, elasticsearch, server, null, TimeValue.timeValueSeconds(30));
+    protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Tags tags) throws Exception {
+        return startCrawler(jobName, fs, elasticsearch, server, null, tags, TimeValue.timeValueSeconds(30));
     }
 
     protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest,
-                                         TimeValue duration)
+                                         Tags tags, TimeValue duration)
             throws Exception {
-        return startCrawler(jobName, FsSettings.builder(jobName).setElasticsearch(elasticsearch).setFs(fs).setServer(server).setRest(rest).build(), duration);
+        FsSettings.Builder builder = FsSettings.builder(jobName);
+        if (elasticsearch != null) builder.setElasticsearch(elasticsearch);
+        if (fs != null) builder.setFs(fs);
+        if (server != null) builder.setServer(server);
+        if (rest != null) builder.setRest(rest);
+        if (tags != null) builder.setTags(tags);
+        return startCrawler(jobName, builder.build(), duration);
     }
 
     protected FsCrawlerImpl startCrawler(final String jobName, FsSettings fsSettings, TimeValue duration)

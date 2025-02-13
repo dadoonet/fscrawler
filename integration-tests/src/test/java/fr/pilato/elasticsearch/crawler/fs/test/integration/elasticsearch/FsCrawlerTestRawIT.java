@@ -79,7 +79,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
             // Sometimes we explicitly disable it but this is also the default value
             builder.setRawMetadata(false);
         }
-        crawler = startCrawler(getCrawlerName(), builder.build(), endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), builder.build(), endCrawlerDefinition(getCrawlerName()), null, null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.meta.raw"));
@@ -91,7 +91,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setRawMetadata(true)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(JsonPath.read(hit.getSource(), "$.meta.raw"), notNullValue());

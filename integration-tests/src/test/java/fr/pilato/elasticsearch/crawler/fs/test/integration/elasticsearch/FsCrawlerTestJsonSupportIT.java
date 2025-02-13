@@ -48,7 +48,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(true)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         assertThat("We should have 2 doc for tweet in text field...", awaitBusy(() -> {
             try {
@@ -71,7 +71,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(false)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         assertThat("We should have 0 doc for tweet in text field...", awaitBusy(() -> {
             try {
@@ -107,7 +107,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                 .setJsonSupport(true)
                 .setAddAsInnerObject(true)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         assertThat("We should have 2 doc for tweet in object.text field...", awaitBusy(() -> {
             try {
@@ -130,7 +130,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         Fs fs = startCrawlerDefinition()
                 .setJsonSupport(true)
                 .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null);
+        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
         assertThat("We should have 2 docs only...", awaitBusy(() -> {
             try {

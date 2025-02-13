@@ -603,6 +603,16 @@ public class ElasticsearchClient implements IElasticsearchClient {
         pushIndexTemplate(name + "_" + index, json);
     }
 
+    public void deleteIndexTemplate(String indexTemplate) throws ElasticsearchClientException {
+        logger.debug("delete index template [{}]", indexTemplate);
+        String url = "_index_template/" + indexTemplate;
+        try {
+            httpDelete(url, null);
+        } catch (NotFoundException e) {
+            logger.trace("Index template [{}] does not exist", indexTemplate);
+        }
+    }
+
     /**
      * Reads a resource file from the classpath or from a JAR.
      * @param source The target

@@ -1,0 +1,2 @@
+This file is in a sub folder of the test_external_metadata directory and it does have a metadata file
+so the content should be altered.
