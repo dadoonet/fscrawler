@@ -51,12 +51,12 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_ignore_dir() throws Exception {
         Fs fs = startCrawlerDefinition()
-                .addExclude("*/\\.ignore")
+                .addExclude("*/\\.ignore/")
                 .addExclude("/subdir/sub*")
                 .build();
         crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
 
-        // We expect to have one file
+        // We expect to have two files: subdir/notsub/roottxtfile.txt and subdir/roottxtfile.txt
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
