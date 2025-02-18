@@ -171,6 +171,15 @@ If you define the following ``fs.excludes`` property in your
 Then all files but the ones in ``/folderB/subfolderA``, ``/folderB/subfolderB`` and
 ``/folderB/subfolderC`` will be indexed.
 
+If you want to exclude a specific folder, you need to use a wildcard character at the end of the folder name, like:
+
+.. code:: yaml
+
+   name: "test"
+   fs:
+     excludes:
+     - "/folderB/subfolderB/*"
+
 Since the includes and excludes work on the entire *path of the file* you must consider that when using wildcards. Below are some includes and excludes pattern to help convey the idea better.
 
 +--------------------+------------------------------------------------+------------------------------------------------+

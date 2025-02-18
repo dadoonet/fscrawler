@@ -102,21 +102,21 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
         assertThat(isIndexable(true, "/subfolderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolder*")), is(true));
         assertThat(isIndexable(true, "/subfolderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolder*")), is(true));
         assertThat(isIndexable(true, "/subfolderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolder*")), is(true));
-        assertThat(isIndexable(true, "/folderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/folderA/subfolderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/folderA/subfolderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/folderA/subfolderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/folderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/folderB/subfolderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/folderB/subfolderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(false));
-        assertThat(isIndexable(true, "/folderB/subfolderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/folderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/folderC/subfolderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/folderC/subfolderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/folderC/subfolderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/subfolderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/subfolderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
-        assertThat(isIndexable(true, "/subfolderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB")), is(true));
+        assertThat(isIndexable(true, "/folderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/folderA/subfolderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/folderA/subfolderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/folderA/subfolderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/folderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/folderB/subfolderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/folderB/subfolderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(false));
+        assertThat(isIndexable(true, "/folderB/subfolderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/folderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/folderC/subfolderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/folderC/subfolderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/folderC/subfolderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/subfolderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/subfolderB", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
+        assertThat(isIndexable(true, "/subfolderC", new ArrayList<>(), Collections.singletonList("/folderB/subfolderB/*")), is(true));
     }
 
     /**
@@ -145,5 +145,21 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
         assertThat(isMatching("/filter test/~should-exclude.docx", Collections.singletonList("*/~*"), "exclusion"), is(true));
         assertThat(isMatching("/filter test/should-not-exclude.docx", Collections.singletonList("*~*"), "exclusion"), is(false));
         assertThat(isMatching("/filter test/should-not-exclude.docx.exclude", Collections.singletonList("*.exclude"), "exclusion"), is(true));
+    }
+
+    /**
+     * Testing with windows separator
+     * See <a href="https://github.com/dadoonet/fscrawler/issues/1974>#1974</a>
+     */
+    @Test
+    public void windowsSeparator() {
+        // We test with the Linux separator
+        assertThat(isIndexable(true, "/arbets", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(false));
+        assertThat(isIndexable(true, "/foo/arbets", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(false));
+        assertThat(isIndexable(true, "/foo", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(true));
+        // We test with the Windows separator
+        assertThat(isIndexable(true, "\\arbets", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(false));
+        assertThat(isIndexable(true, "\\foo\\arbets", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(false));
+        assertThat(isIndexable(true, "\\foo", new ArrayList<>(), Collections.singletonList("*/arbets/*")), is(true));
     }
 }
