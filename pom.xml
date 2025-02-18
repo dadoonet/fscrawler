@@ -93,8 +93,7 @@
         <sonatype.password>${env.SONATYPE_PASS}</sonatype.password>
         <ossindex.score>7.0</ossindex.score>
         <!-- When we need to disable a specific CVE -->
-        <!-- TODO: Remove this when the CVE is fixed -->
-        <ossindex.exclude>CVE-2024-57699</ossindex.exclude>
+        <ossindex.exclude />
 
         <!-- For DockerHub to push images -->
         <!--suppress UnresolvedMavenProperty -->
@@ -565,8 +564,7 @@
             <dependency>
                 <groupId>net.minidev</groupId>
                 <artifactId>json-smart</artifactId>
-                <!-- TODO Remove <ossindex.exclude>CVE-2024-57699</ossindex.exclude> when json-smart 252 is released -->
-                <version>2.5.1</version>
+                <version>2.5.2</version>
             </dependency>
 
             <!-- This is needed to compile on my machine :( -->
