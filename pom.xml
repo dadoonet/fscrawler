@@ -72,7 +72,7 @@
         <tests.cluster.user>elastic</tests.cluster.user>
         <tests.cluster.pass>changeme</tests.cluster.pass>
         <tests.rest.port>0</tests.rest.port>
-        <testcontainers.version>1.20.4</testcontainers.version>
+        <testcontainers.version>1.20.5</testcontainers.version>
 
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
