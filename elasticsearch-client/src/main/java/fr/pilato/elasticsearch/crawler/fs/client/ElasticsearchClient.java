@@ -98,6 +98,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private String authorizationHeader = null;
     private boolean semanticSearch;
     private boolean vectorSearch = false;
+    private boolean serverless;
 
     public ElasticsearchClient(Path config, FsSettings settings) {
         this.config = config;
@@ -176,7 +177,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         try {
             String esVersion = getVersion();
-            logger.info("Elasticsearch Client connected to a node running version {}", esVersion);
+            if (serverless) {
+                logger.info("Elasticsearch Client connected to serverless by Elastic");
+            } else {
+                logger.info("Elasticsearch Client connected to a node running version {}", esVersion);
+            }
         } catch (Exception e) {
             logger.warn("Failed to create elasticsearch client on {}. Message: {}.",
                     settings.getElasticsearch().toString(),
@@ -193,8 +198,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
 
         if (semanticSearch) {
-            // Check the version we are running
-            if (majorVersion >= 8 && minorVersion >= 17) {
+            // Check the version we are running or if it's using serverless
+            if ((majorVersion >= 8 && minorVersion >= 17) || serverless) {
                 logger.debug("Semantic search is enabled and we are running on a version of Elasticsearch {} " +
                         "which is 8.17 or higher. We will try to use the semantic search features.", version);
                 license = getLicense();
@@ -263,7 +268,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
         version = document.read("$.version.number");
         majorVersion = extractMajorVersion(version);
         minorVersion = extractMinorVersion(version);
+        serverless = false;
 
+        if ("serverless".equals(document.read("$.version.build_flavor"))) {
+            logger.debug("We are running on Elastic serverless cloud so we can not consider version number.");
+            serverless = true;
+        };
         logger.debug("get version returns {} and {} as the major version number", version, majorVersion);
         return version;
     }
@@ -557,7 +567,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
         if (settings.getElasticsearch().isPushTemplates()) {
             logger.debug("Creating/updating component templates");
             loadAndPushComponentTemplate(majorVersion, "fscrawler_alias");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_shards");
             loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_total_fields");
             loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attributes");
             loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file");

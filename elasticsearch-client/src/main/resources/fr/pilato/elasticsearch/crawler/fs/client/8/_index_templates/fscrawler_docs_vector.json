@@ -5,7 +5,6 @@
   "priority": 500,
   "composed_of": [
     "fscrawler_alias",
-    "fscrawler_settings_shards",
     "fscrawler_settings_total_fields",
     "fscrawler_mapping_attributes",
     "fscrawler_mapping_file",
