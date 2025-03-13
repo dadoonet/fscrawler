@@ -27,6 +27,12 @@ public class ByteSizeValue implements Comparable<ByteSizeValue> {
     private final long size;
     private final ByteSizeUnit unit;
 
+    public ByteSizeValue(String sValue) {
+        ByteSizeValue parsed = parseBytesSizeValue(sValue);
+        this.size = parsed.size;
+        this.unit = parsed.unit;
+    }
+
     public ByteSizeValue(long bytes) {
         this(bytes, ByteSizeUnit.BYTES);
     }

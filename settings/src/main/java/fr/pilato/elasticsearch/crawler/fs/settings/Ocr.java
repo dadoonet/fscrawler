@@ -19,24 +19,27 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import jakarta.annotation.Nullable;
+
 import java.util.Objects;
 
 public class Ocr {
+    // Is OCR enabled or disabled in general
+    private Boolean enabled = true;
+    // Path to tesseract program
+    @Nullable private String path = null;
+    // Path to tesseract data
+    @Nullable private String dataPath = null;
     // Language dictionary to be used.
     private String language = "eng";
-    // Path to tesseract program
-    private String path = null;
-    // Path to tesseract data
-    private String dataPath = null;
     // Output Type. Can be txt (default) or hocr. null means the default value.
-    private String outputType = null;
-    // Is OCR enabled or disabled in general
-    private boolean enabled = true;
+    @Nullable private String outputType = null;
     // Pdf OCR Strategy
     private String pdfStrategy = "ocr_and_text";
     // PDF Page Seg Mode
-    private Integer pageSegMode = null;
-    private Boolean preserveInterwordSpacing = null;
+    @Nullable private Integer pageSegMode = null;
+    // Preserve interword spacing
+    @Nullable private Boolean preserveInterwordSpacing = null;
 
     public static Builder builder() {
         return new Builder();

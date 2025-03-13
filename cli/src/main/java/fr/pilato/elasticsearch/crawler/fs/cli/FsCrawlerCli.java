@@ -29,12 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
+import fr.pilato.elasticsearch.crawler.fs.settings.*;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +46,7 @@ import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 
 import java.io.Console;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -219,7 +215,7 @@ public class FsCrawlerCli {
      */
     static FsSettings loadSettings(Path configDir, String jobName) throws IOException {
         try {
-            return new FsSettingsFileHandler(configDir).read(jobName);
+            return new FsSettingsLoader(configDir).read(jobName);
         } catch (NoSuchFileException e) {
             return null;
         }
@@ -240,11 +236,11 @@ public class FsCrawlerCli {
 
         if (fsSettings.getServer() != null) {
             // It's a dirty hack. The default port if not set is 22 (SSH), but if protocol is FTP, we should use 21 as a default port
-            if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && fsSettings.getServer().getPort() == PROTOCOL.SSH_PORT) {
+            if (PROTOCOL.FTP.equals(fsSettings.getServer().getProtocol()) && fsSettings.getServer().getPort() == PROTOCOL.SSH_PORT) {
                 fsSettings.getServer().setPort(PROTOCOL.FTP_PORT);
             }
             // For FTP, we set a default username if not set
-            if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP) && StringUtils.isEmpty(fsSettings.getServer().getUsername())) {
+            if (PROTOCOL.FTP.equals(fsSettings.getServer().getProtocol()) && StringUtils.isEmpty(fsSettings.getServer().getUsername())) {
                 fsSettings.getServer().setUsername("anonymous");
             }
         }
@@ -282,14 +278,13 @@ public class FsCrawlerCli {
         }
 
         if ("y".equalsIgnoreCase(yesno)) {
-            FsSettings fsSettings = FsSettings.builder(jobName)
-                    .setFs(Fs.DEFAULT)
-                    .setElasticsearch(Elasticsearch.DEFAULT())
-                    .build();
-            new FsSettingsFileHandler(configDir).write(fsSettings);
+            Path configJobDir = configDir.resolve(jobName);
+            Files.createDirectories(configJobDir);
+            Path configFile = configJobDir.resolve(FsSettingsLoader.SETTINGS_YAML);
 
-            Path config = configDir.resolve(jobName).resolve(FsSettingsFileHandler.SETTINGS_YAML);
-            FSCrawlerLogger.console("Settings have been created in [{}]. Please review and edit before relaunch", config);
+            // Write the example config files from the classpath FsSettingsLoader.DEFAULT_SETTINGS
+            copyResourceFile(FsSettingsLoader.DEFAULT_SETTINGS, configFile);
+            FSCrawlerLogger.console("Settings have been created in [{}]. Please review and edit before relaunch", configFile);
         }
     }
 
@@ -361,22 +356,23 @@ public class FsCrawlerCli {
 
         logger.debug("Starting job [{}]...", jobName);
         try {
-            fsSettings = loadSettings(configDir, jobName);
+            fsSettings = new FsSettingsLoader(configDir).read(jobName);
+        } catch (FsCrawlerIllegalConfigurationException e) {
+            if (e.getCause() == null) {
+                logger.debug("job [{}] does not exist.", jobName);
+                // We can only have a dialog with the end user if we are not silent
+                if (command.silent || scanner == null) {
+                    logger.error("job [{}] does not exist. Exiting as we are in silent mode or no input available.", jobName);
+                    System.exit(2);
+                }
+
+                createJob(jobName, configDir, scanner);
+                return;
+            }
+            throw e;
         } catch (Exception e) {
             logger.fatal("Cannot parse the configuration file: {}", e.getMessage());
             throw e;
-        }
-
-        if (fsSettings == null) {
-            logger.debug("job [{}] does not exist.", jobName);
-            // We can only have a dialog with the end user if we are not silent
-            if (command.silent || scanner == null) {
-                logger.error("job [{}] does not exist. Exiting as we are in silent mode or no input available.", jobName);
-                System.exit(2);
-            }
-
-            createJob(jobName, configDir, scanner);
-            return;
         }
 
         modifySettings(fsSettings, command.username, command.apiKey);

@@ -1,0 +1,83 @@
+{
+    "name": "test",
+    "fs": {
+      "url": "/path/to/docs",
+      "update_rate": "5m",
+      "includes": [
+        "*.doc",
+        "*.xls"
+      ],
+      "excludes": [
+        "resume.doc"
+      ],
+      "filters": [
+        ".*foo.*",
+        "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"
+      ],
+      "json_support": false,
+      "add_as_inner_object": false,
+      "xml_support": false,
+      "follow_symlinks": false,
+      "remove_deleted": true,
+      "continue_on_error": false,
+      "ignore_above": "512mb",
+      "filename_as_id": true,
+      "index_content": true,
+      "add_filesize": true,
+      "attributes_support": false,
+      "lang_detect": false,
+      "store_source": false,
+      "indexed_chars": "10000.0",
+      "raw_metadata": false,
+      "checksum": "MD5",
+      "index_folders": true,
+      "tika_config_path": "/path/to/tika-config.xml",
+      "ocr": {
+        "enabled": true,
+        "language": "eng",
+        "path": "/path/to/tesseract/if/not/available/in/PATH",
+        "data_path": "/path/to/tesseract/tessdata/if/needed",
+        "output_type": "txt",
+        "pdf_strategy": "ocr_and_text",
+        "page_seg_mode": 1,
+        "preserve_interword_spacing": false
+      },
+      "tags": {
+        "meta_filename": "meta_tags.json"
+      }
+    },
+    "server": {
+      "hostname": "localhost",
+      "port": 22,
+      "username": "dadoonet",
+      "password": "password",
+      "protocol": "ssh",
+      "pem_path": "/path/to/pemfile"
+    },
+    "elasticsearch": {
+      "nodes": [
+        {
+          "url": "https://127.0.0.1:9200"
+        },
+        {
+          "url": "https://127.0.0.1:9201"
+        }
+      ],
+      "index": "test_docs",
+      "index_folder": "test_folder",
+      "bulk_size": 1000,
+      "flush_interval": "5s",
+      "byte_size": "10mb",
+      "api_key": "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw==",
+      "username": "elastic",
+      "password": "password",
+      "ca_certificate": "/path/to/ca.crt",
+      "pipeline": "my_pipeline",
+      "push_templates": "true",
+      "semantic_search": "true"
+    },
+    "rest": {
+      "url": "http://127.0.0.1:8080/fscrawler",
+      "enable_cors": true
+    }
+  }

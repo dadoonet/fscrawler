@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.*;
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final Ocr OCR_FULL = Ocr.builder().setLanguage("eng").setOutputType("txt").build();
-    private static final Fs FS_EMPTY = Fs.builder().build();
+    private static final Fs FS_EMPTY = new Fs();
     private static final Fs FS_FULL = Fs.builder()
             .setUrl("/path/to/docs")
             .setStoreSource(true)

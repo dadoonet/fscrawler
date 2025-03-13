@@ -20,7 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerMetadataTestCase;
 import org.junit.Test;
 
@@ -44,7 +44,7 @@ public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase 
         int numJobs = between(1, 30);
 
         // We generate so fake jobs first in metadata dir
-        FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(metadataDir);
+        FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
 
         for (int i = 0; i < numJobs; i++) {
             String jobName = jobNamePrefix + "-" + i;
@@ -52,10 +52,10 @@ public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase 
             Files.createDirectories(jobDir);
             if (randomBoolean()) {
                 // Yaml settings file
-                fsSettingsFileHandler.write(FsSettings.builder(jobName).build());
+                fsSettingsLoader.write(FsSettings.builder(jobName).build());
             } else {
                 // Json settings (empty dummy)
-                Files.createFile(jobDir.resolve(FsSettingsFileHandler.FILENAME_JSON));
+                Files.createFile(jobDir.resolve(FsSettingsLoader.SETTINGS_JSON));
             }
         }
 

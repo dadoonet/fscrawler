@@ -36,7 +36,7 @@ public class MetaFileHandler {
     private static final Logger logger = LogManager.getLogger();
     public final static Path DEFAULT_ROOT = Paths.get(System.getProperty("user.home"), ".fscrawler");
 
-    private final Path root;
+    protected final Path root;
 
     protected MetaFileHandler(Path root) {
         this.root = root;

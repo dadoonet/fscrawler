@@ -19,17 +19,19 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import org.github.gestalt.config.annotations.Config;
+
 import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
 public class FsSettings {
 
     private String name;
-    private Fs fs;
-    private Server server;
-    private Elasticsearch elasticsearch;
-    private Rest rest;
-    private Tags tags;
+    private Fs fs = null;
+    private Server server = null;
+    private Elasticsearch elasticsearch = null;
+    private Rest rest = null;
+    private Tags tags = null;
 
     public FsSettings() {
 

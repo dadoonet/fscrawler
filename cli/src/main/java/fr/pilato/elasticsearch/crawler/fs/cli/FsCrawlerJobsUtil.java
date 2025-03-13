@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,8 +41,8 @@ public class FsCrawlerJobsUtil {
                 // This is a directory. Let's see if we have the _settings.json file in it
                 if (Files.isDirectory(path)) {
                     String jobName = path.getFileName().toString();
-                    if (Files.exists(path.resolve(FsSettingsFileHandler.SETTINGS_YAML))
-                            || Files.exists(path.resolve(FsSettingsFileHandler.FILENAME_JSON))) {
+                    if (Files.exists(path.resolve(FsSettingsLoader.SETTINGS_YAML))
+                            || Files.exists(path.resolve(FsSettingsLoader.SETTINGS_JSON))) {
                         files.add(jobName);
                         logger.debug("Adding job [{}]", jobName);
                     } else {

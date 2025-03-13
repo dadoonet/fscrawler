@@ -1,0 +1,29 @@
+fs:
+  url: "/path/to/docs"
+  update_rate: "5m"
+  includes:
+    - "*.doc"
+    - "*.xls"
+  excludes:
+    - "resume.doc"
+  filters:
+    - ".*foo.*"
+    - "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$" # do not index files containing credit card numbers
+  json_support: false
+  add_as_inner_object: false
+  xml_support: false
+  follow_symlinks: false
+  remove_deleted: true
+  continue_on_error: false
+  ignore_above: "512mb"
+  filename_as_id: true
+  index_content: true
+  add_filesize: true
+  attributes_support: false
+  lang_detect: false
+  store_source: false
+  indexed_chars: "10000.0"
+  raw_metadata: false
+  checksum: "MD5"
+  index_folders: true
+  tika_config_path: "/path/to/tika-config.xml"

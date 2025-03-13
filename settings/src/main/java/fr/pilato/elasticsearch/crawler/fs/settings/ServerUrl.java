@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import jakarta.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,8 +32,8 @@ import java.util.Objects;
  * This is used in the Elasticsearch.Node class.
  */
 public class ServerUrl {
-    private String url;
-    private String cloudId;
+    @Nullable private String url;
+    @Nullable private String cloudId;
 
     public ServerUrl() {
 

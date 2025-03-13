@@ -19,11 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,7 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
-import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsFileHandler.SETTINGS_YAML;
+import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -81,14 +81,14 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         String jobName = "fscrawler_restart_command";
 
         // We generate a fake status first in metadata dir
-        FsSettingsFileHandler fsSettingsFileHandler = new FsSettingsFileHandler(metadataDir);
+        FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
         FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir);
 
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
 
 
-        fsSettingsFileHandler.write(FsSettings.builder(jobName).build());
+        fsSettingsLoader.write(FsSettings.builder(jobName).build());
         fsJobFileHandler.write(jobName, FsJob.builder().build());
 
         assertThat(Files.exists(jobDir.resolve(FsJobFileHandler.FILENAME)), is(true));
@@ -100,20 +100,58 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         assertThat(Files.exists(jobDir.resolve(FsJobFileHandler.FILENAME)), is(false));
     }
 
-    @Test(expected = JsonParseException.class)
+    @Test(expected = FsCrawlerIllegalConfigurationException.class)
     public void testWithWrongSettingsFile() throws Exception {
         String jobName = "fscrawler_wrong_settings";
 
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
         Files.writeString(jobDir.resolve(SETTINGS_YAML),
-                "name: \"test\"\n" +
+                "name: \"fscrawler_wrong_settings\"\n" +
                 "fs:\n" +
                 "  url: \"/path/to/docs\"\n" +
                 // Wrong indentation
-                " follow_symlink: false\n");
+                " follow_symlinks: false\n");
 
         String[] args = { "--config_dir", metadataDir.toString(), "--loop", "1", jobName };
+        FsCrawlerCli.main(args);
+    }
+
+    @Test
+    public void testWithEnvVariables() throws Exception {
+        String jobName = "fscrawler_env_variables";
+
+        Path jobDir = metadataDir.resolve(jobName);
+        Files.createDirectories(jobDir);
+        Files.writeString(jobDir.resolve(SETTINGS_YAML),
+                "name: \"${MY_JOB_NAME}\"\n" +
+                        "fs:\n" +
+                        "  url: \"${FSCRAWLER_FS_URL:=/tmp/test}\"\n");
+
+        String[] args = { "--config_dir", metadataDir.toString(), jobName };
+        // Create an environment variable
+        System.setProperty("MY_JOB_NAME", "fscrawler_env_variables");
+
+        try {
+            FsCrawlerCli.main(args);
+        } finally {
+            // Remove the environment variable
+            System.clearProperty("MY_JOB_NAME");
+        }
+    }
+
+    @Test(expected = FsCrawlerIllegalConfigurationException.class)
+    public void testWithEnvVariablesNotSet() throws Exception {
+        String jobName = "fscrawler_env_variables";
+
+        Path jobDir = metadataDir.resolve(jobName);
+        Files.createDirectories(jobDir);
+        Files.writeString(jobDir.resolve(SETTINGS_YAML),
+                "name: \"${MY_JOB_NAME}\"\n" +
+                        "fs:\n" +
+                        "  url: \"${FSCRAWLER_FS_URL:=/tmp/test}\"\n");
+
+        String[] args = { "--config_dir", metadataDir.toString(), jobName };
         FsCrawlerCli.main(args);
     }
 }
