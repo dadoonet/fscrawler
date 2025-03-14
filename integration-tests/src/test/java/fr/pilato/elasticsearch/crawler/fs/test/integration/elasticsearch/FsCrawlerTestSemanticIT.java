@@ -48,7 +48,7 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(getCrawlerName(),
                 startCrawlerDefinition().build(),
                 generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
-                        1, null, null, false, true),
+                        1, null, null, true),
                 null,
                 null);
 

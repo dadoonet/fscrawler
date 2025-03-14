@@ -10,10 +10,10 @@
     "fscrawler_mapping_file",
     "fscrawler_mapping_path",
     "fscrawler_mapping_attachment",
-    "fscrawler_mapping_content",
+    "fscrawler_mapping_content_vector",
     "fscrawler_mapping_meta"
   ],
   "_meta": {
-    "description": "FSCrawler template for documents"
+    "description": "FSCrawler template for documents with semantic support using basic vectorization"
   }
 }

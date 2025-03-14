@@ -1,0 +1,15 @@
+{
+  "template": {
+    "mappings": {
+      "properties": {
+        "content": {
+          "type": "text",
+          "copy_to": [ "content_semantic" ]
+        },
+        "content_semantic": {
+          "type": "semantic_text"
+        }
+      }
+    }
+  }
+}

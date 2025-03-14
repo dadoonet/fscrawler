@@ -177,11 +177,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         try {
             String esVersion = getVersion();
-            if (serverless) {
-                logger.info("Elasticsearch Client connected to serverless by Elastic");
-            } else {
-                logger.info("Elasticsearch Client connected to a node running version {}", esVersion);
-            }
+            logger.info("Elasticsearch Client connected to a node running version {}", esVersion);
         } catch (Exception e) {
             logger.warn("Failed to create elasticsearch client on {}. Message: {}.",
                     settings.getElasticsearch().toString(),
@@ -261,7 +257,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return version;
         }
         logger.debug("get version");
-        String response = httpGet("/");
+        String response = httpGet(null);
         // We parse the response
         DocumentContext document = parseJsonAsDocumentContext(response);
         // Cache the version and the major version
@@ -273,6 +269,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
         if ("serverless".equals(document.read("$.version.build_flavor"))) {
             logger.debug("We are running on Elastic serverless cloud so we can not consider version number.");
             serverless = true;
+            version = "serverless";
+            majorVersion = 99;
+            minorVersion = 999;
         };
         logger.debug("get version returns {} and {} as the major version number", version, majorVersion);
         return version;

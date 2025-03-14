@@ -41,6 +41,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -142,6 +143,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         copyDirs(from, currentTestResourceDir);
 
         logger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
+    }
+
+    @After
+    public void cleanTestResources() {
+        logger.info("  --> Test [{}] is now stopped", getCurrentTestName());
     }
 
     @BeforeClass
@@ -386,7 +392,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     protected static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
                                                                TimeValue timeValue, ByteSizeValue byteSize,
-                                                               boolean useLoginPassword, boolean useSemantic) {
+                                                               boolean useSemantic) {
         Elasticsearch.Builder builder = Elasticsearch.builder()
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                 .setBulkSize(bulkSize);
@@ -405,12 +411,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             builder.setByteSize(byteSize);
         }
 
-        if (useLoginPassword) {
-            builder.setUsername(testClusterUser);
-            builder.setPassword(testClusterPass);
-        } else {
-            builder.setCredentials(testApiKey, testClusterUser, testClusterPass);
-        }
+        builder.setCredentials(testApiKey, testClusterUser, testClusterPass);
 
         builder.setSslVerification(false);
 
