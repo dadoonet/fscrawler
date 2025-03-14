@@ -12,6 +12,7 @@ New
 
 * Add support for automatic semantic search when using a 8.17+ version with a trial or enterprise
   license. See :ref:`semantic_search`. **Warning**: this might slow down the ingestion process. Thanks to dadoonet.
+* Add support for Elastic cloud serverless. Thanks to dadoonet.
 * Using the REST API ``_document``, you can now fetch a document from the local dir, from an http website
   or from an S3 bucket. See :ref:`rest-service`. Thanks to dadoonet.
 * You can now remove a document in Elasticsearch using FSCrawler ``_document`` endpoint. See :ref:`rest-service`. Thanks to dadoonet.
