@@ -42,7 +42,8 @@ public class FsCrawlerTestEmptyFilesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have 2 files
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withSort("file.indexing_date"), 2L, null);
+
         DocumentContext doc01 = parseJsonAsDocumentContext(response.getHits().get(0).getSource());
         assertThat(doc01.read("$.file.filename"), is("01-not-empty.txt"));
         assertThat(doc01.read("$.content"), containsString("Hello World"));

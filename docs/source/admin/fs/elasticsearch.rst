@@ -80,7 +80,6 @@ FSCrawler defines the following `Component Templates <https://www.elastic.co/gui
 to define the index settings and mappings:
 
 - ``fscrawler_alias``: defines the alias ``fscrawler`` so you can search using this alias.
-- ``fscrawler_settings_shards``: defines the number of shards to use for the index.
 - ``fscrawler_settings_total_fields``: defines the maximum number of fields for the index.
 - ``fscrawler_mapping_attributes``: defines the mapping for the ``attributes`` field.
 - ``fscrawler_mapping_file``: defines the mapping for the ``file`` field.

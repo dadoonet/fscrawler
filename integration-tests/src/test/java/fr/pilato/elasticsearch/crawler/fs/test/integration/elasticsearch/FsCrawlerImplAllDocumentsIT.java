@@ -89,7 +89,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
                 FsSettings.builder("fscrawler_test_all_documents")
                         .setElasticsearch(generateElasticsearchConfig(
                                 "fscrawler_test_all_documents", "fscrawler_test_all_documents_folder",
-                                5, TimeValue.timeValueSeconds(1), null, true, false))
+                                5, TimeValue.timeValueSeconds(1), null, false))
                         .setFs(Fs.builder()
                                 .setUrl(testResourceTarget.toString())
                                 .setLangDetect(true)

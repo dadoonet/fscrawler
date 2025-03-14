@@ -535,7 +535,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat(uploadResponse.getMessage(), nullValue());
 
             // We wait until we have our document
-            response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+            response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withSort("file.indexing_date"), 2L, null);
             assertThat(JsonPath.read(response.getHits().get(1).getSource(), "$.file.filename"), is("robots.txt"));
             assertThat(JsonPath.read(response.getHits().get(1).getSource(), "$.file.filesize"), greaterThan(100));
             assertThat(JsonPath.read(response.getHits().get(1).getSource(), "$.content"), containsString("Sitemap"));

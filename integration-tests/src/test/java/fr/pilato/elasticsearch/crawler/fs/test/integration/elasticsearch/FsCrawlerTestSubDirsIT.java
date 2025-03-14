@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -138,7 +139,8 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
             Files.copy(sourceFile, newDir.resolve("sample.txt"));
         }
 
-        crawler = startCrawler();
+        crawler = startCrawler(getCrawlerName(), startCrawlerDefinition().build(),
+                endCrawlerDefinition(getCrawlerName()), null, null, null, TimeValue.timeValueMinutes(2));
 
         // We expect to have x files (<- whoa that's funny Mulder!)
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), subdirs+1, null);
@@ -181,8 +183,9 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         logger.debug("  --> Removing all dirs from [{}]", mainDir);
         deleteRecursively(mainDir);
 
-        // We expect to have 1 doc now
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
+        // We expect to have 1 doc now but this could take some time to happen
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir,
+                TimeValue.timeValueMinutes(2));
     }
 
     private void folderHitTester(DocumentContext document, int position, String expectedReal, Matcher<String> expectedVirtual,

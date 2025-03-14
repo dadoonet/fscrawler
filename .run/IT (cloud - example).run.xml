@@ -1,0 +1,19 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="IT (cloud - example)" type="JUnit" factoryName="JUnit">
+    <module name="fscrawler-it" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <option name="PACKAGE_NAME" value="fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch" />
+    <option name="MAIN_CLASS_NAME" value="" />
+    <option name="METHOD_NAME" value="" />
+    <option name="TEST_OBJECT" value="package" />
+    <option name="VM_PARAMETERS" value="-ea -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager -Dtests.cluster.apiKey=API_KEY== -Dtests.cluster.url=ES_URL" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
