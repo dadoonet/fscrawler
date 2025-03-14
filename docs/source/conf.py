@@ -53,7 +53,7 @@ release = read_version()
 downloadUrl = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/%s/fscrawler-%s.zip" % (version, version)
 
 if release.endswith('-SNAPSHOT'):
-    downloadUrl = "https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/%s/" % release
+    downloadUrl = "https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/%s/" % release
 
 # -- General configuration ---------------------------------------------------
 
