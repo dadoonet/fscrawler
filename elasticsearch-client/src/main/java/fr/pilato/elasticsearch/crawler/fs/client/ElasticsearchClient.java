@@ -261,7 +261,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return version;
         }
         logger.debug("get version");
-        String response = httpGet(null);
+        String response = httpGet("/");
         // We parse the response
         DocumentContext document = parseJsonAsDocumentContext(response);
         // Cache the version and the major version
