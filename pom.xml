@@ -95,14 +95,6 @@
         <!-- When we need to disable a specific CVE -->
         <ossindex.exclude />
 
-        <!-- For DockerHub to push images -->
-        <!--suppress UnresolvedMavenProperty -->
-        <env.DOCKER_USERNAME>${DOCKER_USERNAME}</env.DOCKER_USERNAME>
-        <!--suppress UnresolvedMavenProperty -->
-        <env.DOCKER_PASSWORD>${DOCKER_PASSWORD}</env.DOCKER_PASSWORD>
-        <docker.push.username>${env.DOCKER_USERNAME}</docker.push.username>
-        <docker.push.password>${env.DOCKER_PASSWORD}</docker.push.password>
-
         <java.compiler.version>11</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

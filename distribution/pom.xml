@@ -148,12 +148,6 @@
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
                 <configuration>
-                    <authConfig>
-                        <push>
-                            <username>${docker.push.username}</username>
-                            <password>${docker.push.password}</password>
-                        </push>
-                    </authConfig>
                     <!-- Create multiple images -->
                     <images combine.self="override">
                         <image>
