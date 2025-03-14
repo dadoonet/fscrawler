@@ -16,3 +16,4 @@ target
 /contrib/docker-compose-example-workplace/config/idx/_status.json
 /contrib/docker-compose-example-workplace/config/_default/
 /contrib/docker-compose-example-workplace/logs/
+/.run/IT (serverless).run.xml
