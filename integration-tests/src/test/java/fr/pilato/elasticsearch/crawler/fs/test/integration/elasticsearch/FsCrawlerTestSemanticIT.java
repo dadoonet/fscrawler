@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
@@ -50,7 +51,9 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
                 generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
                         1, null, null, true),
                 null,
-                null);
+                null,
+                null,
+                TimeValue.timeValueMinutes(5));
 
         // We expect to have 3 files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
