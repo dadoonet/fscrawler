@@ -24,10 +24,10 @@ import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.io.FilenameUtils;
@@ -51,11 +51,7 @@ import java.util.stream.Collectors;
 public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
     private static final Logger logger = LogManager.getLogger();
 
-    private FTPClient ftp;
-
-    private final OutputStream loggerOutputStream = IoBuilder.forLogger(logger).buildOutputStream();
-
-    private final PrintCommandListener ftpListener = new PrintCommandListener(new PrintWriter(loggerOutputStream));
+    private final FTPClient ftp;
 
     private boolean isUtf8 = false;
 
@@ -63,6 +59,14 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
     public FileAbstractorFTP(FsSettings fsSettings) {
         super(fsSettings);
+        ftp = new FTPClient();
+        if (logger.isTraceEnabled() || logger.isDebugEnabled()) {
+            ftp.addProtocolCommandListener(
+                    new PrintCommandListener(
+                            new PrintWriter(IoBuilder.forLogger(logger).buildOutputStream())));
+        }
+        // send a safe command (i.e. NOOP) over the control connection to reset the router's idle timer
+        ftp.setControlKeepAliveTimeout(Duration.ofSeconds(300));
     }
 
     @Override
@@ -166,12 +170,6 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
     @Override
     public void open() throws IOException {
-        ftp = new FTPClient();
-        if (logger.isTraceEnabled() || logger.isDebugEnabled()) {
-            ftp.addProtocolCommandListener(ftpListener);
-        }
-        // send a safe command (i.e. NOOP) over the control connection to reset the router's idle timer
-        ftp.setControlKeepAliveTimeout(300);
         openFTPConnection();
     }
 
