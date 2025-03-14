@@ -83,7 +83,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     private Elasticsearch endCrawlerDefinition(String indexDocName, String indexFolderName) {
-        return generateElasticsearchConfig(indexDocName, indexFolderName, 1, null, null, false, false);
+        return generateElasticsearchConfig(indexDocName, indexFolderName, 1, null, null, false);
     }
 
     protected FsCrawlerImpl startCrawler() throws Exception {
