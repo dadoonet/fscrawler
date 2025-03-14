@@ -127,6 +127,11 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <!-- We don't deploy our IT artifact to maven central -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+            </plugin>
 
             <plugin>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
