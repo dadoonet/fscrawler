@@ -115,7 +115,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_URL }}
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_URL }}
 
   # We run this job in parallel after the build
   build-docker:
