@@ -458,6 +458,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 return "green".equals(health) || "yellow".equals(health);
             });
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new ElasticsearchClientException("Await interrupted while waiting for healthy index [" +
                     index + "]", e);
         }
