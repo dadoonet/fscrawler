@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.Await;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
@@ -272,7 +273,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             version = "serverless";
             majorVersion = 99;
             minorVersion = 999;
-        };
+        }
         logger.debug("get version returns {} and {} as the major version number", version, majorVersion);
         return version;
     }
@@ -446,15 +447,33 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     /**
-     * Wait for an index to become at least yellow (all primaries assigned), up to 5 seconds
+     * Wait for an index to become at least yellow (all primaries assigned), up to 10 seconds
      * @param index index name
      */
     @Override
     public void waitForHealthyIndex(String index) throws ElasticsearchClientException {
-        logger.debug("wait for yellow health on index [{}]", index);
-        httpGet("_cluster/health/" + index,
-                new AbstractMap.SimpleImmutableEntry<>("wait_for_status", "yellow"),
-                new AbstractMap.SimpleImmutableEntry<>("timeout", "5s"));
+        try {
+            Await.awaitBusy(() -> {
+                String health = catIndicesHealth(index);
+                return "green".equals(health) || "yellow".equals(health);
+            });
+        } catch (InterruptedException e) {
+            throw new ElasticsearchClientException("Await interrupted while waiting for healthy index [" +
+                    index + "]", e);
+        }
+    }
+
+    private String catIndicesHealth(String index) {
+        try {
+            String response = httpGet("_cat/indices/" + index,
+                new AbstractMap.SimpleImmutableEntry<>("h", "health"));
+            DocumentContext document = parseJsonAsDocumentContext(response);
+            String health = document.read("$[0].health");
+            logger.trace("index [{}] health: [{}]", index, health);
+            return health;
+        } catch (ElasticsearchClientException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
