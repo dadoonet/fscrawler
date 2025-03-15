@@ -172,7 +172,8 @@ Some options are available from the command line when running the tests:
 * ``tests.output`` what should be displayed to the console while running tests. By default it is set to ``onError`` but can be set to ``always``
 * ``tests.verbose`` ``false`` by default
 * ``tests.seed`` if you need to reproduce a specific failure using the exact same random seed
-* ``tests.timeoutSuite`` how long a single can run. It's set by default to ``600000`` which means 5 minutes.
+* ``tests.timeoutSuite`` how long a full suite of tests can run. It's set by default to ``600000`` which means 5 minutes.
+* ``tests.timeout`` how long a single test can run. It's set by default to ``600000`` which means 5 minutes.
 * ``tests.locale`` by default it's set to ``random`` but you can force the locale to use.
 * ``tests.timezone`` by default it's set to ``random`` but you can force the timezone to use, like ``CEST`` or ``-0200``.
 

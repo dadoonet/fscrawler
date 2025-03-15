@@ -51,7 +51,6 @@ import static org.junit.Assert.fail;
 
 @RunWith(RandomizedRunner.class)
 @Listeners({FSCrawlerReproduceInfoPrinter.class})
-@TimeoutSuite(millis = 5 * 60 * 1000)
 @ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
 @ThreadLeakLingering(linger = 5000) // 5 sec lingering
 @ThreadLeakFilters(filters = {
