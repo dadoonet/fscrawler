@@ -195,6 +195,7 @@
                         <systemProperties combine.children="append">
                             <arg.common>arg.common</arg.common>
                             <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
+                            <tests.timeout>${tests.timeout}</tests.timeout>
                             <tests.locale>${tests.locale}</tests.locale>
                             <tests.timezone>${tests.timezone}</tests.timezone>
                             <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>

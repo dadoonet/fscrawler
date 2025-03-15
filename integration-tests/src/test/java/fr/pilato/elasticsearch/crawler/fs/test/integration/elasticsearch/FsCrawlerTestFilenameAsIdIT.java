@@ -30,6 +30,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 

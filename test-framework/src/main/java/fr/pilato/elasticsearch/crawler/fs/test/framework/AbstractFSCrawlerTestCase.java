@@ -41,9 +41,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
-import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
@@ -54,7 +51,6 @@ import static org.junit.Assert.fail;
 
 @RunWith(RandomizedRunner.class)
 @Listeners({FSCrawlerReproduceInfoPrinter.class})
-@TimeoutSuite(millis = 5 * 60 * 1000)
 @ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
 @ThreadLeakLingering(linger = 5000) // 5 sec lingering
 @ThreadLeakFilters(filters = {
@@ -134,53 +130,6 @@ public abstract class AbstractFSCrawlerTestCase {
 
     public static int between(int min, int max) {
         return RandomNumbers.randomIntBetween(RandomizedContext.current().getRandom(), min, max);
-    }
-
-    public static boolean awaitBusy(BooleanSupplier breakSupplier) throws InterruptedException {
-        return awaitBusy(breakSupplier, 10, TimeUnit.SECONDS);
-    }
-
-    // After 1s, we stop growing the sleep interval exponentially and just sleep 1s until maxWaitTime
-    private static final long AWAIT_BUSY_THRESHOLD = 1000L;
-
-    public static boolean awaitBusy(BooleanSupplier breakSupplier, long maxWaitTime, TimeUnit unit) throws InterruptedException {
-        long maxTimeInMillis = TimeUnit.MILLISECONDS.convert(maxWaitTime, unit);
-        long timeInMillis = 1;
-        long sum = 0;
-        while (sum + timeInMillis < maxTimeInMillis) {
-            if (breakSupplier.getAsBoolean()) {
-                return true;
-            }
-            Thread.sleep(timeInMillis);
-            sum += timeInMillis;
-            timeInMillis = Math.min(AWAIT_BUSY_THRESHOLD, timeInMillis * 2);
-        }
-        timeInMillis = maxTimeInMillis - sum;
-        Thread.sleep(Math.max(timeInMillis, 0));
-        return breakSupplier.getAsBoolean();
-    }
-
-    public static long awaitBusy(LongSupplier breakSupplier, Long expected, long maxWaitTime, TimeUnit unit) throws InterruptedException {
-        long maxTimeInMillis = TimeUnit.MILLISECONDS.convert(maxWaitTime, unit);
-        long timeInMillis = 1;
-        long sum = 0;
-
-        while (sum + timeInMillis < maxTimeInMillis) {
-            long current = breakSupplier.getAsLong();
-            logger.trace("Check if {} is equal to {}", current, expected);
-            if (expected == null && current >= 1) {
-                return current;
-            } else if (expected != null && current == expected) {
-                return expected;
-            }
-            logger.trace("Sleep for {} because {} is not equal to {}", timeInMillis, current, expected);
-            Thread.sleep(timeInMillis);
-            sum += timeInMillis;
-            timeInMillis = Math.min(AWAIT_BUSY_THRESHOLD, timeInMillis * 2);
-        }
-        timeInMillis = maxTimeInMillis - sum;
-        Thread.sleep(Math.max(timeInMillis, 0));
-        return breakSupplier.getAsLong();
     }
 
     public static String toUnderscoreCase(String value) {

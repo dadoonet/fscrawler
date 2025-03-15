@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;

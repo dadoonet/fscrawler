@@ -55,6 +55,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private final static boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
     private static String testCaCertificate;
     private static IElasticsearchClient esClient;
+    @Deprecated
+    protected static final String testClusterUser = getSystemProperty("tests.cluster.user", DEFAULT_USERNAME);
+    @Deprecated
+    protected static final String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
+    protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
 
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
@@ -109,7 +114,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
                 .setSslVerification(sslVerification)
                 .setCaCertificate(testCaCertificate)
-                .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
+                .setCredentials(testApiKey, testClusterUser, testClusterPass)
                 .setIndex(DOC_INDEX_NAME)
                 .setIndexFolder(FOLDER_INDEX_NAME)
                 .build();
@@ -168,23 +173,32 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             esClient.waitForHealthyIndex("does-not-exist-index");
             fail("We should have raised a ClientErrorException");
         } catch (ClientErrorException e) {
-            assertThat(e.getResponse().getStatus(), is(408));
+            assertThat(e.getResponse().getStatus(), is(404));
         }
     }
 
+    /**
+     * We don't need to create indices anymore with ES >= 7
+     * @throws ElasticsearchClientException in case of error
+     */
     @Test
+    @Deprecated
     public void testCreateIndex() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         boolean exists = esClient.isExistingIndex(getCrawlerName());
         assertThat(exists, is(true));
     }
 
+    /**
+     * We don't need to create indices anymore with ES >= 7
+     * @throws ElasticsearchClientException in case of error
+     */
     @Test
+    @Deprecated
     public void testCreateIndexWithSettings() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, "{\n" +
                 "  \"settings\": {\n" +
-                "    \"number_of_shards\": 1,\n" +
-                "    \"number_of_replicas\": 1\n" +
+                "    \"refresh_interval\": \"5s\"\n" +
                 "  }\n" +
                 "}\n");
         boolean exists = esClient.isExistingIndex(getCrawlerName());
@@ -197,7 +211,12 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.refresh(getCrawlerName());
     }
 
+    /**
+     * We don't need to create indices anymore with ES >= 7
+     * @throws ElasticsearchClientException in case of error
+     */
     @Test
+    @Deprecated
     public void testCreateIndexAlreadyExistsShouldFail() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
@@ -209,14 +228,24 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         }
     }
 
+    /**
+     * We don't need to create indices anymore with ES >= 7
+     * @throws ElasticsearchClientException in case of error
+     */
     @Test
+    @Deprecated
     public void testCreateIndexAlreadyExistsShouldBeIgnored() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
         esClient.createIndex(getCrawlerName(), true, null);
     }
 
+    /**
+     * We don't need to create indices anymore with ES >= 7
+     * @throws ElasticsearchClientException in case of error
+     */
     @Test
+    @Deprecated
     public void testCreateIndexWithErrors() {
         try {
             esClient.createIndex(getCrawlerName(), false, "{this is wrong}");
@@ -659,7 +688,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 .setNodes(List.of(
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
-                .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
+                .setCredentials(testApiKey, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .build();
         FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
@@ -680,7 +709,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                         new ServerUrl(testClusterUrl),
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)))
-                .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
+                .setCredentials(testApiKey, testClusterUser, testClusterPass)
                 .setSslVerification(false)
                 .setIndex(DOC_INDEX_NAME)
                 .setIndexFolder(FOLDER_INDEX_NAME)

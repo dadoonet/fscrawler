@@ -67,6 +67,7 @@ import java.util.zip.ZipFile;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
+import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
 import static org.hamcrest.MatcherAssert.assertThat;
