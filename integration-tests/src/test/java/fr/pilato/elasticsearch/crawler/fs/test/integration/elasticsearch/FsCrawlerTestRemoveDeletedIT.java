@@ -39,6 +39,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 
+import static java.lang.Thread.sleep;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.fail;
@@ -171,11 +172,8 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_moving_files() throws Exception {
+        // Let's first create one old file: old = created before the crawler started
         String filename = "oldfile.txt";
-
-        crawler = startCrawler();
-
-        // Let's first create some files
         logger.info(" ---> Creating a file [{}]", filename);
 
         Path tmpDir = rootTmpDir.resolve("resources").resolve(getCurrentTestName() + "-tmp");
@@ -186,14 +184,19 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         Path file = Files.createFile(tmpDir.resolve(filename));
         Files.writeString(file, "Hello world", StandardCharsets.UTF_8);
 
+        // Start the crawler
+        crawler = startCrawler();
+
         // We should have 1 doc first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
-        // We remove a directory
+        // We move the file from the tmp dir to the crawler dir
         logger.info("  ---> Moving file [{}] to [{}]", file, currentTestResourceDir);
         Files.move(file, currentTestResourceDir.resolve(filename));
+        // We need to "touch" the file we just moved
+        Files.setLastModifiedTime(currentTestResourceDir.resolve(filename), FileTime.from(Instant.now()));
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
@@ -206,6 +209,10 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_add_new_file() throws Exception {
+        // We need to wait for 2 seconds before starting the test as the file might have just been created
+        // It's due to https://github.com/dadoonet/fscrawler/issues/82 which removes 2 seconds from the last scan date
+        sleep(2000L);
+
         crawler = startCrawler();
 
         // We should have one doc first
