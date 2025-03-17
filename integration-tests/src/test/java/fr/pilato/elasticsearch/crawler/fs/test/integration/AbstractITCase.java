@@ -421,8 +421,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         return builder.build();
     }
 
-    protected static void refresh() throws IOException, ElasticsearchClientException {
-        documentService.refresh(null);
+    protected static void refresh(String indexName) throws IOException, ElasticsearchClientException {
+        documentService.refresh(indexName);
     }
 
     /**
@@ -461,7 +461,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             // Let's search for entries
             try {
                 // Make sure we refresh indexed docs before counting
-                refresh();
+                refresh(request.getIndex());
                 response[0] = documentService.search(request);
             } catch (RuntimeException | IOException e) {
                 logger.warn("error caught", e);

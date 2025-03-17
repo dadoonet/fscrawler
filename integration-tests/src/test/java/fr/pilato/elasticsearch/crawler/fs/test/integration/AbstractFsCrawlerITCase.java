@@ -134,8 +134,9 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
 
         countTestHelper(new ESSearchRequest().withIndex(jobName), null, null);
 
-        // Make sure we refresh indexed docs before launching tests
-        refresh();
+        // Make sure we refresh indexed docs and folders before launching tests
+        refresh(jobName);
+        refresh(jobName + INDEX_SUFFIX_FOLDER);
 
         return crawler;
     }
