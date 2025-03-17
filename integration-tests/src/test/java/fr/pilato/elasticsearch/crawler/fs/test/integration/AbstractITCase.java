@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
@@ -422,7 +423,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     protected static void refresh(String indexName) throws IOException, ElasticsearchClientException {
-        documentService.refresh(indexName);
+        try {
+            documentService.refresh(indexName);
+        } catch (NotFoundException e) {
+            // The index might not have been created yet. It could happen with cloud services, like serverless.
+            // We can safely ignore it.
+            logger.trace("Index [{}] does not exist yet so we can't refresh it.", indexName);
+        }
     }
 
     /**
