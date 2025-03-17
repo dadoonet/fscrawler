@@ -492,13 +492,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             matcher = equalTo(expected);
         }
 
-        if (matcher.matches(hits)) {
-            logger.debug("     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
-            logContentOfDir(path, Level.DEBUG);
-        } else {
-            logger.warn("     ---> expecting [{}] but got [{}] documents in {}", expected, hits, request.getIndex());
-            logContentOfDir(path, Level.WARN);
-        }
+        Level logLevel = matcher.matches(hits) ? Level.DEBUG : Level.WARN;
+        logger.log(logLevel, "     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
+        logContentOfDir(path, logLevel);
         assertThat(hits, matcher);
 
         return response[0];

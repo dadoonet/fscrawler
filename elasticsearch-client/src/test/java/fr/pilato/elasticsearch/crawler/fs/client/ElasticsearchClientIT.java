@@ -2,6 +2,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -12,8 +13,10 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hamcrest.Matcher;
 import org.junit.*;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
@@ -31,8 +34,10 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHECK_NODES_EVERY;
+import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
@@ -256,7 +261,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testSearch() throws ElasticsearchClientException {
+    public void testSearch() throws Exception {
         esClient.createIndex(getCrawlerName(), false, "{\n" +
                 "  \"mappings\": {\n" +
                 "    \"properties\": {\n" +
@@ -282,7 +287,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.indexSingle(getCrawlerName(), "3", "{ \"number\": 1 }", null);
         esClient.indexSingle(getCrawlerName(), "4", "{ \"number\": 2 }", null);
 
-        esClient.refresh(getCrawlerName());
+        // Wait until we have 4 documents indexed
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L, TimeValue.timeValueSeconds(10));
 
         // match_all
         {
@@ -513,7 +519,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testBulk() throws ElasticsearchClientException {
+    public void testBulk() throws Exception {
         {
             long nbItems = RandomizedTest.randomLongBetween(5, 20);
 
@@ -532,9 +538,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(bulkResponse.hasFailures(), is(false));
             assertThat(bulkResponse.getItems(), not(emptyIterable()));
 
-            esClient.refresh(getCrawlerName());
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
-            assertThat(response.getTotalHits(), is(nbItems));
+            // Wait until we have the expected number of documents indexed
+            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems, TimeValue.timeValueSeconds(10));
         }
         {
             esClient.deleteIndex(getCrawlerName());
@@ -560,9 +565,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(bulkResponse.hasFailures(), is(false));
             assertThat(bulkResponse.getItems(), not(emptyIterable()));
 
-            esClient.refresh(getCrawlerName());
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
-            assertThat(response.getTotalHits(), is(nbItems - nbItemsToDelete));
+            // Wait until we have the expected number of documents indexed
+            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems - nbItemsToDelete, TimeValue.timeValueSeconds(10));
         }
         {
             esClient.deleteIndex(getCrawlerName());
@@ -587,9 +591,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(bulkResponse.hasFailures(), is(false));
             assertThat(bulkResponse.getItems(), not(emptyIterable()));
 
-            esClient.refresh(getCrawlerName());
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
-            assertThat(response.getTotalHits(), is(nbItems));
+            // Wait until we have the expected number of documents indexed
+            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems, TimeValue.timeValueSeconds(10));
         }
         {
             esClient.deleteIndex(getCrawlerName());
@@ -638,27 +641,24 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             long errors = bulkResponse.getItems().stream().filter(FsCrawlerBulkResponse.BulkItemResponse::isFailed).count();
             assertThat(errors, is(nbErrors));
 
-            esClient.refresh(getCrawlerName());
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
-            assertThat(response.getTotalHits(), is(nbItems - nbErrors));
+            // Wait until we have the expected number of documents indexed
+            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems - nbErrors, TimeValue.timeValueSeconds(10));
         }
     }
 
     @Test
-    public void testDeleteSingle() throws ElasticsearchClientException {
+    public void testDeleteSingle() throws Exception {
         esClient.indexSingle(getCrawlerName(), "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
         esClient.indexSingle(getCrawlerName(), "2", "{ \"foo\": { \"bar\": \"baz\" } }", null);
         esClient.indexSingle(getCrawlerName(), "3", "{ \"number\": 1 }", null);
         esClient.indexSingle(getCrawlerName(), "4", "{ \"number\": 2 }", null);
 
-        esClient.refresh(getCrawlerName());
-        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L, TimeValue.timeValueSeconds(10));
         assertThat(response.getTotalHits(), is(4L));
 
         esClient.deleteSingle(getCrawlerName(), "1");
-        esClient.refresh(getCrawlerName());
 
-        response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, TimeValue.timeValueSeconds(10));
         assertThat(response.getTotalHits(), is(3L));
 
         try {
@@ -667,9 +667,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         } catch (ElasticsearchClientException e) {
             assertThat(e.getMessage(), is("Document " + getCrawlerName() + "/99999 does not exist"));
         }
-        esClient.refresh(getCrawlerName());
 
-        response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, TimeValue.timeValueSeconds(10));
         assertThat(response.getTotalHits(), is(3L));
     }
 
@@ -869,8 +868,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         // We flush the bulk request
         esClient.flush();
 
-        // We refresh the index
-        esClient.refresh(DOC_INDEX_NAME);
+        // Wait until we have the expected number of documents indexed
+        countTestHelper(new ESSearchRequest().withIndex(DOC_INDEX_NAME), 3L, TimeValue.timeValueSeconds(10));
 
         // We can run some queries to check that semantic search actually works as expected
         assertThat(esClient.search(new ESSearchRequest()
@@ -925,5 +924,57 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     protected String getCrawlerName() {
         String testName = "fscrawler_".concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
         return testName.contains(" ") ? split(testName, " ")[0] : testName;
+    }
+
+    /**
+     * Check that we have the expected number of docs or at least one if expected is null
+     *
+     * @param request   Elasticsearch request to run.
+     * @param expected  expected number of docs. Null if at least 1.
+     * @param timeout   Time before we declare a failure
+     * @return the search response if further tests are needed
+     * @throws Exception in case of error
+     */
+    public ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final TimeValue timeout) throws Exception {
+
+        final ESSearchResponse[] response = new ESSearchResponse[1];
+
+        // We wait before considering a failing test
+        logger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
+                expected == null ? "some" : expected, request.getIndex());
+        long hits = awaitBusy(() -> {
+            long totalHits;
+
+            // Let's search for entries
+            try {
+                // Make sure we refresh indexed docs before counting
+                esClient.refresh(request.getIndex());
+                response[0] = esClient.search(request);
+            } catch (RuntimeException e) {
+                logger.warn("error caught", e);
+                return -1;
+            } catch (ElasticsearchClientException e) {
+                // TODO create a NOT FOUND Exception instead
+                logger.debug("error caught", e);
+                return -1;
+            }
+            totalHits = response[0].getTotalHits();
+
+            logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+
+            return totalHits;
+        }, expected, timeout.millis(), TimeUnit.MILLISECONDS);
+
+        Matcher<Long> matcher;
+        if (expected == null) {
+            matcher = greaterThan(0L);
+        } else {
+            matcher = equalTo(expected);
+        }
+
+        logger.log(matcher.matches(hits) ? Level.DEBUG : Level.WARN, "     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
+        assertThat(hits, matcher);
+
+        return response[0];
     }
 }
