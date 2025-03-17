@@ -427,12 +427,17 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     /**
-     * Refresh an index
+     * Refresh an index (only used in tests)
      * @param index index name
      * @throws ElasticsearchClientException In case of error
      */
     @Override
     public void refresh(String index) throws ElasticsearchClientException {
+        if (serverless) {
+            logger.debug("Skipping refresh on serverless");
+            return;
+        }
+
         logger.debug("refresh index [{}]", index);
         String url = index + "/_refresh";
         if (index == null) {
