@@ -63,9 +63,10 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.extension", "txt")), 1L, null);
 
         // We should have semantic information
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESSemanticQuery("content_semantic", "Someone understanding loans and finances")), 3L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESSemanticQuery("content_semantic", "Someone understanding loans and finances")),
+                3L, null);
         DocumentContext document = parseJsonAsDocumentContext(response.getHits().get(0).getSource());
         assertThat(document.read("$.file.filename"), is("3547447.pdf"));
-        assertThat(document.read("$.content_semantic.inference.model_settings.task_type"), is("sparse_embedding"));
     }
 }

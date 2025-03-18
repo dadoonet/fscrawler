@@ -124,16 +124,20 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     public Collection<String> getFolderDirectory(String path) throws Exception {
         Collection<String> files = new ArrayList<>();
 
-        ESSearchResponse response = client.search(
-                new ESSearchRequest()
-                        .withIndex(settings.getElasticsearch().getIndexFolder())
-                        .withSize(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                        .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
+        try {
+            ESSearchResponse response = client.search(
+                    new ESSearchRequest()
+                            .withIndex(settings.getElasticsearch().getIndexFolder())
+                            .withSize(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                            .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
 
-        if (response.getHits() != null) {
-            for (ESSearchHit hit : response.getHits()) {
-                files.add(JsonPath.read(hit.getSource(), "$.path.real"));
+            if (response.getHits() != null) {
+                for (ESSearchHit hit : response.getHits()) {
+                    files.add(JsonPath.read(hit.getSource(), "$.path.real"));
+                }
             }
+        } catch (ElasticsearchClientException e) {
+            logger.debug("Index [{}] doesn't exist yet. We just return an empty list.", settings.getElasticsearch().getIndexFolder());
         }
 
         return files;

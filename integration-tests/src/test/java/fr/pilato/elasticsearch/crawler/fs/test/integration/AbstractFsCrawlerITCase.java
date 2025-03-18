@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -133,8 +134,9 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
 
         countTestHelper(new ESSearchRequest().withIndex(jobName), null, null);
 
-        // Make sure we refresh indexed docs before launching tests
-        refresh();
+        // Make sure we refresh indexed docs and folders before launching tests
+        refresh(jobName);
+        refresh(jobName + INDEX_SUFFIX_FOLDER);
 
         return crawler;
     }

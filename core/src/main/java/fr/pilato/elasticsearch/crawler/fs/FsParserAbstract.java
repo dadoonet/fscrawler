@@ -138,8 +138,10 @@ public abstract class FsParserAbstract extends FsParser {
             int run = runNumber.incrementAndGet();
 
             try {
-                logger.debug("Fs crawler thread [{}] is now running. Run #{}...", fsSettings.getName(), run);
+                logger.info("Run #{} starting...", run);
                 stats = new ScanStatistic(fsSettings.getFs().getUrl());
+                LocalDateTime startDate = LocalDateTime.now();
+                stats.setStartTime(startDate);
 
                 fileAbstractor.open();
 
@@ -150,7 +152,9 @@ public abstract class FsParserAbstract extends FsParser {
                 String rootPathId = SignTool.sign(fsSettings.getFs().getUrl());
                 stats.setRootPathId(rootPathId);
 
-                LocalDateTime scanDatenew = LocalDateTime.now();
+                // We need to round that latest date to the lower second and remove 2 seconds.
+                // See #82: https://github.com/dadoonet/fscrawler/issues/82
+                LocalDateTime scanDatenew = startDate.minusSeconds(2);
                 LocalDateTime scanDate = getLastDateFromMeta(fsSettings.getName());
 
                 // We only index the root directory once (first run)
@@ -165,7 +169,14 @@ public abstract class FsParserAbstract extends FsParser {
 
                 addFilesRecursively(fsSettings.getFs().getUrl(), scanDate);
 
+                stats.setEndTime(LocalDateTime.now());
+                logger.info("Run #{}: indexed [{}], deleted [{}], documents up to [{}]. " +
+                                "Started at [{}], finished at [{}], took [{}]", run,
+                        stats.getNbDocScan(), stats.getNbDocDeleted(), scanDatenew,
+                        stats.getStartTime(), stats.getEndTime(), stats.computeDuration());
                 updateFsJob(fsSettings.getName(), scanDatenew);
+                // TODO Update stats
+                // updateStats(fsSettings.getName(), stats);
             } catch (Exception e) {
                 logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
                 if (logger.isDebugEnabled()) {
@@ -173,7 +184,7 @@ public abstract class FsParserAbstract extends FsParser {
                 }
             } finally {
                 try {
-                    logger.info("Closing FS crawler file abstractor [{}].", fileAbstractor.getClass().getSimpleName());
+                    logger.debug("Closing FS crawler file abstractor [{}].", fileAbstractor.getClass().getSimpleName());
                     fileAbstractor.close();
                 } catch (Exception e) {
                     logger.warn("Error while closing the connection: {}", e.getMessage());
@@ -224,11 +235,7 @@ public abstract class FsParserAbstract extends FsParser {
      * @param scanDate last date we scan the dirs
      * @throws Exception In case of error
      */
-    private void updateFsJob(String jobName, LocalDateTime scanDate) throws Exception {
-        // We need to round that latest date to the lower second and
-        // remove 2 seconds.
-        // See #82: https://github.com/dadoonet/fscrawler/issues/82
-        scanDate = scanDate.minusSeconds(2);
+    private void updateFsJob(final String jobName, final LocalDateTime scanDate) throws Exception {
         FsJob fsJob = FsJob.builder()
                 .setName(jobName)
                 .setLastrun(scanDate)
@@ -240,7 +247,7 @@ public abstract class FsParserAbstract extends FsParser {
                 jobName, scanDate, stats.getNbDocScan(), stats.getNbDocDeleted());
     }
 
-    private void addFilesRecursively(String filepath, LocalDateTime lastScanDate)
+    private void addFilesRecursively(final String filepath, final LocalDateTime lastScanDate)
             throws Exception {
         logger.debug("indexing [{}] content", filepath);
 
@@ -296,6 +303,9 @@ public abstract class FsParserAbstract extends FsParser {
                             fsFiles.add(filename);
                             if (child.getLastModifiedDate().isAfter(lastScanDate) ||
                                     (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
+                                logger.debug("    - modified: creation date {} , file date {}, last scan date {}",
+                                        child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
+
                                 if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
                                     InputStream inputStream = null;
                                     try {

@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
@@ -67,6 +68,7 @@ import java.util.zip.ZipFile;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
+import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -420,8 +422,14 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         return builder.build();
     }
 
-    protected static void refresh() throws IOException, ElasticsearchClientException {
-        documentService.refresh(null);
+    protected static void refresh(String indexName) throws IOException, ElasticsearchClientException {
+        try {
+            documentService.refresh(indexName);
+        } catch (NotFoundException e) {
+            // The index might not have been created yet. It could happen with cloud services, like serverless.
+            // We can safely ignore it.
+            logger.trace("Index [{}] does not exist yet so we can't refresh it.", indexName);
+        }
     }
 
     /**
@@ -460,7 +468,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             // Let's search for entries
             try {
                 // Make sure we refresh indexed docs before counting
-                refresh();
+                refresh(request.getIndex());
                 response[0] = documentService.search(request);
             } catch (RuntimeException | IOException e) {
                 logger.warn("error caught", e);
@@ -484,13 +492,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             matcher = equalTo(expected);
         }
 
-        if (matcher.matches(hits)) {
-            logger.debug("     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
-            logContentOfDir(path, Level.DEBUG);
-        } else {
-            logger.warn("     ---> expecting [{}] but got [{}] documents in {}", expected, hits, request.getIndex());
-            logContentOfDir(path, Level.WARN);
-        }
+        Level logLevel = matcher.matches(hits) ? Level.DEBUG : Level.WARN;
+        logger.log(logLevel, "     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
+        logContentOfDir(path, logLevel);
         assertThat(hits, matcher);
 
         return response[0];

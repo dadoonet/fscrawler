@@ -19,55 +19,56 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Provide Scan Statistics
  *
  * @author David Pilato (aka dadoonet)
  */
 public class ScanStatistic {
-    private int nbDocScan;
-    private int nbDocDeleted;
-    private String rootPath;
+    private final AtomicInteger nbDocScan = new AtomicInteger();
+    private final AtomicInteger nbDocDeleted = new AtomicInteger();
+    private String rootPath = "/";
     private String rootPathId;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
 
     public ScanStatistic() {
-        this.rootPath = "/";
-        this.nbDocScan = 0;
-        this.nbDocDeleted = 0;
     }
 
     public ScanStatistic(String rootPath) {
         this.rootPath = rootPath;
-        this.nbDocScan = 0;
-        this.nbDocDeleted = 0;
     }
 
     /**
      * @return the nbDocScan
      */
     public int getNbDocScan() {
-        return nbDocScan;
+        return nbDocScan.get();
     }
 
     /**
      * @param nbDocScan the nbDocScan to set
      */
     public void setNbDocScan(int nbDocScan) {
-        this.nbDocScan = nbDocScan;
+        this.nbDocScan.set(nbDocScan);
     }
 
     /**
      * @return the nbDocDeleted
      */
     public int getNbDocDeleted() {
-        return nbDocDeleted;
+        return nbDocDeleted.get();
     }
 
     /**
      * @param nbDocDeleted the nbDocDeleted to set
      */
     public void setNbDocDeleted(int nbDocDeleted) {
-        this.nbDocDeleted = nbDocDeleted;
+        this.nbDocDeleted.set(nbDocDeleted);
     }
 
     /**
@@ -102,14 +103,48 @@ public class ScanStatistic {
      * Increment statistic for new files
      */
     public void addFile() {
-        this.nbDocScan++;
+        this.nbDocScan.incrementAndGet();
     }
 
     /**
      * Increment statistic for deleted files
      */
     public void removeFile() {
-        this.nbDocDeleted++;
+        this.nbDocDeleted.incrementAndGet();
     }
 
+    /**
+     * @return the start time of the scan
+     */
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    /**
+     * @param startTime the start time to set
+     */
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    /**
+     * @return the end time of the scan
+     */
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    /**
+     * @param endTime the end time to set
+     */
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public Duration computeDuration() {
+        if (startTime != null && endTime != null) {
+            return Duration.between(startTime, endTime);
+        }
+        return Duration.ZERO;
+    }
 }
