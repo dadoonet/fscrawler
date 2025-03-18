@@ -140,6 +140,8 @@ public abstract class FsParserAbstract extends FsParser {
             try {
                 logger.info("Run #{} starting...", run);
                 stats = new ScanStatistic(fsSettings.getFs().getUrl());
+                LocalDateTime startDate = LocalDateTime.now();
+                stats.setStartTime(startDate);
 
                 fileAbstractor.open();
 
@@ -152,7 +154,7 @@ public abstract class FsParserAbstract extends FsParser {
 
                 // We need to round that latest date to the lower second and remove 2 seconds.
                 // See #82: https://github.com/dadoonet/fscrawler/issues/82
-                LocalDateTime scanDatenew = LocalDateTime.now().minusSeconds(2);
+                LocalDateTime scanDatenew = startDate.minusSeconds(2);
                 LocalDateTime scanDate = getLastDateFromMeta(fsSettings.getName());
 
                 // We only index the root directory once (first run)
@@ -167,9 +169,14 @@ public abstract class FsParserAbstract extends FsParser {
 
                 addFilesRecursively(fsSettings.getFs().getUrl(), scanDate);
 
-                logger.info("Run #{}: indexed [{}], deleted [{}], up to [{}]", run, stats.getNbDocScan(),
-                        stats.getNbDocDeleted(), scanDatenew);
+                stats.setEndTime(LocalDateTime.now());
+                logger.info("Run #{}: indexed [{}], deleted [{}], documents up to [{}]. " +
+                                "Started at [{}], finished at [{}], took [{}]", run,
+                        stats.getNbDocScan(), stats.getNbDocDeleted(), scanDatenew,
+                        stats.getStartTime(), stats.getEndTime(), stats.computeDuration());
                 updateFsJob(fsSettings.getName(), scanDatenew);
+                // TODO Update stats
+                // updateStats(fsSettings.getName(), stats);
             } catch (Exception e) {
                 logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
                 if (logger.isDebugEnabled()) {
