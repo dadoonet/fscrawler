@@ -35,16 +35,12 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileOwnerAttributeView;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFileAttributes;
-import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.*;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 public class FsCrawlerUtil {
@@ -275,46 +271,35 @@ public class FsCrawlerUtil {
         return result;
     }
 
-    public static LocalDateTime getCreationTime(File file) {
-        LocalDateTime time;
+    private static LocalDateTime getFileTime(File file, Function<BasicFileAttributes, FileTime> timeFunction) {
         try  {
             Path path = Paths.get(file.getAbsolutePath());
-            BasicFileAttributes fileattr = Files
-                    .getFileAttributeView(path, BasicFileAttributeView.class)
-                    .readAttributes();
-            time = LocalDateTime.ofInstant(fileattr.creationTime().toInstant(), ZoneId.systemDefault());
+            BasicFileAttributes fileattr = Files.getFileAttributeView(path, BasicFileAttributeView.class).readAttributes();
+            return LocalDateTime.ofInstant(timeFunction.apply(fileattr).toInstant(), ZoneId.systemDefault());
         } catch (Exception e) {
-            time = null;
+            return null;
         }
-        return time;
+    }
+
+    public static LocalDateTime getCreationTime(File file) {
+        return getFileTime(file, BasicFileAttributes::creationTime);
     }
 
     public static LocalDateTime getModificationTime(File file) {
-        LocalDateTime time;
-        try  {
-            Path path = Paths.get(file.getAbsolutePath());
-            BasicFileAttributes fileattr = Files
-                    .getFileAttributeView(path, BasicFileAttributeView.class)
-                    .readAttributes();
-            time = LocalDateTime.ofInstant(fileattr.lastModifiedTime().toInstant(), ZoneId.systemDefault());
-        } catch (Exception e) {
-            time = null;
-        }
-        return time;
+        return getFileTime(file, BasicFileAttributes::lastModifiedTime);
     }
 
     public static LocalDateTime getLastAccessTime(File file) {
-        LocalDateTime time;
-        try  {
-            Path path = Paths.get(file.getAbsolutePath());
-            BasicFileAttributes fileattr = Files
-                    .getFileAttributeView(path, BasicFileAttributeView.class)
-                    .readAttributes();
-            time = LocalDateTime.ofInstant(fileattr.lastAccessTime().toInstant(), ZoneId.systemDefault());
-        } catch (Exception e) {
-            time = null;
+        return getFileTime(file, BasicFileAttributes::lastAccessTime);
+    }
+
+    public static LocalDateTime getModificationOrCreationTime(File file) {
+        LocalDateTime lastAccessTime = getFileTime(file, BasicFileAttributes::lastAccessTime);
+        if (lastAccessTime != null) {
+            return lastAccessTime;
+        } else {
+            return getFileTime(file, BasicFileAttributes::creationTime);
         }
-        return time;
     }
 
     public static Date localDateTimeToDate(LocalDateTime ldt) {

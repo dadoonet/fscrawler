@@ -33,6 +33,8 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -40,6 +42,11 @@ public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
     private static final Logger logger = LogManager.getLogger();
 
     private final FsCrawlerSshClient fsCrawlerSshClient;
+    private final static Predicate<SftpClient.DirEntry> IS_DOT = file ->
+            !".".equals(file.getFilename()) &&
+            !"..".equals(file.getFilename());
+    private final static Comparator<SftpClient.DirEntry> SFTP_FILE_COMPARATOR = Comparator.comparing(
+            file -> LocalDateTime.ofInstant(file.getAttributes().getModifyTime().toInstant(), ZoneId.systemDefault()));
 
     public FileAbstractorSSH(FsSettings fsSettings) {
         super(fsSettings);
@@ -98,8 +105,8 @@ public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
          We ignore here all files like "." and ".."
         */
         Collection<FileAbstractModel> result = StreamSupport.stream(ls.spliterator(), false)
-                .filter(file -> !".".equals(file.getFilename()) &&
-                        !"..".equals(file.getFilename()))
+                .filter(IS_DOT)
+                .sorted(SFTP_FILE_COMPARATOR.reversed())
                 .map(file -> toFileAbstractModel(dir, file))
                 .collect(Collectors.toList());
 

@@ -28,8 +28,8 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.net.PrintCommandListener;
 import org.apache.commons.net.ftp.FTP;
@@ -44,8 +44,7 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
@@ -56,6 +55,12 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
     private boolean isUtf8 = false;
 
     private static final String ALTERNATIVE_ENCODING = "GBK";
+    private final static Comparator<FTPFile> FTP_FILE_COMPARATOR = Comparator.comparing(
+            file -> LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getTimestamp().getTimeInMillis()), ZoneId.systemDefault()));
+    private final Predicate<FTPFile> IS_SYM_LINK = file -> {
+        if (fsSettings.getFs().isFollowSymlinks()) return true;
+        return !file.isSymbolicLink();
+    };
 
     public FileAbstractorFTP(FsSettings fsSettings) {
         super(fsSettings);
@@ -136,10 +141,10 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
         FTPFile[] ftpFiles = ftp.listFiles(ftpDir);
         if (ftpFiles == null) return null;
-        List<FTPFile> files = Arrays.stream(ftpFiles).filter(file -> {
-            if (fsSettings.getFs().isFollowSymlinks()) return true;
-            return !file.isSymbolicLink();
-        }).collect(Collectors.toList());
+        List<FTPFile> files = Arrays.stream(ftpFiles)
+                .filter(IS_SYM_LINK)
+                .sorted(FTP_FILE_COMPARATOR.reversed())
+                .collect(Collectors.toList());
 
         Collection<FileAbstractModel> result = new ArrayList<>(files.size());
         // Iterate other files
