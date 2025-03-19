@@ -30,18 +30,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Comparator;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getCreationTime;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFileExtension;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFilePermissions;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getLastAccessTime;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getModificationTime;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 
 public class FileAbstractorFile extends FileAbstractor<File> {
     private static final Logger logger = LogManager.getLogger();
@@ -58,6 +53,9 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         }
         return path.replace("/", "\\");
     }
+
+    private final static Comparator<Path> PATH_COMPARATOR = Comparator.comparing(
+            file -> getModificationOrCreationTime(file.toFile()));
 
     @Override
     public FileAbstractModel toFileAbstractModel(String path, File file) {
@@ -90,41 +88,17 @@ public class FileAbstractorFile extends FileAbstractor<File> {
     public Collection<FileAbstractModel> getFiles(String dir) {
         logger.debug("Listing local files from {}", dir);
 
-        // TODO Replace with
-        /*
+        final Collection<FileAbstractModel> result = new ArrayList<>();
         try {
             Files.list(Paths.get(dir))
                     .filter(p -> fsSettings.getFs().isFollowSymlinks() || !Files.isSymbolicLink(p))
-                    // We can add the filter directly here
+                    // TODO We can add the filter directly here
                     // .filter(s -> s.toString().endsWith(".xml"))
-                    .sorted()
+                    .sorted(PATH_COMPARATOR.reversed())
                     .forEach(p -> result.add(toFileAbstractModel(dir, p.toFile())));
         } catch (IOException e) {
             // Logger
         }
-        */
-
-        File[] files = new File(dir).listFiles(file -> {
-            if (fsSettings.getFs().isFollowSymlinks()) return true;
-            return !Files.isSymbolicLink(file.toPath());
-        });
-        Collection<FileAbstractModel> result;
-
-        if (files != null) {
-            // For tests purposes, we want to sort the list in a predictible way
-            Arrays.sort(files);
-
-            result = new ArrayList<>(files.length);
-
-            // Iterate other files
-            for (File file : files) {
-                result.add(toFileAbstractModel(dir, file));
-            }
-        } else {
-            logger.debug("Symlink on windows gives null for listFiles(). Skipping [{}]", dir);
-            result = Collections.emptyList();
-        }
-
 
         logger.debug("{} local files found", result.size());
         return result;

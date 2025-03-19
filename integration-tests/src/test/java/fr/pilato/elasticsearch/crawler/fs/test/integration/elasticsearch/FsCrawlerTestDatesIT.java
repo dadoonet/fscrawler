@@ -53,6 +53,9 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         logger.info(" ---> Creating a new file second.txt");
+        // Let's wait for some milliseconds to make sure we have different dates
+        Thread.sleep(100);
+
         Files.write(currentTestResourceDir.resolve("second.txt"), "This is a second file".getBytes());
 
         // We expect to have two files
@@ -118,8 +121,8 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
     }
 
     private void showHitDates(List<ESSearchHit> hits) {
-        logger.info("|        created date        |        indexing date       |     last modified date     |     last accessed date     |");
-        logger.info("|----------------------------|----------------------------|----------------------------|----------------------------|");
+        logger.info("|        created date         |         indexing date       |      last modified date     |      last accessed date     |");
+        logger.info("|-----------------------------|-----------------------------|-----------------------------|-----------------------------|");
         for (ESSearchHit hit : hits) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             String created = document.read("$.file.created");
