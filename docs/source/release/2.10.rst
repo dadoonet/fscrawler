@@ -7,7 +7,7 @@ Breaking changes
 * If you want to exclude a specific folder, you need to use a wildcard character at the end of the folder name.
   For example, to exclude the folder ``/tmp/foo``, you need to use ``/tmp/foo/*``. Thanks to dadoonet.
 * The way we run docker images has changed. We don't need anymore to specify the fscrawler binary.
-So running ``docker run -it -v ~/.fscrawler:/root/.fscrawler -v /documents:/tmp/es:ro dadoonet/fscrawler job_name`` is
+  So running ``docker run -it -v ~/.fscrawler:/root/.fscrawler -v /documents:/tmp/es:ro dadoonet/fscrawler job_name`` is
 enough. Thanks to dadoonet.
 
 New
