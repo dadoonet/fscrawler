@@ -48,41 +48,7 @@ machine <https://wiki.apache.org/hadoop/MountableHDFS>`__ and run FS
 crawler on this mount point. You can also read details about `HDFS NFS
 Gateway <http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsNfsGateway.html>`__.
 
-Using docker with FSCrawler REST
---------------------------------
+Using docker
+------------
 
-To use the REST service available from 2.2 you can add the ``--rest`` flag to the FSCrawler docker container ``command:``. Note that you must expose the same ports that the REST service opens on in the docker container. For example, if your REST service starts on ``127.0.0.1:8080`` then expose the same ports in your FSCrawler docker-compose image:
-
-.. code:: yaml
-
-    fscrawler:
-      context: ${PWD}
-      dockerfile: Dockerfile-fscrawler
-    container_name: fscrawler
-    restart: always
-    ...
-    ports:
-      - "8080:8080"
-    ...
-
-Then expose the docker container you've created by changing the IP of the REST URL in your ``settings.yaml`` to the docker-compose container name:
-
-.. code:: yaml
-
-    rest :
-      url: "http://fscrawler:8080"
-
-
-Pull the Docker image:
-
-.. code:: sh
-
-   docker pull dadoonet/fscrawler
-
-Run it:
-
-.. code:: sh
-
-   docker run dadoonet/fscrawler job
-
-
+See :ref:`docker`.

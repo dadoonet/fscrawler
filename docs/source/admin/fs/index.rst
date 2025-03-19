@@ -11,7 +11,7 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
    # required
    fs:
 
-     # define a "local" file path crawler, if running inside a docker container this must be the path INSIDE the container
+     # define a "local" file path crawler, if running inside a docker container this must be the path INSIDE the container (/tmp/es)
      url: "/path/to/docs"
      follow_symlink: false
      remove_deleted: true
@@ -89,19 +89,14 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
    # required
    elasticsearch:
      nodes:
-     # With Cloud ID
-     - cloud_id: "CLOUD_ID"
-     # With URL
-     - url: "http://127.0.0.1:9200"
+     - url: "https://127.0.0.1:9200"
      bulk_size: 1000
      flush_interval: "5s"
      byte_size: "10mb"
-     # choose one of the 3 following options:
-     # 1 - Using access token
-     access_token: "dGhpcyBpcyBub3QgYSByZWFsIHRva2VuIGJ1dCBpdCBpcyBvbmx5IHRlc3QgZGF0YS4gZG8gbm90IHRyeSB0byByZWFkIHRva2VuIQ=="
-     # 2 - Using Api Key
+     # choose one of the 2 following options:
+     # 1 - Using Api Key
      api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
-     # 3 - Using username/password (not recommended / deprecated)
+     # 2 - Using username/password (not recommended / deprecated)
      username: "elastic"
      password: "password"
      # optional, defaults to ``name``-property

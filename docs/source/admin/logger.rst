@@ -41,3 +41,36 @@ Please read `Log4J2 documentation <https://logging.apache.org/log4j/2.x/manual/i
 
     FSCrawler detects automatically on Linux machines when it's running in background or foreground.
     When in background, the logger configuration file used is ``config/log4j2-file.xml``.
+
+In the Docker context, you can modify the logs level by setting the ``FS_JAVA_OPTS`` environment variable:
+
+.. code:: sh
+
+   docker run -it --rm \
+        -v ~/.fscrawler:/root/.fscrawler \
+        -v ~/tmp:/tmp/es:ro \
+        -v ~/logs:/root/logs \
+        -e FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug" \
+        dadoonet/fscrawler job_name
+
+Then the logs will be readable from the ``~/logs`` directory.
+
+Read :ref:`docker` for more information.
+
+Same for Docker Compose, you can modify your ``docker-compose.yml`` file:
+
+.. code:: yaml
+
+   version: '3'
+   services:
+     fscrawler:
+       image: dadoonet/fscrawler
+       volumes:
+         - ~/.fscrawler:/root/.fscrawler
+         - ~/tmp:/tmp/es:ro
+         - ~/logs:/root/logs
+       environment:
+         - FS_JAVA_OPTS=-DLOG_LEVEL=debug -DDOC_LEVEL=debug
+       command: job_name
+
+Read :ref:`docker-compose` for more information.
