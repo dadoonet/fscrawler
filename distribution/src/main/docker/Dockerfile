@@ -13,7 +13,4 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/*
 
 COPY maven /usr/share/fscrawler
-RUN set -ex \
-    && ln -sn /usr/share/fscrawler/bin/fscrawler /usr/bin/
-
-WORKDIR /usr/share/fscrawler
+ENTRYPOINT [ "/usr/share/fscrawler/bin/fscrawler" ]

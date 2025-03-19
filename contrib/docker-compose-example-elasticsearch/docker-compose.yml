@@ -123,9 +123,11 @@ services:
 
   # FSCrawler
   fscrawler:
-    image: dadoonet/fscrawler:$FSCRAWLER_VERSION
+    image: dadoonet/fscrawler:${FSCRAWLER_VERSION}
     container_name: fscrawler
     restart: always
+    environment:
+      - FS_JAVA_OPTS=${FS_JAVA_OPTS}
     volumes:
       - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
       - ${PWD}/config:/root/.fscrawler
@@ -136,7 +138,7 @@ services:
         condition: service_healthy
     ports:
       - ${FSCRAWLER_PORT}:8080
-    command: fscrawler idx --restart --rest
+    command: idx --restart --rest
 
 volumes:
   certs:
