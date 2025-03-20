@@ -97,8 +97,9 @@ jobs:
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-6x -Dtests.parallelism=1
 
-  # We run integration tests with Elastic Cloud Serverless
+  # We run integration tests with Elastic Cloud Elasticsearch service (if secrets are set)
   it-cloud:
+    if: ${{ secrets.ELASTIC_CLOUD_APIKEY && secrets.ELASTIC_CLOUD_URL }}
     runs-on: ubuntu-latest
     needs: unit
     steps:
@@ -117,8 +118,9 @@ jobs:
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }}
 
-  # We run integration tests with Elastic Cloud Serverless
+  # We run integration tests with Elastic Cloud Serverless (if the secrets are set)
   it-serverless:
+    if: ${{ secrets.ELASTIC_APIKEY && secrets.ELASTIC_URL }}
     runs-on: ubuntu-latest
     needs: unit
     steps:
