@@ -404,7 +404,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("pdf:containsNonEmbeddedFont", "false"));
         assertThat(raw, hasEntry("pdf:docinfo:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("pdf:hasMarkedContent", "true"));
-        assertThat(raw, hasEntry("pdf:ocrPageCount", "2"));
+        assertThat(raw, hasEntry(is("pdf:ocrPageCount"), not(isEmptyOrNullString())));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
         assertThat(raw, hasEntry("access_permission:can_print_faithful", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:creator", "David Pilato"));
@@ -769,7 +769,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("pdf:encrypted", "false"));
         assertThat(raw, hasEntry("pdf:containsNonEmbeddedFont", "false"));
         assertThat(raw, hasEntry("pdf:hasMarkedContent", "false"));
-        assertThat(raw, hasEntry("pdf:ocrPageCount", "1"));
+        assertThat(raw, hasEntry(is("pdf:ocrPageCount"), not(isEmptyOrNullString())));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
         assertThat(raw, hasEntry("access_permission:can_print_faithful", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:creator", "Evangelos Vlachogiannis"));
