@@ -261,18 +261,20 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(13));
+        assertThat(raw.entrySet(), iterableWithSize(15));
         assertThat(raw, hasEntry("Titre", "Test Tika title"));
         assertThat(raw, hasEntry("Content-Location", "Web%20page"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("resourceName", "test.html"));
         assertThat(raw, hasEntry("Mots clés", "keyword1, keyword2"));
         assertThat(raw, hasEntry("ProgId", "Word.Document"));
+        assertThat(raw, hasEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector"));
         assertThat(raw, hasEntry("Originator", "Microsoft Word 15"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("dc:title", "Test Tika title"));
         assertThat(raw, hasEntry("Content-Encoding", "UTF-8"));
         assertThat(raw, hasEntry("Content-Type-Hint", "text/html; charset=macintosh"));
+        assertThat(raw, hasEntry("X-TIKA:detectedEncoding", "UTF-8"));
         assertThat(raw, hasEntry("Content-Type", "text/html; charset=UTF-8"));
         assertThat(raw, hasEntry("Generator", "Microsoft Word 15"));
     }
@@ -378,14 +380,13 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(41));
+        assertThat(raw.entrySet(), iterableWithSize(42));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
         assertThat(raw, hasEntry("pdf:docinfo:title", "Test Tika title"));
         assertThat(raw, hasEntry("xmp:CreatorTool", "Microsoft Word"));
         assertThat(raw, hasEntry("pdf:hasXFA", "false"));
         assertThat(raw, hasEntry("access_permission:modify_annotations", "true"));
-        assertThat(raw, hasEntry("access_permission:can_print_degraded", "true"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("dc:creator", "David Pilato"));
         assertThat(raw, hasEntry("pdf:num3DAnnotations", "0"));
@@ -403,7 +404,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("pdf:containsNonEmbeddedFont", "false"));
         assertThat(raw, hasEntry("pdf:docinfo:subject", "Test Tika Object"));
         assertThat(raw, hasEntry("pdf:hasMarkedContent", "true"));
+        assertThat(raw, hasEntry("pdf:ocrPageCount", "2"));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
+        assertThat(raw, hasEntry("access_permission:can_print_faithful", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:creator", "David Pilato"));
         assertThat(raw, hasEntry("dc:language", "en-US"));
         assertThat(raw, hasEntry("dc:subject", "keyword1, keyword2"));
@@ -474,11 +477,13 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(5));
+        assertThat(raw.entrySet(), iterableWithSize(7));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
         assertThat(raw, hasEntry("Content-Encoding", "ISO-8859-1"));
         assertThat(raw, hasEntry("resourceName", "test.txt"));
+        assertThat(raw, hasEntry("X-TIKA:detectedEncoding", "ISO-8859-1"));
+        assertThat(raw, hasEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector"));
         assertThat(raw, hasEntry("Content-Type", "text/plain; charset=ISO-8859-1"));
 
         assertThat(doc.getAttachment(), nullValue());
@@ -746,13 +751,12 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getMeta().getTitle(), is(nullValue()));
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(35));
+        assertThat(raw.entrySet(), iterableWithSize(36));
         assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
         assertThat(raw, hasEntry("pdf:PDFVersion", "1.4"));
         assertThat(raw, hasEntry("xmp:CreatorTool", "Writer"));
         assertThat(raw, hasEntry("pdf:hasXFA", "false"));
         assertThat(raw, hasEntry("access_permission:modify_annotations", "true"));
-        assertThat(raw, hasEntry("access_permission:can_print_degraded", "true"));
         assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser"));
         assertThat(raw, hasEntry("dc:creator", "Evangelos Vlachogiannis"));
         assertThat(raw, hasEntry("pdf:num3DAnnotations", "0"));
@@ -765,7 +769,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw, hasEntry("pdf:encrypted", "false"));
         assertThat(raw, hasEntry("pdf:containsNonEmbeddedFont", "false"));
         assertThat(raw, hasEntry("pdf:hasMarkedContent", "false"));
+        assertThat(raw, hasEntry("pdf:ocrPageCount", "1"));
         assertThat(raw, hasEntry("Content-Type", "application/pdf"));
+        assertThat(raw, hasEntry("access_permission:can_print_faithful", "true"));
         assertThat(raw, hasEntry("pdf:docinfo:creator", "Evangelos Vlachogiannis"));
         assertThat(raw, hasEntry("pdf:producer", "OpenOffice.org 2.1"));
         assertThat(raw, hasEntry("pdf:totalUnmappedUnicodeChars", "0"));

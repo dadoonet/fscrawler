@@ -5,7 +5,7 @@
   <parsers>
     <!-- Default Parser, but never use HTML parser -->
     <parser class="org.apache.tika.parser.DefaultParser">
-      <parser-exclude class="org.apache.tika.parser.html.HtmlParser"/>
+      <parser-exclude class="org.apache.tika.parser.html.JsoupParser"/>
     </parser>
     <!-- Use a different parser for XHTML -->
     <parser class="org.apache.tika.parser.xml.XMLParser">

@@ -794,7 +794,7 @@ An example tika config file is shown below. See |Tika_configuring|_ for more inf
     <parsers>
       <!-- Use Default Parser for files, but Default Parser will never use HTML parser -->
       <parser class="org.apache.tika.parser.DefaultParser">
-        <parser-exclude class="org.apache.tika.parser.html.HtmlParser"/>
+        <parser-exclude class="org.apache.tika.parser.html.JsoupParser"/>
       </parser>
       <!-- Use a different parser for XHTML -->
       <parser class="org.apache.tika.parser.xml.XMLParser">
