@@ -84,11 +84,12 @@ public class FsSettingsLoader extends MetaFileHandler {
 
     /**
      * We write settings to ~/.fscrawler/{job_name}/_settings.yaml
+     * @param name the job_name
      * @param settings Settings to write (settings.getName() contains the job name)
      * @throws IOException in case of error while reading
      */
-    public void write(FsSettings settings) throws IOException {
-        writeFile(settings.getName(), SETTINGS_YAML, FsSettingsParser.toYaml(settings));
+    public void write(String name, FsSettings settings) throws IOException {
+        writeFile(name, SETTINGS_YAML, FsSettingsParser.toYaml(settings));
     }
 
     /**
@@ -125,7 +126,7 @@ public class FsSettingsLoader extends MetaFileHandler {
 
         FsSettings settings = new FsSettings();
 
-        settings.setName(gestalt.getConfig("name", String.class));
+        settings.setName(gestalt.getConfigOptional("name", String.class).orElse(null));
         settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
         settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class).orElse(null));
         settings.setTags(gestalt.getConfigOptional("fs.tags", Tags.class).orElse(null));
