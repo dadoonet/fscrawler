@@ -53,8 +53,9 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         logger.info(" ---> Creating a new file second.txt");
-        // Let's wait for some milliseconds to make sure we have different dates
-        Thread.sleep(100);
+        // Let's wait for at least one second to make sure we have different dates
+        // between the two files. Created date seems to be rounded to the second.
+        Thread.sleep(1001);
 
         Files.write(currentTestResourceDir.resolve("second.txt"), "This is a second file".getBytes());
 
