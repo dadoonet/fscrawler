@@ -40,6 +40,8 @@ public class ElasticsearchEngine implements Engine<ElasticsearchOperation, Elast
     public ElasticsearchBulkResponse bulk(ElasticsearchBulkRequest request) {
         StringBuilder ndjson = new StringBuilder();
 
+        // TODO If all indices are the same, we could optimize this by calling POST index/_bulk instead
+
         request.getOperations().forEach(r -> {
             StringBuilder bulkRequest = new StringBuilder();
             // Header

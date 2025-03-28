@@ -35,8 +35,7 @@ public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_zip() throws Exception {
-        crawler = startCrawler(getCrawlerName(), startCrawlerDefinition().build(), endCrawlerDefinition(getCrawlerName()), null, null,
-                null, TimeValue.timeValueMinutes(2));
+        crawler = startCrawler(createTestSettings(), TimeValue.timeValueMinutes(2));
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);

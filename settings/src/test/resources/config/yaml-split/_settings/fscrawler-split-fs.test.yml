@@ -1,29 +1,67 @@
+# optional: the fs settings
 fs:
+  # define a "local" file path crawler, if running inside a docker container this must be the path INSIDE the container
   url: "/path/to/docs"
+  # optional: scan every 5 minutes for changes in url defined above
   update_rate: "5m"
+  # optional: define includes and excludes, "~" files are excluded by default if not defined below
   includes:
     - "*.doc"
     - "*.xls"
   excludes:
     - "resume.doc"
+  # optional: List regular expressions to match the content that should not be indexed
   filters:
     - ".*foo.*"
     - "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$" # do not index files containing credit card numbers
-  json_support: false
-  add_as_inner_object: false
-  xml_support: false
-  follow_symlinks: false
-  remove_deleted: true
-  continue_on_error: false
+
+  # optional: special handling of JSON files, should only be used if ALL files are JSON
+  json_support: true
+  # optional: if false, all JSON files will be added as documents, if true, they will be added as JSON objects
+  add_as_inner_object: true
+
+  # optional: special handling of XML files, should only be used if ALL files are XML
+  xml_support: true
+
+  # optional: if true, the crawler will follow symbolic links
+  follow_symlinks: true
+  # optional: if true, the crawler will remove files found as deleted
+  remove_deleted: false
+  # optional: if false, the crawler will stop crawling at the first error found
+  continue_on_error: true
+  # optional: do not send big files to TIKA
   ignore_above: "512mb"
+
+  # optional: use MD5 from filename (instead of filename) if set to false
   filename_as_id: true
-  index_content: true
-  add_filesize: true
-  attributes_support: false
-  lang_detect: false
-  store_source: false
+
+  # you may want to store (partial) content of the file (see indexed_chars)
+  index_content: false
+
+  # include size ot file in index
+  add_filesize: false
+
+  # include user/group of file only if needed
+  attributes_support: true
+
+  # optional: this will try to detect the language of the extracted content
+  lang_detect: true
+
+  # optional: do you REALLY want to store every file as a copy in the index? Then set this to true
+  store_source: true
+
+  # optional: how much data from the content of the file should be indexed (and stored inside the index), set to 0 if you need checksum, but no content at all to be indexed
+  #indexed_chars: "0"
   indexed_chars: "10000.0"
-  raw_metadata: false
+
+  # optional: usually file metadata will be stored in separate fields, if you want to keep the original set, set this to true
+  raw_metadata: true
+
+  # optional: add checksum meta (requires index_content to be set to true)
   checksum: "MD5"
-  index_folders: true
+
+  # optional: recommended, but will create another index
+  index_folders: false
+
+  # optional: the optional path to a specific external Tika Configuration file
   tika_config_path: "/path/to/tika-config.xml"

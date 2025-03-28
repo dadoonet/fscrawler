@@ -26,7 +26,7 @@ public class AwaitTest {
                 logger.warn("error caught", e);
                 return l.getAndIncrement();
             }
-        }, null, 1, TimeUnit.SECONDS);
+        }, null, TimeValue.timeValueSeconds(1));
 
         assertThat(hits, Matchers.greaterThan(-1L));
     }

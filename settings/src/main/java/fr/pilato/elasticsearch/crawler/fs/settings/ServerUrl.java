@@ -20,8 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import jakarta.annotation.Nullable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.github.gestalt.config.annotations.Config;
 
 import java.util.Base64;
 import java.util.Objects;
@@ -31,8 +30,12 @@ import java.util.Objects;
  * can be either an url or a cloud id.
  * This is used in the Elasticsearch.Node class.
  */
+@Deprecated
 public class ServerUrl {
+    @Config
     @Nullable private String url;
+    @Deprecated
+    @Config
     @Nullable private String cloudId;
 
     public ServerUrl() {
@@ -58,6 +61,7 @@ public class ServerUrl {
      * @param cloudId The cloud ID to decode.
      * @return A Node running on <a href="https://address">https://address</a>
      */
+    @Deprecated
     public static String decodeCloudId(String cloudId) {
         // 1. Ignore anything before `:`.
         String id = cloudId.substring(cloudId.indexOf(':') + 1);
@@ -84,10 +88,12 @@ public class ServerUrl {
         this.url = url;
     }
 
+    @Deprecated
     public String getCloudId() {
         return cloudId;
     }
 
+    @Deprecated
     public void setCloudId(String cloudId) {
         this.cloudId = cloudId;
     }
@@ -97,6 +103,7 @@ public class ServerUrl {
      * if it was provided.
      * @return a url (decoded from a cloud id or not)
      */
+    @Deprecated
     public String decodedUrl() {
         if (cloudId != null) {
             return decodeCloudId(cloudId);
@@ -109,8 +116,7 @@ public class ServerUrl {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ServerUrl serverUrl = (ServerUrl) o;
-        return Objects.equals(url, serverUrl.url) &&
-                Objects.equals(cloudId, serverUrl.cloudId);
+        return Objects.equals(url, serverUrl.url);
     }
 
     @Override

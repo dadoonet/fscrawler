@@ -24,13 +24,13 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
-import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
@@ -52,11 +52,7 @@ import java.io.*;
 import java.net.SocketException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -69,7 +65,8 @@ import java.util.zip.ZipFile;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -334,13 +331,17 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         logger.info("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
                 testClusterUrl, testCaCertificate, sslVerification);
         // We build the elasticsearch Client based on the parameters
-        elasticsearchConfiguration = Elasticsearch.builder()
-                .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
-                .setSslVerification(sslVerification)
-                .setCaCertificate(testCaCertificate)
-                .setCredentials(testApiKey, testClusterUser, testClusterPass)
-                .build();
-        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchConfiguration).build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getElasticsearch().setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)));
+        fsSettings.getElasticsearch().setSslVerification(sslVerification);
+        fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
+        if (testApiKey != null) {
+            fsSettings.getElasticsearch().setApiKey(testApiKey);
+        } else {
+            fsSettings.getElasticsearch().setUsername(testClusterUser);
+            fsSettings.getElasticsearch().setPassword(testClusterPass);
+        }
+        elasticsearchConfiguration = fsSettings.getElasticsearch();
 
         documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
         try {
@@ -392,36 +393,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     protected static final String testCrawlerPrefix = "fscrawler_";
 
-    protected static Elasticsearch generateElasticsearchConfig(String indexName, String indexFolderName, int bulkSize,
-                                                               TimeValue timeValue, ByteSizeValue byteSize,
-                                                               boolean useSemantic) {
-        Elasticsearch.Builder builder = Elasticsearch.builder()
-                .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
-                .setBulkSize(bulkSize);
-
-        if (indexName != null) {
-            builder.setIndex(indexName);
-        }
-        if (indexFolderName != null) {
-            builder.setIndexFolder(indexFolderName);
-        }
-
-        if (timeValue != null) {
-            builder.setFlushInterval(timeValue);
-        }
-        if (byteSize != null) {
-            builder.setByteSize(byteSize);
-        }
-
-        builder.setCredentials(testApiKey, testClusterUser, testClusterPass);
-
-        builder.setSslVerification(false);
-
-        builder.setSemanticSearch(useSemantic);
-
-        return builder.build();
-    }
-
     protected static void refresh(String indexName) throws IOException, ElasticsearchClientException {
         try {
             documentService.refresh(indexName);
@@ -442,7 +413,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      * @throws Exception in case of error
      */
     public static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final Path path) throws Exception {
-        return countTestHelper(request, expected, path, TimeValue.timeValueSeconds(20));
+        return countTestHelper(request, expected, path, TimeValue.timeValueMinutes(1));
     }
 
     /**
@@ -483,7 +454,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
             return totalHits;
-        }, expected, timeout.millis(), TimeUnit.MILLISECONDS);
+        }, expected, timeout);
 
         Matcher<Long> matcher;
         if (expected == null) {
@@ -574,5 +545,16 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 return FileVisitResult.CONTINUE;
             }
         });
+    }
+
+    protected static Elasticsearch clone(Elasticsearch source) {
+        Elasticsearch elasticsearch = FsSettingsLoader.load().getElasticsearch();
+        elasticsearch.setNodes(Collections.singletonList(new ServerUrl(source.getNodes().get(0).getUrl())));
+        elasticsearch.setSslVerification(source.isSslVerification());
+        elasticsearch.setCaCertificate(source.getCaCertificate());
+        elasticsearch.setApiKey(source.getApiKey());
+        elasticsearch.setUsername(source.getUsername());
+        elasticsearch.setPassword(source.getPassword());
+        return elasticsearch;
     }
 }

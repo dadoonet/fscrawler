@@ -21,7 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,10 +45,9 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_filename_as_id() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setFilenameAsId(true)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setFilenameAsId(true);
+        crawler = startCrawler(fsSettings);
 
         assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
             try {
@@ -64,11 +63,10 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_remove_deleted_with_filename_as_id() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setRemoveDeleted(true)
-                .setFilenameAsId(true)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setRemoveDeleted(true);
+        fsSettings.getFs().setFilenameAsId(true);
+        crawler = startCrawler(fsSettings);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);

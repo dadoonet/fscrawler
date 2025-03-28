@@ -19,39 +19,15 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import org.github.gestalt.config.annotations.Config;
+
 import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
 public class Tags {
-    public static final String DEFAULT_META_FILENAME = ".meta.yml";
-    public static final Tags DEFAULT = Tags.builder().build();
 
+    @Config(defaultVal = Defaults.DEFAULT_META_FILENAME)
     private String metaFilename;
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-        private String metaFilename = DEFAULT_META_FILENAME;
-
-        public Builder setMetaFilename(String metaFilename) {
-            this.metaFilename = metaFilename;
-            return this;
-        }
-
-        public Tags build() {
-            return new Tags(metaFilename);
-        }
-    }
-
-    public Tags() {
-
-    }
-
-    public Tags(String metaFilename) {
-        this.metaFilename = metaFilename;
-    }
 
     public String getMetaFilename() {
         return metaFilename;

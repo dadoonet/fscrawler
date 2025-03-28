@@ -16,7 +16,6 @@ you defined with the ``-config_dir`` CLI option (see :ref:`cli-options`). The jo
 When using a directory, FSCrawler will merge all files found in the directory. Meaning that you can split your settings
 in multiple files, like:
 
-* ``my_job.yaml`` which contains the job name
 * ``my_job_fs.yaml`` which contains the file system settings
 * ``my_job_elasticsearch.yaml`` which contains the elasticsearch settings
 
@@ -30,7 +29,6 @@ For example, you can define the following job file:
 
 .. code:: yaml
 
-   name: "test"
    fs:
      url: "${HOME}/docs"
    elasticsearch:
@@ -48,6 +46,34 @@ be set to ``https://127.0.0.1:9200`` if not set.
 FSCrawler is using the gestalt-config project to handle placeholders. You can read more about String substitution in the
 `gestalt-config documentation <https://github.com/gestalt-config/gestalt#string-substitution>`_.
 
+Default placeholders
+--------------------
+
+FSCrawler supports a set of default placeholders that you can define using environment variables.
+The form of those placeholders is the prefix ``FSCRAWLER_`` and the setting name. For example,
+``fs.url`` can be set using the environment variable ``FSCRAWLER_FS_URL`` or the system property ``-Dfs.url``.
+
+As an example, you can run:
+
+.. code:: sh
+
+   FSCRAWLER_NAME=foo \
+   FSCRAWLER_FS_URL=/tmp/test \
+   FSCRAWLER_ELASTICSEARCH_API_KEY=VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw== \
+   bin/fscrawler test
+
+or:
+
+.. code:: sh
+
+   FS_JAVA_OPTS="-Dname=foo -Dfs.url=/tmp/test -Delasticsearch.api_key=VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw==" \
+   bin/fscrawler test
+
+.. note::
+
+    If you define as well some settings in the job file, the settings in the job file will override the
+    environment variables and system properties.
+
 Example job file specification
 ------------------------------
 
@@ -55,7 +81,7 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
 
 .. code:: yaml
 
-   # required
+   # optional: the name of the crawler. Defaults to the job directory name.
    name: "test"
 
    # required

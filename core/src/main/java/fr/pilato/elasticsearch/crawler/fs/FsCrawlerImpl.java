@@ -69,7 +69,7 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
-        if (FsCrawlerValidator.validateSettings(logger, settings, rest)) {
+        if (FsCrawlerValidator.validateSettings(logger, settings)) {
             throw new RuntimeException("Settings are incorrect and should have been verified with FsCrawlerValidator.validateSettings before.");
         }
 

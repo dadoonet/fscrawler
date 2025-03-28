@@ -37,25 +37,24 @@ public class Await {
     private static final long AWAIT_BUSY_THRESHOLD = 1000L;
 
     /**
-     * Wait until a condition is met or a timeout is reached
+     * Wait until a condition is met or a 10s timeout is reached
      * @param breakSupplier the condition to check
      * @return true if the condition is met, false if the timeout is reached
      * @throws InterruptedException if the thread is interrupted
      */
     public static boolean awaitBusy(BooleanSupplier breakSupplier) throws InterruptedException {
-        return Await.awaitBusy(breakSupplier, 10, TimeUnit.SECONDS);
+        return Await.awaitBusy(breakSupplier, TimeValue.timeValueSeconds(10));
     }
 
     /**
      * Wait until a condition is met or a timeout is reached
      * @param breakSupplier the condition to check
      * @param maxWaitTime   max wait time
-     * @param unit          unit for max wait time
      * @return true if the condition is met, false if the timeout is reached
      * @throws InterruptedException if the thread is interrupted
      */
-    public static boolean awaitBusy(BooleanSupplier breakSupplier, long maxWaitTime, TimeUnit unit) throws InterruptedException {
-        long maxTimeInMillis = TimeUnit.MILLISECONDS.convert(maxWaitTime, unit);
+    public static boolean awaitBusy(BooleanSupplier breakSupplier, TimeValue maxWaitTime) throws InterruptedException {
+        long maxTimeInMillis = maxWaitTime.millis();
         long timeInMillis = 1;
         long sum = 0;
         while (sum + timeInMillis < maxTimeInMillis) {
@@ -76,22 +75,19 @@ public class Await {
      * @param breakSupplier the condition to check
      * @param expected     the expected value
      * @param maxWaitTime  max wait time
-     * @param unit         unit for max wait time
      * @return the value of the breakSupplier
      * @throws InterruptedException if the thread is interrupted
      */
-    public static long awaitBusy(LongSupplier breakSupplier, Long expected, long maxWaitTime, TimeUnit unit) throws InterruptedException {
-        long maxTimeInMillis = TimeUnit.MILLISECONDS.convert(maxWaitTime, unit);
+    public static long awaitBusy(LongSupplier breakSupplier, Long expected, TimeValue maxWaitTime) throws InterruptedException {
+        long maxTimeInMillis = maxWaitTime.millis();
         long timeInMillis = 1;
         long sum = 0;
 
         while (sum + timeInMillis < maxTimeInMillis) {
             long current = breakSupplier.getAsLong();
             logger.trace("Check if {} is equal to {}", current, expected);
-            if (expected == null && current >= 1) {
+            if ((expected == null && current >= 1) || (expected != null && current == expected)) {
                 return current;
-            } else if (expected != null && current == expected) {
-                return expected;
             }
             logger.trace("Sleep for {} because {} is not equal to {}", timeInMillis, current, expected);
             Thread.sleep(timeInMillis);

@@ -19,79 +19,17 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import org.github.gestalt.config.annotations.Config;
-
 import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
 public class FsSettings {
 
     private String name;
-    private Fs fs = null;
-    private Server server = null;
-    private Elasticsearch elasticsearch = null;
-    private Rest rest = null;
-    private Tags tags = null;
-
-    public FsSettings() {
-
-    }
-
-    private FsSettings(String name, Fs fs, Server server, Elasticsearch elasticsearch, Rest rest, Tags tags) {
-        this.name = name;
-        this.fs = fs;
-        this.server = server;
-        this.elasticsearch = elasticsearch;
-        this.rest = rest;
-        this.tags = tags;
-    }
-
-    public static Builder builder(String name) {
-        return new Builder().setName(name);
-    }
-
-    public static class Builder {
-        private String name;
-        private Fs fs = Fs.DEFAULT;
-        private Server server = null;
-        private Elasticsearch elasticsearch = Elasticsearch.DEFAULT();
-        private Rest rest = null;
-        private Tags tags = Tags.DEFAULT;
-
-        private Builder setName(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder setFs(Fs fs) {
-            this.fs = fs;
-            return this;
-        }
-
-        public Builder setServer(Server server) {
-            this.server = server;
-            return this;
-        }
-
-        public Builder setElasticsearch(Elasticsearch elasticsearch) {
-            this.elasticsearch = elasticsearch;
-            return this;
-        }
-
-        public Builder setRest(Rest rest) {
-            this.rest = rest;
-            return this;
-        }
-
-        public Builder setTags(Tags tags) {
-            this.tags = tags;
-            return this;
-        }
-
-        public FsSettings build() {
-            return new FsSettings(name, fs, server, elasticsearch, rest, tags);
-        }
-    }
+    private Fs fs;
+    private Server server;
+    private Elasticsearch elasticsearch;
+    private Rest rest;
+    private Tags tags;
 
     public String getName() {
         return name;

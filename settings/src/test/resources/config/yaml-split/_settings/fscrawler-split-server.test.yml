@@ -1,7 +1,14 @@
+# optional: only required if you want to SSH to another server to index documents from there
 server:
+  # optional: hostname, defaults to "localhost"
   hostname: "localhost"
+  # optional: port, defaults to 22
   port: 22
+  # optional: username
   username: "dadoonet"
+  # optional: password
   password: "password"
+  # optional: protocol, either "ssh" or "local"
   protocol: "ssh"
+  # optional: path to the private key
   pem_path: "/path/to/pemfile"

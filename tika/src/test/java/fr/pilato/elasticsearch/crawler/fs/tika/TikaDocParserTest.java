@@ -20,9 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Ocr;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,9 +68,8 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void testLangDetect162() throws IOException {
-        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setLangDetect(true).build())
-                .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setLangDetect(true);
         Doc doc = extractFromFile("test.txt", fsSettings);
         assertThat(doc.getMeta().getLanguage(), is("en"));
         doc = extractFromFile("test-fr.txt", fsSettings);
@@ -123,9 +121,8 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void testXmlIssue163() throws IOException {
-        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setRawMetadata(true).build())
-                .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadata(true);
         Doc doc = extractFromFile("issue-163.xml", fsSettings);
 
         // Extracted content
@@ -522,10 +519,9 @@ public class TikaDocParserTest extends DocParserTestCase {
 
     @Test
     public void testExtractFromTxtAndStoreSource() throws IOException {
-        Doc doc = extractFromFile("test.txt",
-                FsSettings.builder(getCurrentTestName())
-                        .setFs(Fs.builder().setStoreSource(true).build())
-                        .build());
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setStoreSource(true);
+        Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
         assertThat(doc.getContent(), containsString("This file contains some words."));
@@ -534,10 +530,10 @@ public class TikaDocParserTest extends DocParserTestCase {
 
     @Test
     public void testExtractFromTxtStoreSourceAndNoIndexContent() throws IOException {
-        Doc doc = extractFromFile("test.txt",
-                FsSettings.builder(getCurrentTestName())
-                        .setFs(Fs.builder().setStoreSource(true).setIndexContent(false).build())
-                        .build());
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setStoreSource(true);
+        fsSettings.getFs().setIndexContent(false);
+        Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
         assertThat(doc.getContent(), nullValue());
@@ -552,10 +548,10 @@ public class TikaDocParserTest extends DocParserTestCase {
             assumeNoException(e);
         }
 
-        Doc doc = extractFromFile("test.txt",
-                FsSettings.builder(getCurrentTestName())
-                        .setFs(Fs.builder().setStoreSource(true).setChecksum("MD5").build())
-                        .build());
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setStoreSource(true);
+        fsSettings.getFs().setChecksum("MD5");
+        Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
         assertThat(doc.getContent(), containsString("This file contains some words."));
@@ -571,10 +567,9 @@ public class TikaDocParserTest extends DocParserTestCase {
             assumeNoException(e);
         }
 
-        Doc doc = extractFromFile("test.txt",
-                FsSettings.builder(getCurrentTestName())
-                        .setFs(Fs.builder().setChecksum("MD5").build())
-                        .build());
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setChecksum("MD5");
+        Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
         assertThat(doc.getContent(), containsString("This file contains some words."));
@@ -597,11 +592,8 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), containsString("This file also contains text."));
 
         // Test with OCR On and PDF Strategy set to no_ocr (meaning that PDF are not OCRed)
-        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setOcr(Ocr.builder()
-                        .setPdfStrategy("no_ocr")
-                        .build()).build())
-                .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().getOcr().setPdfStrategy("no_ocr");
         doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent(), containsString("This file contains some words."));
         doc = extractFromFile("test-ocr.pdf", fsSettings);
@@ -612,11 +604,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), containsString("This file contains some words."));
 
         // Test with OCR On and PDF Strategy set to ocr_only (meaning that PDF only OCRed and no text is extracted)
-        fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setOcr(Ocr.builder()
-                        .setPdfStrategy("ocr_only")
-                        .build()).build())
-                .build();
+        fsSettings.getFs().getOcr().setPdfStrategy("ocr_only");
         doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent(), containsString("This file contains some words."));
         doc = extractFromFile("test-ocr.pdf", fsSettings);
@@ -628,11 +616,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), containsString("This file also contains text."));
 
         // Test with OCR On and PDF Strategy set to auto (meaning that PDF will be only OCRed if less than 10 characters are found)
-        fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setOcr(Ocr.builder()
-                        .setPdfStrategy("auto")
-                        .build()).build())
-                .build();
+        fsSettings.getFs().getOcr().setPdfStrategy("auto");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent(), not(containsString("This file contains some words.")));
         assertThat(doc.getContent(), containsString("This file also contains text."));
@@ -640,11 +624,8 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), containsString("This file contains some words."));
 
         // Test with OCR Off
-        fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setOcr(Ocr.builder()
-                        .setEnabled(false)
-                        .build()).build())
-                .build();
+        fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().getOcr().setEnabled(false);
         doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent(), isEmptyString());
         doc = extractFromFile("test-ocr.pdf", fsSettings);
@@ -653,30 +634,25 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent(), not(containsString("This file contains some words.")));
 
         // Test with OCR On (default) but a wrong path to tesseract
-        fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setOcr(Ocr.builder()
-                        .setPath("/path/to/doesnotexist")
-                        .setDataPath("/path/to/doesnotexist")
-                        .build()).build())
-                .build();
+        fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().getOcr().setPath("/path/to/doesnotexist");
+        fsSettings.getFs().getOcr().setDataPath("/path/to/doesnotexist");
         doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent(), isEmptyString());
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent(), not(containsString("This file contains some words.")));
 
         // Test with OCR On with hocr output type
-        fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setOcr(Ocr.builder().setOutputType("hocr").build()).build())
-                .build();
+        fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().getOcr().setOutputType("hocr");
         doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent(), stringContainsInOrder(Arrays.asList("This", "file", "contains", "some", "words.")));
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent(), stringContainsInOrder(Arrays.asList("This", "file", "contains", "some", "words.")));
 
         // Test with heb language
-        fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setOcr(Ocr.builder().setLanguage("heb").build()).build())
-                .build();
+        fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().getOcr().setLanguage("heb");
         doc = extractFromFile("test-ocr-heb.pdf", fsSettings);
         try {
             // This test requires to have the hebrew language pack, so we don't fail the test but just log
@@ -695,9 +671,8 @@ public class TikaDocParserTest extends DocParserTestCase {
         }
         Files.copy(tikaConfigIS, testTikaConfig.resolve("tikaConfig.xml"));
 
-        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
-            .setFs(Fs.builder().setTikaConfigPath(testTikaConfig.resolve("tikaConfig.xml").toString()).build())
-            .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setTikaConfigPath(testTikaConfig.resolve("tikaConfig.xml").toString());
 
         // Test that default parser for HTML is HTML parser
         Doc doc = extractFromFile("test.html");
@@ -734,9 +709,9 @@ public class TikaDocParserTest extends DocParserTestCase {
     public void testPdfIssue1097() throws IOException {
         // Run the test with or without OCR as the behavior changes
         boolean withOcr = isOcrAvailable && randomBoolean();
-        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setRawMetadata(true).setOcr(Ocr.builder().setEnabled(withOcr).build()).build())
-                .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadata(true);
+        fsSettings.getFs().getOcr().setEnabled(withOcr);
         Doc doc = extractFromFile("issue-1097.pdf", fsSettings);
         // TODO This test is now passing but should be failing with ocr when
         // https://issues.apache.org/jira/browse/TIKA-3364 is solved
@@ -796,9 +771,8 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void testEmptyFileIssue834() throws IOException {
-        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setRawMetadata(true).build())
-                .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadata(true);
         Doc doc = extractFromFile("issue-834.txt", fsSettings);
         assertThat(doc.getContent(), isEmptyString());
 
@@ -814,7 +788,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void testProtectedDocument() throws IOException {
-        FsSettings fsSettings = FsSettings.builder(getCurrentTestName()).build();
+        FsSettings fsSettings = FsSettingsLoader.load();
         Doc doc = extractFromFile("test-protected.docx", fsSettings);
         assertThat(doc.getFile().getContentType(), is("application/x-tika-ooxml-protected"));
     }
@@ -826,14 +800,13 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     private Doc extractFromFileExtension(String extension) throws IOException {
-        FsSettings fsSettings = FsSettings.builder(getCurrentTestName())
-                .setFs(Fs.builder().setRawMetadata(true).build())
-                .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadata(true);
         return extractFromFile("test." + extension, fsSettings);
     }
 
     private Doc extractFromFile(String filename) throws IOException {
-        return extractFromFile(filename, FsSettings.builder(getCurrentTestName()).build());
+        return extractFromFile(filename, FsSettingsLoader.load());
     }
 
     private Doc extractFromFile(String filename, FsSettings fsSettings) throws IOException {

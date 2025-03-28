@@ -20,9 +20,11 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
+
+import java.util.List;
 
 /**
  * Test filters crawler settings
@@ -30,29 +32,25 @@ import org.junit.Test;
 public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_filter_one_term() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .addFilter(".*foo.*")
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setFilters(List.of(".*foo.*"));
+        crawler = startCrawler(fsSettings);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
     @Test
     public void test_filter_visa_pattern() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .addFilter("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$")
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"));
+        crawler = startCrawler(fsSettings);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
     @Test
     public void test_filter_visa_pattern_plus_foo() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .addFilter("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$")
-                .addFilter(".*foo.*")
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$", ".*foo.*"));
+        crawler = startCrawler(fsSettings);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 }

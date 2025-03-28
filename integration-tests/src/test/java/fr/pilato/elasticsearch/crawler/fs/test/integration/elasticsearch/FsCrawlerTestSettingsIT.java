@@ -22,11 +22,9 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 
 /**
  * Test various crawler settings
@@ -38,8 +36,9 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_time_value() throws Exception {
-        Fs fs = startCrawlerDefinition(TimeValue.timeValueHours(1)).build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueHours(1));
+        crawler = startCrawler(fsSettings);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
@@ -47,10 +46,11 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_bulk_flush() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-        crawler = startCrawler(getCrawlerName(), fs,
-                generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
-                        100, TimeValue.timeValueSeconds(2), ByteSizeValue.parseBytesSizeValue("100b"), false), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getElasticsearch().setBulkSize(100);
+        fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(2));
+        fsSettings.getElasticsearch().setByteSize(ByteSizeValue.parseBytesSizeValue("100b"));
+        crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }

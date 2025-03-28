@@ -24,7 +24,7 @@ import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
@@ -38,10 +38,9 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_store_source() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setStoreSource(true)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setStoreSource(true);
+        crawler = startCrawler(fsSettings);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -65,11 +64,10 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_store_source_no_index_content() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setStoreSource(true)
-                .setIndexContent(false)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setStoreSource(true);
+        fsSettings.getFs().setIndexContent(false);
+        crawler = startCrawler(fsSettings);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {

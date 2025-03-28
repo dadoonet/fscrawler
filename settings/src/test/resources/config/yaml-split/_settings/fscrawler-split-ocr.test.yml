@@ -1,10 +1,19 @@
 fs:
+  # optional: the OCR Options
   ocr:
-    enabled: true
-    language: "eng"
+    # optional: enable or disable OCR
+    enabled: false
+    # optional: language to use for OCR
+    language: "fra"
+    # optional: path to the Tesseract binary
     path: "/path/to/tesseract/if/not/available/in/PATH"
+    # optional: path to the Tesseract tessdata directory
     data_path: "/path/to/tesseract/tessdata/if/needed"
+    # optional: the OCR output type, either txt or hocr
     output_type: txt
-    pdf_strategy: ocr_and_text
+    # optional: the OCR strategy, either auto, no_ocr, ocr_only, ocr_and_text
+    pdf_strategy: auto
+    # optional: the mode to use for page orientation from 0 to 13
     page_seg_mode: 1 # automatic mode
-    preserve_interword_spacing: false
+    # optional: if true, we will try to preserve interword spacing
+    preserve_interword_spacing: true

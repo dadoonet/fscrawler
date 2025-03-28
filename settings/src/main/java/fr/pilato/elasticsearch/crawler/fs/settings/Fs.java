@@ -24,284 +24,67 @@ import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import jakarta.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.github.gestalt.config.annotations.Config;
 
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
 public class Fs {
-    private static final Logger logger = LogManager.getLogger();
-
-    public static final String DEFAULT_DIR = Paths.get("/tmp/es").toString();
-    public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("*/~*");
-    public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).setExcludes(DEFAULT_EXCLUDED).build();
-
-    private String url = DEFAULT_DIR;
-    private TimeValue updateRate = TimeValue.timeValueMinutes(15);
+    @Config(defaultVal = Defaults.DEFAULT_DIR)
+    private String url;
+    @Config(defaultVal = "15m")
+    private TimeValue updateRate;
+    @Config
     @Nullable private List<String> includes;
-    private List<String> excludes = Collections.singletonList("*/~*");
+    @Config(defaultVal = "*/~*")
+    private List<String> excludes;
+    @Config
     @Nullable private List<String> filters;
 
-    private Boolean jsonSupport = false;
-    private Boolean addAsInnerObject = false;
-    private Boolean xmlSupport = false;
+    @Config(defaultVal = "false")
+    private boolean jsonSupport;
+    @Config(defaultVal = "false")
+    private boolean addAsInnerObject;
+    @Config(defaultVal = "false")
+    private boolean xmlSupport;
 
-    private Boolean followSymlinks = false;
-    private Boolean removeDeleted = true;
-    private Boolean continueOnError = false;
-    @Nullable private ByteSizeValue ignoreAbove = null;
+    @Config(defaultVal = "false")
+    private boolean followSymlinks;
+    @Config(defaultVal = "true")
+    private boolean removeDeleted;
+    @Config(defaultVal = "false")
+    private boolean continueOnError;
+    @Config
+    @Nullable private ByteSizeValue ignoreAbove;
 
-    private Boolean filenameAsId = false;
-    private Boolean addFilesize = true;
-    private Boolean attributesSupport = false;
-    private Boolean storeSource = false;
-    private Boolean indexContent = true;
-    @Nullable private Percentage indexedChars = null;
-    private Boolean rawMetadata = false;
-    @Nullable private String checksum = null;
+    @Config(defaultVal = "false")
+    private boolean filenameAsId;
+    @Config(defaultVal = "true")
+    private boolean addFilesize;
+    @Config(defaultVal = "false")
+    private boolean attributesSupport;
+    @Config(defaultVal = "false")
+    private boolean storeSource;
+    @Config(defaultVal = "true")
+    private boolean indexContent;
+    @Config
+    @Nullable private Percentage indexedChars;
+    @Config(defaultVal = "false")
+    private boolean rawMetadata;
+    @Config
+    @Nullable private String checksum;
 
-    private Boolean indexFolders = true;
-    private Boolean langDetect = false;
+    @Config(defaultVal = "true")
+    private boolean indexFolders;
+    @Config(defaultVal = "false")
+    private boolean langDetect;
 
-    @Nullable private String tikaConfigPath = null;
+    @Config
+    @Nullable private String tikaConfigPath;
 
-    @Nullable private Ocr ocr = new Ocr();
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-        private String url = DEFAULT_DIR;
-        private TimeValue updateRate = TimeValue.timeValueMinutes(15);
-        private List<String> includes = null;
-        private List<String> excludes = null;
-        private List<String> filters = null;
-        private boolean jsonSupport = false;
-        private boolean filenameAsId = false;
-        private boolean addFilesize = true;
-        private boolean removeDeleted = true;
-        private boolean addAsInnerObject = false;
-        private boolean storeSource = false;
-        private boolean indexContent = true;
-        private Percentage indexedChars = null;
-        private boolean attributesSupport = false;
-        private boolean rawMetadata = false;
-        private String checksum = null;
-        private boolean xmlSupport = false;
-        private boolean indexFolders = true;
-        private boolean langDetect = false;
-        private boolean continueOnError = false;
-        private Ocr ocr = new Ocr();
-        private ByteSizeValue ignoreAbove = null;
-        private boolean followSymlinks = false;
-        private String tikaConfigPath = null;
-
-        public Builder setUrl(String url) {
-            this.url = url;
-            return this;
-        }
-
-        public Builder setUpdateRate(TimeValue updateRate) {
-            this.updateRate = updateRate;
-            return this;
-        }
-
-        public Builder setIncludes(List<String> includes) {
-            this.includes = includes;
-            return this;
-        }
-
-        public Builder addInclude(String include) {
-            if (this.includes == null) {
-                this.includes = new ArrayList<>();
-            }
-
-            // We refuse to add duplicates
-            if (!this.includes.contains(include)) {
-                this.includes.add(include);
-            }
-
-            return this;
-        }
-
-        public Builder setExcludes(List<String> excludes) {
-            this.excludes = excludes;
-            return this;
-        }
-
-        public Builder addExclude(String exclude) {
-            if (this.excludes == null) {
-                this.excludes = new ArrayList<>();
-            }
-
-            // We refuse to add duplicates
-            if (!this.excludes.contains(exclude)) {
-                this.excludes.add(exclude);
-            }
-
-            return this;
-        }
-
-        public Builder setFilters(List<String> filters) {
-            this.filters = filters;
-            return this;
-        }
-
-        public Builder addFilter(String filter) {
-            if (this.filters == null) {
-                this.filters = new ArrayList<>();
-            }
-
-            // We refuse to add duplicates
-            if (!this.filters.contains(filter)) {
-                this.filters.add(filter);
-            }
-
-            return this;
-        }
-
-        public Builder setJsonSupport(boolean jsonSupport) {
-            this.jsonSupport = jsonSupport;
-            return this;
-        }
-
-        public Builder setFilenameAsId(boolean filenameAsId) {
-            this.filenameAsId = filenameAsId;
-            return this;
-        }
-
-        public Builder setAddFilesize(boolean addFilesize) {
-            this.addFilesize = addFilesize;
-            return this;
-        }
-
-        public Builder setRemoveDeleted(boolean removeDeleted) {
-            this.removeDeleted = removeDeleted;
-            return this;
-        }
-
-        public Builder setAddAsInnerObject(boolean addAsInnerObject) {
-            this.addAsInnerObject = addAsInnerObject;
-            return this;
-        }
-
-        public Builder setStoreSource(boolean storeSource) {
-            this.storeSource = storeSource;
-            return this;
-        }
-
-        public Builder setIndexedChars(Percentage indexedChars) {
-            this.indexedChars = indexedChars;
-            return this;
-        }
-
-        public Builder setIndexContent(boolean indexContent) {
-            this.indexContent = indexContent;
-            return this;
-        }
-
-        public Builder setAttributesSupport(boolean attributesSupport) {
-            this.attributesSupport = attributesSupport;
-            return this;
-        }
-
-        public Builder setRawMetadata(boolean rawMetadata) {
-            this.rawMetadata = rawMetadata;
-            return this;
-        }
-
-        public Builder setChecksum(String checksum) {
-            this.checksum = checksum;
-            return this;
-        }
-
-        public Builder setXmlSupport(boolean xmlSupport) {
-            this.xmlSupport = xmlSupport;
-            return this;
-        }
-
-        public Builder setIndexFolders(boolean indexFolders) {
-            this.indexFolders = indexFolders;
-            return this;
-        }
-
-        public Builder setLangDetect(boolean langDetect) {
-            this.langDetect = langDetect;
-            return this;
-        }
-
-        public Builder setContinueOnError(boolean continueOnError) {
-            this.continueOnError = continueOnError;
-            return this;
-        }
-
-        public Builder setOcr(Ocr ocr) {
-            this.ocr = ocr;
-            return this;
-        }
-
-        public Builder setIgnoreAbove(ByteSizeValue ignoreAbove) {
-            this.ignoreAbove = ignoreAbove;
-            return this;
-        }
-
-        public Builder setFollowSymlinks(boolean followSymlinks) {
-            this.followSymlinks = followSymlinks;
-            return this;
-        }
-
-        public Builder setTikaConfigPath(String tikaConfigPath) {
-            this.tikaConfigPath = tikaConfigPath;
-            return this;
-        }
-
-        public Fs build() {
-            return new Fs(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
-                    removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks,
-                    tikaConfigPath);
-        }
-    }
-
-    public Fs( ) {
-
-    }
-
-    private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, List<String> filters, boolean jsonSupport,
-               boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
-               Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove, boolean followSymlinks,
-               String tikaConfigPath) {
-        this.url = url;
-        this.updateRate = updateRate;
-        this.includes = includes;
-        this.excludes = excludes;
-        this.filters = filters;
-        this.jsonSupport = jsonSupport;
-        this.filenameAsId = filenameAsId;
-        this.addFilesize = addFilesize;
-        this.removeDeleted = removeDeleted;
-        this.addAsInnerObject = addAsInnerObject;
-        this.storeSource = storeSource;
-        this.indexedChars = indexedChars;
-        this.indexContent = indexContent;
-        this.attributesSupport = attributesSupport;
-        this.rawMetadata = rawMetadata;
-        this.checksum = checksum;
-        this.xmlSupport = xmlSupport;
-        this.indexFolders = indexFolders;
-        this.langDetect = langDetect;
-        this.continueOnError = continueOnError;
-        this.ocr = ocr;
-        this.ignoreAbove = ignoreAbove;
-        this.followSymlinks = followSymlinks;
-        this.tikaConfigPath = tikaConfigPath;
-    }
+    @Config
+    @Nullable private Ocr ocr;
 
     public String getUrl() {
         return url;
@@ -471,7 +254,7 @@ public class Fs {
         } else {
             strategy = "no_ocr";
         }
-        logger.warn("pdf_ocr setting has been deprecated and is replaced by ocr.pdf_strategy: {}.", strategy);
+        LogManager.getLogger().warn("pdf_ocr setting has been deprecated and is replaced by ocr.pdf_strategy: {}.", strategy);
         if (this.ocr == null) {
             this.ocr = new Ocr();
         }

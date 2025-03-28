@@ -24,7 +24,7 @@ import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
@@ -74,12 +74,12 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_disable_raw() throws Exception {
-        Fs.Builder builder = startCrawlerDefinition();
+        FsSettings fsSettings = createTestSettings();
         if (rarely()) {
             // Sometimes we explicitly disable it but this is also the default value
-            builder.setRawMetadata(false);
+            fsSettings.getFs().setRawMetadata(false);
         }
-        crawler = startCrawler(getCrawlerName(), builder.build(), endCrawlerDefinition(getCrawlerName()), null, null);
+        crawler = startCrawler(fsSettings);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.meta.raw"));
@@ -88,10 +88,9 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_enable_raw() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setRawMetadata(true)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setRawMetadata(true);
+        crawler = startCrawler(fsSettings);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat(JsonPath.read(hit.getSource(), "$.meta.raw"), notNullValue());

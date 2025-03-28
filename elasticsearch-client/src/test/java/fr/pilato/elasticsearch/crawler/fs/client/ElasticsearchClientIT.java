@@ -4,8 +4,8 @@ import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.ClientErrorException;
@@ -115,15 +115,18 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.info("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
                 testClusterUrl, testCaCertificate, sslVerification);
         // We build the elasticsearch Client based on the parameters
-        Elasticsearch elasticsearchConfiguration = Elasticsearch.builder()
-                .setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)))
-                .setSslVerification(sslVerification)
-                .setCaCertificate(testCaCertificate)
-                .setCredentials(testApiKey, testClusterUser, testClusterPass)
-                .setIndex(DOC_INDEX_NAME)
-                .setIndexFolder(FOLDER_INDEX_NAME)
-                .build();
-        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearchConfiguration).build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getElasticsearch().setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)));
+        fsSettings.getElasticsearch().setSslVerification(sslVerification);
+        fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
+        if (testApiKey != null) {
+            fsSettings.getElasticsearch().setApiKey(testApiKey);
+        } else if (testClusterUser != null && testClusterPass != null) {
+            fsSettings.getElasticsearch().setUsername(testClusterUser);
+            fsSettings.getElasticsearch().setPassword(testClusterPass);
+        }
+        fsSettings.getElasticsearch().setIndex(DOC_INDEX_NAME);
+        fsSettings.getElasticsearch().setIndexFolder(FOLDER_INDEX_NAME);
 
         ElasticsearchClient client = new ElasticsearchClient(null, fsSettings);
 
@@ -683,14 +686,17 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Test
     public void testWithOnlyOneRunningNode() throws ElasticsearchClientException, IOException {
         // Build a client with a non-running node
-        Elasticsearch elasticsearch = Elasticsearch.builder()
-                .setNodes(List.of(
-                        new ServerUrl("http://127.0.0.1:9206"),
-                        new ServerUrl(testClusterUrl)))
-                .setCredentials(testApiKey, testClusterUser, testClusterPass)
-                .setSslVerification(false)
-                .build();
-        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getElasticsearch().setNodes(List.of(
+                new ServerUrl("http://127.0.0.1:9206"),
+                new ServerUrl(testClusterUrl)));
+        if (testApiKey != null) {
+            fsSettings.getElasticsearch().setApiKey(testApiKey);
+        } else if (testClusterUser != null && testClusterPass != null) {
+            fsSettings.getElasticsearch().setUsername(testClusterUser);
+            fsSettings.getElasticsearch().setPassword(testClusterPass);
+        }
+        fsSettings.getElasticsearch().setSslVerification(false);
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
             localClient.isExistingIndex("foo");
@@ -702,18 +708,21 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Test
     public void testWithTwoRunningNodes() throws ElasticsearchClientException, IOException {
         // Build a client with 2 running nodes (well, the same one is used twice) and one non-running node
-        Elasticsearch elasticsearch = Elasticsearch.builder()
-                .setNodes(List.of(
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getElasticsearch().setNodes(List.of(
                         new ServerUrl(testClusterUrl),
                         new ServerUrl(testClusterUrl),
                         new ServerUrl("http://127.0.0.1:9206"),
-                        new ServerUrl(testClusterUrl)))
-                .setCredentials(testApiKey, testClusterUser, testClusterPass)
-                .setSslVerification(false)
-                .setIndex(DOC_INDEX_NAME)
-                .setIndexFolder(FOLDER_INDEX_NAME)
-                .build();
-        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
+                        new ServerUrl(testClusterUrl)));
+        if (testApiKey != null) {
+            fsSettings.getElasticsearch().setApiKey(testApiKey);
+        } else if (testClusterUser != null && testClusterPass != null) {
+            fsSettings.getElasticsearch().setUsername(testClusterUser);
+            fsSettings.getElasticsearch().setPassword(testClusterPass);
+        }
+        fsSettings.getElasticsearch().setSslVerification(false);
+        fsSettings.getElasticsearch().setIndex(DOC_INDEX_NAME);
+        fsSettings.getElasticsearch().setIndexFolder(FOLDER_INDEX_NAME);
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
             assertThat(localClient.getAvailableNodes(), hasSize(4));
@@ -743,14 +752,13 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Test
     public void testWithNonRunningNodes() {
         // Build a client with a non-running node
-        Elasticsearch elasticsearch = Elasticsearch.builder()
-                .setNodes(List.of(
-                        new ServerUrl("http://127.0.0.1:9206"),
-                        new ServerUrl("http://127.0.0.1:9207")))
-                .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
-                .setSslVerification(false)
-                .build();
-        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getElasticsearch().setNodes(List.of(
+                new ServerUrl("http://127.0.0.1:9206"),
+                new ServerUrl("http://127.0.0.1:9207")));
+        fsSettings.getElasticsearch().setUsername(DEFAULT_USERNAME);
+        fsSettings.getElasticsearch().setPassword(DEFAULT_PASSWORD);
+        fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
@@ -765,12 +773,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Test
     public void testWithNonRunningNode() {
         // Build a client with a non-running node
-        Elasticsearch elasticsearch = Elasticsearch.builder()
-                .setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")))
-                .setCredentials(null, DEFAULT_USERNAME, DEFAULT_PASSWORD)
-                .setSslVerification(false)
-                .build();
-        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getElasticsearch().setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")));
+        fsSettings.getElasticsearch().setUsername(DEFAULT_USERNAME);
+        fsSettings.getElasticsearch().setPassword(DEFAULT_PASSWORD);
+        fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
@@ -787,11 +794,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Test
     public void testSecuredClusterWithBadCredentials() throws IOException, ElasticsearchClientException {
         // Build a client with a null password
-        Elasticsearch elasticsearch = Elasticsearch.builder()
-                .setNodes(List.of(new ServerUrl(testClusterUrl)))
-                .setSslVerification(false)
-                .build();
-        FsSettings fsSettings = FsSettings.builder("esClient").setElasticsearch(elasticsearch).build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getElasticsearch().setNodes(List.of(new ServerUrl(testClusterUrl)));
+        fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
@@ -963,7 +968,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
             return totalHits;
-        }, expected, timeout.millis(), TimeUnit.MILLISECONDS);
+        }, expected, timeout);
 
         Matcher<Long> matcher;
         if (expected == null) {

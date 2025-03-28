@@ -87,9 +87,8 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
 
-
-        fsSettingsLoader.write(FsSettings.builder(jobName).build());
-        fsJobFileHandler.write(jobName, FsJob.builder().build());
+        fsSettingsLoader.write(jobName, new FsSettings());
+        fsJobFileHandler.write(jobName, new FsJob());
 
         assertThat(Files.exists(jobDir.resolve(FsJobFileHandler.FILENAME)), is(true));
 
@@ -140,6 +139,27 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         }
     }
 
+    @Test
+    public void testWithDefaultNamesForEnvVariables() throws Exception {
+        String jobName = "fscrawler_env_variables_default";
+
+        Path jobDir = metadataDir.resolve(jobName);
+        Files.createDirectories(jobDir);
+
+        String[] args = { "--config_dir", metadataDir.toString(), jobName };
+        // Create an environment variable
+        System.setProperty("FSCRAWLER_NAME", "fscrawler_env_variables_default");
+        System.setProperty("FSCRAWLER_FS_URL", "/foo/bar");
+
+        try {
+            FsCrawlerCli.main(args);
+        } finally {
+            // Remove the environment variable
+            System.clearProperty("FSCRAWLER_NAME");
+            System.clearProperty("FSCRAWLER_FS_URL");
+        }
+    }
+
     @Test(expected = FsCrawlerIllegalConfigurationException.class)
     public void testWithEnvVariablesNotSet() throws Exception {
         String jobName = "fscrawler_env_variables";
@@ -152,6 +172,18 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
                         "  url: \"${FSCRAWLER_FS_URL:=/tmp/test}\"\n");
 
         String[] args = { "--config_dir", metadataDir.toString(), jobName };
+        FsCrawlerCli.main(args);
+    }
+
+    @Test
+    public void testWithEmptySettings() throws Exception {
+        String jobName = "fscrawler_empty_settings";
+        Path jobDir = metadataDir.resolve(jobName);
+        Files.createDirectories(jobDir);
+        Files.writeString(jobDir.resolve(SETTINGS_YAML), "");
+
+        String[] args = { "--config_dir", metadataDir.toString(), jobName };
+
         FsCrawlerCli.main(args);
     }
 }

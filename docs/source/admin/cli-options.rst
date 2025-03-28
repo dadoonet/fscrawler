@@ -7,13 +7,16 @@ CLI options
 -  ``--silent`` runs in silent mode. No output is generated on the console.
 -  ``--config_dir`` defines directory where jobs are stored instead of
    default ``~/.fscrawler``.
--  ``--api_key`` defines the Elasticsearch Api Key to use.
-   Do not use with ``--username``. Read :ref:`credentials`.
--  ``--username`` defines the username to use (Deprecated).
-   Do not use with ``--api_key``. Read :ref:`credentials`.
 -  ``--loop x`` defines the number of runs we want before exiting. See `Loop`_.
 -  ``--restart`` restart a job from scratch. See `Restart`_.
 -  ``--rest`` starts the REST service. See `Rest`_.
+
+Job settings can also be passed as command line arguments. For example, if you
+want to set the ``url`` of a job named ``myjob`` to ``/tmp/test``, you can run:
+
+.. code:: sh
+
+   bin/fscrawler myjob -Dfs.url=/tmp/test
 
 
 Loop

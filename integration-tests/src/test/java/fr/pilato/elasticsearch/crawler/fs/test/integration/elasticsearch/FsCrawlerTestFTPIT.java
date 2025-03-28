@@ -20,7 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.After;
@@ -69,29 +69,27 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_ftp() throws Exception {
-        Fs fs = startCrawlerDefinition().setUrl("/").build();
-        Server server = Server.builder()
-                .setHostname(hostname)
-                .setUsername("anonymous")
-                .setProtocol(Server.PROTOCOL.FTP)
-                .setPort(port)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setUrl("/");
+        fsSettings.getServer().setHostname(hostname);
+        fsSettings.getServer().setUsername("anonymous");
+        fsSettings.getServer().setProtocol(Server.PROTOCOL.FTP);
+        fsSettings.getServer().setPort(port);
+        crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 
     @Test
     public void test_ftp_with_user() throws Exception {
-        Fs fs = startCrawlerDefinition().setUrl("/").build();
-        Server server = Server.builder()
-                .setHostname(hostname)
-                .setUsername(user)
-                .setPassword(pass)
-                .setProtocol(Server.PROTOCOL.FTP)
-                .setPort(port)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setUrl("/");
+        fsSettings.getServer().setHostname(hostname);
+        fsSettings.getServer().setUsername(user);
+        fsSettings.getServer().setPassword(pass);
+        fsSettings.getServer().setProtocol(Server.PROTOCOL.FTP);
+        fsSettings.getServer().setPort(port);
+        crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }

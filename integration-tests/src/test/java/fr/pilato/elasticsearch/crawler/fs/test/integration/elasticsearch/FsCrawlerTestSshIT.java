@@ -20,7 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
@@ -40,7 +40,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.security.*;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 
 /**
@@ -114,30 +117,29 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_ssh() throws Exception {
-        Fs fs = startCrawlerDefinition("/").build();
-        Server server = Server.builder()
-                .setHostname(sshd.getHost())
-                .setPort(sshd.getPort())
-                .setUsername(SSH_USERNAME)
-                .setPassword(SSH_PASSWORD)
-                .setProtocol(Server.PROTOCOL.SSH)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setUrl("/");
+        fsSettings.getServer().setHostname(sshd.getHost());
+        fsSettings.getServer().setPort(sshd.getPort());
+        fsSettings.getServer().setUsername(SSH_USERNAME);
+        fsSettings.getServer().setPassword(SSH_PASSWORD);
+        fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
+        crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
 
     @Test
     public void test_ssh_with_key() throws Exception {
-        Fs fs = startCrawlerDefinition("/").build();
-        Server server = Server.builder()
-                .setHostname(sshd.getHost())
-                .setPort(sshd.getPort())
-                .setUsername(SSH_USERNAME)
-                .setPemPath(rootTmpDir.resolve("private.key").toFile().getAbsolutePath())
-                .setProtocol(Server.PROTOCOL.SSH)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), server, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setUrl("/");
+        fsSettings.getServer().setHostname(sshd.getHost());
+        fsSettings.getServer().setPort(sshd.getPort());
+        fsSettings.getServer().setUsername(SSH_USERNAME);
+        fsSettings.getServer().setPassword(SSH_PASSWORD);
+        fsSettings.getServer().setPemPath(rootTmpDir.resolve("private.key").toFile().getAbsolutePath());
+        fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
+        crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }

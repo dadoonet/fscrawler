@@ -46,7 +46,6 @@ public class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
         String[] args = {
                 "--config_dir", metadataDir.toString(),
                 "--loop", "0",
-                "--username", "dadoonet",
                 "--rest",
                 "--upgrade",
                 "--restart",
@@ -56,7 +55,6 @@ public class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
         assertThat(command, notNullValue());
         assertThat(command.configDir, is(metadataDir.toString()));
         assertThat(command.loop, is(0));
-        assertThat(command.username, is("dadoonet"));
         assertThat(command.rest, is(true));
         assertThat(command.upgrade, is(true));
         assertThat(command.restart, is(true));

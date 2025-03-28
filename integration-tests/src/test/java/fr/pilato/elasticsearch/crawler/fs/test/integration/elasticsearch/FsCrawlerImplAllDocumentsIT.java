@@ -22,16 +22,11 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.client.*;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -85,17 +80,21 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
 
         logger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
-        crawler = new FsCrawlerImpl(metadataDir,
-                FsSettings.builder("fscrawler_test_all_documents")
-                        .setElasticsearch(generateElasticsearchConfig(
-                                "fscrawler_test_all_documents", "fscrawler_test_all_documents_folder",
-                                5, TimeValue.timeValueSeconds(1), null, false))
-                        .setFs(Fs.builder()
-                                .setUrl(testResourceTarget.toString())
-                                .setLangDetect(true)
-                                .build())
-                        .build(), LOOP_INFINITE, false);
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName("fscrawler_test_all_documents");
+        fsSettings.getFs().setUrl(testResourceTarget.toString());
+        fsSettings.getFs().setLangDetect(true);
+        // Clone the elasticsearchConfiguration to avoid modifying the default one
+        // We start with a clean configuration
+        Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
+        fsSettings.setElasticsearch(elasticsearch);
+        fsSettings.getElasticsearch().setIndex("fscrawler_test_all_documents");
+        fsSettings.getElasticsearch().setIndexFolder("fscrawler_test_all_documents_folder");
+        fsSettings.getElasticsearch().setBulkSize(5);
+        fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
+        fsSettings.getElasticsearch().setSemanticSearch(false);
 
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
         crawler.start();
 
         // We wait until we have all docs

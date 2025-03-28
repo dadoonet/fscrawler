@@ -23,11 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.*;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
 import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FileAbstractorFile;
-import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
-import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
-import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
+import fr.pilato.elasticsearch.crawler.fs.framework.*;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -138,7 +134,7 @@ public abstract class FsParserAbstract extends FsParser {
             int run = runNumber.incrementAndGet();
 
             try {
-                logger.info("Run #{} starting...", run);
+                logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
                 stats = new ScanStatistic(fsSettings.getFs().getUrl());
                 LocalDateTime startDate = LocalDateTime.now();
                 stats.setStartTime(startDate);
@@ -170,8 +166,8 @@ public abstract class FsParserAbstract extends FsParser {
                 addFilesRecursively(fsSettings.getFs().getUrl(), scanDate);
 
                 stats.setEndTime(LocalDateTime.now());
-                logger.info("Run #{}: indexed [{}], deleted [{}], documents up to [{}]. " +
-                                "Started at [{}], finished at [{}], took [{}]", run,
+                logger.info("Run #{}: job [{}]: indexed [{}], deleted [{}], documents up to [{}]. " +
+                                "Started at [{}], finished at [{}], took [{}]", run, fsSettings.getName(),
                         stats.getNbDocScan(), stats.getNbDocDeleted(), scanDatenew,
                         stats.getStartTime(), stats.getEndTime(), stats.computeDuration());
                 updateFsJob(fsSettings.getName(), scanDatenew);
@@ -436,9 +432,9 @@ public abstract class FsParserAbstract extends FsParser {
             doc.getFile().setLastModified(localDateTimeToDate(lastModified));
             doc.getFile().setLastAccessed(localDateTimeToDate(lastAccessed));
             doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
-            if (fsSettings.getServer() == null) {
+            if (fsSettings.getServer() == null || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
                 doc.getFile().setUrl("file://" + fullFilename);
-            } else if (fsSettings.getServer().getProtocol().equals(PROTOCOL.FTP)) {
+            } else if (PROTOCOL.FTP.equals(fsSettings.getServer().getProtocol())) {
                 doc.getFile().setUrl(String.format("ftp://%s:%d%s", fsSettings.getServer().getHostname(), fsSettings.getServer().getPort(), fullFilename));
             }
             doc.getFile().setExtension(extension);

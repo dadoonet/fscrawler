@@ -32,11 +32,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.Invocation;
-import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -57,11 +53,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -72,7 +64,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsD
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 
 /**
- * Elasticsearch Client for Clusters running v7.
+ * Elasticsearch Client
  */
 public class ElasticsearchClient implements IElasticsearchClient {
 
@@ -676,6 +668,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
 
         url += "/_search";
+
+        logger.debug("searching index [{}]", request.getIndex());
 
         final AtomicReference<String> body = new AtomicReference<>("{");
 

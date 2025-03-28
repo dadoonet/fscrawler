@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.is;
 
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.io.InputStream;
@@ -91,17 +91,11 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
     @Test
     public void testConnectToFakeFTPServer() throws Exception {
         int port = fakeFtpServer.getServerControlPort();
-        FsSettings fsSettings = FsSettings.builder("fake")
-                .setServer(
-                        Server.builder()
-                                .setHostname("localhost")
-                                .setUsername(user)
-                                .setPassword(pass)
-                                .setPort(port)
-                                .build()
-                )
-                .build();
-
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getServer().setHostname("localhost");
+        fsSettings.getServer().setUsername(user);
+        fsSettings.getServer().setPassword(pass);
+        fsSettings.getServer().setPort(port);
         FileAbstractorFTP ftp = new FileAbstractorFTP(fsSettings);
         ftp.open();
         boolean exists = ftp.exists(nestedDir);
@@ -140,16 +134,11 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
     @Test @Ignore
     public void testConnectToFTPServer() throws Exception {
         String path = "/中文目录";
-        FsSettings fsSettings = FsSettings.builder("local_utf8_test")
-            .setServer(
-                Server.builder()
-                    .setHostname("192.168.18.207")
-                    .setUsername("helsonxiao")
-                    .setPassword("123456")
-                    .setPort(21)
-                    .build()
-            )
-            .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getServer().setHostname("192.168.18.207");
+        fsSettings.getServer().setUsername("helsonxiao");
+        fsSettings.getServer().setPassword("123456");
+        fsSettings.getServer().setPort(21);
 
         FileAbstractorFTP ftp = new FileAbstractorFTP(fsSettings);
         ftp.open();
@@ -184,16 +173,11 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
     @Test
     public void testFTPFilePermissions() throws IOException {
         int port = fakeFtpServer.getServerControlPort();
-        FsSettings fsSettings = FsSettings.builder("fake")
-            .setServer(
-                Server.builder()
-                    .setHostname("localhost")
-                    .setUsername(user)
-                    .setPassword(pass)
-                    .setPort(port)
-                    .build()
-            )
-            .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getServer().setHostname("localhost");
+        fsSettings.getServer().setUsername(user);
+        fsSettings.getServer().setPassword(pass);
+        fsSettings.getServer().setPort(port);
 
         FileAbstractorFTP ftp = new FileAbstractorFTP(fsSettings);
         ftp.open();

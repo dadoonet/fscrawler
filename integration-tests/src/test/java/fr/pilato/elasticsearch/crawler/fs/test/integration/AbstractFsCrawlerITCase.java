@@ -24,7 +24,9 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.settings.*;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -59,61 +61,40 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         stopCrawler();
     }
 
-    protected Fs.Builder startCrawlerDefinition() {
-        return startCrawlerDefinition(currentTestResourceDir.toString(), TimeValue.timeValueSeconds(5));
+    protected FsSettings createTestSettings() {
+        return createTestSettings(getCrawlerName());
     }
 
-    protected Fs.Builder startCrawlerDefinition(TimeValue updateRate) {
-        return startCrawlerDefinition(currentTestResourceDir.toString(), updateRate);
-    }
+    protected FsSettings createTestSettings(String name) {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName(name);
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(1));
+        fsSettings.getFs().setUrl(currentTestResourceDir.toString());
 
-    protected Fs.Builder startCrawlerDefinition(String dir) {
-        return startCrawlerDefinition(dir, TimeValue.timeValueSeconds(5));
-    }
+        // Clone the elasticsearchConfiguration to avoid modifying the default one
+        // We start with a clean configuration
+        Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
 
-    private Fs.Builder startCrawlerDefinition(String dir, TimeValue updateRate) {
-        logger.info("  --> creating crawler for dir [{}]", dir);
-        return Fs
-                .builder()
-                .setUrl(dir)
-                .setUpdateRate(updateRate);
-    }
-
-    protected Elasticsearch endCrawlerDefinition(String indexName) {
-        return endCrawlerDefinition(indexName, indexName + INDEX_SUFFIX_FOLDER);
-    }
-
-    private Elasticsearch endCrawlerDefinition(String indexDocName, String indexFolderName) {
-        return generateElasticsearchConfig(indexDocName, indexFolderName, 1, null, null, false);
+        fsSettings.setElasticsearch(elasticsearch);
+        fsSettings.getElasticsearch().setIndex(name);
+        fsSettings.getElasticsearch().setIndexFolder(name + INDEX_SUFFIX_FOLDER);
+        // We explicitly set semantic search to false because IT takes too long time
+        fsSettings.getElasticsearch().setSemanticSearch(false);
+        return fsSettings;
     }
 
     protected FsCrawlerImpl startCrawler() throws Exception {
-        return startCrawler(getCrawlerName());
+        return startCrawler(createTestSettings());
     }
 
-    private FsCrawlerImpl startCrawler(final String jobName) throws Exception {
-        return startCrawler(jobName, startCrawlerDefinition().build(), endCrawlerDefinition(jobName), null, null);
+    protected FsCrawlerImpl startCrawler(FsSettings fsSettings) throws Exception {
+        return startCrawler(fsSettings, TimeValue.timeValueSeconds(30));
     }
 
-    protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Tags tags) throws Exception {
-        return startCrawler(jobName, fs, elasticsearch, server, null, tags, TimeValue.timeValueSeconds(30));
-    }
-
-    protected FsCrawlerImpl startCrawler(final String jobName, Fs fs, Elasticsearch elasticsearch, Server server, Rest rest,
-                                         Tags tags, TimeValue duration)
+    protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, TimeValue duration)
             throws Exception {
-        FsSettings.Builder builder = FsSettings.builder(jobName);
-        if (elasticsearch != null) builder.setElasticsearch(elasticsearch);
-        if (fs != null) builder.setFs(fs);
-        if (server != null) builder.setServer(server);
-        if (rest != null) builder.setRest(rest);
-        if (tags != null) builder.setTags(tags);
-        return startCrawler(jobName, builder.build(), duration);
-    }
-
-    protected FsCrawlerImpl startCrawler(final String jobName, FsSettings fsSettings, TimeValue duration)
-            throws Exception {
-        logger.info("  --> starting crawler [{}]", jobName);
+        logger.info("  --> starting crawler [{}]", fsSettings.getName());
+        logger.debug("     with settings [{}]", fsSettings);
 
         crawler = new FsCrawlerImpl(
                 metadataDir,
@@ -125,18 +106,18 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         // We wait up to X seconds before considering a failing test
         assertThat("Job meta file should exists in ~/.fscrawler...", awaitBusy(() -> {
             try {
-                new FsJobFileHandler(metadataDir).read(jobName);
+                new FsJobFileHandler(metadataDir).read(fsSettings.getName());
                 return true;
             } catch (IOException e) {
                 return false;
             }
-        }, duration.seconds(), TimeUnit.SECONDS), equalTo(true));
+        }, duration), equalTo(true));
 
-        countTestHelper(new ESSearchRequest().withIndex(jobName), null, null);
+        countTestHelper(new ESSearchRequest().withIndex(fsSettings.getElasticsearch().getIndex()), null, null, duration);
 
         // Make sure we refresh indexed docs and folders before launching tests
-        refresh(jobName);
-        refresh(jobName + INDEX_SUFFIX_FOLDER);
+        refresh(fsSettings.getElasticsearch().getIndex());
+        refresh(fsSettings.getElasticsearch().getIndexFolder());
 
         return crawler;
     }

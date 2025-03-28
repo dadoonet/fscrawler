@@ -19,14 +19,16 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.Collections;
+import java.util.List;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.ymlMapper;
+public class Defaults {
+    public static final String DEFAULT_DIR = "/tmp/es";
+    public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("*/~*");
+    public static final ServerUrl NODE_DEFAULT = new ServerUrl("https://127.0.0.1:9200");
+    public static final String DEFAULT_META_FILENAME = ".meta.yml";
+    public static final String URL_DEFAULT = "http://127.0.0.1:8080/fscrawler";
 
-public class FsSettingsParser {
-
-    public static String toYaml(FsSettings settings) throws JsonProcessingException {
-        return ymlMapper.writeValueAsString(settings);
-    }
-
+    // To make sur we don't create an instance of this class
+    private Defaults() {}
 }
