@@ -46,6 +46,8 @@
 
         <pl4j.version>3.13.0</pl4j.version>
 
+        <gestalt.version>0.35.2</gestalt.version>
+
         <tika.version>3.1.0</tika.version>
         <jackson.version>2.18.3</jackson.version>
         <jsonpath.version>2.9.0</jsonpath.version>
@@ -562,6 +564,29 @@
                 <groupId>net.minidev</groupId>
                 <artifactId>json-smart</artifactId>
                 <version>2.5.2</version>
+            </dependency>
+
+            <!-- gestalt config management: https://github.com/gestalt-config/gestalt -->
+            <dependency>
+                <groupId>com.github.gestalt-config</groupId>
+                <artifactId>gestalt-core</artifactId>
+                <version>${gestalt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.gestalt-config</groupId>
+                <artifactId>gestalt-yaml</artifactId>
+                <version>${gestalt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.gestalt-config</groupId>
+                <artifactId>gestalt-json</artifactId>
+                <version>${gestalt.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>2.1.1</version>
             </dependency>
 
             <!-- This is needed to compile on my machine :( -->

@@ -761,13 +761,13 @@ Follow Symlinks
 ^^^^^^^^^^^^^^^
 
 If you want FSCrawler to follow the symbolic links, you need to be explicit about it and set
-``follow_symlink`` to ``true``. Starting from version 2.7, symbolic links are not followed anymore.
+``follow_symlinks`` to ``true``. Starting from version 2.7, symbolic links are not followed anymore.
 
 .. code:: yaml
 
    name: "test"
    fs:
-     follow_symlink: true
+     follow_symlinks: true
 
 Tika Config Path
 ^^^^^^^^^^^^^^^^

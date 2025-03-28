@@ -9,7 +9,7 @@ To deal with images containing text, just `install
 Tesseract <https://tesseract-ocr.github.io/tessdoc/>`__.
 Tesseract will be auto-detected by Tika or you can explicitly `set the
 path to tesseract binary <#ocr-path>`_. Then add an image (png, jpg, …)
-into your Fscrawler :ref:`root-directory`. After the next
+into your FSCrawler :ref:`root-directory`. After the next
 index update, the text will be indexed and placed in "_source.content".
 
 OCR settings
@@ -32,12 +32,10 @@ Here is a list of OCR settings (under ``fs.ocr`` prefix)`:
 +---------------------------------------+------------------+-----------------------------------+
 | ``fs.ocr.pdf_strategy``               | ``ocr_and_text`` | `OCR PDF Strategy`_               |
 +---------------------------------------+------------------+-----------------------------------+
-| ``fs.ocr.page_seg_mode``              | ``1``            | `OCR Page Seg Mode`_              |
+| ``fs.ocr.page_seg_mode``              | ``01``           | `OCR Page Seg Mode`_              |
 +---------------------------------------+------------------+-----------------------------------+
 | ``fs.ocr.preserve_interword_spacing`` | ``false``        | `OCR Preserve Interword Spacing`_ |
 +---------------------------------------+------------------*-----------------------------------+
-
-
 
 Disable/Enable OCR
 ------------------

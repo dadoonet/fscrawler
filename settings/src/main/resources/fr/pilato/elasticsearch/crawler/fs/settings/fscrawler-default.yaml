@@ -1,0 +1,148 @@
+# required
+name: "test"
+
+# optional: set file system crawler parameters
+#fs:
+  # define a "local" file path crawler, if running inside a docker container this must be the path INSIDE the container
+  #url: "/tmp/es"
+  # optional: scan every 5 minutes for changes in url defined above
+  #update_rate: "5m"
+  # optional: define includes and excludes, "~" files are excluded by default if not defined below
+  #includes:
+  #  - "*.doc"
+  #  - "*.xls"
+  #excludes:
+  #  - "resume.doc"
+  # optional: List regular expressions to match the content that should not be indexed
+  #filters:
+  #  - ".*foo.*"
+  #  - "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$" # do not index files containing credit card numbers
+
+  # optional: special handling of JSON files, should only be used if ALL files are JSON
+  #json_support: false
+  # optional: if false, all JSON files will be added as documents, if true, they will be added as JSON objects
+  #add_as_inner_object: false
+
+  # optional: special handling of XML files, should only be used if ALL files are XML
+  #xml_support: false
+
+  # optional: if true, the crawler will follow symbolic links
+  #follow_symlinks: false
+  # optional: if true, the crawler will remove files found as deleted
+  #remove_deleted: true
+  # optional: if false, the crawler will stop crawling at the first error found
+  #continue_on_error: false
+  # optional: do not send big files to TIKA
+  #ignore_above: "512mb"
+
+  # optional: use MD5 from filename (instead of filename) if set to false
+  #filename_as_id: true
+
+  # you may want to store (partial) content of the file (see indexed_chars)
+  #index_content: true
+
+  # include size ot file in index
+  #add_filesize: true
+
+  # include user/group of file only if needed
+  #attributes_support: false
+
+  # optional: this will try to detect the language of the extracted content
+  #lang_detect: false
+
+  # optional: do you REALLY want to store every file as a copy in the index? Then set this to true
+  #store_source: false
+
+  # optional: how much data from the content of the file should be indexed (and stored inside the index), set to 0 if you need checksum, but no content at all to be indexed
+  #indexed_chars: "0"
+  #indexed_chars: "10000.0"
+
+  # optional: usually file metadata will be stored in separate fields, if you want to keep the original set, set this to true
+  #raw_metadata: false
+
+  # optional: add checksum meta (requires index_content to be set to true)
+  #checksum: "MD5"
+
+  # optional: recommended, but will create another index
+  #index_folders: true
+
+  # optional: the optional path to a specific external Tika Configuration file
+  #tika_config_path: "/path/to/tika-config.xml"
+
+  # optional: the OCR Options
+  #ocr:
+    # optional: enable or disable OCR
+    #enabled: true
+    # optional: language to use for OCR
+    #language: "eng"
+    # optional: path to the Tesseract binary
+    #path: "/path/to/tesseract/if/not/available/in/PATH"
+    # optional: path to the Tesseract tessdata directory
+    #data_path: "/path/to/tesseract/tessdata/if/needed"
+    # optional: the OCR output type, either txt or hocr
+    #output_type: txt
+    # optional: the OCR strategy, either auto, no_ocr, ocr_only, ocr_and_text
+    #pdf_strategy: ocr_and_text
+    # optional: the mode to use for page orientation from 0 to 13
+    #page_seg_mode: 1 # automatic mode
+    # optional: if true, we will try to preserve interword spacing
+    #preserve_interword_spacing: false
+
+  # optional: if the filename is found in the directory, it will be used as a metadata
+  # content of the file will be indexed
+  #tags:
+    #meta_filename: "meta_tags.json" # default is ".meta.yml"
+
+# optional: only required if you want to SSH to another server to index documents from there
+#server:
+  # optional: hostname, defaults to "localhost"
+  #hostname: "localhost"
+  # optional: port, defaults to 22
+  #port: 22
+  # optional: username
+  #username: "dadoonet"
+  # optional: password
+  #password: "password"
+  # optional: protocol, either "ssh" or "local"
+  #protocol: "ssh"
+  # optional: path to the private key
+  #pem_path: "/path/to/pemfile"
+
+# optional: define this if you want to change the default Elasticsearch settings/behavior
+#elasticsearch:
+  # optional: list of Elasticsearch nodes
+  #nodes:
+  #  - url: "https://127.0.0.1:9200"
+  #  - url: "https://127.0.0.1:9201"
+  # optional: the index name to use. Defaults to name property
+  #index: "test_docs"
+  # optional: the index name to use for folders. Defaults to name + "_folder"
+  #index_folder: "test_folder"
+  # optional: the bulk size in number of documents
+  #bulk_size: 1000
+  # optional: the bulk flush period
+  #flush_interval: "5s"
+  # optional: the bulk size in bytes
+  #byte_size: "10mb"
+  # optional: Using Api Key (recommended)
+  #api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+  # optional: Using username/password (not recommended / deprecated)
+  #username: "elastic"
+  #password: "password"
+  # optional: path to the Ca certificate if using self-signed certificates
+  #ca_certificate: "/path/to/ca.crt"
+
+  # optional: the index pipeline
+  #pipeline: "my_pipeline"
+
+  # optional: do we create/update the component and index templates when starting? Defaults to "true"
+  #push_templates: "true"
+  # optional, defaults to "true", used with Elasticsearch 8.17+ with a trial or enterprise license
+  #semantic_search: "true"
+
+# only used when started with --rest option
+#rest:
+  # optional: the URL FSCrawler will listen to.
+  #url: "http://127.0.0.1:8080/fscrawler"
+  # optional: if you want to enable Cross-Origin Resource Sharing
+  #enable_cors: true

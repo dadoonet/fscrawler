@@ -1,5 +1,55 @@
+Job file specifications
+=======================
+
+.. contents:: :backlinks: entry
+
+Expected files
+--------------
+
+FSCrawler expects to find a job directory in the ``~/.fscrawler`` directory or in the directory
+you defined with the ``-config_dir`` CLI option (see :ref:`cli-options`). The job file could be either:
+
+* a ``yaml`` file named ``_settings.yaml``
+* a ``json`` file named ``_settings.json``
+* a list of files within a directory named ``_settings``
+
+When using a directory, FSCrawler will merge all files found in the directory. Meaning that you can split your settings
+in multiple files, like:
+
+* ``my_job.yaml`` which contains the job name
+* ``my_job_fs.yaml`` which contains the file system settings
+* ``my_job_elasticsearch.yaml`` which contains the elasticsearch settings
+
+Using placeholders
+------------------
+
+.. versionadded:: 2.10
+
+FSCrawler supports placeholders in the job file. This is useful when you want to use environment variables in your job file.
+For example, you can define the following job file:
+
+.. code:: yaml
+
+   name: "test"
+   fs:
+     url: "${HOME}/docs"
+   elasticsearch:
+     nodes:
+     - url: "${ES_NODE1:=https://127.0.0.1:9200}"
+     api_key: "${ES_API_KEY}"
+
+When running FSCrawler, it will replace ``${HOME}``, ``${ES_NODE1}`` and ``${ES_API_KEY}``
+by their respective values which will be read from environment variables and java system properties if not found.
+
+If no value is found, it will use the default value after the ``:=`` if any, or it will fail starting if no default value.
+In the previous example, both ``${HOME}`` and ``${ES_API_KEY}`` are mandatory but ``${ES_NODE1}`` is optional and will
+be set to ``https://127.0.0.1:9200`` if not set.
+
+FSCrawler is using the gestalt-config project to handle placeholders. You can read more about String substitution in the
+`gestalt-config documentation <https://github.com/gestalt-config/gestalt#string-substitution>`_.
+
 Example job file specification
-==============================
+------------------------------
 
 The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` must comply to the following ``yaml`` specifications:
 
@@ -13,7 +63,7 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
 
      # define a "local" file path crawler, if running inside a docker container this must be the path INSIDE the container (/tmp/es)
      url: "/path/to/docs"
-     follow_symlink: false
+     follow_symlinks: false
      remove_deleted: true
      continue_on_error: false
 

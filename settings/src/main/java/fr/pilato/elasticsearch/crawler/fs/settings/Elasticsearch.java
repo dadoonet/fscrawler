@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import jakarta.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,33 +36,33 @@ public class Elasticsearch {
     private static final Logger logger = LogManager.getLogger();
     public static final ServerUrl NODE_DEFAULT = new ServerUrl("https://127.0.0.1:9200");
 
-    private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
-    private String index;
-    private String indexFolder;
-    private int bulkSize = 100;
-    private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
-    private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
-    private String apiKey;
+    @Nullable private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
+    @Nullable private String index;
+    @Nullable private String indexFolder;
+    @Nullable private Integer bulkSize = 100;
+    @Nullable private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
+    @Nullable private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
+    @Nullable private String apiKey;
 
     /**
      * Username
      * @deprecated Use apiKey or accessToken instead
      */
     @Deprecated
-    private String username;
+    @Nullable private String username;
     /**
      * Password
      * @deprecated Use apiKey or accessToken instead
      */
     @Deprecated
     @JsonIgnore
-    private String password;
-    private String pipeline;
-    private String pathPrefix;
-    private boolean sslVerification = true;
-    private boolean pushTemplates = true;
-    private String caCertificate;
-    private boolean semanticSearch = true;
+    @Nullable private String password;
+    @Nullable private String caCertificate;
+    @Nullable private String pipeline;
+    @Nullable private String pathPrefix;
+    @Nullable private Boolean sslVerification = true;
+    @Nullable private Boolean pushTemplates = true;
+    @Nullable private Boolean semanticSearch = true;
 
     public Elasticsearch() {
 
@@ -104,6 +105,10 @@ public class Elasticsearch {
         return nodes;
     }
 
+    public void setNodes(@Nullable List<ServerUrl> nodes) {
+        this.nodes = nodes;
+    }
+
     public String getIndex() {
         return index;
     }
@@ -124,12 +129,24 @@ public class Elasticsearch {
         return bulkSize;
     }
 
+    public void setBulkSize(@Nullable Integer bulkSize) {
+        this.bulkSize = bulkSize;
+    }
+
     public TimeValue getFlushInterval() {
         return flushInterval;
     }
 
+    public void setFlushInterval(@Nullable TimeValue flushInterval) {
+        this.flushInterval = flushInterval;
+    }
+
     public ByteSizeValue getByteSize() {
         return byteSize;
+    }
+
+    public void setByteSize(@Nullable ByteSizeValue byteSize) {
+        this.byteSize = byteSize;
     }
 
     public String getApiKey() {
@@ -151,7 +168,6 @@ public class Elasticsearch {
      */
     @Deprecated
     public void setUsername(String username) {
-        logger.warn("username is deprecated. Use apiKey instead.");
         this.username = username;
     }
 
@@ -168,7 +184,6 @@ public class Elasticsearch {
     @Deprecated
     @JsonProperty
     public void setPassword(String password) {
-        logger.warn("password is deprecated. Use apiKey instead.");
         this.password = password;
     }
 
@@ -366,7 +381,7 @@ public class Elasticsearch {
 
         Elasticsearch that = (Elasticsearch) o;
 
-        if (bulkSize != that.bulkSize) return false;
+        if (!Objects.equals(bulkSize, that.bulkSize)) return false;
         if (!Objects.equals(nodes, that.nodes)) return false;
         if (!Objects.equals(index, that.index)) return false;
         if (!Objects.equals(indexFolder, that.indexFolder)) return false;

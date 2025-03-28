@@ -52,6 +52,23 @@
             <artifactId>fscrawler-framework</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.gestalt-config</groupId>
+            <artifactId>gestalt-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.gestalt-config</groupId>
+            <artifactId>gestalt-yaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.gestalt-config</groupId>
+            <artifactId>gestalt-json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>

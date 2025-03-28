@@ -25,6 +25,12 @@ public class Percentage {
 
     private boolean percentage;
 
+    public Percentage(String value) {
+        Percentage parsed = parse(value);
+        this.value = parsed.value;
+        this.percentage = parsed.percentage;
+    }
+
     public Percentage() {
         value = 0;
         percentage = false;

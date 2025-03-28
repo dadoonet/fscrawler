@@ -1,0 +1,16 @@
+elasticsearch:
+  nodes:
+    - url: "https://127.0.0.1:9200"
+    - url: "https://127.0.0.1:9201"
+  index: "test_docs"
+  index_folder: "test_folder"
+  bulk_size: 1000
+  flush_interval: "5s"
+  byte_size: "10mb"
+  api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+  username: "elastic"
+  password: "password"
+  ca_certificate: "/path/to/ca.crt"
+  pipeline: "my_pipeline"
+  push_templates: "true"
+  semantic_search: "true"

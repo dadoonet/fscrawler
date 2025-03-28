@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import jakarta.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,38 +36,44 @@ import java.util.Objects;
 public class Fs {
     private static final Logger logger = LogManager.getLogger();
 
-    private String url;
+    public static final String DEFAULT_DIR = Paths.get("/tmp/es").toString();
+    public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("*/~*");
+    public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).setExcludes(DEFAULT_EXCLUDED).build();
+
+    private String url = DEFAULT_DIR;
     private TimeValue updateRate = TimeValue.timeValueMinutes(15);
-    private List<String> includes = null;
-    private List<String> excludes = null;
-    private List<String> filters = null;
-    private boolean jsonSupport = false;
-    private boolean filenameAsId = false;
-    private boolean addFilesize = true;
-    private boolean removeDeleted = true;
-    private boolean addAsInnerObject = false;
-    private boolean storeSource = false;
-    private boolean indexContent = true;
-    private Percentage indexedChars = null;
-    private boolean attributesSupport = false;
-    private boolean rawMetadata = false;
-    private boolean xmlSupport = false;
-    private String checksum = null;
-    private boolean indexFolders = true;
-    private boolean langDetect = false;
-    private boolean continueOnError = false;
-    private Ocr ocr = new Ocr();
-    private ByteSizeValue ignoreAbove = null;
-    private boolean followSymlinks = false;
-    private String tikaConfigPath = null;
+    @Nullable private List<String> includes;
+    private List<String> excludes = Collections.singletonList("*/~*");
+    @Nullable private List<String> filters;
+
+    private Boolean jsonSupport = false;
+    private Boolean addAsInnerObject = false;
+    private Boolean xmlSupport = false;
+
+    private Boolean followSymlinks = false;
+    private Boolean removeDeleted = true;
+    private Boolean continueOnError = false;
+    @Nullable private ByteSizeValue ignoreAbove = null;
+
+    private Boolean filenameAsId = false;
+    private Boolean addFilesize = true;
+    private Boolean attributesSupport = false;
+    private Boolean storeSource = false;
+    private Boolean indexContent = true;
+    @Nullable private Percentage indexedChars = null;
+    private Boolean rawMetadata = false;
+    @Nullable private String checksum = null;
+
+    private Boolean indexFolders = true;
+    private Boolean langDetect = false;
+
+    @Nullable private String tikaConfigPath = null;
+
+    @Nullable private Ocr ocr = new Ocr();
 
     public static Builder builder() {
         return new Builder();
     }
-
-    public static final String DEFAULT_DIR = Paths.get("/tmp/es").toString();
-    public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("*/~*");
-    public static final Fs DEFAULT = Fs.builder().setUrl(DEFAULT_DIR).setExcludes(DEFAULT_EXCLUDED).build();
 
     public static class Builder {
         private String url = DEFAULT_DIR;

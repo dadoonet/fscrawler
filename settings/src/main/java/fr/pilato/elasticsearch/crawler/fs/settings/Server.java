@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 
 import java.util.Objects;
 
@@ -47,13 +48,12 @@ public class Server {
         this.pemPath = pemPath;
     }
 
-    private String hostname;
-    private int port = PROTOCOL.SSH_PORT;
-    private String username;
-    @JsonIgnore
-    private String password;
-    private String protocol = PROTOCOL.LOCAL;
-    private String pemPath;
+    @Nullable private String hostname;
+    @Nullable private Integer port = PROTOCOL.SSH_PORT;
+    @Nullable private String username;
+    @JsonIgnore @Nullable private String password;
+    @Nullable private String protocol = PROTOCOL.LOCAL;
+    @Nullable private String pemPath;
 
     public String getHostname() {
         return hostname;

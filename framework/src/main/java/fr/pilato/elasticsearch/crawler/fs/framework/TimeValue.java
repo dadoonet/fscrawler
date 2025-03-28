@@ -55,6 +55,12 @@ public class TimeValue {
 
     }
 
+    public TimeValue(String time) {
+        TimeValue timeValue = parseTimeValue(time);
+        this.duration = timeValue.duration;
+        this.timeUnit = timeValue.timeUnit;
+    }
+
     public TimeValue(long millis) {
         this(millis, TimeUnit.MILLISECONDS);
     }

@@ -58,6 +58,9 @@ public class FsCrawlerValidator {
             // When index for folders is not set, we fall back to the config name + _folder
             settings.getElasticsearch().setIndexFolder(settings.getName() + INDEX_SUFFIX_FOLDER);
         }
+        if (settings.getElasticsearch().getUsername() != null || settings.getElasticsearch().getPassword() != null) {
+            logger.warn("username/password is deprecated. Use apiKey instead.");
+        }
 
         // Checking protocol
         if (settings.getServer() != null) {

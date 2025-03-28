@@ -1,0 +1,3 @@
+fs:
+  tags:
+    meta_filename: "meta_tags.json" # default is ".meta.yml"

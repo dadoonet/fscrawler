@@ -26,4 +26,8 @@ public class FsCrawlerIllegalConfigurationException extends RuntimeException {
     public FsCrawlerIllegalConfigurationException(String s) {
         super(s);
     }
+
+    public FsCrawlerIllegalConfigurationException(String s, Throwable e) {
+        super(s, e);
+    }
 }

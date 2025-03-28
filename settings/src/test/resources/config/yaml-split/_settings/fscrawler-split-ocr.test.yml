@@ -1,0 +1,10 @@
+fs:
+  ocr:
+    enabled: true
+    language: "eng"
+    path: "/path/to/tesseract/if/not/available/in/PATH"
+    data_path: "/path/to/tesseract/tessdata/if/needed"
+    output_type: txt
+    pdf_strategy: ocr_and_text
+    page_seg_mode: 1 # automatic mode
+    preserve_interword_spacing: false
