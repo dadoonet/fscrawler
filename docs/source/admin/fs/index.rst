@@ -16,7 +16,6 @@ you defined with the ``-config_dir`` CLI option (see :ref:`cli-options`). The jo
 When using a directory, FSCrawler will merge all files found in the directory. Meaning that you can split your settings
 in multiple files, like:
 
-* ``my_job.yaml`` which contains the job name
 * ``my_job_fs.yaml`` which contains the file system settings
 * ``my_job_elasticsearch.yaml`` which contains the elasticsearch settings
 
@@ -30,7 +29,6 @@ For example, you can define the following job file:
 
 .. code:: yaml
 
-   name: "test"
    fs:
      url: "${HOME}/docs"
    elasticsearch:
@@ -55,7 +53,7 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
 
 .. code:: yaml
 
-   # required
+   # optional: the name of the crawler. Defaults to the job directory name.
    name: "test"
 
    # required

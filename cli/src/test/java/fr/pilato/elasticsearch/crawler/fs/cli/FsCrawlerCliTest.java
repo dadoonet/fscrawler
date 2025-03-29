@@ -87,9 +87,8 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
 
-
-        fsSettingsLoader.write(FsSettings.builder(jobName).build());
-        fsJobFileHandler.write(jobName, FsJob.builder().build());
+        fsSettingsLoader.write(jobName, new FsSettings());
+        fsJobFileHandler.write(jobName, new FsJob());
 
         assertThat(Files.exists(jobDir.resolve(FsJobFileHandler.FILENAME)), is(true));
 
@@ -152,6 +151,18 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
                         "  url: \"${FSCRAWLER_FS_URL:=/tmp/test}\"\n");
 
         String[] args = { "--config_dir", metadataDir.toString(), jobName };
+        FsCrawlerCli.main(args);
+    }
+
+    @Test
+    public void testWithEmptySettings() throws Exception {
+        String jobName = "fscrawler_empty_settings";
+        Path jobDir = metadataDir.resolve(jobName);
+        Files.createDirectories(jobDir);
+        Files.writeString(jobDir.resolve(SETTINGS_YAML), "");
+
+        String[] args = { "--config_dir", metadataDir.toString(), jobName };
+
         FsCrawlerCli.main(args);
     }
 }

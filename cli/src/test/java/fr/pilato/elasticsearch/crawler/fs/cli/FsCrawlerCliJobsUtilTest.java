@@ -52,7 +52,7 @@ public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase 
             Files.createDirectories(jobDir);
             if (randomBoolean()) {
                 // Yaml settings file
-                fsSettingsLoader.write(FsSettings.builder(jobName).build());
+                fsSettingsLoader.write(jobName, new FsSettings());
             } else {
                 // Json settings (empty dummy)
                 Files.createFile(jobDir.resolve(FsSettingsLoader.SETTINGS_JSON));

@@ -357,6 +357,10 @@ public class FsCrawlerCli {
         logger.debug("Starting job [{}]...", jobName);
         try {
             fsSettings = new FsSettingsLoader(configDir).read(jobName);
+            // Let's make the job name not mandatory in the settings file
+            if (fsSettings.getName() == null) {
+                fsSettings.setName(jobName);
+            }
         } catch (FsCrawlerIllegalConfigurationException e) {
             if (e.getCause() == null) {
                 logger.debug("job [{}] does not exist.", jobName);

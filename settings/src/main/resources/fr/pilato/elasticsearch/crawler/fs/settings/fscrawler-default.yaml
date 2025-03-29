@@ -1,5 +1,5 @@
-# required
-name: "test"
+# optional: the name of the crawler. Defaults to the job directory name.
+# name: "test"
 
 # optional: set file system crawler parameters
 #fs:

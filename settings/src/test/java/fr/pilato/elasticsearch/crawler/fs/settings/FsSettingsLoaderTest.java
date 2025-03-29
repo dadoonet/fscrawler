@@ -184,8 +184,6 @@ public class FsSettingsLoaderTest {
     public void testLoadYamlSplit() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("yaml-split");
         FsSettings expected = new FsSettings();
-        expected.setName("test");
-        // Change the expected object to be conform to the fscraller-full.test.yml file
         expected.setFs(new Fs());
         expected.getFs().setUrl("/path/to/docs");
         expected.getFs().setUpdateRate(TimeValue.timeValueMinutes(5));
