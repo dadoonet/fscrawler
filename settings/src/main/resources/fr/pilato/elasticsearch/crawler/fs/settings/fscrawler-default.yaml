@@ -1,12 +1,12 @@
-# required
-name: "test"
+# optional: the name of the crawler. Defaults to the job directory name.
+#name: "fscrawler"
 
 # optional: set file system crawler parameters
 #fs:
   # define a "local" file path crawler, if running inside a docker container this must be the path INSIDE the container
   #url: "/tmp/es"
-  # optional: scan every 5 minutes for changes in url defined above
-  #update_rate: "5m"
+  # optional: scan every 15 minutes for changes in url defined above
+  #update_rate: "15m"
   # optional: define includes and excludes, "~" files are excluded by default if not defined below
   #includes:
   #  - "*.doc"
@@ -19,12 +19,12 @@ name: "test"
   #  - "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$" # do not index files containing credit card numbers
 
   # optional: special handling of JSON files, should only be used if ALL files are JSON
-  #json_support: false
+  #json_support: "${FSCRAWLER_JSON:=false}"
   # optional: if false, all JSON files will be added as documents, if true, they will be added as JSON objects
   #add_as_inner_object: false
 
   # optional: special handling of XML files, should only be used if ALL files are XML
-  #xml_support: false
+  #xml_support: "false"
 
   # optional: if true, the crawler will follow symbolic links
   #follow_symlinks: false
@@ -72,7 +72,7 @@ name: "test"
   # optional: the OCR Options
   #ocr:
     # optional: enable or disable OCR
-    #enabled: true
+    #enabled: "true"
     # optional: language to use for OCR
     #language: "eng"
     # optional: path to the Tesseract binary
@@ -102,7 +102,7 @@ name: "test"
   # optional: username
   #username: "dadoonet"
   # optional: password
-  #password: "password"
+  #password: "password@{secret}"
   # optional: protocol, either "ssh" or "local"
   #protocol: "ssh"
   # optional: path to the private key
@@ -124,11 +124,8 @@ name: "test"
   #flush_interval: "5s"
   # optional: the bulk size in bytes
   #byte_size: "10mb"
-  # optional: Using Api Key (recommended)
-  #api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
-  # optional: Using username/password (not recommended / deprecated)
-  #username: "elastic"
-  #password: "password"
+  # api key (username and password are deprecated and should not be used anymore)
+  #api_key: "YOUR_API_KEY@{secret}"
   # optional: path to the Ca certificate if using self-signed certificates
   #ca_certificate: "/path/to/ca.crt"
 

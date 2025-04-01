@@ -20,106 +20,35 @@
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import jakarta.annotation.Nullable;
+import org.github.gestalt.config.annotations.Config;
 
 import java.util.Objects;
 
 public class Ocr {
     // Is OCR enabled or disabled in general
-    private Boolean enabled = true;
+    @Config(defaultVal = "true")
+    private boolean enabled;
     // Path to tesseract program
-    @Nullable private String path = null;
+    @Config
+    @Nullable private String path;
     // Path to tesseract data
-    @Nullable private String dataPath = null;
+    @Config
+    @Nullable private String dataPath;
     // Language dictionary to be used.
-    private String language = "eng";
+    @Config(defaultVal = "eng")
+    private String language;
     // Output Type. Can be txt (default) or hocr. null means the default value.
-    @Nullable private String outputType = null;
+    @Config
+    @Nullable private String outputType;
     // Pdf OCR Strategy
-    private String pdfStrategy = "ocr_and_text";
+    @Config(defaultVal = "ocr_and_text")
+    private String pdfStrategy;
     // PDF Page Seg Mode
-    @Nullable private Integer pageSegMode = null;
+    @Config
+    private int pageSegMode;
     // Preserve interword spacing
-    @Nullable private Boolean preserveInterwordSpacing = null;
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-
-        private String language = "eng";
-        private String path = null;
-        private String dataPath = null;
-        private String outputType = null;
-        private boolean enabled = true;
-        private String pdfStrategy = "ocr_and_text";
-        private Integer pageSegMode = null;
-        private Boolean preserveInterwordSpacing = null;
-
-        public Builder setLanguage(String language) {
-            this.language = language;
-            return this;
-        }
-
-        public Builder setPath(String path) {
-            this.path = path;
-            return this;
-        }
-
-        public Builder setDataPath(String dataPath) {
-            this.dataPath = dataPath;
-            return this;
-        }
-
-        public Builder setOutputType(String outputType) {
-            this.outputType = outputType;
-            return this;
-        }
-
-        public Builder setEnabled(boolean enabled) {
-            this.enabled = enabled;
-            return this;
-        }
-
-        public Builder setPageSegMode(Integer pageSegMode) {
-            this.pageSegMode = pageSegMode;
-            return this;
-        }
-
-        public Builder setPreserveInterwordSpacing(Boolean preserveInterwordSpacing) {
-            this.preserveInterwordSpacing = preserveInterwordSpacing;
-            return this;
-        }
-
-        /**
-         * Set the PDF Strategy.
-         * @param pdfStrategy the PDF Strategy. Could be "no_ocr", "ocr_only" or "ocr_and_text"
-         */
-        public Builder setPdfStrategy(String pdfStrategy) {
-            this.pdfStrategy = pdfStrategy;
-            return this;
-        }
-
-        public Ocr build() {
-            return new Ocr(language, path, dataPath, outputType, pdfStrategy, enabled, pageSegMode, preserveInterwordSpacing);
-        }
-
-    }
-
-    public Ocr( ) {
-
-    }
-
-    private Ocr(String language, String path, String dataPath, String outputType, String pdfStrategy, boolean enabled, Integer pageSegMode, Boolean preserveInterwordSpacing) {
-        this.language = language;
-        this.path = path;
-        this.dataPath = dataPath;
-        this.outputType = outputType;
-        this.pdfStrategy = pdfStrategy;
-        this.enabled = enabled;
-        this.pageSegMode = pageSegMode;
-        this.preserveInterwordSpacing = preserveInterwordSpacing;
-    }
+    @Config(defaultVal = "false")
+    private boolean preserveInterwordSpacing;
 
     public String getLanguage() {
         return language;

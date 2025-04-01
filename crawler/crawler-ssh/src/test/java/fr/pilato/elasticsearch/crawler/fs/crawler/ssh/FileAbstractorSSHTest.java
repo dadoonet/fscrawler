@@ -21,7 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.crawler.ssh;
 
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -161,16 +161,11 @@ public class FileAbstractorSSHTest extends AbstractFSCrawlerTestCase {
     @Test
     public void testFileAbstractorSSH() throws Exception {
         String path = testDir.getFileName().toString();
-        FsSettings fsSettings = FsSettings.builder("foo")
-                .setServer(
-                        Server.builder()
-                                .setHostname(sshd.getHost())
-                                .setPort(sshd.getPort())
-                                .setUsername(SSH_USERNAME)
-                                .setPassword(SSH_PASSWORD)
-                                .build()
-                )
-                .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getServer().setHostname(sshd.getHost());
+        fsSettings.getServer().setPort(sshd.getPort());
+        fsSettings.getServer().setUsername(SSH_USERNAME);
+        fsSettings.getServer().setPassword(SSH_PASSWORD);
         try (FileAbstractorSSH ssh = new FileAbstractorSSH(fsSettings)) {
             ssh.open();
             assertThat(ssh.exists("/ThisPathDoesNotExist"), is(false));

@@ -26,38 +26,15 @@ import org.apache.logging.log4j.Logger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-
 public class FsCrawlerValidator {
 
     /**
      * Check if settings are valid. Note that settings can be updated by this method (fallback to defaults if not set)
      * @param logger    Needed to print warn/errors or info
      * @param settings  Settings we want to check
-     * @param rest      true If Rest server should be started, so we check Rest settings
      * @return true if we found fatal errors and should prevent from starting
      */
-    public static boolean validateSettings(Logger logger, FsSettings settings, boolean rest) {
-        if (settings.getFs() == null || settings.getFs().getUrl() == null) {
-            logger.warn("`url` is not set. Please define it. Falling back to default: [{}].", Fs.DEFAULT_DIR);
-            if (settings.getFs() == null) {
-                settings.setFs(Fs.DEFAULT);
-            } else {
-                settings.getFs().setUrl(Fs.DEFAULT_DIR);
-            }
-        }
-
-        if (settings.getElasticsearch() == null) {
-            settings.setElasticsearch(Elasticsearch.DEFAULT());
-        }
-        if (settings.getElasticsearch().getIndex() == null) {
-            // When index is not set, we fall back to the config name
-            settings.getElasticsearch().setIndex(settings.getName());
-        }
-        if (settings.getElasticsearch().getIndexFolder() == null) {
-            // When index for folders is not set, we fall back to the config name + _folder
-            settings.getElasticsearch().setIndexFolder(settings.getName() + INDEX_SUFFIX_FOLDER);
-        }
+    public static boolean validateSettings(Logger logger, FsSettings settings) {
         if (settings.getElasticsearch().getUsername() != null || settings.getElasticsearch().getPassword() != null) {
             logger.warn("username/password is deprecated. Use apiKey instead.");
         }
@@ -110,12 +87,6 @@ public class FsCrawlerValidator {
         // We just warn the user if he is running on Windows but want to get attributes
         if (OsValidator.WINDOWS && settings.getFs().isAttributesSupport()) {
             logger.info("attributes_support is set to true but getting group is not available on [{}].", OsValidator.OS);
-        }
-
-        // Check that REST settings are available when we start with rest option
-        if (rest && settings.getRest() == null) {
-            logger.warn("`rest` settings are not defined. Falling back to default: [{}].", Rest.URL_DEFAULT);
-            settings.setRest(Rest.DEFAULT);
         }
 
         return false;

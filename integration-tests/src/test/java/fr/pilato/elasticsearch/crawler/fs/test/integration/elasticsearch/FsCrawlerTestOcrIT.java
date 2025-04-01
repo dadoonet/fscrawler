@@ -20,9 +20,10 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import com.jayway.jsonpath.JsonPath;
-import fr.pilato.elasticsearch.crawler.fs.client.*;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.settings.Ocr;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,7 +38,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -76,17 +77,15 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
         }
 
         {
-            Fs fs = startCrawlerDefinition()
-                    .setOcr(Ocr.builder()
-                            .setEnabled(true)
-                            .setPath(tesseract.toString())
-                            .setPdfStrategy("ocr_and_text")
-                            .setLanguage("vie+eng")
-                            .setOutputType("txt")
-                            .build())
-                    .build();
+            FsSettings fsSettings = createTestSettings();
+            fsSettings.getFs().getOcr().setEnabled(true);
+            // We try to set the path to tesseract executable
+            fsSettings.getFs().getOcr().setPath(tesseract.toString());
+            fsSettings.getFs().getOcr().setPdfStrategy("ocr_and_text");
+            fsSettings.getFs().getOcr().setLanguage("vie+eng");
+            fsSettings.getFs().getOcr().setOutputType("txt");
 
-            crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+            crawler = startCrawler(fsSettings);
 
             // We expect to have one file
             ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
@@ -101,17 +100,15 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
         }
 
         {
-            Fs fs = startCrawlerDefinition()
-                    .setOcr(Ocr.builder()
-                            .setEnabled(true)
-                            .setPath(tessDirPath.toString())
-                            .setPdfStrategy("ocr_and_text")
-                            .setLanguage("vie+eng")
-                            .setOutputType("txt")
-                            .build())
-                    .build();
+            FsSettings fsSettings = createTestSettings();
+            fsSettings.getFs().getOcr().setEnabled(true);
+            // We try to set the path to the dir where tesseract is installed
+            fsSettings.getFs().getOcr().setPath(tessDirPath.toString());
+            fsSettings.getFs().getOcr().setPdfStrategy("ocr_and_text");
+            fsSettings.getFs().getOcr().setLanguage("vie+eng");
+            fsSettings.getFs().getOcr().setOutputType("txt");
 
-            crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+            crawler = startCrawler(fsSettings);
 
             // We expect to have one file
             ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);

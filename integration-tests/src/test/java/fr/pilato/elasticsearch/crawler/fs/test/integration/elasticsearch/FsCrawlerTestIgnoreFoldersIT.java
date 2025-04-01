@@ -22,7 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
@@ -30,7 +30,6 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_S
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
 
 /**
  * Test index_folders crawler setting
@@ -42,10 +41,9 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_ignore_folders() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setIndexFolders(false)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setIndexFolders(false);
+        crawler = startCrawler(fsSettings);
 
         // We expect to have two files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);

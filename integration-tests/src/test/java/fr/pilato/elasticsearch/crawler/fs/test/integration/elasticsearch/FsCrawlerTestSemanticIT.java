@@ -20,12 +20,15 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import com.jayway.jsonpath.DocumentContext;
-import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSemanticQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -46,14 +49,9 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
         assumeTrue("We don't run this test when semantic search is not available",
                 managementService.getClient().isSemanticSupported());
 
-        crawler = startCrawler(getCrawlerName(),
-                startCrawlerDefinition().build(),
-                generateElasticsearchConfig(getCrawlerName(), getCrawlerName() + INDEX_SUFFIX_FOLDER,
-                        1, null, null, true),
-                null,
-                null,
-                null,
-                TimeValue.timeValueMinutes(5));
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getElasticsearch().setSemanticSearch(true);
+        crawler = startCrawler(fsSettings, TimeValue.timeValueMinutes(5));
 
         // We expect to have 3 files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);

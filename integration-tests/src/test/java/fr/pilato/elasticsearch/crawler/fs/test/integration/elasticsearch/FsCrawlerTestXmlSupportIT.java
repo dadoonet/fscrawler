@@ -19,12 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESRangeQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,10 +37,9 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_xml_enabled() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setXmlSupport(true)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setXmlSupport(true);
+        crawler = startCrawler(fsSettings);
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
 
         countTestHelper(new ESSearchRequest()
@@ -67,10 +62,9 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_xml_not_readable() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setXmlSupport(true)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setXmlSupport(true);
+        crawler = startCrawler(fsSettings);
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
         countTestHelper(new ESSearchRequest()

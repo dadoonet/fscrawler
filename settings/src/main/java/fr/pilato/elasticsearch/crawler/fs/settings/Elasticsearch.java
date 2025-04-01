@@ -21,85 +21,58 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import jakarta.annotation.Nullable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.github.gestalt.config.annotations.Config;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class Elasticsearch {
-    private static final Logger logger = LogManager.getLogger();
-    public static final ServerUrl NODE_DEFAULT = new ServerUrl("https://127.0.0.1:9200");
 
-    @Nullable private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
+    @Config
+    @Nullable private List<ServerUrl> nodes;
+    @Config
     @Nullable private String index;
+    @Config
     @Nullable private String indexFolder;
-    @Nullable private Integer bulkSize = 100;
-    @Nullable private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
-    @Nullable private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
+    @Config(defaultVal = "100")
+    @Nullable private Integer bulkSize;
+    @Config(defaultVal = "5s")
+    @Nullable private TimeValue flushInterval;
+    @Config(defaultVal = "10mb")
+    @Nullable private ByteSizeValue byteSize;
+    @Config
     @Nullable private String apiKey;
 
     /**
      * Username
      * @deprecated Use apiKey or accessToken instead
      */
+    @Config
     @Deprecated
     @Nullable private String username;
     /**
      * Password
      * @deprecated Use apiKey or accessToken instead
      */
+    @Config
     @Deprecated
     @JsonIgnore
     @Nullable private String password;
+    @Config
     @Nullable private String caCertificate;
+    @Config
     @Nullable private String pipeline;
+    @Config
     @Nullable private String pathPrefix;
-    @Nullable private Boolean sslVerification = true;
-    @Nullable private Boolean pushTemplates = true;
-    @Nullable private Boolean semanticSearch = true;
-
-    public Elasticsearch() {
-
-    }
-
-    private Elasticsearch(List<ServerUrl> nodes, String index, String indexFolder, int bulkSize,
-                          TimeValue flushInterval, ByteSizeValue byteSize, String apiKey,
-                          String username, String password, String pipeline,
-                          String pathPrefix, boolean sslVerification,
-                          String caCertificate,
-                          boolean pushTemplates, boolean semanticSearch) {
-        this.nodes = nodes;
-        this.index = index;
-        this.indexFolder = indexFolder;
-        this.bulkSize = bulkSize;
-        this.flushInterval = flushInterval;
-        this.byteSize = byteSize;
-        this.apiKey = apiKey;
-        this.username = username;
-        this.password = password;
-        this.pipeline = pipeline;
-        this.pathPrefix = pathPrefix;
-        this.sslVerification = sslVerification;
-        this.caCertificate = caCertificate;
-        this.pushTemplates = pushTemplates;
-        this.semanticSearch = semanticSearch;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    // Using here a method instead of a constant as sadly FSCrawlerValidator can modify this object
-    // TODO fix that: a validator should not modify the original object but return a modified copy
-    public static Elasticsearch DEFAULT() {
-        return Elasticsearch.builder().build();
-    }
+    @Config(defaultVal = "true")
+    private boolean sslVerification;
+    @Config(defaultVal = "true")
+    private boolean pushTemplates;
+    @Config(defaultVal = "true")
+    private boolean semanticSearch;
 
     public List<ServerUrl> getNodes() {
         return nodes;
@@ -235,145 +208,6 @@ public class Elasticsearch {
         this.semanticSearch = semanticSearch;
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public static class Builder {
-        private List<ServerUrl> nodes = Collections.singletonList(NODE_DEFAULT);
-        private String index;
-        private String indexFolder;
-        private int bulkSize = 100;
-        private TimeValue flushInterval = TimeValue.timeValueSeconds(5);
-        private ByteSizeValue byteSize = new ByteSizeValue(10, ByteSizeUnit.MB);
-        private String username = null;
-        private String password = null;
-        private String pipeline = null;
-        private String pathPrefix = null;
-        private boolean sslVerification = true;
-        private String caCertificate;
-        private boolean pushTemplates = true;
-        private String apiKey = null;
-        private boolean semanticSearch = true;
-
-        public Builder setNodes(List<ServerUrl> nodes) {
-            this.nodes = nodes;
-            return this;
-        }
-
-        public Builder setIndex(String index) {
-            this.index = index;
-            return this;
-        }
-
-        public Builder setIndexFolder(String indexFolder) {
-            this.indexFolder = indexFolder;
-            return this;
-        }
-
-        public Builder setBulkSize(int bulkSize) {
-            this.bulkSize = bulkSize;
-            return this;
-        }
-
-        public Builder setFlushInterval(TimeValue flushInterval) {
-            this.flushInterval = flushInterval;
-            return this;
-        }
-
-        public Builder setByteSize(ByteSizeValue byteSize) {
-            this.byteSize = byteSize;
-            return this;
-        }
-
-        public Builder setApiKey(String apiKey) {
-            this.apiKey = apiKey;
-            return this;
-        }
-
-        /**
-         * Set the username (for tests only)
-         * @param username  Username
-         * @return the current builder
-         * @deprecated Use {@link #setApiKey(String)} instead
-         */
-        @Deprecated
-        public Builder setUsername(String username) {
-            logger.warn("username is deprecated. Use apiKey instead.");
-            this.username = username;
-            return this;
-        }
-
-        /**
-         * Set the password (for tests only)
-         * @param password  Password
-         * @return the current builder
-         * @deprecated Use {@link #setApiKey(String)} instead
-         */
-        @Deprecated
-        public Builder setPassword(String password) {
-            logger.warn("password is deprecated. Use apiKey instead.");
-            this.password = password;
-            return this;
-        }
-
-        /**
-         * Set the credentials depending on what is available.
-         * This is a helper method to set either apiKey or username/password.
-         * @param apiKey        API Key (omitted if null)
-         * @param username      Username (omitted if null)
-         * @param password      Password (omitted if null)
-         * @return the current builder
-         */
-        public Builder setCredentials(String apiKey, String username, String password) {
-            if (apiKey != null) {
-                logger.trace("using api key [{}]", apiKey);
-                this.setApiKey(apiKey);
-            } else if (username != null && password != null) {
-                logger.trace("using login/password [{}]/[{}]", username, password);
-                this.setUsername(username);
-                this.setPassword(password);
-            }
-
-            return this;
-        }
-
-        public Builder setPipeline(String pipeline) {
-            this.pipeline = pipeline;
-            return this;
-        }
-
-        public Builder setPathPrefix(String pathPrefix) {
-            this.pathPrefix = pathPrefix;
-            return this;
-        }
-
-        public Builder setSslVerification(boolean sslVerification) {
-            this.sslVerification = sslVerification;
-            return this;
-        }
-
-        public Builder setCaCertificate(String caCertificate) {
-            this.caCertificate = caCertificate;
-            return this;
-        }
-
-        public Builder setPushTemplates(boolean pushTemplates) {
-            this.pushTemplates = pushTemplates;
-            return this;
-        }
-
-        public Builder setSemanticSearch(boolean semanticSearch) {
-            this.semanticSearch = semanticSearch;
-            return this;
-        }
-
-        public Elasticsearch build() {
-            return new Elasticsearch(nodes, index, indexFolder, bulkSize, flushInterval, byteSize, apiKey,
-                    username, password,
-                    pipeline, pathPrefix,
-                    sslVerification, caCertificate,
-                    pushTemplates, semanticSearch);
-        }
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -416,18 +250,20 @@ public class Elasticsearch {
 
     @Override
     public String toString() {
-        return "Elasticsearch{" + "nodes=" + nodes +
+        return "Elasticsearch{" +
+                "nodes=" + nodes +
                 ", index='" + index + '\'' +
                 ", indexFolder='" + indexFolder + '\'' +
                 ", bulkSize=" + bulkSize +
                 ", flushInterval=" + flushInterval +
                 ", byteSize=" + byteSize +
+                ", apiKey='" + apiKey + '\'' +
                 ", username='" + username + '\'' +
                 ", pipeline='" + pipeline + '\'' +
                 ", pathPrefix='" + pathPrefix + '\'' +
-                ", sslVerification='" + sslVerification + '\'' +
-                ", caCertificatePath='" + caCertificate + '\'' +
-                ", pushTemplates='" + pushTemplates + '\'' +
+                ", sslVerification=" + sslVerification +
+                ", caCertificate='" + caCertificate + '\'' +
+                ", pushTemplates=" + pushTemplates +
                 '}';
     }
 }

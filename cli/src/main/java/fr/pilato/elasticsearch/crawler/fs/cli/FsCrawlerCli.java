@@ -23,14 +23,12 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.framework.Version;
+import fr.pilato.elasticsearch.crawler.fs.framework.*;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
-import fr.pilato.elasticsearch.crawler.fs.settings.*;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
@@ -47,7 +45,6 @@ import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 import java.io.Console;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -73,10 +70,11 @@ public class FsCrawlerCli {
         @Parameter(names = "--config_dir", description = "Config directory. Default to ~/.fscrawler")
         String configDir = null;
 
-        @Parameter(names = "--api_key", description = "Elasticsearch api key. See https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html")
+        @Parameter(names = "--api_key", description = "Elasticsearch api key. (Deprecated - use -Delasticsearch.api_key instead)")
+        @Deprecated
         String apiKey = null;
 
-        @Parameter(names = "--username", description = "Elasticsearch username. (Deprecated - use --api_key or --access_token instead)")
+        @Parameter(names = "--username", description = "Elasticsearch username. (Deprecated - use -Delasticsearch.api_key instead)")
         @Deprecated
         String username = null;
 
@@ -207,61 +205,6 @@ public class FsCrawlerCli {
     }
 
     /**
-     * Load settings from the given directory and job name
-     * @param configDir the config dir
-     * @param jobName   the job name
-     * @return  the settings if found, null otherwise
-     * @throws IOException  In case of IO problem
-     */
-    static FsSettings loadSettings(Path configDir, String jobName) throws IOException {
-        try {
-            return new FsSettingsLoader(configDir).read(jobName);
-        } catch (NoSuchFileException e) {
-            return null;
-        }
-    }
-
-    /**
-     * Modify existing settings with correct default values when not set.
-     *
-     * @param fsSettings        the settings to modify
-     * @param usernameCli       the username coming from the CLI if any (deprecated)
-     * @param apiKeyCli         the api key coming from the CLI if any
-     */
-    static void modifySettings(FsSettings fsSettings, String usernameCli, String apiKeyCli) {
-        // Check default settings
-        if (fsSettings.getFs() == null) {
-            fsSettings.setFs(Fs.DEFAULT);
-        }
-
-        if (fsSettings.getServer() != null) {
-            // It's a dirty hack. The default port if not set is 22 (SSH), but if protocol is FTP, we should use 21 as a default port
-            if (PROTOCOL.FTP.equals(fsSettings.getServer().getProtocol()) && fsSettings.getServer().getPort() == PROTOCOL.SSH_PORT) {
-                fsSettings.getServer().setPort(PROTOCOL.FTP_PORT);
-            }
-            // For FTP, we set a default username if not set
-            if (PROTOCOL.FTP.equals(fsSettings.getServer().getProtocol()) && StringUtils.isEmpty(fsSettings.getServer().getUsername())) {
-                fsSettings.getServer().setUsername("anonymous");
-            }
-        }
-
-        if (fsSettings.getElasticsearch() == null) {
-            fsSettings.setElasticsearch(Elasticsearch.DEFAULT());
-        }
-
-        // Overwrite settings with command line values
-        if (fsSettings.getElasticsearch().getUsername() == null && usernameCli != null) {
-            logger.warn("You are using a deprecated way to set the username. Please use --api_key API_KEY instead.");
-            fsSettings.getElasticsearch().setUsername(usernameCli);
-        }
-
-        // Overwrite settings with command line values
-        if (fsSettings.getElasticsearch().getApiKey() == null && apiKeyCli != null) {
-            fsSettings.getElasticsearch().setApiKey(apiKeyCli);
-        }
-    }
-
-    /**
      * Create a job if needed
      * @param jobName the job name
      * @param configDir the config dir
@@ -282,8 +225,8 @@ public class FsCrawlerCli {
             Files.createDirectories(configJobDir);
             Path configFile = configJobDir.resolve(FsSettingsLoader.SETTINGS_YAML);
 
-            // Write the example config files from the classpath FsSettingsLoader.DEFAULT_SETTINGS
-            copyResourceFile(FsSettingsLoader.DEFAULT_SETTINGS, configFile);
+            // Write the example config files from the classpath FsSettingsLoader.EXAMPLE_SETTINGS
+            copyResourceFile(FsSettingsLoader.EXAMPLE_SETTINGS, configFile);
             FSCrawlerLogger.console("Settings have been created in [{}]. Please review and edit before relaunch", configFile);
         }
     }
@@ -357,6 +300,10 @@ public class FsCrawlerCli {
         logger.debug("Starting job [{}]...", jobName);
         try {
             fsSettings = new FsSettingsLoader(configDir).read(jobName);
+            // Let's make the job name not mandatory in the settings file
+            if (fsSettings.getName() == null) {
+                fsSettings.setName(jobName);
+            }
         } catch (FsCrawlerIllegalConfigurationException e) {
             if (e.getCause() == null) {
                 logger.debug("job [{}] does not exist.", jobName);
@@ -375,17 +322,35 @@ public class FsCrawlerCli {
             throw e;
         }
 
-        modifySettings(fsSettings, command.username, command.apiKey);
+        if (command.username != null) {
+            logger.fatal("We don't support reading elasticsearch username from the command line anymore. " +
+                            "Please use either -Delasticsearch.username={} or set the env variable as follows: " +
+                            "FSCRAWLER_ELASTICSEARCH_USERNAME={} ",
+                    command.username, command.username);
+            return;
+        }
+
+        if (command.apiKey != null) {
+            logger.fatal("We don't support reading elasticsearch username from the command line anymore. " +
+                            "Please use either -Delasticsearch.api_key={} or set the env variable as follows: " +
+                            "FSCRAWLER_ELASTICSEARCH_API_KEY={} ",
+                    command.apiKey, command.apiKey);
+            return;
+        }
+
         if (fsSettings.getElasticsearch().getUsername() != null && fsSettings.getElasticsearch().getPassword() == null && scanner != null) {
-            FSCrawlerLogger.console("Password for {}:", fsSettings.getElasticsearch().getUsername());
-            String password = scanner.next();
-            fsSettings.getElasticsearch().setPassword(password);
+            logger.fatal("We don't support reading elasticsearch password from the command line anymore. " +
+                            "Please use either -Delasticsearch.password=YOUR_PASS or set the env variable as follows: " +
+                            "FSCRAWLER_ELASTICSEARCH_PASSWORD=YOUR_PASS.");
+            logger.warn("Using username and password is deprecated. Please use API Keys instead. See " +
+                            "https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#api-key");
+            return;
         }
 
         if (logger.isTraceEnabled()) {
             logger.trace("settings used for this crawler: [{}]", FsSettingsParser.toYaml(fsSettings));
         }
-        if (FsCrawlerValidator.validateSettings(logger, fsSettings, command.rest)) {
+        if (FsCrawlerValidator.validateSettings(logger, fsSettings)) {
             // We don't go further as we have critical errors
             return;
         }

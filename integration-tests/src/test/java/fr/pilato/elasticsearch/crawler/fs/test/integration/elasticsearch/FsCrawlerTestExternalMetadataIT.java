@@ -21,9 +21,10 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
-import fr.pilato.elasticsearch.crawler.fs.client.*;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.settings.Tags;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
@@ -63,11 +64,9 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_external_metadata_yaml() throws Exception {
-        crawler = startCrawler(getCrawlerName(),
-                startCrawlerDefinition().build(),
-                endCrawlerDefinition(getCrawlerName()),
-                null,
-                Tags.builder().setMetaFilename("meta-as-yaml.yaml").build());
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getTags().setMetaFilename("meta-as-yaml.yaml");
+        crawler = startCrawler(fsSettings);
 
         // We expect to have 3 files
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
@@ -92,11 +91,9 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_external_metadata_json() throws Exception {
-        crawler = startCrawler(getCrawlerName(),
-                startCrawlerDefinition().build(),
-                endCrawlerDefinition(getCrawlerName()),
-                null,
-                Tags.builder().setMetaFilename("meta-as-json.json").build());
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getTags().setMetaFilename("meta-as-json.json");
+        crawler = startCrawler(fsSettings);
 
         // We expect to have 3 files
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
@@ -121,11 +118,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_external_metadata_overwrite() throws Exception {
-        crawler = startCrawler(getCrawlerName(),
-                startCrawlerDefinition().build(),
-                endCrawlerDefinition(getCrawlerName()),
-                null,
-                Tags.DEFAULT);
+        crawler = startCrawler();
 
         // We expect to have 3 files
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);

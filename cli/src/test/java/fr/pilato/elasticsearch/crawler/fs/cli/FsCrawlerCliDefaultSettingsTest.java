@@ -23,7 +23,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.*;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -31,7 +30,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static fr.pilato.elasticsearch.crawler.fs.cli.FsCrawlerCli.modifySettings;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -56,71 +54,8 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
-    @AfterClass
-    public static void printMetadataDirContent() throws IOException {
-        printLs(metadataDir);
-    }
-
-    private static void printLs(Path dir) throws IOException {
-        logger.debug("ls -l {}", dir);
-        Files.list(dir).forEach(path -> {
-            if (Files.isDirectory(path)) {
-                try {
-                    printLs(path);
-                } catch (IOException ignored) { }
-            } else {
-                logger.debug("{}", path);
-            }
-        });
-    }
-
     @Test
-    public void testModifySettingsNoUsername() throws IOException {
-        FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
-        Path jobDir = metadataDir.resolve("modify_settings_no_username");
-        Files.createDirectories(jobDir);
-
-        Files.writeString(jobDir.resolve(SETTINGS_YAML), "name: \"modify_settings_no_username\"");
-        FsSettings settings = fsSettingsLoader.read("modify_settings_no_username");
-        assertThat(settings.getElasticsearch(), nullValue());
-        modifySettings(settings, null, null);
-        assertThat(settings.getElasticsearch(), notNullValue());
-        assertThat(settings.getElasticsearch().getUsername(), nullValue());
-        assertThat(settings.getElasticsearch().getApiKey(), nullValue());
-    }
-
-    @Test
-    public void testModifySettingsWithUsernameDeprecated() throws IOException {
-        FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
-        Path jobDir = metadataDir.resolve("modify_settings_with_username");
-        Files.createDirectories(jobDir);
-
-        Files.writeString(jobDir.resolve(SETTINGS_YAML), "name: \"modify_settings_with_username\"");
-        FsSettings settings = fsSettingsLoader.read("modify_settings_with_username");
-        assertThat(settings.getElasticsearch(), nullValue());
-        modifySettings(settings, "elastic", null);
-        assertThat(settings.getElasticsearch(), notNullValue());
-        assertThat(settings.getElasticsearch().getUsername(), is("elastic"));
-        assertThat(settings.getElasticsearch().getApiKey(), nullValue());
-    }
-
-    @Test
-    public void testModifySettingsWithApiKey() throws IOException {
-        FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
-        Path jobDir = metadataDir.resolve("modify_settings_with_username");
-        Files.createDirectories(jobDir);
-
-        Files.writeString(jobDir.resolve(SETTINGS_YAML), "name: \"modify_settings_with_username\"");
-        FsSettings settings = fsSettingsLoader.read("modify_settings_with_username");
-        assertThat(settings.getElasticsearch(), nullValue());
-        modifySettings(settings, null, "my_api_key_base64_encoded");
-        assertThat(settings.getElasticsearch(), notNullValue());
-        assertThat(settings.getElasticsearch().getUsername(), nullValue());
-        assertThat(settings.getElasticsearch().getApiKey(), is("my_api_key_base64_encoded"));
-    }
-
-    @Test
-    public void testModifySettingsWithServerFtp() throws IOException {
+    public void testSettingsModifiedWithFtp() throws IOException {
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
         Path jobDir = metadataDir.resolve("modify_settings_server_ftp");
         Files.createDirectories(jobDir);
@@ -131,20 +66,12 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
                         "  protocol: \"ftp\"\n"
                 );
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ftp");
-        assertThat(settings.getElasticsearch(), nullValue());
-        assertThat(settings.getServer(), notNullValue());
-        assertThat(settings.getServer().getPort(), is(Server.PROTOCOL.SSH_PORT));
-        assertThat(settings.getServer().getUsername(), nullValue());
-        modifySettings(settings, null, "my_api_key_base64_encoded");
-        assertThat(settings.getElasticsearch(), notNullValue());
-        assertThat(settings.getElasticsearch().getUsername(), nullValue());
-        assertThat(settings.getElasticsearch().getApiKey(), is("my_api_key_base64_encoded"));
         assertThat(settings.getServer().getPort(), is(Server.PROTOCOL.FTP_PORT));
         assertThat(settings.getServer().getUsername(), is("anonymous"));
     }
 
     @Test
-    public void testModifySettingsWithServerSsh() throws IOException {
+    public void testSettingsModifiedWithSsh() throws IOException {
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
         Path jobDir = metadataDir.resolve("modify_settings_server_ssh");
         Files.createDirectories(jobDir);
@@ -158,14 +85,6 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         logger.info("{}", Files.readString(jobDir.resolve(SETTINGS_YAML)));
 
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ssh");
-        assertThat(settings.getElasticsearch(), nullValue());
-        assertThat(settings.getServer(), notNullValue());
-        assertThat(settings.getServer().getPort(), is(Server.PROTOCOL.SSH_PORT));
-        assertThat(settings.getServer().getUsername(), nullValue());
-        modifySettings(settings, null, "my_api_key_base64_encoded");
-        assertThat(settings.getElasticsearch(), notNullValue());
-        assertThat(settings.getElasticsearch().getUsername(), nullValue());
-        assertThat(settings.getElasticsearch().getApiKey(), is("my_api_key_base64_encoded"));
         assertThat(settings.getServer().getPort(), is(Server.PROTOCOL.SSH_PORT));
         assertThat(settings.getServer().getUsername(), nullValue());
     }

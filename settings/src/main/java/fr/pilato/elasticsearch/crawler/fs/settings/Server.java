@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
+import org.github.gestalt.config.annotations.Config;
 
 import java.util.Objects;
 
@@ -35,24 +36,17 @@ public class Server {
         public static final int FTP_PORT = 21;
     }
 
-    public Server() {
-
-    }
-
-    private Server(String hostname, int port, String username, String password, String protocol, String pemPath) {
-        this.hostname = hostname;
-        this.port = port;
-        this.username = username;
-        this.password = password;
-        this.protocol = protocol;
-        this.pemPath = pemPath;
-    }
-
+    @Config
     @Nullable private String hostname;
-    @Nullable private Integer port = PROTOCOL.SSH_PORT;
+    @Config
+    private int port;
+    @Config
     @Nullable private String username;
+    @Config
     @JsonIgnore @Nullable private String password;
-    @Nullable private String protocol = PROTOCOL.LOCAL;
+    @Config(defaultVal = PROTOCOL.LOCAL)
+    @Nullable private String protocol;
+    @Config
     @Nullable private String pemPath;
 
     public String getHostname() {
@@ -95,6 +89,18 @@ public class Server {
 
     public void setProtocol(String protocol) {
         this.protocol = protocol;
+
+        // Let's add some logic here. If SSH or FTP and the port is not set, we set it to the default SSH port
+        if (PROTOCOL.SSH.equals(protocol) && port == 0) {
+            port = PROTOCOL.SSH_PORT;
+        } else if (PROTOCOL.FTP.equals(protocol) && port == 0) {
+            port = PROTOCOL.FTP_PORT;
+        }
+
+        // For FTP, we set a default username if not set
+        if (PROTOCOL.FTP.equals(protocol) && username == null) {
+            username = "anonymous";
+        }
     }
 
     public String getPemPath() {
@@ -103,53 +109,6 @@ public class Server {
 
     public void setPemPath(String pemPath) {
         this.pemPath = pemPath;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-        private String hostname = null;
-        private int port = PROTOCOL.SSH_PORT;
-        private String username = null;
-        private String password = null;
-        private String protocol = PROTOCOL.LOCAL;
-        private String pemPath = null;
-
-        public Builder setHostname(String hostname) {
-            this.hostname = hostname;
-            return this;
-        }
-
-        public Builder setPort(int port) {
-            this.port = port;
-            return this;
-        }
-
-        public Builder setUsername(String username) {
-            this.username = username;
-            return this;
-        }
-
-        public Builder setPassword(String password) {
-            this.password = password;
-            return this;
-        }
-
-        public Builder setProtocol(String protocol) {
-            this.protocol = protocol;
-            return this;
-        }
-
-        public Builder setPemPath(String pemPath) {
-            this.pemPath = pemPath;
-            return this;
-        }
-
-        public Server build() {
-            return new Server(hostname, port, username, password, protocol, pemPath);
-        }
     }
 
     @Override

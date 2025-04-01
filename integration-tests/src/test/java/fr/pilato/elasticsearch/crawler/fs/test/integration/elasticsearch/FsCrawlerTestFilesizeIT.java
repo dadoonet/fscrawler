@@ -27,7 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,10 +48,9 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_indexed_chars() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setIndexedChars(new Percentage(7))
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setIndexedChars(new Percentage(7));
+        crawler = startCrawler(fsSettings);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -65,10 +64,9 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_indexed_chars_percentage() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setIndexedChars(Percentage.parse("0.1%"))
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setIndexedChars(Percentage.parse("0.1%"));
+        crawler = startCrawler(fsSettings);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -82,10 +80,9 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_indexed_chars_nolimit() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setIndexedChars(new Percentage(-1))
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setIndexedChars(new Percentage(-1));
+        crawler = startCrawler(fsSettings);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -109,10 +106,9 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_filesize_disabled() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setAddFilesize(false)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setAddFilesize(false);
+        crawler = startCrawler(fsSettings);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -125,10 +121,9 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         logger.info(" ---> Creating a smaller file small.txt");
         Files.write(currentTestResourceDir.resolve("small.txt"), "This is a second file smaller than the previous one".getBytes());
 
-        Fs fs = startCrawlerDefinition()
-                .setIgnoreAbove(ByteSizeValue.parseBytesSizeValue("10kb"))
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setIgnoreAbove(ByteSizeValue.parseBytesSizeValue("10kb"));
+        crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }

@@ -13,6 +13,8 @@ enough. Thanks to dadoonet.
 New
 ---
 
+* Job settings can be defined by env variables and system properties and you can also split the configuration of
+  jobs using multiple files in the ``~/.fscrawler/job/_settings`` directory.
 * Add support for automatic semantic search when using a 8.17+ version with a trial or enterprise
   license. See :ref:`semantic_search`. **Warning**: this might slow down the ingestion process. Thanks to dadoonet.
 * Add support for Elastic cloud serverless. Thanks to dadoonet.

@@ -1,16 +1,31 @@
+# optional: define this if you want to change the default Elasticsearch settings/behavior
 elasticsearch:
+  # optional: list of Elasticsearch nodes
   nodes:
     - url: "https://127.0.0.1:9200"
     - url: "https://127.0.0.1:9201"
+  # optional: the index name to use. Defaults to name property
   index: "test_docs"
+  # optional: the index name to use for folders. Defaults to name + "_folder"
   index_folder: "test_folder"
+  # optional: the bulk size in number of documents
   bulk_size: 1000
+  # optional: the bulk flush period
   flush_interval: "5s"
+  # optional: the bulk size in bytes
   byte_size: "10mb"
+  # optional: Using Api Key (recommended)
   api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+  # optional: Using username/password (not recommended / deprecated)
   username: "elastic"
   password: "password"
+  # optional: path to the Ca certificate if using self-signed certificates
   ca_certificate: "/path/to/ca.crt"
+
+  # optional: the index pipeline
   pipeline: "my_pipeline"
+
+  # optional: do we create/update the component and index templates when starting? Defaults to "true"
   push_templates: "true"
+  # optional, defaults to "true", used with Elasticsearch 8.17+ with a trial or enterprise license
   semantic_search: "true"

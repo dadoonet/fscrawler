@@ -25,9 +25,9 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,11 +45,15 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
     private static final Logger logger = LogManager.getLogger();
 
     public FsSettings getFsSettings() throws IOException {
-        return FsSettings.builder(getCrawlerName())
-                .setFs(Fs.builder().setFilenameAsId(true).build())
-                .setRest(new Rest("http://127.0.0.1:" + getRestPort() + "/fscrawler"))
-                .setElasticsearch(elasticsearchConfiguration)
-                .build();
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName(getCrawlerName());
+        fsSettings.getFs().setFilenameAsId(true);
+        fsSettings.getRest().setUrl("http://127.0.0.1:" + getRestPort() + "/fscrawler");
+        // Clone the elasticsearchConfiguration to avoid modifying the default one
+        // We start with a clean configuration
+        Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
+        fsSettings.setElasticsearch(elasticsearch);
+        return fsSettings;
     }
 
     @Test

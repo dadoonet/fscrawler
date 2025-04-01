@@ -20,7 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
@@ -39,10 +39,9 @@ public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
         Path link = currentTestResourceDir.resolve("link_roottxtfile.txt");
         Files.createSymbolicLink(link, source);
 
-        Fs fs = startCrawlerDefinition()
-                .setFollowSymlinks(false)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setFollowSymlinks(false);
+        crawler = startCrawler(fsSettings);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
@@ -55,10 +54,9 @@ public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
         Path link = currentTestResourceDir.resolve("link_roottxtfile.txt");
         Files.createSymbolicLink(link, source);
 
-        Fs fs = startCrawlerDefinition()
-                .setFollowSymlinks(true)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setFollowSymlinks(true);
+        crawler = startCrawler(fsSettings);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);

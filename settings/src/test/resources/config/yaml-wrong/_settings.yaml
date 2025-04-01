@@ -1,0 +1,5 @@
+# This file is intentionally malformed
+name: "test"
+fs:
+    url: "/path/to/docs"
+  update_rate: "5m"

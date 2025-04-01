@@ -20,9 +20,11 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
+
+import java.util.List;
 
 /**
  * Test includes crawler settings
@@ -30,19 +32,17 @@ import org.junit.Test;
 public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_includes() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .addInclude("*/*_include\\.txt")
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setIncludes(List.of("*/*_include\\.txt"));
+        crawler = startCrawler(fsSettings);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }
 
     @Test
     public void test_subdirs_with_patterns() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .addInclude("*/*\\.txt")
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setIncludes(List.of("*/*\\.txt"));
+        crawler = startCrawler(fsSettings);
 
         // We expect to have seven files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
@@ -50,11 +50,9 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_ignore_dir() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .addExclude("*/\\.ignore/")
-                .addExclude("/subdir/sub*")
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setExcludes(List.of("*/\\.ignore/", "/subdir/sub*"));
+        crawler = startCrawler(fsSettings);
 
         // We expect to have two files: subdir/notsub/roottxtfile.txt and subdir/roottxtfile.txt
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);

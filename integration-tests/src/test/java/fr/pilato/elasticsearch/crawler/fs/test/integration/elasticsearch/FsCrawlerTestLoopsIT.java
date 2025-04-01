@@ -21,11 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
@@ -36,19 +32,13 @@ import static org.hamcrest.Matchers.is;
  * Test loop crawler settings
  */
 public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
-    private static final Logger logger = LogManager.getLogger();
 
     /**
      * Test case for #227: <a href="https://github.com/dadoonet/fscrawler/issues/227">https://github.com/dadoonet/fscrawler/issues/227</a> : Add support for run only once
      */
     @Test
     public void test_single_loop() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-
-        logger.info("  --> starting crawler [{}]", getCrawlerName());
-
-        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 1, false);
+        crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 1, false);
         crawler.start();
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
@@ -62,12 +52,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_two_loops() throws Exception {
-        Fs fs = startCrawlerDefinition().build();
-
-        logger.info("  --> starting crawler [{}]", getCrawlerName());
-
-        crawler = new FsCrawlerImpl(metadataDir, FsSettings.builder(getCrawlerName())
-                .setElasticsearch(endCrawlerDefinition(getCrawlerName())).setFs(fs).build(), 2, false);
+        crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 2, false);
         crawler.start();
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);

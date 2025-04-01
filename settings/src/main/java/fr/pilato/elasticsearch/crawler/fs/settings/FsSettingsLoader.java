@@ -25,9 +25,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.builder.GestaltBuilder;
-import org.github.gestalt.config.exceptions.GestaltException;
 import org.github.gestalt.config.source.ClassPathConfigSourceBuilder;
+import org.github.gestalt.config.source.EnvironmentConfigSourceBuilder;
 import org.github.gestalt.config.source.FileConfigSourceBuilder;
+import org.github.gestalt.config.source.SystemPropertiesConfigSourceBuilder;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,7 +47,8 @@ public class FsSettingsLoader extends MetaFileHandler {
     public static final String SETTINGS_JSON = "_settings.json";
     public static final String SETTINGS_YAML = "_settings.yaml";
     public static final String SETTINGS_DIR = "_settings";
-    public static final String DEFAULT_SETTINGS = "/fr/pilato/elasticsearch/crawler/fs/settings/fscrawler-default.yaml";
+    public static final String DEFAULT_SETTINGS = "/fr/pilato/elasticsearch/crawler/fs/settings/fscrawler-default.properties";
+    public static final String EXAMPLE_SETTINGS = "/fr/pilato/elasticsearch/crawler/fs/settings/fscrawler-default.yaml";
 
     public FsSettingsLoader(Path root) {
         super(root);
@@ -59,36 +61,34 @@ public class FsSettingsLoader extends MetaFileHandler {
      * @throws IOException in case of error while reading
      */
     public FsSettings read(String jobName) throws IOException {
-        try {
-            Path configYaml = root.resolve(jobName).resolve(SETTINGS_YAML);
-            logger.trace("Trying to read settings from [{}] file", configYaml);
-            if (Files.exists(configYaml)) {
-                return load(configYaml);
-            }
-            Path configJson = root.resolve(jobName).resolve(SETTINGS_JSON);
-            logger.trace("Trying to read settings from [{}] file", configJson);
-            if (Files.exists(configJson)) {
-                return load(configJson);
-            }
-            Path configDir = root.resolve(jobName).resolve(SETTINGS_DIR);
-            logger.trace("Trying to read settings from [{}] directory", configDir);
-            if (Files.exists(configDir)) {
-                return load(readDir(configDir).toArray(new Path[0]));
-            }
-            throw new FsCrawlerIllegalConfigurationException("Can not read settings from " +
-                    root.toAbsolutePath() + " with either /_settings.yaml, /_settings.json, /_settings/*.");
-        } catch (GestaltException e) {
-            throw new FsCrawlerIllegalConfigurationException("Can not parse the configuration files for " + jobName, e);
+        Path configYaml = root.resolve(jobName).resolve(SETTINGS_YAML);
+        logger.trace("Trying to read settings from [{}] file", configYaml);
+        if (Files.exists(configYaml)) {
+            return load(configYaml);
         }
+        Path configJson = root.resolve(jobName).resolve(SETTINGS_JSON);
+        logger.trace("Trying to read settings from [{}] file", configJson);
+        if (Files.exists(configJson)) {
+            return load(configJson);
+        }
+        Path configDir = root.resolve(jobName).resolve(SETTINGS_DIR);
+        logger.trace("Trying to read settings from [{}] directory", configDir);
+        if (Files.exists(configDir)) {
+            return load(readDir(configDir).toArray(new Path[0]));
+        }
+        logger.warn("Can not read settings from [{}] with either /_settings.yaml, /_settings.json, /_settings/*." +
+                        " Falling back to default settings.", root.resolve(jobName).toAbsolutePath());
+        return load();
     }
 
     /**
      * We write settings to ~/.fscrawler/{job_name}/_settings.yaml
+     * @param name the job_name
      * @param settings Settings to write (settings.getName() contains the job name)
      * @throws IOException in case of error while reading
      */
-    public void write(FsSettings settings) throws IOException {
-        writeFile(settings.getName(), SETTINGS_YAML, FsSettingsParser.toYaml(settings));
+    public void write(String name, FsSettings settings) throws IOException {
+        writeFile(name, SETTINGS_YAML, FsSettingsParser.toYaml(settings));
     }
 
     /**
@@ -106,35 +106,46 @@ public class FsSettingsLoader extends MetaFileHandler {
      * Load settings from files. It could be both json or yaml files
      * @param configFiles list of files to read
      * @return The settings
-     * @throws GestaltException when we can not read settings
+     * @throws FsCrawlerIllegalConfigurationException when we can not read settings
      */
-    private FsSettings load(Path... configFiles) throws GestaltException {
-        GestaltBuilder builder = new GestaltBuilder()
+    public static FsSettings load(Path... configFiles) throws FsCrawlerIllegalConfigurationException {
+        try {
+            GestaltBuilder builder = new GestaltBuilder()
                 .addSource(ClassPathConfigSourceBuilder.builder().setResource(DEFAULT_SETTINGS).build());
 
-        for (Path configFile : configFiles) {
-            builder.addSource(FileConfigSourceBuilder.builder().setPath(configFile).build());
+            for (Path configFile : configFiles) {
+                builder.addSource(FileConfigSourceBuilder.builder().setPath(configFile).build());
+            }
+
+            // This allows automatic configuration using System properties like -Dname=foobar or -Dfs.url=/tmp
+            builder.addSource(SystemPropertiesConfigSourceBuilder.builder().build());
+            // This allows automatic configuration using Env variables like FSCRAWLER_NAME=foobar or FSCRAWLER_FS_URL=/tmp
+            builder.addSource(EnvironmentConfigSourceBuilder.builder()
+                    .setPrefix("FSCRAWLER_")
+                    .setRemovePrefix(true)
+                    .build());
+
+            Gestalt gestalt = builder.build();
+
+            // Loads and parses the configurations, this will throw exceptions if there are any errors.
+            gestalt.loadConfigs();
+
+            FsSettings settings = new FsSettings();
+
+            settings.setName(gestalt.getConfigOptional("name", String.class).orElse(null));
+            settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
+            settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class).orElse(null));
+            settings.setTags(gestalt.getConfigOptional("fs.tags", Tags.class).orElse(null));
+            settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
+            settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
+
+            logger.debug("Successfully loaded settings from [fscrawler-default.properties] and {}",
+                    (Object) configFiles);
+            logger.trace("Loaded settings [{}]", settings);
+
+            return settings;
+        } catch (Exception e) {
+            throw new FsCrawlerIllegalConfigurationException("Can not load settings", e);
         }
-
-        builder.setTreatMissingDiscretionaryValuesAsErrors(false);
-
-        Gestalt gestalt = builder.build();
-
-        // Loads and parses the configurations, this will throw exceptions if there are any errors.
-        gestalt.loadConfigs();
-
-        FsSettings settings = new FsSettings();
-
-        settings.setName(gestalt.getConfig("name", String.class));
-        settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
-        settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class).orElse(null));
-        settings.setTags(gestalt.getConfigOptional("fs.tags", Tags.class).orElse(null));
-        settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
-        settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
-
-        logger.debug("Successfully loaded settings from {}", (Object) configFiles);
-        logger.trace("Loaded settings [{}]", settings);
-
-        return settings;
     }
 }

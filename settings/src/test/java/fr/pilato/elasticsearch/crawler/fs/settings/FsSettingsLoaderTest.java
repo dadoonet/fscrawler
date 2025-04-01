@@ -19,206 +19,116 @@ public class FsSettingsLoaderTest {
     Path configPath = Path.of(FsSettingsLoaderTest.class.getResource("/config").getPath());
 
     @Test(expected = FsCrawlerIllegalConfigurationException.class)
-    public void testLoad() throws IOException {
+    public void testLoadWrongSettings() throws IOException {
         // This should fail
-        new FsSettingsLoader(configPath).read("doesnotexist");
+        new FsSettingsLoader(configPath).read("yaml-wrong");
+    }
+
+    @Test
+    public void testLoadNonExistingSettings() throws IOException {
+        FsSettings doesnotexist = new FsSettingsLoader(configPath).read("doesnotexist");
+        FsSettings expected = generateExpectedDefaultFsSettings();
+        checkSettings(expected, doesnotexist);
+    }
+
+    @Test
+    public void testLoadNoFile() {
+        checkSettings(generateExpectedDefaultFsSettings(), FsSettingsLoader.load());
     }
 
     @Test
     public void testLoadJsonSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("json-simple");
-        FsSettings expected = new FsSettings();
-        expected.setName("test");
+        FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, settings);
     }
 
     @Test
-    public void testLoadJsonComplete() throws IOException {
-        FsSettings settings = new FsSettingsLoader(configPath).read("json-full");
-        FsSettings expected = new FsSettings();
-        expected.setName("test");
-        // Change the expected object to be conform to the fscraller-full.test.yml file
-        expected.setFs(new Fs());
-        expected.getFs().setUrl("/path/to/docs");
-        expected.getFs().setUpdateRate(TimeValue.timeValueMinutes(5));
-        expected.getFs().setIncludes(List.of("*.doc", "*.xls"));
-        expected.getFs().setExcludes(List.of("resume.doc"));
-        expected.getFs().setFilters(List.of(".*foo.*", "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"));
-        expected.getFs().setJsonSupport(false);
-        expected.getFs().setAddAsInnerObject(false);
-        expected.getFs().setXmlSupport(false);
-        expected.getFs().setFollowSymlinks(false);
-        expected.getFs().setRemoveDeleted(true);
-        expected.getFs().setContinueOnError(false);
-        expected.getFs().setIgnoreAbove(new ByteSizeValue(512, ByteSizeUnit.MB));
-        expected.getFs().setFilenameAsId(true);
-        expected.getFs().setIndexContent(true);
-        expected.getFs().setAddFilesize(true);
-        expected.getFs().setAttributesSupport(false);
-        expected.getFs().setLangDetect(false);
-        expected.getFs().setStoreSource(false);
-        expected.getFs().setIndexedChars(new Percentage(10000.0));
-        expected.getFs().setRawMetadata(false);
-        expected.getFs().setChecksum("MD5");
-        expected.getFs().setIndexFolders(true);
-        expected.getFs().setTikaConfigPath("/path/to/tika-config.xml");
-        expected.getFs().getOcr().setEnabled(true);
-        expected.getFs().getOcr().setLanguage("eng");
-        expected.getFs().getOcr().setPath("/path/to/tesseract/if/not/available/in/PATH");
-        expected.getFs().getOcr().setDataPath("/path/to/tesseract/tessdata/if/needed");
-        expected.getFs().getOcr().setOutputType("txt");
-        expected.getFs().getOcr().setPdfStrategy("ocr_and_text");
-        expected.getFs().getOcr().setPageSegMode(1);
-        expected.getFs().getOcr().setPreserveInterwordSpacing(false);
-        expected.setTags(new Tags("meta_tags.json"));
-        expected.setServer(new Server());
-        expected.getServer().setHostname("localhost");
-        expected.getServer().setPort(22);
-        expected.getServer().setUsername("dadoonet");
-        expected.getServer().setPassword("password");
-        expected.getServer().setProtocol("ssh");
-        expected.getServer().setPemPath("/path/to/pemfile");
-        expected.setElasticsearch(new Elasticsearch());
-        expected.getElasticsearch().setNodes(List.of(
-                new ServerUrl("https://127.0.0.1:9200"),
-                new ServerUrl("https://127.0.0.1:9201")
-        ));
-        expected.getElasticsearch().setIndex("test_docs");
-        expected.getElasticsearch().setIndexFolder("test_folder");
-        expected.getElasticsearch().setBulkSize(1000);
-        expected.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(5));
-        expected.getElasticsearch().setByteSize(new ByteSizeValue(10, ByteSizeUnit.MB));
-        expected.getElasticsearch().setApiKey("VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw==");
-        expected.getElasticsearch().setUsername("elastic");
-        expected.getElasticsearch().setPassword("password");
-        expected.getElasticsearch().setCaCertificate("/path/to/ca.crt");
-        expected.getElasticsearch().setPipeline("my_pipeline");
-        expected.getElasticsearch().setPushTemplates(true);
-        expected.getElasticsearch().setSemanticSearch(true);
-        expected.setRest(new Rest());
-        expected.getRest().setUrl("http://127.0.0.1:8080/fscrawler");
-        expected.getRest().setEnableCors(true);
-
-        checkSettings(expected, settings);
+    public void testLoadJsonFull() throws IOException {
+        testLoadFullSettings("json-full");
     }
 
     @Test
-    public void testLoadYamlComplete() throws IOException {
-        FsSettings settings = new FsSettingsLoader(configPath).read("yaml-full");
-        FsSettings expected = new FsSettings();
-        expected.setName("test");
-        // Change the expected object to be conform to the fscraller-full.test.yml file
-        expected.setFs(new Fs());
-        expected.getFs().setUrl("/path/to/docs");
-        expected.getFs().setUpdateRate(TimeValue.timeValueMinutes(5));
-        expected.getFs().setIncludes(List.of("*.doc", "*.xls"));
-        expected.getFs().setExcludes(List.of("resume.doc"));
-        expected.getFs().setFilters(List.of(".*foo.*", "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"));
-        expected.getFs().setJsonSupport(false);
-        expected.getFs().setAddAsInnerObject(false);
-        expected.getFs().setXmlSupport(false);
-        expected.getFs().setFollowSymlinks(false);
-        expected.getFs().setRemoveDeleted(true);
-        expected.getFs().setContinueOnError(false);
-        expected.getFs().setIgnoreAbove(new ByteSizeValue(512, ByteSizeUnit.MB));
-        expected.getFs().setFilenameAsId(true);
-        expected.getFs().setIndexContent(true);
-        expected.getFs().setAddFilesize(true);
-        expected.getFs().setAttributesSupport(false);
-        expected.getFs().setLangDetect(false);
-        expected.getFs().setStoreSource(false);
-        expected.getFs().setIndexedChars(new Percentage(10000.0));
-        expected.getFs().setRawMetadata(false);
-        expected.getFs().setChecksum("MD5");
-        expected.getFs().setIndexFolders(true);
-        expected.getFs().setTikaConfigPath("/path/to/tika-config.xml");
-        expected.getFs().getOcr().setEnabled(true);
-        expected.getFs().getOcr().setLanguage("eng");
-        expected.getFs().getOcr().setPath("/path/to/tesseract/if/not/available/in/PATH");
-        expected.getFs().getOcr().setDataPath("/path/to/tesseract/tessdata/if/needed");
-        expected.getFs().getOcr().setOutputType("txt");
-        expected.getFs().getOcr().setPdfStrategy("ocr_and_text");
-        expected.getFs().getOcr().setPageSegMode(1);
-        expected.getFs().getOcr().setPreserveInterwordSpacing(false);
-        expected.setTags(new Tags("meta_tags.json"));
-        expected.setServer(new Server());
-        expected.getServer().setHostname("localhost");
-        expected.getServer().setPort(22);
-        expected.getServer().setUsername("dadoonet");
-        expected.getServer().setPassword("password");
-        expected.getServer().setProtocol("ssh");
-        expected.getServer().setPemPath("/path/to/pemfile");
-        expected.setElasticsearch(new Elasticsearch());
-        expected.getElasticsearch().setNodes(List.of(
-            new ServerUrl("https://127.0.0.1:9200"),
-            new ServerUrl("https://127.0.0.1:9201")
-        ));
-        expected.getElasticsearch().setIndex("test_docs");
-        expected.getElasticsearch().setIndexFolder("test_folder");
-        expected.getElasticsearch().setBulkSize(1000);
-        expected.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(5));
-        expected.getElasticsearch().setByteSize(new ByteSizeValue(10, ByteSizeUnit.MB));
-        expected.getElasticsearch().setApiKey("VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw==");
-        expected.getElasticsearch().setUsername("elastic");
-        expected.getElasticsearch().setPassword("password");
-        expected.getElasticsearch().setCaCertificate("/path/to/ca.crt");
-        expected.getElasticsearch().setPipeline("my_pipeline");
-        expected.getElasticsearch().setPushTemplates(true);
-        expected.getElasticsearch().setSemanticSearch(true);
-        expected.setRest(new Rest());
-        expected.getRest().setUrl("http://127.0.0.1:8080/fscrawler");
-        expected.getRest().setEnableCors(true);
+    public void testLoadYamlFull() throws IOException {
+        testLoadFullSettings("yaml-full");
+    }
 
-        checkSettings(expected, settings);
+    @Test
+    public void testLoadYamlSplit() throws IOException {
+        testLoadFullSettings("yaml-split");
     }
 
     @Test
     public void testLoadYamlSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("yaml-simple");
-        FsSettings expected = new FsSettings();
-        expected.setName("test");
+        FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, settings);
     }
 
     @Test
-    public void testLoadYamlSplit() throws IOException {
-        FsSettings settings = new FsSettingsLoader(configPath).read("yaml-split");
-        FsSettings expected = new FsSettings();
+    public void testWithDefaultNamesForEnvVariables() throws Exception {
+        // Create environment variables (system properties)
+        System.setProperty("FSCRAWLER_NAME", "foo");
+        System.setProperty("FSCRAWLER_FS_URL", "/tmp/test");
+
+        try {
+            FsSettings settings = new FsSettingsLoader(configPath).read("yaml-env-vars");
+            FsSettings expected = generateExpectedDefaultFsSettings();
+            // Although a value is set by a system property, the yaml file takes precedence
+            expected.setName("myname");
+            expected.getElasticsearch().setIndex("myname");
+            expected.getElasticsearch().setIndexFolder("myname_folder");
+
+            // This is set by the system property
+            expected.getFs().setUrl("/tmp/test");
+            checkSettings(expected, settings);
+        } finally {
+            // Remove the environment variable
+            System.clearProperty("FSCRAWLER_NAME");
+            System.clearProperty("FSCRAWLER_FS_URL");
+        }
+    }
+
+    private void testLoadFullSettings(String jobName) throws IOException {
+        FsSettings settings = new FsSettingsLoader(configPath).read(jobName);
+        FsSettings expected = generateExpectedDefaultFsSettings();
         expected.setName("test");
-        // Change the expected object to be conform to the fscraller-full.test.yml file
-        expected.setFs(new Fs());
         expected.getFs().setUrl("/path/to/docs");
         expected.getFs().setUpdateRate(TimeValue.timeValueMinutes(5));
         expected.getFs().setIncludes(List.of("*.doc", "*.xls"));
         expected.getFs().setExcludes(List.of("resume.doc"));
         expected.getFs().setFilters(List.of(".*foo.*", "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"));
-        expected.getFs().setJsonSupport(false);
-        expected.getFs().setAddAsInnerObject(false);
-        expected.getFs().setXmlSupport(false);
-        expected.getFs().setFollowSymlinks(false);
-        expected.getFs().setRemoveDeleted(true);
-        expected.getFs().setContinueOnError(false);
+        expected.getFs().setJsonSupport(true);
+        expected.getFs().setAddAsInnerObject(true);
+        expected.getFs().setXmlSupport(true);
+        expected.getFs().setFollowSymlinks(true);
+        expected.getFs().setRemoveDeleted(false);
+        expected.getFs().setContinueOnError(true);
         expected.getFs().setIgnoreAbove(new ByteSizeValue(512, ByteSizeUnit.MB));
         expected.getFs().setFilenameAsId(true);
-        expected.getFs().setIndexContent(true);
-        expected.getFs().setAddFilesize(true);
-        expected.getFs().setAttributesSupport(false);
-        expected.getFs().setLangDetect(false);
-        expected.getFs().setStoreSource(false);
+        expected.getFs().setIndexContent(false);
+        expected.getFs().setAddFilesize(false);
+        expected.getFs().setAttributesSupport(true);
+        expected.getFs().setLangDetect(true);
+        expected.getFs().setStoreSource(true);
         expected.getFs().setIndexedChars(new Percentage(10000.0));
-        expected.getFs().setRawMetadata(false);
+        expected.getFs().setRawMetadata(true);
         expected.getFs().setChecksum("MD5");
-        expected.getFs().setIndexFolders(true);
+        expected.getFs().setIndexFolders(false);
         expected.getFs().setTikaConfigPath("/path/to/tika-config.xml");
-        expected.getFs().getOcr().setEnabled(true);
-        expected.getFs().getOcr().setLanguage("eng");
-        expected.getFs().getOcr().setPath("/path/to/tesseract/if/not/available/in/PATH");
-        expected.getFs().getOcr().setDataPath("/path/to/tesseract/tessdata/if/needed");
-        expected.getFs().getOcr().setOutputType("txt");
-        expected.getFs().getOcr().setPdfStrategy("ocr_and_text");
-        expected.getFs().getOcr().setPageSegMode(1);
-        expected.getFs().getOcr().setPreserveInterwordSpacing(false);
-        expected.setTags(new Tags("meta_tags.json"));
+        Ocr ocr = new Ocr();
+        ocr.setEnabled(false);
+        ocr.setLanguage("fra");
+        ocr.setPath("/path/to/tesseract/if/not/available/in/PATH");
+        ocr.setDataPath("/path/to/tesseract/tessdata/if/needed");
+        ocr.setOutputType("txt");
+        ocr.setPdfStrategy("auto");
+        ocr.setPageSegMode(1);
+        ocr.setPreserveInterwordSpacing(true);
+        expected.getFs().setOcr(ocr);
+        Tags tags = new Tags();
+        tags.setMetaFilename("meta_tags.json");
+        expected.setTags(tags);
         expected.setServer(new Server());
         expected.getServer().setHostname("localhost");
         expected.getServer().setPort(22);
@@ -226,7 +136,6 @@ public class FsSettingsLoaderTest {
         expected.getServer().setPassword("password");
         expected.getServer().setProtocol("ssh");
         expected.getServer().setPemPath("/path/to/pemfile");
-        expected.setElasticsearch(new Elasticsearch());
         expected.getElasticsearch().setNodes(List.of(
                 new ServerUrl("https://127.0.0.1:9200"),
                 new ServerUrl("https://127.0.0.1:9201")
@@ -251,14 +160,68 @@ public class FsSettingsLoaderTest {
     }
 
     private void checkSettings(FsSettings expected, FsSettings settings) {
-        logger.info("Settings loaded: {}", settings);
-        logger.info("Settings expected: {}", expected);
+        logger.debug("Settings loaded: {}", settings);
+        logger.debug("Settings expected: {}", expected);
 
+        if (expected.getFs() != null) {
+            assertEquals("Checking Ocr", expected.getFs().getOcr(), settings.getFs().getOcr());
+        }
         assertEquals("Checking Fs", expected.getFs(), settings.getFs());
         assertEquals("Checking Server", expected.getServer(), settings.getServer());
         assertEquals("Checking Tags", expected.getTags(), settings.getTags());
         assertEquals("Checking Elasticsearch", expected.getElasticsearch(), settings.getElasticsearch());
         assertEquals("Checking Rest", expected.getRest(), settings.getRest());
         assertEquals("Checking whole settings", expected, settings);
+    }
+
+    private FsSettings generateExpectedDefaultFsSettings() {
+        FsSettings expected = new FsSettings();
+        expected.setName("fscrawler");
+
+        Fs fs = new Fs();
+        fs.setUrl("/tmp/es");
+        fs.setUpdateRate(TimeValue.timeValueMinutes(15));
+        fs.setExcludes(List.of("*/~*"));
+        fs.setRemoveDeleted(true);
+        fs.setIndexContent(true);
+        fs.setAddFilesize(true);
+        fs.setIndexFolders(true);
+
+        Ocr ocr = new Ocr();
+        ocr.setEnabled(true);
+        ocr.setLanguage("eng");
+        ocr.setOutputType("txt");
+        ocr.setPdfStrategy("ocr_and_text");
+        ocr.setPageSegMode(1);
+        fs.setOcr(ocr);
+        expected.setFs(fs);
+
+        Server server = new Server();
+        server.setProtocol("local");
+        server.setPort(0);
+        expected.setServer(server);
+
+        Tags tags = new Tags();
+        tags.setMetaFilename(".meta.yml");
+        expected.setTags(tags);
+
+        Elasticsearch es = new Elasticsearch();
+        es.setNodes(List.of(new ServerUrl("https://127.0.0.1:9200")));
+        es.setIndex(expected.getName());
+        es.setIndexFolder(expected.getName() + "_folder");
+        es.setApiKey("");
+        es.setBulkSize(100);
+        es.setFlushInterval(TimeValue.timeValueSeconds(5));
+        es.setByteSize(new ByteSizeValue(10, ByteSizeUnit.MB));
+        es.setSslVerification(true);
+        es.setPushTemplates(true);
+        expected.setElasticsearch(es);
+
+        Rest rest = new Rest();
+        rest.setUrl("http://127.0.0.1:8080/fscrawler");
+        rest.setEnableCors(false);
+        expected.setRest(rest);
+
+        return expected;
     }
 }

@@ -19,12 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -52,10 +49,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_remove_deleted_enabled() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setRemoveDeleted(true)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setRemoveDeleted(true);
+        crawler = startCrawler(fsSettings);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
@@ -70,10 +66,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_remove_deleted_disabled() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setRemoveDeleted(false)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setRemoveDeleted(false);
+        crawler = startCrawler(fsSettings);
 
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
@@ -91,10 +86,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void test_remove_folder_deleted_enabled() throws Exception {
-        Fs fs = startCrawlerDefinition()
-                .setRemoveDeleted(true)
-                .build();
-        crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setRemoveDeleted(true);
+        crawler = startCrawler(fsSettings);
 
         // We should have 7 docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, currentTestResourceDir);
@@ -213,7 +207,10 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         // It's due to https://github.com/dadoonet/fscrawler/issues/82 which removes 2 seconds from the last scan date
         sleep(2000L);
 
-        crawler = startCrawler();
+        FsSettings fsSettings = createTestSettings();
+        // We change the update rate to 5 seconds because the FsParser last scan date is set to 2 seconds less than the current time
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(5));
+        crawler = startCrawler(fsSettings);
 
         // We should have one doc first
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);

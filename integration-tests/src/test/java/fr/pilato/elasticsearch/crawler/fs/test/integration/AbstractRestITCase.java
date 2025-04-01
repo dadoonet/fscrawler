@@ -21,11 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.carrotsearch.randomizedtesting.ThreadFilter;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.client.*;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
@@ -36,11 +32,7 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElas
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.Invocation;
-import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,7 +49,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -128,7 +122,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     public void startRestServer() throws Exception {
         FsSettings fsSettings = getFsSettings();
         fsSettings.getElasticsearch().setIndex(getCrawlerName());
-        FsCrawlerValidator.validateSettings(logger, fsSettings, true);
+        FsCrawlerValidator.validateSettings(logger, fsSettings);
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
         this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);

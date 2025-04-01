@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,7 +38,7 @@ public class FileAbstractorFileTest {
 
     @Before
     public void setUp() {
-        FsSettings fsSettings = FsSettings.builder("foo").build();
+        FsSettings fsSettings = FsSettingsLoader.load();
         fileAbstractorFile = new FileAbstractorFile(fsSettings);
     }
 

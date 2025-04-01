@@ -21,9 +21,11 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
+
+import java.util.List;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.assumeTrue;
 
@@ -32,27 +34,25 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.assumeTrue;
  */
 public class FsCrawlerTestTikaConfigPathIT extends AbstractFsCrawlerITCase {
 
-  @Test
-  public void test_tika_config_path() throws Exception {
-    assumeTrue("We are skipping this test. See discussion at https://github.com/dadoonet/fscrawler/pull/1403#issuecomment-1077912549", false);
-    Fs fs = startCrawlerDefinition()
-        .setTikaConfigPath(currentTestResourceDir.resolve("config/tikaConfig.xml").toString())
-        .addExclude("/config/*")
-        .build();
-    crawler = startCrawler(getCrawlerName(), fs, endCrawlerDefinition(getCrawlerName()), null, null);
+    @Test
+    public void test_tika_config_path() throws Exception {
+        assumeTrue("We are skipping this test. See discussion at https://github.com/dadoonet/fscrawler/pull/1403#issuecomment-1077912549", false);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setTikaConfigPath(currentTestResourceDir.resolve("config/tikaConfig.xml").toString());
+        fsSettings.getFs().setExcludes(List.of("/config/*"));
+        crawler = startCrawler(fsSettings);
 
-    countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
-    countTestHelper(new ESSearchRequest()
-            .withIndex(getCrawlerName())
-            .withESQuery(new ESMatchQuery("content", "Tika")), 2L, null);
-    // HTML parsed as TXT will contain all tags in content
-    // XHTML parsed as XML will remove tags from content
-    countTestHelper(new ESSearchRequest()
-            .withIndex(getCrawlerName())
-            .withESQuery(new ESMatchQuery("content", "div")), 1L, null);
-    countTestHelper(new ESSearchRequest()
-        .withIndex(getCrawlerName())
-        .withESQuery(new ESMatchQuery("meta.title", "Test Tika title")), 0L, null);
-  }
-
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+        countTestHelper(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withESQuery(new ESMatchQuery("content", "Tika")), 2L, null);
+        // HTML parsed as TXT will contain all tags in content
+        // XHTML parsed as XML will remove tags from content
+        countTestHelper(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withESQuery(new ESMatchQuery("content", "div")), 1L, null);
+        countTestHelper(new ESSearchRequest()
+                .withIndex(getCrawlerName())
+                .withESQuery(new ESMatchQuery("meta.title", "Test Tika title")), 0L, null);
+    }
 }

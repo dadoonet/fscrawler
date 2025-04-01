@@ -23,7 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
@@ -59,10 +59,10 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "}";
         managementService.getClient().performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
-        Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
-        elasticsearch.setPipeline(crawlerName);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getElasticsearch().setPipeline(crawlerName);
 
-        crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null, null);
+        crawler = startCrawler(fsSettings);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest()
@@ -104,10 +104,10 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "}";
         managementService.getClient().performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
-        Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
-        elasticsearch.setPipeline(crawlerName);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getElasticsearch().setPipeline(crawlerName);
 
-        crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null, null);
+        crawler = startCrawler(fsSettings);
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
@@ -121,11 +121,11 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
     public void test_ingest_missing_pipeline_490() throws Exception {
         String crawlerName = getCrawlerName();
 
-        Elasticsearch elasticsearch = endCrawlerDefinition(crawlerName);
-        elasticsearch.setPipeline(crawlerName);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getElasticsearch().setPipeline(crawlerName);
 
         try {
-            crawler = startCrawler(crawlerName, startCrawlerDefinition().build(), elasticsearch, null, null);
+            crawler = startCrawler(fsSettings);
             fail("We should have caught a RuntimeException");
         } catch (RuntimeException e) {
             assertThat(e.getMessage(), containsString("You defined pipeline:" + crawlerName + ", but it does not exist."));
