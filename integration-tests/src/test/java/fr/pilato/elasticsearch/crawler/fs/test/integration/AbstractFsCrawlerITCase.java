@@ -33,13 +33,11 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     private static final Logger logger = LogManager.getLogger();
@@ -88,7 +86,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     protected FsCrawlerImpl startCrawler(FsSettings fsSettings) throws Exception {
-        return startCrawler(fsSettings, TimeValue.timeValueSeconds(30));
+        return startCrawler(fsSettings, MAX_WAIT_FOR_SEARCH);
     }
 
     protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, TimeValue duration)
@@ -104,14 +102,16 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         crawler.start();
 
         // We wait up to X seconds before considering a failing test
-        assertThat("Job meta file should exists in ~/.fscrawler...", awaitBusy(() -> {
+        assertThat(awaitBusy(() -> {
             try {
                 new FsJobFileHandler(metadataDir).read(fsSettings.getName());
                 return true;
             } catch (IOException e) {
                 return false;
             }
-        }, duration), equalTo(true));
+        }, duration))
+                .as("Job meta file should exists in ~/.fscrawler...")
+                .isTrue();
 
         countTestHelper(new ESSearchRequest().withIndex(fsSettings.getElasticsearch().getIndex()), null, null, duration);
 

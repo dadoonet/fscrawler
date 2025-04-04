@@ -40,10 +40,10 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Before;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -58,8 +58,7 @@ import java.util.Map;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ALL")
 @ThreadLeakFilters(filters = {
@@ -226,7 +225,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
                 .withIndex(getCrawlerName())
                 .withESQuery(new ESTermQuery("file.filename", filename)));
 
-        assertThat(response.getTotalHits(), is(1L));
+        assertThat(response.getTotalHits()).isEqualTo(1L);
         ESSearchHit hit = response.getHits().get(0);
         logger.debug("For [file.filename:{}], we got: {}", filename, hit.getSource());
 
@@ -261,7 +260,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     }
 
     public static UploadResponse uploadFileUsingApi(WebTarget target, Path file, Path tagsFile, String index, String api, String id) {
-        assertThat(Files.exists(file), is(true));
+        assertThat(file).exists();
 
         Map<String, Object> params = new HashMap<>();
 
@@ -315,7 +314,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     }
 
     public static UploadResponse putDocument(WebTarget target, Path file, Path tagsFile, String index, String id) {
-        assertThat(Files.exists(file), is(true));
+        assertThat(file).exists();
 
         Map<String, Object> params = new HashMap<>();
 

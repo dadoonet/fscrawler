@@ -25,74 +25,73 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void testSettingsValidation() {
+    public void settingsValidation() {
         // Checking default values
         FsSettings settings = FsSettingsLoader.load();
         settings.setName(getCurrentTestName());
         settings.getElasticsearch().setIndex(getCurrentTestName());
         settings.getElasticsearch().setIndexFolder(getCurrentTestName() + INDEX_SUFFIX_FOLDER);
 
-        assertThat(settings.getFs().getUrl(), is(Defaults.DEFAULT_DIR));
-        assertThat(settings.getElasticsearch().getNodes(), hasItem(Defaults.NODE_DEFAULT));
-        assertThat(settings.getElasticsearch().getIndex(), is(getCurrentTestName()));
-        assertThat(settings.getElasticsearch().getIndexFolder(), is(getCurrentTestName() + INDEX_SUFFIX_FOLDER));
-        assertThat(settings.getServer().getProtocol(), is("local"));
-        assertThat(settings.getRest().getUrl(), is("http://127.0.0.1:8080/fscrawler"));
+        assertThat(settings.getFs().getUrl()).isEqualTo(Defaults.DEFAULT_DIR);
+        assertThat(settings.getElasticsearch().getNodes()).contains(Defaults.NODE_DEFAULT);
+        assertThat(settings.getElasticsearch().getIndex()).isEqualTo(getCurrentTestName());
+        assertThat(settings.getElasticsearch().getIndexFolder()).isEqualTo(getCurrentTestName() + INDEX_SUFFIX_FOLDER);
+        assertThat(settings.getServer().getProtocol()).isEqualTo("local");
+        assertThat(settings.getRest().getUrl()).isEqualTo("http://127.0.0.1:8080/fscrawler");
 
         // Checking Checksum Algorithm
         settings = FsSettingsLoader.load();
         settings.getFs().setChecksum("FSCRAWLER");
-        assertThat(FsCrawlerValidator.validateSettings(logger, settings), is(true));
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings)).isTrue();
 
         // Checking protocol
         settings = FsSettingsLoader.load();
         settings.getServer().setProtocol("FSCRAWLER");
-        assertThat(FsCrawlerValidator.validateSettings(logger, settings), is(true));
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings)).isTrue();
 
         // Checking username / password when SSH
         settings = FsSettingsLoader.load();
         settings.getServer().setProtocol(Server.PROTOCOL.SSH);
-        assertThat(FsCrawlerValidator.validateSettings(logger, settings), is(true));
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings)).isTrue();
 
         // Checking username when FTP
         settings = FsSettingsLoader.load();
         settings.getServer().setProtocol(Server.PROTOCOL.FTP);
-        assertThat(FsCrawlerValidator.validateSettings(logger, settings), is(false));
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings)).isFalse();
 
         // Checking username when FTP
         settings = FsSettingsLoader.load();
         settings.getServer().setProtocol(Server.PROTOCOL.FTP);
         settings.getServer().setUsername("");
-        assertThat(FsCrawlerValidator.validateSettings(logger, settings), is(true));
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings)).isTrue();
 
         // Checking That we don't try to do both xml and json
         settings = FsSettingsLoader.load();
         settings.getFs().setJsonSupport(true);
         settings.getFs().setXmlSupport(true);
-        assertThat(FsCrawlerValidator.validateSettings(logger, settings), is(true));
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings)).isTrue();
 
         // Checking That we don't try to do index xml with not indexing the content
         settings = FsSettingsLoader.load();
         settings.getFs().setIndexContent(false);
         settings.getFs().setXmlSupport(true);
-        assertThat(FsCrawlerValidator.validateSettings(logger, settings), is(true));
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings)).isTrue();
 
         // Checking That we don't try to do index json with not indexing the content
         settings = FsSettingsLoader.load();
         settings.getFs().setIndexContent(false);
         settings.getFs().setJsonSupport(true);
-        assertThat(FsCrawlerValidator.validateSettings(logger, settings), is(true));
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings)).isTrue();
 
         // Checking with Rest but no Rest settings
         settings = FsSettingsLoader.load();
-        assertThat(FsCrawlerValidator.validateSettings(logger, settings), is(false));
-        assertThat(settings.getRest(), notNullValue());
+        assertThat(FsCrawlerValidator.validateSettings(logger, settings)).isFalse();
+        assertThat(settings.getRest()).isNotNull();
     }
 }

@@ -25,8 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test loop crawler settings
@@ -37,27 +36,27 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
      * Test case for #227: <a href="https://github.com/dadoonet/fscrawler/issues/227">https://github.com/dadoonet/fscrawler/issues/227</a> : Add support for run only once
      */
     @Test
-    public void test_single_loop() throws Exception {
+    public void single_loop() throws Exception {
         crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 1, false);
         crawler.start();
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
-        assertThat("Job should stop after one run", crawler.getFsParser().isClosed(), is(true));
-        assertThat(crawler.getFsParser().getRunNumber(), is(1));
+        assertThat(crawler.getFsParser().isClosed()).as("Job should stop after one run").isTrue();
+        assertThat(crawler.getFsParser().getRunNumber()).isEqualTo(1);
     }
 
     /**
      * Test case for #227: <a href="https://github.com/dadoonet/fscrawler/issues/227">https://github.com/dadoonet/fscrawler/issues/227</a> : Add support for run only once
      */
     @Test
-    public void test_two_loops() throws Exception {
+    public void two_loops() throws Exception {
         crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 2, false);
         crawler.start();
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
-        assertThat("Job should stop after two runs", awaitBusy(() -> crawler.getFsParser().isClosed()), is(true));
-        assertThat(crawler.getFsParser().getRunNumber(), is(2));
+        assertThat(awaitBusy(() -> crawler.getFsParser().isClosed())).as("Job should stop after two runs").isTrue();
+        assertThat(crawler.getFsParser().getRunNumber()).isEqualTo(2);
     }
 }

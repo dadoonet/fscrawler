@@ -30,6 +30,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -38,16 +39,14 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Map;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeNoException;
-import static org.junit.Assume.assumeTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.assertj.core.api.Assumptions.assumeThatCode;
 
 public class TikaDocParserTest extends DocParserTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -67,486 +66,498 @@ public class TikaDocParserTest extends DocParserTestCase {
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/162">https://github.com/dadoonet/fscrawler/issues/162</a>
      */
     @Test
-    public void testLangDetect162() throws IOException {
+    public void langDetect162() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setLangDetect(true);
         Doc doc = extractFromFile("test.txt", fsSettings);
-        assertThat(doc.getMeta().getLanguage(), is("en"));
+        assertThat(doc.getMeta().getLanguage()).isEqualTo("en");
         doc = extractFromFile("test-fr.txt", fsSettings);
-        assertThat(doc.getMeta().getLanguage(), is("fr"));
+        assertThat(doc.getMeta().getLanguage()).isEqualTo("fr");
         doc = extractFromFile("test-de.txt", fsSettings);
-        assertThat(doc.getMeta().getLanguage(), is("de"));
+        assertThat(doc.getMeta().getLanguage()).isEqualTo("de");
         doc = extractFromFile("test-enfrde.txt", fsSettings);
-        assertThat(doc.getMeta().getLanguage(), is("fr"));
+        assertThat(doc.getMeta().getLanguage()).isEqualTo("fr");
     }
 
     /**
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
      */
     @Test
-    public void testPdfIssue221() throws IOException {
+    public void pdfIssue221() throws IOException {
         // We test document 1
         Doc doc = extractFromFile("issue-221-doc1.pdf");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("coucou"));
+        assertThat(doc.getContent()).contains("coucou");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), containsString("application/pdf"));
+        assertThat(doc.getFile().getContentType()).contains("application/pdf");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is(notNullValue()));
-        assertThat(doc.getMeta().getDate(), is(localDateTimeToDate(LocalDateTime.of(2016, 9, 20, 9, 38, 56))));
-        assertThat(doc.getMeta().getKeywords(), not(emptyIterable()));
-        assertThat(doc.getMeta().getTitle(), containsString("Recherche"));
+        assertThat(doc.getMeta().getAuthor()).isNotNull();
+        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 9, 20, 9, 38, 56)));
+        assertThat(doc.getMeta().getKeywords()).isNotEmpty();
+        assertThat(doc.getMeta().getTitle()).contains("Recherche");
 
         // We test document 2
         doc = extractFromFile("issue-221-doc2.pdf");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("FORMATIONS"));
+        assertThat(doc.getContent()).contains("FORMATIONS");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), containsString("application/pdf"));
+        assertThat(doc.getFile().getContentType()).contains("application/pdf");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
-        assertThat(doc.getMeta().getDate(), is(localDateTimeToDate(LocalDateTime.of(2016, 9, 19, 14, 29, 37))));
-        assertThat(doc.getMeta().getKeywords(), nullValue());
-        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+        assertThat(doc.getMeta().getAuthor()).isNull();
+        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 9, 19, 14, 29, 37)));
+        assertThat(doc.getMeta().getKeywords()).isNull();
+        assertThat(doc.getMeta().getTitle()).isNull();
     }
 
     /**
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
      */
     @Test
-    public void testXmlIssue163() throws IOException {
+    public void xmlIssue163() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
         Doc doc = extractFromFile("issue-163.xml", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent(), is("   \n"));
+        assertThat(doc.getContent()).isEqualTo("   \n");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), containsString("application/xml"));
+        assertThat(doc.getFile().getContentType()).contains("application/xml");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), nullValue());
-        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+        assertThat(doc.getMeta().getAuthor()).isNull();
+        assertThat(doc.getMeta().getDate()).isNull();
+        assertThat(doc.getMeta().getKeywords()).isNull();
+        assertThat(doc.getMeta().getTitle()).isNull();
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(4));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("resourceName", "issue-163.xml"));
-        assertThat(raw, hasEntry("Content-Type", "application/xml"));
+        assertThat(raw)
+                .hasSize(4)
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("resourceName", "issue-163.xml")
+                .containsEntry("Content-Type", "application/xml");
     }
 
     @Test
-    public void testExtractFromDoc() throws IOException {
+    public void extractFromDoc() throws IOException {
         Doc doc = extractFromFileExtension("doc");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
+        assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), is("application/msword"));
+        assertThat(doc.getFile().getContentType()).isEqualTo("application/msword");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 0))));
-        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1"," keyword2"));
-        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
+        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
+        assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
+        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(25));
-        assertThat(raw, hasEntry("cp:revision", "2"));
-        assertThat(raw, hasEntry("meta:word-count", "19"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("dc:creator", "David Pilato"));
-        assertThat(raw, hasEntry("extended-properties:Company", "elastic"));
-        assertThat(raw, hasEntry("dcterms:created", "2016-07-07T08:37:00Z"));
-        assertThat(raw, hasEntry("dcterms:modified", "2016-07-07T08:37:00Z"));
-        assertThat(raw, hasEntry("meta:character-count", "68"));
-        assertThat(raw, hasEntry("custom:Terminé le", "2016-07-06T22:00:00Z"));
-        assertThat(raw, hasEntry("dc:title", "Test Tika title"));
-        assertThat(raw, hasEntry("extended-properties:TotalTime", "600000000"));
-        assertThat(raw, hasEntry("extended-properties:Manager", "My Mother"));
-        assertThat(raw, hasEntry("custom:N° du document", "1234"));
-        assertThat(raw, hasEntry("Content-Type", "application/msword"));
-        assertThat(raw, hasEntry("w:Comments", "Comments"));
-        assertThat(raw, hasEntry("dc:subject", "keyword1, keyword2"));
-        assertThat(raw, hasEntry("extended-properties:Application", "Microsoft Macintosh Word"));
-        assertThat(raw, hasEntry("meta:last-author", "David Pilato"));
-        assertThat(raw, hasEntry("xmpTPg:NPages", "2"));
-        assertThat(raw, hasEntry("resourceName", "test.doc"));
-        assertThat(raw, hasEntry("extended-properties:Template", "Normal.dotm"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("meta:keyword", "keyword1, keyword2"));
-        assertThat(raw, hasEntry("meta:page-count", "2"));
-        assertThat(raw, hasEntry("cp:category", "test"));
+        assertThat(raw)
+                .hasSize(25)
+                .containsEntry("cp:revision", "2")
+                .containsEntry("meta:word-count", "19")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("dc:creator", "David Pilato")
+                .containsEntry("extended-properties:Company", "elastic")
+                .containsEntry("dcterms:created", "2016-07-07T08:37:00Z")
+                .containsEntry("dcterms:modified", "2016-07-07T08:37:00Z")
+                .containsEntry("meta:character-count", "68")
+                .containsEntry("custom:Terminé le", "2016-07-06T22:00:00Z")
+                .containsEntry("dc:title", "Test Tika title")
+                .containsEntry("extended-properties:TotalTime", "600000000")
+                .containsEntry("extended-properties:Manager", "My Mother")
+                .containsEntry("custom:N° du document", "1234")
+                .containsEntry("Content-Type", "application/msword")
+                .containsEntry("w:Comments", "Comments")
+                .containsEntry("dc:subject", "keyword1, keyword2")
+                .containsEntry("extended-properties:Application", "Microsoft Macintosh Word")
+                .containsEntry("meta:last-author", "David Pilato")
+                .containsEntry("xmpTPg:NPages", "2")
+                .containsEntry("resourceName", "test.doc")
+                .containsEntry("extended-properties:Template", "Normal.dotm")
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("meta:keyword", "keyword1, keyword2")
+                .containsEntry("meta:page-count", "2")
+                .containsEntry("cp:category", "test");
     }
 
     @Test
-    public void testExtractFromDocx() throws IOException {
+    public void extractFromDocx() throws IOException {
         Doc doc = extractFromFileExtension("docx");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
+        assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), is("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+        assertThat(doc.getFile().getContentType()).isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 36, 0))));
-        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1"," keyword2"));
-        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
+        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 36, 0)));
+        assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
+        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(31));
-        assertThat(raw, hasEntry("cp:revision", "4"));
-        assertThat(raw, hasEntry("dc:description", "Comments"));
-        assertThat(raw, hasEntry("extended-properties:AppVersion", "15.0000"));
-        assertThat(raw, hasEntry("meta:paragraph-count", "2"));
-        assertThat(raw, hasEntry("meta:word-count", "19"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("dc:creator", "David Pilato"));
-        assertThat(raw, hasEntry("extended-properties:Company", "elastic"));
-        assertThat(raw, hasEntry("dcterms:created", "2015-12-19T23:39:00Z"));
-        assertThat(raw, hasEntry("meta:line-count", "3"));
-        assertThat(raw, hasEntry("dcterms:modified", "2016-07-07T08:36:00Z"));
-        assertThat(raw, hasEntry("meta:character-count", "65"));
-        assertThat(raw, hasEntry("custom:Terminé le", "2016-07-06T22:00:00Z"));
-        assertThat(raw, hasEntry("meta:character-count-with-spaces", "82"));
-        assertThat(raw, hasEntry("dc:title", "Test Tika title"));
-        assertThat(raw, hasEntry("extended-properties:TotalTime", "6"));
-        assertThat(raw, hasEntry("extended-properties:Manager", "My Mother"));
-        assertThat(raw, hasEntry("custom:N° du document", "1234"));
-        assertThat(raw, hasEntry("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
-        assertThat(raw, hasEntry("dc:subject", "Test Tika Object"));
-        assertThat(raw, hasEntry("extended-properties:Application", "Microsoft Macintosh Word"));
-        assertThat(raw, hasEntry("meta:last-author", "David Pilato"));
-        assertThat(raw, hasEntry("xmpTPg:NPages", "2"));
-        assertThat(raw, hasEntry("resourceName", "test.docx"));
-        assertThat(raw, hasEntry("extended-properties:Template", "Normal.dotm"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("extended-properties:DocSecurityString", "None"));
-        assertThat(raw, hasEntry("meta:keyword", "keyword1, keyword2"));
-        assertThat(raw, hasEntry("cp:category", "test"));
-        assertThat(raw, hasEntry("meta:page-count", "2"));
-        assertThat(raw, hasEntry("dc:publisher", "elastic"));
+        assertThat(raw)
+                .hasSize(31)
+                .containsEntry("cp:revision", "4")
+                .containsEntry("dc:description", "Comments")
+                .containsEntry("extended-properties:AppVersion", "15.0000")
+                .containsEntry("meta:paragraph-count", "2")
+                .containsEntry("meta:word-count", "19")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("dc:creator", "David Pilato")
+                .containsEntry("extended-properties:Company", "elastic")
+                .containsEntry("dcterms:created", "2015-12-19T23:39:00Z")
+                .containsEntry("meta:line-count", "3")
+                .containsEntry("dcterms:modified", "2016-07-07T08:36:00Z")
+                .containsEntry("meta:character-count", "65")
+                .containsEntry("custom:Terminé le", "2016-07-06T22:00:00Z")
+                .containsEntry("meta:character-count-with-spaces", "82")
+                .containsEntry("dc:title", "Test Tika title")
+                .containsEntry("extended-properties:TotalTime", "6")
+                .containsEntry("extended-properties:Manager", "My Mother")
+                .containsEntry("custom:N° du document", "1234")
+                .containsEntry("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                .containsEntry("dc:subject", "Test Tika Object")
+                .containsEntry("extended-properties:Application", "Microsoft Macintosh Word")
+                .containsEntry("meta:last-author", "David Pilato")
+                .containsEntry("xmpTPg:NPages", "2")
+                .containsEntry("resourceName", "test.docx")
+                .containsEntry("extended-properties:Template", "Normal.dotm")
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("extended-properties:DocSecurityString", "None")
+                .containsEntry("meta:keyword", "keyword1, keyword2")
+                .containsEntry("cp:category", "test")
+                .containsEntry("meta:page-count", "2")
+                .containsEntry("dc:publisher", "elastic");
     }
 
     @Test
-    public void testExtractFromHtml() throws IOException {
+    public void extractFromHtml() throws IOException {
         Doc doc = extractFromFileExtension("html");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("a sample text available in"));
+        assertThat(doc.getContent()).contains("a sample text available in");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), containsString("text/html"));
+        assertThat(doc.getFile().getContentType()).contains("text/html");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), nullValue());
-        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
+        assertThat(doc.getMeta().getAuthor()).isNull();
+        assertThat(doc.getMeta().getDate()).isNull();
+        assertThat(doc.getMeta().getKeywords()).isNull();
+        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(15));
-        assertThat(raw, hasEntry("Titre", "Test Tika title"));
-        assertThat(raw, hasEntry("Content-Location", "Web%20page"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("resourceName", "test.html"));
-        assertThat(raw, hasEntry("Mots clés", "keyword1, keyword2"));
-        assertThat(raw, hasEntry("ProgId", "Word.Document"));
-        assertThat(raw, hasEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector"));
-        assertThat(raw, hasEntry("Originator", "Microsoft Word 15"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("dc:title", "Test Tika title"));
-        assertThat(raw, hasEntry("Content-Encoding", "UTF-8"));
-        assertThat(raw, hasEntry("Content-Type-Hint", "text/html; charset=macintosh"));
-        assertThat(raw, hasEntry("X-TIKA:detectedEncoding", "UTF-8"));
-        assertThat(raw, hasEntry("Content-Type", "text/html; charset=UTF-8"));
-        assertThat(raw, hasEntry("Generator", "Microsoft Word 15"));
+        assertThat(raw)
+            .hasSize(15)
+            .containsEntry("Titre", "Test Tika title")
+            .containsEntry("Content-Location", "Web%20page")
+            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("resourceName", "test.html")
+            .containsEntry("Mots clés", "keyword1, keyword2")
+            .containsEntry("ProgId", "Word.Document")
+            .containsEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector")
+            .containsEntry("Originator", "Microsoft Word 15")
+            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("dc:title", "Test Tika title")
+            .containsEntry("Content-Encoding", "UTF-8")
+            .containsEntry("Content-Type-Hint", "text/html; charset=macintosh")
+            .containsEntry("X-TIKA:detectedEncoding", "UTF-8")
+            .containsEntry("Content-Type", "text/html; charset=UTF-8")
+            .containsEntry("Generator", "Microsoft Word 15");
     }
 
     /**
      * Test for #87: <a href="https://github.com/dadoonet/fscrawler/issues/87">https://github.com/dadoonet/fscrawler/issues/87</a>
      */
     @Test
-    public void testExtractFromMp3() throws IOException {
+    public void extractFromMp3() throws IOException {
         Doc doc = extractFromFileExtension("mp3");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("Test Tika"));
+        assertThat(doc.getContent()).contains("Test Tika");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), is("audio/mpeg"));
+        assertThat(doc.getFile().getContentType()).isEqualTo("audio/mpeg");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), nullValue());
-        assertThat(doc.getMeta().getTitle(), is("Test Tika"));
+        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        assertThat(doc.getMeta().getDate()).isNull();
+        assertThat(doc.getMeta().getKeywords()).isNull();
+        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(19));
-        assertThat(raw, hasEntry("xmpDM:genre", "Vocal"));
-        assertThat(raw, hasEntry("xmpDM:album", "FS Crawler"));
-        assertThat(raw, hasEntry("xmpDM:trackNumber", "1"));
-        assertThat(raw, hasEntry("xmpDM:releaseDate", "2016"));
-        assertThat(raw, hasEntry("xmpDM:artist", "David Pilato"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("dc:creator", "David Pilato"));
-        assertThat(raw, hasEntry("xmpDM:audioCompressor", "MP3"));
-        assertThat(raw, hasEntry("resourceName", "test.mp3"));
-        assertThat(raw, hasEntry("xmpDM:audioChannelType", "Stereo"));
-        assertThat(raw, hasEntry("version", "MPEG 3 Layer III Version 1"));
-        assertThat(raw, hasEntry(is("xmpDM:logComment"), containsString("Hello but reverted")));
-        assertThat(raw, hasEntry("xmpDM:audioSampleRate", "44100"));
-        assertThat(raw, hasEntry("channels", "2"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("dc:title", "Test Tika"));
-        assertThat(raw, hasEntry("xmpDM:duration", "1.0187751054763794"));
-        assertThat(raw, hasEntry("Content-Type", "audio/mpeg"));
-        assertThat(raw, hasEntry("samplerate", "44100"));
+        assertThat(raw)
+            .hasSize(19)
+            .containsEntry("xmpDM:genre", "Vocal")
+            .containsEntry("xmpDM:album", "FS Crawler")
+            .containsEntry("xmpDM:trackNumber", "1")
+            .containsEntry("xmpDM:releaseDate", "2016")
+            .containsEntry("xmpDM:artist", "David Pilato")
+            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("dc:creator", "David Pilato")
+            .containsEntry("xmpDM:audioCompressor", "MP3")
+            .containsEntry("resourceName", "test.mp3")
+            .containsEntry("xmpDM:audioChannelType", "Stereo")
+            .containsEntry("version", "MPEG 3 Layer III Version 1")
+            .containsEntry("xmpDM:audioSampleRate", "44100")
+            .containsEntry("channels", "2")
+            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("dc:title", "Test Tika")
+            .containsEntry("xmpDM:duration", "1.0187751054763794")
+            .containsEntry("Content-Type", "audio/mpeg")
+            .containsEntry("samplerate", "44100");
+        assertThat(raw)
+                .extractingByKey("xmpDM:logComment")
+                .satisfies(rawField -> assertThat(rawField).containsAnyOf("Hello but reverted"));
     }
 
     @Test
-    public void testExtractFromOdt() throws IOException {
+    public void extractFromOdt() throws IOException {
         Doc doc = extractFromFileExtension("odt");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
+        assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), is("application/vnd.oasis.opendocument.text"));
+        assertThat(doc.getFile().getContentType()).isEqualTo("application/vnd.oasis.opendocument.text");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 0))));
-        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1", "  keyword2"));
-        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
+        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
+        assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", "  keyword2");
+        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(22));
-        assertThat(raw, hasEntry("dc:description", "Comments"));
-        assertThat(raw, hasEntry("meta:paragraph-count", "1"));
-        assertThat(raw, hasEntry("meta:word-count", "12"));
-        assertThat(raw, hasEntry("dc:subject", "keyword1,  keyword2"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("dc:creator", "David Pilato"));
-        assertThat(raw, hasEntry("generator", "MicrosoftOffice/15.0 MicrosoftWord"));
-        assertThat(raw, hasEntry("xmpTPg:NPages", "1"));
-        assertThat(raw, hasEntry("resourceName", "test.odt"));
-        assertThat(raw, hasEntry("dcterms:created", "2016-07-07T08:37:00Z"));
-        assertThat(raw, hasEntry("dcterms:modified", "2016-07-07T08:37:00Z"));
-        assertThat(raw, hasEntry("editing-cycles", "2"));
-        assertThat(raw, hasEntry("meta:character-count", "86"));
-        assertThat(raw, hasEntry("custom:Terminé le", "2016-07-06T22:00:00Z"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("dc:title", "Test Tika title"));
-        assertThat(raw, hasEntry("odf:version", "1.2"));
-        assertThat(raw, hasEntry("meta:keyword", "keyword1,  keyword2"));
-        assertThat(raw, hasEntry("extended-properties:TotalTime", "PT0S"));
-        assertThat(raw, hasEntry("cp:subject", "Test Tika Object"));
-        assertThat(raw, hasEntry("meta:page-count", "1"));
-        assertThat(raw, hasEntry("Content-Type", "application/vnd.oasis.opendocument.text"));
+        assertThat(raw)
+            .hasSize(22)
+            .containsEntry("dc:description", "Comments")
+            .containsEntry("meta:paragraph-count", "1")
+            .containsEntry("meta:word-count", "12")
+            .containsEntry("dc:subject", "keyword1,  keyword2")
+            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("dc:creator", "David Pilato")
+            .containsEntry("generator", "MicrosoftOffice/15.0 MicrosoftWord")
+            .containsEntry("xmpTPg:NPages", "1")
+            .containsEntry("resourceName", "test.odt")
+            .containsEntry("dcterms:created", "2016-07-07T08:37:00Z")
+            .containsEntry("dcterms:modified", "2016-07-07T08:37:00Z")
+            .containsEntry("editing-cycles", "2")
+            .containsEntry("meta:character-count", "86")
+            .containsEntry("custom:Terminé le", "2016-07-06T22:00:00Z")
+            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("dc:title", "Test Tika title")
+            .containsEntry("odf:version", "1.2")
+            .containsEntry("meta:keyword", "keyword1,  keyword2")
+            .containsEntry("extended-properties:TotalTime", "PT0S")
+            .containsEntry("cp:subject", "Test Tika Object")
+            .containsEntry("meta:page-count", "1")
+            .containsEntry("Content-Type", "application/vnd.oasis.opendocument.text");
     }
 
     @Test
-    public void testExtractFromPdf() throws IOException {
+    public void extractFromPdf() throws IOException {
         Doc doc = extractFromFileExtension("pdf");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
+        assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), is("application/pdf"));
+        assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 42))));
-        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1", " keyword2"));
-        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
+        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 42)));
+        assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
+        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(42));
-        assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
-        assertThat(raw, hasEntry("pdf:PDFVersion", "1.5"));
-        assertThat(raw, hasEntry("pdf:docinfo:title", "Test Tika title"));
-        assertThat(raw, hasEntry("xmp:CreatorTool", "Microsoft Word"));
-        assertThat(raw, hasEntry("pdf:hasXFA", "false"));
-        assertThat(raw, hasEntry("access_permission:modify_annotations", "true"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser"));
-        assertThat(raw, hasEntry("dc:creator", "David Pilato"));
-        assertThat(raw, hasEntry("pdf:num3DAnnotations", "0"));
-        assertThat(raw, hasEntry("dcterms:created", "2016-07-07T08:37:42Z"));
-        assertThat(raw, hasEntry("dcterms:modified", "2016-07-07T08:37:42Z"));
-        assertThat(raw, hasEntry("dc:format", "application/pdf; version=1.5"));
-        assertThat(raw, hasEntry("pdf:docinfo:creator_tool", "Microsoft Word"));
-        assertThat(raw, hasEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0"));
-        assertThat(raw, hasEntry("access_permission:fill_in_form", "true"));
-        assertThat(raw, hasEntry("pdf:docinfo:keywords", "keyword1, keyword2"));
-        assertThat(raw, hasEntry("pdf:docinfo:modified", "2016-07-07T08:37:42Z"));
-        assertThat(raw, hasEntry("pdf:hasCollection", "false"));
-        assertThat(raw, hasEntry("pdf:encrypted", "false"));
-        assertThat(raw, hasEntry("dc:title", "Test Tika title"));
-        assertThat(raw, hasEntry("pdf:containsNonEmbeddedFont", "false"));
-        assertThat(raw, hasEntry("pdf:docinfo:subject", "Test Tika Object"));
-        assertThat(raw, hasEntry("pdf:hasMarkedContent", "true"));
-        assertThat(raw, hasEntry(is("pdf:ocrPageCount"), not(isEmptyOrNullString())));
-        assertThat(raw, hasEntry("Content-Type", "application/pdf"));
-        assertThat(raw, hasEntry("access_permission:can_print_faithful", "true"));
-        assertThat(raw, hasEntry("pdf:docinfo:creator", "David Pilato"));
-        assertThat(raw, hasEntry("dc:language", "en-US"));
-        assertThat(raw, hasEntry("dc:subject", "keyword1, keyword2"));
-        assertThat(raw, hasEntry("pdf:totalUnmappedUnicodeChars", "0"));
-        assertThat(raw, hasEntry("access_permission:extract_for_accessibility", "true"));
-        assertThat(raw, hasEntry("access_permission:assemble_document", "true"));
-        assertThat(raw, hasEntry("xmpTPg:NPages", "2"));
-        assertThat(raw, hasEntry("resourceName", "test.pdf"));
-        assertThat(raw, hasEntry("pdf:hasXMP", "false"));
-        assertThat(raw, hasEntry("pdf:charsPerPage", "42"));
-        assertThat(raw, hasEntry("access_permission:extract_content", "true"));
-        assertThat(raw, hasEntry("access_permission:can_print", "true"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
-        assertThat(raw, hasEntry("access_permission:can_modify", "true"));
-        assertThat(raw, hasEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z"));
-        assertThat(raw, hasEntry("pdf:containsDamagedFont", "false"));
+        assertThat(raw)
+            .hasSize(42)
+            .containsEntry("pdf:unmappedUnicodeCharsPerPage", "0")
+            .containsEntry("pdf:PDFVersion", "1.5")
+            .containsEntry("pdf:docinfo:title", "Test Tika title")
+            .containsEntry("xmp:CreatorTool", "Microsoft Word")
+            .containsEntry("pdf:hasXFA", "false")
+            .containsEntry("access_permission:modify_annotations", "true")
+            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser")
+            .containsEntry("dc:creator", "David Pilato")
+            .containsEntry("pdf:num3DAnnotations", "0")
+            .containsEntry("dcterms:created", "2016-07-07T08:37:42Z")
+            .containsEntry("dcterms:modified", "2016-07-07T08:37:42Z")
+            .containsEntry("dc:format", "application/pdf; version=1.5")
+            .containsEntry("pdf:docinfo:creator_tool", "Microsoft Word")
+            .containsEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0")
+            .containsEntry("access_permission:fill_in_form", "true")
+            .containsEntry("pdf:docinfo:keywords", "keyword1, keyword2")
+            .containsEntry("pdf:docinfo:modified", "2016-07-07T08:37:42Z")
+            .containsEntry("pdf:hasCollection", "false")
+            .containsEntry("pdf:encrypted", "false")
+            .containsEntry("dc:title", "Test Tika title")
+            .containsEntry("pdf:containsNonEmbeddedFont", "false")
+            .containsEntry("pdf:docinfo:subject", "Test Tika Object")
+            .containsEntry("pdf:hasMarkedContent", "true")
+            .containsEntry("Content-Type", "application/pdf")
+            .containsEntry("access_permission:can_print_faithful", "true")
+            .containsEntry("pdf:docinfo:creator", "David Pilato")
+            .containsEntry("dc:language", "en-US")
+            .containsEntry("dc:subject", "keyword1, keyword2")
+            .containsEntry("pdf:totalUnmappedUnicodeChars", "0")
+            .containsEntry("access_permission:extract_for_accessibility", "true")
+            .containsEntry("access_permission:assemble_document", "true")
+            .containsEntry("xmpTPg:NPages", "2")
+            .containsEntry("resourceName", "test.pdf")
+            .containsEntry("pdf:hasXMP", "false")
+            .containsEntry("pdf:charsPerPage", "42")
+            .containsEntry("access_permission:extract_content", "true")
+            .containsEntry("access_permission:can_print", "true")
+            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser")
+            .containsEntry("access_permission:can_modify", "true")
+            .containsEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z")
+            .containsEntry("pdf:containsDamagedFont", "false");
+        assertThat(raw).containsKey("pdf:ocrPageCount")
+                .extractingByKey("pdf:ocrPageCount", InstanceOfAssertFactories.STRING)
+                .isNotEmpty();
     }
 
     @Test
-    public void testExtractFromRtf() throws IOException {
+    public void extractFromRtf() throws IOException {
         Doc doc = extractFromFileExtension("rtf");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("This is a sample text available in page"));
+        assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), is("application/rtf"));
+        assertThat(doc.getFile().getContentType()).isEqualTo("application/rtf");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is("David Pilato"));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), containsInAnyOrder("keyword1", " keyword2"));
-        assertThat(doc.getMeta().getTitle(), is("Test Tika title"));
+        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        assertThat(doc.getMeta().getDate()).isNull();
+        assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
+        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(15));
-        assertThat(raw, hasEntry("meta:word-count", "19"));
-        assertThat(raw, hasEntry("dc:subject", "Test Tika Object"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("dc:creator", "David Pilato"));
-        assertThat(raw, hasEntry("extended-properties:Company", "elastic"));
-        assertThat(raw, hasEntry("resourceName", "test.rtf"));
-        assertThat(raw, hasEntry(is("dcterms:created"), startsWith("2016-07-0")));
-        assertThat(raw, hasEntry("meta:character-count", "68"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("dc:title", "Test Tika title"));
-        assertThat(raw, hasEntry("meta:keyword", "keyword1, keyword2"));
-        assertThat(raw, hasEntry("extended-properties:Manager", "My Mother"));
-        assertThat(raw, hasEntry("meta:page-count", "2"));
-        assertThat(raw, hasEntry("cp:category", "test"));
-        assertThat(raw, hasEntry("Content-Type", "application/rtf"));
+        assertThat(raw)
+            .hasSize(15)
+            .containsEntry("meta:word-count", "19")
+            .containsEntry("dc:subject", "Test Tika Object")
+            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("dc:creator", "David Pilato")
+            .containsEntry("extended-properties:Company", "elastic")
+            .containsEntry("resourceName", "test.rtf")
+            .containsEntry("meta:character-count", "68")
+            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("dc:title", "Test Tika title")
+            .containsEntry("meta:keyword", "keyword1, keyword2")
+            .containsEntry("extended-properties:Manager", "My Mother")
+            .containsEntry("meta:page-count", "2")
+            .containsEntry("cp:category", "test")
+            .containsEntry("Content-Type", "application/rtf");
+        assertThat(raw).containsKey("dcterms:created")
+                .extractingByKey("dcterms:created", InstanceOfAssertFactories.STRING)
+                .startsWith("2016-07-0");
     }
 
     @Test
-    public void testExtractFromTxt() throws IOException {
+    public void extractFromTxt() throws IOException {
         Doc doc = extractFromFileExtension("txt");
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent()).contains("This file contains some words.");
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), containsString("text/plain"));
+        assertThat(doc.getFile().getContentType()).contains("text/plain");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), nullValue());
-        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+        assertThat(doc.getMeta().getAuthor()).isNull();
+        assertThat(doc.getMeta().getDate()).isNull();
+        assertThat(doc.getMeta().getKeywords()).isNull();
+        assertThat(doc.getMeta().getTitle()).isNull();
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(7));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("Content-Encoding", "ISO-8859-1"));
-        assertThat(raw, hasEntry("resourceName", "test.txt"));
-        assertThat(raw, hasEntry("X-TIKA:detectedEncoding", "ISO-8859-1"));
-        assertThat(raw, hasEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector"));
-        assertThat(raw, hasEntry("Content-Type", "text/plain; charset=ISO-8859-1"));
+        assertThat(raw)
+            .hasSize(7)
+            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("Content-Encoding", "ISO-8859-1")
+            .containsEntry("resourceName", "test.txt")
+            .containsEntry("X-TIKA:detectedEncoding", "ISO-8859-1")
+            .containsEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector")
+            .containsEntry("Content-Type", "text/plain; charset=ISO-8859-1");
 
-        assertThat(doc.getAttachment(), nullValue());
-        assertThat(doc.getFile().getChecksum(), nullValue());
+        assertThat(doc.getAttachment()).isNull();
+        assertThat(doc.getFile().getChecksum()).isNull();
     }
 
     @Test
-    public void testExtractFromWav() throws IOException {
+    public void extractFromWav() throws IOException {
         Doc doc = extractFromFileExtension("wav");
 
         // Extracted content
-        assertThat(doc.getContent(), is(""));
+        assertThat(doc.getContent()).isEmpty();
 
         // Content Type
-        assertThat(doc.getFile().getContentType(), is("audio/vnd.wave"));
+        assertThat(doc.getFile().getContentType()).isEqualTo("audio/vnd.wave");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), is(nullValue()));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), nullValue());
-        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+        assertThat(doc.getMeta().getAuthor()).isNull();
+        assertThat(doc.getMeta().getDate()).isNull();
+        assertThat(doc.getMeta().getKeywords()).isNull();
+        assertThat(doc.getMeta().getTitle()).isNull();
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(10));
-        assertThat(raw, hasEntry("xmpDM:audioSampleRate", "44100"));
-        assertThat(raw, hasEntry("channels", "2"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser"));
-        assertThat(raw, hasEntry("bits", "16"));
-        assertThat(raw, hasEntry("resourceName", "test.wav"));
-        assertThat(raw, hasEntry("encoding", "PCM_SIGNED"));
-        assertThat(raw, hasEntry("xmpDM:audioSampleType", "16Int"));
-        assertThat(raw, hasEntry("Content-Type", "audio/vnd.wave"));
-        assertThat(raw, hasEntry("samplerate", "44100.0"));
+        assertThat(raw)
+            .hasSize(10)
+            .containsEntry("xmpDM:audioSampleRate", "44100")
+            .containsEntry("channels", "2")
+            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+            .containsEntry("bits", "16")
+            .containsEntry("resourceName", "test.wav")
+            .containsEntry("encoding", "PCM_SIGNED")
+            .containsEntry("xmpDM:audioSampleType", "16Int")
+            .containsEntry("Content-Type", "audio/vnd.wave")
+            .containsEntry("samplerate", "44100.0");
     }
 
     @Test
-    public void testExtractFromTxtAndStoreSource() throws IOException {
+    public void extractFromTxtAndStoreSource() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("This file contains some words."));
-        assertThat(doc.getAttachment(), notNullValue());
+        assertThat(doc.getContent()).contains("This file contains some words.");
+        assertThat(doc.getAttachment()).isNotNull();
     }
 
     @Test
-    public void testExtractFromTxtStoreSourceAndNoIndexContent() throws IOException {
+    public void extractFromTxtStoreSourceAndNoIndexContent() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
         fsSettings.getFs().setIndexContent(false);
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent(), nullValue());
-        assertThat(doc.getAttachment(), notNullValue());
+        assertThat(doc.getContent()).isNull();
+        assertThat(doc.getAttachment()).isNotNull();
     }
 
     @Test
-    public void testExtractFromTxtAndStoreSourceWithDigest() throws IOException {
-        try {
-            MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            assumeNoException(e);
-        }
+    public void extractFromTxtAndStoreSourceWithDigest() throws IOException {
+        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
@@ -554,101 +565,99 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("This file contains some words."));
-        assertThat(doc.getAttachment(), notNullValue());
-        assertThat(doc.getFile().getChecksum(), notNullValue());
+        assertThat(doc.getContent()).contains("This file contains some words.");
+        assertThat(doc.getAttachment()).isNotNull();
+        assertThat(doc.getFile().getChecksum()).isNotNull();
     }
 
     @Test
-    public void testExtractFromTxtWithDigest() throws IOException {
-        try {
-            MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            assumeNoException(e);
-        }
+    public void extractFromTxtWithDigest() throws IOException {
+        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("MD5");
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent(), containsString("This file contains some words."));
-        assertThat(doc.getAttachment(), nullValue());
-        assertThat(doc.getFile().getChecksum(), notNullValue());
+        assertThat(doc.getContent()).contains("This file contains some words.");
+        assertThat(doc.getAttachment()).isNull();
+        assertThat(doc.getFile().getChecksum()).isNotNull();
     }
 
     @Test
-    public void testOcr() throws IOException {
-        assumeTrue("Tesseract is not installed so we are skipping this test", isOcrAvailable);
+    public void ocr() throws IOException {
+        assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
 
         // Test with OCR On (default)
         Doc doc = extractFromFile("test-ocr.png");
-        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent()).contains("This file contains some words.");
         doc = extractFromFile("test-ocr.pdf");
-        assertThat(doc.getContent(), containsString("This file contains some words."));
-        assertThat(doc.getContent(), containsString("This file also contains text."));
+        assertThat(doc.getContent()).contains("This file contains some words.");
+        assertThat(doc.getContent()).contains("This file also contains text.");
         doc = extractFromFile("test-ocr.docx");
-        assertThat(doc.getContent(), containsString("This file contains some words."));
-        assertThat(doc.getContent(), containsString("This file also contains text."));
+        assertThat(doc.getContent()).contains("This file contains some words.");
+        assertThat(doc.getContent()).contains("This file also contains text.");
 
         // Test with OCR On and PDF Strategy set to no_ocr (meaning that PDF are not OCRed)
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPdfStrategy("no_ocr");
         doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent()).contains("This file contains some words.");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent(), containsString("This file also contains text."));
-        assertThat(doc.getContent(), not(containsString("This file contains some words.")));
+        assertThat(doc.getContent()).contains("This file also contains text.");
+        assertThat(doc.getContent()).doesNotContain("This file contains some words.");
         doc = extractFromFile("test-ocr.docx", fsSettings);
-        assertThat(doc.getContent(), containsString("This file also contains text."));
-        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent()).contains("This file also contains text.");
+        assertThat(doc.getContent()).contains("This file contains some words.");
 
         // Test with OCR On and PDF Strategy set to ocr_only (meaning that PDF only OCRed and no text is extracted)
         fsSettings.getFs().getOcr().setPdfStrategy("ocr_only");
         doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent()).contains("This file contains some words.");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent()).contains("This file contains some words.");
         // TODO: for a strange reason ocr_only also extracts text.
         // assertThat(doc.getContent(), not(containsString("This file also contains text.")));
         doc = extractFromFile("test-ocr.docx", fsSettings);
-        assertThat(doc.getContent(), containsString("This file contains some words."));
-        assertThat(doc.getContent(), containsString("This file also contains text."));
+        assertThat(doc.getContent()).contains("This file contains some words.");
+        assertThat(doc.getContent()).contains("This file also contains text.");
 
         // Test with OCR On and PDF Strategy set to auto (meaning that PDF will be only OCRed if less than 10 characters are found)
         fsSettings.getFs().getOcr().setPdfStrategy("auto");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent(), not(containsString("This file contains some words.")));
-        assertThat(doc.getContent(), containsString("This file also contains text."));
+        assertThat(doc.getContent()).doesNotContain("This file contains some words.");
+        assertThat(doc.getContent()).contains("This file also contains text.");
         doc = extractFromFile("test-ocr-notext.pdf", fsSettings);
-        assertThat(doc.getContent(), containsString("This file contains some words."));
+        assertThat(doc.getContent()).contains("This file contains some words.");
 
         // Test with OCR Off
         fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setEnabled(false);
         doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent(), isEmptyString());
+        assertThat(doc.getContent()).isEmpty();
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent(), not(containsString("This file contains some words.")));
+        assertThat(doc.getContent()).doesNotContain("This file contains some words.");
         doc = extractFromFile("test-ocr.docx", fsSettings);
-        assertThat(doc.getContent(), not(containsString("This file contains some words.")));
+        assertThat(doc.getContent()).doesNotContain("This file contains some words.");
 
         // Test with OCR On (default) but a wrong path to tesseract
         fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPath("/path/to/doesnotexist");
         fsSettings.getFs().getOcr().setDataPath("/path/to/doesnotexist");
         doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent(), isEmptyString());
+        assertThat(doc.getContent()).isEmpty();
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent(), not(containsString("This file contains some words.")));
+        assertThat(doc.getContent()).doesNotContain("This file contains some words.");
 
         // Test with OCR On with hocr output type
         fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setOutputType("hocr");
         doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent(), stringContainsInOrder(Arrays.asList("This", "file", "contains", "some", "words.")));
+        assertThat(doc.getContent()).contains("This", "file", "contains", "some", "words.");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent(), stringContainsInOrder(Arrays.asList("This", "file", "contains", "some", "words.")));
+        assertThat(doc.getContent()).contains("This", "file", "contains", "some", "words.");
 
         // Test with heb language
         fsSettings = FsSettingsLoader.load();
@@ -656,14 +665,14 @@ public class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr-heb.pdf", fsSettings);
         try {
             // This test requires to have the hebrew language pack, so we don't fail the test but just log
-            assertThat(doc.getContent(), containsString("המבודדים מתקבלים"));
+            assertThat(doc.getContent()).contains("המבודדים מתקבלים");
         } catch (AssertionError e) {
             logger.info("We were not able to get the Hebrew content with OCR. May be the language pack was not installed?");
         }
     }
 
     @Test
-    public void testCustomTikaConfig() throws IOException {
+    public void customTikaConfig() throws IOException {
         InputStream tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.xml");
         Path testTikaConfig = rootTmpDir.resolve("tika-config");
         if (Files.notExists(testTikaConfig)) {
@@ -676,28 +685,28 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         // Test that default parser for HTML is HTML parser
         Doc doc = extractFromFile("test.html");
-        assertThat(doc.getContent(), not(containsString("Test Tika title")));
-        assertThat(doc.getContent(), containsString("This second part of the text is in Page 2"));
+        assertThat(doc.getContent()).doesNotContain("Test Tika title");
+        assertThat(doc.getContent()).contains("This second part of the text is in Page 2");
 
         // Test HTML parser is never used, TXT parser used instead
         doc = extractFromFile("test.html", fsSettings);
-        assertThat(doc.getContent(), containsString("<title>Test Tika title</title>"));
+        assertThat(doc.getContent()).contains("<title>Test Tika title</title>");
 
         // Test that default parser for XHTML is HTML parser
         doc = extractFromFile("test.xhtml");
-        assertThat(doc.getContent(), not(containsString("Test Tika title")));
-        assertThat(doc.getContent(), containsString("This is an example of XHTML"));
+        assertThat(doc.getContent()).doesNotContain("Test Tika title");
+        assertThat(doc.getContent()).contains("This is an example of XHTML");
 
         // Test XML parser is used to parse XHTML
         doc = extractFromFile("test.xhtml", fsSettings);
-        assertThat(doc.getContent(), containsString("Test Tika title"));
-        assertThat(doc.getContent(), not(containsString("<title>Test Tika title</title>")));
+        assertThat(doc.getContent()).contains("Test Tika title");
+        assertThat(doc.getContent()).doesNotContain("<title>Test Tika title</title>");
     }
 
     @Test
-    public void testShiftJisEncoding() throws IOException {
+    public void shiftJisEncoding() throws IOException {
         Doc doc = extractFromFile("issue-400-shiftjis.txt");
-        assertThat(doc.getContent(), not(isEmptyOrNullString()));
+        assertThat(doc.getContent()).isNotEmpty();
     }
 
     /**
@@ -706,7 +715,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * @throws IOException In case something goes wrong
      */
     @Test
-    public void testPdfIssue1097() throws IOException {
+    public void pdfIssue1097() throws IOException {
         // Run the test with or without OCR as the behavior changes
         boolean withOcr = isOcrAvailable && randomBoolean();
         FsSettings fsSettings = FsSettingsLoader.load();
@@ -715,54 +724,57 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("issue-1097.pdf", fsSettings);
         // TODO This test is now passing but should be failing with ocr when
         // https://issues.apache.org/jira/browse/TIKA-3364 is solved
-        assertThat(doc.getContent(), is(withOcr ?
+        assertThat(doc.getContent()).isEqualTo(withOcr ?
                 "\nDummy PDF file\n\nDummy PDF file\n\n\n\n" :
-                "\nDummy PDF file\n\n\n"));
+                "\nDummy PDF file\n\n\n");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor(), not(nullValue()));
-        assertThat(doc.getMeta().getDate(), is(nullValue()));
-        assertThat(doc.getMeta().getKeywords(), nullValue());
-        assertThat(doc.getMeta().getTitle(), is(nullValue()));
+        assertThat(doc.getMeta().getAuthor()).isNotNull();
+        assertThat(doc.getMeta().getDate()).isNull();
+        assertThat(doc.getMeta().getKeywords()).isNull();
+        assertThat(doc.getMeta().getTitle()).isNull();
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(36));
-        assertThat(raw, hasEntry("pdf:unmappedUnicodeCharsPerPage", "0"));
-        assertThat(raw, hasEntry("pdf:PDFVersion", "1.4"));
-        assertThat(raw, hasEntry("xmp:CreatorTool", "Writer"));
-        assertThat(raw, hasEntry("pdf:hasXFA", "false"));
-        assertThat(raw, hasEntry("access_permission:modify_annotations", "true"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser"));
-        assertThat(raw, hasEntry("dc:creator", "Evangelos Vlachogiannis"));
-        assertThat(raw, hasEntry("pdf:num3DAnnotations", "0"));
-        assertThat(raw, hasEntry("dcterms:created", "2007-02-23T15:56:37Z"));
-        assertThat(raw, hasEntry("dc:format", "application/pdf; version=1.4"));
-        assertThat(raw, hasEntry("pdf:docinfo:creator_tool", "Writer"));
-        assertThat(raw, hasEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0"));
-        assertThat(raw, hasEntry("access_permission:fill_in_form", "true"));
-        assertThat(raw, hasEntry("pdf:hasCollection", "false"));
-        assertThat(raw, hasEntry("pdf:encrypted", "false"));
-        assertThat(raw, hasEntry("pdf:containsNonEmbeddedFont", "false"));
-        assertThat(raw, hasEntry("pdf:hasMarkedContent", "false"));
-        assertThat(raw, hasEntry(is("pdf:ocrPageCount"), not(isEmptyOrNullString())));
-        assertThat(raw, hasEntry("Content-Type", "application/pdf"));
-        assertThat(raw, hasEntry("access_permission:can_print_faithful", "true"));
-        assertThat(raw, hasEntry("pdf:docinfo:creator", "Evangelos Vlachogiannis"));
-        assertThat(raw, hasEntry("pdf:producer", "OpenOffice.org 2.1"));
-        assertThat(raw, hasEntry("pdf:totalUnmappedUnicodeChars", "0"));
-        assertThat(raw, hasEntry("access_permission:extract_for_accessibility", "true"));
-        assertThat(raw, hasEntry("access_permission:assemble_document", "true"));
-        assertThat(raw, hasEntry("xmpTPg:NPages", "1"));
-        assertThat(raw, hasEntry("resourceName", "issue-1097.pdf"));
-        assertThat(raw, hasEntry("pdf:hasXMP", "false"));
-        assertThat(raw, hasEntry("pdf:charsPerPage", "14"));
-        assertThat(raw, hasEntry("access_permission:extract_content", "true"));
-        assertThat(raw, hasEntry("access_permission:can_print", "true"));
-        assertThat(raw, hasEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser"));
-        assertThat(raw, hasEntry("access_permission:can_modify", "true"));
-        assertThat(raw, hasEntry("pdf:docinfo:producer", "OpenOffice.org 2.1"));
-        assertThat(raw, hasEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z"));
-        assertThat(raw, hasEntry("pdf:containsDamagedFont", "false"));
+        assertThat(raw)
+            .hasSize(36)
+            .containsEntry("pdf:unmappedUnicodeCharsPerPage", "0")
+            .containsEntry("pdf:PDFVersion", "1.4")
+            .containsEntry("xmp:CreatorTool", "Writer")
+            .containsEntry("pdf:hasXFA", "false")
+            .containsEntry("access_permission:modify_annotations", "true")
+            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser")
+            .containsEntry("dc:creator", "Evangelos Vlachogiannis")
+            .containsEntry("pdf:num3DAnnotations", "0")
+            .containsEntry("dcterms:created", "2007-02-23T15:56:37Z")
+            .containsEntry("dc:format", "application/pdf; version=1.4")
+            .containsEntry("pdf:docinfo:creator_tool", "Writer")
+            .containsEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0")
+            .containsEntry("access_permission:fill_in_form", "true")
+            .containsEntry("pdf:hasCollection", "false")
+            .containsEntry("pdf:encrypted", "false")
+            .containsEntry("pdf:containsNonEmbeddedFont", "false")
+            .containsEntry("pdf:hasMarkedContent", "false")
+            .containsEntry("Content-Type", "application/pdf")
+            .containsEntry("access_permission:can_print_faithful", "true")
+            .containsEntry("pdf:docinfo:creator", "Evangelos Vlachogiannis")
+            .containsEntry("pdf:producer", "OpenOffice.org 2.1")
+            .containsEntry("pdf:totalUnmappedUnicodeChars", "0")
+            .containsEntry("access_permission:extract_for_accessibility", "true")
+            .containsEntry("access_permission:assemble_document", "true")
+            .containsEntry("xmpTPg:NPages", "1")
+            .containsEntry("resourceName", "issue-1097.pdf")
+            .containsEntry("pdf:hasXMP", "false")
+            .containsEntry("pdf:charsPerPage", "14")
+            .containsEntry("access_permission:extract_content", "true")
+            .containsEntry("access_permission:can_print", "true")
+            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser")
+            .containsEntry("access_permission:can_modify", "true")
+            .containsEntry("pdf:docinfo:producer", "OpenOffice.org 2.1")
+            .containsEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z")
+            .containsEntry("pdf:containsDamagedFont", "false");
+        assertThat(raw).containsKey("pdf:ocrPageCount")
+                .extractingByKey("pdf:ocrPageCount", InstanceOfAssertFactories.STRING)
+                .isNotEmpty();
     }
 
     /**
@@ -770,33 +782,34 @@ public class TikaDocParserTest extends DocParserTestCase {
      * @throws IOException In case something goes wrong
      */
     @Test
-    public void testEmptyFileIssue834() throws IOException {
+    public void emptyFileIssue834() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
         Doc doc = extractFromFile("issue-834.txt", fsSettings);
-        assertThat(doc.getContent(), isEmptyString());
+        assertThat(doc.getContent()).isEmpty();
 
         // Meta data
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw.entrySet(), iterableWithSize(2));
-        assertThat(raw, hasEntry("Content-Type", "text/plain"));
-        assertThat(raw, hasEntry("resourceName", "issue-834.txt"));
+        assertThat(raw)
+            .hasSize(2)
+        .containsEntry("Content-Type", "text/plain")
+        .containsEntry("resourceName", "issue-834.txt");
     }
 
     /**
      * Test protected document
      */
     @Test
-    public void testProtectedDocument() throws IOException {
+    public void protectedDocument() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         Doc doc = extractFromFile("test-protected.docx", fsSettings);
-        assertThat(doc.getFile().getContentType(), is("application/x-tika-ooxml-protected"));
+        assertThat(doc.getFile().getContentType()).isEqualTo("application/x-tika-ooxml-protected");
     }
 
     @Test
-    public void testDocxWithEmbeddedBadPDF() throws IOException {
+    public void docxWithEmbeddedBadPDF() throws IOException {
         Doc doc = extractFromFile("issue-stackoverflow.docx");
-        assertThat(doc.getContent(), not(isEmptyOrNullString()));
+        assertThat(doc.getContent()).isNotEmpty();
     }
 
     private Doc extractFromFileExtension(String extension) throws IOException {

@@ -36,7 +36,7 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
      * Test case for issue #185: <a href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a> : Add xml_support setting
      */
     @Test
-    public void test_xml_enabled() throws Exception {
+    public void xml_enabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setXmlSupport(true);
         crawler = startCrawler(fsSettings);
@@ -61,7 +61,7 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
      * invalid json generated from XML
      */
     @Test
-    public void test_xml_not_readable() throws Exception {
+    public void xml_not_readable() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setXmlSupport(true);
         crawler = startCrawler(fsSettings);

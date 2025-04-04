@@ -24,15 +24,13 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSemanticQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assume.assumeTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Test if semantic search is working as we could expect, ie: not activated when it can't or
@@ -44,13 +42,15 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
      * Test for #1996: <a href="https://github.com/dadoonet/fscrawler/pull/1996">https://github.com/dadoonet/fscrawler/pull/1996</a>
      */
     @Test
-    public void test_semantic() throws Exception {
+    public void semantic() throws Exception {
         // We will execute this test from version 8.17 with a trial or enterprise license
-        assumeTrue("We don't run this test when semantic search is not available",
-                managementService.getClient().isSemanticSupported());
+        assumeThat(managementService.getClient().isSemanticSupported())
+                .as("We don't run this test when semantic search is not available")
+                .isTrue();
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setSemanticSearch(true);
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(5));
         crawler = startCrawler(fsSettings, TimeValue.timeValueMinutes(5));
 
         // We expect to have 3 files
@@ -65,6 +65,6 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
                 .withESQuery(new ESSemanticQuery("content_semantic", "Someone understanding loans and finances")),
                 3L, null);
         DocumentContext document = parseJsonAsDocumentContext(response.getHits().get(0).getSource());
-        assertThat(document.read("$.file.filename"), is("3547447.pdf"));
+        assertThat((String) document.read("$.file.filename")).isEqualTo("3547447.pdf");
     }
 }

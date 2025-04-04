@@ -28,13 +28,12 @@ import java.util.Collections;
 import java.util.List;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    public void testIncludeAndExcludeTextPattern() {
+    public void includeAndExcludeTextPattern() {
         // Test with null or empty text
         regexTester(null, null, true);
         regexTester(null, new ArrayList<>(), true);
@@ -77,7 +76,6 @@ public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
     }
     
     private void regexTester(String input, List<String> regexes, boolean expected) {
-        assertThat(regexes + " should " + (expected ? "" : "not ") + "match " + input,
-                isIndexable(input, regexes), is(expected));
+        assertThat(isIndexable(input, regexes)).as(regexes + " should " + (expected ? "" : "not ") + "match " + input).isEqualTo(expected);
     }
 }

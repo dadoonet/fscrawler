@@ -28,7 +28,7 @@ import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -36,7 +36,7 @@ public class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
     private static final int PAYLOAD_SIZE = serialize(PAYLOAD).getBytes().length + 12 /* for the json payload field overhead */;
 
     @Test
-    public void testBulkRequestLimitsMaxActions() {
+    public void bulkRequestLimitsMaxActions() {
         int maxActions = randomIntBetween(1, 1000);
         FsCrawlerBulkRequest<TestOperation> bulk = generateBulk(maxActions, new ByteSizeValue(1, ByteSizeUnit.MB));
         generateAndTest(bulk, 1, maxActions - 1, false);
@@ -44,7 +44,7 @@ public class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testBulkRequestLimitsMaxSize() {
+    public void bulkRequestLimitsMaxSize() {
         int firstSize = randomIntBetween(1, 1000);
         int secondSize = 1;
         FsCrawlerBulkRequest<TestOperation> bulk = generateBulk(0, new ByteSizeValue((long) firstSize * PAYLOAD_SIZE, ByteSizeUnit.BYTES));
@@ -53,7 +53,7 @@ public class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testBulkRequestLimitsNullSize() {
+    public void bulkRequestLimitsNullSize() {
         int maxActions = randomIntBetween(1, 1000);
         FsCrawlerBulkRequest<TestOperation> bulk = generateBulk(maxActions, null);
         generateAndTest(bulk, 1, maxActions - 1, false);
@@ -61,7 +61,7 @@ public class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testBulkRequestLimitsZeroSize() {
+    public void bulkRequestLimitsZeroSize() {
         int maxActions = randomIntBetween(1, 1000);
         FsCrawlerBulkRequest<TestOperation> bulk = generateBulk(maxActions, new ByteSizeValue(0, ByteSizeUnit.KB));
         generateAndTest(bulk, 1, maxActions - 1, false);
@@ -69,7 +69,7 @@ public class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testBulkRequestNoLimits() {
+    public void bulkRequestNoLimits() {
         int nbActions = randomIntBetween(1, 1000);
         FsCrawlerBulkRequest<TestOperation> bulk = generateBulk(0, null);
         generateAndTest(bulk, 1, nbActions, false);
@@ -79,8 +79,8 @@ public class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
         logger.debug("adding {} actions to the bulk which contains {} actions", size, bulk.numberOfActions());
         generatePayload(bulk, start, size);
         logger.debug("is over the limit after {} actions and {} bytes? {}", start + size - 1, bulk.totalByteSize(), bulk.isOverTheLimit());
-        assertEquals(overTheLimit, bulk.isOverTheLimit());
-        assertEquals(start + size - 1, bulk.numberOfActions());
+        assertThat(bulk.isOverTheLimit()).isEqualTo(overTheLimit);
+        assertThat(bulk.numberOfActions()).isEqualTo(start + size - 1);
     }
 
     private FsCrawlerBulkRequest<TestOperation> generateBulk(Integer maxActions, ByteSizeValue maxBulkSize) {

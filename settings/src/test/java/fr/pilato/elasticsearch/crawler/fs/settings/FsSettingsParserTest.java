@@ -33,7 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -61,23 +61,23 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         logger.debug("Settings expected: {}", expected);
 
         if (expected.getFs() != null) {
-            assertEquals("Checking Ocr", expected.getFs().getOcr(), settings.getFs().getOcr());
+            assertThat(settings.getFs().getOcr()).as("Checking Ocr").isEqualTo(expected.getFs().getOcr());
         }
-        assertEquals("Checking Fs", expected.getFs(), settings.getFs());
-        assertEquals("Checking Server", expected.getServer(), settings.getServer());
-        assertEquals("Checking Tags", expected.getTags(), settings.getTags());
-        assertEquals("Checking Elasticsearch", expected.getElasticsearch(), settings.getElasticsearch());
-        assertEquals("Checking Rest", expected.getRest(), settings.getRest());
-        assertEquals("Checking whole settings", expected, settings);
+        assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
+        assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
+        assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
+        assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
+        assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
+        assertThat(settings).as("Checking whole settings").isEqualTo(expected);
     }
 
     @Test
-    public void testParseEmptySettings() throws IOException {
+    public void parseEmptySettings() throws IOException {
         settingsTester(FsSettingsLoader.load());
     }
 
     @Test
-    public void testParseSettingsElasticsearchTwoNodes() throws IOException {
+    public void parseSettingsElasticsearchTwoNodes() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setNodes(Arrays.asList(
                 new ServerUrl("https://127.0.0.1:9200"),
@@ -86,7 +86,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testParseSettingsElasticsearchWithPathPrefix() throws IOException {
+    public void parseSettingsElasticsearchWithPathPrefix() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setPathPrefix("/path/to/elasticsearch");
         settingsTester(fsSettings);

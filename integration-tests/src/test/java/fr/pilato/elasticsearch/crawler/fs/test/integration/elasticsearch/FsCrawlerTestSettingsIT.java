@@ -35,7 +35,7 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
      * Test for #83: <a href="https://github.com/dadoonet/fscrawler/issues/83">https://github.com/dadoonet/fscrawler/issues/83</a>
      */
     @Test
-    public void test_time_value() throws Exception {
+    public void time_value() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUpdateRate(TimeValue.timeValueHours(1));
         crawler = startCrawler(fsSettings);
@@ -45,7 +45,7 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_bulk_flush() throws Exception {
+    public void bulk_flush() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setBulkSize(100);
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(2));

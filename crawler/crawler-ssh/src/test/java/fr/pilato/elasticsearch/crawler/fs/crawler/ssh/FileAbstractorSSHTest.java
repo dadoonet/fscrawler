@@ -33,7 +33,6 @@ import org.apache.sshd.sftp.client.SftpClient;
 import org.apache.sshd.sftp.server.SftpFileSystemAccessor;
 import org.apache.sshd.sftp.server.SftpSubsystemFactory;
 import org.apache.sshd.sftp.server.SftpSubsystemProxy;
-import org.hamcrest.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,8 +49,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 public class FileAbstractorSSHTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -137,7 +136,7 @@ public class FileAbstractorSSHTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testSshClient() throws Exception {
+    public void sshClient() throws Exception {
         String path = testDir.getFileName().toString();
 
         // Test with login / password
@@ -145,7 +144,7 @@ public class FileAbstractorSSHTest extends AbstractFSCrawlerTestCase {
                 sshd.getHost(),sshd.getPort())) {
             client.open();
             SftpClient.Attributes stat = client.getSftpClient().stat(path);
-            assertThat(stat.isDirectory(), equalTo(true));
+            assertThat(stat.isDirectory()).isTrue();
         }
 
         // Test with PEM file
@@ -154,12 +153,12 @@ public class FileAbstractorSSHTest extends AbstractFSCrawlerTestCase {
                 sshd.getHost(),sshd.getPort())) {
             client.open();
             SftpClient.Attributes stat = client.getSftpClient().stat(path);
-            assertThat(stat.isDirectory(), equalTo(true));
+            assertThat(stat.isDirectory()).isTrue();
         }
     }
 
     @Test
-    public void testFileAbstractorSSH() throws Exception {
+    public void fileAbstractorSSH() throws Exception {
         String path = testDir.getFileName().toString();
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getServer().setHostname(sshd.getHost());
@@ -168,52 +167,20 @@ public class FileAbstractorSSHTest extends AbstractFSCrawlerTestCase {
         fsSettings.getServer().setPassword(SSH_PASSWORD);
         try (FileAbstractorSSH ssh = new FileAbstractorSSH(fsSettings)) {
             ssh.open();
-            assertThat(ssh.exists("/ThisPathDoesNotExist"), is(false));
-            assertThat(ssh.exists(path), is(true));
+            assertThat(ssh.exists("/ThisPathDoesNotExist")).isFalse();
+            assertThat(ssh.exists(path)).isTrue();
             Collection<FileAbstractModel> files = ssh.getFiles(path);
-            assertThat(files, iterableWithSize(2));
-
-            FileAbstractModel expected1 = new FileAbstractModel("subdir", false,
-                    null, null, null,
-                    "", "test-ssh", "test-ssh/subdir", 0,
-                    null, null, 0);
-            FileAbstractModel expected2 = new FileAbstractModel("testfile.txt", true,
-                    null, null, null,
-                    "txt", "test-ssh", "test-ssh/testfile.txt", 15,
-                    null, null, 15);
-
-            assertThat(files, containsInAnyOrder(new FileAbstractModelMatcher(expected1), new FileAbstractModelMatcher(expected2)));
-        }
-    }
-
-    static class FileAbstractModelMatcher extends BaseMatcher<FileAbstractModel> {
-
-        FileAbstractModel bean;
-
-        public FileAbstractModelMatcher(FileAbstractModel object) {
-            bean = object;
-        }
-
-        @Override
-        public boolean matches(Object arg) {
-            if (arg instanceof FileAbstractModel) {
-                FileAbstractModel file = (FileAbstractModel) arg;
-                return file.isFile() == bean.isFile() &&
-                        file.getName().equals(bean.getName()) &&
-                        file.getExtension().equals(bean.getExtension()) &&
-                        file.getPath().equals(bean.getPath()) &&
-                        file.getFullpath().equals(bean.getFullpath()) &&
-                        file.getSize() == bean.getSize();
-            }
-            return false;
-        }
-
-        @Override
-        public void describeTo(Description description) {
-            description
-                    .appendText("Instance of FileAbstractModel(")
-                    .appendValue(bean.getName())
-                    .appendText(")");
+            assertThat(files).hasSize(2);
+            assertThat(files).extracting(
+                            FileAbstractModel::isFile,
+                            FileAbstractModel::getName,
+                            FileAbstractModel::getExtension,
+                            FileAbstractModel::getPath,
+                            FileAbstractModel::getFullpath,
+                            FileAbstractModel::getSize)
+                    .containsAnyOf(
+                            tuple(false, "subdir", "", "test-ssh", "test-ssh/subdir", 0L),
+                            tuple(true, "testfile.txt", "txt", "test-ssh", "test-ssh/testfile.txt", 15L));
         }
     }
 }

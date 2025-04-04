@@ -26,11 +26,11 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Test json support crawler setting
@@ -41,12 +41,13 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
      * Test case for issue #439: <a href="https://github.com/dadoonet/fscrawler/issues/439">https://github.com/dadoonet/fscrawler/issues/439</a> : Date Mapping issue in RAW field
      */
     @Test
-    public void test_mapping() throws Exception {
+    public void mapping() throws Exception {
         crawler = startCrawler();
 
-        // We don't really care here about the fact that one document has been indexed
-        // But let's add manually some documents
+        // We should have one document indexed
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
+        // Let's add manually some documents
         // The 1st document simulates that we are indexing a String field which contains something like a date
         String json1 = "{\n" +
                 "  \"meta\": {\n" +
@@ -65,15 +66,20 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
                 "  }\n" +
                 "}\n";
 
-        // This will cause an Elasticsearch Exception as the String is not a Date
-        // If the mapping is incorrect
+        // This should not raise any exception even if the String is not a Date
+        // because of the default mapping we are applying defines all meta raw fields as text
         documentService.indexRawJson(getCrawlerName(), "1", json1, null);
+        documentService.flush();
         documentService.indexRawJson(getCrawlerName(), "2", json2, null);
         documentService.flush();
+
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        assertThat(searchResponse.getHits())
+                .anySatisfy(hit -> assertThat(hit.getId()).containsAnyOf("1", "2"));
     }
 
     @Test
-    public void test_disable_raw() throws Exception {
+    public void disable_raw() throws Exception {
         FsSettings fsSettings = createTestSettings();
         if (rarely()) {
             // Sometimes we explicitly disable it but this is also the default value
@@ -82,18 +88,20 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.meta.raw"));
+            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.meta.raw")).isInstanceOf(PathNotFoundException.class);
         }
     }
 
     @Test
-    public void test_enable_raw() throws Exception {
+    public void enable_raw() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRawMetadata(true);
         crawler = startCrawler(fsSettings);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.meta.raw"), notNullValue());
+            assertThat((Object) JsonPath.read(hit.getSource(), "$.meta.raw"))
+                    .asInstanceOf(InstanceOfAssertFactories.MAP)
+                    .isNotEmpty();
         }
     }
 }

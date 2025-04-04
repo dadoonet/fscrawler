@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     @Test
-    public void test_includes() throws Exception {
+    public void includes() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIncludes(List.of("*/*_include\\.txt"));
         crawler = startCrawler(fsSettings);
@@ -39,7 +39,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_subdirs_with_patterns() throws Exception {
+    public void subdirs_with_patterns() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIncludes(List.of("*/*\\.txt"));
         crawler = startCrawler(fsSettings);
@@ -49,7 +49,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_ignore_dir() throws Exception {
+    public void ignore_dir() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setExcludes(List.of("*/\\.ignore/", "/subdir/sub*"));
         crawler = startCrawler(fsSettings);
@@ -59,7 +59,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_fscrawlerignore() throws Exception {
+    public void fscrawlerignore() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 4 files as subdir1 should be ignored

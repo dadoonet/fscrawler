@@ -31,7 +31,7 @@ import java.io.IOException;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -39,7 +39,7 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
     private static final int PAYLOAD_SIZE = serialize(PAYLOAD).getBytes().length + 12 /* for the json payload field overhead */;
 
     @Test
-    public void testBulkProcessorMaxActions() throws IOException {
+    public void bulkProcessorMaxActions() throws IOException {
         int maxActions = randomIntBetween(1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
@@ -52,16 +52,16 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
                         TestBulkRequest::new);
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
-        assertEquals(0, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isZero();
         generatePayload(bulkProcessor, maxActions, 1);
-        assertEquals(1, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
         generatePayload(bulkProcessor, maxActions + 1, 1);
         bulkProcessor.close();
-        assertEquals(2, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(2);
     }
 
     @Test
-    public void testBulkProcessorNullSize() throws IOException {
+    public void bulkProcessorNullSize() throws IOException {
         int maxActions = randomIntBetween(1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
@@ -74,16 +74,16 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
                         TestBulkRequest::new);
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
-        assertEquals(0, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isZero();
         generatePayload(bulkProcessor, maxActions, 1);
-        assertEquals(1, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
         generatePayload(bulkProcessor, maxActions + 1, 1);
         bulkProcessor.close();
-        assertEquals(2, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(2);
     }
 
     @Test
-    public void testBulkProcessorZeroSize() throws IOException {
+    public void bulkProcessorZeroSize() throws IOException {
         int maxActions = randomIntBetween(1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
@@ -96,16 +96,16 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
                         TestBulkRequest::new);
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
-        assertEquals(0, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isZero();
         generatePayload(bulkProcessor, maxActions, 1);
-        assertEquals(1, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
         generatePayload(bulkProcessor, maxActions + 1, 1);
         bulkProcessor.close();
-        assertEquals(2, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(2);
     }
 
     @Test
-    public void testBulkProcessorMaxSize() throws IOException {
+    public void bulkProcessorMaxSize() throws IOException {
         int maxActions = randomIntBetween(1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
@@ -118,20 +118,20 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
                         TestBulkRequest::new);
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
-        assertEquals(0, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isZero();
         generatePayload(bulkProcessor, maxActions, 1);
-        assertEquals(1, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
         generatePayload(bulkProcessor, maxActions + 1, maxActions - 1);
-        assertEquals(1, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
         generatePayload(bulkProcessor, 2 * maxActions, 1);
-        assertEquals(2, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(2);
         generatePayload(bulkProcessor, 2 * maxActions + 1, 1);
         bulkProcessor.close();
-        assertEquals(3, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(3);
     }
 
     @Test
-    public void testBulkProcessorFlushInterval() throws IOException, InterruptedException {
+    public void bulkProcessorFlushInterval() throws IOException, InterruptedException {
         int maxActions = randomIntBetween(1, 1000);
         TimeValue flushInterval = TimeValue.timeValueMillis(randomIntBetween(500, 2000));
         TestBulkListener listener = new TestBulkListener();
@@ -142,13 +142,13 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         Thread.sleep(100);
 
         generatePayload(bulkProcessor, 1, maxActions);
-        assertEquals(0, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isZero();
 
         Thread.sleep(flushInterval.millis());
 
-        assertEquals(1, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
         bulkProcessor.close();
-        assertEquals(1, listener.nbSuccessfulExecutions);
+        assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
     }
 
     private void generatePayload(FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor, int start, int size) {
