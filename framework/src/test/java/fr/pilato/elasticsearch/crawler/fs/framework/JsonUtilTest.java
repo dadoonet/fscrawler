@@ -51,12 +51,14 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
                 "   \"attributes\":{\n" +
                 "      \"owner\":\"dpilato\",\n" +
                 "      \"group\":\"staff\",\n" +
-                "      \"permissions\":644\n" +
+                "      \"permissions\":644,\n" +
+                "      \"foobar\":null\n" +
                 "   }\n" +
                 "}";
 
         DocumentContext context = parseJsonAsDocumentContext(json);
         assertThat((String) context.read("$.attributes.owner")).isEqualTo("dpilato");
-        assertThat((int) context.read("$.attributes.permissions")).isEqualTo(644);
+        assertThat((Integer) context.read("$.attributes.permissions")).isEqualTo(644);
+        assertThat((Integer) context.read("$.attributes.foobar")).isNull();
     }
 }

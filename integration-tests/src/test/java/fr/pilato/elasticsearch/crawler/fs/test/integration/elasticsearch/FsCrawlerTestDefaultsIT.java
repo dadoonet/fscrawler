@@ -64,7 +64,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
             assertThat((String) document.read("$.file.filename")).isNotEmpty();
             assertThat((String) document.read("$.file.content_type")).isNotEmpty();
             assertThat((String) document.read("$.file.url")).isNotEmpty();
-            assertThat((int) document.read("$.file.filesize")).isGreaterThan(0);
+            assertThat((Integer) document.read("$.file.filesize")).isGreaterThan(0);
             assertThat((String) document.read("$.file.indexing_date")).isNotEmpty();
             assertThatThrownBy(() -> document.read("$.file.indexed_chars")).isInstanceOf(PathNotFoundException.class);
             assertThat((String) document.read("$.file.created")).isNotEmpty();

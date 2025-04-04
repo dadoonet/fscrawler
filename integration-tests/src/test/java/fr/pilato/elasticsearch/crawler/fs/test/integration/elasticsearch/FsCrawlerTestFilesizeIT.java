@@ -57,7 +57,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
             // Our original text should be truncated
             assertThat((String) document.read("$.content")).isEqualTo("Novo de");
-            assertThat((int) document.read("$.file.indexed_chars")).isEqualTo(7);
+            assertThat((Integer) document.read("$.file.indexed_chars")).isEqualTo(7);
         }
     }
 
@@ -73,7 +73,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
             // Our original text should be truncated
             assertThat((String) document.read("$.content")).isEqualTo("Novo denique");
-            assertThat((int) document.read("$.file.indexed_chars")).isEqualTo(12);
+            assertThat((Integer) document.read("$.file.indexed_chars")).isEqualTo(12);
         }
     }
 
@@ -99,7 +99,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat((int) JsonPath.read(hit.getSource(), "$.file.filesize")).isEqualTo(12230);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isEqualTo(12230);
         }
     }
 

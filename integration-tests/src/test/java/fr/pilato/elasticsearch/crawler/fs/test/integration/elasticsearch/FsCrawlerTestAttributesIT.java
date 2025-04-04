@@ -47,11 +47,11 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
             if (OsValidator.WINDOWS) {
                 // We should not have values for group and permissions on Windows OS
                 assertThat((String) document.read("$.attributes.group")).isNull();
-                assertThat((int) document.read("$.attributes.permissions")).isNull();
+                assertThat((Integer) document.read("$.attributes.permissions")).isNull();
             } else {
                 // We test group and permissions only on non Windows OS
                 assertThat((String) document.read("$.attributes.group")).isNotEmpty();
-                assertThat((int) document.read("$.attributes.permissions")).isGreaterThanOrEqualTo(400);
+                assertThat((Integer) document.read("$.attributes.permissions")).isGreaterThanOrEqualTo(400);
             }
         }
     }

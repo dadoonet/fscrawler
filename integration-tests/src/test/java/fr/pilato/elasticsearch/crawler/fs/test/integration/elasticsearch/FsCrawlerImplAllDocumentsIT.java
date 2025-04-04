@@ -135,7 +135,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             assertThat((String) document.read("$.file.filename")).isNotEmpty();
             assertThat((String) document.read("$.file.content_type")).isNotEmpty();
             assertThat((String) document.read("$.file.url")).isNotEmpty();
-            assertThat((int) document.read("$.file.filesize")).isGreaterThan(0);
+            assertThat((Integer) document.read("$.file.filesize")).isGreaterThan(0);
             assertThat((String) document.read("$.file.indexing_date")).isNotEmpty();
             assertThat((String) document.read("$.file.created")).isNotEmpty();
             assertThat((String) document.read("$.file.last_modified")).isNotEmpty();
