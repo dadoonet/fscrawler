@@ -35,9 +35,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test different dates of files
@@ -49,7 +47,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
      * We want to make sure dates are correctly generated
      */
     @Test
-    public void test_check_dates() throws Exception {
+    public void check_dates() throws Exception {
         crawler = startCrawler();
 
         logger.info(" ---> Creating a new file second.txt");
@@ -111,13 +109,13 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
             logger.warn("OS is [{}]. Creation date changed from [{}] to [{}].", OsValidator.OS, hitBeforeCreated, hitAfterCreated);
         }
         if (shouldBeIdentical) {
-            assertThat(hitBeforeIndexingDate, equalTo(hitAfterIndexingDate));
-            assertThat(hitBeforeLastModified, equalTo(hitAfterLastModified));
-            assertThat(hitBeforeLastAccessed, equalTo(hitAfterLastAccessed));
+            assertThat(hitBeforeIndexingDate).isEqualTo(hitAfterIndexingDate);
+            assertThat(hitBeforeLastModified).isEqualTo(hitAfterLastModified);
+            assertThat(hitBeforeLastAccessed).isEqualTo(hitAfterLastAccessed);
         } else {
-            assertThat(hitBeforeIndexingDate, not(equalTo(hitAfterIndexingDate)));
-            assertThat(hitBeforeLastModified, not(equalTo(hitAfterLastModified)));
-            assertThat(hitBeforeLastAccessed, not(equalTo(hitAfterLastAccessed)));
+            assertThat(hitBeforeIndexingDate).isNotEqualTo(hitAfterIndexingDate);
+            assertThat(hitBeforeLastModified).isNotEqualTo(hitAfterLastModified);
+            assertThat(hitBeforeLastAccessed).isNotEqualTo(hitAfterLastAccessed);
         }
     }
 

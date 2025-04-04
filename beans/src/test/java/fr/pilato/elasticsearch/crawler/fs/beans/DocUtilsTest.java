@@ -8,8 +8,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.prettyPrint;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DocUtilsTest {
     private static final Logger logger = LogManager.getLogger(DocUtilsTest.class);
@@ -18,26 +17,26 @@ public class DocUtilsTest {
     Path path = Path.of(DocUtilsTest.class.getResource("/tags").getPath());
 
     @Test
-    public void testMergeDocsWithNothing() {
+    public void mergeDocsWithNothing() {
         Doc mergedDoc = DocUtils.getMergedJsonDoc(getDocSample(), (InputStream) null);
         logger.trace("Merged doc: {}", prettyPrint(mergedDoc));
 
-        assertThat(mergedDoc.getContent(), is("This is a test"));
-        assertThat(mergedDoc.getFile().getFilename(), is("foo.txt"));
-        assertThat(mergedDoc.getMeta(), notNullValue());
-        assertThat(mergedDoc.getPath(), notNullValue());
-        assertThat(mergedDoc.getAttachment(), nullValue());
-        assertThat(mergedDoc.getExternal(), nullValue());
-        assertThat(mergedDoc.getAttributes(), nullValue());
+        assertThat(mergedDoc.getContent()).isEqualTo("This is a test");
+        assertThat(mergedDoc.getFile().getFilename()).isEqualTo("foo.txt");
+        assertThat(mergedDoc.getMeta()).isNotNull();
+        assertThat(mergedDoc.getPath()).isNotNull();
+        assertThat(mergedDoc.getAttachment()).isNull();
+        assertThat(mergedDoc.getExternal()).isNull();
+        assertThat(mergedDoc.getAttributes()).isNull();
     }
 
     @Test
-    public void testMergeDocsWithAJsonFile() {
+    public void mergeDocsWithAJsonFile() {
         testMergeDocsWithAFile(path.resolve("meta-as-json.json"));
     }
 
     @Test
-    public void testMergeDocsWithAYamlFile() {
+    public void mergeDocsWithAYamlFile() {
         testMergeDocsWithAFile(path.resolve(".meta.yml"));
     }
 
@@ -45,14 +44,14 @@ public class DocUtilsTest {
         Doc mergedDoc = DocUtils.getMergedDoc(getDocSample(), file);
         logger.trace("Merged doc: {}", prettyPrint(mergedDoc));
 
-        assertThat(mergedDoc.getContent(), is("This is a test"));
-        assertThat(mergedDoc.getFile().getFilename(), is("foo.txt"));
-        assertThat(mergedDoc.getMeta(), notNullValue());
-        assertThat(mergedDoc.getPath(), notNullValue());
-        assertThat(mergedDoc.getExternal(), notNullValue());
-        assertThat(mergedDoc.getExternal().get("tenantId"), is(23));
-        assertThat(mergedDoc.getAttachment(), nullValue());
-        assertThat(mergedDoc.getAttributes(), nullValue());
+        assertThat(mergedDoc.getContent()).isEqualTo("This is a test");
+        assertThat(mergedDoc.getFile().getFilename()).isEqualTo("foo.txt");
+        assertThat(mergedDoc.getMeta()).isNotNull();
+        assertThat(mergedDoc.getPath()).isNotNull();
+        assertThat(mergedDoc.getExternal()).isNotNull();
+        assertThat(mergedDoc.getExternal()).containsEntry("tenantId", 23);
+        assertThat(mergedDoc.getAttachment()).isNull();
+        assertThat(mergedDoc.getAttributes()).isNull();
     }
 
     private Doc getDocSample() {

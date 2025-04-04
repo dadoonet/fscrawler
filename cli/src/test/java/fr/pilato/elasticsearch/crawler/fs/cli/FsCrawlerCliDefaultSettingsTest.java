@@ -32,9 +32,7 @@ import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * We want to test FSCrawler main app
@@ -55,7 +53,7 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testSettingsModifiedWithFtp() throws IOException {
+    public void settingsModifiedWithFtp() throws IOException {
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
         Path jobDir = metadataDir.resolve("modify_settings_server_ftp");
         Files.createDirectories(jobDir);
@@ -66,12 +64,12 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
                         "  protocol: \"ftp\"\n"
                 );
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ftp");
-        assertThat(settings.getServer().getPort(), is(Server.PROTOCOL.FTP_PORT));
-        assertThat(settings.getServer().getUsername(), is("anonymous"));
+        assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.FTP_PORT);
+        assertThat(settings.getServer().getUsername()).isEqualTo("anonymous");
     }
 
     @Test
-    public void testSettingsModifiedWithSsh() throws IOException {
+    public void settingsModifiedWithSsh() throws IOException {
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
         Path jobDir = metadataDir.resolve("modify_settings_server_ssh");
         Files.createDirectories(jobDir);
@@ -85,7 +83,7 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         logger.info("{}", Files.readString(jobDir.resolve(SETTINGS_YAML)));
 
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ssh");
-        assertThat(settings.getServer().getPort(), is(Server.PROTOCOL.SSH_PORT));
-        assertThat(settings.getServer().getUsername(), nullValue());
+        assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.SSH_PORT);
+        assertThat(settings.getServer().getUsername()).isNull();
     }
 }

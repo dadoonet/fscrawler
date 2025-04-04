@@ -23,18 +23,17 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsSettingsTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    public void testCloudId() {
+    public void cloudId() {
 
         String cloudId = "foobar:dXMtZWFzdC0xLmF3cy5mb3VuZC5pbyRmb29iYXJlbGFzdGljc2VhcmNoJGZvb2JhcmtpYmFuYQ==";
         String httpHost = decodeCloudId(cloudId);
 
-        assertThat(httpHost, is("https://foobarelasticsearch.us-east-1.aws.found.io"));
+        assertThat(httpHost).isEqualTo("https://foobarelasticsearch.us-east-1.aws.found.io");
     }
 
 }

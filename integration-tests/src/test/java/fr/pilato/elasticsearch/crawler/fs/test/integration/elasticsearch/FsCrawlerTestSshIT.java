@@ -116,7 +116,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_ssh() throws Exception {
+    public void ssh() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUrl("/");
         fsSettings.getServer().setHostname(sshd.getHost());
@@ -130,7 +130,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_ssh_with_key() throws Exception {
+    public void ssh_with_key() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUrl("/");
         fsSettings.getServer().setHostname(sshd.getHost());

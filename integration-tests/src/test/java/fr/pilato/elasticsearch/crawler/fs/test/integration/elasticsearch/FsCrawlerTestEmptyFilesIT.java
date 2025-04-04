@@ -27,9 +27,8 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Test crawler with empty files.
@@ -38,18 +37,18 @@ import static org.hamcrest.Matchers.is;
 public class FsCrawlerTestEmptyFilesIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void test_empty_files() throws Exception {
+    public void empty_files() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 2 files
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withSort("file.filename"), 2L, null);
 
         DocumentContext doc01 = parseJsonAsDocumentContext(response.getHits().get(0).getSource());
-        assertThat(doc01.read("$.file.filename"), is("01-not-empty.txt"));
-        assertThat(doc01.read("$.content"), containsString("Hello World"));
+        assertThat((String) doc01.read("$.file.filename")).isEqualTo("01-not-empty.txt");
+        assertThat((String) doc01.read("$.content")).contains("Hello World");
 
         DocumentContext doc02 = parseJsonAsDocumentContext(response.getHits().get(1).getSource());
-        assertThat(doc02.read("$.file.filename"), is("02-empty.txt"));
-        expectThrows(PathNotFoundException.class, () -> doc02.read("$.content"));
+        assertThat((String) doc02.read("$.file.filename")).isEqualTo("02-empty.txt");
+        assertThatThrownBy(() -> doc02.read("$.content")).isInstanceOf(PathNotFoundException.class);
     }
 }
