@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     @Test
-    public void test_filter_one_term() throws Exception {
+    public void filter_one_term() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilters(List.of(".*foo.*"));
         crawler = startCrawler(fsSettings);
@@ -39,7 +39,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_filter_visa_pattern() throws Exception {
+    public void filter_visa_pattern() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"));
         crawler = startCrawler(fsSettings);
@@ -47,7 +47,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_filter_visa_pattern_plus_foo() throws Exception {
+    public void filter_visa_pattern_plus_foo() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$", ".*foo.*"));
         crawler = startCrawler(fsSettings);

@@ -28,8 +28,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -40,16 +39,16 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
 
         logger.info("-> generated job: [{}]", json);
         FsJob generated = prettyMapper.readValue(json, FsJob.class);
-        assertThat(generated, is(source));
+        assertThat(generated).isEqualTo(source);
     }
 
     @Test
-    public void testParseEmptyJob() throws IOException {
+    public void parseEmptyJob() throws IOException {
         jobTester(JOB_EMPTY);
     }
 
     @Test
-    public void testParseJob() throws IOException {
+    public void parseJob() throws IOException {
         jobTester(
                 FsJob.builder()
                         .setName(getCurrentTestName())
@@ -65,12 +64,12 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
      * @throws IOException In case of serialization problem
      */
     @Test
-    public void testDateTimeSerialization() throws IOException {
+    public void dateTimeSerialization() throws IOException {
         LocalDateTime now = LocalDateTime.now();
         FsJob job = FsJob.builder().setLastrun(now).build();
         String json = prettyMapper.writeValueAsString(job);
         FsJob generated = prettyMapper.readValue(json, FsJob.class);
-        assertThat(generated.getLastrun(), is(now));
+        assertThat(generated.getLastrun()).isEqualTo(now);
     }
 
 }

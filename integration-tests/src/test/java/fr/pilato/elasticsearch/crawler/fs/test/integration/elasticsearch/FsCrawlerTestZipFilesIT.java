@@ -34,7 +34,7 @@ public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
      * It's a long job, so we let it run up to 2 minutes
      */
     @Test
-    public void test_zip() throws Exception {
+    public void zip() throws Exception {
         crawler = startCrawler(createTestSettings(), TimeValue.timeValueMinutes(2));
 
         // We expect to have one file

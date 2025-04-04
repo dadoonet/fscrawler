@@ -43,7 +43,7 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_multiple_crawlers() throws Exception {
+    public void multiple_crawlers() throws Exception {
         FsSettings fsSettings1 = createTestSettings(getCrawlerName() + "_1");
         fsSettings1.getFs().setUrl(currentTestResourceDir.resolve("crawler1").toString());
         FsSettings fsSettings2 = createTestSettings(getCrawlerName() + "_2");

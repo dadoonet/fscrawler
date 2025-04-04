@@ -40,12 +40,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Before;
 
 import javax.net.ssl.SSLException;
 import java.io.*;
@@ -57,7 +56,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -68,10 +66,9 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Integration tests expect to have an elasticsearch instance running on <a href="https://127.0.0.1:9200">https://127.0.0.1:9200</a>.
@@ -87,7 +84,7 @@ import static org.junit.Assume.assumeThat;
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
+    protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "_common"));
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private static final String DEFAULT_USERNAME = "elastic";
     private static final String DEFAULT_PASSWORD = "changeme";
@@ -299,8 +296,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             fsSettings = startClient(checkCertificate);
         }
 
-        assumeThat("Integration tests are skipped because we have not been able to find an Elasticsearch cluster",
-                fsSettings, notNullValue());
+        assumeThat(fsSettings)
+                .as("Integration tests are skipped because we have not been able to find an Elasticsearch cluster")
+                .isNotNull();
 
         // We create and start the managementService
         managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
@@ -456,17 +454,20 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             return totalHits;
         }, expected, timeout);
 
-        Matcher<Long> matcher;
         if (expected == null) {
-            matcher = greaterThan(0L);
+            assertThat(hits)
+                    .as("expecting some documents in {}", request.getIndex())
+                    .isGreaterThan(0);
+
         } else {
-            matcher = equalTo(expected);
+            assertThat(hits)
+                    .withFailMessage("", expected)
+                    .as("expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex())
+                    .isEqualTo(expected);
         }
 
-        Level logLevel = matcher.matches(hits) ? Level.DEBUG : Level.WARN;
-        logger.log(logLevel, "     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
-        logContentOfDir(path, logLevel);
-        assertThat(hits, matcher);
+        // TODO if the test fails, we should display the content of the index using a WARN LEVEL instead
+        logContentOfDir(path, Level.DEBUG);
 
         return response[0];
     }
