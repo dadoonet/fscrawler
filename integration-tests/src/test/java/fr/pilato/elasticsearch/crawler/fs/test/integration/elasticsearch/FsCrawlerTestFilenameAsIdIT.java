@@ -54,7 +54,9 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
             } catch (IOException | ElasticsearchClientException e) {
                 return false;
             }
-        })).as("Document should exists with [roottxtfile.txt] id...").isTrue();
+        }, MAX_WAIT_FOR_SEARCH))
+                .as("Document should exists with [roottxtfile.txt] id...")
+                .isTrue();
     }
 
     /**
@@ -76,14 +78,18 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
             } catch (IOException | ElasticsearchClientException e) {
                 return false;
             }
-        })).as("Document should exists with [id1.txt] id...").isTrue();
+        }))
+                .as("Document should exists with [id1.txt] id...")
+                .isTrue();
         assertThat(awaitBusy(() -> {
             try {
                 return documentService.exists(getCrawlerName(), "id2.txt");
             } catch (IOException | ElasticsearchClientException e) {
                 return false;
             }
-        })).as("Document should exists with [id2.txt] id...").isTrue();
+        }))
+                .as("Document should exists with [id2.txt] id...")
+                .isTrue();
 
         // We remove a file
         logger.info("  ---> Removing file id2.txt");
