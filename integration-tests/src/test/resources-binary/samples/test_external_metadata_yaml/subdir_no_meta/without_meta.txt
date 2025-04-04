@@ -1,1 +1,0 @@
-This file is in a sub folder of the test_external_metadata directory, but it does not have a metadata file.

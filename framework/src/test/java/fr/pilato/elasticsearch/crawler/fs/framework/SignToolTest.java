@@ -24,16 +24,14 @@ import org.junit.Test;
 
 import java.security.NoSuchAlgorithmException;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.SignTool.sign;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SignToolTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    public void testSign() throws NoSuchAlgorithmException {
-        String signature = sign("ABCD");
-        assertThat(signature, is("cb8ca4a7bb5f9683c19133a84872ca7"));
+    public void sign() throws NoSuchAlgorithmException {
+        String signature = SignTool.sign("ABCD");
+        assertThat(signature).isEqualTo("cb8ca4a7bb5f9683c19133a84872ca7");
     }
 
 }

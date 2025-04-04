@@ -29,8 +29,8 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Test crawler with external metadata files
@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.*;
 public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void test_external_metadata_default() throws Exception {
+    public void external_metadata_default() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 3 files
@@ -46,7 +46,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
-            assertThat(filename, isOneOf("root_dir.txt", "with_meta.txt", "without_meta.txt"));
+            assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
 
             switch (filename) {
                 case "root_dir.txt":
@@ -63,7 +63,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_external_metadata_yaml() throws Exception {
+    public void external_metadata_yaml() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getTags().setMetaFilename("meta-as-yaml.yaml");
         crawler = startCrawler(fsSettings);
@@ -73,7 +73,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
-            assertThat(filename, isOneOf("root_dir.txt", "with_meta.txt", "without_meta.txt"));
+            assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
 
             switch (filename) {
                 case "root_dir.txt":
@@ -90,7 +90,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_external_metadata_json() throws Exception {
+    public void external_metadata_json() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getTags().setMetaFilename("meta-as-json.json");
         crawler = startCrawler(fsSettings);
@@ -100,7 +100,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
-            assertThat(filename, isOneOf("root_dir.txt", "with_meta.txt", "without_meta.txt"));
+            assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
 
             switch (filename) {
                 case "root_dir.txt":
@@ -117,7 +117,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_external_metadata_overwrite() throws Exception {
+    public void external_metadata_overwrite() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 3 files
@@ -125,7 +125,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
-            assertThat(filename, isOneOf("root_dir.txt", "with_meta.txt", "without_meta.txt"));
+            assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
 
             switch (filename) {
                 case "root_dir.txt":
@@ -141,13 +141,14 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         }
     }
 
+    // TODO Rewrite this test to use AssertJ
     private void checkHit(DocumentContext document, String filename, boolean hasExternal, String expectedContent) {
-        assertThat(document.read("$.content"), containsString(expectedContent));
-        assertThat(document.read("$.file.filename"), is(filename));
+        assertThat((String) document.read("$.content")).contains(expectedContent);
+        assertThat((String) document.read("$.file.filename")).isEqualTo(filename);
         if (hasExternal) {
-            assertThat(document.read("$.external.tenantId"), is(23));
+            assertThat((Integer) document.read("$.external.tenantId")).isEqualTo(23);
         } else {
-            expectThrows(PathNotFoundException.class, () -> document.read("$.external"));
+            assertThatThrownBy(() -> document.read("$.external")).isInstanceOf(PathNotFoundException.class);
         }
     }
 }

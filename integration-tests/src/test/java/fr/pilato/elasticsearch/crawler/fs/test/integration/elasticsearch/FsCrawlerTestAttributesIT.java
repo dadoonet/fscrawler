@@ -29,30 +29,29 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test attributes crawler settings
  */
 public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
     @Test
-    public void test_attributes() throws Exception {
+    public void attributes() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setAttributesSupport(true);
         crawler = startCrawler(fsSettings);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
-            assertThat(document.read("$.attributes.owner"), notNullValue());
+            assertThat((String) document.read("$.attributes.owner")).isNotEmpty();
             if (OsValidator.WINDOWS) {
                 // We should not have values for group and permissions on Windows OS
-                assertThat(document.read("$.attributes.group"), nullValue());
-                assertThat(document.read("$.attributes.permissions"), nullValue());
+                assertThat((String) document.read("$.attributes.group")).isNull();
+                assertThat((Integer) document.read("$.attributes.permissions")).isNull();
             } else {
                 // We test group and permissions only on non Windows OS
-                assertThat(document.read("$.attributes.group"), notNullValue());
-                assertThat(document.read("$.attributes.permissions"), greaterThanOrEqualTo(400));
+                assertThat((String) document.read("$.attributes.group")).isNotEmpty();
+                assertThat((Integer) document.read("$.attributes.permissions")).isGreaterThanOrEqualTo(400);
             }
         }
     }

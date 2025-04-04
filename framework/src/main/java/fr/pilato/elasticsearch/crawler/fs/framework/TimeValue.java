@@ -24,8 +24,6 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.format1
 
 @SuppressWarnings("WeakerAccess")
 public class TimeValue {
-    /** How many nanoseconds in one millisecond */
-    public static final long NSEC_PER_MSEC = 1000000;
 
     public static TimeValue timeValueNanos(long nanos) {
         return new TimeValue(nanos, TimeUnit.NANOSECONDS);
@@ -200,13 +198,13 @@ public class TimeValue {
         }
     }
 
-    static final long C0 = 1L;
-    static final long C1 = C0 * 1000L;
-    static final long C2 = C1 * 1000L;
-    static final long C3 = C2 * 1000L;
-    static final long C4 = C3 * 60L;
-    static final long C5 = C4 * 60L;
-    static final long C6 = C5 * 24L;
+    private static final long C0 = 1L;
+    private static final long C1 = C0 * 1000L;
+    private static final long C2 = C1 * 1000L;
+    private static final long C3 = C2 * 1000L;
+    private static final long C4 = C3 * 60L;
+    private static final long C5 = C4 * 60L;
+    private static final long C6 = C5 * 24L;
 
     @Override
     public boolean equals(Object o) {

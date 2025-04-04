@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
@@ -34,8 +33,8 @@ public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
      * It's a long job, so we let it run up to 2 minutes
      */
     @Test
-    public void test_zip() throws Exception {
-        crawler = startCrawler(createTestSettings(), TimeValue.timeValueMinutes(2));
+    public void zip() throws Exception {
+        crawler = startCrawler(createTestSettings());
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);

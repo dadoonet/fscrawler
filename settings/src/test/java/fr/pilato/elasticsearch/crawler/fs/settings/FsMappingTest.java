@@ -29,10 +29,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -55,7 +53,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
     public void fsSettingsForDocVersion6() throws Exception {
         String settings = readJsonFile(rootTmpDir, metadataDir, 6, INDEX_SETTINGS_FILE);
         logger.info("Settings used for doc index v6 : " + settings);
-        assertThat(settings, is("{\n" +
+        assertThat(settings).isEqualTo("{\n" +
                 "  \"settings\": {\n" +
                 "    \"number_of_shards\": 1,\n" +
                 "    \"index.mapping.total_fields.limit\": 2000,\n" +
@@ -268,14 +266,14 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "      }\n" +
                 "    }\n" +
                 "  }\n" +
-                "}\n"));
+                "}\n");
     }
 
     @Test
     public void fsSettingsForFolderVersion6() throws Exception {
         String settings = readJsonFile(rootTmpDir, metadataDir, 6, INDEX_SETTINGS_FOLDER_FILE);
         logger.info("Settings used for folder index v6 : " + settings);
-        assertThat(settings, is("{\n" +
+        assertThat(settings).isEqualTo("{\n" +
                 "  \"settings\": {\n" +
                 "    \"analysis\": {\n" +
                 "      \"analyzer\": {\n" +
@@ -350,23 +348,23 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
                 "      }\n" +
                 "    }\n" +
                 "  }\n" +
-                "}\n"));
+                "}\n");
     }
 
     @Test
     public void fsSettingsForDocSpecificJobVersion6() throws Exception {
         String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 6, INDEX_SETTINGS_FILE);
-        assertThat(settings, is("{\n" +
+        assertThat(settings).isEqualTo("{\n" +
                 "  // This is settings for version 6\n" +
-                "}\n"));
+                "}\n");
     }
 
     @Test
     public void fsSettingsForFolderSpecificJobVersion6() throws Exception {
         String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 6, INDEX_SETTINGS_FOLDER_FILE);
-        assertThat(settings, is("{\n" +
+        assertThat(settings).isEqualTo("{\n" +
                 "  // This is folder settings for version 6\n" +
-                "}\n"));
+                "}\n");
     }
 
     @Test
@@ -375,7 +373,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
             readJsonFile(rootTmpDir, metadataDir, 0, INDEX_SETTINGS_FILE);
             fail("We should have thrown an exception for an unknown elasticsearch version");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage(), containsString("does not exist for elasticsearch version"));
+            assertThat(e.getMessage()).contains("does not exist for elasticsearch version");
         }
     }
 
@@ -385,7 +383,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
             readJsonFile(rootTmpDir, metadataDir, 0, INDEX_SETTINGS_FOLDER_FILE);
             fail("We should have thrown an exception for an unknown elasticsearch version");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage(), containsString("does not exist for elasticsearch version"));
+            assertThat(e.getMessage()).contains("does not exist for elasticsearch version");
         }
     }
 }
