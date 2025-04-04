@@ -51,6 +51,7 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setSemanticSearch(true);
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(5));
         crawler = startCrawler(fsSettings, TimeValue.timeValueMinutes(5));
 
         // We expect to have 3 files

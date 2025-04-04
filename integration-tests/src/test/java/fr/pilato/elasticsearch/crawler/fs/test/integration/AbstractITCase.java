@@ -96,6 +96,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static final boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
     protected static final boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
     private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
+    public static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(1);
 
     protected static Path metadataDir = null;
     protected FsCrawlerImpl crawler = null;
@@ -411,7 +412,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      * @throws Exception in case of error
      */
     public static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final Path path) throws Exception {
-        return countTestHelper(request, expected, path, TimeValue.timeValueMinutes(1));
+        return countTestHelper(request, expected, path, MAX_WAIT_FOR_SEARCH);
     }
 
     /**

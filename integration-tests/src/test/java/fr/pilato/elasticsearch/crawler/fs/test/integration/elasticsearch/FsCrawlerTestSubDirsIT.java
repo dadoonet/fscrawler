@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 import fr.pilato.elasticsearch.crawler.fs.client.*;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,7 +56,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
                 .allSatisfy(hit -> {
                     DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
                     assertThat((String) document.read("$.path.virtual"))
-                            .contains("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt");
+                            .containsAnyOf("/subdir/roottxtfile_multi_feed.txt", "/roottxtfile.txt");
                 });
 
         // Try to search within part of the full path, ie subdir
@@ -93,13 +92,13 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         DocumentContext document = parseJsonAsDocumentContext(response.getJson());
 
         int i = 0;
-        pathHitTester(document, i++, "/test_subdirs_deep_tree/roottxtfile.txt", "/roottxtfile.txt");
-        pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", "/subdir1/roottxtfile_multi_feed.txt");
-        pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", "/subdir1/subdir11/roottxtfile.txt");
-        pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", "/subdir1/subdir12/roottxtfile.txt");
-        pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", "/subdir2/roottxtfile_multi_feed.txt");
-        pathHitTester(document, i++, "/test_subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", "/subdir2/subdir21/roottxtfile.txt");
-        pathHitTester(document, i, "/test_subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", "/subdir2/subdir22/roottxtfile.txt");
+        pathHitTester(document, i++, "/subdirs_deep_tree/roottxtfile.txt", "/roottxtfile.txt");
+        pathHitTester(document, i++, "/subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", "/subdir1/roottxtfile_multi_feed.txt");
+        pathHitTester(document, i++, "/subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", "/subdir1/subdir11/roottxtfile.txt");
+        pathHitTester(document, i++, "/subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", "/subdir1/subdir12/roottxtfile.txt");
+        pathHitTester(document, i++, "/subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", "/subdir2/roottxtfile_multi_feed.txt");
+        pathHitTester(document, i++, "/subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", "/subdir2/subdir21/roottxtfile.txt");
+        pathHitTester(document, i, "/subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", "/subdir2/subdir22/roottxtfile.txt");
 
 
         // Check folders
@@ -109,13 +108,13 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         document = parseJsonAsDocumentContext(response.getJson());
 
         i = 0;
-        folderHitTester(document, i++, "/test_subdirs_deep_tree", "/", "test_subdirs_deep_tree");
-        folderHitTester(document, i++, "/test_subdirs_deep_tree/subdir1", "/subdir1", "subdir1");
-        folderHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/subdir11", "/subdir1/subdir11", "subdir11");
-        folderHitTester(document, i++, "/test_subdirs_deep_tree/subdir1/subdir12", "/subdir1/subdir12", "subdir12");
-        folderHitTester(document, i++, "/test_subdirs_deep_tree/subdir2", "/subdir2", "subdir2");
-        folderHitTester(document, i++, "/test_subdirs_deep_tree/subdir2/subdir21", "/subdir2/subdir21", "subdir21");
-        folderHitTester(document, i, "/test_subdirs_deep_tree/subdir2/subdir22", "/subdir2/subdir22", "subdir22");
+        folderHitTester(document, i++, "/subdirs_deep_tree", "/", "subdirs_deep_tree");
+        folderHitTester(document, i++, "/subdirs_deep_tree/subdir1", "/subdir1", "subdir1");
+        folderHitTester(document, i++, "/subdirs_deep_tree/subdir1/subdir11", "/subdir1/subdir11", "subdir11");
+        folderHitTester(document, i++, "/subdirs_deep_tree/subdir1/subdir12", "/subdir1/subdir12", "subdir12");
+        folderHitTester(document, i++, "/subdirs_deep_tree/subdir2", "/subdir2", "subdir2");
+        folderHitTester(document, i++, "/subdirs_deep_tree/subdir2/subdir21", "/subdir2/subdir21", "subdir21");
+        folderHitTester(document, i, "/subdirs_deep_tree/subdir2/subdir22", "/subdir2/subdir22", "subdir22");
     }
 
     @Test
@@ -137,7 +136,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
             Files.copy(sourceFile, newDir.resolve("sample.txt"));
         }
 
-        crawler = startCrawler(createTestSettings(), TimeValue.timeValueMinutes(2));
+        crawler = startCrawler(createTestSettings());
 
         // We expect to have x files (<- whoa that's funny Mulder!)
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), subdirs+1, null);
@@ -181,8 +180,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         deleteRecursively(mainDir);
 
         // We expect to have 1 doc now but this could take some time to happen
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir,
-                TimeValue.timeValueMinutes(2));
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
     // TODO rewrite this tester

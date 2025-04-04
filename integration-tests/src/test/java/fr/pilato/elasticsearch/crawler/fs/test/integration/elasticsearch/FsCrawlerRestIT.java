@@ -206,7 +206,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
 
         // We wait until we have removed all documents
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 0L, null, TimeValue.timeValueMinutes(2));
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 0L, null);
     }
 
     @Test
@@ -255,7 +255,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all our documents docs
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), numFiles.longValue(), null, TimeValue.timeValueMinutes(2));
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), numFiles.longValue(), null);
 
         // Let's test every single document that has been enriched
         checkDocument("add_external.txt", hit -> {

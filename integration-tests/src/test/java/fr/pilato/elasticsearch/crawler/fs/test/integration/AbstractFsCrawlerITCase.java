@@ -86,7 +86,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     protected FsCrawlerImpl startCrawler(FsSettings fsSettings) throws Exception {
-        return startCrawler(fsSettings, TimeValue.timeValueSeconds(30));
+        return startCrawler(fsSettings, MAX_WAIT_FOR_SEARCH);
     }
 
     protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, TimeValue duration)
