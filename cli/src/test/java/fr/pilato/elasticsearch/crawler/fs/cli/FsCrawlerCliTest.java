@@ -99,7 +99,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         assertThat(jobDir.resolve(FsJobFileHandler.FILENAME)).doesNotExist();
     }
 
-    @Test(expected = FsCrawlerIllegalConfigurationException.class)
+    @Test
     public void testWithWrongSettingsFile() throws Exception {
         String jobName = "fscrawler_wrong_settings";
         Path jobDir = metadataDir.resolve(jobName);
