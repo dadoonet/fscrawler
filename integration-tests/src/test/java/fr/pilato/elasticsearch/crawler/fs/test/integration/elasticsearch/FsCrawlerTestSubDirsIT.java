@@ -53,6 +53,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
         // We check that the subdir document has his meta path data correctly set
         assertThat(searchResponse.getHits())
+                .isNotEmpty()
                 .allSatisfy(hit -> {
                     DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
                     assertThat((String) document.read("$.path.virtual"))
