@@ -242,7 +242,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      */
     private void checkDocVersions(ESSearchResponse response, long maxVersion) {
         // It should be only version <= maxVersion for all docs
-       assertThat(response.getHits()).allSatisfy(hit -> {
+       assertThat(response.getHits())
+               .isNotEmpty()
+               .allSatisfy(hit -> {
            ESSearchHit getHit = documentService.get(hit.getIndex(), hit.getId());
            assertThat(getHit.getVersion()).isLessThanOrEqualTo(maxVersion);
        });

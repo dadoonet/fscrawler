@@ -69,6 +69,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
 
             // Check that we extracted the content
             assertThat(searchResponse.getHits())
+                    .isNotEmpty()
                     .allSatisfy(hit ->
                             assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
                                     .contains("words"));
@@ -93,6 +94,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
 
             // Check that we extracted the content
             assertThat(searchResponse.getHits())
+                    .isNotEmpty()
                     .allSatisfy(hit ->
                             assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
                                     .contains("words"));
@@ -117,6 +119,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
 
             // Check that we extracted the content
             assertThat(searchResponse.getHits())
+                    .isNotEmpty()
                     .allSatisfy(hit ->
                             assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
                                     .contains("words"));
