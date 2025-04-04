@@ -139,7 +139,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         assertThat(response.getHits().get(0).getId()).isEqualTo("1234");
-        assertThat((int) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isGreaterThan(0);
+        assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isGreaterThan(0);
     }
 
     @Test
@@ -155,7 +155,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         assertThat(response.getHits().get(0).getId()).isEqualTo("1234");
-        assertThat((int) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isGreaterThan(0);
+        assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isGreaterThan(0);
     }
 
     @Test
@@ -235,7 +235,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 logger.warn("File [{}] has a size of [{}]",
                         JsonPath.read(hit.getSource(), "$.file.filename"), filesize);
             } else {
-                assertThat((int) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
+                assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
             }
         }
     }
@@ -261,39 +261,39 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         checkDocument("add_external.txt", hit -> {
             assertThat((String) JsonPath.read(hit.getSource(), "$.content")).contains("This file content will be extracted");
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
-            assertThat((int) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
             assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.meta")).isInstanceOf(PathNotFoundException.class);
-            assertThat((int) JsonPath.read(hit.getSource(), "$.external.tenantId")).isEqualTo(23);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.tenantId")).isEqualTo(23);
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.company")).isEqualTo("shoe company");
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.daysOpen[0]")).isEqualTo("Mon");
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.daysOpen[4]")).isEqualTo("Fri");
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[0].brand")).isEqualTo("nike");
-            assertThat((int) JsonPath.read(hit.getSource(), "$.external.products[0].size")).isEqualTo(41);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.products[0].size")).isEqualTo(41);
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[0].sub")).isEqualTo("Air MAX");
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[1].brand")).isEqualTo("reebok");
-            assertThat((int) JsonPath.read(hit.getSource(), "$.external.products[1].size")).isEqualTo(43);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.products[1].size")).isEqualTo(43);
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[1].sub")).isEqualTo("Pump");
         });
         checkDocument("replace_content_and_external.txt", hit -> {
             assertThat((String) JsonPath.read(hit.getSource(), "$.content")).isEqualTo("OVERWRITTEN CONTENT");
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
-            assertThat((int) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
             assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.meta")).isInstanceOf(PathNotFoundException.class);
-            assertThat((int) JsonPath.read(hit.getSource(), "$.external.tenantId")).isEqualTo(23);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.tenantId")).isEqualTo(23);
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.company")).isEqualTo("shoe company");
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.daysOpen[0]")).isEqualTo("Mon");
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.daysOpen[4]")).isEqualTo("Fri");
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[0].brand")).isEqualTo("nike");
-            assertThat((int) JsonPath.read(hit.getSource(), "$.external.products[0].size")).isEqualTo(41);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.products[0].size")).isEqualTo(41);
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[0].sub")).isEqualTo("Air MAX");
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[1].brand")).isEqualTo("reebok");
-            assertThat((int) JsonPath.read(hit.getSource(), "$.external.products[1].size")).isEqualTo(43);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.products[1].size")).isEqualTo(43);
             assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[1].sub")).isEqualTo("Pump");
         });
         checkDocument("replace_content_only.txt", hit -> {
             assertThat((String) JsonPath.read(hit.getSource(), "$.content")).isEqualTo("OVERWRITTEN CONTENT");
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
-            assertThat((int) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
             assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.meta")).isInstanceOf(PathNotFoundException.class);
             assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.external")).isInstanceOf(PathNotFoundException.class);
         });
@@ -364,7 +364,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("test.txt");
-        assertThat((int) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(30);
+        assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(30);
         assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains("This file contains some words.");
     }
 
@@ -429,7 +429,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             // We wait until we have our document
             ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("roottxtfile.txt");
-            assertThat((int) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(12230);
+            assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(12230);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains("Nihil est enim virtute amabilius");
         }
     }
@@ -515,7 +515,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             // We wait until we have our document
             ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("foo.txt");
-            assertThat((int) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(16);
+            assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(16);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains(text);
 
             // We try with an existing document running on https
@@ -531,7 +531,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             // We wait until we have our document
             response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withSort("file.indexing_date"), 2L, null);
             assertThat((String) JsonPath.read(response.getHits().get(1).getSource(), "$.file.filename")).isEqualTo("robots.txt");
-            assertThat((int) JsonPath.read(response.getHits().get(1).getSource(), "$.file.filesize")).isGreaterThan(100);
+            assertThat((Integer) JsonPath.read(response.getHits().get(1).getSource(), "$.file.filesize")).isGreaterThan(100);
             assertThat((String) JsonPath.read(response.getHits().get(1).getSource(), "$.content")).contains("Sitemap");
         }
     }

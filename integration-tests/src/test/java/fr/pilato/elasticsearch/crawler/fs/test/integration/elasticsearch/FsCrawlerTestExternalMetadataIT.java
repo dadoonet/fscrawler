@@ -146,7 +146,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         assertThat((String) document.read("$.content")).contains(expectedContent);
         assertThat((String) document.read("$.file.filename")).isEqualTo(filename);
         if (hasExternal) {
-            assertThat((int) document.read("$.external.tenantId")).isEqualTo(23);
+            assertThat((Integer) document.read("$.external.tenantId")).isEqualTo(23);
         } else {
             assertThatThrownBy(() -> document.read("$.external")).isInstanceOf(PathNotFoundException.class);
         }
