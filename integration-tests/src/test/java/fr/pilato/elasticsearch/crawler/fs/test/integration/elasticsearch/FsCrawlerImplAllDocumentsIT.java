@@ -97,7 +97,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         crawler.start();
 
         // We wait until we have all docs
-        countTestHelper(new ESSearchRequest().withIndex("fscrawler_test_all_documents"), numFiles, null, TimeValue.timeValueMinutes(1));
+        countTestHelper(new ESSearchRequest().withIndex("fscrawler_test_all_documents"), numFiles, null);
     }
 
     @AfterClass

@@ -142,6 +142,6 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }
-        })).as("We should have 2 docs only...").isTrue();
+        }, MAX_WAIT_FOR_SEARCH)).as("We should have 2 docs only...").isTrue();
     }
 }

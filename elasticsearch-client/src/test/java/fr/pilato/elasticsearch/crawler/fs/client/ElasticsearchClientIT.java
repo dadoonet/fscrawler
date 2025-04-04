@@ -64,6 +64,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     protected static final String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
 
+    private static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(1);
+
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
         if (testClusterUrl == null) {
@@ -289,7 +291,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.indexSingle(getCrawlerName(), "4", "{ \"number\": 2 }", null);
 
         // Wait until we have 4 documents indexed
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L, TimeValue.timeValueSeconds(10));
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L);
 
         // match_all
         {
@@ -546,7 +548,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(bulkResponse.getItems()).isNotEmpty();
 
             // Wait until we have the expected number of documents indexed
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems, TimeValue.timeValueSeconds(10));
+            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems);
         }
         {
             esClient.deleteIndex(getCrawlerName());
@@ -573,7 +575,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(bulkResponse.getItems()).isNotEmpty();
 
             // Wait until we have the expected number of documents indexed
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems - nbItemsToDelete, TimeValue.timeValueSeconds(10));
+            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems - nbItemsToDelete);
         }
         {
             esClient.deleteIndex(getCrawlerName());
@@ -599,7 +601,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(bulkResponse.getItems()).isNotEmpty();
 
             // Wait until we have the expected number of documents indexed
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems, TimeValue.timeValueSeconds(10));
+            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems);
         }
         {
             esClient.deleteIndex(getCrawlerName());
@@ -649,7 +651,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(errors).isEqualTo(nbErrors);
 
             // Wait until we have the expected number of documents indexed
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems - nbErrors, TimeValue.timeValueSeconds(10));
+            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), nbItems - nbErrors);
         }
     }
 
@@ -660,12 +662,12 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.indexSingle(getCrawlerName(), "3", "{ \"number\": 1 }", null);
         esClient.indexSingle(getCrawlerName(), "4", "{ \"number\": 2 }", null);
 
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L, TimeValue.timeValueSeconds(10));
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L);
         assertThat(response.getTotalHits()).isEqualTo(4L);
 
         esClient.deleteSingle(getCrawlerName(), "1");
 
-        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, TimeValue.timeValueSeconds(10));
+        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L);
         assertThat(response.getTotalHits()).isEqualTo(3L);
 
         try {
@@ -675,7 +677,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(e.getMessage()).isEqualTo("Document " + getCrawlerName() + "/99999 does not exist");
         }
 
-        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, TimeValue.timeValueSeconds(10));
+        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L);
         assertThat(response.getTotalHits()).isEqualTo(3L);
     }
 
@@ -878,7 +880,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.flush();
 
         // Wait until we have the expected number of documents indexed
-        countTestHelper(new ESSearchRequest().withIndex(DOC_INDEX_NAME), 3L, TimeValue.timeValueSeconds(10));
+        countTestHelper(new ESSearchRequest().withIndex(DOC_INDEX_NAME), 3L);
 
         // We can run some queries to check that semantic search actually works as expected
         assertThat(esClient.search(new ESSearchRequest()
@@ -940,16 +942,14 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
      *
      * @param request   Elasticsearch request to run.
      * @param expected  expected number of docs. Null if at least 1.
-     * @param timeout   Time before we declare a failure
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    private ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final TimeValue timeout) throws Exception {
-
+    private ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected) throws Exception {
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        logger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
+        logger.info("  ---> Waiting up to {} for {} documents in {}", MAX_WAIT_FOR_SEARCH.toString(),
                 expected == null ? "some" : expected, request.getIndex());
         long hits = awaitBusy(() -> {
             long totalHits;
@@ -972,7 +972,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
             return totalHits;
-        }, expected, timeout);
+        }, expected, MAX_WAIT_FOR_SEARCH);
 
         if (expected == null) {
             assertThat(hits).withFailMessage("     ---> expecting some documents in {}", request.getIndex()).isGreaterThan(0);
