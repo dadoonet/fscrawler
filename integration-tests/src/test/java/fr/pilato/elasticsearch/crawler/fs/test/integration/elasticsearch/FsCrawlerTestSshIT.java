@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
@@ -119,6 +120,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     public void ssh() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUrl("/");
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(1));
         fsSettings.getServer().setHostname(sshd.getHost());
         fsSettings.getServer().setPort(sshd.getPort());
         fsSettings.getServer().setUsername(SSH_USERNAME);
@@ -133,6 +135,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     public void ssh_with_key() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUrl("/");
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(1));
         fsSettings.getServer().setHostname(sshd.getHost());
         fsSettings.getServer().setPort(sshd.getPort());
         fsSettings.getServer().setUsername(SSH_USERNAME);

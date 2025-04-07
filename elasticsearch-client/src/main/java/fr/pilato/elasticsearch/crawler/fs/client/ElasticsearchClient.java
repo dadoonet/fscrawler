@@ -1026,9 +1026,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return response;
         } catch (WebApplicationException e) {
             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                logger.warn("Error on server side. {} -> {}",
+                logger.error("Error on server side. {} -> {} / {}",
                         e.getResponse().getStatus(),
-                        e.getResponse().getStatusInfo().getReasonPhrase());
+                        e.getResponse().getStatusInfo().getReasonPhrase(),
+                        e.getResponse().readEntity(String.class));
             } else {
                 logger.debug("Error while running {} {}/{}: {}", method, node, path == null ? "" : path, e.getResponse().readEntity(String.class));
             }
