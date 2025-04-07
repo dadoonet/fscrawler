@@ -66,7 +66,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     protected FsSettings createTestSettings(String name) {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.setName(name);
-        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(1));
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(5));
         fsSettings.getFs().setUrl(currentTestResourceDir.toString());
 
         // Clone the elasticsearchConfiguration to avoid modifying the default one
@@ -76,6 +76,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         fsSettings.setElasticsearch(elasticsearch);
         fsSettings.getElasticsearch().setIndex(name);
         fsSettings.getElasticsearch().setIndexFolder(name + INDEX_SUFFIX_FOLDER);
+        fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
         // We explicitly set semantic search to false because IT takes too long time
         fsSettings.getElasticsearch().setSemanticSearch(false);
         return fsSettings;
