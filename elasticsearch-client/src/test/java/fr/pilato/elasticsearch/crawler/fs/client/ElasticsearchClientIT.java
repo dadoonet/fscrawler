@@ -65,6 +65,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
 
     private static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(1);
+    private static final TimeValue MAX_WAIT_FOR_SEARCH_LONG_TESTS = TimeValue.timeValueMinutes(5);
+    private static TimeValue maxWaitForSearch;
 
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
@@ -110,6 +112,14 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         String version = esClient.getVersion();
         logger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
+
+        if (esClient.isSemanticSupported()) {
+            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", MAX_WAIT_FOR_SEARCH_LONG_TESTS.toString());
+            maxWaitForSearch = MAX_WAIT_FOR_SEARCH_LONG_TESTS;
+        } else {
+            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", MAX_WAIT_FOR_SEARCH.toString());
+            maxWaitForSearch = MAX_WAIT_FOR_SEARCH;
+        }
     }
 
     private static ElasticsearchClient startClient(boolean sslVerification) throws ElasticsearchClientException {
@@ -945,11 +955,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    private ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected) throws Exception {
+    private static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected) throws Exception {
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        logger.info("  ---> Waiting up to {} for {} documents in {}", MAX_WAIT_FOR_SEARCH.toString(),
+        logger.info("  ---> Waiting up to {} for {} documents in {}", maxWaitForSearch.toString(),
                 expected == null ? "some" : expected, request.getIndex());
         long hits = awaitBusy(() -> {
             long totalHits;
@@ -972,7 +982,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
             return totalHits;
-        }, expected, MAX_WAIT_FOR_SEARCH);
+        }, expected, maxWaitForSearch);
 
         if (expected == null) {
             assertThat(hits)
