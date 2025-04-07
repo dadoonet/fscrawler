@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -136,10 +137,10 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
             Files.copy(sourceFile, newDir.resolve("sample.txt"));
         }
 
-        crawler = startCrawler(createTestSettings());
+        crawler = startCrawler(createTestSettings(), MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // We expect to have x files (<- whoa that's funny Mulder!)
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), subdirs+1, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), subdirs+1, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // Run aggs
         ESSearchResponse response = documentService.search(new ESSearchRequest()

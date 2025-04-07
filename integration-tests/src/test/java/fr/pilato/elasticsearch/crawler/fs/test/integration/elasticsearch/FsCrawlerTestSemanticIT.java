@@ -51,11 +51,11 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setSemanticSearch(true);
-        fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(5));
-        crawler = startCrawler(fsSettings, TimeValue.timeValueMinutes(5));
+        fsSettings.getFs().setUpdateRate(MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        crawler = startCrawler(fsSettings, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // We expect to have 3 files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // 2 pdf and 1 txt
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.extension", "pdf")), 2L, null);
