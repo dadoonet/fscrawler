@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import com.carrotsearch.randomizedtesting.annotations.Timeout;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
@@ -79,6 +80,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
+    @Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
     public void uploadAllDocuments() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {

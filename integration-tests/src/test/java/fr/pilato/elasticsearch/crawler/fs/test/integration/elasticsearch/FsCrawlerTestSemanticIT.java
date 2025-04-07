@@ -19,6 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import com.carrotsearch.randomizedtesting.annotations.Nightly;
+import com.carrotsearch.randomizedtesting.annotations.Timeout;
+import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -29,6 +32,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
@@ -36,6 +40,9 @@ import static org.assertj.core.api.Assumptions.assumeThat;
  * Test if semantic search is working as we could expect, ie: not activated when it can't or
  * activated when it should.
  */
+@Nightly("Loading semantic models could take some minutes")
+@TimeoutSuite(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+@Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
     /**
@@ -50,11 +57,11 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setSemanticSearch(true);
-        fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(5));
-        crawler = startCrawler(fsSettings, TimeValue.timeValueMinutes(5));
+        fsSettings.getFs().setUpdateRate(MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        crawler = startCrawler(fsSettings, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // We expect to have 3 files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // 2 pdf and 1 txt
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.extension", "pdf")), 2L, null);

@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import com.carrotsearch.randomizedtesting.annotations.Timeout;
+import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
@@ -44,12 +46,15 @@ import java.nio.file.Path;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Test all type of documents we have
  */
+@TimeoutSuite(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+@Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static FsCrawlerImpl crawler = null;

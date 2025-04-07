@@ -1,6 +1,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.Nightly;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
@@ -64,6 +65,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
 
     private static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(1);
+    private static final TimeValue MAX_WAIT_FOR_SEARCH_LONG_TESTS = TimeValue.timeValueMinutes(5);
+    private static TimeValue maxWaitForSearch;
 
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
@@ -170,6 +173,10 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
         esClient.deleteIndex(getCrawlerName());
         esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+        // Remove existing templates if any
+        logger.info(" -> Removing existing templates");
+        removeIndexTemplates();
+        removeComponentTemplates();
     }
 
     @Test
@@ -858,12 +865,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         assertThat(license).isNotEmpty();
     }
 
+    @Nightly("This test is only run in nightly builds as semantic search could take a long time")
     @Test
     public void indexFsCrawlerDocuments() throws Exception {
-        // Remove existing templates if any
-        removeIndexTemplates();
-        removeComponentTemplates();
-
         // We push the templates to the cluster
         esClient.createIndexAndComponentTemplates();
 
@@ -945,11 +949,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    private ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected) throws Exception {
+    private static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected) throws Exception {
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        logger.info("  ---> Waiting up to {} for {} documents in {}", MAX_WAIT_FOR_SEARCH,
+        logger.info("  ---> Waiting up to {} for {} documents in {}", maxWaitForSearch,
                 expected == null ? "some" : expected, request.getIndex());
         long hits = awaitBusy(() -> {
             long totalHits;
@@ -972,7 +976,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
             return totalHits;
-        }, expected, MAX_WAIT_FOR_SEARCH);
+        }, expected, maxWaitForSearch);
 
         if (expected == null) {
             assertThat(hits)

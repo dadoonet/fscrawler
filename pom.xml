@@ -85,8 +85,10 @@
         <tests.parallelism>auto</tests.parallelism>
         <tests.seed></tests.seed>
         <!-- Running the tests with Tesseract OCR might take time -->
-        <tests.timeoutSuite>600000</tests.timeoutSuite>
-        <tests.timeout>600000</tests.timeout>
+        <tests.timeoutSuite></tests.timeoutSuite>
+        <tests.timeout></tests.timeout>
+        <!-- When we want to run tests which could take a lot of time - ie semantic search -->
+        <tests.nightly></tests.nightly>
 
         <!-- For CVE Audit with Sonatype -->
         <env.SONATYPE_USER></env.SONATYPE_USER>
@@ -200,6 +202,7 @@
                             <tests.timeout>${tests.timeout}</tests.timeout>
                             <tests.locale>${tests.locale}</tests.locale>
                             <tests.timezone>${tests.timezone}</tests.timezone>
+                            <tests.nightly>${tests.nightly}</tests.nightly>
                             <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                             <java.awt.headless>true</java.awt.headless>
                             <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
