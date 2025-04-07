@@ -224,7 +224,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     public void ocr() throws IOException, ElasticsearchClientException {
         assumeThat(ExternalParser.check("tesseract"))
                 .as("Tesseract is not installed so we are skipping this test")
-                        .isTrue();
+                .isTrue();
         runSearch("test-ocr.png", "words");
         runSearch("test-ocr.pdf", "words");
     }

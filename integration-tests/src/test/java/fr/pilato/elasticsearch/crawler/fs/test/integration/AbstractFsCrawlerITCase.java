@@ -109,7 +109,9 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
             } catch (IOException e) {
                 return false;
             }
-        }, duration)).as("Job meta file should exists in ~/.fscrawler...").isTrue();
+        }, duration))
+                .as("Job meta file should exists in ~/.fscrawler...")
+                .isTrue();
 
         countTestHelper(new ESSearchRequest().withIndex(fsSettings.getElasticsearch().getIndex()), null, null, duration);
 
