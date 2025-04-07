@@ -975,11 +975,12 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         }, expected, MAX_WAIT_FOR_SEARCH);
 
         if (expected == null) {
-            assertThat(hits).as("some documents in {}", request.getIndex())
+            assertThat(hits)
+                    .as("checking if any document in " + request.getIndex())
                     .isGreaterThan(0);
         } else {
             assertThat(hits)
-                    .as("expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex())
+                    .as("checking documents in " + request.getIndex())
                     .isEqualTo(expected);
         }
 

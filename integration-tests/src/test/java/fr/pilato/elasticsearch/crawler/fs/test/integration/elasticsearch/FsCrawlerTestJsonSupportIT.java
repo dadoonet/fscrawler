@@ -60,7 +60,9 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }
-        }, MAX_WAIT_FOR_SEARCH)).as("We should have 2 doc for tweet in text field...").isTrue();
+        }, MAX_WAIT_FOR_SEARCH))
+                .as("We should have 2 doc for tweet in text field...")
+                .isTrue();
     }
 
     /**
@@ -82,7 +84,9 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }
-        })).as("We should have 0 doc for tweet in text field...").isTrue();
+        }, MAX_WAIT_FOR_SEARCH))
+                .as("We should have 0 doc for tweet in text field...")
+                .isTrue();
 
         assertThat(awaitBusy(() -> {
             try {
@@ -94,7 +98,9 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }
-        }, MAX_WAIT_FOR_SEARCH)).as("We should have 2 docs for tweet in content field...").isTrue();
+        }, MAX_WAIT_FOR_SEARCH))
+                .as("We should have 2 docs for tweet in content field...")
+                .isTrue();
     }
 
     /**
@@ -117,7 +123,9 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }
-        }, MAX_WAIT_FOR_SEARCH)).as("We should have 2 doc for tweet in object.text field...").isTrue();
+        }, MAX_WAIT_FOR_SEARCH))
+                .as("We should have 2 doc for tweet in object.text field...")
+                .isTrue();
     }
 
     /**
@@ -142,6 +150,8 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                 logger.warn("Caught exception while running the test", e);
                 return false;
             }
-        }, MAX_WAIT_FOR_SEARCH)).as("We should have 2 docs only...").isTrue();
+        }, MAX_WAIT_FOR_SEARCH))
+                .as("We should have 2 docs only...")
+                .isTrue();
     }
 }

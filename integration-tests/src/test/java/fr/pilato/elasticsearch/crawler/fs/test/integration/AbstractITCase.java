@@ -457,13 +457,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         if (expected == null) {
             assertThat(hits)
-                    .as("expecting some documents in {}", request.getIndex())
+                    .as("checking if any document in " + request.getIndex())
                     .isGreaterThan(0);
 
         } else {
             assertThat(hits)
-                    .withFailMessage("", expected)
-                    .as("expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex())
+                    .as("checking documents in " + request.getIndex())
                     .isEqualTo(expected);
         }
 
