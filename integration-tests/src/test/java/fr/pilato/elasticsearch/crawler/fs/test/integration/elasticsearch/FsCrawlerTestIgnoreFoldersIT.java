@@ -52,7 +52,7 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
             documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
             // If we have an answer, it means that we are running on version 6
             ESSearchResponse response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
-            assertThat(response.getTotalHits()).isEqualTo(0L);
+            assertThat(response.getTotalHits()).isZero();
             assertThat(extractMajorVersion(documentService.getVersion())).isEqualTo(6);
         } catch (ElasticsearchClientException e) {
             assertThat(e.getMessage()).isEqualTo("index " + getCrawlerName() + INDEX_SUFFIX_FOLDER + " does not exist.");

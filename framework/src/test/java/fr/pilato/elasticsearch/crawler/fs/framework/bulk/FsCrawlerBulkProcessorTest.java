@@ -52,7 +52,7 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
                         TestBulkRequest::new);
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
-        assertThat(listener.nbSuccessfulExecutions).isEqualTo(0);
+        assertThat(listener.nbSuccessfulExecutions).isZero();
         generatePayload(bulkProcessor, maxActions, 1);
         assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
         generatePayload(bulkProcessor, maxActions + 1, 1);
@@ -74,7 +74,7 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
                         TestBulkRequest::new);
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
-        assertThat(listener.nbSuccessfulExecutions).isEqualTo(0);
+        assertThat(listener.nbSuccessfulExecutions).isZero();
         generatePayload(bulkProcessor, maxActions, 1);
         assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
         generatePayload(bulkProcessor, maxActions + 1, 1);
@@ -96,7 +96,7 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
                         TestBulkRequest::new);
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
-        assertThat(listener.nbSuccessfulExecutions).isEqualTo(0);
+        assertThat(listener.nbSuccessfulExecutions).isZero();
         generatePayload(bulkProcessor, maxActions, 1);
         assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
         generatePayload(bulkProcessor, maxActions + 1, 1);
@@ -118,7 +118,7 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
                         TestBulkRequest::new);
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
-        assertThat(listener.nbSuccessfulExecutions).isEqualTo(0);
+        assertThat(listener.nbSuccessfulExecutions).isZero();
         generatePayload(bulkProcessor, maxActions, 1);
         assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
         generatePayload(bulkProcessor, maxActions + 1, maxActions - 1);
@@ -142,7 +142,7 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         Thread.sleep(100);
 
         generatePayload(bulkProcessor, 1, maxActions);
-        assertThat(listener.nbSuccessfulExecutions).isEqualTo(0);
+        assertThat(listener.nbSuccessfulExecutions).isZero();
 
         Thread.sleep(flushInterval.millis());
 
