@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
@@ -214,9 +215,11 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     @Test
     public void localDateToDate() {
         LocalDateTime now = LocalDateTime.now();
+        Date date = FsCrawlerUtil.localDateTimeToDate(now);
         logger.info("Current Time [{}] in [{}] is actually [{}]", 
                 now, 
-                TimeZone.getDefault().getDisplayName(), 
-                FsCrawlerUtil.localDateTimeToDate(now));
+                TimeZone.getDefault().getDisplayName(),
+                date);
+        assertThat(date).isNotNull();
     }
 }
