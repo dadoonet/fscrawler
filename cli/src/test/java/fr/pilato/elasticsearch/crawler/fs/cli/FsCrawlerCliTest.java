@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 /**
@@ -131,7 +132,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         System.setProperty("MY_JOB_NAME", "fscrawler_env_variables");
 
         try {
-            FsCrawlerCli.main(args);
+            assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
         } finally {
             // Remove the environment variable
             System.clearProperty("MY_JOB_NAME");
@@ -151,7 +152,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         System.setProperty("FSCRAWLER_FS_URL", "/foo/bar");
 
         try {
-            FsCrawlerCli.main(args);
+            assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
         } finally {
             // Remove the environment variable
             System.clearProperty("FSCRAWLER_NAME");
@@ -182,6 +183,6 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
 
         String[] args = { "--config_dir", metadataDir.toString(), jobName };
 
-        FsCrawlerCli.main(args);
+        assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
     }
 }
