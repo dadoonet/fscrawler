@@ -65,8 +65,6 @@ public abstract class FsParserAbstract extends FsParser {
     private final FileAbstractor<?> fileAbstractor;
     private final String metadataFilename;
 
-    private ScanStatistic stats;
-
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
         this.fsSettings = fsSettings;
         this.fsJobFileHandler = new FsJobFileHandler(config);
@@ -135,7 +133,7 @@ public abstract class FsParserAbstract extends FsParser {
 
             try {
                 logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
-                stats = new ScanStatistic(fsSettings.getFs().getUrl());
+                ScanStatistic stats = new ScanStatistic(fsSettings.getFs().getUrl());
                 LocalDateTime startDate = LocalDateTime.now();
                 stats.setStartTime(startDate);
 
@@ -156,21 +154,21 @@ public abstract class FsParserAbstract extends FsParser {
                 // We only index the root directory once (first run)
                 // That means that we don't have a scanDate yet
                 if (scanDate == null && fsSettings.getFs().isIndexFolders()) {
-                    indexDirectory(fsSettings.getFs().getUrl());
+                    indexDirectory(fsSettings.getFs().getUrl(), fsSettings.getFs().getUrl());
                 }
 
                 if (scanDate == null) {
                     scanDate = LocalDateTime.MIN;
                 }
 
-                addFilesRecursively(fsSettings.getFs().getUrl(), scanDate);
+                addFilesRecursively(fsSettings.getFs().getUrl(), scanDate, stats);
 
                 stats.setEndTime(LocalDateTime.now());
                 logger.info("Run #{}: job [{}]: indexed [{}], deleted [{}], documents up to [{}]. " +
                                 "Started at [{}], finished at [{}], took [{}]", run, fsSettings.getName(),
                         stats.getNbDocScan(), stats.getNbDocDeleted(), scanDatenew,
                         stats.getStartTime(), stats.getEndTime(), stats.computeDuration());
-                updateFsJob(fsSettings.getName(), scanDatenew);
+                updateFsJob(fsSettings.getName(), scanDatenew, stats);
                 // TODO Update stats
                 // updateStats(fsSettings.getName(), stats);
             } catch (Exception e) {
@@ -226,24 +224,27 @@ public abstract class FsParserAbstract extends FsParser {
     }
 
     /**
-     * Update the job metadata
-     * @param jobName job name
+     * Update the job statistics
+     *
+     * @param jobName  job name
      * @param scanDate last date we scan the dirs
+     * @param stats    the stats used to update the job statistics
      * @throws Exception In case of error
      */
-    private void updateFsJob(final String jobName, final LocalDateTime scanDate) throws Exception {
+    private void updateFsJob(final String jobName, final LocalDateTime scanDate, final ScanStatistic stats) throws Exception {
         FsJob fsJob = FsJob.builder()
                 .setName(jobName)
                 .setLastrun(scanDate)
                 .setIndexed(stats.getNbDocScan())
                 .setDeleted(stats.getNbDocDeleted())
                 .build();
+        // TODO replace this with a call to the management service (Elasticsearch)
         fsJobFileHandler.write(jobName, fsJob);
         logger.debug("Updating job metadata after run for [{}]: lastrun [{}], indexed [{}], deleted [{}]",
                 jobName, scanDate, stats.getNbDocScan(), stats.getNbDocDeleted());
     }
 
-    private void addFilesRecursively(final String filepath, final LocalDateTime lastScanDate)
+    private void addFilesRecursively(final String filepath, final LocalDateTime lastScanDate, final ScanStatistic stats)
             throws Exception {
         logger.debug("indexing [{}] content", filepath);
 
@@ -333,9 +334,9 @@ public abstract class FsParserAbstract extends FsParser {
                             logger.debug("  - folder: {}", filename);
                             if (fsSettings.getFs().isIndexFolders()) {
                                 fsFolders.add(child.getFullpath());
-                                indexDirectory(child.getFullpath());
+                                indexDirectory(child.getFullpath(), fsSettings.getFs().getUrl());
                             }
-                            addFilesRecursively(child.getFullpath(), lastScanDate);
+                            addFilesRecursively(child.getFullpath(), lastScanDate, stats);
                         } else {
                             logger.debug("  - other: {}", filename);
                             logger.debug("Not a file nor a dir. Skipping {}", child.getFullpath());
@@ -561,8 +562,9 @@ public abstract class FsParserAbstract extends FsParser {
     /**
      * Index a directory
      * @param path complete path like "/", "/path/to/subdir", "C:\\dir", "C:/dir", "/C:/dir", "//SOMEONE/dir"
+     * @param rootPath the root path we started from
      */
-    private void indexDirectory(String path) throws Exception {
+    private void indexDirectory(String path, String rootPath) throws Exception {
         String name = path.substring(path.lastIndexOf(pathSeparator) + 1);
         String rootdir = path.substring(0, path.lastIndexOf(pathSeparator));
 
@@ -571,7 +573,7 @@ public abstract class FsParserAbstract extends FsParser {
         Folder folder = new Folder(name,
                 SignTool.sign(rootdir),
                 path,
-                computeVirtualPathName(stats.getRootPath(), path),
+                computeVirtualPathName(rootPath, path),
                 getCreationTime(folderInfo),
                 getModificationTime(folderInfo),
                 getLastAccessTime(folderInfo));
