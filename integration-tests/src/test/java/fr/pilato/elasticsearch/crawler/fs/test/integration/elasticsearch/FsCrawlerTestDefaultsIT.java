@@ -79,7 +79,8 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We should have one doc
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")), 1L, null);
+        assertThat(response.getTotalHits()).isEqualTo(1);
     }
 
     /**

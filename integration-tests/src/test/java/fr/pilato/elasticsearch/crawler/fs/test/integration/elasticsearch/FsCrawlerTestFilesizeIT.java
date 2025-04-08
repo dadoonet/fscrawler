@@ -124,6 +124,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIgnoreAbove(ByteSizeValue.parseBytesSizeValue("10kb"));
         crawler = startCrawler(fsSettings);
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        assertThat(response.getTotalHits()).isEqualTo(1);
     }
 }
