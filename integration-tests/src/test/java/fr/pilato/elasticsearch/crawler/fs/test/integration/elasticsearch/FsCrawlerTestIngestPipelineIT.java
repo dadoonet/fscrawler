@@ -108,8 +108,9 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have one file
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
                 .withESQuery(new ESTermQuery("ip_addr", "127.0.0.1")), 1L, currentTestResourceDir);
+        assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 
     /**
