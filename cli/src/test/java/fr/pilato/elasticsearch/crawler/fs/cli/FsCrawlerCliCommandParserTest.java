@@ -54,7 +54,7 @@ public class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         assertThat(command).isNotNull();
         assertThat(command.configDir).isEqualTo(metadataDir.toString());
-        assertThat(command.loop).isEqualTo(0);
+        assertThat(command.loop).isZero();
         assertThat(command.rest).isTrue();
         assertThat(command.upgrade).isTrue();
         assertThat(command.restart).isTrue();
