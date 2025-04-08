@@ -42,8 +42,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_S
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
 import static org.apache.commons.lang3.StringUtils.split;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
@@ -227,7 +226,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Test
     public void refresh() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
-        esClient.refresh(getCrawlerName());
+        assertThatNoException().isThrownBy(() -> esClient.refresh(getCrawlerName()));
     }
 
     /**
@@ -239,12 +238,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void createIndexAlreadyExistsShouldFail() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
-        try {
-            esClient.createIndex(getCrawlerName(), false, null);
-            fail("we should reject creation of an already existing index");
-        } catch (ElasticsearchClientException e) {
-            assertThat(e.getMessage()).contains("already exists");
-        }
+        assertThatExceptionOfType(ElasticsearchClientException.class)
+                .isThrownBy(() -> esClient.createIndex(getCrawlerName(), false, null))
+                .withMessageContaining("already exists");
     }
 
     /**
@@ -256,7 +252,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void createIndexAlreadyExistsShouldBeIgnored() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
-        esClient.createIndex(getCrawlerName(), true, null);
+        assertThatNoException()
+                .isThrownBy(() -> esClient.createIndex(getCrawlerName(), true, null));
     }
 
     /**
@@ -714,10 +711,10 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         }
         fsSettings.getElasticsearch().setSslVerification(false);
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
-            localClient.start();
-            localClient.isExistingIndex("foo");
-            localClient.isExistingIndex("bar");
-            localClient.isExistingIndex("baz");
+            assertThatNoException().isThrownBy(localClient::start);
+            assertThat(localClient.isExistingIndex("foo")).isFalse();
+            assertThat(localClient.isExistingIndex("bar")).isFalse();
+            assertThat(localClient.isExistingIndex("baz")).isFalse();
         }
     }
 
@@ -766,7 +763,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void withNonRunningNodes() {
+    public void withNonRunningNodes() throws IOException {
         // Build a client with a non-running node
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setNodes(List.of(
@@ -777,17 +774,14 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
-            localClient.start();
-            fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
-        } catch (IOException ex) {
-            fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
-        } catch (ElasticsearchClientException ex) {
-            assertThat(ex.getMessage()).contains("All nodes are failing");
+            assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(localClient::start)
+                    .withMessageContaining("All nodes are failing");
         }
     }
 
     @Test
-    public void withNonRunningNode() {
+    public void withNonRunningNode() throws IOException {
         // Build a client with a non-running node
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")));
@@ -796,14 +790,12 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
-            localClient.start();
-            fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
-        } catch (IOException ex) {
-            fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
-        } catch (ElasticsearchClientException ex) {
-            assertThat(ex.getMessage()).contains("Can not execute GET");
-            assertThat(ex.getCause().getCause()).isInstanceOf(ConnectException.class);
-            assertThat(ex.getCause().getCause().getMessage()).contains("Connection refused");
+            assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(localClient::start)
+                    .withMessageContaining("Can not execute GET")
+                    .havingCause()
+                    .withCauseInstanceOf(ConnectException.class)
+                    .withMessageContaining("Connection refused");
         }
     }
 
