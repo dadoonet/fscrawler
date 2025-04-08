@@ -66,7 +66,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     protected FsSettings createTestSettings(String name) {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.setName(name);
-        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(2));
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(5));
         fsSettings.getFs().setUrl(currentTestResourceDir.toString());
 
         // Clone the elasticsearchConfiguration to avoid modifying the default one

@@ -31,7 +31,7 @@ import java.util.Properties;
 /**
  * This creates a TestContainer Elasticsearch instance
  */
-public class TestContainerHelper {
+class TestContainerHelper {
 
     private static final Logger log = LoggerFactory.getLogger(TestContainerHelper.class);
 
