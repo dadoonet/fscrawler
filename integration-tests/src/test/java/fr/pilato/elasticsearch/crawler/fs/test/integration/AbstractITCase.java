@@ -286,7 +286,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
 
         if (fsSettings == null) {
-            logger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
+            logger.info("Elasticsearch is not running on [{}]. We switch to TestContainer.", testClusterUrl);
             testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
             // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
             if (testContainerHelper.getCertAsBytes() != null) {
@@ -348,7 +348,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             documentService.start();
             return fsSettings;
         } catch (ElasticsearchClientException e) {
-            logger.info("Elasticsearch is not running on [{}]", testClusterUrl);
+            logger.debug("Elasticsearch is not running on [{}]", testClusterUrl);
             if ((e.getCause() instanceof SocketException ||
                     (e.getCause() instanceof ProcessingException && e.getCause().getCause() instanceof SSLException))
                     && testClusterUrl.toLowerCase().startsWith("https")) {
