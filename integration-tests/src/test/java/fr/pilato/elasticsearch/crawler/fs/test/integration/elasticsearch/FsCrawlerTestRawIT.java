@@ -30,8 +30,7 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Test json support crawler setting
@@ -45,9 +44,10 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
     public void mapping() throws Exception {
         crawler = startCrawler();
 
-        // We don't really care here about the fact that one document has been indexed
-        // But let's add manually some documents
+        // We should have one document indexed
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
+        // Let's add manually some documents
         // The 1st document simulates that we are indexing a String field which contains something like a date
         String json1 = "{\n" +
                 "  \"meta\": {\n" +
@@ -66,11 +66,16 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
                 "  }\n" +
                 "}\n";
 
-        // This will cause an Elasticsearch Exception as the String is not a Date
-        // If the mapping is incorrect
+        // This should not raise any exception even if the String is not a Date
+        // because of the default mapping we are applying defines all meta raw fields as text
         documentService.indexRawJson(getCrawlerName(), "1", json1, null);
+        documentService.flush();
         documentService.indexRawJson(getCrawlerName(), "2", json2, null);
         documentService.flush();
+
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        assertThat(searchResponse.getHits())
+                .anySatisfy(hit -> assertThat(hit.getId()).containsAnyOf("1", "2"));
     }
 
     @Test
