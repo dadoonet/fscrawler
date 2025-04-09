@@ -29,7 +29,6 @@ import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.client.*;
@@ -66,7 +65,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class,
         AbstractRestITCase.MinioThreadFilter.class
 })
-public abstract class AbstractRestITCase extends AbstractITCase {
+public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static final int DEFAULT_TEST_REST_PORT = 0;
     private static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
@@ -95,7 +94,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         return testRestPort;
     }
 
-    public abstract FsSettings getFsSettings() throws IOException;
+    public abstract FsSettings getFsSettings();
 
     @Before
     public void copyTags() throws IOException {
@@ -120,8 +119,9 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     @Before
     public void startRestServer() throws Exception {
         FsSettings fsSettings = getFsSettings();
-        fsSettings.getElasticsearch().setIndex(getCrawlerName());
-        FsCrawlerValidator.validateSettings(logger, fsSettings);
+
+        // Add the rest interface
+        fsSettings.getRest().setUrl("http://127.0.0.1:" + getRestPort() + "/fscrawler");
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
         this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
