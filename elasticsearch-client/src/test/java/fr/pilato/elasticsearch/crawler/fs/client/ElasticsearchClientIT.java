@@ -972,7 +972,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        logger.info("  ---> Waiting up to {} for {} documents in {}", maxWaitForSearch.toString(),
+        logger.info("  ---> Waiting up to {} for {} documents in {}", maxWaitForSearch,
                 expected == null ? "some" : expected, request.getIndex());
         long hits = awaitBusy(() -> {
             long totalHits;
