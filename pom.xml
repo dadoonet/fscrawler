@@ -655,7 +655,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>33.4.6-jre</version>
+                <version>33.4.7-jre</version>
             </dependency>
 
             <!-- Because of CVE-2024-29857 - this comes from Tika 2.9.2 -->
