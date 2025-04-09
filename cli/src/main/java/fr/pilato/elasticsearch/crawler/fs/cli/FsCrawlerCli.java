@@ -61,6 +61,7 @@ public class FsCrawlerCli {
 
     private static final Logger logger = LogManager.getLogger();
     private static FsCrawlerPluginsManager pluginsManager;
+    private static RestServer restServer;
 
     @SuppressWarnings("CanBeFinal")
     public static class FsCrawlerCommand {
@@ -358,7 +359,6 @@ public class FsCrawlerCli {
         pluginsManager.startPlugins();
 
         try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, command.loop, command.rest)) {
-            Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler, pluginsManager));
             // Let see if we want to upgrade an existing cluster to the latest version
             if (command.upgrade) {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
@@ -371,8 +371,12 @@ public class FsCrawlerCli {
 
                 // Start the REST Server if needed
                 if (command.rest) {
-                    RestServer.start(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService(), pluginsManager);
+                    restServer = new RestServer(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService(), pluginsManager);
+                    restServer.start();
                 }
+
+                // We add a shutdown hook to stop the crawler and all the related services
+                Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler, pluginsManager, restServer));
 
                 // We just have to wait until the process is stopped
                 while (!fsCrawler.getFsParser().isClosed()) {
