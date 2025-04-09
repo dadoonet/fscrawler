@@ -63,8 +63,7 @@ import java.util.zip.ZipFile;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -558,5 +557,28 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         elasticsearch.setUsername(source.getUsername());
         elasticsearch.setPassword(source.getPassword());
         return elasticsearch;
+    }
+
+    protected FsSettings createTestSettings() {
+        return createTestSettings(getCrawlerName());
+    }
+
+    protected FsSettings createTestSettings(String name) {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName(name);
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(5));
+        fsSettings.getFs().setUrl(currentTestResourceDir.toString());
+
+        // Clone the elasticsearchConfiguration to avoid modifying the default one
+        // We start with a clean configuration
+        Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
+
+        fsSettings.setElasticsearch(elasticsearch);
+        fsSettings.getElasticsearch().setIndex(name);
+        fsSettings.getElasticsearch().setIndexFolder(name + INDEX_SUFFIX_FOLDER);
+        fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
+        // We explicitly set semantic search to false because IT takes too long time
+        fsSettings.getElasticsearch().setSemanticSearch(false);
+        return fsSettings;
     }
 }
