@@ -76,6 +76,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     protected Path currentTestTagDir;
     private FsCrawlerManagementServiceElasticsearchImpl managementService;
     protected FsCrawlerDocumentService documentService;
+    private RestServer restServer;
 
     /**
      * Get the Rest Port. It could be set externally. If 0,
@@ -129,7 +130,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         managementService.start();
         documentService.start();
 
-        RestServer.start(fsSettings, managementService, documentService, pluginsManager);
+        restServer = new RestServer(fsSettings, managementService, documentService, pluginsManager);
+        restServer.start();
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
         managementService.getClient().deleteIndex(getCrawlerName());
@@ -140,15 +142,9 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
 
     @After
     public void stopRestServer() throws IOException {
-        RestServer.close();
-        if (managementService != null) {
-            managementService.close();
-            managementService = null;
-        }
-        if (documentService != null) {
-            documentService.close();
-            documentService = null;
-        }
+        restServer.close();
+        managementService.close();
+        documentService.close();
     }
 
     public static <T> T get(String path, Class<T> clazz) {
