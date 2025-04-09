@@ -73,7 +73,7 @@ public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
         logger.debug("Testing [{}]", value);
 
         ByteSizeValue byteSizeValue = ByteSizeValue.parseBytesSizeValue(value);
-        assertThat(byteSizeValue.toString()).isEqualTo(value);
+        assertThat(byteSizeValue).hasToString(value);
         assertThat(byteSizeValue.getBytes()).isEqualTo(bytes);
     }
 

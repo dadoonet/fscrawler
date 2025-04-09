@@ -26,8 +26,7 @@ public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void toUnderscoreCase() {
-        assertThat(toUnderscoreCase(""))
-                .isEqualTo("");
+        assertThat(toUnderscoreCase("")).isEmpty();
         assertThat(toUnderscoreCase("AbstractFSCrawlerTestCaseTest"))
                 .isEqualTo("abstract_f_s_crawler_test_case_test");
         assertThat(toUnderscoreCase("abstract_f_s_crawler_test_case_test"))

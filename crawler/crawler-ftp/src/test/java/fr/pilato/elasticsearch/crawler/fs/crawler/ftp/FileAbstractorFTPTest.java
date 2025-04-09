@@ -184,8 +184,7 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
         Collection<FileAbstractModel> files = ftp.getFiles(permissionDir);
         assertThat(files).hasSize(2);
         List<String> filenames = files.stream().map(FileAbstractModel::getName).collect(Collectors.toList());
-        assertThat(filenames.contains("all.txt")).isTrue();
-        assertThat(filenames.contains("none.txt")).isTrue();
+        assertThat(filenames).contains("all.txt", "none.txt");
         for (FileAbstractModel file : files) {
             if (file.getName().equals("all.txt")) {
                 assertThat(file.getPermissions()).isEqualTo(777);
