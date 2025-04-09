@@ -312,7 +312,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(hit.getId()).containsAnyOf("1", "2", "3", "4");
             assertThat(hit.getVersion()).isEqualTo(1L);
             assertThat(hit.getSource()).isNotEmpty();
-            assertThat(hit.getHighlightFields().isEmpty()).isTrue();
+            assertThat(hit.getHighlightFields()).isEmpty();
             assertThat(hit.getStoredFields()).isNull();
         }
     }
@@ -328,7 +328,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         assertThat(response.getHits().get(0).getId()).isEqualTo("1");
         assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
         assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-        assertThat(response.getHits().get(0).getHighlightFields().isEmpty()).isTrue();
+        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
         assertThat(response.getHits().get(0).getStoredFields()).isNull();
     }
 
@@ -343,7 +343,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         assertThat(response.getHits().get(0).getId()).isEqualTo("1");
         assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
         assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-        assertThat(response.getHits().get(0).getHighlightFields().isEmpty()).isTrue();
+        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
         assertThat(response.getHits().get(0).getStoredFields()).isNull();
     }
 
@@ -360,7 +360,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(hit.getId()).containsAnyOf("1", "2");
             assertThat(hit.getVersion()).isEqualTo(1L);
             assertThat(hit.getSource()).isNotEmpty();
-            assertThat(hit.getHighlightFields().isEmpty()).isTrue();
+            assertThat(hit.getHighlightFields()).isEmpty();
             assertThat(hit.getStoredFields()).isNull();
         }
     }
@@ -376,7 +376,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         assertThat(response.getHits().get(0).getId()).isEqualTo("3");
         assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
         assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-        assertThat(response.getHits().get(0).getHighlightFields().isEmpty()).isTrue();
+        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
         assertThat(response.getHits().get(0).getStoredFields()).isNull();
     }
 
@@ -458,7 +458,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(hit.getId()).containsAnyOf("1", "2");
             assertThat(hit.getVersion()).isEqualTo(1L);
             assertThat(hit.getSource()).isNullOrEmpty();
-            assertThat(hit.getHighlightFields().isEmpty()).isTrue();
+            assertThat(hit.getHighlightFields()).isEmpty();
             assertThat(hit.getStoredFields()).isNotNull();
             assertThat(hit.getStoredFields())
                     .extractingByKey("foo.bar")
@@ -482,7 +482,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             assertThat(hit.getId()).containsAnyOf("1", "2");
             assertThat(hit.getVersion()).isEqualTo(1L);
             assertThat(hit.getSource()).isNotEmpty();
-            assertThat(hit.getHighlightFields().isEmpty()).isTrue();
+            assertThat(hit.getHighlightFields()).isEmpty();
             assertThat(hit.getStoredFields()).isNotNull();
             assertThat(hit.getStoredFields())
                     .extractingByKey("foo.bar")

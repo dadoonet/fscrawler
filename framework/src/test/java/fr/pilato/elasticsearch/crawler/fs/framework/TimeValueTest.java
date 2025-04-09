@@ -42,16 +42,16 @@ public class TimeValueTest {
 
     @Test
     public void timeValueToString() {
-        assertThat(TimeValue.parseTimeValue("1s").toString()).isEqualTo("1s");
-        assertThat(TimeValue.parseTimeValue("10s").toString()).isEqualTo("10s");
-        assertThat(TimeValue.parseTimeValue("1m").toString()).isEqualTo("1m");
-        assertThat(TimeValue.parseTimeValue("70s").toString()).isEqualTo("1.1m");
-        assertThat(TimeValue.parseTimeValue("1h").toString()).isEqualTo("1h");
-        assertThat(TimeValue.parseTimeValue("75m").toString()).isEqualTo("1.2h");
-        assertThat(TimeValue.parseTimeValue("3830s").toString()).isEqualTo("1h");
-        assertThat(TimeValue.parseTimeValue("1d").toString()).isEqualTo("1d");
-        assertThat(TimeValue.parseTimeValue("25h").toString()).isEqualTo("1d");
-        assertThat(TimeValue.parseTimeValue("2d").toString()).isEqualTo("2d");
-        assertThat(TimeValue.parseTimeValue("30d").toString()).isEqualTo("30d");
+        assertThat(TimeValue.parseTimeValue("1s")).hasToString("1s");
+        assertThat(TimeValue.parseTimeValue("10s")).hasToString("10s");
+        assertThat(TimeValue.parseTimeValue("1m")).hasToString("1m");
+        assertThat(TimeValue.parseTimeValue("70s")).hasToString("1.1m");
+        assertThat(TimeValue.parseTimeValue("1h")).hasToString("1h");
+        assertThat(TimeValue.parseTimeValue("75m")).hasToString("1.2h");
+        assertThat(TimeValue.parseTimeValue("3830s")).hasToString("1h");
+        assertThat(TimeValue.parseTimeValue("1d")).hasToString("1d");
+        assertThat(TimeValue.parseTimeValue("25h")).hasToString("1d");
+        assertThat(TimeValue.parseTimeValue("2d")).hasToString("2d");
+        assertThat(TimeValue.parseTimeValue("30d")).hasToString("30d");
     }
 }
