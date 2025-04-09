@@ -30,6 +30,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -401,7 +402,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw).containsEntry("pdf:containsNonEmbeddedFont", "false");
         assertThat(raw).containsEntry("pdf:docinfo:subject", "Test Tika Object");
         assertThat(raw).containsEntry("pdf:hasMarkedContent", "true");
-        assertThat(raw).containsKey("pdf:ocrPageCount"); // TODO The value should not be empty .isNotEmpty();
+        assertThat(raw).containsKey("pdf:ocrPageCount")
+                .extractingByKey("pdf:ocrPageCount", InstanceOfAssertFactories.STRING)
+                .isNotEmpty();
         assertThat(raw).containsEntry("Content-Type", "application/pdf");
         assertThat(raw).containsEntry("access_permission:can_print_faithful", "true");
         assertThat(raw).containsEntry("pdf:docinfo:creator", "David Pilato");
@@ -446,7 +449,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw).containsEntry("dc:creator", "David Pilato");
         assertThat(raw).containsEntry("extended-properties:Company", "elastic");
         assertThat(raw).containsEntry("resourceName", "test.rtf");
-        // TODO FIX ME assertThat(raw).containsEntry(is("dcterms:created"), startsWith("2016-07-0"));
+        assertThat(raw).containsKey("dcterms:created")
+                .extractingByKey("dcterms:created", InstanceOfAssertFactories.STRING)
+                .startsWith("2016-07-0");
         assertThat(raw).containsEntry("meta:character-count", "68");
         assertThat(raw).containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser");
         assertThat(raw).containsEntry("dc:title", "Test Tika title");
@@ -738,7 +743,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(raw).containsEntry("pdf:encrypted", "false");
         assertThat(raw).containsEntry("pdf:containsNonEmbeddedFont", "false");
         assertThat(raw).containsEntry("pdf:hasMarkedContent", "false");
-        assertThat(raw).containsKey("pdf:ocrPageCount"); // TODO The value should not be empty .isNotEmpty();
+        assertThat(raw).containsKey("pdf:ocrPageCount")
+                .extractingByKey("pdf:ocrPageCount", InstanceOfAssertFactories.STRING)
+                .isNotEmpty();
         assertThat(raw).containsEntry("Content-Type", "application/pdf");
         assertThat(raw).containsEntry("access_permission:can_print_faithful", "true");
         assertThat(raw).containsEntry("pdf:docinfo:creator", "Evangelos Vlachogiannis");
