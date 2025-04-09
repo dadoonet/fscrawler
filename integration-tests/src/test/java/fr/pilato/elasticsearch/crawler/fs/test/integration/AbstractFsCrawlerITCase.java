@@ -24,9 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -59,29 +57,6 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         stopCrawler();
     }
 
-    protected FsSettings createTestSettings() {
-        return createTestSettings(getCrawlerName());
-    }
-
-    protected FsSettings createTestSettings(String name) {
-        FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.setName(name);
-        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(5));
-        fsSettings.getFs().setUrl(currentTestResourceDir.toString());
-
-        // Clone the elasticsearchConfiguration to avoid modifying the default one
-        // We start with a clean configuration
-        Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
-
-        fsSettings.setElasticsearch(elasticsearch);
-        fsSettings.getElasticsearch().setIndex(name);
-        fsSettings.getElasticsearch().setIndexFolder(name + INDEX_SUFFIX_FOLDER);
-        fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
-        // We explicitly set semantic search to false because IT takes too long time
-        fsSettings.getElasticsearch().setSemanticSearch(false);
-        return fsSettings;
-    }
-
     protected FsCrawlerImpl startCrawler() throws Exception {
         return startCrawler(createTestSettings());
     }
@@ -95,11 +70,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", fsSettings.getName());
         logger.debug("     with settings [{}]", fsSettings);
 
-        crawler = new FsCrawlerImpl(
-                metadataDir,
-                fsSettings,
-                LOOP_INFINITE,
-                fsSettings.getRest() != null);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
         crawler.start();
 
         // We wait up to X seconds before considering a failing test

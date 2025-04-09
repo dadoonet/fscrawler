@@ -31,7 +31,6 @@ import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -64,12 +63,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class FsCrawlerRestIT extends AbstractRestITCase {
     private static final Logger logger = LogManager.getLogger();
 
-    public FsSettings getFsSettings() throws IOException {
-        FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.setName(getCrawlerName());
-        fsSettings.getRest().setUrl("http://127.0.0.1:" + getRestPort() + "/fscrawler");
-        fsSettings.setElasticsearch(clone(elasticsearchConfiguration));
-        return fsSettings;
+    public FsSettings getFsSettings() {
+        return createTestSettings();
     }
 
     @Test
@@ -244,14 +239,14 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     public void documentWithExternalTags() throws Exception {
-        // We iterate over all sample files and we try to locate any existing tag file
+        // We iterate over all sample files, and we try to locate any existing tag file
         // which can overwrite the data we extracted
         AtomicInteger numFiles = new AtomicInteger();
         Files.walk(currentTestResourceDir)
                 .filter(Files::isRegularFile)
                 .forEach(path -> {
                     Path tagsFilePath = currentTestTagDir.resolve(path.getFileName().toString() + ".json");
-                    logger.debug("Upload file #[{}]: [{}] with tags [{}]", numFiles.incrementAndGet(), path.getFileName(), tagsFilePath.getFileName());
+                    logger.info("Upload file #[{}]: [{}] with tags [{}]", numFiles.incrementAndGet(), path.getFileName(), tagsFilePath.getFileName());
                     UploadResponse response = uploadFileUsingApi(target, path, tagsFilePath, null, "/_document", null);
                     assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
                 });

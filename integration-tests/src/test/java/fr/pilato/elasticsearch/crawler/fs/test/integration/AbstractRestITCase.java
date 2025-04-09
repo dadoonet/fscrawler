@@ -29,7 +29,6 @@ import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.client.*;
@@ -66,7 +65,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class,
         AbstractRestITCase.MinioThreadFilter.class
 })
-public abstract class AbstractRestITCase extends AbstractITCase {
+public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static final int DEFAULT_TEST_REST_PORT = 0;
     private static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
@@ -77,6 +76,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     protected Path currentTestTagDir;
     private FsCrawlerManagementServiceElasticsearchImpl managementService;
     protected FsCrawlerDocumentService documentService;
+    private RestServer restServer;
 
     /**
      * Get the Rest Port. It could be set externally. If 0,
@@ -95,7 +95,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         return testRestPort;
     }
 
-    public abstract FsSettings getFsSettings() throws IOException;
+    public abstract FsSettings getFsSettings();
 
     @Before
     public void copyTags() throws IOException {
@@ -120,8 +120,9 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     @Before
     public void startRestServer() throws Exception {
         FsSettings fsSettings = getFsSettings();
-        fsSettings.getElasticsearch().setIndex(getCrawlerName());
-        FsCrawlerValidator.validateSettings(logger, fsSettings);
+
+        // Add the rest interface
+        fsSettings.getRest().setUrl("http://127.0.0.1:" + getRestPort() + "/fscrawler");
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
         this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
@@ -129,7 +130,8 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         managementService.start();
         documentService.start();
 
-        RestServer.start(fsSettings, managementService, documentService, pluginsManager);
+        restServer = new RestServer(fsSettings, managementService, documentService, pluginsManager);
+        restServer.start();
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
         managementService.getClient().deleteIndex(getCrawlerName());
@@ -140,15 +142,9 @@ public abstract class AbstractRestITCase extends AbstractITCase {
 
     @After
     public void stopRestServer() throws IOException {
-        RestServer.close();
-        if (managementService != null) {
-            managementService.close();
-            managementService = null;
-        }
-        if (documentService != null) {
-            documentService.close();
-            documentService = null;
-        }
+        restServer.close();
+        managementService.close();
+        documentService.close();
     }
 
     public static <T> T get(String path, Class<T> clazz) {
