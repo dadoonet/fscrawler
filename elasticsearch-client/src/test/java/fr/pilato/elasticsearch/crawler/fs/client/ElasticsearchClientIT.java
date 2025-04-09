@@ -275,8 +275,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         }
     }
 
-    @Test
-    public void search() throws Exception {
+    private void createSearchDataset() throws Exception {
         esClient.createIndex(getCrawlerName(), false, "{\n" +
                 "  \"mappings\": {\n" +
                 "    \"properties\": {\n" +
@@ -304,196 +303,218 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         // Wait until we have 4 documents indexed
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L);
+    }
 
-        // match_all
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
-            assertThat(response.getTotalHits()).isEqualTo(4L);
+    @Test
+    public void searchMatchAll() throws Exception {
+        createSearchDataset();
 
-            for (ESSearchHit hit : response.getHits()) {
-                assertThat(hit.getIndex()).isEqualTo(getCrawlerName());
-                assertThat(hit.getId()).containsAnyOf("1", "2", "3", "4");
-                assertThat(hit.getVersion()).isEqualTo(1L);
-                assertThat(hit.getSource()).isNotEmpty();
-                assertThat(hit.getHighlightFields()).isEmpty();
-                assertThat(hit.getStoredFields()).isNull();
-            }
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName()));
+        assertThat(response.getTotalHits()).isEqualTo(4L);
+
+        for (ESSearchHit hit : response.getHits()) {
+            assertThat(hit.getIndex()).isEqualTo(getCrawlerName());
+            assertThat(hit.getId()).containsAnyOf("1", "2", "3", "4");
+            assertThat(hit.getVersion()).isEqualTo(1L);
+            assertThat(hit.getSource()).isNotEmpty();
+            assertThat(hit.getHighlightFields()).isEmpty();
+            assertThat(hit.getStoredFields()).isNull();
         }
+    }
 
-        // term
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
-                    .withESQuery(new ESTermQuery("foo.bar", "bar")));
-            assertThat(response.getTotalHits()).isEqualTo(1L);
-            assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName());
-            assertThat(response.getHits().get(0).getId()).isEqualTo("1");
-            assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
-            assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-            assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
-            assertThat(response.getHits().get(0).getStoredFields()).isNull();
+    @Test
+    public void searchTerm() throws Exception {
+        createSearchDataset();
+
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESTermQuery("foo.bar", "bar")));
+        assertThat(response.getTotalHits()).isEqualTo(1L);
+        assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName());
+        assertThat(response.getHits().get(0).getId()).isEqualTo("1");
+        assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
+        assertThat(response.getHits().get(0).getSource()).isNotEmpty();
+        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
+        assertThat(response.getHits().get(0).getStoredFields()).isNull();
+    }
+
+    @Test
+    public void searchMatch() throws Exception {
+        createSearchDataset();
+
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESMatchQuery("foo.bar", "bar")));
+        assertThat(response.getTotalHits()).isEqualTo(1L);
+        assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName());
+        assertThat(response.getHits().get(0).getId()).isEqualTo("1");
+        assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
+        assertThat(response.getHits().get(0).getSource()).isNotEmpty();
+        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
+        assertThat(response.getHits().get(0).getStoredFields()).isNull();
+    }
+
+    @Test
+    public void searchPrefix() throws Exception {
+        createSearchDataset();
+
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESPrefixQuery("foo.bar", "ba")));
+        assertThat(response.getTotalHits()).isEqualTo(2L);
+
+        for (ESSearchHit hit : response.getHits()) {
+            assertThat(hit.getIndex()).isEqualTo(getCrawlerName());
+            assertThat(hit.getId()).containsAnyOf("1", "2");
+            assertThat(hit.getVersion()).isEqualTo(1L);
+            assertThat(hit.getSource()).isNotEmpty();
+            assertThat(hit.getHighlightFields()).isEmpty();
+            assertThat(hit.getStoredFields()).isNull();
         }
+    }
 
-        // match
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
-                    .withESQuery(new ESMatchQuery("foo.bar", "bar")));
-            assertThat(response.getTotalHits()).isEqualTo(1L);
-            assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName());
-            assertThat(response.getHits().get(0).getId()).isEqualTo("1");
-            assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
-            assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-            assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
-            assertThat(response.getHits().get(0).getStoredFields()).isNull();
-        }
+    @Test
+    public void searchRangeLowerThan() throws Exception {
+        createSearchDataset();
 
-        // prefix
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
-                    .withESQuery(new ESPrefixQuery("foo.bar", "ba")));
-            assertThat(response.getTotalHits()).isEqualTo(2L);
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESRangeQuery("number").withLt(2)));
+        assertThat(response.getTotalHits()).isEqualTo(1L);
+        assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName());
+        assertThat(response.getHits().get(0).getId()).isEqualTo("3");
+        assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
+        assertThat(response.getHits().get(0).getSource()).isNotEmpty();
+        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
+        assertThat(response.getHits().get(0).getStoredFields()).isNull();
+    }
 
-            for (ESSearchHit hit : response.getHits()) {
-                assertThat(hit.getIndex()).isEqualTo(getCrawlerName());
-                assertThat(hit.getId()).containsAnyOf("1", "2");
-                assertThat(hit.getVersion()).isEqualTo(1L);
-                assertThat(hit.getSource()).isNotEmpty();
-                assertThat(hit.getHighlightFields()).isEmpty();
-                assertThat(hit.getStoredFields()).isNull();
-            }
-        }
+    @Test
+    public void searchRangeGreaterOrEqual() throws Exception {
+        createSearchDataset();
 
-        // range - lower than 2
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
-                    .withESQuery(new ESRangeQuery("number").withLt(2)));
-            assertThat(response.getTotalHits()).isEqualTo(1L);
-            assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName());
-            assertThat(response.getHits().get(0).getId()).isEqualTo("3");
-            assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
-            assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-            assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
-            assertThat(response.getHits().get(0).getStoredFields()).isNull();
-        }
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESRangeQuery("number").withGte(2)));
+        assertThat(response.getTotalHits()).isEqualTo(1L);
+        assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName());
+        assertThat(response.getHits().get(0).getId()).isEqualTo("4");
+        assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
+        assertThat(response.getHits().get(0).getSource()).isNotEmpty();
+        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
+        assertThat(response.getHits().get(0).getStoredFields()).isNull();
+    }
 
-        // range - greater or equal to 2
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
-                    .withESQuery(new ESRangeQuery("number").withGte(2)));
-            assertThat(response.getTotalHits()).isEqualTo(1L);
-            assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName());
-            assertThat(response.getHits().get(0).getId()).isEqualTo("4");
-            assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
-            assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-            assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
-            assertThat(response.getHits().get(0).getStoredFields()).isNull();
-        }
+    @Test
+    public void searchBoolWithPrefixAndMatch() throws Exception {
+        createSearchDataset();
 
-        // bool with prefix and match
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
-                    .withESQuery(new ESBoolQuery()
-                            .addMust(new ESPrefixQuery("foo.bar", "ba"))
-                            .addMust(new ESMatchQuery("foo.bar", "bar"))
-                    ));
-            assertThat(response.getTotalHits()).isEqualTo(1L);
-            assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName());
-            assertThat(response.getHits().get(0).getId()).isEqualTo("1");
-            assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
-            assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-            assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
-            assertThat(response.getHits().get(0).getStoredFields()).isNull();
-        }
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESBoolQuery()
+                        .addMust(new ESPrefixQuery("foo.bar", "ba"))
+                        .addMust(new ESMatchQuery("foo.bar", "bar"))
+                ));
+        assertThat(response.getTotalHits()).isEqualTo(1L);
+        assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName());
+        assertThat(response.getHits().get(0).getId()).isEqualTo("1");
+        assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
+        assertThat(response.getHits().get(0).getSource()).isNotEmpty();
+        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
+        assertThat(response.getHits().get(0).getStoredFields()).isNull();
+    }
 
-        // Highlighting
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
-                    .withESQuery(new ESMatchQuery("foo.bar", "bar"))
-                    .addHighlighter("foo.bar")
-            );
-            assertThat(response.getTotalHits()).isEqualTo(1L);
-            assertThat(response.getHits())
-                    .singleElement()
-                            .satisfies(hit -> {
-                                assertThat(hit.getIndex()).isEqualTo(getCrawlerName());
-                                assertThat(hit.getId()).isEqualTo("1");
-                                assertThat(hit.getVersion()).isEqualTo(1L);
-                                assertThat(hit.getSource()).isNotEmpty();
-                                assertThat(hit.getHighlightFields())
-                                        .hasSize(1)
-                                        .satisfies(highlight -> {
-                                            assertThat(highlight)
-                                                    .containsKey("foo.bar")
-                                                    .extractingByKey("foo.bar")
-                                                    .satisfies(highlightField -> assertThat(highlightField)
-                                                            .singleElement()
-                                                            .isEqualTo("<em>bar</em>"));
-                                        });
-                                assertThat(hit.getStoredFields()).isNull();
+    @Test
+    public void searchHighlighting() throws Exception {
+        createSearchDataset();
+
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESMatchQuery("foo.bar", "bar"))
+                .addHighlighter("foo.bar")
+        );
+        assertThat(response.getTotalHits()).isEqualTo(1L);
+        assertThat(response.getHits())
+                .singleElement()
+                .satisfies(hit -> {
+                    assertThat(hit.getIndex()).isEqualTo(getCrawlerName());
+                    assertThat(hit.getId()).isEqualTo("1");
+                    assertThat(hit.getVersion()).isEqualTo(1L);
+                    assertThat(hit.getSource()).isNotEmpty();
+                    assertThat(hit.getHighlightFields())
+                            .hasSize(1)
+                            .satisfies(highlight -> {
+                                assertThat(highlight)
+                                        .containsKey("foo.bar")
+                                        .extractingByKey("foo.bar")
+                                        .satisfies(highlightField -> assertThat(highlightField)
+                                                .singleElement()
+                                                .isEqualTo("<em>bar</em>"));
                             });
+                    assertThat(hit.getStoredFields()).isNull();
+                });
+    }
+
+    @Test
+    public void searchFields() throws Exception {
+        createSearchDataset();
+
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESPrefixQuery("foo.bar", "ba"))
+                .addStoredField("foo.bar")
+        );
+        assertThat(response.getTotalHits()).isEqualTo(2L);
+
+        for (ESSearchHit hit : response.getHits()) {
+            assertThat(hit.getIndex()).isEqualTo(getCrawlerName());
+            assertThat(hit.getId()).containsAnyOf("1", "2");
+            assertThat(hit.getVersion()).isEqualTo(1L);
+            assertThat(hit.getSource()).isNullOrEmpty();
+            assertThat(hit.getHighlightFields()).isEmpty();
+            assertThat(hit.getStoredFields()).isNotNull();
+            assertThat(hit.getStoredFields())
+                    .extractingByKey("foo.bar")
+                    .satisfies(storedField -> assertThat(storedField).containsAnyOf("bar", "baz"));
         }
+    }
 
-        // Fields
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
-                    .withESQuery(new ESPrefixQuery("foo.bar", "ba"))
-                    .addStoredField("foo.bar")
-            );
-            assertThat(response.getTotalHits()).isEqualTo(2L);
+    @Test
+    public void searchFieldsWithSource() throws Exception {
+        createSearchDataset();
 
-            for (ESSearchHit hit : response.getHits()) {
-                assertThat(hit.getIndex()).isEqualTo(getCrawlerName());
-                assertThat(hit.getId()).containsAnyOf("1", "2");
-                assertThat(hit.getVersion()).isEqualTo(1L);
-                assertThat(hit.getSource()).isNullOrEmpty();
-                assertThat(hit.getHighlightFields()).isEmpty();
-                assertThat(hit.getStoredFields()).isNotNull();
-                assertThat(hit.getStoredFields())
-                        .extractingByKey("foo.bar")
-                        .satisfies(storedField -> assertThat(storedField).containsAnyOf("bar", "baz"));
-            }
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                .withESQuery(new ESPrefixQuery("foo.bar", "ba"))
+                .addStoredField("_source")
+                .addStoredField("foo.bar")
+        );
+        assertThat(response.getTotalHits()).isEqualTo(2L);
+
+        for (ESSearchHit hit : response.getHits()) {
+            assertThat(hit.getIndex()).isEqualTo(getCrawlerName());
+            assertThat(hit.getId()).containsAnyOf("1", "2");
+            assertThat(hit.getVersion()).isEqualTo(1L);
+            assertThat(hit.getSource()).isNotEmpty();
+            assertThat(hit.getHighlightFields()).isEmpty();
+            assertThat(hit.getStoredFields()).isNotNull();
+            assertThat(hit.getStoredFields())
+                    .extractingByKey("foo.bar")
+                    .satisfies(storedField -> assertThat(storedField).containsAnyOf("bar", "baz"));
         }
+    }
 
-        // Fields with _source
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
-                    .withESQuery(new ESPrefixQuery("foo.bar", "ba"))
-                    .addStoredField("_source")
-                    .addStoredField("foo.bar")
-            );
-            assertThat(response.getTotalHits()).isEqualTo(2L);
+    @Test
+    public void searchAggregations() throws Exception {
+        createSearchDataset();
 
-            for (ESSearchHit hit : response.getHits()) {
-                assertThat(hit.getIndex()).isEqualTo(getCrawlerName());
-                assertThat(hit.getId()).containsAnyOf("1", "2");
-                assertThat(hit.getVersion()).isEqualTo(1L);
-                assertThat(hit.getSource()).isNotEmpty();
-                assertThat(hit.getHighlightFields()).isEmpty();
-                assertThat(hit.getStoredFields()).isNotNull();
-                assertThat(hit.getStoredFields())
-                        .extractingByKey("foo.bar")
-                        .satisfies(storedField -> assertThat(storedField).containsAnyOf("bar", "baz"));
-            }
-        }
-
-        // Aggregation
-        {
-            ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
-                    .withAggregation(new ESTermsAggregation("foobar1", "foo.bar.raw"))
-                    .withAggregation(new ESTermsAggregation("foobar2", "foo.bar.raw"))
-                    .withSize(0)
-            );
-            assertThat(response.getTotalHits()).isEqualTo(4L);
-            assertThat(response.getAggregations()).isNotNull();
-            assertThat(response.getAggregations()).hasSize(2);
-            assertThat(response.getAggregations()).containsKey("foobar1");
-            assertThat(response.getAggregations().get("foobar1").getName()).isEqualTo("foobar1");
-            assertThat(response.getAggregations().get("foobar1").getBuckets()).hasSize(2);
-            assertThat(response.getAggregations().get("foobar1").getBuckets()).contains(new ESTermsAggregation.ESTermsBucket("bar", 1), new ESTermsAggregation.ESTermsBucket("baz", 1));
-            assertThat(response.getAggregations()).containsKey("foobar2");
-            assertThat(response.getAggregations().get("foobar2").getName()).isEqualTo("foobar2");
-            assertThat(response.getAggregations().get("foobar2").getBuckets()).hasSize(2);
-            assertThat(response.getAggregations().get("foobar2").getBuckets()).contains(new ESTermsAggregation.ESTermsBucket("bar", 1), new ESTermsAggregation.ESTermsBucket("baz", 1));
-        }
+        ESSearchResponse response = esClient.search(new ESSearchRequest().withIndex(getCrawlerName())
+                .withAggregation(new ESTermsAggregation("foobar1", "foo.bar.raw"))
+                .withAggregation(new ESTermsAggregation("foobar2", "foo.bar.raw"))
+                .withSize(0)
+        );
+        assertThat(response.getTotalHits()).isEqualTo(4L);
+        assertThat(response.getAggregations()).isNotNull();
+        assertThat(response.getAggregations()).hasSize(2);
+        assertThat(response.getAggregations()).containsKey("foobar1");
+        assertThat(response.getAggregations().get("foobar1").getName()).isEqualTo("foobar1");
+        assertThat(response.getAggregations().get("foobar1").getBuckets()).hasSize(2);
+        assertThat(response.getAggregations().get("foobar1").getBuckets()).contains(new ESTermsAggregation.ESTermsBucket("bar", 1), new ESTermsAggregation.ESTermsBucket("baz", 1));
+        assertThat(response.getAggregations()).containsKey("foobar2");
+        assertThat(response.getAggregations().get("foobar2").getName()).isEqualTo("foobar2");
+        assertThat(response.getAggregations().get("foobar2").getBuckets()).hasSize(2);
+        assertThat(response.getAggregations().get("foobar2").getBuckets()).contains(new ESTermsAggregation.ESTermsBucket("bar", 1), new ESTermsAggregation.ESTermsBucket("baz", 1));
     }
 
     @Test
