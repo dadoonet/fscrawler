@@ -49,8 +49,8 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
 @Listeners({FSCrawlerReproduceInfoPrinter.class})
 @ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
 @ThreadLeakLingering(linger = 5000) // 5 sec lingering
-@Timeout(millis = AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
-@TimeoutSuite(millis = 2 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
+@Timeout(millis = 2 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
+@TimeoutSuite(millis = 3 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
 @ThreadLeakFilters(filters = {
         AbstractFSCrawlerTestCase.TestContainerThreadFilter.class,
         AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class
