@@ -361,16 +361,16 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @AfterClass
     public static void stopServices() throws IOException {
-        logger.info("Stopping integration tests against an external cluster");
+        logger.debug("Stopping integration tests against an external cluster");
         if (documentService != null) {
             documentService.close();
             documentService = null;
-            logger.info("Document service stopped");
+            logger.debug("Document service stopped");
         }
         if (managementService != null) {
             managementService.close();
             managementService = null;
-            logger.info("Management service stopped");
+            logger.debug("Management service stopped");
         }
         if (pluginsManager != null) {
             pluginsManager.close();
