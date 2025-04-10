@@ -19,8 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.crawler.ftp;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -89,7 +88,7 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testConnectToFakeFTPServer() throws Exception {
+    public void connectToFakeFTPServer() throws Exception {
         int port = fakeFtpServer.getServerControlPort();
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getServer().setHostname("localhost");
@@ -99,15 +98,15 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
         FileAbstractorFTP ftp = new FileAbstractorFTP(fsSettings);
         ftp.open();
         boolean exists = ftp.exists(nestedDir);
-        assertThat(exists, is(true));
+        assertThat(exists).isTrue();
         Collection<FileAbstractModel> files = ftp.getFiles(nestedDir);
-        assertThat(files.size(), is(3));
+        assertThat(files).hasSize(3);
 
         for (FileAbstractModel file : files) {
             if (file.isDirectory()) {
-                assertThat(file.getName(), is("buzz"));
+                assertThat(file.getName()).isEqualTo("buzz");
                 Collection<FileAbstractModel> subDirFiles = ftp.getFiles(file.getFullpath());
-                assertThat(subDirFiles.size(), is(2));
+                assertThat(subDirFiles).hasSize(2);
                 logger.debug("Found {} files in sub dir", subDirFiles.size());
                 for (FileAbstractModel subDirFile : subDirFiles) {
                     InputStream inputStream = ftp.getInputStream(subDirFile);
@@ -143,7 +142,7 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
         FileAbstractorFTP ftp = new FileAbstractorFTP(fsSettings);
         ftp.open();
         boolean exists = ftp.exists(path);
-        assertThat(exists, is(true));
+        assertThat(exists).isTrue();
         Collection<FileAbstractModel> files = ftp.getFiles(path);
         logger.debug("Found {} files", files.size());
 
@@ -171,7 +170,7 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testFTPFilePermissions() throws IOException {
+    public void ftpFilePermissions() throws IOException {
         int port = fakeFtpServer.getServerControlPort();
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getServer().setHostname("localhost");
@@ -183,19 +182,18 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
         ftp.open();
 
         Collection<FileAbstractModel> files = ftp.getFiles(permissionDir);
-        assertThat(files.size(), is(2));
+        assertThat(files).hasSize(2);
         List<String> filenames = files.stream().map(FileAbstractModel::getName).collect(Collectors.toList());
-        assertThat(filenames.contains("all.txt"), is(true));
-        assertThat(filenames.contains("none.txt"), is(true));
+        assertThat(filenames).contains("all.txt", "none.txt");
         for (FileAbstractModel file : files) {
             if (file.getName().equals("all.txt")) {
-                assertThat(file.getPermissions(), is(777));
+                assertThat(file.getPermissions()).isEqualTo(777);
                 InputStream inputStream = ftp.getInputStream(file);
                 String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                 logger.debug(" - {}: {}", file.getName(), content);
                 ftp.closeInputStream(inputStream);
             } else if (file.getName().equals("none.txt")) {
-                assertThat(file.getPermissions(), is(0));
+                assertThat(file.getPermissions()).isZero();
                 boolean errorOccurred = false;
                 //noinspection EmptyTryBlock
                 try (InputStream ignored = ftp.getInputStream(file)) {
@@ -203,7 +201,7 @@ public class FileAbstractorFTPTest extends AbstractFSCrawlerTestCase {
                     errorOccurred = true;
                     logger.error(e.getMessage());
                 }
-                assertThat(errorOccurred, is(true));
+                assertThat(errorOccurred).isTrue();
             }
         }
 

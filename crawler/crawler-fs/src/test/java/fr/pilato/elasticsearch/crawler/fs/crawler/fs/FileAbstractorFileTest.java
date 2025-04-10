@@ -30,7 +30,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileAbstractorFileTest {
 
@@ -43,7 +43,7 @@ public class FileAbstractorFileTest {
     }
 
     @Test
-    public void testGetFiles() throws Exception {
+    public void getFiles() throws Exception {
         Path tempDir = Files.createTempDirectory("testGetFiles");
         // File1 is created first
         Path tempFile1 = Files.createFile(tempDir.resolve("file1.txt"));
@@ -56,10 +56,10 @@ public class FileAbstractorFileTest {
 
         Collection<FileAbstractModel> files = fileAbstractorFile.getFiles(tempDir.toString());
 
-        assertEquals(2, files.size());
+        assertThat(files).hasSize(2);
         Iterator<FileAbstractModel> iterator = files.iterator();
-        assertEquals(tempFile2.toFile().getName(), iterator.next().getName());
-        assertEquals(tempFile1.toFile().getName(), iterator.next().getName());
+        assertThat(iterator.next().getName()).isEqualTo(tempFile2.toFile().getName());
+        assertThat(iterator.next().getName()).isEqualTo(tempFile1.toFile().getName());
 
         // Clean up
         Files.delete(tempFile1);

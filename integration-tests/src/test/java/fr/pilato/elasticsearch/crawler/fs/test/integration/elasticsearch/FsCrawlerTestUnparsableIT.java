@@ -32,7 +32,7 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 
-import static org.junit.Assume.assumeTrue;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Test crawler with unparsable files
@@ -44,7 +44,7 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
      * Test for #105: <a href="https://github.com/dadoonet/fscrawler/issues/105">https://github.com/dadoonet/fscrawler/issues/105</a>
      */
     @Test
-    public void test_unparsable() throws Exception {
+    public void unparsable() throws Exception {
         crawler = startCrawler();
 
         // We expect to have two files
@@ -56,14 +56,16 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
      * @throws Exception In case something is wrong
      */
     @Test
-    public void test_non_readable_file() throws Exception {
+    public void non_readable_file() throws Exception {
         // We change the attributes of the file
         logger.info(" ---> Changing attributes for file roottxtfile.txt");
 
         boolean isPosix =
                 FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
 
-        assumeTrue("This test can only run on Posix systems", isPosix);
+        assumeThat(isPosix)
+                .describedAs("This test can only run on Posix systems")
+                .isTrue();
 
         Files.getFileAttributeView(currentTestResourceDir.resolve("roottxtfile.txt"), PosixFileAttributeView.class)
                 .setPermissions(EnumSet.noneOf(PosixFilePermission.class));

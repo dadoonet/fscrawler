@@ -26,8 +26,8 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 /**
  * We want to test FSCrawler main app
@@ -42,7 +42,7 @@ public class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testCommandParserWithFullOptions() {
+    public void commandParserWithFullOptions() {
         String[] args = {
                 "--config_dir", metadataDir.toString(),
                 "--loop", "0",
@@ -52,42 +52,43 @@ public class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
                 "jobName"
         };
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
-        assertThat(command, notNullValue());
-        assertThat(command.configDir, is(metadataDir.toString()));
-        assertThat(command.loop, is(0));
-        assertThat(command.rest, is(true));
-        assertThat(command.upgrade, is(true));
-        assertThat(command.restart, is(true));
-        assertThat(command.silent, is(false));
-        assertThat(command.jobName.get(0), is("jobName"));
+        assertThat(command).isNotNull();
+        assertThat(command.configDir).isEqualTo(metadataDir.toString());
+        assertThat(command.loop).isZero();
+        assertThat(command.rest).isTrue();
+        assertThat(command.upgrade).isTrue();
+        assertThat(command.restart).isTrue();
+        assertThat(command.silent).isFalse();
+        assertThat(command.jobName.get(0)).isEqualTo("jobName");
     }
 
     @Test
-    public void testCommandParserForHelp() {
+    public void commandParserForHelp() {
         String[] args = {
                 "--help"
         };
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
-        assertThat(command, nullValue());
-    }
-
-    @Test(expected = FsCrawlerIllegalConfigurationException.class)
-    public void testCommandParserSilentModeNoJob() {
-        String[] args = {
-                "--silent"
-        };
-        FsCrawlerCli.commandParser(args);
+        assertThat(command).isNull();
     }
 
     @Test
-    public void testCommandParserSilentModeWithJob() {
+    public void commandParserSilentModeNoJob() {
+        String[] args = {
+                    "--silent"
+            };
+        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class).isThrownBy(() ->
+                FsCrawlerCli.commandParser(args));
+    }
+
+    @Test
+    public void commandParserSilentModeWithJob() {
         String[] args = {
                 "--silent",
                 "jobName"
         };
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
-        assertThat(command, notNullValue());
-        assertThat(command.silent, is(true));
-        assertThat(command.jobName.get(0), is("jobName"));
+        assertThat(command).isNotNull();
+        assertThat(command.silent).isTrue();
+        assertThat(command.jobName.get(0)).isEqualTo("jobName");
     }
 }

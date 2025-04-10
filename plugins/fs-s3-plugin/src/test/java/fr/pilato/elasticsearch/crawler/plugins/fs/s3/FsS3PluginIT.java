@@ -29,14 +29,15 @@ import io.minio.PutObjectArgs;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.testcontainers.containers.MinIOContainer;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 @ThreadLeakFilters(filters = {
@@ -92,7 +93,7 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testMinio() throws Exception {
+    public void minio() throws Exception {
         String text = "Hello Foo world!";
         createBucket("foo.txt", text);
         createBucket("bar.txt", "This one should be ignored.");
@@ -112,9 +113,9 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
             provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object, is(text));
-            assertThat(provider.getFilename(), is("foo.txt"));
-            assertThat(provider.getFilesize(), is(16L));
+            assertThat(object).isEqualTo(text);
+            assertThat(provider.getFilename()).isEqualTo("foo.txt");
+            assertThat(provider.getFilesize()).isEqualTo(16L);
         }
     }
 

@@ -28,8 +28,7 @@ import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test index_folders crawler setting
@@ -40,7 +39,7 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
      * Test case for #155: <a href="https://github.com/dadoonet/fscrawler/issues/155">https://github.com/dadoonet/fscrawler/issues/155</a> : New option: do not index folders
      */
     @Test
-    public void test_ignore_folders() throws Exception {
+    public void ignore_folders() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIndexFolders(false);
         crawler = startCrawler(fsSettings);
@@ -53,10 +52,10 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
             documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
             // If we have an answer, it means that we are running on version 6
             ESSearchResponse response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
-            assertThat(response.getTotalHits(), is(0L));
-            assertThat(extractMajorVersion(documentService.getVersion()), is(6));
+            assertThat(response.getTotalHits()).isZero();
+            assertThat(extractMajorVersion(documentService.getVersion())).isEqualTo(6);
         } catch (ElasticsearchClientException e) {
-            assertThat(e.getMessage(), is("index " + getCrawlerName() + INDEX_SUFFIX_FOLDER + " does not exist."));
+            assertThat(e.getMessage()).isEqualTo("index " + getCrawlerName() + INDEX_SUFFIX_FOLDER + " does not exist.");
         }
     }
 }

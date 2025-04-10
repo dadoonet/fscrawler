@@ -23,29 +23,28 @@ import org.junit.Test;
 
 import java.io.InputStream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class XmlDocParserTest extends DocParserTestCase {
 
     @Test
-    public void testXml() {
+    public void xml() {
         String doc = extractFromFile("issue-163.xml");
-        assertThat(doc, is("{\"version\":\"1.0\",\"subscription-update\":{\"subscriptionid\":\"0\",\"requestid\":\"0\"," +
+        assertThat(doc).isEqualTo("{\"version\":\"1.0\",\"subscription-update\":{\"subscriptionid\":\"0\",\"requestid\":\"0\"," +
                 "\"last_push\":\"2016-06-03 06:21:34\",\"current_push\":\"2016-06-03 06:21:37\",\"exec\":\"0.002\"," +
-                "\"lineup\":{\"id\":\"0\",\"del\":\"no\"}}}"));
+                "\"lineup\":{\"id\":\"0\",\"del\":\"no\"}}}");
     }
 
     @Test
-    public void testXmlNestedObjects() {
+    public void xmlNestedObjects() {
         String doc = extractFromFile("issue-592.xml");
-        assertThat(doc, is("{\"object\":[{\"id\":\"1\",\"name\":\"foo\"},{\"id\":\"2\",\"name\":\"bar\"}]}"));
+        assertThat(doc).isEqualTo("{\"object\":[{\"id\":\"1\",\"name\":\"foo\"},{\"id\":\"2\",\"name\":\"bar\"}]}");
     }
 
     @Test
-    public void testXmlNotReadable() {
+    public void xmlNotReadable() {
         String doc = extractFromFile(null, "issue-1753.xml");
-        assertThat(doc, is("{\"Tag\":{\"attr\":\"false\",\"$\":\"Content\"}}"));
+        assertThat(doc).isEqualTo("{\"Tag\":{\"attr\":\"false\",\"$\":\"Content\"}}");
     }
 
 

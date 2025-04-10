@@ -24,13 +24,12 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    public void testJsonPath() {
+    public void jsonPath() {
         String json = "{\n" +
                 "   \"content\":\"Some Text\",\n" +
                 "   \"file\":{\n" +
@@ -52,12 +51,14 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
                 "   \"attributes\":{\n" +
                 "      \"owner\":\"dpilato\",\n" +
                 "      \"group\":\"staff\",\n" +
-                "      \"permissions\":644\n" +
+                "      \"permissions\":644,\n" +
+                "      \"foobar\":null\n" +
                 "   }\n" +
                 "}";
 
         DocumentContext context = parseJsonAsDocumentContext(json);
-        assertThat(context.read("$.attributes.owner"), is("dpilato"));
-        assertThat(context.read("$.attributes.permissions"), is(644));
+        assertThat((String) context.read("$.attributes.owner")).isEqualTo("dpilato");
+        assertThat((Integer) context.read("$.attributes.permissions")).isEqualTo(644);
+        assertThat((Integer) context.read("$.attributes.foobar")).isNull();
     }
 }

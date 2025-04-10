@@ -20,21 +20,16 @@ package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
 import org.junit.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
-    @SuppressWarnings("ConstantConditions")
+
     @Test
-    public void testExpectThrows() {
-        NullPointerException npe = expectThrows(NullPointerException.class, () -> {
-            throw new NullPointerException("NPE");
-        });
-        assertThat(npe.getMessage(), is("NPE"));
-        AssertionError assertionError = expectThrows(AssertionError.class, () -> expectThrows(NullPointerException.class, () -> {
-            throw new RuntimeException("RTE");
-        }));
-        assertThat(assertionError.getMessage(), containsString("Expected: an instance of " + NullPointerException.class.getName()));
+    public void toUnderscoreCase() {
+        assertThat(toUnderscoreCase("")).isEmpty();
+        assertThat(toUnderscoreCase("AbstractFSCrawlerTestCaseTest"))
+                .isEqualTo("abstract_f_s_crawler_test_case_test");
+        assertThat(toUnderscoreCase("abstract_f_s_crawler_test_case_test"))
+                .isEqualTo("abstract_f_s_crawler_test_case_test");
     }
 }

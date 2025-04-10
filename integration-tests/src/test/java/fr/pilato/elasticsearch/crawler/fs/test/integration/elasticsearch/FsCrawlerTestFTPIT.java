@@ -68,7 +68,7 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_ftp() throws Exception {
+    public void ftp() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUrl("/");
         fsSettings.getServer().setHostname(hostname);
@@ -81,7 +81,7 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_ftp_with_user() throws Exception {
+    public void ftp_with_user() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUrl("/");
         fsSettings.getServer().setHostname(hostname);

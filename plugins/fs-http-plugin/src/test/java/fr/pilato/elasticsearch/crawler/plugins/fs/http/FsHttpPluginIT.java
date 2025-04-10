@@ -24,7 +24,7 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.*;
+import org.junit.Test;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.MountableFile;
@@ -36,8 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 @ThreadLeakFilters(filters = {
@@ -55,7 +54,7 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testReadFileFromNginx() throws Exception {
+    public void readFileFromNginx() throws Exception {
         logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
         Files.createDirectory(nginxRoot);
@@ -81,15 +80,15 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
                 provider.start();
                 InputStream inputStream = provider.readFile();
                 String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                assertThat(object, is(text));
-                assertThat(provider.getFilename(), is("foo.txt"));
-                assertThat(provider.getFilesize(), is(16L));
+                assertThat(object).isEqualTo(text);
+                assertThat(provider.getFilename()).isEqualTo("foo.txt");
+                assertThat(provider.getFilesize()).isEqualTo(16L);
             }
         }
     }
 
     @Test
-    public void testReadTxtFileFromElasticCo() throws Exception {
+    public void readTxtFileFromElasticCo() throws Exception {
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
             provider.settings("{\n" +
@@ -101,9 +100,9 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
             provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object, containsString("Sitemap"));
-            assertThat(provider.getFilename(), is("robots.txt"));
-            assertThat(provider.getFilesize(), greaterThan(100L));
+            assertThat(object).contains("Sitemap");
+            assertThat(provider.getFilename()).isEqualTo("robots.txt");
+            assertThat(provider.getFilesize()).isGreaterThan(100L);
         }
     }
 }

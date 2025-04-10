@@ -40,12 +40,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Before;
 
 import javax.net.ssl.SSLException;
 import java.io.*;
@@ -57,7 +56,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -65,13 +63,11 @@ import java.util.zip.ZipFile;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Integration tests expect to have an elasticsearch instance running on <a href="https://127.0.0.1:9200">https://127.0.0.1:9200</a>.
@@ -87,7 +83,7 @@ import static org.junit.Assume.assumeThat;
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "common"));
+    protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "_common"));
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private static final String DEFAULT_USERNAME = "elastic";
     private static final String DEFAULT_PASSWORD = "changeme";
@@ -99,6 +95,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static final boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
     protected static final boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
     private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
+    public static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(1);
+    public static final TimeValue MAX_WAIT_FOR_SEARCH_LONG_TESTS = TimeValue.timeValueMinutes(5);
 
     protected static Path metadataDir = null;
     protected FsCrawlerImpl crawler = null;
@@ -287,7 +285,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
 
         if (fsSettings == null) {
-            logger.info("Elasticsearch is not running on [{}]. We start TestContainer.", testClusterUrl);
+            logger.info("Elasticsearch is not running on [{}]. We switch to TestContainer.", testClusterUrl);
             testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
             // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
             if (testContainerHelper.getCertAsBytes() != null) {
@@ -299,8 +297,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             fsSettings = startClient(checkCertificate);
         }
 
-        assumeThat("Integration tests are skipped because we have not been able to find an Elasticsearch cluster",
-                fsSettings, notNullValue());
+        assumeThat(fsSettings)
+                .as("Integration tests are skipped because we have not been able to find an Elasticsearch cluster")
+                .isNotNull();
 
         // We create and start the managementService
         managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
@@ -348,7 +347,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             documentService.start();
             return fsSettings;
         } catch (ElasticsearchClientException e) {
-            logger.info("Elasticsearch is not running on [{}]", testClusterUrl);
+            logger.debug("Elasticsearch is not running on [{}]", testClusterUrl);
             if ((e.getCause() instanceof SocketException ||
                     (e.getCause() instanceof ProcessingException && e.getCause().getCause() instanceof SSLException))
                     && testClusterUrl.toLowerCase().startsWith("https")) {
@@ -362,16 +361,16 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @AfterClass
     public static void stopServices() throws IOException {
-        logger.info("Stopping integration tests against an external cluster");
+        logger.debug("Stopping integration tests against an external cluster");
         if (documentService != null) {
             documentService.close();
             documentService = null;
-            logger.info("Document service stopped");
+            logger.debug("Document service stopped");
         }
         if (managementService != null) {
             managementService.close();
             managementService = null;
-            logger.info("Management service stopped");
+            logger.debug("Management service stopped");
         }
         if (pluginsManager != null) {
             pluginsManager.close();
@@ -413,7 +412,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      * @throws Exception in case of error
      */
     public static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final Path path) throws Exception {
-        return countTestHelper(request, expected, path, TimeValue.timeValueMinutes(1));
+        return countTestHelper(request, expected, path, MAX_WAIT_FOR_SEARCH);
     }
 
     /**
@@ -456,17 +455,19 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             return totalHits;
         }, expected, timeout);
 
-        Matcher<Long> matcher;
         if (expected == null) {
-            matcher = greaterThan(0L);
+            assertThat(hits)
+                    .as("checking if any document in " + request.getIndex())
+                    .isGreaterThan(0);
+
         } else {
-            matcher = equalTo(expected);
+            assertThat(hits)
+                    .as("checking documents in " + request.getIndex())
+                    .isEqualTo(expected);
         }
 
-        Level logLevel = matcher.matches(hits) ? Level.DEBUG : Level.WARN;
-        logger.log(logLevel, "     ---> expecting [{}] and got [{}] documents in {}", expected, hits, request.getIndex());
-        logContentOfDir(path, logLevel);
-        assertThat(hits, matcher);
+        // TODO if the test fails, we should display the content of the index using a WARN LEVEL instead
+        logContentOfDir(path, Level.DEBUG);
 
         return response[0];
     }
@@ -556,5 +557,28 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         elasticsearch.setUsername(source.getUsername());
         elasticsearch.setPassword(source.getPassword());
         return elasticsearch;
+    }
+
+    protected FsSettings createTestSettings() {
+        return createTestSettings(getCrawlerName());
+    }
+
+    protected FsSettings createTestSettings(String name) {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName(name);
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(5));
+        fsSettings.getFs().setUrl(currentTestResourceDir.toString());
+
+        // Clone the elasticsearchConfiguration to avoid modifying the default one
+        // We start with a clean configuration
+        Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
+
+        fsSettings.setElasticsearch(elasticsearch);
+        fsSettings.getElasticsearch().setIndex(name);
+        fsSettings.getElasticsearch().setIndexFolder(name + INDEX_SUFFIX_FOLDER);
+        fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
+        // We explicitly set semantic search to false because IT takes too long time
+        fsSettings.getElasticsearch().setSemanticSearch(false);
+        return fsSettings;
     }
 }

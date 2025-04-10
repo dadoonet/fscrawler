@@ -36,14 +36,13 @@ import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsCopyResourcesTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void testCopyResources() throws IOException {
+    public void copyResources() throws IOException {
         Path target = Paths.get(folder.getRoot().toURI()).resolve(".fscrawler-test-copy-resources");
 
         Files.createDirectory(target);
@@ -83,10 +82,10 @@ public class FsCopyResourcesTest extends AbstractFSCrawlerTestCase {
         // root test dir ".fscrawler-test-copy-resources"
         // "_default" dir
         // "6" for elasticsearch version 6
-        assertThat(dirCounter.get(), is(3));
+        assertThat(dirCounter.get()).isEqualTo(3);
 
         // We have 2 files for version 6: _settings_folder.json and _settings.json
         // and plus 0 files for version 7 and 8.
-        assertThat(fileCounter.get(), is(2));
+        assertThat(fileCounter.get()).isEqualTo(2);
     }
 }

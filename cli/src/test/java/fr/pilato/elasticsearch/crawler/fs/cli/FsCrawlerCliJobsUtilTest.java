@@ -30,8 +30,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * We want to test some utilities
@@ -39,7 +38,7 @@ import static org.hamcrest.Matchers.hasSize;
 public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
-    public void testListExistingJobs() throws IOException {
+    public void listExistingJobs() throws IOException {
         String jobNamePrefix = "fscrawler_list_existing_jobs";
         int numJobs = between(1, 30);
 
@@ -61,6 +60,6 @@ public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase 
 
         // We test that we can actually see the jobs
         List<String> jobs = FsCrawlerJobsUtil.listExistingJobs(metadataDir);
-        assertThat(jobs, hasSize(numJobs));
+        assertThat(jobs).hasSize(numJobs);
     }
 }
