@@ -1,6 +1,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.Nightly;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
@@ -172,6 +173,10 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.info(" -> Removing existing index [{}*]", getCrawlerName());
         esClient.deleteIndex(getCrawlerName());
         esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+        // Remove existing templates if any
+        logger.info(" -> Removing existing templates");
+        removeIndexTemplates();
+        removeComponentTemplates();
     }
 
     @Test
@@ -881,12 +886,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         assertThat(license).isNotEmpty();
     }
 
+    @Nightly("This test is only run in nightly builds as semantic search could take a long time")
     @Test
     public void indexFsCrawlerDocuments() throws Exception {
-        // Remove existing templates if any
-        removeIndexTemplates();
-        removeComponentTemplates();
-
         // We push the templates to the cluster
         esClient.createIndexAndComponentTemplates();
 
