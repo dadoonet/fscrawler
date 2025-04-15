@@ -112,13 +112,9 @@ To run the test suite against an elasticsearch instance running locally, just ru
 
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
             -Dtests.cluster.apiKey=APIKEYHERE \
-            -Dtests.cluster.url=https://XYZ.es.io:9243
+            -Dtests.cluster.url=https://ALIAS.es.REGION.CLOUD_PROVIDER.elastic.cloud
 
-    Or even easier, you can use the ``Cloud ID`` available on you Cloud Console::
-
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
-            -Dtests.cluster.apiKey=APIKEYHERE \
-            -Dtests.cluster.cloud_id=fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==
+    You can use both Elasticsearch service and Serverless projects.
 
 Changing the REST port
 """"""""""""""""""""""

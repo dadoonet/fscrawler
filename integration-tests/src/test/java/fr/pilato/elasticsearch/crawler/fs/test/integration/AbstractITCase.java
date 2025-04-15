@@ -62,7 +62,6 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlpha
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl.decodeCloudId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -84,7 +83,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "_common"));
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private static final String DEFAULT_USERNAME = "elastic";
-    private static final String DEFAULT_PASSWORD = "changeme";
+    static final String DEFAULT_PASSWORD = "changeme";
+    protected static String testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
     protected static final boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
     protected static final boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
@@ -96,7 +96,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
 
-    protected static String testClusterUrl = null;
     private static String testCaCertificate = null;
 
     protected static Elasticsearch elasticsearchConfiguration;
@@ -253,20 +252,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         pluginsManager = new FsCrawlerPluginsManager();
         pluginsManager.loadPlugins();
         pluginsManager.startPlugins();
-
-        if (testClusterUrl == null) {
-            String testClusterCloudId = System.getProperty("tests.cluster.cloud_id");
-            if (testClusterCloudId != null && !testClusterCloudId.isEmpty()) {
-                testClusterUrl = decodeCloudId(testClusterCloudId);
-                logger.debug("Using cloud id [{}] meaning actually [{}]", testClusterCloudId, testClusterUrl);
-            } else {
-                testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
-                if (testClusterUrl.isEmpty()) {
-                    // When running from Maven CLI, tests.cluster.url is empty and not null...
-                    testClusterUrl = DEFAULT_TEST_CLUSTER_URL;
-                }
-            }
-        }
 
         logger.debug("Generate settings against [{}] with ssl check [{}]", testClusterUrl, testCheckCertificate);
 
