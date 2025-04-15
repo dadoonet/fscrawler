@@ -89,29 +89,20 @@ To run the test suite against an elasticsearch instance running locally, just ru
 
 .. hint::
 
-    If you are using a secured instance, use ``tests.cluster.apiKey``::
+    If you are using an external cluster, you must set the ``tests.cluster.apiKey`` if your cluster does not use
+    ``elastic`` and ``changeme`` as their credentials, and it's anyway the recommended approach::
 
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
             -Dtests.cluster.apiKey=APIKEYHERE \
-            -Dtests.cluster.url=https://127.0.0.1:9200 \
-
-    If you don't have an API Key, use ``tests.cluster.user``, ``tests.cluster.pass`` and ``tests.cluster.url``::
-
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
-            -Dtests.cluster.user=elastic \
-            -Dtests.cluster.pass=changeme \
-            -Dtests.cluster.url=https://127.0.0.1:9200 \
+            -Dtests.cluster.url=https://localhost:9200 \
 
     If the cluster is using a self generated SSL certificate, you can bypass checking the certificate by using
     ``tests.cluster.check_ssl``::
 
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
             -Dtests.cluster.apiKey=APIKEYHERE \
-            -Dtests.cluster.url=https://127.0.0.1:9200 \
+            -Dtests.cluster.url=https://localhost:9200 \
             -Dtests.cluster.check_ssl=false
-
-    But anyway, by default, the integration tests will try to run with both options, first checking the ssl certificate,
-    and then ignoring it.
 
 .. hint::
 
@@ -128,18 +119,6 @@ To run the test suite against an elasticsearch instance running locally, just ru
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
             -Dtests.cluster.apiKey=APIKEYHERE \
             -Dtests.cluster.cloud_id=fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==
-
-Using security feature
-""""""""""""""""""""""
-
-Integration tests are run by default against a secured Elasticsearch cluster.
-
-.. versionadded:: 2.7
-
-Secured tests are using by default ``changeme`` as the password.
-You can change this by using ``tests.cluster.pass`` option::
-
-    mvn verify -Dtests.cluster.pass=mystrongpassword
 
 Changing the REST port
 """"""""""""""""""""""

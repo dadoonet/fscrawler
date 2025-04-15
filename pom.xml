@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>fr.pilato.elasticsearch.crawler</groupId>
     <artifactId>fscrawler-parent</artifactId>
@@ -32,7 +32,7 @@
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -71,8 +71,7 @@
         <tests.cluster.url></tests.cluster.url>
         <tests.cluster.cloud_id></tests.cluster.cloud_id>
         <tests.cluster.apiKey></tests.cluster.apiKey>
-        <tests.cluster.user>elastic</tests.cluster.user>
-        <tests.cluster.pass>changeme</tests.cluster.pass>
+        <tests.cluster.check_ssl>true</tests.cluster.check_ssl>
         <tests.rest.port>0</tests.rest.port>
         <testcontainers.version>1.21.0</testcontainers.version>
 
@@ -208,8 +207,7 @@
                             <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
                             <tests.cluster.cloud_id>${tests.cluster.cloud_id}</tests.cluster.cloud_id>
                             <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
-                            <tests.cluster.user>${tests.cluster.user}</tests.cluster.user>
-                            <tests.cluster.pass>${tests.cluster.pass}</tests.cluster.pass>
+                            <tests.cluster.check_ssl>${tests.cluster.check_ssl}</tests.cluster.check_ssl>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
                             <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
                             <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>

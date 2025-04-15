@@ -27,6 +27,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This creates a TestContainer Elasticsearch instance
@@ -35,55 +36,82 @@ class TestContainerHelper {
 
     private static final Logger log = LoggerFactory.getLogger(TestContainerHelper.class);
 
-    ElasticsearchContainer elasticsearch;
+    private ElasticsearchContainer elasticsearch;
     private byte[] certAsBytes;
+    private final AtomicBoolean starting = new AtomicBoolean(false);
+    private boolean started = false;
 
     /**
-     * Start the container
+     * Start the container. If the container was already started, it will be reused.
      * @param  keepData keep the cluster running after the test and reuse it if possible
      * @throws IOException in case of error
      */
-    String startElasticsearch(boolean keepData) throws IOException {
-        Properties props = new Properties();
-        props.load(TestContainerHelper.class.getResourceAsStream("/elasticsearch.version.properties"));
-        String version = props.getProperty("version");
-        String password = props.getProperty("password");
+    synchronized String startElasticsearch(boolean keepData) throws IOException {
+        if (starting.compareAndSet(false, true)) {
+            Properties props = new Properties();
+            props.load(TestContainerHelper.class.getResourceAsStream("/elasticsearch.version.properties"));
+            String version = props.getProperty("version");
+            String password = props.getProperty("password");
+            if (!started) {
+                // Start the container. This step might take some time...
+                log.info("Starting{} testcontainers with Elasticsearch [{}].",
+                        keepData ? " or reusing" : "",
+                        version);
 
-        if (elasticsearch == null) {
-            // Start the container. This step might take some time...
-            log.info("Starting testcontainers with Elasticsearch [{}].", version);
+                elasticsearch = new ElasticsearchContainer(
+                        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
+                                .withTag(version))
+                        // As for 7.x clusters, there's no https, api keys are disabled by default. We force it.
+                        .withEnv("xpack.security.authc.api_key.enabled", "true")
+                        // For 6.x clusters and for semantic search, we need to activate a trial
+                        .withEnv("xpack.license.self_generated.type", "trial")
+                        .withReuse(keepData)
+                        .withPassword(password);
+                elasticsearch.start();
 
-            elasticsearch = new ElasticsearchContainer(
-                    DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
-                            .withTag(version))
-                    // As for 7.x clusters, there's no https, api keys are disabled by default. We force it.
-                    .withEnv("xpack.security.authc.api_key.enabled", "true")
-                    // For 6.x clusters and for semantic search, we need to activate a trial
-                    .withEnv("xpack.license.self_generated.type", "trial")
-                    .withReuse(keepData)
-                    .withPassword(password);
-            elasticsearch.start();
+                // Try to get the https certificate if exists
+                try {
+                    certAsBytes = elasticsearch.copyFileFromContainer(
+                            "/usr/share/elasticsearch/config/certs/http_ca.crt",
+                            IOUtils::toByteArray);
+                    log.debug("Found an https elasticsearch cert for version [{}].", version);
+                } catch (Exception e) {
+                    log.warn("We did not find the https elasticsearch cert for version [{}].", version);
+                }
 
-            // Try to get the https certificate if exists
-            try {
-                certAsBytes = elasticsearch.copyFileFromContainer(
-                        "/usr/share/elasticsearch/config/certs/http_ca.crt",
-                        IOUtils::toByteArray);
-                log.debug("Found an https elasticsearch cert for version [{}].", version);
-            } catch (Exception e) {
-                log.warn("We did not find the https elasticsearch cert for version [{}].", version);
+                String url = "https://" + elasticsearch.getHttpHostAddress();
+                log.info("Elasticsearch container is now running at {}", url);
+
+                starting.set(false);
+                started = true;
+                return "https://" + elasticsearch.getHttpHostAddress();
+            } else {
+                log.info("Testcontainers with Elasticsearch [{}] was previously started", version);
+                return "https://" + elasticsearch.getHttpHostAddress();
             }
         } else {
-            log.info("Testcontainers with Elasticsearch [{}] was previously started", version);
+            log.info("Elasticsearch container is already starting. Skipping starting it again.");
+
+            // Let's wait for it to be started
+            while (!started) {
+                try {
+                    wait(1000);
+                    log.info("Checking if started...");
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            log.info("Testcontainers with Elasticsearch is now available");
+            return "https://" + elasticsearch.getHttpHostAddress();
         }
-
-        String url = "https://" + elasticsearch.getHttpHostAddress();
-
-        log.info("Elasticsearch container is now running at {}", url);
-        return url;
     }
 
     public byte[] getCertAsBytes() {
         return certAsBytes;
+    }
+
+    public boolean isStarted() {
+        return started;
     }
 }

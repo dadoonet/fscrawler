@@ -55,7 +55,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        managementService.getClient().performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+        client.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setPipeline(crawlerName);
@@ -68,7 +68,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 .withESQuery(new ESMatchQuery("my_content_field", "perniciosoque")), 1L, currentTestResourceDir);
 
         // We expect to have one folder
-        ESSearchResponse response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
+        ESSearchResponse response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
         assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 
@@ -100,7 +100,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        managementService.getClient().performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+        client.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setPipeline(crawlerName);
