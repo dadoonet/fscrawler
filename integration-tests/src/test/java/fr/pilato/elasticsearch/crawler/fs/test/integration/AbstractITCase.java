@@ -84,7 +84,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "_common"));
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private static final String DEFAULT_USERNAME = "elastic";
-    private static final String DEFAULT_PASSWORD = "changeme";
+    static final String DEFAULT_PASSWORD = "changeme";
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
     protected static final boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
     protected static final boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);

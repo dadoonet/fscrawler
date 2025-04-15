@@ -51,7 +51,6 @@ class TestContainerHelper {
             Properties props = new Properties();
             props.load(TestContainerHelper.class.getResourceAsStream("/elasticsearch.version.properties"));
             String version = props.getProperty("version");
-            String password = props.getProperty("password");
             if (!started) {
                 // Start the container. This step might take some time...
                 log.info("Starting{} testcontainers with Elasticsearch [{}].",
@@ -66,7 +65,7 @@ class TestContainerHelper {
                         // For 6.x clusters and for semantic search, we need to activate a trial
                         .withEnv("xpack.license.self_generated.type", "trial")
                         .withReuse(keepData)
-                        .withPassword(password);
+                        .withPassword(AbstractITCase.DEFAULT_PASSWORD);
                 elasticsearch.start();
 
                 // Try to get the https certificate if exists
