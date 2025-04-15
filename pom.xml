@@ -69,7 +69,6 @@
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.elasticsearch.port>9200</integ.elasticsearch.port>
         <tests.cluster.url></tests.cluster.url>
-        <tests.cluster.cloud_id></tests.cluster.cloud_id>
         <tests.cluster.apiKey></tests.cluster.apiKey>
         <tests.cluster.check_ssl>true</tests.cluster.check_ssl>
         <tests.rest.port>0</tests.rest.port>
@@ -205,7 +204,6 @@
                             <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                             <java.awt.headless>true</java.awt.headless>
                             <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
-                            <tests.cluster.cloud_id>${tests.cluster.cloud_id}</tests.cluster.cloud_id>
                             <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
                             <tests.cluster.check_ssl>${tests.cluster.check_ssl}</tests.cluster.check_ssl>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
