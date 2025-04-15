@@ -38,12 +38,12 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
         super.cleanExistingIndex();
         // Also clean the specific indices for this test
-        managementService.getClient().deleteIndex(getCrawlerName() + "_1");
-        managementService.getClient().deleteIndex(getCrawlerName() + "_2");
+        client.deleteIndex(getCrawlerName() + "_1");
+        client.deleteIndex(getCrawlerName() + "_2");
     }
 
     @Test
-    public void test_multiple_crawlers() throws Exception {
+    public void multiple_crawlers() throws Exception {
         FsSettings fsSettings1 = createTestSettings(getCrawlerName() + "_1");
         fsSettings1.getFs().setUrl(currentTestResourceDir.resolve("crawler1").toString());
         FsSettings fsSettings2 = createTestSettings(getCrawlerName() + "_2");

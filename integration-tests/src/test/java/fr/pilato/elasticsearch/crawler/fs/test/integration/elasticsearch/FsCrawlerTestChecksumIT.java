@@ -28,11 +28,9 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assume.assumeNoException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThatCode;
 
 /**
  * Test checksum crawler settings
@@ -40,36 +38,28 @@ import static org.junit.Assume.assumeNoException;
 public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void test_checksum_md5() throws Exception {
-        try {
-            MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            assumeNoException(e);
-        }
+    public void checksum_md5() throws Exception {
+        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setChecksum("MD5");
         crawler = startCrawler(fsSettings);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.file.checksum"), is("caa71e1914ecbcf5ae4f46cf85de8648"));
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.checksum")).isEqualTo("caa71e1914ecbcf5ae4f46cf85de8648");
         }
     }
 
     @Test
-    public void test_checksum_sha1() throws Exception {
-        try {
-            MessageDigest.getInstance("SHA-1");
-        } catch (NoSuchAlgorithmException e) {
-            assumeNoException(e);
-        }
+    public void checksum_sha1() throws Exception {
+        assumeThatCode(() -> MessageDigest.getInstance("SHA-1")).doesNotThrowAnyException();
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setChecksum("SHA-1");
         crawler = startCrawler(fsSettings);
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.file.checksum"), is("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab"));
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.checksum")).isEqualTo("81bf7dba781a1efbea6d9f2ad638ffe772ba4eab");
         }
     }
 }

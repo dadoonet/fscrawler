@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
@@ -38,20 +39,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeRealPathName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMinorVersion;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFileExtension;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getFilePermissions;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getGroupName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.getOwnerName;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isFileSizeUnderLimit;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static org.hamcrest.Matchers.not;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 
 public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
@@ -68,49 +56,49 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testOwnerName() {
-        String ownerName = getOwnerName(file);
-        assertThat(ownerName, not(isEmptyOrNullString()));
+    public void ownerName() {
+        String ownerName = FsCrawlerUtil.getOwnerName(file);
+        assertThat(ownerName).isNotEmpty();
     }
 
     @Test
-    public void testGroups() {
+    public void groups() {
         assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
-        String groupName = getGroupName(file);
-        assertThat(groupName, not(isEmptyOrNullString()));
+        String groupName = FsCrawlerUtil.getGroupName(file);
+        assertThat(groupName).isNotEmpty();
     }
 
     @Test
-    public void testPermissions() {
+    public void permissions() {
         assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
-        int permissions = getFilePermissions(file);
-        assertThat(permissions, is(700));
+        int permissions = FsCrawlerUtil.getFilePermissions(file);
+        assertThat(permissions).isEqualTo(700);
     }
 
     @Test
-    public void testIsFileSizeUnderLimit() {
-        assertThat(isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1), is(true));
-        assertThat(isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576), is(true));
-        assertThat(isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"),
-                new ByteSizeValue(randomIntBetween(2, 100), ByteSizeUnit.MB).getBytes()), is(false));
+    public void isFileSizeUnderLimit() {
+        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1)).isTrue();
+        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576)).isTrue();
+        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"),
+                new ByteSizeValue(randomIntBetween(2, 100), ByteSizeUnit.MB).getBytes())).isFalse();
     }
 
     @Test
-    public void testExtractMajorVersion() {
-        assertThat(extractMajorVersion("7.2.0"), is(7));
-        assertThat(extractMajorVersion("8.17.1"), is(8));
-        assertThat(extractMajorVersion("10.1.0"), is(10));
+    public void extractMajorVersion() {
+        assertThat(FsCrawlerUtil.extractMajorVersion("7.2.0")).isEqualTo(7);
+        assertThat(FsCrawlerUtil.extractMajorVersion("8.17.1")).isEqualTo(8);
+        assertThat(FsCrawlerUtil.extractMajorVersion("10.1.0")).isEqualTo(10);
     }
 
     @Test
-    public void testExtractMinorVersion() {
-        assertThat(extractMinorVersion("7.2.0"), is(2));
-        assertThat(extractMinorVersion("8.17.1"), is(17));
-        assertThat(extractMinorVersion("10.1.0"), is(1));
+    public void extractMinorVersion() {
+        assertThat(FsCrawlerUtil.extractMinorVersion("7.2.0")).isEqualTo(2);
+        assertThat(FsCrawlerUtil.extractMinorVersion("8.17.1")).isEqualTo(17);
+        assertThat(FsCrawlerUtil.extractMinorVersion("10.1.0")).isEqualTo(1);
     }
 
     @Test
-    public void testGetRealPathNameWindows() {
+    public void getRealPathNameWindows() {
         testRealPath("/C:", "test-windows.txt", "/C:/test-windows.txt");
         testRealPath("/C:/", "test-windows.txt", "/C:/test-windows.txt");
         testRealPath("/C:/dir", "test-windows.txt", "/C:/dir/test-windows.txt");
@@ -132,7 +120,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testGetRealPathNameLinux() {
+    public void getRealPathNameLinux() {
         // Local Linux / FTP
         testRealPath("/", "test-linux.txt", "/test-linux.txt");
         testRealPath("/dir", "test-linux.txt", "/dir/test-linux.txt");
@@ -146,11 +134,11 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     private void testRealPath(String dirname, String filename, String expectedPath) {
-        assertThat(computeRealPathName(dirname, filename), is(expectedPath));
+        assertThat(FsCrawlerUtil.computeRealPathName(dirname, filename)).isEqualTo(expectedPath);
     }
 
     @Test
-    public void testComputePathLinux() {
+    public void computePathLinux() {
         // Local Linux / FTP
         testVirtualPath("/", "/", "/");
         testVirtualPath("/", "/dir", "/dir");
@@ -176,7 +164,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testComputePathWindows() {
+    public void computePathWindows() {
         testVirtualPath("C:", "C:", "\\");
         testVirtualPath("C:", "C:\\dir", "\\dir");
         testVirtualPath("C:", "C:\\dir\\subdir", "\\dir\\subdir");
@@ -214,19 +202,24 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     private void testVirtualPath(String rootPath, String realPath, String expectedPath) {
-        assertThat(computeVirtualPathName(rootPath, realPath), is(expectedPath));
+        assertThat(FsCrawlerUtil.computeVirtualPathName(rootPath, realPath)).isEqualTo(expectedPath);
     }
 
     @Test
-    public void testGetFileExtension() {
-        assertThat(getFileExtension(new File("foo.bar")), is("bar"));
-        assertThat(getFileExtension(new File("foo")), is(""));
-        assertThat(getFileExtension(new File("foo.bar.baz")), is("baz"));
+    public void getFileExtension() {
+        assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar"))).isEqualTo("bar");
+        assertThat(FsCrawlerUtil.getFileExtension(new File("foo"))).isEmpty();
+        assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar.baz"))).isEqualTo("baz");
     }
 
     @Test
-    public void testLocalDateToDate() {
+    public void localDateToDate() {
         LocalDateTime now = LocalDateTime.now();
-        logger.info("Current Time [{}] in [{}] is actually [{}]", now, TimeZone.getDefault().getDisplayName(), localDateTimeToDate(now));
+        Date date = FsCrawlerUtil.localDateTimeToDate(now);
+        logger.info("Current Time [{}] in [{}] is actually [{}]", 
+                now, 
+                TimeZone.getDefault().getDisplayName(),
+                date);
+        assertThat(date).isNotNull();
     }
 }

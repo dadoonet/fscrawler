@@ -26,14 +26,13 @@ import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void testByteSizeConversion() {
+    public void byteSizeConversion() {
         testConversionBothWays("100mb", 104857600L);
         testConversionBothWays("1mb", 1048576L);
         testConversionBothWays("10kb", 10240L);
@@ -74,8 +73,8 @@ public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
         logger.debug("Testing [{}]", value);
 
         ByteSizeValue byteSizeValue = ByteSizeValue.parseBytesSizeValue(value);
-        assertThat(byteSizeValue.toString(), is(value));
-        assertThat(byteSizeValue.getBytes(), is(bytes));
+        assertThat(byteSizeValue).hasToString(value);
+        assertThat(byteSizeValue.getBytes()).isEqualTo(bytes);
     }
 
     private void testConversionBothWays(String asString, long size, ByteSizeUnit unit) {

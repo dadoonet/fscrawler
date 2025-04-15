@@ -140,7 +140,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 sslContext = SSLContext.getInstance("SSL");
                 sslContext.init(null, trustAllCerts, new SecureRandom());
                 clientBuilder.sslContext(sslContext);
-                logger.warn("We are not doing SSL verification. It's not recommended for production.");
             } catch (KeyManagementException | NoSuchAlgorithmException e) {
                 logger.warn("Failed to get SSL Context", e);
                 throw new RuntimeException(e);
@@ -170,7 +169,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         try {
             String esVersion = getVersion();
-            logger.info("Elasticsearch Client connected to a node running version {}", esVersion);
+            logger.debug("Elasticsearch Client connected to a node running version {}", esVersion);
+            if (!settings.getElasticsearch().isSslVerification()) {
+                logger.warn("We are not doing SSL verification. It's not recommended for production.");
+            }
         } catch (Exception e) {
             logger.warn("Failed to create elasticsearch client on {}. Message: {}.",
                     settings.getElasticsearch().toString(),
@@ -1026,9 +1028,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return response;
         } catch (WebApplicationException e) {
             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                logger.warn("Error on server side. {} -> {}",
+                logger.error("Error on server side. {} -> {} / {}",
                         e.getResponse().getStatus(),
-                        e.getResponse().getStatusInfo().getReasonPhrase());
+                        e.getResponse().getStatusInfo().getReasonPhrase(),
+                        e.getResponse().readEntity(String.class));
             } else {
                 logger.debug("Error while running {} {}/{}: {}", method, node, path == null ? "" : path, e.getResponse().readEntity(String.class));
             }

@@ -31,8 +31,8 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Test crawler default settings
@@ -40,7 +40,7 @@ import static org.hamcrest.Matchers.*;
 public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void test_defaults() throws Exception {
+    public void defaults() throws Exception {
         crawler = startCrawler();
 
         // We expect to have one file
@@ -48,39 +48,39 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
         // The default configuration should not add file attributes
         for (ESSearchHit hit : searchResponse.getHits()) {
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.attributes"));
+            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.attributes")).isInstanceOf(PathNotFoundException.class);
         }
     }
 
     @Test
-    public void test_default_metadata() throws Exception {
+    public void default_metadata() throws Exception {
         crawler = startCrawler();
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
-            expectThrows(PathNotFoundException.class, () -> document.read("$.attachment"));
+            assertThatThrownBy(() -> document.read("$.attachment")).isInstanceOf(PathNotFoundException.class);
 
-            assertThat(document.read("$.file.filename"), notNullValue());
-            assertThat(document.read("$.file.content_type"), notNullValue());
-            assertThat(document.read("$.file.url"), notNullValue());
-            assertThat(document.read("$.file.filesize"), notNullValue());
-            assertThat(document.read("$.file.indexing_date"), notNullValue());
-            expectThrows(PathNotFoundException.class, () -> document.read("$.file.indexed_chars"));
-            assertThat(document.read("$.file.created"), notNullValue());
-            assertThat(document.read("$.file.last_modified"), notNullValue());
-            assertThat(document.read("$.file.last_accessed"), notNullValue());
-
-            assertThat(document.read("$.meta.title"), notNullValue());
+            assertThat((String) document.read("$.file.filename")).isNotEmpty();
+            assertThat((String) document.read("$.file.content_type")).isNotEmpty();
+            assertThat((String) document.read("$.file.url")).isNotEmpty();
+            assertThat((Integer) document.read("$.file.filesize")).isGreaterThan(0);
+            assertThat((String) document.read("$.file.indexing_date")).isNotEmpty();
+            assertThatThrownBy(() -> document.read("$.file.indexed_chars")).isInstanceOf(PathNotFoundException.class);
+            assertThat((String) document.read("$.file.created")).isNotEmpty();
+            assertThat((String) document.read("$.file.last_modified")).isNotEmpty();
+            assertThat((String) document.read("$.file.last_accessed")).isNotEmpty();
+            assertThat((String) document.read("$.meta.title")).isNotEmpty();
         }
     }
 
     @Test
-    public void test_filename_analyzer() throws Exception {
+    public void filename_analyzer() throws Exception {
         crawler = startCrawler();
 
         // We should have one doc
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")), 1L, null);
+        assertThat(response.getTotalHits()).isEqualTo(1);
     }
 
     /**
@@ -88,22 +88,24 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
      * We want to make sure we can highlight documents even if we don't store fields
      */
     @Test
-    public void test_highlight_documents() throws Exception {
+    public void highlight_documents() throws Exception {
         crawler = startCrawler();
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
 
         // Let's test highlighting
-        ESSearchResponse response = documentService.search(new ESSearchRequest()
+        ESSearchResponse response = client.search(new ESSearchRequest()
                 .withIndex(getCrawlerName())
                 .withESQuery(new ESMatchQuery("content", "exemplo"))
                 .addHighlighter("content"));
-        assertThat(response.getTotalHits(), is(1L));
-
-        ESSearchHit hit = response.getHits().get(0);
-        assertThat(hit.getHighlightFields(), hasKey("content"));
-        assertThat(hit.getHighlightFields().get("content"), iterableWithSize(1));
-        assertThat(hit.getHighlightFields().get("content"), hasItem(containsString("<em>exemplo</em>")));
+        assertThat(response.getTotalHits()).isEqualTo(1L);
+        assertThat(response.getHits())
+                .singleElement()
+                .satisfies(hit -> assertThat(hit.getHighlightFields())
+                        .extractingByKey("content")
+                        .satisfies(h -> assertThat(h)
+                                .singleElement()
+                                .satisfies(t -> assertThat(t).contains("<em>exemplo</em>"))));
     }
 }
