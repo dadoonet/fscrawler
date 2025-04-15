@@ -27,7 +27,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
@@ -50,8 +49,8 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         assertThat(awaitBusy(() -> {
             try {
-                return documentService.exists(getCrawlerName(), "roottxtfile.txt");
-            } catch (IOException | ElasticsearchClientException e) {
+                return client.exists(getCrawlerName(), "roottxtfile.txt");
+            } catch (ElasticsearchClientException e) {
                 return false;
             }
         }, MAX_WAIT_FOR_SEARCH))
@@ -74,8 +73,8 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         assertThat(awaitBusy(() -> {
             try {
-                return documentService.exists(getCrawlerName(), "id1.txt");
-            } catch (IOException | ElasticsearchClientException e) {
+                return client.exists(getCrawlerName(), "id1.txt");
+            } catch (ElasticsearchClientException e) {
                 return false;
             }
         }))
@@ -83,8 +82,8 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
                 .isTrue();
         assertThat(awaitBusy(() -> {
             try {
-                return documentService.exists(getCrawlerName(), "id2.txt");
-            } catch (IOException | ElasticsearchClientException e) {
+                return client.exists(getCrawlerName(), "id2.txt");
+            } catch (ElasticsearchClientException e) {
                 return false;
             }
         }))

@@ -245,7 +245,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
        assertThat(response.getHits())
                .isNotEmpty()
                .allSatisfy(hit -> {
-           ESSearchHit getHit = documentService.get(hit.getIndex(), hit.getId());
+           ESSearchHit getHit = client.get(hit.getIndex(), hit.getId());
            assertThat(getHit.getVersion()).isLessThanOrEqualTo(maxVersion);
        });
     }

@@ -23,11 +23,9 @@ import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
@@ -46,15 +44,15 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Before;
 
-import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 import java.io.*;
-import java.net.SocketException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -87,10 +85,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private static final String DEFAULT_USERNAME = "elastic";
     private static final String DEFAULT_PASSWORD = "changeme";
-    @Deprecated
-    protected static final String testClusterUser = getSystemProperty("tests.cluster.user", DEFAULT_USERNAME);
-    @Deprecated
-    protected static final String testClusterPass = getSystemProperty("tests.cluster.pass", DEFAULT_PASSWORD);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
     protected static final boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
     protected static final boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
@@ -106,9 +100,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static String testCaCertificate = null;
 
     protected static Elasticsearch elasticsearchConfiguration;
-    protected static FsCrawlerManagementServiceElasticsearchImpl managementService = null;
-    protected static FsCrawlerDocumentService documentService = null;
     protected static FsCrawlerPluginsManager pluginsManager;
+    protected static ElasticsearchClient client;
 
     /**
      * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
@@ -206,7 +199,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     throw new RuntimeException(source + " doesn't seem to exist. Check your JUnit tests.");
                 }
 
-                logger.info("-> Copying test documents from [{}] to [{}]", source, finalTarget);
+                logger.debug("-> Copying test documents from [{}] to [{}]", source, finalTarget);
                 copyDirs(source, finalTarget);
                 break;
             }
@@ -231,7 +224,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     private static void unzip(Path zip, Path outputFolder, Charset charset) throws IOException {
-        logger.info("-> Unzipping test documents from [{}] to [{}]", zip, outputFolder);
+        logger.debug("-> Unzipping test documents from [{}] to [{}]", zip, outputFolder);
 
         try (ZipFile zipFile = new ZipFile(zip.toFile(), ZipFile.OPEN_READ, charset)) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -275,111 +268,131 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
         }
 
-        boolean checkCertificate = testCheckCertificate;
-        FsSettings fsSettings = startClient(checkCertificate);
-        if (fsSettings == null && checkCertificate) {
-            testClusterUrl = testClusterUrl.replace("http:", "https:");
-            logger.info("Trying without SSL verification on [{}].", testClusterUrl);
-            checkCertificate = false;
-            fsSettings = startClient(checkCertificate);
+        logger.debug("Generate settings against [{}] with ssl check [{}]", testClusterUrl, testCheckCertificate);
+
+        FsSettings fsSettings = FsSettingsLoader.load();
+        // If we already have the elasticsearch settings, there's no need to load them again
+        if (elasticsearchConfiguration != null) {
+            logger.debug("We already found the cluster settings. No need to set them again.");
+            Elasticsearch elasticsearchLocalConfiguration = clone(elasticsearchConfiguration);
+
+            // If we already launched testcontainers, we need to write the CA certificate file again
+            // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
+            if (testContainerHelper.isStarted() && testContainerHelper.getCertAsBytes() != null) {
+                Path clusterCaCrtPath = rootTmpDir.resolve("cluster-ca.crt");
+                Files.write(clusterCaCrtPath, testContainerHelper.getCertAsBytes());
+                testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
+            } else {
+                testCaCertificate = null;
+            }
+            elasticsearchLocalConfiguration.setSslVerification(testCaCertificate != null);
+            elasticsearchLocalConfiguration.setCaCertificate(testCaCertificate);
+            fsSettings.setElasticsearch(elasticsearchLocalConfiguration);
+        } else {
+            logger.debug("No elasticsearch configuration found, using default settings");
+            // We build the elasticsearch Client based on the parameters
+            fsSettings.getElasticsearch().setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)));
+            fsSettings.getElasticsearch().setSslVerification(testCheckCertificate);
+            fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
+            if (testApiKey != null) {
+                fsSettings.getElasticsearch().setApiKey(testApiKey);
+            } else {
+                fsSettings.getElasticsearch().setUsername(DEFAULT_USERNAME);
+                fsSettings.getElasticsearch().setPassword(DEFAULT_PASSWORD);
+            }
         }
 
-        if (fsSettings == null) {
-            logger.info("Elasticsearch is not running on [{}]. We switch to TestContainer.", testClusterUrl);
+        try {
+            client = startClient(fsSettings);
+        } catch (ElasticsearchClientException e) {
+            if (e.getCause() instanceof ProcessingException
+                    && e.getCause().getCause() instanceof SSLHandshakeException
+                    && fsSettings.getElasticsearch().isSslVerification()
+            ) {
+                logger.fatal("❌ SSL check is on but you are probably using a self-signed certificate on [{}]." +
+                                " You can bypass this SSL check using -Dtests.cluster.check_ssl=false",
+                        fsSettings.getElasticsearch().getNodes().get(0).getUrl());
+                throw e;
+            }
+
+            if (!DEFAULT_TEST_CLUSTER_URL.equals(testClusterUrl)) {
+                logger.fatal("❌ Can not connect to Elasticsearch on [{}] with ssl checks [{}]. You can " +
+                                "disable it using -Dtests.cluster.check_ssl=false",
+                        testClusterUrl, testCheckCertificate);
+                throw e;
+            }
+            if (testContainerHelper.isStarted()) {
+                logger.fatal("❌ Elasticsearch TestContainer was previously started but we can not connect to it " +
+                                "on [{}] with ssl checks [{}].",
+                        testClusterUrl, testCheckCertificate);
+                logger.fatal("Full error:", e);
+                throw e;
+            }
+
+            logger.debug("Elasticsearch is not running on [{}]. We switch to TestContainer.", testClusterUrl);
             testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
             // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
             if (testContainerHelper.getCertAsBytes() != null) {
                 Path clusterCaCrtPath = rootTmpDir.resolve("cluster-ca.crt");
                 Files.write(clusterCaCrtPath, testContainerHelper.getCertAsBytes());
                 testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
+            } else {
+                testCaCertificate = null;
             }
-            checkCertificate = testCheckCertificate;
-            fsSettings = startClient(checkCertificate);
+            fsSettings.getElasticsearch().setNodes(List.of(new ServerUrl(testClusterUrl)));
+            fsSettings.getElasticsearch().setSslVerification(testCaCertificate != null);
+            fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
+            client = startClient(fsSettings);
         }
 
-        assumeThat(fsSettings)
+        elasticsearchConfiguration = fsSettings.getElasticsearch();
+
+        assumeThat(client)
                 .as("Integration tests are skipped because we have not been able to find an Elasticsearch cluster")
                 .isNotNull();
-
-        // We create and start the managementService
-        managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-        managementService.start();
 
         // If the Api Key is not provided, we want to generate it and use in all the tests
         if (testApiKey == null) {
             // Generate the Api-Key
-            testApiKey = managementService.getClient().generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
+            testApiKey = client.generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
 
-            // Stop all the services
-            documentService.close();
-            managementService.close();
+            fsSettings.getElasticsearch().setApiKey(testApiKey);
+            fsSettings.getElasticsearch().setUsername(null);
+            fsSettings.getElasticsearch().setPassword(null);
 
-            // Start the documentService with the Api Key
-            fsSettings = startClient(checkCertificate);
+            // Close the previous client
+            client.close();
 
-            // Start the managementService with the Api Key
-            managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-            managementService.start();
+            // Start a new client with the Api Key
+            client = startClient(fsSettings);
         }
 
-        String version = managementService.getVersion();
-        logger.info("Starting integration tests against an external cluster running elasticsearch [{}]", version);
+        String version = client.getVersion();
+        logger.info("✅ Starting integration tests against an external cluster running elasticsearch [{}]", version);
     }
 
-    private static FsSettings startClient(boolean sslVerification) throws IOException, ElasticsearchClientException {
-        logger.info("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
-                testClusterUrl, testCaCertificate, sslVerification);
-        // We build the elasticsearch Client based on the parameters
-        FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.getElasticsearch().setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)));
-        fsSettings.getElasticsearch().setSslVerification(sslVerification);
-        fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
-        if (testApiKey != null) {
-            fsSettings.getElasticsearch().setApiKey(testApiKey);
-        } else {
-            fsSettings.getElasticsearch().setUsername(testClusterUser);
-            fsSettings.getElasticsearch().setPassword(testClusterPass);
-        }
-        elasticsearchConfiguration = fsSettings.getElasticsearch();
-
-        documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
-        try {
-            documentService.start();
-            return fsSettings;
-        } catch (ElasticsearchClientException e) {
-            logger.debug("Elasticsearch is not running on [{}]", testClusterUrl);
-            if ((e.getCause() instanceof SocketException ||
-                    (e.getCause() instanceof ProcessingException && e.getCause().getCause() instanceof SSLException))
-                    && testClusterUrl.toLowerCase().startsWith("https")) {
-                logger.info("May be we are trying to run against a <8.x cluster. So let's fallback to http.");
-                testClusterUrl = testClusterUrl.replace("https", "http");
-                return startClient(sslVerification);
-            }
-        }
-        return null;
+    private static ElasticsearchClient startClient(FsSettings fsSettings) throws ElasticsearchClientException {
+        logger.debug("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
+                fsSettings.getElasticsearch().getNodes().get(0).getUrl(),
+                fsSettings.getElasticsearch().getCaCertificate(),
+                fsSettings.getElasticsearch().isSslVerification());
+        ElasticsearchClient client = new ElasticsearchClient(null, fsSettings);
+        client.start();
+        return client;
     }
 
     @AfterClass
     public static void stopServices() throws IOException {
         logger.debug("Stopping integration tests against an external cluster");
-        if (documentService != null) {
-            documentService.close();
-            documentService = null;
-            logger.debug("Document service stopped");
-        }
-        if (managementService != null) {
-            managementService.close();
-            managementService = null;
-            logger.debug("Management service stopped");
+        if (client != null) {
+            client.close();
+            client = null;
+            logger.debug("Elasticsearch client stopped");
         }
         if (pluginsManager != null) {
             pluginsManager.close();
             pluginsManager = null;
         }
-        testClusterUrl = null;
-        testApiKey = getSystemProperty("tests.cluster.apiKey", null);
-        testCaCertificate = null;
-        elasticsearchConfiguration = null;
     }
 
     @Before
@@ -394,7 +407,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     protected static void refresh(String indexName) throws IOException, ElasticsearchClientException {
         try {
-            documentService.refresh(indexName);
+            client.refresh(indexName);
         } catch (NotFoundException e) {
             // The index might not have been created yet. It could happen with cloud services, like serverless.
             // We can safely ignore it.
@@ -439,13 +452,14 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             try {
                 // Make sure we refresh indexed docs before counting
                 refresh(request.getIndex());
-                response[0] = documentService.search(request);
+                response[0] = client.search(request);
             } catch (RuntimeException | IOException e) {
                 logger.warn("error caught", e);
                 return -1;
             } catch (ElasticsearchClientException e) {
                 // TODO create a NOT FOUND Exception instead
-                logger.debug("error caught", e);
+                logger.debug("error caught: [{}] ", e.getMessage());
+                logger.trace("error caught", e);
                 return -1;
             }
             totalHits = response[0].getTotalHits();

@@ -68,10 +68,10 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
         // This should not raise any exception even if the String is not a Date
         // because of the default mapping we are applying defines all meta raw fields as text
-        documentService.indexRawJson(getCrawlerName(), "1", json1, null);
-        documentService.flush();
-        documentService.indexRawJson(getCrawlerName(), "2", json2, null);
-        documentService.flush();
+        client.indexRawJson(getCrawlerName(), "1", json1, null);
+        client.flush();
+        client.indexRawJson(getCrawlerName(), "2", json2, null);
+        client.flush();
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
         assertThat(searchResponse.getHits())

@@ -42,14 +42,14 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
 
     @Before
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
-        logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        managementService.getClient().deleteIndex(getCrawlerName());
-        managementService.getClient().deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+        logger.debug(" -> Removing existing index [{}*]", getCrawlerName());
+        client.deleteIndex(getCrawlerName());
+        client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
 
-        logger.info(" -> Removing existing index templates [{}*]", getCrawlerName());
-        managementService.getClient().deleteIndexTemplate("fscrawler_docs_" + getCrawlerName());
-        managementService.getClient().deleteIndexTemplate("fscrawler_docs_semantic_" + getCrawlerName());
-        managementService.getClient().deleteIndexTemplate("fscrawler_folders_" + getCrawlerName());
+        logger.debug(" -> Removing existing index templates [{}*]", getCrawlerName());
+        client.deleteIndexTemplate("fscrawler_docs_" + getCrawlerName());
+        client.deleteIndexTemplate("fscrawler_docs_semantic_" + getCrawlerName());
+        client.deleteIndexTemplate("fscrawler_folders_" + getCrawlerName());
     }
 
     @After
