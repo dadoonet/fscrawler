@@ -68,6 +68,8 @@ class TestContainerHelper {
                         .withPassword(AbstractITCase.DEFAULT_PASSWORD);
                 elasticsearch.start();
 
+                String url = "https://" + elasticsearch.getHttpHostAddress();
+
                 // Try to get the https certificate if exists
                 try {
                     certAsBytes = elasticsearch.copyFileFromContainer(
@@ -75,15 +77,15 @@ class TestContainerHelper {
                             IOUtils::toByteArray);
                     log.debug("Found an https elasticsearch cert for version [{}].", version);
                 } catch (Exception e) {
-                    log.warn("We did not find the https elasticsearch cert for version [{}].", version);
+                    log.debug("We did not find the https elasticsearch cert for version [{}]. We switch to http instead.", version);
+                    url = "http://" + elasticsearch.getHttpHostAddress();
                 }
 
-                String url = "https://" + elasticsearch.getHttpHostAddress();
                 log.info("Elasticsearch container is now running at {}", url);
 
                 starting.set(false);
                 started = true;
-                return "https://" + elasticsearch.getHttpHostAddress();
+                return url;
             } else {
                 log.info("Testcontainers with Elasticsearch [{}] was previously started", version);
                 return "https://" + elasticsearch.getHttpHostAddress();
