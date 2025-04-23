@@ -43,10 +43,8 @@ Indexing from HDFS drive
 ------------------------
 
 There is no specific support for HDFS in FSCrawler. But you can `mount
-your HDFS on your
-machine <https://wiki.apache.org/hadoop/MountableHDFS>`__ and run FS
-crawler on this mount point. You can also read details about `HDFS NFS
-Gateway <http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsNfsGateway.html>`__.
+your HDFS on your machine <https://wiki.apache.org/hadoop/MountableHDFS>`__ and run FS crawler on this mount point.
+You can also read details about `HDFS NFS Gateway <http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsNfsGateway.html>`__.
 
 Using docker
 ------------

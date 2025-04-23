@@ -17,48 +17,32 @@ Start FSCrawler with:
 
 .. code:: sh
 
-   bin/fscrawler job_name
+   bin/fscrawler
 
-FSCrawler will read a local file (default to
-``~/.fscrawler/{job_name}/_settings.yaml``). If the file does not exist,
-FSCrawler will propose to create your first job.
+FSCrawler will read a local file (default to ``~/.fscrawler/fscrawler/_settings.yaml``). If the file does not exist,
+you can ask to create it using the ``--setup`` command.
 
 .. code:: sh
 
-   $ bin/fscrawler job_name
-   18:28:58,174 WARN  [f.p.e.c.f.FsCrawler] job [job_name] does not exist
-   18:28:58,177 INFO  [f.p.e.c.f.FsCrawler] Do you want to create it (Y/N)?
-   y
-   18:29:05,711 INFO  [f.p.e.c.f.FsCrawler] Settings have been created in [~/.fscrawler/job_name/_settings.yaml]. Please review and edit before relaunch
+   $ bin/fscrawler --setup
+   17:40:33,905 INFO  [f.console] You can edit the settings in [~/.fscrawler/fscrawler/_settings.yaml]. Then, you can run again fscrawler without the --setup option.
 
 Create a directory named ``/tmp/es`` or ``c:\tmp\es``, add some files
 you want to index in it and start again:
 
 .. code:: sh
 
-   $ bin/fscrawler --config_dir ./test job_name
-   18:30:34,330 INFO  [f.p.e.c.f.FsCrawlerImpl] Starting FS crawler
-   18:30:34,332 INFO  [f.p.e.c.f.FsCrawlerImpl] FS crawler started in watch mode. It will run unless you stop it with CTRL+C.
-   18:30:34,682 INFO  [f.p.e.c.f.FsCrawlerImpl] FS crawler started for [job_name] for [/tmp/es] every [15m]
-
-If you did not create the directory, FSCrawler will complain until you
-fix it:
-
-::
-
-   18:30:34,683 WARN  [f.p.e.c.f.FsCrawlerImpl] Error while indexing content from /tmp/es: /tmp/es doesn't exists.
-
-You can also run FSCrawler without arguments. It will give you the list
-of existing jobs and will allow you to choose one:
-
-::
-
    $ bin/fscrawler
-   18:33:00,624 INFO  [f.p.e.c.f.FsCrawler] No job specified. Here is the list of existing jobs:
-   18:33:00,629 INFO  [f.p.e.c.f.FsCrawler] [1] - job_name
-   18:33:00,629 INFO  [f.p.e.c.f.FsCrawler] Choose your job [1-1]...
-   1
-   18:33:06,151 INFO  [f.p.e.c.f.FsCrawlerImpl] Starting FS crawler
+   17:41:45,395 INFO  [f.p.e.c.f.FsCrawlerImpl] FSCrawler is now connected to Elasticsearch version [8.17.3]
+   17:41:45,395 INFO  [f.p.e.c.f.FsCrawlerImpl] FSCrawler started in watch mode. It will run unless you stop it with CTRL+C.
+   17:41:45,395 INFO  [f.p.e.c.f.FsParserAbstract] FS crawler started for [fscrawler] for [/tmp/es] every [15m]
+
+If you did not create the directory, FSCrawler will complain until you fix it:
+
+::
+
+   17:41:45,396 INFO  [f.p.e.c.f.FsParserAbstract] Run #1: job [fscrawler]: starting...
+   17:41:45,397 WARN  [f.p.e.c.f.FsParserAbstract] Error while crawling /tmp/es: /tmp/es doesn't exists.
 
 Searching for docs
 ^^^^^^^^^^^^^^^^^^

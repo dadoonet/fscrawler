@@ -59,14 +59,14 @@ As an example, you can run:
 
    FSCRAWLER_NAME=foo \
    FSCRAWLER_FS_URL=/tmp/test \
-   FSCRAWLER_ELASTICSEARCH_API_KEY=VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw== \
+   FSCRAWLER_ELASTICSEARCH_API-KEY=VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw== \
    bin/fscrawler test
 
 or:
 
 .. code:: sh
 
-   FS_JAVA_OPTS="-Dname=foo -Dfs.url=/tmp/test -Delasticsearch.api_key=VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw==" \
+   FS_JAVA_OPTS="-Dname=foo -Dfs.url=/tmp/test -Delasticsearch.api-key=VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw==" \
    bin/fscrawler test
 
 .. note::

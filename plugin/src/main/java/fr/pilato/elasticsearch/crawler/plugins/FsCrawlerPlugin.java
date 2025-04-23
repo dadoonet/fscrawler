@@ -33,11 +33,11 @@ public abstract class FsCrawlerPlugin extends Plugin {
 
     @Override
     public void start() {
-        logger.info("Starting FsCrawler plugin [{}]", this.getName());
+        logger.debug("Starting FsCrawler plugin [{}]", this.getName());
     }
 
     @Override
     public void stop() {
-        logger.info("Stopping FsCrawler plugin [{}]", this.getName());
+        logger.debug("Stopping FsCrawler plugin [{}]", this.getName());
     }
 }

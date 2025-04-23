@@ -6,7 +6,7 @@ import java.util.Objects;
 
 public class Rest {
 
-    @Config(defaultVal = Defaults.URL_DEFAULT)
+    @Config(defaultVal = Defaults.REST_URL_DEFAULT)
     private String url;
     @Config(defaultVal = "false")
     private boolean enableCors;

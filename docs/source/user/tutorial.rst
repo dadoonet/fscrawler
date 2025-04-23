@@ -31,11 +31,11 @@ Start FSCrawler
 .. code:: sh
 
    # On Linux/Mac
-   bin/fscrawler resumes
+   bin/fscrawler --setup resumes
    # On Windows
-   .\bin\fscrawler resumes
+   .\bin\fscrawler --setup resumes
 
-* It will ask "Do you want to create it (Y/N)?". Answer ``Y``.
+* It will create a sample configuration file.
 * Go to the FSCrawler configuration folder to edit the job configuration. The FSCrawler configuration folder named
   ``.fscrawler`` is by default in the user home directory, like ``C:\Users\myuser`` on Windows platform or
   ``~`` on Linux/MacOS. In this folder, you will find another folder named ``resumes``. Enter this folder:

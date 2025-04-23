@@ -60,23 +60,16 @@ You can run FSCrawler with:
    docker run -it --rm \
         -v ~/.fscrawler:/root/.fscrawler \
         -v ~/tmp:/tmp/es:ro \
-        dadoonet/fscrawler job_name
-
-On the first run, if the job does not exist yet in ``~/.fscrawler``, FSCrawler will ask you if you want to create it:
-
-::
-
-    10:16:53,880 INFO  [f.p.e.c.f.c.BootstrapChecks] Memory [Free/Total=Percent]: HEAP [67.3mb/876.5mb=7.69%], RAM [2.1gb/3.8gb=55.43%], Swap [1023.9mb/1023.9mb=100.0%].
-    10:16:53,899 WARN  [f.p.e.c.f.c.FsCrawlerCli] job [job_name] does not exist
-    10:16:53,900 INFO  [f.p.e.c.f.c.FsCrawlerCli] Do you want to create it (Y/N)?
-    y
-    10:16:56,745 INFO  [f.p.e.c.f.c.FsCrawlerCli] Settings have been created in [/root/.fscrawler/job_name/_settings.yaml]. Please review and edit before relaunch
+        dadoonet/fscrawler
 
 .. note::
 
-    The configuration file is actually stored on your machine in ``~/.fscrawler/job_name/_settings.yaml``.
+    The configuration file is expected to be stored on your machine in ``~/.fscrawler/fscrawler/_settings.yaml``.
     Remember to change the URL of your elasticsearch instance as the container won't be able to see it
     running under the default ``127.0.0.1``. You will need to use the actual IP address of the host.
+
+    Or use the ``FSCRAWLER_ELASTICSEARCH_NODES`` environment variable to set the elasticsearch URL.
+    See :ref:`docker-options` for more information.
 
 If you need to add a 3rd party library (jar) or your Tika custom jar, you can put it in a ``external`` directory and
 mount it as well:
@@ -87,7 +80,7 @@ mount it as well:
         -v ~/.fscrawler:/root/.fscrawler \
         -v ~/tmp:/tmp/es:ro \
         -v "$PWD/external:/usr/share/fscrawler/external" \
-        dadoonet/fscrawler job_name
+        dadoonet/fscrawler
 
 If you want to use the :ref:`rest-service`, don't forget to also expose the port:
 
@@ -97,7 +90,7 @@ If you want to use the :ref:`rest-service`, don't forget to also expose the port
         -v ~/.fscrawler:/root/.fscrawler \
         -v ~/tmp:/tmp/es:ro \
         -p 8080:8080 \
-        dadoonet/fscrawler job_name
+        dadoonet/fscrawler
 
 If you want to change the log level for FSCrawler, you can run:
 
@@ -108,7 +101,7 @@ If you want to change the log level for FSCrawler, you can run:
         -v ~/tmp:/tmp/es:ro \
         -v ~/logs:/root/logs \
         -e FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug" \
-        dadoonet/fscrawler job_name
+        dadoonet/fscrawler
 
 And you can read the logs from the ``~/logs`` directory:
 

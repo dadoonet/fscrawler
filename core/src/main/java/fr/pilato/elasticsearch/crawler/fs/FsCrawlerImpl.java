@@ -114,11 +114,6 @@ public class FsCrawlerImpl implements AutoCloseable {
     }
 
     public void start() throws Exception {
-        logger.info("Starting FS crawler");
-        if (loop < 0) {
-            logger.info("FS crawler started in watch mode. It will run unless you stop it with CTRL+C.");
-        }
-
         if (loop == 0 && !rest) {
             logger.warn("Number of runs is set to 0 and rest layer has not been started. Exiting");
             return;
@@ -127,6 +122,13 @@ public class FsCrawlerImpl implements AutoCloseable {
         managementService.start();
         documentService.start();
         documentService.createSchema();
+
+        logger.info("FSCrawler is now connected to Elasticsearch version [{}]", managementService.getVersion());
+
+        logger.debug("Starting FSCrawler for job [{}]", settings.getName());
+        if (loop < 0) {
+            logger.info("FSCrawler started in watch mode. It will run unless you stop it with CTRL+C.");
+        }
 
         fsCrawlerThread.start();
     }

@@ -12,4 +12,4 @@ You can also use the ``-D`` option to pass some jobs specific settings:
 
 .. code:: sh
 
-   FS_JAVA_OPTS="-Dfs.url=/tmp/test" bin/fscrawler job_name
+   FS_JAVA_OPTS="-Dfs.url=/tmp/test" bin/fscrawler

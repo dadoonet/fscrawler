@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.cli;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.settings.Defaults;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -185,5 +186,38 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         String[] args = { "--config_dir", metadataDir.toString(), jobName };
 
         FsCrawlerCli.main(args);
+    }
+
+    @Test
+    public void testWithNoJobName() throws Exception {
+        Path jobDir = metadataDir.resolve(Defaults.JOB_NAME_DEFAULT);
+        Files.createDirectories(jobDir);
+        Files.writeString(jobDir.resolve(SETTINGS_YAML), "");
+
+        String[] args = { "--config_dir", metadataDir.toString() };
+
+        FsCrawlerCli.main(args);
+    }
+
+    @Test
+    public void testSetupJob() throws Exception {
+        String jobName = "fscrawler_setup_job";
+        String[] args = { "--config_dir", metadataDir.toString(), "--setup", jobName };
+        FsCrawlerCli.main(args);
+
+        Path jobDir = metadataDir.resolve(jobName);
+        assertThat(Files.exists(jobDir), is(true));
+        assertThat(Files.exists(jobDir.resolve(SETTINGS_YAML)), is(true));
+    }
+
+    @Test
+    public void testListJobs() throws Exception {
+        String[] argsJob1 = { "--config_dir", metadataDir.toString(), "--setup", "fscrawler_list_jobs_1" };
+        FsCrawlerCli.main(argsJob1);
+        String[] argsJob2 = { "--config_dir", metadataDir.toString(), "--setup", "fscrawler_list_jobs_2" };
+        FsCrawlerCli.main(argsJob2);
+
+        String[] argsListJobs = { "--config_dir", metadataDir.toString(), "--list" };
+        FsCrawlerCli.main(argsListJobs);
     }
 }

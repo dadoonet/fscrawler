@@ -3,21 +3,33 @@
 CLI options
 ===========
 
+-  ``--config_dir`` defines directory where jobs are stored instead of default ``~/.fscrawler``.
 -  ``--help`` displays help
--  ``--silent`` runs in silent mode. No output is generated on the console.
--  ``--config_dir`` defines directory where jobs are stored instead of
-   default ``~/.fscrawler``.
+-  ``--list`` lists all jobs. See `List`_.
 -  ``--loop x`` defines the number of runs we want before exiting. See `Loop`_.
 -  ``--restart`` restart a job from scratch. See `Restart`_.
 -  ``--rest`` starts the REST service. See `Rest`_.
+-  ``--setup`` creates a job configuration. See `Setup`_.
+-  ``--silent`` runs in silent mode. No output is generated on the console.
 
 Job settings can also be passed as command line arguments. For example, if you
 want to set the ``url`` of a job named ``myjob`` to ``/tmp/test``, you can run:
 
 .. code:: sh
 
-   bin/fscrawler myjob -Dfs.url=/tmp/test
+   FS_JAVA_OPTS="-Dfs.url=/tmp/test" bin/fscrawler
 
+A more complete example as follow, runs out of the box the indexation of a the directory
+``/tmp/test`` in Elasticsearch running at ``https://elastic.mycompany.com`` with ``API_KEY`` as the API key and it
+exits after the first run:
+
+.. code:: sh
+
+   FS_JAVA_OPTS="-Dfs.url=/tmp/test -Delasticsearch.nodes=https://elastic.mycompany.com -Delasticsearch.api-key=API_KEY" bin/fscrawler --loop 1
+
+..note::
+
+    You can optionally specify the job name you want to use / run. If not set, the default job name is ``fscrawler``.
 
 Loop
 ----
@@ -34,21 +46,42 @@ If you want to scan your hard drive only once, run with ``--loop 1``.
 Restart
 -------
 
-You can tell FSCrawler that it must restart from the beginning by using
-``--restart`` option:
+You can tell FSCrawler that it must restart from the beginning by using ``--restart`` option:
 
 .. code:: sh
 
-   bin/fscrawler job_name --restart
+   bin/fscrawler --restart
 
-In that case, the ``{job_name}/_status.json`` file will be removed.
+In that case, the ``~/.fscrawler/fscrawler/_status.json`` file will be removed.
 
 Rest
 ----
 
-If you want to run the :ref:`rest-service` without scanning
-your hard drive, launch with:
+If you want to run the :ref:`rest-service` without scanning your hard drive, launch with:
 
 .. code:: sh
 
    bin/fscrawler --rest --loop 0
+
+Setup
+-----
+
+If you want to setup a new job, you can use the ``--setup`` option. It will create
+a default configuration file named ``~/.fscrawler/fscrawler/_settings.yaml``:
+
+.. code:: sh
+
+   bin/fscrawler --setup
+
+..note::
+
+    You can also use ``--setup job_name`` to create a job named ``job_name`` instead of the default ``fscrawler``.
+
+List
+----
+
+If you want to list all jobs, you can use the ``--list`` option. It will list all the existing jobs in ``~/.fscrawler``:
+
+.. code:: sh
+
+   bin/fscrawler --list
