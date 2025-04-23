@@ -76,7 +76,7 @@ public class FsSettingsLoader extends MetaFileHandler {
         if (Files.exists(configDir)) {
             return load(readDir(configDir).toArray(new Path[0]));
         }
-        logger.warn("Can not read settings from [{}] with either /_settings.yaml, /_settings.json, /_settings/*." +
+        logger.debug("Can not read settings from [{}] with either /_settings.yaml, /_settings.json, /_settings/*." +
                         " Falling back to default settings.", root.resolve(jobName).toAbsolutePath());
         return load();
     }

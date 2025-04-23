@@ -14,7 +14,7 @@ local files but only listen to incoming REST requests:
 
 .. code:: sh
 
-   $ bin/fscrawler job_name --loop 0 --rest
+   $ bin/fscrawler --loop 0 --rest
    18:55:37,851 INFO  [f.p.e.c.f.FsCrawlerImpl] Starting FS Crawler
    18:55:39,237 INFO  [f.p.e.c.f.FsCrawlerImpl] FS crawler Rest service started on [http://127.0.0.1:8080/fscrawler]
 

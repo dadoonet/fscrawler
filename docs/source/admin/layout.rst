@@ -44,7 +44,7 @@ As this directory is empty by default, you can also mount it when using Docker i
         -v ~/.fscrawler:/root/.fscrawler \
         -v ~/tmp:/tmp/es:ro \
         -v "$PWD/external:/usr/share/fscrawler/external" \
-        dadoonet/fscrawler fscrawler job_name
+        dadoonet/fscrawler
 
 See also :ref:`docker` and :ref:`docker-compose`.
 

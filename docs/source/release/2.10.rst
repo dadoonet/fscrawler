@@ -9,12 +9,18 @@ Breaking changes
 * The way we run docker images has changed. We don't need anymore to specify the fscrawler binary.
   So running ``docker run -it -v ~/.fscrawler:/root/.fscrawler -v /documents:/tmp/es:ro dadoonet/fscrawler job_name`` is
 enough. Thanks to dadoonet.
+* FSCrawler does not display anymore the list of existing jobs when no job name is provided.
+  You need to use the ``--list`` option to list the jobs. Thanks to dadoonet.
+* When launching for the first time FSCrawler with a job name, FSCrawler does not create anymore the job
+  configuration folder with default settings. You need to use the ``--setup`` option to create the job settings.
+  Thanks to dadoonet.
 
 New
 ---
 
 * Job settings can be defined by env variables and system properties and you can also split the configuration of
-  jobs using multiple files in the ``~/.fscrawler/job/_settings`` directory.
+  jobs using multiple files in the ``~/.fscrawler/job/_settings`` directory. Also note that the system properties
+  need to be set in the ``FS_JAVA_OPTS`` environment variable.
 * Add support for automatic semantic search when using a 8.17+ version with a trial or enterprise
   license. See :ref:`semantic_search`. **Warning**: this might slow down the ingestion process. Thanks to dadoonet.
 * Add support for Elastic cloud serverless. Thanks to dadoonet.
@@ -30,6 +36,7 @@ New
   to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. See :ref:`layout`. Thanks to dadoonet.
 * Add temporal information in folder index. Thanks to bdauvissat
 * Add support for external metadata files while crawling, defaults to ``.meta.yml``. See :ref:`tags` Thanks to dadoonet.
+* The job name is not mandatory anymore and it will be ``fscrawler`` by default. Thanks to dadoonet.
 
 Fix
 ---

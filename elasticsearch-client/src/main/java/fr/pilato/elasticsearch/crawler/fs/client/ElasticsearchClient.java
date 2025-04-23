@@ -170,7 +170,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         try {
             String esVersion = getVersion();
-            logger.info("Elasticsearch Client connected to a node running version {}", esVersion);
+            logger.debug("Elasticsearch Client connected to a node running version {}", esVersion);
         } catch (Exception e) {
             logger.warn("Failed to create elasticsearch client on {}. Message: {}.",
                     settings.getElasticsearch().toString(),
