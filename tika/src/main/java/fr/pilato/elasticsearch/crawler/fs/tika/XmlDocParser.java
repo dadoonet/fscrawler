@@ -37,7 +37,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
 @SuppressWarnings("unchecked")
 public class XmlDocParser {
 
-    private final static Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger();
     private static final ObjectMapper xmlMapper;
 
     static {

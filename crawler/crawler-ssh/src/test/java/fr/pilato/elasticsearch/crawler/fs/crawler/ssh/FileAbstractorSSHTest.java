@@ -54,8 +54,8 @@ import static org.assertj.core.api.Assertions.tuple;
 
 public class FileAbstractorSSHTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    private final static String SSH_USERNAME = "USERNAME";
-    private final static String SSH_PASSWORD = "PASSWORD";
+    private static final String SSH_USERNAME = "USERNAME";
+    private static final String SSH_PASSWORD = "PASSWORD";
     private SshServer sshd = null;
     Path testDir = rootTmpDir.resolve("test-ssh");
 

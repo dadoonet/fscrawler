@@ -27,17 +27,17 @@ public class FSCrawlerLogger {
     /**
      * This logger is for the console
      */
-    private final static Logger consoleLogger = LogManager.getLogger("fscrawler.console");
+    private static final Logger consoleLogger = LogManager.getLogger("fscrawler.console");
 
     /**
      * This logger is used to log information related to documents
      */
-    private final static Logger documentLogger = LogManager.getLogger("fscrawler.document");
+    private static final Logger documentLogger = LogManager.getLogger("fscrawler.document");
 
     /**
      * This logger is used to help writing the test cases
      */
-    private final static Logger metadataLogger = LogManager.getLogger("fscrawler.metadata");
+    private static final Logger metadataLogger = LogManager.getLogger("fscrawler.metadata");
 
     /**
      * Print something to the console

@@ -47,17 +47,17 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 
 public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    private final static String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
-    private final static String DEFAULT_USERNAME = "elastic";
-    final static String DEFAULT_PASSWORD = "changeme";
+    private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
+    private static final String DEFAULT_USERNAME = "elastic";
+    static final String DEFAULT_PASSWORD = "changeme";
     private static final String DOC_INDEX_NAME = "fscrawler_elasticsearch_client_i_t";
     private static final String FOLDER_INDEX_NAME = DOC_INDEX_NAME + "_folder";
-    private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
+    private static final TestContainerHelper TEST_CONTAINER_HELPER = new TestContainerHelper();
 
     private static String testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
-    private final static boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
-    private static final boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
-    protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
+    private static final boolean TEST_CHECK_CERTIFICATE = getSystemProperty("tests.cluster.check_ssl", true);
+    private static final boolean TEST_KEEP_DATA = getSystemProperty("tests.leaveTemporary", true);
+    protected static final String TEST_API_KEY = getSystemProperty("tests.cluster.apiKey", null);
     private static String testCaCertificate;
     private static IElasticsearchClient esClient;
 
@@ -67,14 +67,14 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
-        logger.debug("Generate settings against [{}] with ssl check [{}]", testClusterUrl, testCheckCertificate);
+        logger.debug("Generate settings against [{}] with ssl check [{}]", testClusterUrl, TEST_CHECK_CERTIFICATE);
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)));
-        fsSettings.getElasticsearch().setSslVerification(testCheckCertificate);
+        fsSettings.getElasticsearch().setSslVerification(TEST_CHECK_CERTIFICATE);
         fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
-        if (testApiKey != null) {
-            fsSettings.getElasticsearch().setApiKey(testApiKey);
+        if (TEST_API_KEY != null) {
+            fsSettings.getElasticsearch().setApiKey(TEST_API_KEY);
         } else {
             fsSettings.getElasticsearch().setUsername(DEFAULT_USERNAME);
             fsSettings.getElasticsearch().setPassword(DEFAULT_PASSWORD);
@@ -96,23 +96,23 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             if (!DEFAULT_TEST_CLUSTER_URL.equals(testClusterUrl)) {
                 logger.fatal("❌ Can not connect to Elasticsearch on [{}] with ssl checks [{}]. You can " +
                                 "disable it using -Dtests.cluster.check_ssl=false",
-                        testClusterUrl, testCheckCertificate);
+                        testClusterUrl, TEST_CHECK_CERTIFICATE);
                 throw e;
             }
-            if (testContainerHelper.isStarted()) {
+            if (TEST_CONTAINER_HELPER.isStarted()) {
                 logger.fatal("❌ Elasticsearch TestContainer was previously started but we can not connect to it " +
                                 "on [{}] with ssl checks [{}].",
-                        testClusterUrl, testCheckCertificate);
+                        testClusterUrl, TEST_CHECK_CERTIFICATE);
                 logger.fatal("Full error:", e);
                 throw e;
             }
 
             logger.debug("Elasticsearch is not running on [{}]. We switch to TestContainer.", testClusterUrl);
-            testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
+            testClusterUrl = TEST_CONTAINER_HELPER.startElasticsearch(TEST_KEEP_DATA);
             // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
-            if (testContainerHelper.getCertAsBytes() != null) {
+            if (TEST_CONTAINER_HELPER.getCertAsBytes() != null) {
                 Path clusterCaCrtPath = rootTmpDir.resolve("cluster-ca.crt");
-                Files.write(clusterCaCrtPath, testContainerHelper.getCertAsBytes());
+                Files.write(clusterCaCrtPath, TEST_CONTAINER_HELPER.getCertAsBytes());
                 testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
             } else {
                 testCaCertificate = null;
@@ -128,9 +128,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 .isNotNull();
 
         // If the Api Key is not provided, we want to generate it and use in all the tests
-        if (testApiKey == null) {
+        if (TEST_API_KEY == null) {
             // Generate the Api-Key
-            testApiKey = esClient.generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
+            String testApiKey = esClient.generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
 
             fsSettings.getElasticsearch().setApiKey(testApiKey);
             fsSettings.getElasticsearch().setUsername(null);
@@ -737,7 +737,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setNodes(List.of(
                 new ServerUrl("http://127.0.0.1:9206"),
                 new ServerUrl(testClusterUrl)));
-        fsSettings.getElasticsearch().setApiKey(testApiKey);
+        fsSettings.getElasticsearch().setApiKey(TEST_API_KEY);
         fsSettings.getElasticsearch().setSslVerification(false);
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             assertThatNoException().isThrownBy(localClient::start);
@@ -756,7 +756,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                         new ServerUrl(testClusterUrl),
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)));
-        fsSettings.getElasticsearch().setApiKey(testApiKey);
+        fsSettings.getElasticsearch().setApiKey(TEST_API_KEY);
         fsSettings.getElasticsearch().setSslVerification(false);
         fsSettings.getElasticsearch().setIndex(DOC_INDEX_NAME);
         fsSettings.getElasticsearch().setIndexFolder(FOLDER_INDEX_NAME);
@@ -793,7 +793,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setNodes(List.of(
                 new ServerUrl("http://127.0.0.1:9206"),
                 new ServerUrl("http://127.0.0.1:9207")));
-        fsSettings.getElasticsearch().setApiKey(testApiKey);
+        fsSettings.getElasticsearch().setApiKey(TEST_API_KEY);
         fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
@@ -808,7 +808,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         // Build a client with a non-running node
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")));
-        fsSettings.getElasticsearch().setApiKey(testApiKey);
+        fsSettings.getElasticsearch().setApiKey(TEST_API_KEY);
         fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
