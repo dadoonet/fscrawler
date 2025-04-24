@@ -52,6 +52,7 @@ public abstract class FsParserAbstract extends FsParser {
     private static final Logger logger = LogManager.getLogger();
 
     private static final String FSCRAWLER_IGNORE_FILENAME = ".fscrawlerignore";
+    private static final String FULL_STACKTRACE_LOG_MESSAGE = "Full stacktrace";
 
     final FsSettings fsSettings;
     private final FsJobFileHandler fsJobFileHandler;
@@ -172,18 +173,14 @@ public abstract class FsParserAbstract extends FsParser {
                 // updateStats(fsSettings.getName(), stats);
             } catch (Exception e) {
                 logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
-                if (logger.isDebugEnabled()) {
-                    logger.warn("Full stacktrace", e);
-                }
+                logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
             } finally {
                 try {
                     logger.debug("Closing FS crawler file abstractor [{}].", fileAbstractor.getClass().getSimpleName());
                     fileAbstractor.close();
                 } catch (Exception e) {
                     logger.warn("Error while closing the connection: {}", e.getMessage());
-                    if (logger.isDebugEnabled()) {
-                        logger.warn("Full stacktrace", e);
-                    }
+                    logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
                 }
             }
 
@@ -519,9 +516,7 @@ public abstract class FsParserAbstract extends FsParser {
                     }
                 } catch (Exception e) {
                     logger.warn("Unable to parse JSON file [{}] in [{}]: {}", filename, dirname, e.getMessage());
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Full stacktrace", e);
-                    }
+                    logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
                 } finally {
                     if (inputStream != null) {
                         fileAbstractor.closeInputStream(inputStream);
@@ -546,9 +541,7 @@ public abstract class FsParserAbstract extends FsParser {
                     }
                 } catch (Exception e) {
                     logger.warn("Unable to parse XML file [{}] in [{}]: {}", filename, dirname, e.getMessage());
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Full stacktrace", e);
-                    }
+                    logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
                 } finally {
                     if (inputStream != null) {
                         fileAbstractor.closeInputStream(inputStream);
