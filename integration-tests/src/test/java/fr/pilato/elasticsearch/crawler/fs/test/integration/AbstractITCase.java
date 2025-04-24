@@ -390,7 +390,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     protected static final String testCrawlerPrefix = "fscrawler_";
 
-    protected static void refresh(String indexName) throws IOException, ElasticsearchClientException {
+    protected static void refresh(String indexName) throws ElasticsearchClientException {
         try {
             client.refresh(indexName);
         } catch (NotFoundException e) {
@@ -438,7 +438,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 // Make sure we refresh indexed docs before counting
                 refresh(request.getIndex());
                 response[0] = client.search(request);
-            } catch (RuntimeException | IOException e) {
+            } catch (RuntimeException e) {
                 logger.warn("error caught", e);
                 return -1;
             } catch (ElasticsearchClientException e) {
