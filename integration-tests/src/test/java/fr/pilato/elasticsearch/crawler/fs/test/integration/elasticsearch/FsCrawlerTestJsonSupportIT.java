@@ -137,7 +137,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         // The problem here is that the bulk request is sent with an error in it. If you send 1 doc per bulk request,
         // you will just catch the error and then run another bulk request. But if you send 2 docs in the same bulk request,
         // the whole request will fail, meaning that no document will be indexed.
-        fsSettings.getElasticsearch().setBulkSize(1);
+        // fsSettings.getElasticsearch().setBulkSize(1);
         crawler = startCrawler(fsSettings, TimeValue.timeValueSeconds(5));
 
         assertThat(awaitBusy(() -> {

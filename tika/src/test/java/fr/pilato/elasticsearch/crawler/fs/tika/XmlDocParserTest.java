@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -28,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class XmlDocParserTest extends DocParserTestCase {
 
     @Test
-    public void xml() {
+    public void xml() throws JsonProcessingException {
         String doc = extractFromFile("issue-163.xml");
         assertThat(doc).isEqualTo("{\"version\":\"1.0\",\"subscription-update\":{\"subscriptionid\":\"0\",\"requestid\":\"0\"," +
                 "\"last_push\":\"2016-06-03 06:21:34\",\"current_push\":\"2016-06-03 06:21:37\",\"exec\":\"0.002\"," +
@@ -36,24 +37,24 @@ public class XmlDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void xmlNestedObjects() {
+    public void xmlNestedObjects() throws JsonProcessingException {
         String doc = extractFromFile("issue-592.xml");
         assertThat(doc).isEqualTo("{\"object\":[{\"id\":\"1\",\"name\":\"foo\"},{\"id\":\"2\",\"name\":\"bar\"}]}");
     }
 
     @Test
-    public void xmlNotReadable() {
+    public void xmlNotReadable() throws JsonProcessingException {
         String doc = extractFromFile(null, "issue-1753.xml");
         assertThat(doc).isEqualTo("{\"Tag\":{\"attr\":\"false\",\"$\":\"Content\"}}");
     }
 
 
-    private String extractFromFile(String root, String filename) {
+    private String extractFromFile(String root, String filename) throws JsonProcessingException {
         InputStream data = getBinaryContent(root, filename);
         return XmlDocParser.generate(data);
     }
 
-    private String extractFromFile(String filename) {
+    private String extractFromFile(String filename) throws JsonProcessingException {
         InputStream data = getBinaryContent(filename);
         return XmlDocParser.generate(data);
     }

@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.*;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
@@ -36,7 +37,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -44,7 +44,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
@@ -502,31 +501,58 @@ public abstract class FsParserAbstract extends FsParser {
                 FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
                         computeVirtualPathName(stats.getRootPath(), fullFilename),
                         "Indexing json content");
-                // We index the json content directly
-                if (!closed) {
-                    documentService.indexRawJson(
-                            fsSettings.getElasticsearch().getIndex(),
-                            id,
-                            read(inputStream),
-                            fsSettings.getElasticsearch().getPipeline());
-                } else {
-                    logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                            fsSettings.getElasticsearch().getIndex(), id);
+                // We need to check that the provided file is actually a JSON file which can be parsed
+                try {
+                    DocumentContext documentContext = JsonUtil.parseJsonAsDocumentContext(inputStream);
+                    String jsonString = documentContext.jsonString();
+
+                    // We index the json content directly
+                    if (!closed) {
+                        documentService.indexRawJson(
+                                fsSettings.getElasticsearch().getIndex(),
+                                id,
+                                jsonString,
+                                fsSettings.getElasticsearch().getPipeline());
+                    } else {
+                        logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                fsSettings.getElasticsearch().getIndex(), id);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Unable to parse JSON file [{}] in [{}]: {}", filename, dirname, e.getMessage());
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Full stacktrace", e);
+                    }
+                } finally {
+                    if (inputStream != null) {
+                        fileAbstractor.closeInputStream(inputStream);
+                    }
                 }
             } else if (fsSettings.getFs().isXmlSupport()) {
                 FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
                         computeVirtualPathName(stats.getRootPath(), fullFilename),
                         "Indexing xml content");
-                // We index the xml content directly (after transformation to json)
-                if (!closed) {
-                    documentService.indexRawJson(
-                            fsSettings.getElasticsearch().getIndex(),
-                            id,
-                            XmlDocParser.generate(inputStream),
-                            fsSettings.getElasticsearch().getPipeline());
-                } else {
-                    logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                            fsSettings.getElasticsearch().getIndex(), id);
+                // We need to check that the provided file is actually a JSON file which can be parsed
+                try {
+                    // We index the xml content directly (after transformation to json)
+                    if (!closed) {
+                        documentService.indexRawJson(
+                                fsSettings.getElasticsearch().getIndex(),
+                                id,
+                                XmlDocParser.generate(inputStream),
+                                fsSettings.getElasticsearch().getPipeline());
+                    } else {
+                        logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                fsSettings.getElasticsearch().getIndex(), id);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Unable to parse XML file [{}] in [{}]: {}", filename, dirname, e.getMessage());
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Full stacktrace", e);
+                    }
+                } finally {
+                    if (inputStream != null) {
+                        fileAbstractor.closeInputStream(inputStream);
+                    }
                 }
             }
         }
@@ -537,12 +563,6 @@ public abstract class FsParserAbstract extends FsParser {
         String filenameForId = filename.replace("\\", "").replace("/", "");
         String idSource = filepathForId.endsWith("/") ? filepathForId.concat(filenameForId) : filepathForId.concat("/").concat(filenameForId);
         return fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign(idSource);
-    }
-
-    private String read(InputStream input) throws IOException {
-        try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
-            return buffer.lines().collect(Collectors.joining("\n"));
-        }
     }
 
     /**
