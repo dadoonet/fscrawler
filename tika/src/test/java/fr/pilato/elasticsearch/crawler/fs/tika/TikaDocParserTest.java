@@ -599,11 +599,18 @@ public class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr.docx");
         assertThat(doc.getContent()).contains("This file contains some words.");
         assertThat(doc.getContent()).contains("This file also contains text.");
+    }
+
+    @Test
+    public void ocrWithPdfStrategyNoOcr() throws IOException {
+        assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
 
         // Test with OCR On and PDF Strategy set to no_ocr (meaning that PDF are not OCRed)
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPdfStrategy("no_ocr");
-        doc = extractFromFile("test-ocr.png", fsSettings);
+        Doc doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent()).contains("This file contains some words.");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent()).contains("This file also contains text.");
@@ -611,10 +618,18 @@ public class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr.docx", fsSettings);
         assertThat(doc.getContent()).contains("This file also contains text.");
         assertThat(doc.getContent()).contains("This file contains some words.");
+    }
+
+    @Test
+    public void ocrWithPdfStrategyOcrOnly() throws IOException {
+        assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
 
         // Test with OCR On and PDF Strategy set to ocr_only (meaning that PDF only OCRed and no text is extracted)
+        FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPdfStrategy("ocr_only");
-        doc = extractFromFile("test-ocr.png", fsSettings);
+        Doc doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent()).contains("This file contains some words.");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent()).contains("This file contains some words.");
@@ -623,46 +638,85 @@ public class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr.docx", fsSettings);
         assertThat(doc.getContent()).contains("This file contains some words.");
         assertThat(doc.getContent()).contains("This file also contains text.");
+    }
+
+
+    @Test
+    public void ocrWithPdfStrategyAuto() throws IOException {
+        assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
 
         // Test with OCR On and PDF Strategy set to auto (meaning that PDF will be only OCRed if less than 10 characters are found)
+        FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPdfStrategy("auto");
-        doc = extractFromFile("test-ocr.pdf", fsSettings);
+        Doc doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent()).doesNotContain("This file contains some words.");
         assertThat(doc.getContent()).contains("This file also contains text.");
         doc = extractFromFile("test-ocr-notext.pdf", fsSettings);
         assertThat(doc.getContent()).contains("This file contains some words.");
+    }
+
+
+    @Test
+    public void ocrOff() throws IOException {
+        assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
 
         // Test with OCR Off
-        fsSettings = FsSettingsLoader.load();
+        FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setEnabled(false);
-        doc = extractFromFile("test-ocr.png", fsSettings);
+        Doc doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent()).isEmpty();
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent()).doesNotContain("This file contains some words.");
         doc = extractFromFile("test-ocr.docx", fsSettings);
         assertThat(doc.getContent()).doesNotContain("This file contains some words.");
+    }
+
+
+    @Test
+    public void ocrWrongPaths() throws IOException {
+        assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
 
         // Test with OCR On (default) but a wrong path to tesseract
-        fsSettings = FsSettingsLoader.load();
+        FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPath("/path/to/doesnotexist");
         fsSettings.getFs().getOcr().setDataPath("/path/to/doesnotexist");
-        doc = extractFromFile("test-ocr.png", fsSettings);
+        Doc doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent()).isEmpty();
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent()).doesNotContain("This file contains some words.");
+    }
+
+    @Test
+    public void ocrOutputTypeHocr() throws IOException {
+        assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
 
         // Test with OCR On with hocr output type
-        fsSettings = FsSettingsLoader.load();
+        FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setOutputType("hocr");
-        doc = extractFromFile("test-ocr.png", fsSettings);
+        Doc doc = extractFromFile("test-ocr.png", fsSettings);
         assertThat(doc.getContent()).contains("This", "file", "contains", "some", "words.");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
         assertThat(doc.getContent()).contains("This", "file", "contains", "some", "words.");
+    }
+
+    @Test
+    public void ocrLanguageHeb() throws IOException {
+        assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
 
         // Test with heb language
-        fsSettings = FsSettingsLoader.load();
+        FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setLanguage("heb");
-        doc = extractFromFile("test-ocr-heb.pdf", fsSettings);
+        Doc doc = extractFromFile("test-ocr-heb.pdf", fsSettings);
         try {
             // This test requires to have the hebrew language pack, so we don't fail the test but just log
             assertThat(doc.getContent()).contains("המבודדים מתקבלים");
