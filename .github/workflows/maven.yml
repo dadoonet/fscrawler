@@ -16,7 +16,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Cache Docker images
-        uses: ScribeMD/docker-cache@0.5.0
+        uses: AndreKurait/docker-cache@0.6.0
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
@@ -35,7 +35,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Cache Docker images
-        uses: ScribeMD/docker-cache@0.5.0
+        uses: AndreKurait/docker-cache@0.6.0
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
