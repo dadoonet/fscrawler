@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    public void includeAndExcludeTextPattern() {
+    public void emptyOrNullTextPattern() {
         // Test with null or empty text
         regexTester(null, null, true);
         regexTester(null, new ArrayList<>(), true);
@@ -41,7 +41,10 @@ public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
         regexTester("", null, true);
         regexTester("", new ArrayList<>(), true);
         regexTester("", Collections.singletonList("foo"), true);
+    }
 
+    @Test
+    public void regexTextPattern() {
         // Test with text
         regexTester("foo bar", null, true);
         regexTester("foo bar", new ArrayList<>(), true);
@@ -58,7 +61,10 @@ public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
         regexTester("baz", Collections.singletonList(".*bar.*"), false);
         regexTester("baz", Arrays.asList(".*foo.*", ".*bar.*"), false);
         regexTester("baz", Arrays.asList(".*foo.*", "^bar$"), false);
+    }
 
+    @Test
+    public void regexMultiLinesTextPattern() {
         // Test with multi line text
         String text = "This is containing foo as one of the words.\n" +
                 "Another line which contains bar also.\n";
@@ -68,13 +74,16 @@ public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
         regexTester(text, Collections.singletonList(".*bar.*"), true);
         regexTester(text, Arrays.asList(".*foo.*", ".*bar.*"), true);
         regexTester(text, Arrays.asList(".*foo.*", "^bar$"), false);
+    }
 
+    @Test
+    public void regexCreditCardPattern() {
         // Test a Visa Credit Card pattern
         regexTester("4012888888881881", Collections.singletonList("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"), true);
         regexTester("4012 8888 8888 1881", Collections.singletonList("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"), true);
         regexTester("4012-8888-8888-1881", Collections.singletonList("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"), true);
     }
-    
+
     private void regexTester(String input, List<String> regexes, boolean expected) {
         assertThat(isIndexable(input, regexes)).as(regexes + " should " + (expected ? "" : "not ") + "match " + input).isEqualTo(expected);
     }
