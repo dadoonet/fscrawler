@@ -57,7 +57,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static String testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
     private static final boolean TEST_CHECK_CERTIFICATE = getSystemProperty("tests.cluster.check_ssl", true);
     private static final boolean TEST_KEEP_DATA = getSystemProperty("tests.leaveTemporary", true);
-    protected static final String TEST_API_KEY = getSystemProperty("tests.cluster.apiKey", null);
+    protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
     private static String testCaCertificate;
     private static IElasticsearchClient esClient;
 
@@ -73,8 +73,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)));
         fsSettings.getElasticsearch().setSslVerification(TEST_CHECK_CERTIFICATE);
         fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
-        if (TEST_API_KEY != null) {
-            fsSettings.getElasticsearch().setApiKey(TEST_API_KEY);
+        if (testApiKey != null) {
+            fsSettings.getElasticsearch().setApiKey(testApiKey);
         } else {
             fsSettings.getElasticsearch().setUsername(DEFAULT_USERNAME);
             fsSettings.getElasticsearch().setPassword(DEFAULT_PASSWORD);
@@ -128,9 +128,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 .isNotNull();
 
         // If the Api Key is not provided, we want to generate it and use in all the tests
-        if (TEST_API_KEY == null) {
+        if (testApiKey == null) {
             // Generate the Api-Key
-            String testApiKey = esClient.generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
+            testApiKey = esClient.generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
 
             fsSettings.getElasticsearch().setApiKey(testApiKey);
             fsSettings.getElasticsearch().setUsername(null);
@@ -737,7 +737,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setNodes(List.of(
                 new ServerUrl("http://127.0.0.1:9206"),
                 new ServerUrl(testClusterUrl)));
-        fsSettings.getElasticsearch().setApiKey(TEST_API_KEY);
+        fsSettings.getElasticsearch().setApiKey(testApiKey);
         fsSettings.getElasticsearch().setSslVerification(false);
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             assertThatNoException().isThrownBy(localClient::start);
@@ -756,7 +756,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                         new ServerUrl(testClusterUrl),
                         new ServerUrl("http://127.0.0.1:9206"),
                         new ServerUrl(testClusterUrl)));
-        fsSettings.getElasticsearch().setApiKey(TEST_API_KEY);
+        fsSettings.getElasticsearch().setApiKey(testApiKey);
         fsSettings.getElasticsearch().setSslVerification(false);
         fsSettings.getElasticsearch().setIndex(DOC_INDEX_NAME);
         fsSettings.getElasticsearch().setIndexFolder(FOLDER_INDEX_NAME);
@@ -793,7 +793,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setNodes(List.of(
                 new ServerUrl("http://127.0.0.1:9206"),
                 new ServerUrl("http://127.0.0.1:9207")));
-        fsSettings.getElasticsearch().setApiKey(TEST_API_KEY);
+        fsSettings.getElasticsearch().setApiKey(testApiKey);
         fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
@@ -808,7 +808,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         // Build a client with a non-running node
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")));
-        fsSettings.getElasticsearch().setApiKey(TEST_API_KEY);
+        fsSettings.getElasticsearch().setApiKey(testApiKey);
         fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
