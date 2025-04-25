@@ -16,10 +16,7 @@ import jakarta.ws.rs.ProcessingException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.BeforeClass;
+import org.junit.*;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.MountableFile;
@@ -178,13 +175,30 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
     @Before
     public void cleanExistingIndex() throws ElasticsearchClientException {
-        logger.info(" -> Removing existing index [{}*]", getCrawlerName());
+        logger.debug(" -> Removing existing index [{}*]", getCrawlerName());
         esClient.deleteIndex(getCrawlerName());
         esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
         // Remove existing templates if any
-        logger.info(" -> Removing existing templates");
+        logger.debug(" -> Removing existing templates");
         removeIndexTemplates();
         removeComponentTemplates();
+
+        logger.info("🎬 Starting test [{}]", getCurrentTestName());
+    }
+
+    @After
+    public void cleanUp() throws ElasticsearchClientException {
+        if (!TEST_KEEP_DATA) {
+            logger.debug(" -> Removing index [{}*]", getCrawlerName());
+            esClient.deleteIndex(getCrawlerName());
+            esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+            // Remove existing templates if any
+            logger.debug(" -> Removing existing templates");
+            removeIndexTemplates();
+            removeComponentTemplates();
+        }
+
+        logger.info("✅ End of test [{}]", getCurrentTestName());
     }
 
     @Test
