@@ -107,12 +107,18 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testRealPath("C:/", "test-windows.txt", "C:/test-windows.txt");
         testRealPath("C:/dir", "test-windows.txt", "C:/dir/test-windows.txt");
         testRealPath("C:/dir/", "test-windows.txt", "C:/dir/test-windows.txt");
+    }
 
+    @Test
+    public void getRealPathNameWindowsBackslash() {
         testRealPath("C:", "test-windows.txt", "C:\\test-windows.txt");
         testRealPath("C:\\", "test-windows.txt", "C:\\test-windows.txt");
         testRealPath("C:\\dir", "test-windows.txt", "C:\\dir\\test-windows.txt");
         testRealPath("C:\\dir\\", "test-windows.txt", "C:\\dir\\test-windows.txt");
+    }
 
+    @Test
+    public void getRealPathNameWindowsNetworkPath() {
         testRealPath("\\\\SOMEONE", "test-smb.txt", "\\\\SOMEONE\\test-smb.txt");
         testRealPath("\\\\SOMEONE\\", "test-smb.txt", "\\\\SOMEONE\\test-smb.txt");
         testRealPath("\\\\SOMEONE\\share", "test-smb.txt", "\\\\SOMEONE\\share\\test-smb.txt");
@@ -120,12 +126,15 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void getRealPathNameLinux() {
+    public void getRealPathNameLinuxForLocalOrFtp() {
         // Local Linux / FTP
         testRealPath("/", "test-linux.txt", "/test-linux.txt");
         testRealPath("/dir", "test-linux.txt", "/dir/test-linux.txt");
         testRealPath("/dir/", "test-linux.txt", "/dir/test-linux.txt");
+    }
 
+    @Test
+    public void getRealPathNameLinuxForSmb() {
         // SMB
         testRealPath("//SOMEONE", "test-smb.txt", "//SOMEONE/test-smb.txt");
         testRealPath("//SOMEONE/", "test-smb.txt", "//SOMEONE/test-smb.txt");
@@ -138,7 +147,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void computePathLinux() {
+    public void computePathLinuxFromRoot() {
         // Local Linux / FTP
         testVirtualPath("/", "/", "/");
         testVirtualPath("/", "/dir", "/dir");
@@ -146,7 +155,10 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("/", "/file.txt", "/file.txt");
         testVirtualPath("/", "/dir/file.txt", "/dir/file.txt");
         testVirtualPath("/", "/dir/subdir/file.txt", "/dir/subdir/file.txt");
+    }
 
+    @Test
+    public void computePathLinuxFromDir() {
         testVirtualPath("/tmp", "/tmp", "/");
         testVirtualPath("/tmp", "/tmp/dir", "/dir");
         testVirtualPath("/tmp", "/tmp/dir/subdir", "/dir/subdir");
@@ -154,6 +166,10 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("/tmp", "/tmp/dir/file.txt", "/dir/file.txt");
         testVirtualPath("/tmp", "/tmp/dir/subdir/file.txt", "/dir/subdir/file.txt");
 
+    }
+
+    @Test
+    public void computePathLinuxSmb() {
         // SMB
         testVirtualPath("//SOMEONE/share", "//SOMEONE/share", "/");
         testVirtualPath("//SOMEONE/share", "//SOMEONE/share/dir", "/dir");
@@ -164,7 +180,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void computePathWindows() {
+    public void computePathWindowsFromRoot() {
         testVirtualPath("C:", "C:", "\\");
         testVirtualPath("C:", "C:\\dir", "\\dir");
         testVirtualPath("C:", "C:\\dir\\subdir", "\\dir\\subdir");
@@ -172,6 +188,10 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("C:", "C:\\dir\\file.txt", "\\dir\\file.txt");
         testVirtualPath("C:", "C:\\dir\\subdir\\file.txt", "\\dir\\subdir\\file.txt");
 
+    }
+
+    @Test
+    public void computePathWindowsFromDirBackslash() {
         testVirtualPath("C:\\tmp", "C:\\tmp", "\\");
         testVirtualPath("C:\\tmp", "C:\\tmp\\dir", "\\dir");
         testVirtualPath("C:\\tmp", "C:\\tmp\\dir\\subdir", "\\dir\\subdir");
@@ -179,6 +199,10 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("C:\\tmp", "C:\\tmp\\dir\\file.txt", "\\dir\\file.txt");
         testVirtualPath("C:\\tmp", "C:\\tmp\\dir\\subdir\\file.txt", "\\dir\\subdir\\file.txt");
 
+    }
+
+    @Test
+    public void computePathWindowsFromDirSlash() {
         testVirtualPath("C:/tmp", "C:/tmp", "/");
         testVirtualPath("C:/tmp", "C:/tmp/dir", "/dir");
         testVirtualPath("C:/tmp", "C:/tmp/dir/subdir", "/dir/subdir");
@@ -186,6 +210,10 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("C:/tmp", "C:/tmp/dir/file.txt", "/dir/file.txt");
         testVirtualPath("C:/tmp", "C:/tmp/dir/subdir/file.txt", "/dir/subdir/file.txt");
 
+    }
+
+    @Test
+    public void computePathWindowsNetworkDrive() {
         testVirtualPath("/C:/tmp", "/C:/tmp", "/");
         testVirtualPath("/C:/tmp", "/C:/tmp/dir", "/dir");
         testVirtualPath("/C:/tmp", "/C:/tmp/dir/subdir", "/dir/subdir");
@@ -193,6 +221,10 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("/C:/tmp", "/C:/tmp/dir/file.txt", "/dir/file.txt");
         testVirtualPath("/C:/tmp", "/C:/tmp/dir/subdir/file.txt", "/dir/subdir/file.txt");
 
+    }
+
+    @Test
+    public void computePathWindowsRemoteServer() {
         testVirtualPath("\\\\SOMEONE\\share", "\\\\SOMEONE\\share", "\\");
         testVirtualPath("\\\\SOMEONE\\share", "\\\\SOMEONE\\share\\dir", "\\dir");
         testVirtualPath("\\\\SOMEONE\\share", "\\\\SOMEONE\\share\\dir\\subdir", "\\dir\\subdir");
