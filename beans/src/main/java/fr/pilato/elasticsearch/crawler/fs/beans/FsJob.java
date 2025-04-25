@@ -32,43 +32,7 @@ public class FsJob {
     private long indexed;
     private long deleted;
 
-    public static class Builder {
-        private String name;
-        private LocalDateTime lastrun;
-        private long indexed = 0;
-        private long deleted = 0;
-
-        public Builder setName(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder setLastrun(LocalDateTime lastrun) {
-            this.lastrun = lastrun;
-            return this;
-        }
-
-        public Builder setIndexed(long indexed) {
-            this.indexed = indexed;
-            return this;
-        }
-
-        public Builder setDeleted(long deleted) {
-            this.deleted = deleted;
-            return this;
-        }
-
-        public FsJob build() {
-            return new FsJob(name, lastrun, indexed, deleted);
-        }
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
     public FsJob() {
-
     }
 
     public FsJob(String name, LocalDateTime lastrun, long indexed, long deleted) {
@@ -121,15 +85,14 @@ public class FsJob {
         if (deleted != fsJob.deleted) return false;
         if (!Objects.equals(name, fsJob.name)) return false;
         return Objects.equals(lastrun, fsJob.lastrun);
-
     }
 
     @Override
     public int hashCode() {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (lastrun != null ? lastrun.hashCode() : 0);
-        result = 31 * result + (int) (indexed ^ (indexed >>> 32));
-        result = 31 * result + (int) (deleted ^ (deleted >>> 32));
+        result = 31 * result + Long.hashCode(indexed);
+        result = 31 * result + Long.hashCode(deleted);
         return result;
     }
 }

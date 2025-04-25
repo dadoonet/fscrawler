@@ -225,15 +225,10 @@ public abstract class FsParserAbstract extends FsParser {
      * @param jobName  job name
      * @param scanDate last date we scan the dirs
      * @param stats    the stats used to update the job statistics
-     * @throws Exception In case of error
+     * @throws IOException In case of error while saving the job stats
      */
-    private void updateFsJob(final String jobName, final LocalDateTime scanDate, final ScanStatistic stats) throws Exception {
-        FsJob fsJob = FsJob.builder()
-                .setName(jobName)
-                .setLastrun(scanDate)
-                .setIndexed(stats.getNbDocScan())
-                .setDeleted(stats.getNbDocDeleted())
-                .build();
+    private void updateFsJob(final String jobName, final LocalDateTime scanDate, final ScanStatistic stats) throws IOException {
+        FsJob fsJob = new FsJob(jobName, scanDate, stats.getNbDocScan(), stats.getNbDocDeleted());
         // TODO replace this with a call to the management service (Elasticsearch)
         fsJobFileHandler.write(jobName, fsJob);
         logger.debug("Updating job metadata after run for [{}]: lastrun [{}], indexed [{}], deleted [{}]",

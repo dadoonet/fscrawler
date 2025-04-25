@@ -32,7 +32,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    private static final FsJob JOB_EMPTY = FsJob.builder().build();
 
     private void jobTester(FsJob source) throws IOException {
         String json = prettyMapper.writeValueAsString(source);
@@ -44,19 +43,12 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void parseEmptyJob() throws IOException {
-        jobTester(JOB_EMPTY);
+        jobTester(new FsJob());
     }
 
     @Test
     public void parseJob() throws IOException {
-        jobTester(
-                FsJob.builder()
-                        .setName(getCurrentTestName())
-                        .setLastrun(LocalDateTime.now())
-                        .setIndexed(1000)
-                        .setDeleted(5)
-                        .build()
-        );
+        jobTester(new FsJob(getCurrentTestName(), LocalDateTime.now(), 1000, 5));
     }
 
     /**
@@ -66,10 +58,9 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     @Test
     public void dateTimeSerialization() throws IOException {
         LocalDateTime now = LocalDateTime.now();
-        FsJob job = FsJob.builder().setLastrun(now).build();
+        FsJob job = new FsJob(getCurrentTestName(), now, 1000, 5);
         String json = prettyMapper.writeValueAsString(job);
         FsJob generated = prettyMapper.readValue(json, FsJob.class);
         assertThat(generated.getLastrun()).isEqualTo(now);
     }
-
 }
