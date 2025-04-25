@@ -141,7 +141,6 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         }
     }
 
-    // TODO Rewrite this test to use AssertJ
     private void checkHit(DocumentContext document, String filename, boolean hasExternal, String expectedContent) {
         assertThat((String) document.read("$.content")).contains(expectedContent);
         assertThat((String) document.read("$.file.filename")).isEqualTo(filename);

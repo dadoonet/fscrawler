@@ -188,7 +188,6 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
     }
 
-    // TODO rewrite this tester
     private void folderHitTester(DocumentContext document, int position, String expectedReal, String expectedVirtual,
                                  String expectedFilename) {
         pathHitTester(document, position, expectedReal, expectedVirtual);
@@ -198,7 +197,6 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
                 .isEqualTo(Folder.CONTENT_TYPE);
     }
 
-    // TODO rewrite this tester
     private void pathHitTester(DocumentContext document, int position, String expectedReal, String expectedVirtual) {
         String real = document.read("$.hits.hits[" + position + "]._source.path.real");
         String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");
@@ -211,7 +209,6 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
                 .isEqualTo(expectedVirtual);
     }
 
-    // TODO rewrite this tester
     private void pathHitTesterEndWith(DocumentContext document, int position, String expectedReal, String expectedVirtual) {
         String real = document.read("$.hits.hits[" + position + "]._source.path.real");
         String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");

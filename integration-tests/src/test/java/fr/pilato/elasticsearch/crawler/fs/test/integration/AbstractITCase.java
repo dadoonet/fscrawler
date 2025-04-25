@@ -457,16 +457,21 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         if (expected == null) {
             assertThat(hits)
                     .as("checking if any document in " + request.getIndex())
+                    .withFailMessage(() -> {
+                        logContentOfDir(path, Level.WARN);
+                        return "got 0 documents in " + request.getIndex() + " while we expected at least one";
+                    })
                     .isGreaterThan(0);
 
         } else {
             assertThat(hits)
                     .as("checking documents in " + request.getIndex())
+                    .withFailMessage(() -> {
+                        logContentOfDir(path, Level.WARN);
+                        return "got " + hits + " documents in " + request.getIndex() + " while we expected exactly " + expected;
+                    })
                     .isEqualTo(expected);
         }
-
-        // TODO if the test fails, we should display the content of the index using a WARN LEVEL instead
-        logContentOfDir(path, Level.DEBUG);
 
         return response[0];
     }
