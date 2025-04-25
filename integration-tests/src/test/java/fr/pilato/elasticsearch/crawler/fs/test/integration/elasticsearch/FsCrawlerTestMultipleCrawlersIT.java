@@ -24,10 +24,13 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 
 /**
  * Test with multiple crawlers
@@ -36,10 +39,22 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
 
     @Before
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
-        super.cleanExistingIndex();
-        // Also clean the specific indices for this test
+        // Also clean the specific indices for this test suite
         client.deleteIndex(getCrawlerName() + "_1");
         client.deleteIndex(getCrawlerName() + "_2");
+        super.cleanExistingIndex();
+    }
+
+    @After
+    public void cleanUp() throws ElasticsearchClientException {
+        if (!TEST_KEEP_DATA) {
+            // Also clean the specific indices for this test suite
+            client.deleteIndex(getCrawlerName() + "_1");
+            client.deleteIndex(getCrawlerName() + "_1" + INDEX_SUFFIX_FOLDER);
+            client.deleteIndex(getCrawlerName() + "_2");
+            client.deleteIndex(getCrawlerName() + "_2" + INDEX_SUFFIX_FOLDER);
+        }
+        super.cleanUp();
     }
 
     @Test

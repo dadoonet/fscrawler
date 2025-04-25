@@ -77,11 +77,17 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        logger.info(" -> Removing existing index [fscrawler_test_all_documents*]");
+        logger.debug(" -> Removing existing index [fscrawler_test_all_documents*]");
         client.deleteIndex("fscrawler_test_all_documents");
         client.deleteIndex("fscrawler_test_all_documents" + INDEX_SUFFIX_FOLDER);
 
-        logger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
+        // Remove existing templates if any
+        logger.debug(" -> Removing existing templates");
+        removeIndexTemplates();
+        removeComponentTemplates();
+
+        logger.info("🎬 Starting test [fscrawler_test_all_documents*]");
+        logger.debug("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.setName("fscrawler_test_all_documents");
@@ -111,7 +117,24 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             crawler.close();
             crawler = null;
         }
+        if (!TEST_KEEP_DATA) {
+            logger.debug(" -> Removing existing index [fscrawler_test_all_documents*]");
+            client.deleteIndex("fscrawler_test_all_documents");
+            client.deleteIndex("fscrawler_test_all_documents" + INDEX_SUFFIX_FOLDER);
+            // Remove existing templates if any
+            logger.debug(" -> Removing existing templates");
+            removeIndexTemplates();
+            removeComponentTemplates();
+        }
+
+        logger.info("✅ End of test [fscrawler_test_all_documents*]");
     }
+
+    // We need to override this method to avoid removing the index
+    public void cleanExistingIndex() { }
+
+    // We need to override this method to avoid removing the index
+    public void cleanUp() { }
 
     /**
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>

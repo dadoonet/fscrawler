@@ -86,7 +86,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     static final String DEFAULT_PASSWORD = "changeme";
     protected static String testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
-    protected static final boolean testKeepData = getSystemProperty("tests.leaveTemporary", true);
+    protected static final boolean TEST_KEEP_DATA = getSystemProperty("tests.leaveTemporary", true);
     protected static final boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
     private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
     public static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(1);
@@ -315,7 +315,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
 
             logger.debug("Elasticsearch is not running on [{}]. We switch to TestContainer.", testClusterUrl);
-            testClusterUrl = testContainerHelper.startElasticsearch(testKeepData);
+            testClusterUrl = testContainerHelper.startElasticsearch(TEST_KEEP_DATA);
             // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
             if (testContainerHelper.getCertAsBytes() != null) {
                 Path clusterCaCrtPath = rootTmpDir.resolve("cluster-ca.crt");

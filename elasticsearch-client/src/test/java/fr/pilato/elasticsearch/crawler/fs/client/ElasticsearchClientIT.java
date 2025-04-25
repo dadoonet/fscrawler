@@ -950,7 +950,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     }
 
     private void removeComponentTemplates() {
-        logger.debug("Removing component templates");
+        logger.trace("Removing component templates");
         try {
             esClient.performLowLevelRequest("DELETE", "/_component_template/fscrawler_*", null);
         } catch (ElasticsearchClientException | NotFoundException e) {
@@ -959,7 +959,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     }
 
     private void removeIndexTemplates() {
-        logger.debug("Removing index templates");
+        logger.trace("Removing index templates");
         try {
             esClient.performLowLevelRequest("DELETE", "/_index_template/fscrawler_*", null);
         } catch (ElasticsearchClientException | NotFoundException e) {

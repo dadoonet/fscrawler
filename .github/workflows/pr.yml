@@ -64,7 +64,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.output=always
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.output=always -Dtests.leaveTemporary=false
 
   # We run integration tests with elastic stack 7
   it-es7:
@@ -85,7 +85,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-7x -Dtests.parallelism=1
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-7x -Dtests.parallelism=1 -Dtests.leaveTemporary=false
 
   # We run integration tests with elastic stack 6
   it-es6:
@@ -106,7 +106,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-6x -Dtests.parallelism=1
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-6x -Dtests.parallelism=1 -Dtests.leaveTemporary=false
 
   # We run integration tests with Elastic Cloud Elasticsearch service (if secrets are set)
   it-cloud:
@@ -131,7 +131,7 @@ jobs:
         continue-on-error: true
       - name: Run the integration tests
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }}
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }}
 
   # We run integration tests with Elastic Cloud Serverless (if the eare set)
   it-serverless:
@@ -155,7 +155,7 @@ jobs:
         continue-on-error: true
       - name: Run the integration tests
         if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_URL }}
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_URL }}
 
   # We run this job in parallel after the build
   build-docker:

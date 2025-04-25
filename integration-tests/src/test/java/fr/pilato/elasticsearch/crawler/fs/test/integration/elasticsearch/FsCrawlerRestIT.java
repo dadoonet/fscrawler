@@ -25,6 +25,7 @@ import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
@@ -41,6 +42,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.NginxContainer;
@@ -57,6 +60,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -65,6 +69,24 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
     public FsSettings getFsSettings() {
         return createTestSettings();
+    }
+
+    @Before
+    public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
+        // Also clean the specific indices for this test suite
+        client.deleteIndex("fscrawler_fs_custom");
+        client.deleteIndex("fscrawler_fs_custom" + INDEX_SUFFIX_FOLDER);
+        super.cleanExistingIndex();
+    }
+
+    @After
+    public void cleanUp() throws ElasticsearchClientException {
+        if (!TEST_KEEP_DATA) {
+            // Also clean the specific indices for this test suite
+            client.deleteIndex("fscrawler_fs_custom");
+            client.deleteIndex("fscrawler_fs_custom" + INDEX_SUFFIX_FOLDER);
+        }
+        super.cleanUp();
     }
 
     @Test

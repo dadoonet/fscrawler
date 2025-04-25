@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import jakarta.ws.rs.NotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -46,15 +47,54 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         client.deleteIndex(getCrawlerName());
         client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
 
-        logger.debug(" -> Removing existing index templates [{}*]", getCrawlerName());
-        client.deleteIndexTemplate("fscrawler_docs_" + getCrawlerName());
-        client.deleteIndexTemplate("fscrawler_docs_semantic_" + getCrawlerName());
-        client.deleteIndexTemplate("fscrawler_folders_" + getCrawlerName());
+        // Remove existing templates if any
+        logger.debug(" -> Removing existing templates");
+        removeIndexTemplates();
+        removeComponentTemplates();
+
+        logger.info("🎬 Starting test [{}]", getCurrentTestName());
+    }
+
+    @After
+    public void cleanUp() throws ElasticsearchClientException {
+        if (!TEST_KEEP_DATA) {
+            logger.debug(" -> Removing index [{}*]", getCrawlerName());
+            client.deleteIndex(getCrawlerName());
+            client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+            // Remove existing templates if any
+            logger.debug(" -> Removing existing templates");
+            removeIndexTemplates();
+            removeComponentTemplates();
+        }
+
+        logger.info("✅ End of test [{}]", getCurrentTestName());
+    }
+
+    protected static void removeComponentTemplates() {
+        logger.trace("Removing component templates");
+        try {
+            client.performLowLevelRequest("DELETE", "/_component_template/fscrawler_*", null);
+        } catch (ElasticsearchClientException | NotFoundException e) {
+            // We ignore the error
+        }
+    }
+
+    protected static void removeIndexTemplates() {
+        logger.trace("Removing index templates");
+        try {
+            client.performLowLevelRequest("DELETE", "/_index_template/fscrawler_*", null);
+        } catch (ElasticsearchClientException | NotFoundException e) {
+            // We ignore the error
+        }
     }
 
     @After
     public void shutdownCrawler() throws InterruptedException, IOException {
-        stopCrawler();
+        if (crawler != null) {
+            logger.info("  --> Stopping crawler");
+            crawler.close();
+            crawler = null;
+        }
     }
 
     protected FsCrawlerImpl startCrawler() throws Exception {
@@ -92,13 +132,5 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         refresh(fsSettings.getElasticsearch().getIndexFolder());
 
         return crawler;
-    }
-
-    private void stopCrawler() throws InterruptedException, IOException {
-        if (crawler != null) {
-            logger.info("  --> Stopping crawler");
-            crawler.close();
-            crawler = null;
-        }
     }
 }

@@ -71,11 +71,11 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     private static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
 
     protected static WebTarget target;
-    protected static Client client;
+    private static Client httpClient;
 
     protected Path currentTestTagDir;
     private FsCrawlerManagementServiceElasticsearchImpl managementService;
-    protected FsCrawlerDocumentService documentService;
+    private FsCrawlerDocumentService documentService;
     private RestServer restServer;
 
     /**
@@ -199,20 +199,20 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     @BeforeClass
     public static void startRestClient() throws IOException {
         // create the client
-        client = ClientBuilder.newBuilder()
+        httpClient = ClientBuilder.newBuilder()
                 .register(MultiPartFeature.class)
                 .register(RestJsonProvider.class)
                 .register(JacksonFeature.class)
                 .build();
 
-        target = client.target("http://127.0.0.1:" + getRestPort() + "/fscrawler");
+        target = httpClient.target("http://127.0.0.1:" + getRestPort() + "/fscrawler");
     }
 
     @AfterClass
     public static void stopRestClient() {
-        if (client != null) {
-            client.close();
-            client = null;
+        if (httpClient != null) {
+            httpClient.close();
+            httpClient = null;
         }
     }
 
