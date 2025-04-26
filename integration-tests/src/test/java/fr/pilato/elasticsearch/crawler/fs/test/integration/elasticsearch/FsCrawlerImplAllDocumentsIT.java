@@ -130,11 +130,15 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         logger.info("✅ End of test [fscrawler_test_all_documents*]");
     }
 
-    // We need to override this method to avoid removing the index
-    public void cleanExistingIndex() { }
+    @Override
+    public void cleanExistingIndex() {
+        // We need to override this method to avoid removing the index
+    }
 
-    // We need to override this method to avoid removing the index
-    public void cleanUp() { }
+    @Override
+    public void cleanUp() {
+        // We need to override this method to avoid removing the index
+    }
 
     /**
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
