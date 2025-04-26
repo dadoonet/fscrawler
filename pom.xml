@@ -81,6 +81,7 @@
         <tests.verbose>false</tests.verbose>
         <tests.leaveTemporary>false</tests.leaveTemporary>
         <tests.parallelism>auto</tests.parallelism>
+        <tests.heartbeat>10</tests.heartbeat>
         <tests.seed></tests.seed>
         <!-- Running the tests with Tesseract OCR might take time -->
         <tests.timeoutSuite></tests.timeoutSuite>
@@ -183,7 +184,7 @@
                     <artifactId>junit4-maven-plugin</artifactId>
                     <version>2.8.3</version>
                     <configuration>
-                        <heartbeat>10</heartbeat>
+                        <heartbeat>${tests.heartbeat}</heartbeat>
                         <jvmOutputAction>pipe,ignore</jvmOutputAction>
                         <leaveTemporary>${tests.leaveTemporary}</leaveTemporary>
                         <ifNoTests>warn</ifNoTests>
