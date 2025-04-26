@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
 
     @Before
+    @Override
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
         // Also clean the specific indices for this test suite
         client.deleteIndex(getCrawlerName() + "_1");
@@ -48,6 +49,7 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
     }
 
     @After
+    @Override
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             // Also clean the specific indices for this test suite
