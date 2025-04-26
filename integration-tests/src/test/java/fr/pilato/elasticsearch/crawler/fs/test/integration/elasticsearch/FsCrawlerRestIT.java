@@ -72,6 +72,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Before
+    @Override
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
         // Also clean the specific indices for this test suite
         client.deleteIndex("fscrawler_fs_custom");
@@ -80,6 +81,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @After
+    @Override
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             // Also clean the specific indices for this test suite
