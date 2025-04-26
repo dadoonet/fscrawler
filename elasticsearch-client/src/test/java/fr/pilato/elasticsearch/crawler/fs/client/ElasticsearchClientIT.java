@@ -179,9 +179,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.deleteIndex(getCrawlerName());
         esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
         // Remove existing templates if any
-        logger.debug(" -> Removing existing templates");
-        removeIndexTemplates();
-        removeComponentTemplates();
+        if (esClient.getMajorVersion() > 6) {
+            logger.debug(" -> Removing existing templates");
+            removeIndexTemplates();
+            removeComponentTemplates();
+        }
 
         logger.info("🎬 Starting test [{}]", getCurrentTestName());
     }
@@ -193,9 +195,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             esClient.deleteIndex(getCrawlerName());
             esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
-            logger.debug(" -> Removing existing templates");
-            removeIndexTemplates();
-            removeComponentTemplates();
+            if (esClient.getMajorVersion() > 6) {
+                logger.debug(" -> Removing existing templates");
+                removeIndexTemplates();
+                removeComponentTemplates();
+            }
         }
 
         logger.info("✅ End of test [{}]", getCurrentTestName());

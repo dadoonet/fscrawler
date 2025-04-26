@@ -48,9 +48,11 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
-        logger.debug(" -> Removing existing templates");
-        removeIndexTemplates();
-        removeComponentTemplates();
+        if (client.getMajorVersion() > 6) {
+            logger.debug(" -> Removing existing templates");
+            removeIndexTemplates();
+            removeComponentTemplates();
+        }
 
         logger.info("🎬 Starting test [{}]", getCurrentTestName());
     }
@@ -62,9 +64,11 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
             client.deleteIndex(getCrawlerName());
             client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
-            logger.debug(" -> Removing existing templates");
-            removeIndexTemplates();
-            removeComponentTemplates();
+            if (client.getMajorVersion() > 6) {
+                logger.debug(" -> Removing existing templates");
+                removeIndexTemplates();
+                removeComponentTemplates();
+            }
         }
 
         logger.info("✅ End of test [{}]", getCurrentTestName());
