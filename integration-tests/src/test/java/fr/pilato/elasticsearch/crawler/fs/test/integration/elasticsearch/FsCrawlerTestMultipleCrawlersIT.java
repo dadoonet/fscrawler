@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
@@ -31,6 +32,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test with multiple crawlers
@@ -66,9 +68,11 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
 
         try (FsCrawlerImpl ignored1 = startCrawler(fsSettings1); FsCrawlerImpl ignored2 = startCrawler(fsSettings2)) {
             // We should have one doc in index 1...
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_1"), 1L, null);
+            ESSearchResponse response1 = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_1"), 1L, null);
+            assertThat(response1.getTotalHits()).isEqualTo(1L);
             // We should have one doc in index 2...
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_2"), 1L, null);
+            ESSearchResponse response2 = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_2"), 1L, null);
+            assertThat(response2.getTotalHits()).isEqualTo(1L);
         }
     }
 }
