@@ -84,8 +84,8 @@
         <tests.heartbeat>10</tests.heartbeat>
         <tests.seed></tests.seed>
         <!-- Running the tests with Tesseract OCR might take time -->
-        <tests.timeoutSuite></tests.timeoutSuite>
-        <tests.timeout></tests.timeout>
+        <tests.timeoutSuite>180000</tests.timeoutSuite>
+        <tests.timeout>120000</tests.timeout>
         <!-- When we want to run tests which could take a lot of time - ie semantic search -->
         <tests.nightly></tests.nightly>
 
