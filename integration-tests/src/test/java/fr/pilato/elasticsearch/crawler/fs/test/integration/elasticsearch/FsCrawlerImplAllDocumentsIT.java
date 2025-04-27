@@ -124,9 +124,12 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             client.deleteIndex("fscrawler_test_all_documents");
             client.deleteIndex("fscrawler_test_all_documents" + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
-            logger.debug(" -> Removing existing templates");
-            removeIndexTemplates();
-            removeComponentTemplates();
+            // Remove existing templates if any
+            if (client.getMajorVersion() > 6) {
+                logger.debug(" -> Removing existing templates");
+                removeIndexTemplates();
+                removeComponentTemplates();
+            }
         }
 
         logger.info("✅ End of test [fscrawler_test_all_documents*]");
