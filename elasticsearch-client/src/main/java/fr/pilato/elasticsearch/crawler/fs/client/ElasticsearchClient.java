@@ -262,12 +262,19 @@ public class ElasticsearchClient implements IElasticsearchClient {
         minorVersion = extractMinorVersion(version);
         serverless = false;
 
-        if ("serverless".equals(document.read("$.version.build_flavor"))) {
-            logger.debug("We are running on Elastic serverless cloud so we can not consider version number.");
-            serverless = true;
-            version = "serverless";
-            majorVersion = 99;
-            minorVersion = 999;
+        try {
+            if ("serverless".equals(document.read("$.version.build_flavor"))) {
+                logger.debug("We are running on Elastic serverless cloud so we can not consider version number.");
+                serverless = true;
+                version = "serverless";
+                majorVersion = 99;
+                minorVersion = 999;
+            }
+        } catch (PathNotFoundException e) {
+            // We are not running an official Elasticsearch version
+            logger.info("FSCrawler only supports Elasticsearch official distribution. " +
+                    "You are running another custom distribution. We will not be able to use some features like " +
+                    "semantic search.");
         }
         logger.debug("get version returns {} and {} as the major version number", version, majorVersion);
         return version;
