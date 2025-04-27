@@ -23,7 +23,7 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.*;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,8 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -45,7 +44,7 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testReadFile() throws Exception {
+    public void readFile() throws Exception {
         String text = "Hello Foo world!";
         Path bucket = createFile("foo.txt", text);
         createFile("bar.txt", "This one should be ignored.");
@@ -61,9 +60,9 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
             provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object, is(text));
-            assertThat(provider.getFilename(), is("foo.txt"));
-            assertThat(provider.getFilesize(), is(16L));
+            assertThat(object).isEqualTo(text);
+            assertThat(provider.getFilename()).isEqualTo("foo.txt");
+            assertThat(provider.getFilesize()).isEqualTo(16L);
         }
     }
 }

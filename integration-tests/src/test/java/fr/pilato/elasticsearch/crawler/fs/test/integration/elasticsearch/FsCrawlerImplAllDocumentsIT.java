@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import com.carrotsearch.randomizedtesting.annotations.Timeout;
+import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
@@ -31,11 +33,11 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.parser.external.ExternalParser;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -43,14 +45,15 @@ import java.nio.file.Path;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assume.assumeTrue;
+import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Test all type of documents we have
  */
+@TimeoutSuite(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+@Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static FsCrawlerImpl crawler = null;
@@ -74,11 +77,19 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        logger.info(" -> Removing existing index [fscrawler_test_all_documents*]");
-        managementService.getClient().deleteIndex("fscrawler_test_all_documents");
-        managementService.getClient().deleteIndex("fscrawler_test_all_documents" + INDEX_SUFFIX_FOLDER);
+        logger.debug(" -> Removing existing index [fscrawler_test_all_documents*]");
+        client.deleteIndex("fscrawler_test_all_documents");
+        client.deleteIndex("fscrawler_test_all_documents" + INDEX_SUFFIX_FOLDER);
 
-        logger.info("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
+        // Remove existing templates if any
+        if (client.getMajorVersion() > 6) {
+            logger.debug(" -> Removing existing templates");
+            removeIndexTemplates();
+            removeComponentTemplates();
+        }
+
+        logger.info("🎬 Starting test [fscrawler_test_all_documents*]");
+        logger.debug("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.setName("fscrawler_test_all_documents");
@@ -98,7 +109,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         crawler.start();
 
         // We wait until we have all docs
-        countTestHelper(new ESSearchRequest().withIndex("fscrawler_test_all_documents"), numFiles, null, TimeValue.timeValueMinutes(1));
+        countTestHelper(new ESSearchRequest().withIndex("fscrawler_test_all_documents"), numFiles, null);
     }
 
     @AfterClass
@@ -108,77 +119,102 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             crawler.close();
             crawler = null;
         }
+        if (!TEST_KEEP_DATA) {
+            logger.debug(" -> Removing existing index [fscrawler_test_all_documents*]");
+            client.deleteIndex("fscrawler_test_all_documents");
+            client.deleteIndex("fscrawler_test_all_documents" + INDEX_SUFFIX_FOLDER);
+            // Remove existing templates if any
+            // Remove existing templates if any
+            if (client.getMajorVersion() > 6) {
+                logger.debug(" -> Removing existing templates");
+                removeIndexTemplates();
+                removeComponentTemplates();
+            }
+        }
+
+        logger.info("✅ End of test [fscrawler_test_all_documents*]");
+    }
+
+    @Override
+    public void cleanExistingIndex() {
+        // We need to override this method to avoid removing the index
+    }
+
+    @Override
+    public void cleanUp() {
+        // We need to override this method to avoid removing the index
     }
 
     /**
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
      */
     @Test
-    public void testXmlIssue163() throws IOException, ElasticsearchClientException {
+    public void xmlIssue163() throws ElasticsearchClientException {
         runSearch("issue-163.xml");
     }
 
     @Test
-    public void testJson() throws IOException, ElasticsearchClientException {
+    public void json() throws ElasticsearchClientException {
         runSearch("test.json", "json");
     }
 
     @Test
-    public void testExtractFromDoc() throws IOException, ElasticsearchClientException {
+    public void extractFromDoc() throws ElasticsearchClientException {
         runSearch("test.doc", "sample");
     }
 
     @Test
-    public void testExtractFromDocx() throws IOException, ElasticsearchClientException {
+    public void extractFromDocx() throws ElasticsearchClientException {
         ESSearchResponse response = runSearch("test.docx", "sample");
         for (ESSearchHit hit : response.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
-            assertThat(document.read("$.file.filename"), notNullValue());
-            assertThat(document.read("$.file.content_type"), notNullValue());
-            assertThat(document.read("$.file.url"), notNullValue());
-            assertThat(document.read("$.file.filesize"), notNullValue());
-            assertThat(document.read("$.file.indexing_date"), notNullValue());
-            assertThat(document.read("$.file.created"), notNullValue());
-            assertThat(document.read("$.file.last_modified"), notNullValue());
-            assertThat(document.read("$.file.last_accessed"), notNullValue());
-
-            assertThat(document.read("$.meta.title"), notNullValue());
-            assertThat(document.read("$.meta.keywords"), notNullValue());
+            assertThat((String) document.read("$.file.filename")).isNotEmpty();
+            assertThat((String) document.read("$.file.content_type")).isNotEmpty();
+            assertThat((String) document.read("$.file.url")).isNotEmpty();
+            assertThat((Integer) document.read("$.file.filesize")).isGreaterThan(0);
+            assertThat((String) document.read("$.file.indexing_date")).isNotEmpty();
+            assertThat((String) document.read("$.file.created")).isNotEmpty();
+            assertThat((String) document.read("$.file.last_modified")).isNotEmpty();
+            assertThat((String) document.read("$.file.last_accessed")).isNotEmpty();
+            assertThat((String) document.read("$.meta.title")).isNotEmpty();
+            assertThat((Object) document.read("$.meta.keywords"))
+                    .asInstanceOf(InstanceOfAssertFactories.list(String.class))
+                    .containsExactlyInAnyOrder("keyword1", " keyword2");
         }
     }
 
     @Test
-    public void testExtractFromHtml() throws IOException, ElasticsearchClientException {
+    public void extractFromHtml() throws ElasticsearchClientException {
         runSearch("test.html", "sample");
     }
 
     @Test
-    public void testExtractFromMp3() throws IOException, ElasticsearchClientException {
+    public void extractFromMp3() throws ElasticsearchClientException {
         runSearch("test.mp3", "tika");
     }
 
     @Test
-    public void testExtractFromOdt() throws IOException, ElasticsearchClientException {
+    public void extractFromOdt() throws ElasticsearchClientException {
         runSearch("test.odt", "sample");
     }
 
     @Test
-    public void testExtractFromPdf() throws IOException, ElasticsearchClientException {
+    public void extractFromPdf() throws ElasticsearchClientException {
         runSearch("test.pdf", "sample");
     }
 
     @Test
-    public void testExtractFromRtf() throws IOException, ElasticsearchClientException {
+    public void extractFromRtf() throws ElasticsearchClientException {
         runSearch("test.rtf", "sample");
     }
 
     @Test
-    public void testExtractFromTxt() throws IOException, ElasticsearchClientException {
+    public void extractFromTxt() throws ElasticsearchClientException {
         runSearch("test.txt", "contains");
     }
 
     @Test
-    public void testExtractFromWav() throws IOException, ElasticsearchClientException {
+    public void extractFromWav() throws ElasticsearchClientException {
         runSearch("test.wav");
     }
 
@@ -186,7 +222,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/229">https://github.com/dadoonet/fscrawler/issues/229</a>
      */
     @Test
-    public void testProtectedDocument229() throws IOException, ElasticsearchClientException {
+    public void protectedDocument229() throws ElasticsearchClientException {
         runSearch("test-protected.docx");
     }
 
@@ -194,64 +230,66 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
      */
     @Test
-    public void testProtectedDocument221() throws IOException, ElasticsearchClientException {
+    public void protectedDocument221() throws ElasticsearchClientException {
         runSearch("issue-221-doc1.pdf", "coucou");
         runSearch("issue-221-doc2.pdf", "FORMATIONS");
     }
 
     @Test
-    public void testLanguageDetection() throws IOException, ElasticsearchClientException {
+    public void languageDetection() throws ElasticsearchClientException {
         ESSearchResponse response = runSearch("test-fr.txt", "fichier");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.meta.language"), is("fr"));
+            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language")).isEqualTo("fr");
         }
         response = runSearch("test-de.txt", "Datei");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.meta.language"), is("de"));
+            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language")).isEqualTo("de");
         }
         response = runSearch("test.txt", "contains");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.meta.language"), is("en"));
+            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language")).isEqualTo("en");
         }
     }
 
     @Test
-    public void testChineseContent369() throws IOException, ElasticsearchClientException {
+    public void chineseContent369() throws ElasticsearchClientException {
         runSearch("issue-369.txt", "今天天气晴好");
     }
 
     @Test
-    public void testOcr() throws IOException, ElasticsearchClientException {
-        assumeTrue("Tesseract is not installed so we are skipping this test", ExternalParser.check("tesseract"));
+    public void ocr() throws ElasticsearchClientException {
+        assumeThat(ExternalParser.check("tesseract"))
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
         runSearch("test-ocr.png", "words");
         runSearch("test-ocr.pdf", "words");
     }
 
     @Test
-    public void testShiftJisEncoding() throws IOException, ElasticsearchClientException {
+    public void shiftJisEncoding() throws ElasticsearchClientException {
         runSearch("issue-400-shiftjis.txt", "elasticsearch");
     }
 
     @Test
-    public void testNonUtf8Filename418() throws IOException, ElasticsearchClientException {
+    public void nonUtf8Filename418() throws ElasticsearchClientException {
         runSearch("issue-418-中文名称.txt");
     }
 
-    private ESSearchResponse runSearch(String filename) throws IOException, ElasticsearchClientException {
+    private ESSearchResponse runSearch(String filename) throws ElasticsearchClientException {
         return runSearch(filename, null);
     }
 
-    private ESSearchResponse runSearch(String filename, String content) throws IOException, ElasticsearchClientException {
+    private ESSearchResponse runSearch(String filename, String content) throws ElasticsearchClientException {
         logger.info(" -> Testing if file [{}] has been indexed correctly{}.", filename,
                 content == null ? "" : " and contains [" + content + "]");
         ESBoolQuery query = new ESBoolQuery().addMust(new ESTermQuery("file.filename", filename));
         if (content != null) {
             query.addMust(new ESMatchQuery("content", content));
         }
-        ESSearchResponse response = documentService.search(new ESSearchRequest()
+        ESSearchResponse response = client.search(new ESSearchRequest()
                         .withIndex("fscrawler_test_all_documents")
                         .withESQuery(query));
-        assertThat(response.getTotalHits(), is(1L));
+        assertThat(response.getTotalHits()).isEqualTo(1L);
         return response;
     }
 }

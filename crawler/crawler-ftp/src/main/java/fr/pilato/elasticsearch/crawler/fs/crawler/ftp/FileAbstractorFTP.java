@@ -55,7 +55,7 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
     private boolean isUtf8 = false;
 
     private static final String ALTERNATIVE_ENCODING = "GBK";
-    private final static Comparator<FTPFile> FTP_FILE_COMPARATOR = Comparator.comparing(
+    private static final Comparator<FTPFile> FTP_FILE_COMPARATOR = Comparator.comparing(
             file -> LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getTimestamp().getTimeInMillis()), ZoneId.systemDefault()));
     private final Predicate<FTPFile> IS_SYM_LINK = file -> {
         if (fsSettings.getFs().isFollowSymlinks()) return true;

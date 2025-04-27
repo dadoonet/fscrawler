@@ -24,63 +24,81 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import jakarta.ws.rs.NotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Before
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
-        logger.info(" -> Removing existing index [{}*]", getCrawlerName());
-        managementService.getClient().deleteIndex(getCrawlerName());
-        managementService.getClient().deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+        logger.debug(" -> Removing existing index [{}*]", getCrawlerName());
+        client.deleteIndex(getCrawlerName());
+        client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
 
-        logger.info(" -> Removing existing index templates [{}*]", getCrawlerName());
-        managementService.getClient().deleteIndexTemplate("fscrawler_docs_" + getCrawlerName());
-        managementService.getClient().deleteIndexTemplate("fscrawler_docs_semantic_" + getCrawlerName());
-        managementService.getClient().deleteIndexTemplate("fscrawler_folders_" + getCrawlerName());
+        // Remove existing templates if any
+        if (client.getMajorVersion() > 6) {
+            logger.debug(" -> Removing existing templates");
+            removeIndexTemplates();
+            removeComponentTemplates();
+        }
+
+        logger.info("🎬 Starting test [{}]", getCurrentTestName());
+    }
+
+    @After
+    public void cleanUp() throws ElasticsearchClientException {
+        if (!TEST_KEEP_DATA) {
+            logger.debug(" -> Removing index [{}*]", getCrawlerName());
+            client.deleteIndex(getCrawlerName());
+            client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+            // Remove existing templates if any
+            if (client.getMajorVersion() > 6) {
+                logger.debug(" -> Removing existing templates");
+                removeIndexTemplates();
+                removeComponentTemplates();
+            }
+        }
+
+        logger.info("✅ End of test [{}]", getCurrentTestName());
+    }
+
+    protected static void removeComponentTemplates() {
+        logger.trace("Removing component templates");
+        try {
+            client.performLowLevelRequest("DELETE", "/_component_template/fscrawler_*", null);
+        } catch (ElasticsearchClientException | NotFoundException e) {
+            // We ignore the error
+        }
+    }
+
+    protected static void removeIndexTemplates() {
+        logger.trace("Removing index templates");
+        try {
+            client.performLowLevelRequest("DELETE", "/_index_template/fscrawler_*", null);
+        } catch (ElasticsearchClientException | NotFoundException e) {
+            // We ignore the error
+        }
     }
 
     @After
     public void shutdownCrawler() throws InterruptedException, IOException {
-        stopCrawler();
-    }
-
-    protected FsSettings createTestSettings() {
-        return createTestSettings(getCrawlerName());
-    }
-
-    protected FsSettings createTestSettings(String name) {
-        FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.setName(name);
-        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(1));
-        fsSettings.getFs().setUrl(currentTestResourceDir.toString());
-
-        // Clone the elasticsearchConfiguration to avoid modifying the default one
-        // We start with a clean configuration
-        Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
-
-        fsSettings.setElasticsearch(elasticsearch);
-        fsSettings.getElasticsearch().setIndex(name);
-        fsSettings.getElasticsearch().setIndexFolder(name + INDEX_SUFFIX_FOLDER);
-        // We explicitly set semantic search to false because IT takes too long time
-        fsSettings.getElasticsearch().setSemanticSearch(false);
-        return fsSettings;
+        if (crawler != null) {
+            logger.info("  --> Stopping crawler");
+            crawler.close();
+            crawler = null;
+        }
     }
 
     protected FsCrawlerImpl startCrawler() throws Exception {
@@ -88,7 +106,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     protected FsCrawlerImpl startCrawler(FsSettings fsSettings) throws Exception {
-        return startCrawler(fsSettings, TimeValue.timeValueSeconds(30));
+        return startCrawler(fsSettings, MAX_WAIT_FOR_SEARCH);
     }
 
     protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, TimeValue duration)
@@ -96,22 +114,20 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         logger.info("  --> starting crawler [{}]", fsSettings.getName());
         logger.debug("     with settings [{}]", fsSettings);
 
-        crawler = new FsCrawlerImpl(
-                metadataDir,
-                fsSettings,
-                LOOP_INFINITE,
-                fsSettings.getRest() != null);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
         crawler.start();
 
         // We wait up to X seconds before considering a failing test
-        assertThat("Job meta file should exists in ~/.fscrawler...", awaitBusy(() -> {
+        assertThat(awaitBusy(() -> {
             try {
                 new FsJobFileHandler(metadataDir).read(fsSettings.getName());
                 return true;
             } catch (IOException e) {
                 return false;
             }
-        }, duration), equalTo(true));
+        }, duration))
+                .as("Job meta file should exists in ~/.fscrawler...")
+                .isTrue();
 
         countTestHelper(new ESSearchRequest().withIndex(fsSettings.getElasticsearch().getIndex()), null, null, duration);
 
@@ -120,13 +136,5 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         refresh(fsSettings.getElasticsearch().getIndexFolder());
 
         return crawler;
-    }
-
-    private void stopCrawler() throws InterruptedException, IOException {
-        if (crawler != null) {
-            logger.info("  --> Stopping crawler");
-            crawler.close();
-            crawler = null;
-        }
     }
 }

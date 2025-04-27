@@ -2,20 +2,18 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class AwaitTest {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void testSimulateElasticsearchException() throws InterruptedException {
+    public void simulateElasticsearchException() throws InterruptedException {
         AtomicLong l = new AtomicLong(-1);
 
         long hits = awaitBusy(() -> {
@@ -28,6 +26,6 @@ public class AwaitTest {
             }
         }, null, TimeValue.timeValueSeconds(1));
 
-        assertThat(hits, Matchers.greaterThan(-1L));
+        assertThat(hits).isGreaterThan(-1L);
     }
 }

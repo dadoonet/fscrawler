@@ -33,19 +33,35 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 import java.net.URI;
 
-public class RestServer {
+public class RestServer implements AutoCloseable {
     private static final Logger logger = LogManager.getLogger();
-    private static HttpServer httpServer = null;
+    private final FsSettings settings;
+    private final FsCrawlerManagementService managementService;
+    private final FsCrawlerDocumentService documentService;
+    private final FsCrawlerPluginsManager pluginsManager;
+    private HttpServer httpServer = null;
 
     /**
-     * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
+     * Create the Rest Server, but it does not start it.
      * @param settings FSCrawler settings
      * @param managementService The management service
      * @param documentService The document service
      * @param pluginsManager The plugins manager instance
      */
-    public static void start(FsSettings settings, FsCrawlerManagementService managementService,
-                             FsCrawlerDocumentService documentService, FsCrawlerPluginsManager pluginsManager) {
+    public RestServer(FsSettings settings,
+                      FsCrawlerManagementService managementService,
+                      FsCrawlerDocumentService documentService,
+                      FsCrawlerPluginsManager pluginsManager) {
+        this.settings = settings;
+        this.managementService = managementService;
+        this.documentService = documentService;
+        this.pluginsManager = pluginsManager;
+    }
+
+    /**
+     * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
+     */
+    public void start() {
         // We create the service only one
         if (httpServer == null) {
             // create a resource config that scans for JAX-RS resources and providers
@@ -65,10 +81,12 @@ public class RestServer {
             // exposing the Jersey application at BASE_URI
             httpServer = GrizzlyHttpServerFactory.createHttpServer(URI.create(settings.getRest().getUrl()), rc);
             logger.info("FSCrawler Rest service started on [{}]", settings.getRest().getUrl());
+        } else {
+            logger.warn("FSCrawler Rest service already started. This might indicate a bug.");
         }
     }
 
-    public static synchronized void close() {
+    public void close() {
         if (httpServer != null) {
             httpServer.shutdownNow();
             httpServer = null;

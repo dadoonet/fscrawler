@@ -26,6 +26,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Test Xml support crawler setting
  */
@@ -36,11 +38,12 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
      * Test case for issue #185: <a href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a> : Add xml_support setting
      */
     @Test
-    public void test_xml_enabled() throws Exception {
+    public void xmlSupport() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setXmlSupport(true);
         crawler = startCrawler(fsSettings);
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        assertThat(response.getTotalHits()).isEqualTo(3L);
 
         countTestHelper(new ESSearchRequest()
                 .withIndex(getCrawlerName())
@@ -50,10 +53,22 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
                 .withIndex(getCrawlerName())
                 .withESQuery(new ESRangeQuery("price").withGte(5).withLt(6)), 2L, null);
 
-        logger.info("XML documents converted to:");
+        logger.debug("XML documents converted to:");
         for (ESSearchHit hit : response.getHits()) {
-            logger.info("{}", hit.getSource());
+            logger.debug("{}", hit.getSource());
         }
+    }
+
+    /**
+     * Test case for issue #185: <a href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a> : Add xml_support setting
+     */
+    @Test
+    public void xmlSupportAndOtherFiles() throws Exception {
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setXmlSupport(true);
+        crawler = startCrawler(fsSettings);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        assertThat(response.getTotalHits()).isEqualTo(3L);
     }
 
     /**
@@ -61,20 +76,21 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
      * invalid json generated from XML
      */
     @Test
-    public void test_xml_not_readable() throws Exception {
+    public void xmlNotReadable() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setXmlSupport(true);
         crawler = startCrawler(fsSettings);
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        assertThat(response.getTotalHits()).isEqualTo(1L);
 
         countTestHelper(new ESSearchRequest()
                 .withIndex(getCrawlerName())
                 .withESQuery(new ESMatchQuery("Tag.$", "Content")),
                 1L, null);
 
-        logger.info("XML documents converted to:");
+        logger.debug("XML documents converted to:");
         for (ESSearchHit hit : response.getHits()) {
-            logger.info("{}", hit.getSource());
+            logger.debug("{}", hit.getSource());
         }
     }
 }

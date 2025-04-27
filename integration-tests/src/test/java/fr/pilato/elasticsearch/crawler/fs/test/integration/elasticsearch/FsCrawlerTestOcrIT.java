@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import com.jayway.jsonpath.JsonPath;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -37,9 +36,8 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assume.assumeTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Tests with OCR configuration
@@ -49,13 +47,15 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void test_ocr() throws Exception {
+    public void ocr() throws Exception {
         String exec = "tesseract";
         Optional<Path> tessPath = Stream.of(System.getenv("PATH").split(Pattern.quote(File.pathSeparator)))
                 .map(Paths::get)
                 .filter(path -> Files.exists(path.resolve(exec)))
                 .findFirst();
-        assumeTrue("We need to have tesseract installed and present in path to run this test", tessPath.isPresent());
+        assumeThat(tessPath.isPresent())
+                .as("tesseract executable [{}] should be present in PATH [{}]", exec, System.getenv("PATH"))
+                .isTrue();
         Path tessDirPath = tessPath.get();
         Path tesseract = tessDirPath.resolve(exec);
         logger.info("Tesseract is installed at [{}]", tesseract);
@@ -67,10 +67,12 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
             // We expect to have one file
             ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
 
-            // The default configuration should not add file attributes
-            for (ESSearchHit hit : searchResponse.getHits()) {
-                assertThat(JsonPath.read(hit.getSource(), "$.content"), containsString("words"));
-            }
+            // Check that we extracted the content
+            assertThat(searchResponse.getHits())
+                    .isNotEmpty()
+                    .allSatisfy(hit ->
+                            assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
+                                    .contains("words"));
 
             crawler.close();
             crawler = null;
@@ -90,10 +92,12 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
             // We expect to have one file
             ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
 
-            // The default configuration should not add file attributes
-            for (ESSearchHit hit : searchResponse.getHits()) {
-                assertThat(JsonPath.read(hit.getSource(), "$.content"), containsString("words"));
-            }
+            // Check that we extracted the content
+            assertThat(searchResponse.getHits())
+                    .isNotEmpty()
+                    .allSatisfy(hit ->
+                            assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
+                                    .contains("words"));
 
             crawler.close();
             crawler = null;
@@ -113,10 +117,12 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
             // We expect to have one file
             ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
 
-            // The default configuration should not add file attributes
-            for (ESSearchHit hit : searchResponse.getHits()) {
-                assertThat(JsonPath.read(hit.getSource(), "$.content"), containsString("words"));
-            }
+            // Check that we extracted the content
+            assertThat(searchResponse.getHits())
+                    .isNotEmpty()
+                    .allSatisfy(hit ->
+                            assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
+                                    .contains("words"));
         }
     }
 }

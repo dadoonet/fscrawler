@@ -27,12 +27,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test filename_as_id crawler setting
@@ -44,25 +42,27 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
      * Test case for issue #7: <a href="https://github.com/dadoonet/fscrawler/issues/7">https://github.com/dadoonet/fscrawler/issues/7</a> : Use filename as ID
      */
     @Test
-    public void test_filename_as_id() throws Exception {
+    public void filename_as_id() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilenameAsId(true);
         crawler = startCrawler(fsSettings);
 
-        assertThat("Document should exists with [roottxtfile.txt] id...", awaitBusy(() -> {
+        assertThat(awaitBusy(() -> {
             try {
-                return documentService.exists(getCrawlerName(), "roottxtfile.txt");
-            } catch (IOException | ElasticsearchClientException e) {
+                return client.exists(getCrawlerName(), "roottxtfile.txt");
+            } catch (ElasticsearchClientException e) {
                 return false;
             }
-        }), equalTo(true));
+        }, MAX_WAIT_FOR_SEARCH))
+                .as("Document should exists with [roottxtfile.txt] id...")
+                .isTrue();
     }
 
     /**
      * Test case for #336: <a href="https://github.com/dadoonet/fscrawler/issues/336">https://github.com/dadoonet/fscrawler/issues/336</a>
      */
     @Test
-    public void test_remove_deleted_with_filename_as_id() throws Exception {
+    public void remove_deleted_with_filename_as_id() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRemoveDeleted(true);
         fsSettings.getFs().setFilenameAsId(true);
@@ -71,20 +71,24 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
 
-        assertThat("Document should exists with [id1.txt] id...", awaitBusy(() -> {
+        assertThat(awaitBusy(() -> {
             try {
-                return documentService.exists(getCrawlerName(), "id1.txt");
-            } catch (IOException | ElasticsearchClientException e) {
+                return client.exists(getCrawlerName(), "id1.txt");
+            } catch (ElasticsearchClientException e) {
                 return false;
             }
-        }), equalTo(true));
-        assertThat("Document should exists with [id2.txt] id...", awaitBusy(() -> {
+        }))
+                .as("Document should exists with [id1.txt] id...")
+                .isTrue();
+        assertThat(awaitBusy(() -> {
             try {
-                return documentService.exists(getCrawlerName(), "id2.txt");
-            } catch (IOException | ElasticsearchClientException e) {
+                return client.exists(getCrawlerName(), "id2.txt");
+            } catch (ElasticsearchClientException e) {
                 return false;
             }
-        }), equalTo(true));
+        }))
+                .as("Document should exists with [id2.txt] id...")
+                .isTrue();
 
         // We remove a file
         logger.info("  ---> Removing file id2.txt");

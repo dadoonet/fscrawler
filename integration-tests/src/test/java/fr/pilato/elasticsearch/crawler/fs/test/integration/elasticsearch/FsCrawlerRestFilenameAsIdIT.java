@@ -25,56 +25,46 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ALL")
 public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
     private static final Logger logger = LogManager.getLogger();
 
-    public FsSettings getFsSettings() throws IOException {
-        FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.setName(getCrawlerName());
+    public FsSettings getFsSettings() {
+        FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilenameAsId(true);
-        fsSettings.getRest().setUrl("http://127.0.0.1:" + getRestPort() + "/fscrawler");
-        // Clone the elasticsearchConfiguration to avoid modifying the default one
-        // We start with a clean configuration
-        Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
-        fsSettings.setElasticsearch(elasticsearch);
         return fsSettings;
     }
 
     @Test
-    public void testUploadOneDocument() throws Exception {
+    public void uploadOneDocument() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         UploadResponse uploadResponse = uploadFile(target, from);
-        assertThat(uploadResponse.isOk(), is(true));
+        assertThat(uploadResponse.isOk()).isTrue();
 
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(hit.getId(), is((String) JsonPath.read(hit.getSource(), "$.file.filename")));
+            assertThat(hit.getId()).isEqualTo((String) JsonPath.read(hit.getSource(), "$.file.filename"));
         }
     }
 
     @Test
-    public void testUploadAllDocuments() throws Exception {
+    public void uploadAllDocuments() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
@@ -84,14 +74,14 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
                 .filter(Files::isRegularFile)
                 .forEach(path -> {
                     UploadResponse response = uploadFile(target, path);
-                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+            assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
                 });
 
         // We wait until we have all docs
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), Files.list(from).count(), null, TimeValue
                 .timeValueMinutes(2));
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(hit.getId(), is((String) JsonPath.read(hit.getSource(), "$.file.filename")));
+            assertThat(hit.getId()).isEqualTo((String) JsonPath.read(hit.getSource(), "$.file.filename"));
         }
     }
 }

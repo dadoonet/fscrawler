@@ -42,10 +42,10 @@ public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
     private static final Logger logger = LogManager.getLogger();
 
     private final FsCrawlerSshClient fsCrawlerSshClient;
-    private final static Predicate<SftpClient.DirEntry> IS_DOT = file ->
+    private static final Predicate<SftpClient.DirEntry> IS_DOT = file ->
             !".".equals(file.getFilename()) &&
             !"..".equals(file.getFilename());
-    private final static Comparator<SftpClient.DirEntry> SFTP_FILE_COMPARATOR = Comparator.comparing(
+    private static final Comparator<SftpClient.DirEntry> SFTP_FILE_COMPARATOR = Comparator.comparing(
             file -> LocalDateTime.ofInstant(file.getAttributes().getModifyTime().toInstant(), ZoneId.systemDefault()));
 
     public FileAbstractorSSH(FsSettings fsSettings) {

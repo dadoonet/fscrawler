@@ -41,13 +41,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.function.Supplier;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.fail;
 
 @RunWith(RandomizedRunner.class)
 @Listeners({FSCrawlerReproduceInfoPrinter.class})
@@ -58,6 +54,8 @@ import static org.junit.Assert.fail;
         AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class
 })
 public abstract class AbstractFSCrawlerTestCase {
+
+    public static final int TIMEOUT_MINUTE_AS_MS = 60 * 1000;
 
     public static class TestContainerThreadFilter implements ThreadFilter {
         @Override
@@ -170,24 +168,6 @@ public abstract class AbstractFSCrawlerTestCase {
         } catch(URISyntaxException e) {
             return new File(url.getPath());
         }
-    }
-
-    /**
-     * Helper to check that something actually throws an error
-     * @param exceptionClass    Expected error
-     * @param function          Function to be executed
-     */
-    public static <T extends Throwable> T expectThrows(Class<T> exceptionClass, Supplier<?> function) {
-        try {
-            Object o = function.get();
-            fail("We should have caught a " + exceptionClass.getName() + ". " +
-                    "But we returned " + o + ".");
-        } catch (Throwable t) {
-            assertThat(t, instanceOf(exceptionClass));
-            //noinspection unchecked
-            return (T) t;
-        }
-        return null;
     }
 
     /**

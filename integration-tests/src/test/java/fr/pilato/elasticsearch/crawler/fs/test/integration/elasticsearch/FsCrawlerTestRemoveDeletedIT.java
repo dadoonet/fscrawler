@@ -19,7 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
@@ -28,7 +31,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,9 +39,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 
 import static java.lang.Thread.sleep;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test moving/removing/adding files
@@ -48,7 +48,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void test_remove_deleted_enabled() throws Exception {
+    public void remove_deleted_enabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRemoveDeleted(true);
         crawler = startCrawler(fsSettings);
@@ -65,7 +65,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_remove_deleted_disabled() throws Exception {
+    public void remove_deleted_disabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRemoveDeleted(false);
         crawler = startCrawler(fsSettings);
@@ -85,7 +85,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * Test case for #95: <a href="https://github.com/dadoonet/fscrawler/issues/95">https://github.com/dadoonet/fscrawler/issues/95</a> : Folder index is not getting delete on delete of folder
      */
     @Test
-    public void test_remove_folder_deleted_enabled() throws Exception {
+    public void remove_folder_deleted_enabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRemoveDeleted(true);
         crawler = startCrawler(fsSettings);
@@ -110,7 +110,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * @throws Exception In case something is wrong
      */
     @Test
-    public void test_rename_file() throws Exception {
+    public void rename_file() throws Exception {
         crawler = startCrawler();
 
         // We should have one doc first
@@ -135,7 +135,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * @throws Exception In case something is wrong
      */
     @Test
-    public void test_move_file() throws Exception {
+    public void move_file() throws Exception {
         crawler = startCrawler();
 
         // We should have one doc first
@@ -165,7 +165,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * Test case for #136: <a href="https://github.com/dadoonet/fscrawler/issues/136">https://github.com/dadoonet/fscrawler/issues/136</a> : Moving existing files does not index new files
      */
     @Test
-    public void test_moving_files() throws Exception {
+    public void moving_files() throws Exception {
         // Let's first create one old file: old = created before the crawler started
         String filename = "oldfile.txt";
         logger.info(" ---> Creating a file [{}]", filename);
@@ -202,7 +202,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * Test case for issue #60: <a href="https://github.com/dadoonet/fscrawler/issues/60">https://github.com/dadoonet/fscrawler/issues/60</a> : new files are not added
      */
     @Test
-    public void test_add_new_file() throws Exception {
+    public void add_new_file() throws Exception {
         // We need to wait for 2 seconds before starting the test as the file might have just been created
         // It's due to https://github.com/dadoonet/fscrawler/issues/82 which removes 2 seconds from the last scan date
         sleep(2000L);
@@ -242,14 +242,11 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      */
     private void checkDocVersions(ESSearchResponse response, long maxVersion) {
         // It should be only version <= maxVersion for all docs
-        for (ESSearchHit hit : response.getHits()) {
-            // Read the document. This is needed since 5.0 as search does not return the _version field
-            try {
-                ESSearchHit getHit = documentService.get(hit.getIndex(), hit.getId());
-                assertThat(getHit.getVersion(), lessThanOrEqualTo(maxVersion));
-            } catch (IOException | ElasticsearchClientException e) {
-                fail("We got an Exception: " + e.getMessage());
-            }
-        }
+       assertThat(response.getHits())
+               .isNotEmpty()
+               .allSatisfy(hit -> {
+           ESSearchHit getHit = client.get(hit.getIndex(), hit.getId());
+           assertThat(getHit.getVersion()).isLessThanOrEqualTo(maxVersion);
+       });
     }
 }

@@ -33,8 +33,8 @@ public class Await {
 
     private static final Logger logger = LogManager.getLogger();
 
-    // After 1s, we stop growing the sleep interval exponentially and just sleep 1s until maxWaitTime
-    private static final long AWAIT_BUSY_THRESHOLD = 1000L;
+    // After 5s, we stop growing the sleep interval exponentially and just sleep 5s until maxWaitTime
+    private static final long AWAIT_BUSY_THRESHOLD = 5000L;
 
     /**
      * Wait until a condition is met or a 10s timeout is reached
@@ -55,7 +55,7 @@ public class Await {
      */
     public static boolean awaitBusy(BooleanSupplier breakSupplier, TimeValue maxWaitTime) throws InterruptedException {
         long maxTimeInMillis = maxWaitTime.millis();
-        long timeInMillis = 1;
+        long timeInMillis = 500;
         long sum = 0;
         while (sum + timeInMillis < maxTimeInMillis) {
             if (breakSupplier.getAsBoolean()) {
@@ -80,7 +80,7 @@ public class Await {
      */
     public static long awaitBusy(LongSupplier breakSupplier, Long expected, TimeValue maxWaitTime) throws InterruptedException {
         long maxTimeInMillis = maxWaitTime.millis();
-        long timeInMillis = 1;
+        long timeInMillis = 500;
         long sum = 0;
 
         while (sum + timeInMillis < maxTimeInMillis) {

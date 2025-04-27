@@ -28,10 +28,8 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Test crawler with ingest pipelines
@@ -42,7 +40,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
      * Test case for #234: <a href="https://github.com/dadoonet/fscrawler/issues/234">https://github.com/dadoonet/fscrawler/issues/234</a> : Support ingest pipeline processing
      */
     @Test
-    public void test_ingest_pipeline() throws Exception {
+    public void ingest_pipeline() throws Exception {
         String crawlerName = getCrawlerName();
 
         // Create an empty ingest pipeline
@@ -57,7 +55,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        managementService.getClient().performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+        client.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setPipeline(crawlerName);
@@ -70,15 +68,15 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 .withESQuery(new ESMatchQuery("my_content_field", "perniciosoque")), 1L, currentTestResourceDir);
 
         // We expect to have one folder
-        ESSearchResponse response = documentService.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
-        assertThat(response.getTotalHits(), is(1L));
+        ESSearchResponse response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
+        assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 
     /**
      * Test case for #392: <a href="https://github.com/dadoonet/fscrawler/issues/392">https://github.com/dadoonet/fscrawler/issues/392</a> : Support ingest pipeline processing
      */
     @Test
-    public void test_ingest_pipeline_392() throws Exception {
+    public void ingest_pipeline_392() throws Exception {
         String crawlerName = getCrawlerName();
 
         // Create an empty ingest pipeline
@@ -102,7 +100,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        managementService.getClient().performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+        client.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setPipeline(crawlerName);
@@ -110,15 +108,16 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have one file
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
                 .withESQuery(new ESTermQuery("ip_addr", "127.0.0.1")), 1L, currentTestResourceDir);
+        assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 
     /**
      * Test case for #490: <a href="https://github.com/dadoonet/fscrawler/issues/490">https://github.com/dadoonet/fscrawler/issues/490</a> : Missing ES pipeline
      */
     @Test
-    public void test_ingest_missing_pipeline_490() throws Exception {
+    public void ingest_missing_pipeline_490() throws Exception {
         String crawlerName = getCrawlerName();
 
         FsSettings fsSettings = createTestSettings();
@@ -128,7 +127,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
             crawler = startCrawler(fsSettings);
             fail("We should have caught a RuntimeException");
         } catch (RuntimeException e) {
-            assertThat(e.getMessage(), containsString("You defined pipeline:" + crawlerName + ", but it does not exist."));
+            assertThat(e.getMessage()).contains("You defined pipeline:" + crawlerName + ", but it does not exist.");
         }
     }
 }

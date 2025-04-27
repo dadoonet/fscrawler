@@ -89,29 +89,20 @@ To run the test suite against an elasticsearch instance running locally, just ru
 
 .. hint::
 
-    If you are using a secured instance, use ``tests.cluster.apiKey``::
+    If you are using an external cluster, you must set the ``tests.cluster.apiKey`` if your cluster does not use
+    ``elastic`` and ``changeme`` as their credentials, and it's anyway the recommended approach::
 
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
             -Dtests.cluster.apiKey=APIKEYHERE \
-            -Dtests.cluster.url=https://127.0.0.1:9200 \
-
-    If you don't have an API Key, use ``tests.cluster.user``, ``tests.cluster.pass`` and ``tests.cluster.url``::
-
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
-            -Dtests.cluster.user=elastic \
-            -Dtests.cluster.pass=changeme \
-            -Dtests.cluster.url=https://127.0.0.1:9200 \
+            -Dtests.cluster.url=https://localhost:9200 \
 
     If the cluster is using a self generated SSL certificate, you can bypass checking the certificate by using
     ``tests.cluster.check_ssl``::
 
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
             -Dtests.cluster.apiKey=APIKEYHERE \
-            -Dtests.cluster.url=https://127.0.0.1:9200 \
+            -Dtests.cluster.url=https://localhost:9200 \
             -Dtests.cluster.check_ssl=false
-
-    But anyway, by default, the integration tests will try to run with both options, first checking the ssl certificate,
-    and then ignoring it.
 
 .. hint::
 
@@ -121,25 +112,9 @@ To run the test suite against an elasticsearch instance running locally, just ru
 
         mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
             -Dtests.cluster.apiKey=APIKEYHERE \
-            -Dtests.cluster.url=https://XYZ.es.io:9243
+            -Dtests.cluster.url=https://ALIAS.es.REGION.CLOUD_PROVIDER.elastic.cloud
 
-    Or even easier, you can use the ``Cloud ID`` available on you Cloud Console::
-
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
-            -Dtests.cluster.apiKey=APIKEYHERE \
-            -Dtests.cluster.cloud_id=fscrawler:ZXVyb3BlLXdlc3QxLmdjcC5jbG91ZC5lcy5pbyQxZDFlYTk5Njg4Nzc0NWE2YTJiN2NiNzkzMTUzNDhhMyQyOTk1MDI3MzZmZGQ0OTI5OTE5M2UzNjdlOTk3ZmU3Nw==
-
-Using security feature
-""""""""""""""""""""""
-
-Integration tests are run by default against a secured Elasticsearch cluster.
-
-.. versionadded:: 2.7
-
-Secured tests are using by default ``changeme`` as the password.
-You can change this by using ``tests.cluster.pass`` option::
-
-    mvn verify -Dtests.cluster.pass=mystrongpassword
+    You can use both Elasticsearch service and Serverless projects.
 
 Changing the REST port
 """"""""""""""""""""""
@@ -167,15 +142,20 @@ Tests options
 
 Some options are available from the command line when running the tests:
 
-* ``tests.leaveTemporary`` leaves temporary files after tests. ``false`` by default.
-* ``tests.parallelism`` how many JVM to launch in parallel for tests. ``auto`` by default which means that it depends on the number of processors you have. It can be set to ``max`` if you want to use all the available processors, or a given value like ``1`` to use that exact number of JVMs.
-* ``tests.output`` what should be displayed to the console while running tests. By default it is set to ``onError`` but can be set to ``always``
-* ``tests.verbose`` ``false`` by default
-* ``tests.seed`` if you need to reproduce a specific failure using the exact same random seed
-* ``tests.timeoutSuite`` how long a full suite of tests can run. It's set by default to ``600000`` which means 5 minutes.
-* ``tests.timeout`` how long a single test can run. It's set by default to ``600000`` which means 5 minutes.
+* ``tests.leaveTemporary`` leaves temporary files after tests (and also the TestContainers instance). ``false`` by default.
+* ``tests.parallelism`` how many JVM to launch in parallel for tests. ``auto`` by default which means that it depends on
+  the number of processors you have. It can be set to ``max`` if you want to use all the available processors, or a
+  given value like ``1`` to use that exact number of JVMs.
+* ``tests.output`` what should be displayed to the console while running tests. By default it is set to ``onError`` but
+  can be set to ``always``.
+* ``tests.verbose`` ``false`` by default.
+* ``tests.seed`` if you need to reproduce a specific failure using the exact same random seed.
+* ``tests.timeoutSuite`` how long a full suite of tests can run. It's set by default to ``60000`` which means 1 minute.
+* ``tests.timeout`` how long a single test can run. It's set by default to ``120000`` which means 2 minutes.
 * ``tests.locale`` by default it's set to ``random`` but you can force the locale to use.
 * ``tests.timezone`` by default it's set to ``random`` but you can force the timezone to use, like ``CEST`` or ``-0200``.
+* ``tests.nightly`` if you want to run the tests which are taking a significant time to run, set it to ``true``.
+  ``false`` by default.
 
 For example::
 

@@ -28,36 +28,27 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    private static final FsJob JOB_EMPTY = FsJob.builder().build();
 
     private void jobTester(FsJob source) throws IOException {
         String json = prettyMapper.writeValueAsString(source);
 
         logger.info("-> generated job: [{}]", json);
         FsJob generated = prettyMapper.readValue(json, FsJob.class);
-        assertThat(generated, is(source));
+        assertThat(generated).isEqualTo(source);
     }
 
     @Test
-    public void testParseEmptyJob() throws IOException {
-        jobTester(JOB_EMPTY);
+    public void parseEmptyJob() throws IOException {
+        jobTester(new FsJob());
     }
 
     @Test
-    public void testParseJob() throws IOException {
-        jobTester(
-                FsJob.builder()
-                        .setName(getCurrentTestName())
-                        .setLastrun(LocalDateTime.now())
-                        .setIndexed(1000)
-                        .setDeleted(5)
-                        .build()
-        );
+    public void parseJob() throws IOException {
+        jobTester(new FsJob(getCurrentTestName(), LocalDateTime.now(), 1000, 5));
     }
 
     /**
@@ -65,12 +56,11 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
      * @throws IOException In case of serialization problem
      */
     @Test
-    public void testDateTimeSerialization() throws IOException {
+    public void dateTimeSerialization() throws IOException {
         LocalDateTime now = LocalDateTime.now();
-        FsJob job = FsJob.builder().setLastrun(now).build();
+        FsJob job = new FsJob(getCurrentTestName(), now, 1000, 5);
         String json = prettyMapper.writeValueAsString(job);
         FsJob generated = prettyMapper.readValue(json, FsJob.class);
-        assertThat(generated.getLastrun(), is(now));
+        assertThat(generated.getLastrun()).isEqualTo(now);
     }
-
 }

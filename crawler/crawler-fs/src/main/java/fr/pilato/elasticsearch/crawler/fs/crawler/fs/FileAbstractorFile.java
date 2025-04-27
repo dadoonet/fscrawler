@@ -54,7 +54,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         return path.replace("/", "\\");
     }
 
-    private final static Comparator<Path> PATH_COMPARATOR = Comparator.comparing(
+    private static final Comparator<Path> PATH_COMPARATOR = Comparator.comparing(
             file -> getModificationOrCreationTime(file.toFile()));
 
     @Override

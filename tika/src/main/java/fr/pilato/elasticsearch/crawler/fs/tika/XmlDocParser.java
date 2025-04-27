@@ -37,14 +37,14 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
 @SuppressWarnings("unchecked")
 public class XmlDocParser {
 
-    private final static Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger();
     private static final ObjectMapper xmlMapper;
 
     static {
         xmlMapper = XmlMapper.xmlBuilder().nameForTextElement("$").build();
     }
 
-    public static String generate(InputStream inputStream) {
+    public static String generate(InputStream inputStream) throws JsonProcessingException {
         logger.trace("Converting XML document");
         // Extracting XML content
         // See #185: https://github.com/dadoonet/fscrawler/issues/185
@@ -52,14 +52,9 @@ public class XmlDocParser {
         Map<String, Object> map = generateMap(inputStream);
 
         // Serialize to JSON
-        try {
-            String json = mapper.writeValueAsString(map);
-            logger.trace("Generated JSON: {}", json);
-            return json;
-        } catch (JsonProcessingException e) {
-            // TODO Fix that code. We should log here and return null.
-            throw new RuntimeException(e);
-        }
+        String json = mapper.writeValueAsString(map);
+        logger.trace("Generated JSON: {}", json);
+        return json;
     }
 
     /**

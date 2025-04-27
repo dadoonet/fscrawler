@@ -29,7 +29,7 @@ import org.junit.Test;
 public class BootstrapChecksTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    public void testBootstrapChecks() {
+    public void bootstrapChecks() {
         // Test all checks (this test depends on the platform we are running)
         BootstrapChecks.check();
 

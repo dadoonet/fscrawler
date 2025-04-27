@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 
-class FsCrawlerUtilForTests {
+public class FsCrawlerUtilForTests {
     private static final Logger logger = LogManager.getLogger();
 
     private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";

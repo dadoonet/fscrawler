@@ -27,7 +27,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.assumeTrue;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Test tika config path crawler setting
@@ -35,8 +35,10 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.assumeTrue;
 public class FsCrawlerTestTikaConfigPathIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void test_tika_config_path() throws Exception {
-        assumeTrue("We are skipping this test. See discussion at https://github.com/dadoonet/fscrawler/pull/1403#issuecomment-1077912549", false);
+    public void tika_config_path() throws Exception {
+        assumeThat(false)
+                .as("We are skipping this test. See discussion at https://github.com/dadoonet/fscrawler/pull/1403#issuecomment-1077912549")
+                .isTrue();
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setTikaConfigPath(currentTestResourceDir.resolve("config/tikaConfig.xml").toString());
         fsSettings.getFs().setExcludes(List.of("/config/*"));

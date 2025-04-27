@@ -9,7 +9,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 public class FsSettingsLoaderTest {
 
@@ -18,74 +19,83 @@ public class FsSettingsLoaderTest {
     // Get the config path from resources
     Path configPath = Path.of(FsSettingsLoaderTest.class.getResource("/config").getPath());
 
-    @Test(expected = FsCrawlerIllegalConfigurationException.class)
-    public void testLoadWrongSettings() throws IOException {
-        // This should fail
-        new FsSettingsLoader(configPath).read("yaml-wrong");
+    @Test
+    public void loadWrongSettings() {
+        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class).isThrownBy(() ->
+                // This should fail
+                new FsSettingsLoader(configPath).read("yaml-wrong"));
     }
 
     @Test
-    public void testLoadNonExistingSettings() throws IOException {
+    public void loadNonExistingSettings() throws IOException {
         FsSettings doesnotexist = new FsSettingsLoader(configPath).read("doesnotexist");
         FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, doesnotexist);
     }
 
     @Test
-    public void testLoadNoFile() {
+    public void loadNoFile() {
         checkSettings(generateExpectedDefaultFsSettings(), FsSettingsLoader.load());
     }
 
     @Test
-    public void testLoadJsonSimple() throws IOException {
+    public void loadJsonSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("json-simple");
         FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, settings);
     }
 
     @Test
-    public void testLoadJsonFull() throws IOException {
+    public void loadJsonFull() throws IOException {
         testLoadFullSettings("json-full");
     }
 
     @Test
-    public void testLoadYamlFull() throws IOException {
+    public void loadYamlFull() throws IOException {
         testLoadFullSettings("yaml-full");
     }
 
     @Test
-    public void testLoadYamlSplit() throws IOException {
+    public void loadYamlSplit() throws IOException {
         testLoadFullSettings("yaml-split");
     }
 
     @Test
-    public void testLoadYamlSimple() throws IOException {
+    public void loadYamlSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("yaml-simple");
         FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, settings);
     }
 
     @Test
-    public void testWithDefaultNamesForEnvVariables() throws Exception {
-        // Create environment variables (system properties)
-        System.setProperty("FSCRAWLER_NAME", "foo");
-        System.setProperty("FSCRAWLER_FS_URL", "/tmp/test");
+    public void withDefaultNamesForEnvVariables() throws Exception {
+        // Create environment variables
+        System.setProperty("name", "foo");
+        System.setProperty("fs.url", "/tmp/test");
+        System.setProperty("fs.xml_support", "true");
 
         try {
             FsSettings settings = new FsSettingsLoader(configPath).read("yaml-env-vars");
             FsSettings expected = generateExpectedDefaultFsSettings();
-            // Although a value is set by a system property, the yaml file takes precedence
+            // Although a value is set by a env variable, the yaml file takes precedence
+            // So we have myname instead of foo
             expected.setName("myname");
+
+            // Elasticsearch index name depends on the crawler name value ${name}
             expected.getElasticsearch().setIndex("myname");
             expected.getElasticsearch().setIndexFolder("myname_folder");
 
-            // This is set by the system property
+            // This is set by the env variable
             expected.getFs().setUrl("/tmp/test");
+
+            // This is set by the env variable
+            expected.getFs().setXmlSupport(true);
             checkSettings(expected, settings);
         } finally {
             // Remove the environment variable
-            System.clearProperty("FSCRAWLER_NAME");
-            System.clearProperty("FSCRAWLER_FS_URL");
+            System.clearProperty("name");
+            System.clearProperty("fs.url");
+            System.clearProperty("fs.xml_support");
         }
     }
 
@@ -164,14 +174,14 @@ public class FsSettingsLoaderTest {
         logger.debug("Settings expected: {}", expected);
 
         if (expected.getFs() != null) {
-            assertEquals("Checking Ocr", expected.getFs().getOcr(), settings.getFs().getOcr());
+            assertThat(settings.getFs().getOcr()).as("Checking Ocr").isEqualTo(expected.getFs().getOcr());
         }
-        assertEquals("Checking Fs", expected.getFs(), settings.getFs());
-        assertEquals("Checking Server", expected.getServer(), settings.getServer());
-        assertEquals("Checking Tags", expected.getTags(), settings.getTags());
-        assertEquals("Checking Elasticsearch", expected.getElasticsearch(), settings.getElasticsearch());
-        assertEquals("Checking Rest", expected.getRest(), settings.getRest());
-        assertEquals("Checking whole settings", expected, settings);
+        assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
+        assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
+        assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
+        assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
+        assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
+        assertThat(settings).as("Checking whole settings").isEqualTo(expected);
     }
 
     private FsSettings generateExpectedDefaultFsSettings() {
@@ -209,7 +219,6 @@ public class FsSettingsLoaderTest {
         es.setNodes(List.of(new ServerUrl("https://127.0.0.1:9200")));
         es.setIndex(expected.getName());
         es.setIndexFolder(expected.getName() + "_folder");
-        es.setApiKey("");
         es.setBulkSize(100);
         es.setFlushInterval(TimeValue.timeValueSeconds(5));
         es.setByteSize(new ByteSizeValue(10, ByteSizeUnit.MB));

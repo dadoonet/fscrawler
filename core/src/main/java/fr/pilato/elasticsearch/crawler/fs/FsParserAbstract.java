@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.*;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
@@ -36,7 +37,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -44,7 +44,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
@@ -53,6 +52,7 @@ public abstract class FsParserAbstract extends FsParser {
     private static final Logger logger = LogManager.getLogger();
 
     private static final String FSCRAWLER_IGNORE_FILENAME = ".fscrawlerignore";
+    private static final String FULL_STACKTRACE_LOG_MESSAGE = "Full stacktrace";
 
     final FsSettings fsSettings;
     private final FsJobFileHandler fsJobFileHandler;
@@ -64,8 +64,6 @@ public abstract class FsParserAbstract extends FsParser {
     private final String pathSeparator;
     private final FileAbstractor<?> fileAbstractor;
     private final String metadataFilename;
-
-    private ScanStatistic stats;
 
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
         this.fsSettings = fsSettings;
@@ -135,7 +133,7 @@ public abstract class FsParserAbstract extends FsParser {
 
             try {
                 logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
-                stats = new ScanStatistic(fsSettings.getFs().getUrl());
+                ScanStatistic stats = new ScanStatistic(fsSettings.getFs().getUrl());
                 LocalDateTime startDate = LocalDateTime.now();
                 stats.setStartTime(startDate);
 
@@ -156,37 +154,33 @@ public abstract class FsParserAbstract extends FsParser {
                 // We only index the root directory once (first run)
                 // That means that we don't have a scanDate yet
                 if (scanDate == null && fsSettings.getFs().isIndexFolders()) {
-                    indexDirectory(fsSettings.getFs().getUrl());
+                    indexDirectory(fsSettings.getFs().getUrl(), fsSettings.getFs().getUrl());
                 }
 
                 if (scanDate == null) {
                     scanDate = LocalDateTime.MIN;
                 }
 
-                addFilesRecursively(fsSettings.getFs().getUrl(), scanDate);
+                addFilesRecursively(fsSettings.getFs().getUrl(), scanDate, stats);
 
                 stats.setEndTime(LocalDateTime.now());
                 logger.info("Run #{}: job [{}]: indexed [{}], deleted [{}], documents up to [{}]. " +
                                 "Started at [{}], finished at [{}], took [{}]", run, fsSettings.getName(),
                         stats.getNbDocScan(), stats.getNbDocDeleted(), scanDatenew,
                         stats.getStartTime(), stats.getEndTime(), stats.computeDuration());
-                updateFsJob(fsSettings.getName(), scanDatenew);
+                updateFsJob(fsSettings.getName(), scanDatenew, stats);
                 // TODO Update stats
                 // updateStats(fsSettings.getName(), stats);
             } catch (Exception e) {
                 logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
-                if (logger.isDebugEnabled()) {
-                    logger.warn("Full stacktrace", e);
-                }
+                logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
             } finally {
                 try {
                     logger.debug("Closing FS crawler file abstractor [{}].", fileAbstractor.getClass().getSimpleName());
                     fileAbstractor.close();
                 } catch (Exception e) {
                     logger.warn("Error while closing the connection: {}", e.getMessage());
-                    if (logger.isDebugEnabled()) {
-                        logger.warn("Full stacktrace", e);
-                    }
+                    logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
                 }
             }
 
@@ -226,24 +220,22 @@ public abstract class FsParserAbstract extends FsParser {
     }
 
     /**
-     * Update the job metadata
-     * @param jobName job name
+     * Update the job statistics
+     *
+     * @param jobName  job name
      * @param scanDate last date we scan the dirs
-     * @throws Exception In case of error
+     * @param stats    the stats used to update the job statistics
+     * @throws IOException In case of error while saving the job stats
      */
-    private void updateFsJob(final String jobName, final LocalDateTime scanDate) throws Exception {
-        FsJob fsJob = FsJob.builder()
-                .setName(jobName)
-                .setLastrun(scanDate)
-                .setIndexed(stats.getNbDocScan())
-                .setDeleted(stats.getNbDocDeleted())
-                .build();
+    private void updateFsJob(final String jobName, final LocalDateTime scanDate, final ScanStatistic stats) throws IOException {
+        FsJob fsJob = new FsJob(jobName, scanDate, stats.getNbDocScan(), stats.getNbDocDeleted());
+        // TODO replace this with a call to the management service (Elasticsearch)
         fsJobFileHandler.write(jobName, fsJob);
         logger.debug("Updating job metadata after run for [{}]: lastrun [{}], indexed [{}], deleted [{}]",
                 jobName, scanDate, stats.getNbDocScan(), stats.getNbDocDeleted());
     }
 
-    private void addFilesRecursively(final String filepath, final LocalDateTime lastScanDate)
+    private void addFilesRecursively(final String filepath, final LocalDateTime lastScanDate, final ScanStatistic stats)
             throws Exception {
         logger.debug("indexing [{}] content", filepath);
 
@@ -333,9 +325,9 @@ public abstract class FsParserAbstract extends FsParser {
                             logger.debug("  - folder: {}", filename);
                             if (fsSettings.getFs().isIndexFolders()) {
                                 fsFolders.add(child.getFullpath());
-                                indexDirectory(child.getFullpath());
+                                indexDirectory(child.getFullpath(), fsSettings.getFs().getUrl());
                             }
-                            addFilesRecursively(child.getFullpath(), lastScanDate);
+                            addFilesRecursively(child.getFullpath(), lastScanDate, stats);
                         } else {
                             logger.debug("  - other: {}", filename);
                             logger.debug("Not a file nor a dir. Skipping {}", child.getFullpath());
@@ -501,31 +493,54 @@ public abstract class FsParserAbstract extends FsParser {
                 FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
                         computeVirtualPathName(stats.getRootPath(), fullFilename),
                         "Indexing json content");
-                // We index the json content directly
-                if (!closed) {
-                    documentService.indexRawJson(
-                            fsSettings.getElasticsearch().getIndex(),
-                            id,
-                            read(inputStream),
-                            fsSettings.getElasticsearch().getPipeline());
-                } else {
-                    logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                            fsSettings.getElasticsearch().getIndex(), id);
+                // We need to check that the provided file is actually a JSON file which can be parsed
+                try {
+                    DocumentContext documentContext = JsonUtil.parseJsonAsDocumentContext(inputStream);
+                    String jsonString = documentContext.jsonString();
+
+                    // We index the json content directly
+                    if (!closed) {
+                        documentService.indexRawJson(
+                                fsSettings.getElasticsearch().getIndex(),
+                                id,
+                                jsonString,
+                                fsSettings.getElasticsearch().getPipeline());
+                    } else {
+                        logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                fsSettings.getElasticsearch().getIndex(), id);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Unable to parse JSON file [{}] in [{}]: {}", filename, dirname, e.getMessage());
+                    logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+                } finally {
+                    if (inputStream != null) {
+                        fileAbstractor.closeInputStream(inputStream);
+                    }
                 }
             } else if (fsSettings.getFs().isXmlSupport()) {
                 FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
                         computeVirtualPathName(stats.getRootPath(), fullFilename),
                         "Indexing xml content");
-                // We index the xml content directly (after transformation to json)
-                if (!closed) {
-                    documentService.indexRawJson(
-                            fsSettings.getElasticsearch().getIndex(),
-                            id,
-                            XmlDocParser.generate(inputStream),
-                            fsSettings.getElasticsearch().getPipeline());
-                } else {
-                    logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                            fsSettings.getElasticsearch().getIndex(), id);
+                // We need to check that the provided file is actually a JSON file which can be parsed
+                try {
+                    // We index the xml content directly (after transformation to json)
+                    if (!closed) {
+                        documentService.indexRawJson(
+                                fsSettings.getElasticsearch().getIndex(),
+                                id,
+                                XmlDocParser.generate(inputStream),
+                                fsSettings.getElasticsearch().getPipeline());
+                    } else {
+                        logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                fsSettings.getElasticsearch().getIndex(), id);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Unable to parse XML file [{}] in [{}]: {}", filename, dirname, e.getMessage());
+                    logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+                } finally {
+                    if (inputStream != null) {
+                        fileAbstractor.closeInputStream(inputStream);
+                    }
                 }
             }
         }
@@ -536,12 +551,6 @@ public abstract class FsParserAbstract extends FsParser {
         String filenameForId = filename.replace("\\", "").replace("/", "");
         String idSource = filepathForId.endsWith("/") ? filepathForId.concat(filenameForId) : filepathForId.concat("/").concat(filenameForId);
         return fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign(idSource);
-    }
-
-    private String read(InputStream input) throws IOException {
-        try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
-            return buffer.lines().collect(Collectors.joining("\n"));
-        }
     }
 
     /**
@@ -561,8 +570,9 @@ public abstract class FsParserAbstract extends FsParser {
     /**
      * Index a directory
      * @param path complete path like "/", "/path/to/subdir", "C:\\dir", "C:/dir", "/C:/dir", "//SOMEONE/dir"
+     * @param rootPath the root path we started from
      */
-    private void indexDirectory(String path) throws Exception {
+    private void indexDirectory(String path, String rootPath) throws Exception {
         String name = path.substring(path.lastIndexOf(pathSeparator) + 1);
         String rootdir = path.substring(0, path.lastIndexOf(pathSeparator));
 
@@ -571,7 +581,7 @@ public abstract class FsParserAbstract extends FsParser {
         Folder folder = new Folder(name,
                 SignTool.sign(rootdir),
                 path,
-                computeVirtualPathName(stats.getRootPath(), path),
+                computeVirtualPathName(rootPath, path),
                 getCreationTime(folderInfo),
                 getModificationTime(folderInfo),
                 getLastAccessTime(folderInfo));

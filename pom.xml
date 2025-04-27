@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>fr.pilato.elasticsearch.crawler</groupId>
     <artifactId>fscrawler-parent</artifactId>
@@ -32,7 +32,7 @@
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -69,10 +69,8 @@
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.elasticsearch.port>9200</integ.elasticsearch.port>
         <tests.cluster.url></tests.cluster.url>
-        <tests.cluster.cloud_id></tests.cluster.cloud_id>
         <tests.cluster.apiKey></tests.cluster.apiKey>
-        <tests.cluster.user>elastic</tests.cluster.user>
-        <tests.cluster.pass>changeme</tests.cluster.pass>
+        <tests.cluster.check_ssl>true</tests.cluster.check_ssl>
         <tests.rest.port>0</tests.rest.port>
         <testcontainers.version>1.21.0</testcontainers.version>
 
@@ -83,10 +81,13 @@
         <tests.verbose>false</tests.verbose>
         <tests.leaveTemporary>false</tests.leaveTemporary>
         <tests.parallelism>auto</tests.parallelism>
+        <tests.heartbeat>10</tests.heartbeat>
         <tests.seed></tests.seed>
         <!-- Running the tests with Tesseract OCR might take time -->
-        <tests.timeoutSuite>600000</tests.timeoutSuite>
-        <tests.timeout>600000</tests.timeout>
+        <tests.timeoutSuite>180000</tests.timeoutSuite>
+        <tests.timeout>120000</tests.timeout>
+        <!-- When we want to run tests which could take a lot of time - ie semantic search -->
+        <tests.nightly></tests.nightly>
 
         <!-- For CVE Audit with Sonatype -->
         <env.SONATYPE_USER></env.SONATYPE_USER>
@@ -183,7 +184,7 @@
                     <artifactId>junit4-maven-plugin</artifactId>
                     <version>2.8.3</version>
                     <configuration>
-                        <heartbeat>10</heartbeat>
+                        <heartbeat>${tests.heartbeat}</heartbeat>
                         <jvmOutputAction>pipe,ignore</jvmOutputAction>
                         <leaveTemporary>${tests.leaveTemporary}</leaveTemporary>
                         <ifNoTests>warn</ifNoTests>
@@ -200,13 +201,12 @@
                             <tests.timeout>${tests.timeout}</tests.timeout>
                             <tests.locale>${tests.locale}</tests.locale>
                             <tests.timezone>${tests.timezone}</tests.timezone>
+                            <tests.nightly>${tests.nightly}</tests.nightly>
                             <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                             <java.awt.headless>true</java.awt.headless>
                             <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
-                            <tests.cluster.cloud_id>${tests.cluster.cloud_id}</tests.cluster.cloud_id>
                             <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
-                            <tests.cluster.user>${tests.cluster.user}</tests.cluster.user>
-                            <tests.cluster.pass>${tests.cluster.pass}</tests.cluster.pass>
+                            <tests.cluster.check_ssl>${tests.cluster.check_ssl}</tests.cluster.check_ssl>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
                             <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
                             <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
@@ -825,9 +825,9 @@
 
             <!-- Test dependencies -->
             <dependency>
-                <groupId>org.hamcrest</groupId>
-                <artifactId>hamcrest-all</artifactId>
-                <version>1.3</version>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>3.27.3</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>

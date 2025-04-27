@@ -113,10 +113,6 @@ public class FsSettingsLoader extends MetaFileHandler {
             GestaltBuilder builder = new GestaltBuilder()
                 .addSource(ClassPathConfigSourceBuilder.builder().setResource(DEFAULT_SETTINGS).build());
 
-            for (Path configFile : configFiles) {
-                builder.addSource(FileConfigSourceBuilder.builder().setPath(configFile).build());
-            }
-
             // This allows automatic configuration using System properties like -Dname=foobar or -Dfs.url=/tmp
             builder.addSource(SystemPropertiesConfigSourceBuilder.builder().build());
             // This allows automatic configuration using Env variables like FSCRAWLER_NAME=foobar or FSCRAWLER_FS_URL=/tmp
@@ -124,6 +120,10 @@ public class FsSettingsLoader extends MetaFileHandler {
                     .setPrefix("FSCRAWLER_")
                     .setRemovePrefix(true)
                     .build());
+
+            for (Path configFile : configFiles) {
+                builder.addSource(FileConfigSourceBuilder.builder().setPath(configFile).build());
+            }
 
             Gestalt gestalt = builder.build();
 
@@ -139,7 +139,7 @@ public class FsSettingsLoader extends MetaFileHandler {
             settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
             settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
 
-            logger.debug("Successfully loaded settings from [fscrawler-default.properties] and {}",
+            logger.debug("Successfully loaded settings from classpath [fscrawler-default.properties] and files {}",
                     (Object) configFiles);
             logger.trace("Loaded settings [{}]", settings);
 

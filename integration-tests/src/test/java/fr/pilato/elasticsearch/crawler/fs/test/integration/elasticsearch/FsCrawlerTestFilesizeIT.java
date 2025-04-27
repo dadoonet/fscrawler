@@ -36,9 +36,8 @@ import org.junit.Test;
 import java.nio.file.Files;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Test filesize crawler setting
@@ -47,7 +46,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void test_indexed_chars() throws Exception {
+    public void indexed_chars() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIndexedChars(new Percentage(7));
         crawler = startCrawler(fsSettings);
@@ -57,13 +56,13 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
 
             // Our original text should be truncated
-            assertThat(document.read("$.content"), is("Novo de"));
-            assertThat(document.read("$.file.indexed_chars"), is(7));
+            assertThat((String) document.read("$.content")).isEqualTo("Novo de");
+            assertThat((Integer) document.read("$.file.indexed_chars")).isEqualTo(7);
         }
     }
 
     @Test
-    public void test_indexed_chars_percentage() throws Exception {
+    public void indexed_chars_percentage() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIndexedChars(Percentage.parse("0.1%"));
         crawler = startCrawler(fsSettings);
@@ -73,13 +72,13 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
 
             // Our original text should be truncated
-            assertThat(document.read("$.content"), is("Novo denique"));
-            assertThat(document.read("$.file.indexed_chars"), is(12));
+            assertThat((String) document.read("$.content")).isEqualTo("Novo denique");
+            assertThat((Integer) document.read("$.file.indexed_chars")).isEqualTo(12);
         }
     }
 
     @Test
-    public void test_indexed_chars_nolimit() throws Exception {
+    public void indexed_chars_nolimit() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIndexedChars(new Percentage(-1));
         crawler = startCrawler(fsSettings);
@@ -89,35 +88,35 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
 
             // Our original text should not be truncated, so we must have its end extracted
-            assertThat(document.read("$.content"), containsString("haecque non diu sunt perpetrata."));
-            expectThrows(PathNotFoundException.class, () -> document.read("$.file.indexed_chars"));
+            assertThat((String) document.read("$.content")).contains("haecque non diu sunt perpetrata.");
+            assertThatThrownBy(() -> document.read("$.file.indexed_chars")).isInstanceOf(PathNotFoundException.class);
         }
     }
 
     @Test
-    public void test_filesize() throws Exception {
+    public void filesize() throws Exception {
         crawler = startCrawler();
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), is(12230));
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isEqualTo(12230);
         }
     }
 
     @Test
-    public void test_filesize_disabled() throws Exception {
+    public void filesize_disabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setAddFilesize(false);
         crawler = startCrawler(fsSettings);
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.file.filesize"));
+            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.file.filesize")).isInstanceOf(PathNotFoundException.class);
         }
     }
 
     @Test
-    public void test_filesize_limit() throws Exception {
+    public void filesize_limit() throws Exception {
         logger.info(" ---> Creating a smaller file small.txt");
         Files.write(currentTestResourceDir.resolve("small.txt"), "This is a second file smaller than the previous one".getBytes());
 
@@ -125,6 +124,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIgnoreAbove(ByteSizeValue.parseBytesSizeValue("10kb"));
         crawler = startCrawler(fsSettings);
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        assertThat(response.getTotalHits()).isEqualTo(1);
     }
 }

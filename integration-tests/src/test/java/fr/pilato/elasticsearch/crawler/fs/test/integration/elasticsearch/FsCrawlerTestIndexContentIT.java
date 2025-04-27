@@ -35,7 +35,7 @@ public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
      * Test for #103: <a href="https://github.com/dadoonet/fscrawler/issues/103">https://github.com/dadoonet/fscrawler/issues/103</a>
      */
     @Test
-    public void test_index_content() throws Exception {
+    public void index_content() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIndexContent(false);
         crawler = startCrawler(fsSettings);

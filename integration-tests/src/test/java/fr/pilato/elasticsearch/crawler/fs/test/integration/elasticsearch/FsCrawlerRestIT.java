@@ -19,18 +19,19 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import com.carrotsearch.randomizedtesting.annotations.Timeout;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -41,6 +42,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.NginxContainer;
@@ -57,30 +60,47 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class FsCrawlerRestIT extends AbstractRestITCase {
     private static final Logger logger = LogManager.getLogger();
 
-    public FsSettings getFsSettings() throws IOException {
-        FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.setName(getCrawlerName());
-        fsSettings.getRest().setUrl("http://127.0.0.1:" + getRestPort() + "/fscrawler");
-        fsSettings.setElasticsearch(clone(elasticsearchConfiguration));
-        return fsSettings;
+    public FsSettings getFsSettings() {
+        return createTestSettings();
+    }
+
+    @Before
+    @Override
+    public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
+        // Also clean the specific indices for this test suite
+        client.deleteIndex("fscrawler_fs_custom");
+        client.deleteIndex("fscrawler_fs_custom" + INDEX_SUFFIX_FOLDER);
+        super.cleanExistingIndex();
+    }
+
+    @After
+    @Override
+    public void cleanUp() throws ElasticsearchClientException {
+        if (!TEST_KEEP_DATA) {
+            // Also clean the specific indices for this test suite
+            client.deleteIndex("fscrawler_fs_custom");
+            client.deleteIndex("fscrawler_fs_custom" + INDEX_SUFFIX_FOLDER);
+        }
+        super.cleanUp();
     }
 
     @Test
-    public void testCallRoot() {
+    public void callRoot() {
         ServerStatusResponse status = get("/", ServerStatusResponse.class);
-        assertThat(status.getVersion(), is(Version.getVersion()));
-        assertThat(status.getElasticsearch(), notNullValue());
+        assertThat(status.getVersion()).isEqualTo(Version.getVersion());
+        assertThat(status.getElasticsearch()).isNotNull();
     }
 
     @Test
-    public void testUploadAllDocuments() throws Exception {
+    @Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+    public void uploadAllDocuments() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
@@ -90,20 +110,20 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 .filter(Files::isRegularFile)
                 .forEach(path -> {
                     UploadResponse response = uploadFile(target, path);
-                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+            assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
                 });
 
         // We wait until we have all docs
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), Files.list(from).count(), null, TimeValue
                 .timeValueMinutes(2));
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
         }
     }
 
     @Deprecated
     @Test
-    public void testUploadTxtDocumentsWithDeprecatedApi() throws Exception {
+    public void uploadTxtDocumentsWithDeprecatedApi() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
@@ -112,64 +132,59 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         AtomicInteger number = new AtomicInteger();
         Files.walk(from)
                 .filter(Files::isRegularFile)
-                .filter(new Predicate<Path>() {
-                    @Override
-                    public boolean test(Path path) {
-                        return path.toString().endsWith("txt");
-                    }
-                })
+                .filter(path -> path.toString().endsWith("txt"))
                 .forEach(path -> {
                     number.getAndIncrement();
                     UploadResponse response = uploadFileUsingApi(target, path, null, null, "/_upload", null);
-                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+            assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
                 });
 
         // We wait until we have all txt docs
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), number.longValue(), null, TimeValue
                 .timeValueMinutes(2));
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotNull();
         }
     }
 
     @Test
-    public void testUploadDocumentWithId() throws Exception {
+    public void uploadDocumentWithId() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         UploadResponse uploadResponse = uploadFileWithId(target, from, "1234");
-        assertThat(uploadResponse.isOk(), is(true));
+        assertThat(uploadResponse.isOk()).isTrue();
 
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-        assertThat(response.getHits().get(0).getId(), is("1234"));
-        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), notNullValue());
+        assertThat(response.getHits().get(0).getId()).isEqualTo("1234");
+        assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isGreaterThan(0);
     }
 
     @Test
-    public void testUploadDocumentWithIdUsingPut() throws Exception {
+    public void uploadDocumentWithIdUsingPut() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         UploadResponse uploadResponse = putDocument(target, from, null, null, "1234");
-        assertThat(uploadResponse.isOk(), is(true));
+        assertThat(uploadResponse.isOk()).isTrue();
 
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-        assertThat(response.getHits().get(0).getId(), is("1234"));
-        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), greaterThan(0));
+        assertThat(response.getHits().get(0).getId()).isEqualTo("1234");
+        assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isGreaterThan(0);
     }
 
     @Test
-    public void testDeleteDocumentApi() throws Exception {
+    public void deleteDocumentApi() throws Exception {
         // We need to create first the index
         DeleteResponse deleteResponse = deleteDocument(target, null, "foo", null, "/_document");
-        assertThat(deleteResponse.isOk(), is(false));
-        assertThat(deleteResponse.getMessage(), startsWith("Can not remove document ["));
+        assertThat(deleteResponse.isOk()).isFalse();
+        assertThat(deleteResponse.getMessage()).startsWith("Can not remove document [");
 
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
@@ -190,7 +205,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 .forEach(path -> {
                     number.getAndIncrement();
                     UploadResponse response = uploadFileUsingApi(target, path, null, null, "/_document", null);
-                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+            assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
 
                     toBeRemoved.add(response.getFilename());
                 });
@@ -199,7 +214,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), number.longValue(), null, TimeValue
                 .timeValueMinutes(2));
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
         }
 
         // We can now remove all docs
@@ -208,16 +223,15 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             if (!deleteResponse.isOk()) {
                 logger.error("{}", deleteResponse.getMessage());
             }
-            assertThat(deleteResponse.isOk(), is(true));
+            assertThat(deleteResponse.isOk()).isTrue();
         }
 
         // We wait until we have removed all documents
-        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 0L, null, TimeValue
-                .timeValueMinutes(2));
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 0L, null);
     }
 
     @Test
-    public void testAllDocumentsWithRestExternalIndex() throws Exception {
+    public void allDocumentsWithRestExternalIndex() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
@@ -228,91 +242,91 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 .filter(Files::isRegularFile)
                 .forEach(path -> {
                     UploadResponse response = uploadFileOnIndex(target, path, index);
-                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+            assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
                 });
 
         // We wait until we have all docs
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(index), Files.list(from).count(), null, TimeValue
                 .timeValueMinutes(2));
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
             int filesize = JsonPath.read(hit.getSource(), "$.file.filesize");
             if (filesize <= 0) {
                 // On some machines (ie Github Actions), the size is not provided
                 logger.warn("File [{}] has a size of [{}]",
                         JsonPath.read(hit.getSource(), "$.file.filename"), filesize);
             } else {
-                assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), greaterThan(0));
+                assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
             }
         }
     }
 
     @Test
-    public void testDocumentWithExternalTags() throws Exception {
-        // We iterate over all sample files and we try to locate any existing tag file
+    public void documentWithExternalTags() throws Exception {
+        // We iterate over all sample files, and we try to locate any existing tag file
         // which can overwrite the data we extracted
         AtomicInteger numFiles = new AtomicInteger();
         Files.walk(currentTestResourceDir)
                 .filter(Files::isRegularFile)
                 .forEach(path -> {
                     Path tagsFilePath = currentTestTagDir.resolve(path.getFileName().toString() + ".json");
-                    logger.debug("Upload file #[{}]: [{}] with tags [{}]", numFiles.incrementAndGet(), path.getFileName(), tagsFilePath.getFileName());
+                    logger.info("Upload file #[{}]: [{}] with tags [{}]", numFiles.incrementAndGet(), path.getFileName(), tagsFilePath.getFileName());
                     UploadResponse response = uploadFileUsingApi(target, path, tagsFilePath, null, "/_document", null);
-                    assertThat(response.getFilename(), is(path.getFileName().toString()));
+                    assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
                 });
 
         // We wait until we have all our documents docs
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), numFiles.longValue(), null, TimeValue.timeValueMinutes(2));
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), numFiles.longValue(), null);
 
         // Let's test every single document that has been enriched
         checkDocument("add_external.txt", hit -> {
-            assertThat(JsonPath.read(hit.getSource(), "$.content"), containsString("This file content will be extracted"));
-            assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
-            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), greaterThan(0));
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.meta"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.tenantId"), is(23));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.company"), is("shoe company"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.daysOpen[0]"), is("Mon"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.daysOpen[4]"), is("Fri"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[0].brand"), is("nike"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[0].size"), is(41));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[0].sub"), is("Air MAX"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[1].brand"), is("reebok"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[1].size"), is(43));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[1].sub"), is("Pump"));
+            assertThat((String) JsonPath.read(hit.getSource(), "$.content")).contains("This file content will be extracted");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
+            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.meta")).isInstanceOf(PathNotFoundException.class);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.tenantId")).isEqualTo(23);
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.company")).isEqualTo("shoe company");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.daysOpen[0]")).isEqualTo("Mon");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.daysOpen[4]")).isEqualTo("Fri");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[0].brand")).isEqualTo("nike");
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.products[0].size")).isEqualTo(41);
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[0].sub")).isEqualTo("Air MAX");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[1].brand")).isEqualTo("reebok");
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.products[1].size")).isEqualTo(43);
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[1].sub")).isEqualTo("Pump");
         });
         checkDocument("replace_content_and_external.txt", hit -> {
-            assertThat(JsonPath.read(hit.getSource(), "$.content"), is("OVERWRITTEN CONTENT"));
-            assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
-            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), greaterThan(0));
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.meta"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.tenantId"), is(23));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.company"), is("shoe company"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.daysOpen[0]"), is("Mon"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.daysOpen[4]"), is("Fri"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[0].brand"), is("nike"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[0].size"), is(41));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[0].sub"), is("Air MAX"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[1].brand"), is("reebok"));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[1].size"), is(43));
-            assertThat(JsonPath.read(hit.getSource(), "$.external.products[1].sub"), is("Pump"));
+            assertThat((String) JsonPath.read(hit.getSource(), "$.content")).isEqualTo("OVERWRITTEN CONTENT");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
+            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.meta")).isInstanceOf(PathNotFoundException.class);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.tenantId")).isEqualTo(23);
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.company")).isEqualTo("shoe company");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.daysOpen[0]")).isEqualTo("Mon");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.daysOpen[4]")).isEqualTo("Fri");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[0].brand")).isEqualTo("nike");
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.products[0].size")).isEqualTo(41);
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[0].sub")).isEqualTo("Air MAX");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[1].brand")).isEqualTo("reebok");
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.external.products[1].size")).isEqualTo(43);
+            assertThat((String) JsonPath.read(hit.getSource(), "$.external.products[1].sub")).isEqualTo("Pump");
         });
         checkDocument("replace_content_only.txt", hit -> {
-            assertThat(JsonPath.read(hit.getSource(), "$.content"), is("OVERWRITTEN CONTENT"));
-            assertThat(JsonPath.read(hit.getSource(), "$.file.extension"), notNullValue());
-            assertThat(JsonPath.read(hit.getSource(), "$.file.filesize"), greaterThan(0));
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.meta"));
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.external"));
+            assertThat((String) JsonPath.read(hit.getSource(), "$.content")).isEqualTo("OVERWRITTEN CONTENT");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isGreaterThan(0);
+            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.meta")).isInstanceOf(PathNotFoundException.class);
+            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.external")).isInstanceOf(PathNotFoundException.class);
         });
         checkDocument("replace_meta_only.txt", hit -> {
-            assertThat(JsonPath.read(hit.getSource(), "$.content"), containsString("This file content will be extracted"));
-            assertThat(JsonPath.read(hit.getSource(), "$.meta.raw.resourceName"), is("another-file-name.txt"));
-            expectThrows(PathNotFoundException.class, () -> JsonPath.read(hit.getSource(), "$.external"));
+            assertThat((String) JsonPath.read(hit.getSource(), "$.content")).contains("This file content will be extracted");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.raw.resourceName")).isEqualTo("another-file-name.txt");
+            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.external")).isInstanceOf(PathNotFoundException.class);
         });
     }
 
     @Test
-    public void testUploadUsingWrongFieldName() {
+    public void uploadUsingWrongFieldName() {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
@@ -329,12 +343,12 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         UploadResponse response = post(target, "/_document", mp, UploadResponse.class, params);
 
-        assertThat(response.isOk(), is(false));
-        assertThat(response.getMessage(), containsString("No file has been sent or you are not using [file] as the field name."));
+        assertThat(response.isOk()).isFalse();
+        assertThat(response.getMessage()).contains("No file has been sent or you are not using [file] as the field name.");
     }
 
     @Test
-    public void testUploadDocumentWithFsPlugin() throws Exception {
+    public void uploadDocumentWithFsPlugin() throws Exception {
         Path fromDoesNotExist = rootTmpDir.resolve("resources").resolve("documents").resolve("foobar").resolve("foobar.txt");
         Path fromExists = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(fromExists)) {
@@ -354,9 +368,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 "  }\n" +
                 "}";
         UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
-        assertThat(uploadResponse.isOk(), is(false));
-        assertThat(uploadResponse.getMessage(), containsString("NoSuchFileException"));
-        assertThat(uploadResponse.getMessage(), containsString(fromDoesNotExist.toString()));
+        assertThat(uploadResponse.isOk()).isFalse();
+        assertThat(uploadResponse.getMessage()).contains("NoSuchFileException");
+        assertThat(uploadResponse.getMessage()).contains(fromDoesNotExist.toString());
 
         // We try with an existing document
         json = "{\n" +
@@ -366,17 +380,17 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 "  }\n" +
                 "}";
         uploadResponse = post(target, "/_document", json, UploadResponse.class);
-        assertThat(uploadResponse.isOk(), is(true));
+        assertThat(uploadResponse.isOk()).isTrue();
 
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("test.txt"));
-        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (30));
-        assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString ("This file contains some words."));
+        assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("test.txt");
+        assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(30);
+        assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains("This file contains some words.");
     }
 
     @Test
-    public void testUploadDocumentWithS3Plugin() throws Exception {
+    public void uploadDocumentWithS3Plugin() throws Exception {
         logger.info("Starting Minio");
 
         try (MinIOContainer container = new MinIOContainer("minio/minio")) {
@@ -415,9 +429,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                     "}";
 
             UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
-            assertThat(uploadResponse.isOk(), is(false));
-            assertThat(uploadResponse.getMessage(), containsString("FsCrawlerIllegalConfigurationException"));
-            assertThat(uploadResponse.getMessage(), containsString("The specified key does not exist"));
+            assertThat(uploadResponse.isOk()).isFalse();
+            assertThat(uploadResponse.getMessage()).contains("FsCrawlerIllegalConfigurationException");
+            assertThat(uploadResponse.getMessage()).contains("The specified key does not exist");
 
             // We try with an existing document
             json = "{\n" +
@@ -431,13 +445,13 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                     "  }\n" +
                     "}";
             uploadResponse = post(target, "/_document", json, UploadResponse.class);
-            assertThat(uploadResponse.isOk(), is(true));
+            assertThat(uploadResponse.isOk()).isTrue();
 
             // We wait until we have our document
             ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("roottxtfile.txt"));
-            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (12230));
-            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString ("Nihil est enim virtute amabilius"));
+            assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("roottxtfile.txt");
+            assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(12230);
+            assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains("Nihil est enim virtute amabilius");
         }
     }
 
@@ -453,7 +467,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
 
         @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
             logger.trace("  --> Creating dir [{}] in [{}]", dir, bucket);
             return FileVisitResult.CONTINUE;
         }
@@ -481,7 +495,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void testUploadDocumentWithHttpPlugin() throws Exception {
+    public void uploadDocumentWithHttpPlugin() throws Exception {
         logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
         Files.createDirectory(nginxRoot);
@@ -505,9 +519,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                     "  }\n" +
                     "}";
             UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
-            assertThat(uploadResponse.isOk(), is(false));
-            assertThat(uploadResponse.getMessage(), containsString("FileNotFoundException"));
-            assertThat(uploadResponse.getMessage(), containsString("doesnotexist.txt"));
+            assertThat(uploadResponse.isOk()).isFalse().isFalse();
+            assertThat(uploadResponse.getMessage()).contains("FileNotFoundException");
+            assertThat(uploadResponse.getMessage()).contains("doesnotexist.txt");
 
             // We try with an existing document
             json = "{\n" +
@@ -517,13 +531,13 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                     "  }\n" +
                     "}";
             uploadResponse = post(target, "/_document", json, UploadResponse.class);
-            assertThat(uploadResponse.isOk(), is(true));
+            assertThat(uploadResponse.isOk()).isTrue();
 
             // We wait until we have our document
             ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename"), is("foo.txt"));
-            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"), is (16));
-            assertThat(JsonPath.read(response.getHits().get(0).getSource(), "$.content"), containsString(text));
+            assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("foo.txt");
+            assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(16);
+            assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains(text);
 
             // We try with an existing document running on https
             json = "{\n" +
@@ -533,13 +547,13 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                     "  }\n" +
                     "}";
             uploadResponse = post(target, "/_document", json, UploadResponse.class);
-            assertThat(uploadResponse.getMessage(), nullValue());
+            assertThat(uploadResponse.getMessage()).isNull();
 
             // We wait until we have our document
             response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withSort("file.indexing_date"), 2L, null);
-            assertThat(JsonPath.read(response.getHits().get(1).getSource(), "$.file.filename"), is("robots.txt"));
-            assertThat(JsonPath.read(response.getHits().get(1).getSource(), "$.file.filesize"), greaterThan(100));
-            assertThat(JsonPath.read(response.getHits().get(1).getSource(), "$.content"), containsString("Sitemap"));
+            assertThat((String) JsonPath.read(response.getHits().get(1).getSource(), "$.file.filename")).isEqualTo("robots.txt");
+            assertThat((Integer) JsonPath.read(response.getHits().get(1).getSource(), "$.file.filesize")).isGreaterThan(100);
+            assertThat((String) JsonPath.read(response.getHits().get(1).getSource(), "$.content")).contains("Sitemap");
         }
     }
 }

@@ -51,6 +51,9 @@
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
+      <Logger name="org.testcontainers" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
       <Root level="info">
          <AppenderRef ref="CONSOLE"/>
       </Root>

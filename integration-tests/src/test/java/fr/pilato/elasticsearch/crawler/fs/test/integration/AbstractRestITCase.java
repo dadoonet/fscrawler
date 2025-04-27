@@ -29,7 +29,6 @@ import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.client.*;
@@ -40,10 +39,10 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Before;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -58,8 +57,7 @@ import java.util.Map;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ALL")
 @ThreadLeakFilters(filters = {
@@ -67,17 +65,18 @@ import static org.hamcrest.Matchers.is;
         AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class,
         AbstractRestITCase.MinioThreadFilter.class
 })
-public abstract class AbstractRestITCase extends AbstractITCase {
+public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static final int DEFAULT_TEST_REST_PORT = 0;
     private static int testRestPort = getSystemProperty("tests.rest.port", DEFAULT_TEST_REST_PORT);
 
     protected static WebTarget target;
-    protected static Client client;
+    private static Client httpClient;
 
     protected Path currentTestTagDir;
     private FsCrawlerManagementServiceElasticsearchImpl managementService;
-    protected FsCrawlerDocumentService documentService;
+    private FsCrawlerDocumentService documentService;
+    private RestServer restServer;
 
     /**
      * Get the Rest Port. It could be set externally. If 0,
@@ -96,7 +95,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         return testRestPort;
     }
 
-    public abstract FsSettings getFsSettings() throws IOException;
+    public abstract FsSettings getFsSettings();
 
     @Before
     public void copyTags() throws IOException {
@@ -121,8 +120,9 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     @Before
     public void startRestServer() throws Exception {
         FsSettings fsSettings = getFsSettings();
-        fsSettings.getElasticsearch().setIndex(getCrawlerName());
-        FsCrawlerValidator.validateSettings(logger, fsSettings);
+
+        // Add the rest interface
+        fsSettings.getRest().setUrl("http://127.0.0.1:" + getRestPort() + "/fscrawler");
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
         this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
@@ -130,7 +130,8 @@ public abstract class AbstractRestITCase extends AbstractITCase {
         managementService.start();
         documentService.start();
 
-        RestServer.start(fsSettings, managementService, documentService, pluginsManager);
+        restServer = new RestServer(fsSettings, managementService, documentService, pluginsManager);
+        restServer.start();
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
         managementService.getClient().deleteIndex(getCrawlerName());
@@ -141,15 +142,9 @@ public abstract class AbstractRestITCase extends AbstractITCase {
 
     @After
     public void stopRestServer() throws IOException {
-        RestServer.close();
-        if (managementService != null) {
-            managementService.close();
-            managementService = null;
-        }
-        if (documentService != null) {
-            documentService.close();
-            documentService = null;
-        }
+        restServer.close();
+        managementService.close();
+        documentService.close();
     }
 
     public static <T> T get(String path, Class<T> clazz) {
@@ -204,20 +199,20 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     @BeforeClass
     public static void startRestClient() throws IOException {
         // create the client
-        client = ClientBuilder.newBuilder()
+        httpClient = ClientBuilder.newBuilder()
                 .register(MultiPartFeature.class)
                 .register(RestJsonProvider.class)
                 .register(JacksonFeature.class)
                 .build();
 
-        target = client.target("http://127.0.0.1:" + getRestPort() + "/fscrawler");
+        target = httpClient.target("http://127.0.0.1:" + getRestPort() + "/fscrawler");
     }
 
     @AfterClass
     public static void stopRestClient() {
-        if (client != null) {
-            client.close();
-            client = null;
+        if (httpClient != null) {
+            httpClient.close();
+            httpClient = null;
         }
     }
 
@@ -226,7 +221,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
                 .withIndex(getCrawlerName())
                 .withESQuery(new ESTermQuery("file.filename", filename)));
 
-        assertThat(response.getTotalHits(), is(1L));
+        assertThat(response.getTotalHits()).isEqualTo(1L);
         ESSearchHit hit = response.getHits().get(0);
         logger.debug("For [file.filename:{}], we got: {}", filename, hit.getSource());
 
@@ -261,7 +256,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     }
 
     public static UploadResponse uploadFileUsingApi(WebTarget target, Path file, Path tagsFile, String index, String api, String id) {
-        assertThat(Files.exists(file), is(true));
+        assertThat(file).exists();
 
         Map<String, Object> params = new HashMap<>();
 
@@ -315,7 +310,7 @@ public abstract class AbstractRestITCase extends AbstractITCase {
     }
 
     public static UploadResponse putDocument(WebTarget target, Path file, Path tagsFile, String index, String id) {
-        assertThat(Files.exists(file), is(true));
+        assertThat(file).exists();
 
         Map<String, Object> params = new HashMap<>();
 

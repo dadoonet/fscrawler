@@ -25,25 +25,26 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
     @SuppressWarnings("resource")
-    @Test(expected = RuntimeException.class)
-    public void test_checksum_non_existing_algorithm() {
+    @Test
+    public void checksum_non_existing_algorithm() {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("FSCRAWLER");
-        new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false);
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false));
     }
 
     /**
      * Test case for issue #185: <a href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a> : Add xml_support setting
      */
     @SuppressWarnings("resource")
-    @Test(expected = RuntimeException.class)
-    public void test_xml_and_json_enabled() {
+    @Test
+    public void xml_and_json_enabled() {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setXmlSupport(true);
         fsSettings.getFs().setJsonSupport(true);
-        new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false);
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false));
     }
 }

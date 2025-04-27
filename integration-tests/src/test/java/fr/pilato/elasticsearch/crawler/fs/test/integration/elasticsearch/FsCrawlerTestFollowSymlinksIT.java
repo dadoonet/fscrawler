@@ -33,7 +33,7 @@ import java.nio.file.Path;
 public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void test_follow_symlinks_disabled() throws Exception {
+    public void follow_symlinks_disabled() throws Exception {
         // We create a symlink
         Path source = currentTestResourceDir.resolve("roottxtfile.txt");
         Path link = currentTestResourceDir.resolve("link_roottxtfile.txt");
@@ -48,7 +48,7 @@ public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_follow_symlinks_enabled() throws Exception {
+    public void follow_symlinks_enabled() throws Exception {
         // We create a symlink
         Path source = currentTestResourceDir.resolve("roottxtfile.txt");
         Path link = currentTestResourceDir.resolve("link_roottxtfile.txt");

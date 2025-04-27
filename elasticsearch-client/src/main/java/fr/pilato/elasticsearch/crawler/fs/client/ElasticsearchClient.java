@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProce
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.ServiceUnavailableException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -140,7 +141,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 sslContext = SSLContext.getInstance("SSL");
                 sslContext.init(null, trustAllCerts, new SecureRandom());
                 clientBuilder.sslContext(sslContext);
-                logger.warn("We are not doing SSL verification. It's not recommended for production.");
             } catch (KeyManagementException | NoSuchAlgorithmException e) {
                 logger.warn("Failed to get SSL Context", e);
                 throw new RuntimeException(e);
@@ -171,6 +171,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
         try {
             String esVersion = getVersion();
             logger.debug("Elasticsearch Client connected to a node running version {}", esVersion);
+            if (!settings.getElasticsearch().isSslVerification()) {
+                logger.warn("We are not doing SSL verification. It's not recommended for production.");
+            }
         } catch (Exception e) {
             logger.warn("Failed to create elasticsearch client on {}. Message: {}.",
                     settings.getElasticsearch().toString(),
@@ -813,6 +816,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
         } catch (NotFoundException e) {
             logger.debug("index {} does not exist.", request.getIndex());
             throw new ElasticsearchClientException("index " + request.getIndex() + " does not exist.");
+        } catch (ServiceUnavailableException e) {
+            if (serverless) {
+                logger.debug("on serverless this might happen if we just created the index as shards may not be " +
+                        "fully allocated for index [{}].", request.getIndex());
+                throw new ElasticsearchClientException("index " + request.getIndex() + " might not be fully allocated on serverless.");
+            }
+            logger.error("search on index [{}] thrown a [{}] error but we are not on serverless.",
+                    request.getIndex(), e.getResponse().getStatus());
+            throw e;
         }
     }
 
@@ -1026,9 +1038,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return response;
         } catch (WebApplicationException e) {
             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                logger.warn("Error on server side. {} -> {}",
+                logger.error("Error on server side. {} -> {} / {}",
                         e.getResponse().getStatus(),
-                        e.getResponse().getStatusInfo().getReasonPhrase());
+                        e.getResponse().getStatusInfo().getReasonPhrase(),
+                        e.getResponse().readEntity(String.class));
             } else {
                 logger.debug("Error while running {} {}/{}: {}", method, node, path == null ? "" : path, e.getResponse().readEntity(String.class));
             }
