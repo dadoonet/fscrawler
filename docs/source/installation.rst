@@ -185,7 +185,7 @@ Prepare a ``.env`` file with the following content:
     FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug"
 
     # Chenge the STACK_VERSION if needed
-    STACK_VERSION=8.17.3
+    STACK_VERSION=9.0.0
     ELASTIC_PASSWORD=changeme
     KIBANA_PASSWORD=changeme
     CLUSTER_NAME=docker-cluster

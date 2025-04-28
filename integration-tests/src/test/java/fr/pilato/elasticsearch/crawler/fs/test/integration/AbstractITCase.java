@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
@@ -83,7 +84,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "_common"));
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private static final String DEFAULT_USERNAME = "elastic";
-    static final String DEFAULT_PASSWORD = "changeme";
     protected static String testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
     protected static final boolean TEST_KEEP_DATA = getSystemProperty("tests.leaveTemporary", true);
@@ -283,7 +283,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 fsSettings.getElasticsearch().setApiKey(testApiKey);
             } else {
                 fsSettings.getElasticsearch().setUsername(DEFAULT_USERNAME);
-                fsSettings.getElasticsearch().setPassword(DEFAULT_PASSWORD);
+                fsSettings.getElasticsearch().setPassword(TestContainerHelper.DEFAULT_PASSWORD);
             }
         }
 

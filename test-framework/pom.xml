@@ -20,7 +20,6 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.27.3</version>
         </dependency>
         <dependency>
             <groupId>com.carrotsearch.randomizedtesting</groupId>
@@ -43,6 +42,12 @@
         <dependency>
             <groupId>org.fusesource.jansi</groupId>
             <artifactId>jansi</artifactId>
+        </dependency>
+
+        <!-- Test containers -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>elasticsearch</artifactId>
         </dependency>
     </dependencies>
 

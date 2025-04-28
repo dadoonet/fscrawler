@@ -1,0 +1,14 @@
+{
+  "template": {
+    "mappings": {
+      "properties": {
+        "content": {
+          "type": "text"
+        },
+        "content_vector": {
+          "type": "dense_vector"
+        }
+      }
+    }
+  }
+}

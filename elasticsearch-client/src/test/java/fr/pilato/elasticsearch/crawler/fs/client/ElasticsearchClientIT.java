@@ -9,6 +9,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
@@ -46,7 +47,6 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private static final String DEFAULT_USERNAME = "elastic";
-    static final String DEFAULT_PASSWORD = "changeme";
     private static final String DOC_INDEX_NAME = "fscrawler_elasticsearch_client_i_t";
     private static final String FOLDER_INDEX_NAME = DOC_INDEX_NAME + "_folder";
     private static final TestContainerHelper TEST_CONTAINER_HELPER = new TestContainerHelper();
@@ -74,7 +74,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             fsSettings.getElasticsearch().setApiKey(testApiKey);
         } else {
             fsSettings.getElasticsearch().setUsername(DEFAULT_USERNAME);
-            fsSettings.getElasticsearch().setPassword(DEFAULT_PASSWORD);
+            fsSettings.getElasticsearch().setPassword(TestContainerHelper.DEFAULT_PASSWORD);
         }
 
         try {
@@ -780,6 +780,12 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setIndexFolder(FOLDER_INDEX_NAME);
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
+
+            if (localClient.getMajorVersion() < 8) {
+                // We are missing one call when comparing with an ES 8.x cluster
+                localClient.isExistingIndex("foo");
+            }
+
             assertThat(localClient.getAvailableNodes()).hasSize(4);
             localClient.isExistingIndex("foo");
             assertThat(localClient.getAvailableNodes()).hasSize(3);

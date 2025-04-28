@@ -191,7 +191,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         if (semanticSearch) {
             // Check the version we are running or if it's using serverless
-            if ((majorVersion >= 8 && minorVersion >= 17) || serverless) {
+            if ((majorVersion >= 8 && minorVersion >= 17) || serverless || (majorVersion >= 9)) {
                 logger.debug("Semantic search is enabled and we are running on a version of Elasticsearch {} " +
                         "which is 8.17 or higher. We will try to use the semantic search features.", version);
                 license = getLicense();
