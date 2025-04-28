@@ -474,11 +474,17 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private String catIndicesHealth(String index) {
         try {
             String response = httpGet("_cat/indices/" + index,
-                new AbstractMap.SimpleImmutableEntry<>("h", "health"));
+                    new AbstractMap.SimpleImmutableEntry<>("h", "health"));
             DocumentContext document = parseJsonAsDocumentContext(response);
             String health = document.read("$[0].health");
             logger.trace("index [{}] health: [{}]", index, health);
             return health;
+        } catch (WebApplicationException e) {
+            if (e.getResponse().getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                logger.debug("Index [{}] not found yet", index);
+                return null;
+            }
+            throw e;
         } catch (ElasticsearchClientException e) {
             throw new RuntimeException(e);
         }

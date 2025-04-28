@@ -215,12 +215,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void waitForHealthyIndex() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
-        try {
-            esClient.waitForHealthyIndex("does-not-exist-index");
-            fail("We should have raised a ClientErrorException");
-        } catch (ClientErrorException e) {
-            assertThat(e.getResponse().getStatus()).isEqualTo(404);
-        }
+
+        // This one could take a long time as the index does not exist
+        assertThatNoException().isThrownBy(() -> esClient.waitForHealthyIndex("does-not-exist-index"));
     }
 
     /**
