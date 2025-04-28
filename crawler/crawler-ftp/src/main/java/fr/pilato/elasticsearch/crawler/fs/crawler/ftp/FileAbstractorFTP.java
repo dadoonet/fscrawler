@@ -180,9 +180,13 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
     @Override
     public void close() throws IOException {
-        if (ftp.isConnected()) {
-            ftp.logout();
-            ftp.disconnect();
+        try {
+            if (ftp.isConnected()) {
+                ftp.logout();
+                ftp.disconnect();
+            }
+        } catch (IOException e) {
+            logger.warn("Error during FTP logout: {}", e.getMessage());
         }
     }
 
