@@ -10,10 +10,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
-import jakarta.ws.rs.ClientErrorException;
-import jakarta.ws.rs.NotAuthorizedException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -959,21 +956,29 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         }
     }
 
-    private void removeComponentTemplates() {
+    protected static void removeComponentTemplates() {
         logger.trace("Removing component templates");
         try {
             esClient.performLowLevelRequest("DELETE", "/_component_template/fscrawler_*", null);
         } catch (ElasticsearchClientException | NotFoundException e) {
             // We ignore the error
+        } catch (BadRequestException e) {
+            // We ignore the error
+            logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_component_template/fscrawler_*]",
+                    e.getMessage());
         }
     }
 
-    private void removeIndexTemplates() {
+    protected static void removeIndexTemplates() {
         logger.trace("Removing index templates");
         try {
             esClient.performLowLevelRequest("DELETE", "/_index_template/fscrawler_*", null);
         } catch (ElasticsearchClientException | NotFoundException e) {
             // We ignore the error
+        } catch (BadRequestException e) {
+            // We ignore the error
+            logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_index_template/fscrawler_*]",
+                    e.getMessage());
         }
     }
 
