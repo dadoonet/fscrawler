@@ -998,6 +998,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected) throws Exception {
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
+        // Wait for the index to be healthy as we might have a race condition
+        esClient.waitForHealthyIndex(request.getIndex());
+
         // We wait before considering a failing test
         logger.info("  ---> Waiting up to {} for {} documents in {}", maxWaitForSearch,
                 expected == null ? "some" : expected, request.getIndex());

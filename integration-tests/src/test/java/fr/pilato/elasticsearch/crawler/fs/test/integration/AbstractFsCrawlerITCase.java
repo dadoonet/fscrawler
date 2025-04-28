@@ -138,6 +138,9 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
                 .as("Job meta file should exists in ~/.fscrawler...")
                 .isTrue();
 
+        // Wait for the index to be healthy as we might have a race condition
+        client.waitForHealthyIndex(fsSettings.getElasticsearch().getIndex());
+
         countTestHelper(new ESSearchRequest().withIndex(fsSettings.getElasticsearch().getIndex()), null, null, duration);
 
         // Make sure we refresh indexed docs and folders before launching tests

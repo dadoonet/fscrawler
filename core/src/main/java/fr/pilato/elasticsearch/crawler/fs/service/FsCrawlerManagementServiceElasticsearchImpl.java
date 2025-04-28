@@ -88,6 +88,8 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
         Collection<String> files = new ArrayList<>();
 
         try {
+            // This call is just to avoid errors if the index is not fully allocated yet
+            client.waitForHealthyIndex(settings.getElasticsearch().getIndex());
             ESSearchResponse response = client.search(
                     new ESSearchRequest()
                             .withIndex(settings.getElasticsearch().getIndex())
@@ -125,6 +127,8 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
         Collection<String> files = new ArrayList<>();
 
         try {
+            // This call is just to avoid errors if the index is not fully allocated yet
+            client.waitForHealthyIndex(settings.getElasticsearch().getIndexFolder());
             ESSearchResponse response = client.search(
                     new ESSearchRequest()
                             .withIndex(settings.getElasticsearch().getIndexFolder())
