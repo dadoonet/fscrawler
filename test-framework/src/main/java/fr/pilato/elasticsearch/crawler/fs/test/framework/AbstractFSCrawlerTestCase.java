@@ -20,7 +20,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
 import com.carrotsearch.randomizedtesting.RandomizedContext;
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
-import com.carrotsearch.randomizedtesting.ThreadFilter;
 import com.carrotsearch.randomizedtesting.annotations.*;
 import com.carrotsearch.randomizedtesting.generators.RandomNumbers;
 import org.apache.logging.log4j.LogManager;
@@ -50,28 +49,12 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
 @ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
 @ThreadLeakLingering(linger = 5000) // 5 sec lingering
 @ThreadLeakFilters(filters = {
-        AbstractFSCrawlerTestCase.TestContainerThreadFilter.class,
-        AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class
+        TestContainerThreadFilter.class,
+        JNACleanerThreadFilter.class
 })
 public abstract class AbstractFSCrawlerTestCase {
 
     public static final int TIMEOUT_MINUTE_AS_MS = 60 * 1000;
-
-    public static class TestContainerThreadFilter implements ThreadFilter {
-        @Override
-        public boolean reject(Thread t) {
-            return
-                    t.getName().startsWith("ducttape-") ||
-                    t.getThreadGroup() != null && "testcontainers".equals(t.getThreadGroup().getName());
-        }
-    }
-
-    public static class JNACleanerThreadFilter implements ThreadFilter {
-        @Override
-        public boolean reject(Thread t) {
-            return "JNA Cleaner".equals(t.getName());
-        }
-    }
 
     private static final Logger logger = LogManager.getLogger();
     private static final String RANDOM = "random";

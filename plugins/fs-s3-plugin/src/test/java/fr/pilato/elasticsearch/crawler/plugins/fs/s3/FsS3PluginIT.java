@@ -18,9 +18,11 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
-import com.carrotsearch.randomizedtesting.ThreadFilter;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.MinioThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
@@ -41,9 +43,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @ThreadLeakFilters(filters = {
-        AbstractFSCrawlerTestCase.TestContainerThreadFilter.class,
-        AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class,
-        FsS3PluginIT.MinioThreadFilter.class
+        TestContainerThreadFilter.class,
+        JNACleanerThreadFilter.class,
+        MinioThreadFilter.class
 })
 public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -116,18 +118,6 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
             assertThat(object).isEqualTo(text);
             assertThat(provider.getFilename()).isEqualTo("foo.txt");
             assertThat(provider.getFilesize()).isEqualTo(16L);
-        }
-    }
-
-    /**
-     * This is temporary until <a href="https://github.com/minio/minio-java/issues/1584">https://github.com/minio/minio-java/issues/1584</a> is solved
-     */
-    static public class MinioThreadFilter implements ThreadFilter {
-        @Override
-        public boolean reject(Thread t) {
-            return "Okio Watchdog".equals(t.getName())
-                    || "OkHttp TaskRunner".equals(t.getName())
-                    || "ForkJoinPool.commonPool-worker-1".equals(t.getName());
         }
     }
 }
