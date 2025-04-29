@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,6 +81,10 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
             client.performLowLevelRequest("DELETE", "/_component_template/fscrawler_*", null);
         } catch (ElasticsearchClientException | NotFoundException e) {
             // We ignore the error
+        } catch (BadRequestException e) {
+            // We ignore the error
+            logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_component_template/fscrawler_*]",
+                    e.getMessage());
         }
     }
 
@@ -89,6 +94,10 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
             client.performLowLevelRequest("DELETE", "/_index_template/fscrawler_*", null);
         } catch (ElasticsearchClientException | NotFoundException e) {
             // We ignore the error
+        } catch (BadRequestException e) {
+            // We ignore the error
+            logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_index_template/fscrawler_*]",
+                    e.getMessage());
         }
     }
 
@@ -128,6 +137,9 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         }, duration))
                 .as("Job meta file should exists in ~/.fscrawler...")
                 .isTrue();
+
+        // Wait for the index to be healthy as we might have a race condition
+        client.waitForHealthyIndex(fsSettings.getElasticsearch().getIndex());
 
         countTestHelper(new ESSearchRequest().withIndex(fsSettings.getElasticsearch().getIndex()), null, null, duration);
 

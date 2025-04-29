@@ -39,10 +39,11 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch8.version>8.17.4</elasticsearch8.version>
-        <elasticsearch7.version>7.17.23</elasticsearch7.version>
+        <elasticsearch9.version>9.0.0</elasticsearch9.version>
+        <elasticsearch8.version>8.18.0</elasticsearch8.version>
+        <elasticsearch7.version>7.17.28</elasticsearch7.version>
         <elasticsearch6.version>6.8.23</elasticsearch6.version>
-        <elasticsearch.version>${elasticsearch8.version}</elasticsearch.version>
+        <elasticsearch.version>${elasticsearch9.version}</elasticsearch.version>
 
         <pl4j.version>3.13.0</pl4j.version>
 
@@ -841,21 +842,23 @@
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${testcontainers.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
                 <artifactId>elasticsearch</artifactId>
                 <version>${testcontainers.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>minio</artifactId>
                 <version>${testcontainers.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>nginx</artifactId>
                 <version>${testcontainers.version}</version>
-                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -883,6 +886,27 @@
     </repositories>
 
     <profiles>
+        <!-- Profile for ES8 -->
+        <profile>
+            <id>es-8x</id>
+            <properties>
+                <integ.elasticsearch.version>${elasticsearch8.version}</integ.elasticsearch.version>
+            </properties>
+        </profile>
+        <!-- Profile for ES7 -->
+        <profile>
+            <id>es-7x</id>
+            <properties>
+                <integ.elasticsearch.version>${elasticsearch7.version}</integ.elasticsearch.version>
+            </properties>
+        </profile>
+        <!-- Profile for ES6 -->
+        <profile>
+            <id>es-6x</id>
+            <properties>
+                <integ.elasticsearch.version>${elasticsearch6.version}</integ.elasticsearch.version>
+            </properties>
+        </profile>
         <profile>
             <id>skip-docker-compose</id>
             <activation>

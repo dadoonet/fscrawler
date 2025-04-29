@@ -37,6 +37,7 @@ New
 * Add temporal information in folder index. Thanks to bdauvissat
 * Add support for external metadata files while crawling, defaults to ``.meta.yml``. See :ref:`tags` Thanks to dadoonet.
 * The job name is not mandatory anymore and it will be ``fscrawler`` by default. Thanks to dadoonet.
+* FSCrawler also supports Elasticsearch 9. Thanks to dadoonet.
 
 Fix
 ---

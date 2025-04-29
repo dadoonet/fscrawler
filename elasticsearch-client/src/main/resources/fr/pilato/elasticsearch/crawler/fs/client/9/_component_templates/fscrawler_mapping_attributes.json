@@ -1,0 +1,18 @@
+{
+  "template": {
+    "mappings": {
+      "properties": {
+        "attributes": {
+          "properties": {
+            "group": {
+              "type": "keyword"
+            },
+            "owner": {
+              "type": "keyword"
+            }
+          }
+        }
+      }
+    }
+  }
+}

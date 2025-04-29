@@ -28,7 +28,7 @@ jobs:
     - name: Build but the docker images
       run: mvn --batch-mode install -Ddocker.skip -DskipIntegTests
 
-  # We run integration tests with elastic stack 8 (default)
+  # We run integration tests with elastic stack 9 (default)
   it:
     runs-on: ubuntu-latest
     needs: build
@@ -47,6 +47,26 @@ jobs:
         continue-on-error: true
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.output=always -Dtests.leaveTemporary=false
+
+  # We run integration tests with elastic stack 8
+  it-es8:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Cache Docker images
+        uses: AndreKurait/docker-cache@0.6.0
+        with:
+          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
+        continue-on-error: true
+      - name: Run the integration tests
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-8x -Dtests.parallelism=1 -Dtests.leaveTemporary=false
 
   # We run integration tests with elastic stack 7
   it-es7:

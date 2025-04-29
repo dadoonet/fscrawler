@@ -17,11 +17,11 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.client;
+package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -32,9 +32,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * This creates a TestContainer Elasticsearch instance
  */
-class TestContainerHelper {
+public class TestContainerHelper {
 
-    private static final Logger log = LoggerFactory.getLogger(TestContainerHelper.class);
+    private static final Logger log = LogManager.getLogger(TestContainerHelper.class);
+
+    public static final String DEFAULT_PASSWORD = "changeme";
+    private static final String HTTPS_URL = "https://%s";
+    private static final String HTTP_URL = "http://%s";
 
     private ElasticsearchContainer elasticsearch;
     private byte[] certAsBytes;
@@ -46,7 +50,7 @@ class TestContainerHelper {
      * @param  keepData keep the cluster running after the test and reuse it if possible
      * @throws IOException in case of error
      */
-    synchronized String startElasticsearch(boolean keepData) throws IOException {
+    public synchronized String startElasticsearch(boolean keepData) throws IOException {
         if (starting.compareAndSet(false, true)) {
             Properties props = new Properties();
             props.load(TestContainerHelper.class.getResourceAsStream("/elasticsearch.version.properties"));
@@ -65,8 +69,10 @@ class TestContainerHelper {
                         // For 6.x clusters and for semantic search, we need to activate a trial
                         .withEnv("xpack.license.self_generated.type", "trial")
                         .withReuse(keepData)
-                        .withPassword(ElasticsearchClientIT.DEFAULT_PASSWORD);
+                        .withPassword(DEFAULT_PASSWORD);
                 elasticsearch.start();
+
+                String url = String.format(HTTPS_URL, elasticsearch.getHttpHostAddress());
 
                 // Try to get the https certificate if exists
                 try {
@@ -75,18 +81,20 @@ class TestContainerHelper {
                             IOUtils::toByteArray);
                     log.debug("Found an https elasticsearch cert for version [{}].", version);
                 } catch (Exception e) {
-                    log.warn("We did not find the https elasticsearch cert for version [{}].", version);
+                    log.debug("We did not find the https elasticsearch cert for version [{}]. We switch to http instead.", version);
+                    url = String.format(HTTP_URL, elasticsearch.getHttpHostAddress());
                 }
 
-                String url = "https://" + elasticsearch.getHttpHostAddress();
                 log.info("Elasticsearch container is now running at {}", url);
 
                 starting.set(false);
                 started = true;
-                return "https://" + elasticsearch.getHttpHostAddress();
+
+                waitForReadiness(version);
+                return url;
             } else {
                 log.info("Testcontainers with Elasticsearch [{}] was previously started", version);
-                return "https://" + elasticsearch.getHttpHostAddress();
+                return String.format(HTTPS_URL, elasticsearch.getHttpHostAddress());
             }
         } else {
             log.info("Elasticsearch container is already starting. Skipping starting it again.");
@@ -102,7 +110,7 @@ class TestContainerHelper {
             }
 
             log.info("Testcontainers with Elasticsearch is now available");
-            return "https://" + elasticsearch.getHttpHostAddress();
+            return String.format(HTTPS_URL, elasticsearch.getHttpHostAddress());
         }
     }
 
@@ -112,5 +120,16 @@ class TestContainerHelper {
 
     public boolean isStarted() {
         return started;
+    }
+
+    private synchronized void waitForReadiness(String version) {
+        if (Integer.parseInt(version.split("\\.")[0]) > 8) {
+            log.warn("From 9.0.0, we need to wait a bit before all security indices are allocated");
+            try {
+                wait(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }

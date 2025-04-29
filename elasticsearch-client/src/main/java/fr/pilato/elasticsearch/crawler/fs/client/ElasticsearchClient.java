@@ -191,7 +191,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         if (semanticSearch) {
             // Check the version we are running or if it's using serverless
-            if ((majorVersion >= 8 && minorVersion >= 17) || serverless) {
+            if ((majorVersion >= 8 && minorVersion >= 17) || serverless || (majorVersion >= 9)) {
                 logger.debug("Semantic search is enabled and we are running on a version of Elasticsearch {} " +
                         "which is 8.17 or higher. We will try to use the semantic search features.", version);
                 license = getLicense();
@@ -474,11 +474,17 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private String catIndicesHealth(String index) {
         try {
             String response = httpGet("_cat/indices/" + index,
-                new AbstractMap.SimpleImmutableEntry<>("h", "health"));
+                    new AbstractMap.SimpleImmutableEntry<>("h", "health"));
             DocumentContext document = parseJsonAsDocumentContext(response);
             String health = document.read("$[0].health");
             logger.trace("index [{}] health: [{}]", index, health);
             return health;
+        } catch (WebApplicationException e) {
+            if (e.getResponse().getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                logger.debug("Index [{}] not found yet", index);
+                return null;
+            }
+            throw e;
         } catch (ElasticsearchClientException e) {
             throw new RuntimeException(e);
         }

@@ -1,0 +1,107 @@
+{
+  "template": {
+    "mappings": {
+      "dynamic_templates": [
+        {
+          "raw_as_text": {
+            "path_match": "meta.raw.*",
+            "mapping": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "meta": {
+          "properties": {
+            "author": {
+              "type": "text"
+            },
+            "date": {
+              "type": "date",
+              "format": "date_optional_time"
+            },
+            "keywords": {
+              "type": "text"
+            },
+            "title": {
+              "type": "text"
+            },
+            "language": {
+              "type": "keyword"
+            },
+            "format": {
+              "type": "text"
+            },
+            "identifier": {
+              "type": "text"
+            },
+            "contributor": {
+              "type": "text"
+            },
+            "coverage": {
+              "type": "text"
+            },
+            "modifier": {
+              "type": "text"
+            },
+            "creator_tool": {
+              "type": "keyword"
+            },
+            "publisher": {
+              "type": "text"
+            },
+            "relation": {
+              "type": "text"
+            },
+            "rights": {
+              "type": "text"
+            },
+            "source": {
+              "type": "text"
+            },
+            "type": {
+              "type": "text"
+            },
+            "description": {
+              "type": "text"
+            },
+            "created": {
+              "type": "date",
+              "format": "date_optional_time"
+            },
+            "print_date": {
+              "type": "date",
+              "format": "date_optional_time"
+            },
+            "metadata_date": {
+              "type": "date",
+              "format": "date_optional_time"
+            },
+            "latitude": {
+              "type": "text"
+            },
+            "longitude": {
+              "type": "text"
+            },
+            "altitude": {
+              "type": "text"
+            },
+            "rating": {
+              "type": "byte"
+            },
+            "comments": {
+              "type": "text"
+            }
+          }
+        }
+      }
+    }
+  }
+}

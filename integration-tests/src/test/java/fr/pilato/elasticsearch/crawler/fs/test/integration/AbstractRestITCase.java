@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import com.carrotsearch.randomizedtesting.ThreadFilter;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.client.*;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
@@ -30,7 +29,9 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.MinioThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.logging.log4j.LogManager;
@@ -61,9 +62,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ALL")
 @ThreadLeakFilters(filters = {
-        AbstractFSCrawlerTestCase.TestContainerThreadFilter.class,
-        AbstractFSCrawlerTestCase.JNACleanerThreadFilter.class,
-        AbstractRestITCase.MinioThreadFilter.class
+        TestContainerThreadFilter.class,
+        JNACleanerThreadFilter.class,
+        MinioThreadFilter.class
 })
 public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
@@ -356,17 +357,5 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         }
 
         return delete(target, api, DeleteResponse.class, options);
-    }
-
-    /**
-     * This is temporary until https://github.com/minio/minio-java/issues/1584 is solved
-     */
-    static public class MinioThreadFilter implements ThreadFilter {
-        @Override
-        public boolean reject(Thread t) {
-            return "Okio Watchdog".equals(t.getName())
-                    || "OkHttp TaskRunner".equals(t.getName())
-                    || "ForkJoinPool.commonPool-worker-1".equals(t.getName());
-        }
     }
 }

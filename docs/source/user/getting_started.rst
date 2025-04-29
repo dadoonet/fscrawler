@@ -33,7 +33,7 @@ you want to index in it and start again:
 .. code:: sh
 
    $ bin/fscrawler
-   17:41:45,395 INFO  [f.p.e.c.f.FsCrawlerImpl] FSCrawler is now connected to Elasticsearch version [8.17.3]
+   17:41:45,395 INFO  [f.p.e.c.f.FsCrawlerImpl] FSCrawler is now connected to Elasticsearch version [9.0.0]
    17:41:45,395 INFO  [f.p.e.c.f.FsCrawlerImpl] FSCrawler started in watch mode. It will run unless you stop it with CTRL+C.
    17:41:45,395 INFO  [f.p.e.c.f.FsParserAbstract] FS crawler started for [fscrawler] for [/tmp/es] every [15m]
 

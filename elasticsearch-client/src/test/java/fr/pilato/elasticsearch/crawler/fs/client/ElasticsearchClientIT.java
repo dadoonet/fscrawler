@@ -9,10 +9,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import jakarta.ws.rs.ClientErrorException;
-import jakarta.ws.rs.NotAuthorizedException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.ProcessingException;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
+import jakarta.ws.rs.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,7 +44,6 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private static final String DEFAULT_USERNAME = "elastic";
-    static final String DEFAULT_PASSWORD = "changeme";
     private static final String DOC_INDEX_NAME = "fscrawler_elasticsearch_client_i_t";
     private static final String FOLDER_INDEX_NAME = DOC_INDEX_NAME + "_folder";
     private static final TestContainerHelper TEST_CONTAINER_HELPER = new TestContainerHelper();
@@ -74,7 +71,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             fsSettings.getElasticsearch().setApiKey(testApiKey);
         } else {
             fsSettings.getElasticsearch().setUsername(DEFAULT_USERNAME);
-            fsSettings.getElasticsearch().setPassword(DEFAULT_PASSWORD);
+            fsSettings.getElasticsearch().setPassword(TestContainerHelper.DEFAULT_PASSWORD);
         }
 
         try {
@@ -218,12 +215,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void waitForHealthyIndex() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
-        try {
-            esClient.waitForHealthyIndex("does-not-exist-index");
-            fail("We should have raised a ClientErrorException");
-        } catch (ClientErrorException e) {
-            assertThat(e.getResponse().getStatus()).isEqualTo(404);
-        }
+
+        // This one could take a long time as the index does not exist
+        assertThatNoException().isThrownBy(() -> esClient.waitForHealthyIndex("does-not-exist-index"));
     }
 
     /**
@@ -780,6 +774,12 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setIndexFolder(FOLDER_INDEX_NAME);
         try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
             localClient.start();
+
+            if (localClient.getMajorVersion() < 8) {
+                // We are missing one call when comparing with an ES 8.x cluster
+                localClient.isExistingIndex("foo");
+            }
+
             assertThat(localClient.getAvailableNodes()).hasSize(4);
             localClient.isExistingIndex("foo");
             assertThat(localClient.getAvailableNodes()).hasSize(3);
@@ -953,21 +953,29 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         }
     }
 
-    private void removeComponentTemplates() {
+    protected static void removeComponentTemplates() {
         logger.trace("Removing component templates");
         try {
             esClient.performLowLevelRequest("DELETE", "/_component_template/fscrawler_*", null);
         } catch (ElasticsearchClientException | NotFoundException e) {
             // We ignore the error
+        } catch (BadRequestException e) {
+            // We ignore the error
+            logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_component_template/fscrawler_*]",
+                    e.getMessage());
         }
     }
 
-    private void removeIndexTemplates() {
+    protected static void removeIndexTemplates() {
         logger.trace("Removing index templates");
         try {
             esClient.performLowLevelRequest("DELETE", "/_index_template/fscrawler_*", null);
         } catch (ElasticsearchClientException | NotFoundException e) {
             // We ignore the error
+        } catch (BadRequestException e) {
+            // We ignore the error
+            logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_index_template/fscrawler_*]",
+                    e.getMessage());
         }
     }
 
@@ -986,6 +994,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
      */
     private static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected) throws Exception {
         final ESSearchResponse[] response = new ESSearchResponse[1];
+
+        // Wait for the index to be healthy as we might have a race condition
+        esClient.waitForHealthyIndex(request.getIndex());
 
         // We wait before considering a failing test
         logger.info("  ---> Waiting up to {} for {} documents in {}", maxWaitForSearch,

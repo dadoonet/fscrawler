@@ -152,21 +152,4 @@
         </plugins>
     </build>
 
-    <profiles>
-        <!-- Profile for ES7 -->
-        <profile>
-            <id>es-7x</id>
-            <properties>
-                <integ.elasticsearch.version>${elasticsearch7.version}</integ.elasticsearch.version>
-            </properties>
-        </profile>
-        <!-- Profile for ES6 -->
-        <profile>
-            <id>es-6x</id>
-            <properties>
-                <integ.elasticsearch.version>${elasticsearch6.version}</integ.elasticsearch.version>
-            </properties>
-        </profile>
-    </profiles>
-
 </project>
