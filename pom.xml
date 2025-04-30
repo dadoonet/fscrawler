@@ -53,7 +53,6 @@
         <jackson.version>2.19.0</jackson.version>
         <jsonpath.version>2.9.0</jsonpath.version>
         <log4j.version>2.24.3</log4j.version>
-        <jansi.version>2.4.1</jansi.version>
         <jersey.version>3.1.10</jersey.version>
 
         <!-- Non Apache2 Compatible licenses -->
@@ -801,12 +800,6 @@
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-iostreams</artifactId>
                 <version>${log4j.version}</version>
-                <optional>true</optional>
-            </dependency>
-            <dependency>
-                <groupId>org.fusesource.jansi</groupId>
-                <artifactId>jansi</artifactId>
-                <version>${jansi.version}</version>
                 <optional>true</optional>
             </dependency>
             <!--
