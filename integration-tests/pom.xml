@@ -12,11 +12,6 @@
     <artifactId>fscrawler-it</artifactId>
     <name>FSCrawler Integration Tests</name>
 
-    <properties>
-        <integ.elasticsearch.version>${elasticsearch8.version}</integ.elasticsearch.version>
-        <contrib.dir>${project.basedir}/../contrib</contrib.dir>
-    </properties>
-
     <dependencies>
         <!-- Test dependencies -->
         <dependency>
