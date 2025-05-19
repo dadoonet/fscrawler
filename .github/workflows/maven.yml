@@ -49,5 +49,5 @@ jobs:
         with:
           githubServer: false
           servers: '[{"id": "central", "username": "${{ secrets.CENTRAL_USERNAME }}", "password": "${{ secrets.CENTRAL_TOKEN }}"},{"id": "docker.io", "username": "${{ secrets.DOCKER_USERNAME }}", "password": "${{ secrets.DOCKER_PASSWORD }}"}]'
-      - name: Deploy with Maven
-        run: mvn --batch-mode deploy -DskipTests
+      - name: Deploy with Maven (but docker - tmp test)
+        run: mvn --batch-mode deploy -DskipTests -Ddocker.skip
