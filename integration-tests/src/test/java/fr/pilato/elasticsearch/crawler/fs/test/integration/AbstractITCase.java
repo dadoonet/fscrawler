@@ -55,6 +55,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -63,8 +64,7 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlpha
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
@@ -430,6 +430,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         // We wait before considering a failing test
         logger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
                 expected == null ? "some" : expected, request.getIndex());
+        AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
         long hits = awaitBusy(() -> {
             long totalHits;
 
@@ -438,13 +439,16 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 // Make sure we refresh indexed docs before counting
                 refresh(request.getIndex());
                 response[0] = client.search(request);
+                errorWhileWaiting.set(null);
             } catch (RuntimeException e) {
                 logger.warn("error caught", e);
+                errorWhileWaiting.set(e);
                 return -1;
             } catch (ElasticsearchClientException e) {
                 // TODO create a NOT FOUND Exception instead
                 logger.debug("error caught: [{}] ", e.getMessage());
                 logger.trace("error caught", e);
+                errorWhileWaiting.set(e);
                 return -1;
             }
             totalHits = response[0].getTotalHits();
@@ -453,6 +457,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
             return totalHits;
         }, expected, timeout);
+
+        // We check that we did not catch an error while waiting
+        assertThatNoException().isThrownBy(() -> {
+            if (errorWhileWaiting.get() != null) {
+                throw errorWhileWaiting.get();
+            }
+        });
 
         if (expected == null) {
             assertThat(hits)
