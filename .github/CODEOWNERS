@@ -1,0 +1,6 @@
+# This file is used to define the code owners for the repository.
+# Each line is a file pattern followed by one or more GitHub usernames or team names.
+# For more information, see https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# The code owners will be automatically requested for review when someone makes changes to the files they own.
+# All the modified files will be reviewed by dadoonet.
+*       @dadoonet
