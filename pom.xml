@@ -72,7 +72,7 @@
         <tests.cluster.apiKey></tests.cluster.apiKey>
         <tests.cluster.check_ssl>true</tests.cluster.check_ssl>
         <tests.rest.port>0</tests.rest.port>
-        <testcontainers.version>1.21.0</testcontainers.version>
+        <testcontainers.version>1.21.1</testcontainers.version>
 
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
