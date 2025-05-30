@@ -49,7 +49,7 @@
 
         <gestalt.version>0.35.8</gestalt.version>
 
-        <tika.version>3.1.0</tika.version>
+        <tika.version>3.2.0</tika.version>
         <jackson.version>2.19.0</jackson.version>
         <jsonpath.version>2.9.0</jsonpath.version>
         <log4j.version>2.24.3</log4j.version>
