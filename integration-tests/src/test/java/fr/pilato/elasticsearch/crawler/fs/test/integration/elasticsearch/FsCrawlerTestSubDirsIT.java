@@ -75,6 +75,9 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         // We expect to have 7 files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
 
+        // We expect to have 7 folders
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 7L, null);
+
         // Run aggs
         ESSearchResponse response = client.search(new ESSearchRequest()
                         .withIndex(getCrawlerName())
