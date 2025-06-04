@@ -20,7 +20,7 @@
         <dependency>
             <groupId>co.elastic.clients</groupId>
             <artifactId>elasticsearch-java</artifactId>
-            <version>${elasticsearch8.version}</version>
+            <version>${elasticsearch9.version}</version>
             <type>pom</type>
         </dependency>
     </dependencies>
