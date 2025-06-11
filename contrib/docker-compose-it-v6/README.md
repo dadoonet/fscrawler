@@ -15,7 +15,7 @@ Wait for everything to start. It could take several minutes.
 
 ## Stop Elastic Stack
 
-Go to the `contrib/docker-compose-it` dir and type:
+Go to the `contrib/docker-compose-it-v6` dir and type:
 
 ```sh
 docker-compose down
