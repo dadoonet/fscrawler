@@ -50,7 +50,7 @@
         <gestalt.version>0.35.8</gestalt.version>
 
         <tika.version>3.2.0</tika.version>
-        <jackson.version>2.19.0</jackson.version>
+        <jackson.version>2.19.1</jackson.version>
         <jsonpath.version>2.9.0</jsonpath.version>
         <log4j.version>2.24.3</log4j.version>
         <jersey.version>3.1.10</jersey.version>
