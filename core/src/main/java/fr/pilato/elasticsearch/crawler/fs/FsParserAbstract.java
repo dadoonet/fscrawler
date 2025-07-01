@@ -65,7 +65,7 @@ public abstract class FsParserAbstract extends FsParser {
     private final String pathSeparator;
     private final FileAbstractor<?> fileAbstractor;
     private final String metadataFilename;
-    private final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
+    private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
         this.fsSettings = fsSettings;
