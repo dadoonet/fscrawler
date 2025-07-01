@@ -48,7 +48,7 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void parseJob() throws IOException {
-        jobTester(new FsJob(getCurrentTestName(), LocalDateTime.now(), 1000, 5));
+        jobTester(new FsJob(getCurrentTestName(), LocalDateTime.now(), LocalDateTime.now(), 1000, 5));
     }
 
     /**
@@ -58,7 +58,7 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     @Test
     public void dateTimeSerialization() throws IOException {
         LocalDateTime now = LocalDateTime.now();
-        FsJob job = new FsJob(getCurrentTestName(), now, 1000, 5);
+        FsJob job = new FsJob(getCurrentTestName(), now, now, 1000, 5);
         String json = prettyMapper.writeValueAsString(job);
         FsJob generated = prettyMapper.readValue(json, FsJob.class);
         assertThat(generated.getLastrun()).isEqualTo(now);

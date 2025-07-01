@@ -42,6 +42,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -64,6 +65,7 @@ public abstract class FsParserAbstract extends FsParser {
     private final String pathSeparator;
     private final FileAbstractor<?> fileAbstractor;
     private final String metadataFilename;
+    private final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
         this.fsSettings = fsSettings;
@@ -164,11 +166,17 @@ public abstract class FsParserAbstract extends FsParser {
                 addFilesRecursively(fsSettings.getFs().getUrl(), scanDate, stats);
 
                 stats.setEndTime(LocalDateTime.now());
+
+                // Compute the next check time by adding fsSettings.getFs().getUpdateRate().millis()
+                LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
                 logger.info("Run #{}: job [{}]: indexed [{}], deleted [{}], documents up to [{}]. " +
-                                "Started at [{}], finished at [{}], took [{}]", run, fsSettings.getName(),
+                                "Started at [{}], finished at [{}], took [{}]. " +
+                                "Will restart at [{}].", run, fsSettings.getName(),
                         stats.getNbDocScan(), stats.getNbDocDeleted(), scanDatenew,
-                        stats.getStartTime(), stats.getEndTime(), stats.computeDuration());
-                updateFsJob(fsSettings.getName(), scanDatenew, stats);
+                        stats.getStartTime(), stats.getEndTime(), stats.computeDuration(),
+                        nextCheck);
+
+                updateFsJob(fsSettings.getName(), scanDatenew, nextCheck, stats);
                 // TODO Update stats
                 // updateStats(fsSettings.getName(), stats);
             } catch (Exception e) {
@@ -198,8 +206,28 @@ public abstract class FsParserAbstract extends FsParser {
 
                 if (!closed) {
                     synchronized (semaphore) {
-                        semaphore.wait(fsSettings.getFs().getUpdateRate().millis());
-                        logger.debug("Fs crawler is now waking up again...");
+                        long totalWaitTime = 0;
+                        long maxWaitTime = fsSettings.getFs().getUpdateRate().millis();
+                        while (totalWaitTime < maxWaitTime && !closed) {
+                            long waitTime = Math.min(CHECK_JOB_INTERVAL.millis(), maxWaitTime - totalWaitTime);
+                            semaphore.wait(waitTime);
+                            totalWaitTime += waitTime;
+                            logger.debug("Waking up after {} ms to check if the condition changed. We waited for {} in total...", waitTime, totalWaitTime);
+
+                            // Read again the FsJob to check if we need to stop the crawler
+                            try {
+                                FsJob fsJob = fsJobFileHandler.read(fsSettings.getName());
+                                if (fsJob.getNextCheck() == null || LocalDateTime.now().isAfter(fsJob.getNextCheck())) {
+                                    logger.debug("Fs crawler is waking up because next check time [{}] is in the past.", fsJob.getNextCheck());
+                                    break; // Exit the loop to re-run the crawler
+                                }
+                            } catch (NoSuchFileException e) {
+                                // The file does not exist yet, we can continue
+                            } catch (IOException e) {
+                                logger.warn("Error while reading job metadata: {}", e.getMessage());
+                            }
+                        }
+                        logger.debug("Fs crawler is now waking up again after a total wait time of {}...", totalWaitTime);
                     }
                 }
             } catch (InterruptedException e) {
@@ -222,17 +250,18 @@ public abstract class FsParserAbstract extends FsParser {
     /**
      * Update the job statistics
      *
-     * @param jobName  job name
-     * @param scanDate last date we scan the dirs
-     * @param stats    the stats used to update the job statistics
+     * @param jobName   job name
+     * @param scanDate  last date we scan the dirs
+     * @param nextCheck next planned date to scan again
+     * @param stats     the stats used to update the job statistics
      * @throws IOException In case of error while saving the job stats
      */
-    private void updateFsJob(final String jobName, final LocalDateTime scanDate, final ScanStatistic stats) throws IOException {
-        FsJob fsJob = new FsJob(jobName, scanDate, stats.getNbDocScan(), stats.getNbDocDeleted());
+    private void updateFsJob(final String jobName, final LocalDateTime scanDate, final LocalDateTime nextCheck, final ScanStatistic stats) throws IOException {
+        FsJob fsJob = new FsJob(jobName, scanDate, nextCheck, stats.getNbDocScan(), stats.getNbDocDeleted());
         // TODO replace this with a call to the management service (Elasticsearch)
         fsJobFileHandler.write(jobName, fsJob);
-        logger.debug("Updating job metadata after run for [{}]: lastrun [{}], indexed [{}], deleted [{}]",
-                jobName, scanDate, stats.getNbDocScan(), stats.getNbDocDeleted());
+        logger.debug("Updating job metadata after run for [{}]: lastrun [{}], nextcheck [{}], indexed [{}], deleted [{}]",
+                jobName, scanDate, nextCheck, stats.getNbDocScan(), stats.getNbDocDeleted());
     }
 
     private void addFilesRecursively(final String filepath, final LocalDateTime lastScanDate, final ScanStatistic stats)
