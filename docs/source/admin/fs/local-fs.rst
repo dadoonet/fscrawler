@@ -113,6 +113,13 @@ The supported units for duration are:
 * ``s`` for seconds
 * ``ms`` for milliseconds
 
+.. note::
+
+    If you don't want to wait for the next scan, you can manually edit the ``~/.fscrawler/test/_status.json`` file and
+    set ``next_check`` to the current time or to ``null``. FSCrawler will then start a new scan at most after 5 seconds.
+
+    See :ref:`status-files` for more information.
+
 .. _includes_excludes:
 
 Includes and excludes

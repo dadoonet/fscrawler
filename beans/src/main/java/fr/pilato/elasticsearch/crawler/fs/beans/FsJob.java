@@ -29,15 +29,17 @@ public class FsJob {
 
     private String name;
     private LocalDateTime lastrun;
+    private LocalDateTime nextCheck;
     private long indexed;
     private long deleted;
 
     public FsJob() {
     }
 
-    public FsJob(String name, LocalDateTime lastrun, long indexed, long deleted) {
+    public FsJob(String name, LocalDateTime lastrun, LocalDateTime nextCheck, long indexed, long deleted) {
         this.name = name;
         this.lastrun = lastrun;
+        this.nextCheck = nextCheck;
         this.indexed = indexed;
         this.deleted = deleted;
     }
@@ -56,6 +58,14 @@ public class FsJob {
 
     public void setLastrun(LocalDateTime lastrun) {
         this.lastrun = lastrun;
+    }
+
+    public LocalDateTime getNextCheck() {
+        return nextCheck;
+    }
+
+    public void setNextCheck(LocalDateTime nextCheck) {
+        this.nextCheck = nextCheck;
     }
 
     public long getIndexed() {
@@ -84,6 +94,7 @@ public class FsJob {
         if (indexed != fsJob.indexed) return false;
         if (deleted != fsJob.deleted) return false;
         if (!Objects.equals(name, fsJob.name)) return false;
+        if (!Objects.equals(nextCheck, fsJob.nextCheck)) return false;
         return Objects.equals(lastrun, fsJob.lastrun);
     }
 
@@ -91,6 +102,7 @@ public class FsJob {
     public int hashCode() {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (lastrun != null ? lastrun.hashCode() : 0);
+        result = 31 * result + (nextCheck != null ? nextCheck.hashCode() : 0);
         result = 31 * result + Long.hashCode(indexed);
         result = 31 * result + Long.hashCode(deleted);
         return result;

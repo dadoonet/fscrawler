@@ -18,6 +18,9 @@ enough. Thanks to dadoonet.
 New
 ---
 
+* FSCrawler does not need to wait until the next planned scan to scan again the filesystem. You can just remove the
+  line ``next_check`` in the ``~/.fscrawler/{job_name}/_status.json`` file and FSCrawler will start a new scan
+  immediately.
 * Job settings can be defined by env variables and system properties and you can also split the configuration of
   jobs using multiple files in the ``~/.fscrawler/job/_settings`` directory. Also note that the system properties
   need to be set in the ``FS_JAVA_OPTS`` environment variable.
