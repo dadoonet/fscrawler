@@ -97,7 +97,7 @@ public abstract class FsParserAbstract extends FsParser {
 
         if (fsSettings.getTags() != null && !StringUtils.isEmpty(fsSettings.getTags().getMetaFilename())) {
             metadataFilename = fsSettings.getTags().getMetaFilename();
-            logger.debug("We are going to use [{}] as meta file if found whil crawling dirs", metadataFilename);
+            logger.debug("We are going to use [{}] as meta file if found while crawling dirs", metadataFilename);
         } else {
             metadataFilename = null;
         }
