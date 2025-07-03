@@ -385,7 +385,7 @@ public abstract class FsParserAbstract extends FsParser {
                 String virtualFileName = computeVirtualPathName(stats.getRootPath(), computeRealPathName(filepath, esfile));
                 if (isIndexable(false, virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
                         && !fsFiles.contains(esfile)) {
-                    logger.trace("Removing file [{}] in elasticsearch/workplace", esfile);
+                    logger.trace("Removing file [{}] in elasticsearch", esfile);
                     esDelete(documentService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, filepath));
                     stats.removeFile();
                 }

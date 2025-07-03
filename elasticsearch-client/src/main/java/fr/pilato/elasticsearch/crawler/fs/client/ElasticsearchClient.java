@@ -844,6 +844,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
             logger.error("search on index [{}] thrown a [{}] error but we are not on serverless.",
                     request.getIndex(), e.getResponse().getStatus());
+            logger.error("full stack trace", e);
             throw e;
         }
     }
