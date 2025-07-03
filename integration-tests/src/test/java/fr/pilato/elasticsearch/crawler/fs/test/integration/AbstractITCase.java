@@ -54,14 +54,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static org.assertj.core.api.Assertions.*;
@@ -388,8 +386,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 getSystemProperty("skipIntegTests", false));
     }
 
-    protected static final String testCrawlerPrefix = "fscrawler_";
-
     protected static void refresh(String indexName) throws ElasticsearchClientException {
         try {
             client.refresh(indexName);
@@ -519,15 +515,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
 
         return dir.getAbsoluteFile().getAbsolutePath();
-    }
-
-    protected String getCrawlerName() {
-        String testName = testCrawlerPrefix.concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
-        return testName.contains(" ") ? split(testName, " ")[0] : testName;
-    }
-
-    protected String getRandomCrawlerName() {
-        return testCrawlerPrefix.concat(randomAsciiAlphanumOfLength(randomIntBetween(10, 15))).toLowerCase(Locale.ROOT);
     }
 
     /**

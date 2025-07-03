@@ -597,21 +597,21 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
 
         if (settings.getElasticsearch().isPushTemplates()) {
-            logger.debug("Creating/updating component templates");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_alias");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_total_fields");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attributes");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attachment");
+            logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_alias", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_total_fields", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attributes", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attachment", settings.getElasticsearch().getIndex());
             if (semanticSearch) {
-                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content_semantic");
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content_semantic", settings.getElasticsearch().getIndex());
             } else {
-                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content");
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content", settings.getElasticsearch().getIndex());
             }
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_meta");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_meta", settings.getElasticsearch().getIndex());
 
-            logger.debug("Creating/updating index templates");
+            logger.debug("Creating/updating index templates for [{}]", settings.getElasticsearch().getIndex());
             // If needed, we create the new settings for this files index
             if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
                 if (semanticSearch) {
@@ -621,17 +621,23 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 }
             }
 
-            // If needed, we create the new settings for this folder index
+            // If needed, we create the component and index templates for the folder index
             if (settings.getFs().isIndexFolders()) {
+                logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndexFolder());
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndexFolder());
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndexFolder());
+
+                logger.debug("Creating/updating index templates for [{}]", settings.getElasticsearch().getIndexFolder());
                 loadAndPushIndexTemplate(majorVersion, "fscrawler_folders", settings.getElasticsearch().getIndexFolder());
             }
         }
     }
 
-    private void loadAndPushComponentTemplate(int version, String name) throws IOException, ElasticsearchClientException {
+    private void loadAndPushComponentTemplate(int version, String name, String index) throws IOException, ElasticsearchClientException {
         logger.trace("Loading component template [{}]", name);
         String json = loadResourceFile(version + "/_component_templates/" + name + ".json");
-        pushComponentTemplate(name, json);
+        String componentTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
+        pushComponentTemplate(componentTemplateName, json);
     }
 
     private void loadAndPushIndexTemplate(int version, String name, String index) throws IOException, ElasticsearchClientException {
@@ -641,7 +647,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         // We need to replace the placeholder values
         json = json.replaceAll("INDEX_NAME", index);
 
-        pushIndexTemplate(name + "_" + index, json);
+        String indexTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
+        pushIndexTemplate(indexTemplateName, json);
     }
 
     public void deleteIndexTemplate(String indexTemplate) throws ElasticsearchClientException {

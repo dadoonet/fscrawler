@@ -83,9 +83,10 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
 
         // Remove existing templates if any
         if (client.getMajorVersion() > 6) {
-            logger.debug(" -> Removing existing templates");
-            removeIndexTemplates();
-            removeComponentTemplates();
+            String templateName = "fscrawler_fscrawler_test_all_documents_*";
+            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+            removeIndexTemplates(templateName);
+            removeComponentTemplates(templateName);
         }
 
         logger.info("🎬 Starting test [fscrawler_test_all_documents*]");
@@ -126,9 +127,10 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             // Remove existing templates if any
             // Remove existing templates if any
             if (client.getMajorVersion() > 6) {
-                logger.debug(" -> Removing existing templates");
-                removeIndexTemplates();
-                removeComponentTemplates();
+                String templateName = "fscrawler_fscrawler_test_all_documents_*";
+                logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+                removeIndexTemplates(templateName);
+                removeComponentTemplates(templateName);
             }
         }
 

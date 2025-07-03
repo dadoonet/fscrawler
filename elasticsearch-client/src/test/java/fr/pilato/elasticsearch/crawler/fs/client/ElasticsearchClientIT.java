@@ -37,7 +37,6 @@ import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHEC
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
-import static org.apache.commons.lang3.StringUtils.split;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
@@ -978,11 +977,6 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_index_template/fscrawler_*]",
                     e.getMessage());
         }
-    }
-
-    private String getCrawlerName() {
-        String testName = "fscrawler_".concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
-        return testName.contains(" ") ? split(testName, " ")[0] : testName;
     }
 
     /**

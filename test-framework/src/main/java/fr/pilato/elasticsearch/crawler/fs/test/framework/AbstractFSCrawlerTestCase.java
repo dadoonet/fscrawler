@@ -43,6 +43,7 @@ import java.util.TimeZone;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
+import static org.apache.commons.lang3.StringUtils.split;
 
 @RunWith(RandomizedRunner.class)
 @Listeners({FSCrawlerReproduceInfoPrinter.class})
@@ -58,6 +59,9 @@ public abstract class AbstractFSCrawlerTestCase {
 
     private static final Logger logger = LogManager.getLogger();
     private static final String RANDOM = "random";
+    private static final Locale savedLocale = Locale.getDefault();
+    private static final TimeZone savedTimeZone = TimeZone.getDefault();
+    protected static final String indexPrefix = getSystemProperty("tests.index.prefix", "");
 
     @Rule
     public TestName name = new TestName();
@@ -71,9 +75,6 @@ public abstract class AbstractFSCrawlerTestCase {
         folder.create();
         rootTmpDir = Paths.get(folder.getRoot().toURI());
     }
-
-    private static final Locale savedLocale = Locale.getDefault();
-    private static final TimeZone savedTimeZone = TimeZone.getDefault();
 
     @BeforeClass
     public static void setLocale() {
@@ -105,8 +106,24 @@ public abstract class AbstractFSCrawlerTestCase {
         return toUnderscoreCase(name.getMethodName());
     }
 
-    protected String getCurrentClassName() {
+    private String getCurrentClassName() {
         return toUnderscoreCase(this.getClass().getSimpleName());
+    }
+
+    /**
+     * Get the crawler name which is also used as the index name.
+     * This is a combination of the index prefix, the current class name and the current test name.
+     * Note that the index prefix might be empty. It's normally the pull request number if set with -Dtests.index.prefix
+     * @return the crawler name to use
+     */
+    protected String getCrawlerName() {
+        String testName;
+        if (indexPrefix.isEmpty()) {
+            testName = "fscrawler_".concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
+        } else {
+            testName = "fscrawler_".concat(indexPrefix).concat("_").concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
+        }
+        return testName.contains(" ") ? split(testName, " ")[0] : testName;
     }
 
     public static int between(int min, int max) {

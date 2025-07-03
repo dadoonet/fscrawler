@@ -38,10 +38,6 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: 'maven'
-    - name: Echo PR number
-      run: echo "PR number is ${{ needs.get-pr-number.outputs.pr_number }}"
-    - name: Fail the rest of the build
-      run: exit 1
     - name: Display Maven information
       run: mvn --version
     - name: Build but the docker images
@@ -149,7 +145,7 @@ jobs:
         continue-on-error: true
       - name: Run the integration tests
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }}
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run integration tests with Elastic Cloud Serverless (if the eare set)
   it-serverless:
@@ -173,7 +169,7 @@ jobs:
         continue-on-error: true
       - name: Run the integration tests
         if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_URL }}
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run this job in parallel after the build
   build-docker:

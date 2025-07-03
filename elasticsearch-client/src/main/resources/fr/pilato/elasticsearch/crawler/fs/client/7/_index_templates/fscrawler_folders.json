@@ -4,10 +4,10 @@
   ],
   "priority": 600,
   "composed_of": [
-    "fscrawler_mapping_file",
-    "fscrawler_mapping_path"
+    "fscrawler_INDEX_NAME_mapping_file",
+    "fscrawler_INDEX_NAME_mapping_path"
   ],
   "_meta": {
-    "description": "FSCrawler template for folders"
+    "description": "FSCrawler template for folders in INDEX_NAME"
   }
 }
