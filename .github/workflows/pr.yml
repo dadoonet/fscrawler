@@ -126,7 +126,9 @@ jobs:
   # We run integration tests with Elastic Cloud Elasticsearch service (if secrets are set)
   it-cloud:
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - get-pr-number
     steps:
       - uses: actions/checkout@v4
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
@@ -145,12 +147,16 @@ jobs:
         continue-on-error: true
       - name: Run the integration tests
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
+        run: |
+          echo "Running integration tests with Elastic Cloud Elasticsearch service with prefix ${{ needs.get-pr-number.outputs.pr_number }}"
+          mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run integration tests with Elastic Cloud Serverless (if the eare set)
   it-serverless:
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - get-pr-number
     steps:
       - uses: actions/checkout@v4
         if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
