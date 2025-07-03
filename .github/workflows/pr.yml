@@ -24,7 +24,7 @@ jobs:
         id: findPr
       - id: pr_number
         run: echo "pr_number=${{ steps.findPr.outputs.pr }}" >> "$GITHUB_OUTPUT"
-        if: sucess() && steps.findPr.outputs.number
+        if: success() && steps.findPr.outputs.number
 
   # We build the project but the docker images and run the unit tests
   build:
