@@ -73,6 +73,12 @@ public interface IElasticsearchClient extends Closeable {
     void createIndex(String index, boolean ignoreExistingIndex, String indexSettings) throws ElasticsearchClientException;
 
     /**
+     * Create an index if not existing yet and wait for it to be allocated (at least YELLOW status).
+     * @param index index name
+     */
+    void createIndex(String index) throws ElasticsearchClientException;
+
+    /**
      * Create or update a component template
      * @param name  component template name
      * @param json  template definition
@@ -160,13 +166,6 @@ public interface IElasticsearchClient extends Closeable {
      * @throws Exception in case of error
      */
     void createIndexAndComponentTemplates() throws Exception;
-
-    /**
-     * Delete an index template (only needed for tests)
-     * @param indexTemplate Index template name
-     * @throws ElasticsearchClientException in case of error
-     */
-    void deleteIndexTemplate(String indexTemplate) throws ElasticsearchClientException;
 
     /**
      * Run a search

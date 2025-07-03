@@ -29,7 +29,8 @@ import java.io.IOException;
 
 public interface FsCrawlerDocumentService extends FsCrawlerService {
     /**
-     * Create a schema for the dataset. This is called when the service starts
+     * Create a schema (templates + index) for the dataset. This is called when the service starts.
+     * This creates both data structures when needed for documents and folders
      * @throws Exception in case of error
      */
     void createSchema() throws Exception;
@@ -67,12 +68,6 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
     void deleteSingle(String index, String id) throws ElasticsearchClientException;
 
     /**
-     * Refresh the document database to make changes visible
-     * @param index     Optional index name
-     */
-    void refresh(String index) throws IOException, ElasticsearchClientException;
-
-    /**
      * Search for information
      * @param request   The request
      * @return a response from the document service
@@ -94,9 +89,4 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @return the document or null
      */
     ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException;
-
-    /**
-     * Flush any pending operation
-     */
-    void flush();
 }

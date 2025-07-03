@@ -90,12 +90,6 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
-    public void refresh(String index) throws ElasticsearchClientException {
-        logger.debug("Refreshing {}", index);
-        client.refresh(index);
-    }
-
-    @Override
     public ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException {
         logger.debug("Searching {}", request);
         return client.search(request);
@@ -113,9 +107,4 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
         return client.get(index, id);
     }
 
-    @Override
-    public void flush() {
-        logger.debug("Flushing");
-        client.flush();
-    }
 }
