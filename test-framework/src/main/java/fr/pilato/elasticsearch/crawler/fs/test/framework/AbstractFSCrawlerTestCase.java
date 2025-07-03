@@ -74,6 +74,8 @@ public abstract class AbstractFSCrawlerTestCase {
     public static void createTmpDir() throws IOException {
         folder.create();
         rootTmpDir = Paths.get(folder.getRoot().toURI());
+
+        logger.fatal("TODO REMOVE ME: prefix is {}", indexPrefix);
     }
 
     @BeforeClass
@@ -106,10 +108,6 @@ public abstract class AbstractFSCrawlerTestCase {
         return toUnderscoreCase(name.getMethodName());
     }
 
-    private String getCurrentClassName() {
-        return toUnderscoreCase(this.getClass().getSimpleName());
-    }
-
     /**
      * Get the crawler name which is also used as the index name.
      * This is a combination of the index prefix, the current class name and the current test name.
@@ -117,11 +115,21 @@ public abstract class AbstractFSCrawlerTestCase {
      * @return the crawler name to use
      */
     protected String getCrawlerName() {
+        return getCrawlerName(this.getClass(), getCurrentTestName());
+    }
+
+    /**
+     * Get the crawler name from a class and a method name.
+     * @param clazz the class to use
+     * @param methodName the method name
+     * @return the crawler name to use
+     */
+    protected static String getCrawlerName(Class<?> clazz, String methodName) {
         String testName;
         if (indexPrefix.isEmpty()) {
-            testName = "fscrawler_".concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
+            testName = "fscrawler_".concat(toUnderscoreCase(clazz.getSimpleName())).concat("_").concat(methodName);
         } else {
-            testName = "fscrawler_".concat(indexPrefix).concat("_").concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
+            testName = "fscrawler_".concat(indexPrefix).concat("_").concat(toUnderscoreCase(clazz.getSimpleName())).concat("_").concat(methodName);
         }
         return testName.contains(" ") ? split(testName, " ")[0] : testName;
     }

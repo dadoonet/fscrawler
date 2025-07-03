@@ -66,6 +66,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class FsCrawlerRestIT extends AbstractRestITCase {
     private static final Logger logger = LogManager.getLogger();
+    private static final String CUSTOM_INDEX_NAME = getCrawlerName(FsCrawlerRestIT.class, "custom");
 
     public FsSettings getFsSettings() {
         return createTestSettings();
@@ -75,8 +76,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     @Override
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
         // Also clean the specific indices for this test suite
-        client.deleteIndex("fscrawler_fs_custom");
-        client.deleteIndex("fscrawler_fs_custom" + INDEX_SUFFIX_FOLDER);
+        client.deleteIndex(CUSTOM_INDEX_NAME);
+        client.deleteIndex(CUSTOM_INDEX_NAME + INDEX_SUFFIX_FOLDER);
         super.cleanExistingIndex();
     }
 
@@ -85,8 +86,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             // Also clean the specific indices for this test suite
-            client.deleteIndex("fscrawler_fs_custom");
-            client.deleteIndex("fscrawler_fs_custom" + INDEX_SUFFIX_FOLDER);
+            client.deleteIndex(CUSTOM_INDEX_NAME);
+            client.deleteIndex(CUSTOM_INDEX_NAME + INDEX_SUFFIX_FOLDER);
         }
         super.cleanUp();
     }
@@ -237,16 +238,15 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
-        String index = "fscrawler_fs_custom";
         Files.walk(from)
                 .filter(Files::isRegularFile)
                 .forEach(path -> {
-                    UploadResponse response = uploadFileOnIndex(target, path, index);
+                    UploadResponse response = uploadFileOnIndex(target, path, CUSTOM_INDEX_NAME);
             assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
                 });
 
         // We wait until we have all docs
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(index), Files.list(from).count(), null, TimeValue
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(CUSTOM_INDEX_NAME), Files.list(from).count(), null, TimeValue
                 .timeValueMinutes(2));
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();

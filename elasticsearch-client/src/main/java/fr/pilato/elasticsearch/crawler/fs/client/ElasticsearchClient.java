@@ -599,12 +599,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
             // If needed, we create the new settings for this folder index
             if (settings.getFs().isIndexFolders()) {
                 createIndexWithSettings(jobMappingDir, majorVersion, INDEX_SETTINGS_FOLDER_FILE, settings.getElasticsearch().getIndexFolder());
-            } else {
-                createIndex(settings.getElasticsearch().getIndexFolder());
             }
         } else {
             createIndex(settings.getElasticsearch().getIndex());
-            createIndex(settings.getElasticsearch().getIndexFolder());
+            if (settings.getFs().isIndexFolders()) {
+                createIndex(settings.getElasticsearch().getIndexFolder());
+            }
         }
     }
 
