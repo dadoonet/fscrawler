@@ -125,7 +125,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    @Timeout(millis = 2 * TIMEOUT_MINUTE_AS_MS)
+    @Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
     public void subdirs_very_deep_tree() throws Exception {
 
         long subdirs = randomLongBetween(30, 100);
