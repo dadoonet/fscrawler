@@ -68,7 +68,8 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                 .withESQuery(new ESMatchQuery("my_content_field", "perniciosoque")), 1L, currentTestResourceDir);
 
         // We expect to have one folder
-        ESSearchResponse response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
+        ESSearchResponse response = countTestHelper(new ESSearchRequest()
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 1L, currentTestResourceDir);
         assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 
