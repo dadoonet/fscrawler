@@ -188,7 +188,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         deleteRecursively(mainDir);
 
         // We expect to have 1 doc now but this could take some time to happen
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
     private void folderHitTester(DocumentContext document, int position, String expectedReal, String expectedVirtual,
