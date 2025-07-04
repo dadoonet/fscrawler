@@ -37,7 +37,6 @@ import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHEC
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
-import static org.apache.commons.lang3.StringUtils.split;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
@@ -227,7 +226,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
      */
     @Test
     @Deprecated
-    public void createIndex() throws ElasticsearchClientException {
+    public void createIndexWithNoSettings() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         boolean exists = esClient.isExistingIndex(getCrawlerName());
         assertThat(exists).isTrue();
@@ -261,7 +260,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
      */
     @Test
     @Deprecated
-    public void createIndexAlreadyExistsShouldFail() throws ElasticsearchClientException {
+    public void createIndexWithSettingsAlreadyExistsShouldFail() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
         assertThatExceptionOfType(ElasticsearchClientException.class)
@@ -275,7 +274,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
      */
     @Test
     @Deprecated
-    public void createIndexAlreadyExistsShouldBeIgnored() throws ElasticsearchClientException {
+    public void createIndexWithSettingsAlreadyExistsShouldBeIgnored() throws ElasticsearchClientException {
         esClient.createIndex(getCrawlerName(), false, null);
         esClient.waitForHealthyIndex(getCrawlerName());
         assertThatNoException()
@@ -287,7 +286,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
      */
     @Test
     @Deprecated
-    public void createIndexWithErrors() {
+    public void createIndexWithSettingsWithErrors() {
         try {
             esClient.createIndex(getCrawlerName(), false, "{this is wrong}");
             fail("we should reject creation of an already existing index");
@@ -457,14 +456,12 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                     assertThat(hit.getSource()).isNotEmpty();
                     assertThat(hit.getHighlightFields())
                             .hasSize(1)
-                            .satisfies(highlight -> {
-                                assertThat(highlight)
-                                        .containsKey("foo.bar")
-                                        .extractingByKey("foo.bar")
-                                        .satisfies(highlightField -> assertThat(highlightField)
-                                                .singleElement()
-                                                .isEqualTo("<em>bar</em>"));
-                            });
+                            .satisfies(highlight -> assertThat(highlight)
+                                    .containsKey("foo.bar")
+                                    .extractingByKey("foo.bar")
+                                    .satisfies(highlightField -> assertThat(highlightField)
+                                            .singleElement()
+                                            .isEqualTo("<em>bar</em>")));
                     assertThat(hit.getStoredFields()).isNull();
                 });
     }
@@ -978,11 +975,6 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_index_template/fscrawler_*]",
                     e.getMessage());
         }
-    }
-
-    private String getCrawlerName() {
-        String testName = "fscrawler_".concat(getCurrentClassName()).concat("_").concat(getCurrentTestName());
-        return testName.contains(" ") ? split(testName, " ")[0] : testName;
     }
 
     /**

@@ -4,16 +4,16 @@
   ],
   "priority": 500,
   "composed_of": [
-    "fscrawler_alias",
-    "fscrawler_settings_total_fields",
-    "fscrawler_mapping_attributes",
-    "fscrawler_mapping_file",
-    "fscrawler_mapping_path",
-    "fscrawler_mapping_attachment",
-    "fscrawler_mapping_content_semantic",
-    "fscrawler_mapping_meta"
+    "fscrawler_INDEX_NAME_alias",
+    "fscrawler_INDEX_NAME_settings_total_fields",
+    "fscrawler_INDEX_NAME_mapping_attributes",
+    "fscrawler_INDEX_NAME_mapping_file",
+    "fscrawler_INDEX_NAME_mapping_path",
+    "fscrawler_INDEX_NAME_mapping_attachment",
+    "fscrawler_INDEX_NAME_mapping_content_semantic",
+    "fscrawler_INDEX_NAME_mapping_meta"
   ],
   "_meta": {
-    "description": "FSCrawler template for documents with semantic support using inference endpoint"
+    "description": "FSCrawler template for documents in INDEX_NAME with semantic support using inference endpoint"
   }
 }

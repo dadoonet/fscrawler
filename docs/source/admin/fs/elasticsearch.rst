@@ -77,22 +77,22 @@ Mappings
 .. versionadded:: 2.10
 
 FSCrawler defines the following `Component Templates <https://www.elastic.co/guide/en/elasticsearch/reference/current/index-templates.html>`__
-to define the index settings and mappings:
+to define the index settings and mappings (replace ``INDEX`` with the index name):
 
-- ``fscrawler_alias``: defines the alias ``fscrawler`` so you can search using this alias.
-- ``fscrawler_settings_total_fields``: defines the maximum number of fields for the index.
-- ``fscrawler_mapping_attributes``: defines the mapping for the ``attributes`` field.
-- ``fscrawler_mapping_file``: defines the mapping for the ``file`` field.
-- ``fscrawler_mapping_path``: defines an define an analyzer named ``fscrawler_path`` which uses a
+- ``fscrawler_INDEX_alias``: defines the alias ``fscrawler`` so you can search using this alias.
+- ``fscrawler_INDEX_settings_total_fields``: defines the maximum number of fields for the index.
+- ``fscrawler_INDEX_mapping_attributes``: defines the mapping for the ``attributes`` field.
+- ``fscrawler_INDEX_mapping_file``: defines the mapping for the ``file`` field.
+- ``fscrawler_INDEX_mapping_path``: defines an define an analyzer named ``fscrawler_path`` which uses a
   `path hierarchy tokenizer <https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pathhierarchy-tokenizer.html>`__
   and the mapping for the ``path`` field.
 
-- ``fscrawler_mapping_attachment``: defines the mapping for the ``attachment`` field.
-- ``fscrawler_mapping_content_semantic``: defines the mapping for the ``content`` field when using semantic search.
+- ``fscrawler_INDEX_mapping_attachment``: defines the mapping for the ``attachment`` field.
+- ``fscrawler_INDEX_mapping_content_semantic``: defines the mapping for the ``content`` field when using semantic search.
 It also creates a ``semantic_text`` field named ``content_semantic``. Please read the :ref:`semantic_search` section.
 
-- ``fscrawler_mapping_content``: defines the mapping for the ``content`` field when semantic search is not available.
-- ``fscrawler_mapping_meta``: defines the mapping for the ``meta`` field.
+- ``fscrawler_INDEX_mapping_content``: defines the mapping for the ``content`` field when semantic search is not available.
+- ``fscrawler_INDEX_mapping_meta``: defines the mapping for the ``meta`` field.
 
 You can see the content of those templates by running:
 
@@ -126,7 +126,7 @@ The following example uses a ``french`` analyzer to index the
 
 .. code:: json
 
-    PUT _component_template/fscrawler_mapping_content_semantic
+    PUT _component_template/fscrawler_fscrawler_mapping_content_semantic
     {
       "template": {
         "mappings": {
@@ -149,7 +149,7 @@ The following example uses a ``french`` analyzer to index the
 
 .. code:: json
 
-    PUT _component_template/fscrawler_mapping_content
+    PUT _component_template/fscrawler_fscrawler_mapping_content
     {
       "template": {
         "mappings": {
@@ -208,7 +208,7 @@ english content is the Elastic `multilingual-e5-small <https://www.elastic.co/gu
 
 .. code:: json
 
-    PUT _component_template/fscrawler_mapping_content_semantic
+    PUT _component_template/fscrawler_fscrawler_mapping_content_semantic
     {
       "template": {
         "mappings": {

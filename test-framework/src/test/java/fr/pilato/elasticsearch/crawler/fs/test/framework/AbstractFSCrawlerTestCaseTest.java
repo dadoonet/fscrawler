@@ -32,4 +32,16 @@ public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
         assertThat(toUnderscoreCase("abstract_f_s_crawler_test_case_test"))
                 .isEqualTo("abstract_f_s_crawler_test_case_test");
     }
+
+    @Test
+    public void testCrawlerName() {
+        String crawlerName = getCrawlerName();
+
+        // The test depends on the env variable "test.index.prefix" being set to something"
+        if (indexPrefix.isEmpty()) {
+            assertThat(crawlerName).isEqualTo("fscrawler_abstract_f_s_crawler_test_case_test_test_crawler_name");
+        } else {
+            assertThat(crawlerName).isEqualTo("fscrawler_" + indexPrefix + "_abstract_f_s_crawler_test_case_test_test_crawler_name");
+        }
+    }
 }

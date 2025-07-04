@@ -12,9 +12,24 @@ env:
   ELASTIC_CLOUD_URL: ${{ secrets.ELASTIC_CLOUD_URL }}
 
 jobs:
+  # We initialize the PR number so that we can use it in the other jobs
+  get-pr-number:
+    runs-on: ubuntu-latest
+    # The pr_number will be used in the other jobs as ${{ needs.get-pr-number.outputs.pr_number }}
+    outputs:
+      pr_number: ${{ steps.pr_number.outputs.pr_number }}
+    steps:
+      # Find the PR associated with this push, if there is one.
+      - uses: jwalton/gh-find-current-pr@master
+        id: findPr
+      - id: pr_number
+        run: echo "pr_number=${{ steps.findPr.outputs.pr }}" >> "$GITHUB_OUTPUT"
+        if: success() && steps.findPr.outputs.number
+
   # We build the project but the docker images and run the unit tests
   build:
     runs-on: ubuntu-latest
+    needs: get-pr-number
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 21
@@ -46,7 +61,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.output=always -Dtests.leaveTemporary=false
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.output=always -Dtests.parallelism=1 -Dtests.leaveTemporary=false
 
   # We run integration tests with elastic stack 8
   it-es8:
@@ -111,7 +126,9 @@ jobs:
   # We run integration tests with Elastic Cloud Elasticsearch service (if secrets are set)
   it-cloud:
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - get-pr-number
     steps:
       - uses: actions/checkout@v4
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
@@ -130,12 +147,16 @@ jobs:
         continue-on-error: true
       - name: Run the integration tests
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }}
+        run: |
+          echo "Running integration tests with Elastic Cloud Elasticsearch service with prefix ${{ needs.get-pr-number.outputs.pr_number }}"
+          mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run integration tests with Elastic Cloud Serverless (if the eare set)
   it-serverless:
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - get-pr-number
     steps:
       - uses: actions/checkout@v4
         if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
@@ -154,7 +175,7 @@ jobs:
         continue-on-error: true
       - name: Run the integration tests
         if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
-        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_URL }}
+        run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run this job in parallel after the build
   build-docker:

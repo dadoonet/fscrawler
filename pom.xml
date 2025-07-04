@@ -71,6 +71,7 @@
         <tests.cluster.url></tests.cluster.url>
         <tests.cluster.apiKey></tests.cluster.apiKey>
         <tests.cluster.check_ssl>true</tests.cluster.check_ssl>
+        <tests.index.prefix></tests.index.prefix>
         <tests.rest.port>0</tests.rest.port>
         <testcontainers.version>1.21.3</testcontainers.version>
 
@@ -207,6 +208,7 @@
                             <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
                             <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
                             <tests.cluster.check_ssl>${tests.cluster.check_ssl}</tests.cluster.check_ssl>
+                            <tests.index.prefix>${tests.index.prefix}</tests.index.prefix>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
                             <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
                             <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>

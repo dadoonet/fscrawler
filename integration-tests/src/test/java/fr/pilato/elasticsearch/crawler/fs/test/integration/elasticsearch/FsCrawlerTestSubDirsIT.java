@@ -125,7 +125,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    @Timeout(millis = 2 * TIMEOUT_MINUTE_AS_MS)
+    @Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
     public void subdirs_very_deep_tree() throws Exception {
 
         long subdirs = randomLongBetween(30, 100);
@@ -188,7 +188,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         deleteRecursively(mainDir);
 
         // We expect to have 1 doc now but this could take some time to happen
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
     private void folderHitTester(DocumentContext document, int position, String expectedReal, String expectedVirtual,
@@ -203,7 +203,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     private void pathHitTester(DocumentContext document, int position, String expectedReal, String expectedVirtual) {
         String real = document.read("$.hits.hits[" + position + "]._source.path.real");
         String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");
-        logger.debug(" - {}, {}", real, virtual);
+        logger.trace(" - {}, {}", real, virtual);
         assertThat(real)
                 .as("path.real[" + position + "]")
                 .endsWith(expectedReal);
@@ -215,7 +215,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     private void pathHitTesterEndWith(DocumentContext document, int position, String expectedReal, String expectedVirtual) {
         String real = document.read("$.hits.hits[" + position + "]._source.path.real");
         String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");
-        logger.debug(" - {}, {}", real, virtual);
+        logger.trace(" - {}, {}", real, virtual);
         assertThat(real)
                 .as("path.real[" + position + "]")
                 .endsWith(expectedReal);

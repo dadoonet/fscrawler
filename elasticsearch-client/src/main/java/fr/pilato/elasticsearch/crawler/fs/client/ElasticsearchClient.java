@@ -24,6 +24,7 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.Await;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
@@ -369,6 +370,19 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
+    public void createIndex(String index) throws ElasticsearchClientException {
+        if (index == null || index.isEmpty()) {
+            throw new FsCrawlerIllegalConfigurationException("Index name must not be null or empty");
+        }
+
+        if (!isExistingIndex(index)) {
+            httpPut(index, null);
+        }
+
+        waitForHealthyIndex(index);
+    }
+
+    @Override
     public void pushComponentTemplate(String name, String json) throws ElasticsearchClientException {
         logger.debug("push component template [{}]", name);
         String url = "_component_template/" + name;
@@ -569,49 +583,49 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @Deprecated
     private void createIndices() throws Exception {
-        Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
+        if (majorVersion < 7) {
+            logger.warn("We are running on a version of Elasticsearch {} which is lower than 7.0. " +
+                    "We will not create index templates nor component templates.", version);
+            logger.warn("Instead we will create indices based on files on disk (Deprecated).");
+            Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
 
-        // If needed, we create the new settings for this files index
-        if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
-            createIndex(jobMappingDir, majorVersion, INDEX_SETTINGS_FILE, settings.getElasticsearch().getIndex());
-        } else {
-            createIndex(settings.getElasticsearch().getIndex(), true, null);
-        }
+            // If needed, we create the new settings for this files index
+            if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
+                createIndexWithSettings(jobMappingDir, majorVersion, INDEX_SETTINGS_FILE, settings.getElasticsearch().getIndex());
+            } else {
+                createIndex(settings.getElasticsearch().getIndex());
+            }
 
-        // If needed, we create the new settings for this folder index
-        if (settings.getFs().isIndexFolders()) {
-            createIndex(jobMappingDir, majorVersion, INDEX_SETTINGS_FOLDER_FILE, settings.getElasticsearch().getIndexFolder());
+            // If needed, we create the new settings for this folder index
+            if (settings.getFs().isIndexFolders()) {
+                createIndexWithSettings(jobMappingDir, majorVersion, INDEX_SETTINGS_FOLDER_FILE, settings.getElasticsearch().getIndexFolder());
+            }
         } else {
-            createIndex(settings.getElasticsearch().getIndexFolder(), true, null);
+            createIndex(settings.getElasticsearch().getIndex());
+            if (settings.getFs().isIndexFolders()) {
+                createIndex(settings.getElasticsearch().getIndexFolder());
+            }
         }
     }
 
     @Override
     public void createIndexAndComponentTemplates() throws Exception {
-        if (majorVersion < 7) {
-            logger.warn("We are running on a version of Elasticsearch {} which is lower than 7.0. " +
-                    "We will not create index templates nor component templates.", version);
-            logger.warn("Instead we will create indices based on files on disk (Deprecated).");
-            createIndices();
-            return;
-        }
-
-        if (settings.getElasticsearch().isPushTemplates()) {
-            logger.debug("Creating/updating component templates");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_alias");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_total_fields");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attributes");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path");
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attachment");
+        if (settings.getElasticsearch().isPushTemplates() && majorVersion >= 7) {
+            logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_alias", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_total_fields", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attributes", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndex());
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attachment", settings.getElasticsearch().getIndex());
             if (semanticSearch) {
-                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content_semantic");
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content_semantic", settings.getElasticsearch().getIndex());
             } else {
-                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content");
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content", settings.getElasticsearch().getIndex());
             }
-            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_meta");
+            loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_meta", settings.getElasticsearch().getIndex());
 
-            logger.debug("Creating/updating index templates");
+            logger.debug("Creating/updating index templates for [{}]", settings.getElasticsearch().getIndex());
             // If needed, we create the new settings for this files index
             if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
                 if (semanticSearch) {
@@ -621,17 +635,26 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 }
             }
 
-            // If needed, we create the new settings for this folder index
+            // If needed, we create the component and index templates for the folder index
             if (settings.getFs().isIndexFolders()) {
+                logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndexFolder());
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndexFolder());
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndexFolder());
+
+                logger.debug("Creating/updating index templates for [{}]", settings.getElasticsearch().getIndexFolder());
                 loadAndPushIndexTemplate(majorVersion, "fscrawler_folders", settings.getElasticsearch().getIndexFolder());
             }
         }
+
+        // Create the indices
+        createIndices();
     }
 
-    private void loadAndPushComponentTemplate(int version, String name) throws IOException, ElasticsearchClientException {
+    private void loadAndPushComponentTemplate(int version, String name, String index) throws IOException, ElasticsearchClientException {
         logger.trace("Loading component template [{}]", name);
         String json = loadResourceFile(version + "/_component_templates/" + name + ".json");
-        pushComponentTemplate(name, json);
+        String componentTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
+        pushComponentTemplate(componentTemplateName, json);
     }
 
     private void loadAndPushIndexTemplate(int version, String name, String index) throws IOException, ElasticsearchClientException {
@@ -641,23 +664,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         // We need to replace the placeholder values
         json = json.replaceAll("INDEX_NAME", index);
 
-        pushIndexTemplate(name + "_" + index, json);
-    }
-
-    public void deleteIndexTemplate(String indexTemplate) throws ElasticsearchClientException {
-        logger.debug("delete index template [{}]", indexTemplate);
-
-        // Component templates are only available since 7.8
-        if (majorVersion > 7 || (majorVersion == 7 && minorVersion >= 8)) {
-            String url = "_index_template/" + indexTemplate;
-            try {
-                httpDelete(url, null);
-            } catch (NotFoundException e) {
-                logger.trace("Index template [{}] does not exist", indexTemplate);
-            }
-        } else {
-            logger.debug("Index templates are not available on this version [{}] of Elasticsearch", version);
-        }
+        String indexTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
+        pushIndexTemplate(indexTemplateName, json);
     }
 
     /**
@@ -837,6 +845,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
             logger.error("search on index [{}] thrown a [{}] error but we are not on serverless.",
                     request.getIndex(), e.getResponse().getStatus());
+            logger.error("full stack trace", e);
             throw e;
         }
     }
@@ -983,7 +992,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Deprecated
-    private void createIndex(Path jobMappingDir, int elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
+    private void createIndexWithSettings(Path jobMappingDir, int elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
         try {
             // If needed, we create the new settings for this files index
             String indexSettings = readJsonFile(jobMappingDir, config, elasticsearchVersion, indexSettingsFile);
