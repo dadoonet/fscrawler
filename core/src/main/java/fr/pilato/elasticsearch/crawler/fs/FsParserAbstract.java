@@ -402,7 +402,7 @@ public abstract class FsParserAbstract extends FsParser {
                         logger.trace("Checking directory [{}]", esfolder);
                         if (!fsFolders.contains(esfolder)) {
                             logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
-                            removeEsDirectoryRecursively(esfolder);
+                            removeEsDirectoryRecursively(esfolder, stats);
                         }
                     }
                 }
@@ -621,17 +621,18 @@ public abstract class FsParserAbstract extends FsParser {
     /**
      * Remove a full directory and sub dirs recursively
      */
-    private void removeEsDirectoryRecursively(final String path) throws Exception {
+    private void removeEsDirectoryRecursively(final String path, ScanStatistic stats) throws Exception {
         logger.debug("Delete folder [{}]", path);
         Collection<String> listFile = getFileDirectory(path);
 
         for (String esfile : listFile) {
             esDelete(managementService, fsSettings.getElasticsearch().getIndex(), SignTool.sign(path.concat(pathSeparator).concat(esfile)));
+            stats.removeFile();
         }
 
         Collection<String> listFolder = getFolderDirectory(path);
         for (String esfolder : listFolder) {
-            removeEsDirectoryRecursively(esfolder);
+            removeEsDirectoryRecursively(esfolder, stats);
         }
 
         esDelete(managementService, fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path));

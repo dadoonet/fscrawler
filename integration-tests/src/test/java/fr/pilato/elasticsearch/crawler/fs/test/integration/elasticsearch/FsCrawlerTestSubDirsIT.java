@@ -203,7 +203,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     private void pathHitTester(DocumentContext document, int position, String expectedReal, String expectedVirtual) {
         String real = document.read("$.hits.hits[" + position + "]._source.path.real");
         String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");
-        logger.debug(" - {}, {}", real, virtual);
+        logger.trace(" - {}, {}", real, virtual);
         assertThat(real)
                 .as("path.real[" + position + "]")
                 .endsWith(expectedReal);
@@ -215,7 +215,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     private void pathHitTesterEndWith(DocumentContext document, int position, String expectedReal, String expectedVirtual) {
         String real = document.read("$.hits.hits[" + position + "]._source.path.real");
         String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");
-        logger.debug(" - {}, {}", real, virtual);
+        logger.trace(" - {}, {}", real, virtual);
         assertThat(real)
                 .as("path.real[" + position + "]")
                 .endsWith(expectedReal);
