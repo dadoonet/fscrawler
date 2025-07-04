@@ -12,7 +12,7 @@
       <Logger name="fr.pilato.elasticsearch.crawler" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.test.integration" level="debug" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.test.integration" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="fr.pilato.elasticsearch.crawler.fs.tika" level="error" additivity="false">
