@@ -74,8 +74,6 @@ public abstract class AbstractFSCrawlerTestCase {
     public static void createTmpDir() throws IOException {
         folder.create();
         rootTmpDir = Paths.get(folder.getRoot().toURI());
-
-        logger.fatal("TODO REMOVE ME: prefix is {}", indexPrefix);
     }
 
     @BeforeClass
