@@ -673,7 +673,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.17.0</version>
+                <version>3.18.0</version>
             </dependency>
 
             <!-- Too old in org.apache.tika:tika-parser-scientific-module:2.9.1 deps -->
