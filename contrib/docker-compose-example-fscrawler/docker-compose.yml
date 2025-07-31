@@ -1,6 +1,4 @@
 ---
-version: "2.2"
-
 services:
   fscrawler:
     image: dadoonet/fscrawler:${FSCRAWLER_VERSION}
