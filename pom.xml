@@ -53,7 +53,7 @@
         <jackson.version>2.19.2</jackson.version>
         <jsonpath.version>2.9.0</jsonpath.version>
         <log4j.version>2.25.1</log4j.version>
-        <jersey.version>3.1.10</jersey.version>
+        <jersey.version>3.1.11</jersey.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
