@@ -81,7 +81,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode install -Ddocker.skip=true -DskipUnitTests=true -Dtests.output=always -Dtests.parallelism=1 -Dtests.leaveTemporary=false
+        run: mvn --batch-mode install '-Ddocker.skip -DskipUnitTests -Dtests.output=always -Dtests.parallelism=1 -Dtests.leaveTemporary=false'
 
   # We run integration tests with elastic stack 8
   it-es8:
