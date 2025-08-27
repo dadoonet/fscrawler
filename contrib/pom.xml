@@ -16,12 +16,26 @@
     <packaging>pom</packaging>
 
     <dependencies>
-        <!-- We fake a dependency so we will hopefully benefit from automatic upgrades with dependabot -->
+        <!-- We fake a dependency for version 9 so we will hopefully benefit from automatic upgrades with dependabot -->
         <dependency>
-            <groupId>co.elastic.clients</groupId>
-            <artifactId>elasticsearch-java</artifactId>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>rest-api-spec</artifactId>
             <version>${elasticsearch9.version}</version>
-            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- We fake a dependency for version 8 so we will hopefully benefit from automatic upgrades with dependabot -->
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>rest-api-spec</artifactId>
+            <version>${elasticsearch8.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- We fake a dependency for version 7 so we will hopefully benefit from automatic upgrades with dependabot -->
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>rest-api-spec</artifactId>
+            <version>${elasticsearch7.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
