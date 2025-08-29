@@ -18,10 +18,7 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -40,11 +37,6 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
-@ThreadLeakFilters(filters = {
-        TestContainerThreadFilter.class,
-        JNACleanerThreadFilter.class
-})
 public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String text = "Hello Foo world!";

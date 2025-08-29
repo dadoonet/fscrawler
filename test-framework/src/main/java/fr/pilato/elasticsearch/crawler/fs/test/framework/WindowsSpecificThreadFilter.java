@@ -7,6 +7,6 @@ public class WindowsSpecificThreadFilter implements ThreadFilter {
     public boolean reject(Thread t) {
         return System.getProperty("os.name").toLowerCase().contains("win")
                 && t.getThreadGroup() != null
-                && "TGRP-ElasticsearchClientIT".equals(t.getThreadGroup().getName());
+                && t.getThreadGroup().getName().startsWith("TGRP-");
     }
 }
