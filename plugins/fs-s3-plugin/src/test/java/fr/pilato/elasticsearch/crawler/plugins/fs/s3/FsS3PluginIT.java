@@ -19,10 +19,7 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.MinioThreadFilter;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.*;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
@@ -43,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @ThreadLeakFilters(filters = {
+        WindowsSpecificThreadFilter.class,
         TestContainerThreadFilter.class,
         JNACleanerThreadFilter.class,
         MinioThreadFilter.class

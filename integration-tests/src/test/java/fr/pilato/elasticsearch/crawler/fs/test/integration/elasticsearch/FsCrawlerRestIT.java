@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
@@ -364,7 +365,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         String json = "{\n" +
                 "  \"type\": \"local\",\n" +
                 "  \"local\": {\n" +
-                "    \"url\": \"" + fromDoesNotExist + "\"\n" +
+                "    \"url\": \"" + fromDoesNotExist.toString().replace("\\", "\\\\") + "\"\n" +
                 "  }\n" +
                 "}";
         UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
@@ -376,7 +377,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         json = "{\n" +
                 "  \"type\": \"local\",\n" +
                 "  \"local\": {\n" +
-                "    \"url\": \"" + fromExists + "\"\n" +
+                "    \"url\": \"" + fromExists.toString().replace("\\", "\\\\") + "\"\n" +
                 "  }\n" +
                 "}";
         uploadResponse = post(target, "/_document", json, UploadResponse.class);
@@ -450,7 +451,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             // We wait until we have our document
             ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("roottxtfile.txt");
-            assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(12230);
+            // When on Windows the expected file size differs
+            int expectedFilesize = OsValidator.WINDOWS ? 12364 : 12230;
+            assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(expectedFilesize);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains("Nihil est enim virtute amabilius");
         }
     }
