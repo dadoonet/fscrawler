@@ -364,7 +364,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         String json = "{\n" +
                 "  \"type\": \"local\",\n" +
                 "  \"local\": {\n" +
-                "    \"url\": \"" + fromDoesNotExist + "\"\n" +
+                "    \"url\": \"" + fromDoesNotExist.toString().replace("\\", "\\\\") + "\"\n" +
                 "  }\n" +
                 "}";
         UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
@@ -376,7 +376,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         json = "{\n" +
                 "  \"type\": \"local\",\n" +
                 "  \"local\": {\n" +
-                "    \"url\": \"" + fromExists + "\"\n" +
+                "    \"url\": \"" + fromExists.toString().replace("\\", "\\\\") + "\"\n" +
                 "  }\n" +
                 "}";
         uploadResponse = post(target, "/_document", json, UploadResponse.class);
