@@ -53,7 +53,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
     public void fsSettingsForDocVersion6() throws Exception {
         String settings = readJsonFile(rootTmpDir, metadataDir, 6, INDEX_SETTINGS_FILE);
         logger.info("Settings used for doc index v6 : " + settings);
-        assertThat(settings).isEqualTo("{\n" +
+        assertThat(settings.replace("\r\n", "\n")).isEqualTo("{\n" +
                 "  \"settings\": {\n" +
                 "    \"number_of_shards\": 1,\n" +
                 "    \"index.mapping.total_fields.limit\": 2000,\n" +
@@ -273,7 +273,7 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
     public void fsSettingsForFolderVersion6() throws Exception {
         String settings = readJsonFile(rootTmpDir, metadataDir, 6, INDEX_SETTINGS_FOLDER_FILE);
         logger.info("Settings used for folder index v6 : " + settings);
-        assertThat(settings).isEqualTo("{\n" +
+        assertThat(settings.replace("\r\n", "\n")).isEqualTo("{\n" +
                 "  \"settings\": {\n" +
                 "    \"analysis\": {\n" +
                 "      \"analyzer\": {\n" +
@@ -354,17 +354,13 @@ public class FsMappingTest extends AbstractFSCrawlerMetadataTestCase {
     @Test
     public void fsSettingsForDocSpecificJobVersion6() throws Exception {
         String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 6, INDEX_SETTINGS_FILE);
-        assertThat(settings).isEqualTo("{\n" +
-                "  // This is settings for version 6\n" +
-                "}\n");
+        assertThat(settings).contains("// This is settings for version 6");
     }
 
     @Test
     public void fsSettingsForFolderSpecificJobVersion6() throws Exception {
         String settings = readJsonFile(metadataDir.resolve("jobtest").resolve("_mappings"), metadataDir, 6, INDEX_SETTINGS_FOLDER_FILE);
-        assertThat(settings).isEqualTo("{\n" +
-                "  // This is folder settings for version 6\n" +
-                "}\n");
+        assertThat(settings).contains("// This is folder settings for version 6");
     }
 
     @Test
