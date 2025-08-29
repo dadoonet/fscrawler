@@ -20,12 +20,15 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static com.carrotsearch.randomizedtesting.RandomizedTest.assumeFalse;
 
 /**
  * Test with symlinks
@@ -34,7 +37,8 @@ public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void follow_symlinks_disabled() throws Exception {
-        // We create a symlink
+        // We create a symlink (but not on Windows)
+       assumeFalse("We cannot create symlink on Windows OS", OsValidator.WINDOWS);
         Path source = currentTestResourceDir.resolve("roottxtfile.txt");
         Path link = currentTestResourceDir.resolve("link_roottxtfile.txt");
         Files.createSymbolicLink(link, source);
@@ -49,7 +53,8 @@ public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void follow_symlinks_enabled() throws Exception {
-        // We create a symlink
+        // We create a symlink (but not on Windows)
+        assumeFalse("We cannot create symlink on Windows OS", OsValidator.WINDOWS);
         Path source = currentTestResourceDir.resolve("roottxtfile.txt");
         Path link = currentTestResourceDir.resolve("link_roottxtfile.txt");
         Files.createSymbolicLink(link, source);
