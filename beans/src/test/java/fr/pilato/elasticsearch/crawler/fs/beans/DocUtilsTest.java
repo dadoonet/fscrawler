@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.prettyPrint;
@@ -14,7 +15,11 @@ public class DocUtilsTest {
     private static final Logger logger = LogManager.getLogger(DocUtilsTest.class);
 
     // Get the tags path from resources
-    Path path = Path.of(DocUtilsTest.class.getResource("/tags").getPath());
+    Path path;
+
+    public DocUtilsTest() throws URISyntaxException {
+        path = Path.of(DocUtilsTest.class.getResource("/tags").toURI());
+    }
 
     @Test
     public void mergeDocsWithNothing() {
