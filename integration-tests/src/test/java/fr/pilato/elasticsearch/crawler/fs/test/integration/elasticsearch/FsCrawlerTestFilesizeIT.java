@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
@@ -98,8 +99,9 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        int expectedFilesize = OsValidator.WINDOWS ? 12364 : 12230;
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isEqualTo(12230);
+            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isEqualTo(expectedFilesize);
         }
     }
 
