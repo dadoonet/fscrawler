@@ -1,0 +1,46 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Build Pull Requests on Windows
+
+on: [pull_request]
+
+env:
+  ELASTIC_APIKEY: ${{ secrets.ELASTIC_APIKEY }}
+  ELASTIC_URL: ${{ secrets.ELASTIC_URL }}
+  ELASTIC_CLOUD_APIKEY: ${{ secrets.ELASTIC_CLOUD_APIKEY }}
+  ELASTIC_CLOUD_URL: ${{ secrets.ELASTIC_CLOUD_URL }}
+
+jobs:
+  # We initialize the PR number so that we can use it in the other jobs
+  get-pr-number:
+    runs-on: windows-latest
+    # The pr_number will be used in the other jobs as ${{ needs.get-pr-number.outputs.pr_number }}
+    outputs:
+      pr_number: ${{ steps.pr_number.outputs.pr_number }}
+    steps:
+      # Find the PR associated with this push, if there is one.
+      - uses: jwalton/gh-find-current-pr@master
+        id: findPr
+      - id: pr_number
+        run: echo "pr_number=${{ steps.findPr.outputs.pr }}" >> "$GITHUB_OUTPUT"
+        if: success() && steps.findPr.outputs.number
+
+  # We run integration tests from a windows machine to Elastic Cloud
+  it-windows:
+    runs-on: windows-latest
+    needs: get-pr-number
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Run the integration tests
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        run: |
+          echo "Running integration tests from Windows with Elastic Cloud Elasticsearch service with prefix win-${{ needs.get-pr-number.outputs.pr_number }}"
+          mvn --batch-mode install '-Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=win-${{ needs.get-pr-number.outputs.pr_number }}'
+
