@@ -31,12 +31,14 @@ import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 
 @ThreadLeakFilters(filters = {
@@ -54,6 +56,9 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
 
     @Before
     public void startMinioContainer() {
+        // We can only run this test if Docker is available on this machine
+        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+
         logger.info("Starting Minio");
         container = new MinIOContainer("minio/minio");
         container.start();
