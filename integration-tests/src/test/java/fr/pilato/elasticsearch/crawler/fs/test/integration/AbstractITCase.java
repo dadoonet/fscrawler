@@ -47,6 +47,7 @@ import org.junit.Before;
 
 import javax.net.ssl.SSLHandshakeException;
 import java.io.*;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -206,12 +207,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     logger.debug("  --> Creating test dir named [{}]", target);
                     Files.createDirectory(target);
                 }
-                // We are running our tests from the CLI most likely and documents are provided within a JAR as a dependency
+                // We are  running our tests from the CLI most likely and documents are provided within a JAR as a dependency
                 String fileInJar = resource.getPath();
                 int i = fileInJar.indexOf("!/");
                 String jarFileWithProtocol = fileInJar.substring(0, i);
-                // We remove the "file:" protocol
-                String jarFile = jarFileWithProtocol.substring("file:".length());
+                URI jarFile = new URI(jarFileWithProtocol);
                 unzip(Path.of(jarFile), target, Charset.defaultCharset());
                 break;
             }
