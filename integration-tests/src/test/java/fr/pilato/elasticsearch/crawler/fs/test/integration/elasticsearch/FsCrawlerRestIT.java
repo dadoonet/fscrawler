@@ -46,6 +46,7 @@ import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
@@ -64,6 +65,7 @@ import java.util.function.Predicate;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assume.assumeTrue;
 
 public class FsCrawlerRestIT extends AbstractRestITCase {
     private static final Logger logger = LogManager.getLogger();
@@ -392,6 +394,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     public void uploadDocumentWithS3Plugin() throws Exception {
+        // We can only run this test if Docker is available on this machine
+        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+
         logger.info("Starting Minio");
 
         try (MinIOContainer container = new MinIOContainer("minio/minio")) {
@@ -499,6 +504,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     public void uploadDocumentWithHttpPlugin() throws Exception {
+        // We can only run this test if Docker is available on this machine
+        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+
         logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
         Files.createDirectory(nginxRoot);
