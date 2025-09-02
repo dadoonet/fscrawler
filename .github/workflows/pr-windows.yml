@@ -38,9 +38,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-      - env:
-        PR_NUMBER: ${{ needs.get-pr-number.outputs.pr_number }}
       - name: Run the integration tests
+        env:
+          PR_NUMBER: ${{ needs.get-pr-number.outputs.pr_number }}
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
         run: |
           echo "Running integration tests from Windows with Elastic Cloud Elasticsearch service with prefix win-$env:PR_NUMBER"
