@@ -198,3 +198,22 @@ jobs:
         continue-on-error: true
       - name: Build the docker images
         run: mvn --batch-mode install -DskipTests
+
+  # We run integration tests from a windows machine to Elastic Cloud
+  it-windows:
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Run the integration tests
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        shell: bash
+        run: |
+          echo "Running integration tests from Windows with Elastic Cloud Elasticsearch service with prefix win-${{ needs.get-pr-number.outputs.pr_number }}"
+          mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200000 -Dtests.timeout=900000 -Dtests.heartbeat=30 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=win-${{ needs.get-pr-number.outputs.pr_number }}
