@@ -103,11 +103,13 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
         int expectedBuckets;
         if (OsValidator.WINDOWS) {
+            // FIXME The number of buckets is different on Windows as the path separator is \ and not /
+            // because the path_hierarchy tokenizer is using `/` as the delimiter
+            // See https://github.com/elastic/elasticsearch/issues/133989
             expectedBuckets = 7;
         } else {
             expectedBuckets = 10;
         }
-        // TODO check why the number of buckets is different on Windows and *nix
         assertThat(buckets).hasSize(expectedBuckets);
 
         // Check files
