@@ -49,9 +49,13 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     @BeforeClass
     public static void createTmpFile() throws IOException {
         Path path = rootTmpDir.resolve("test-group.txt");
-        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwx------");
-        FileAttribute<Set<PosixFilePermission>> fileAttributes = PosixFilePermissions.asFileAttribute(permissions);
-        Files.createFile(path, fileAttributes);
+        if (!OsValidator.WINDOWS) {
+            Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwx------");
+            FileAttribute<Set<PosixFilePermission>> fileAttributes = PosixFilePermissions.asFileAttribute(permissions);
+            Files.createFile(path, fileAttributes);
+        } else {
+            Files.createFile(path);
+        }
         file = path.toFile();
     }
 
