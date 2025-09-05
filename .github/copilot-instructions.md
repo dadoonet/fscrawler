@@ -29,11 +29,7 @@ FSCrawler is a Java-based file system crawler for Elasticsearch that helps index
   mvn clean install -DskipTests -DskipIntegTests
   ```
 
-- **Integration tests (NEVER CANCEL - takes 15-30+ minutes after install)**:
-  ```bash
-  mvn verify -DskipUnitTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false
-  # Note: Some external connection tests may fail in restricted environments
-  ```
+
 
 ### Run FSCrawler
 
@@ -72,7 +68,6 @@ Set appropriate timeouts for ALL build commands:
 - Basic build: 2+ minutes timeout
 - Unit tests: 2+ minutes timeout 
 - Install with Docker: 30+ minutes timeout (due to tesseract OCR installation)
-- Integration tests: 30+ minutes timeout
 
 ### Manual Testing Scenarios
 
@@ -88,16 +83,11 @@ Always test functionality after code changes:
    - Config file is created and readable
    - Can modify config (e.g., set `fs.url` path)
 
-3. **Integration test verification**:
-   - Unit tests pass (some integration tests may fail due to external dependencies)
-   - Docker containers start properly during integration tests
-
 Always run validation commands with long timeouts and wait for completion.
 
 ## Common Issues and Workarounds
 
 - **Docker build timeouts**: Normal during first build due to tesseract installation - wait for completion
-- **Integration test failures**: Some tests require external connections (Elasticsearch, external URLs) and may fail in restricted environments
 - **Memory settings**: Use `FS_JAVA_OPTS` to configure JVM: `FS_JAVA_OPTS="-Xmx2g" bin/fscrawler`
 - **Elasticsearch connection**: FSCrawler requires Elasticsearch running to function (defaults to https://127.0.0.1:9200)
 
@@ -144,14 +134,11 @@ The project uses several workflows:
 ## Quick Reference Commands
 
 ```bash
-# Full clean build with tests
-mvn clean verify -Dtests.parallelism=1 -Dtests.leaveTemporary=false
+# Clean build without tests
+mvn clean package -DskipTests
 
-# Build specific Elasticsearch version
-mvn clean verify -Pes-8x -DskipUnitTests
-
-# Skip problematic external tests
-mvn verify -DskipUnitTests -Dtests.class="!*HttpPluginIT"
+# Build with unit tests
+mvn clean test -DskipIntegTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false
 
 # Build distribution only
 mvn clean package -DskipTests -pl distribution
