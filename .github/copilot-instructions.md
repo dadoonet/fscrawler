@@ -20,13 +20,7 @@ FSCrawler is a Java-based file system crawler for Elasticsearch that helps index
 
 - **Unit tests (NEVER CANCEL - takes ~45-60 seconds)**:
   ```bash
-  mvn clean test -DskipIntegTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false
-  ```
-
-- **Install dependencies (NEVER CANCEL - takes 15-25+ minutes)**:
-  ```bash
-  # Docker builds with tesseract OCR + 200+ language packs - extremely long but normal
-  mvn clean install -DskipTests -DskipIntegTests
+  mvn clean install -DskipIntegTests
   ```
 
 
