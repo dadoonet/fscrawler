@@ -119,11 +119,11 @@ public class FsCrawlerCli {
         if (command != null) {
             if (command.debug) {
                 // Deprecated command line option
-                logger.warn("--debug option has been deprecated. Use FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\" instead.");
+                logger.warn("La opción --debug ha sido depreciada. Usa FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\" en su lugar.");
             }
             if (command.trace) {
                 // Deprecated command line option
-                logger.warn("--trace option has been deprecated. Use FS_JAVA_OPTS=\"-DLOG_LEVEL=trace\" instead.");
+                logger.warn("La opción --trace ha sido depreciada. Usa FS_JAVA_OPTS=\"-DLOG_LEVEL=trace\" en su lugar.");
             }
 
             // We change the log level if needed
@@ -150,9 +150,9 @@ public class FsCrawlerCli {
         if (commands.silent) {
             if (commands.jobName == null) {
                 banner();
-                logger.warn("--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
+                logger.warn("--silent está configurado pero no se ha definido ningún trabajo. Agrega un nombre de trabajo o quita la opción --silent. Saliendo.");
                 jCommander.usage();
-                throw new FsCrawlerIllegalConfigurationException("No job specified while in silent mode.");
+                throw new FsCrawlerIllegalConfigurationException("Ningún trabajo especificado mientras está en modo silencioso.");
             }
         }
 
@@ -290,31 +290,31 @@ public class FsCrawlerCli {
                 fsSettings.setName(jobName);
             }
         } catch (Exception e) {
-            logger.fatal("Cannot parse the configuration file: {}", e.getMessage());
+            logger.fatal("No se puede analizar el archivo de configuración: {}", e.getMessage());
             throw e;
         }
 
         if (command.username != null) {
-            logger.fatal("We don't support reading elasticsearch username from the command line anymore. " +
-                            "Please use either FS_JAVA_OPTS=\"-Delasticsearch.username={}\" or set the env variable as " +
-                            "follows: FSCRAWLER_ELASTICSEARCH_USERNAME={} ",
+            logger.fatal("Ya no soportamos leer el nombre de usuario de elasticsearch desde la línea de comandos. " +
+                            "Por favor usa FS_JAVA_OPTS=\"-Delasticsearch.username={}\" o establece la variable de entorno " +
+                            "de la siguiente manera: FSCRAWLER_ELASTICSEARCH_USERNAME={} ",
                     command.username, command.username);
             return;
         }
 
         if (command.apiKey != null) {
-            logger.fatal("We don't support reading elasticsearch API Key from the command line anymore. " +
-                            "Please use either FS_JAVA_OPTS=\"-Delasticsearch.api-key={}\" or set the env variable as " +
-                            "follows: FSCRAWLER_ELASTICSEARCH_API-KEY={} ",
+            logger.fatal("Ya no soportamos leer la clave API de elasticsearch desde la línea de comandos. " +
+                            "Por favor usa FS_JAVA_OPTS=\"-Delasticsearch.api-key={}\" o establece la variable de entorno " +
+                            "de la siguiente manera: FSCRAWLER_ELASTICSEARCH_API-KEY={} ",
                     command.apiKey, command.apiKey);
             return;
         }
 
         if (fsSettings.getElasticsearch().getUsername() != null && fsSettings.getElasticsearch().getPassword() == null && scanner != null) {
-            logger.fatal("We don't support reading elasticsearch password from the command line anymore. " +
-                    "Please use either FS_JAVA_OPTS=\"-Delasticsearch.password=YOUR_PASS\" or set the env variable as " +
-                    "follows: FSCRAWLER_ELASTICSEARCH_PASSWORD=YOUR_PASS.");
-            logger.warn("Using username and password is deprecated. Please use API Keys instead. See " +
+            logger.fatal("Ya no soportamos leer la contraseña de elasticsearch desde la línea de comandos. " +
+                    "Por favor usa FS_JAVA_OPTS=\"-Delasticsearch.password=TU_CONTRASEÑA\" o establece la variable de entorno " +
+                    "de la siguiente manera: FSCRAWLER_ELASTICSEARCH_PASSWORD=TU_CONTRASEÑA.");
+            logger.warn("El uso de nombre de usuario y contraseña está depreciado. Por favor usa claves API en su lugar. Ver " +
                             "https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#api-key");
             return;
         }
@@ -355,30 +355,30 @@ public class FsCrawlerCli {
                 }
             }
         } catch (Exception e) {
-            logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
-            logger.debug("error caught", e);
+            logger.fatal("Error fatal recibido mientras se ejecutaba el crawler: [{}]", e.getMessage());
+            logger.debug("error capturado", e);
         }
     }
 
     private static void listJobs(Path configDir) {
-        FSCrawlerLogger.console("Here is the list of existing jobs:");
+        FSCrawlerLogger.console("Aquí está la lista de trabajos existentes:");
         List<String> files = FsCrawlerJobsUtil.listExistingJobs(configDir);
         if (!files.isEmpty()) {
             for (int i = 0; i < files.size(); i++) {
                 FSCrawlerLogger.console("[{}] - {}", i+1, files.get(i));
             }
         } else {
-            FSCrawlerLogger.console("No job exists in [{}].", configDir);
-            FSCrawlerLogger.console("To create your first job, run 'fscrawler --setup'");
+            FSCrawlerLogger.console("No existe ningún trabajo en [{}].", configDir);
+            FSCrawlerLogger.console("Para crear tu primer trabajo, ejecuta 'fscrawler --setup'");
         }
     }
 
     private static void setup(Path configDir, String jobName) throws IOException {
-        logger.debug("Entering setup mode for [{}]...", jobName);
+        logger.debug("Entrando en modo configuración para [{}]...", jobName);
         createJob(jobName, configDir);
 
-        FSCrawlerLogger.console("You can edit the settings in [{}]. Then, you can run again fscrawler " +
-                        "without the --setup option.",
+        FSCrawlerLogger.console("Puedes editar la configuración en [{}]. Luego, puedes ejecutar fscrawler " +
+                        "nuevamente sin la opción --setup.",
                 configDir.resolve(jobName).resolve(FsSettingsLoader.SETTINGS_YAML));
     }
 
@@ -417,10 +417,10 @@ public class FsCrawlerCli {
                 separatorLine(",", ".") +
                 centerAsciiArt() +
                 separatorLine("+", "+") +
-                bannerLine("You know, for Files!") +
-                bannerLine("Made from France with Love") +
-                bannerLine("Source: https://github.com/dadoonet/fscrawler/") +
-                bannerLine("Documentation: https://fscrawler.readthedocs.io/") +
+                bannerLine("¡Tú sabes, para Archivos!") +
+                bannerLine("Hecho desde Francia con Amor") +
+                bannerLine("Fuente: https://github.com/dadoonet/fscrawler/") +
+                bannerLine("Documentación: https://fscrawler.readthedocs.io/") +
                 separatorLine("`", "'"));
     }
 
