@@ -49,6 +49,14 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- Skip publishing this contribution examples module -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <configuration>
+                    <skipPublishing>true</skipPublishing>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
