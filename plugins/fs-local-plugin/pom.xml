@@ -12,4 +12,17 @@
     <artifactId>fscrawler-fs-local-plugin</artifactId>
     <description>FSCrawler Local Plugin</description>
 
+    <build>
+        <plugins>
+            <!-- Skip publishing this internal module -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <configuration>
+                    <skipPublishing>true</skipPublishing>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
