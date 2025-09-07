@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
@@ -232,5 +233,35 @@ public class FsSettingsLoaderTest {
         expected.setRest(rest);
 
         return expected;
+    }
+
+    @Test
+    public void loadSettingsWithStaticMetadata() throws IOException {
+        FsSettings settings = new FsSettingsLoader(configPath).read("static-metadata");
+        
+        // Basic validation
+        assertThat(settings.getName()).isEqualTo("test-static-metadata");
+        assertThat(settings.getFs().getUrl()).isEqualTo("/path/to/docs");
+        
+        // Validate static tags
+        assertThat(settings.getTags()).isNotNull();
+        assertThat(settings.getTags().getMetaFilename()).isEqualTo(".meta.yml");
+        assertThat(settings.getTags().getStaticTags()).isNotNull();
+        
+        Map<String, Object> staticTags = settings.getTags().getStaticTags();
+        assertThat(staticTags).containsKey("external");
+        assertThat(staticTags).containsKey("custom");
+        
+        // Validate external metadata
+        @SuppressWarnings("unchecked")
+        Map<String, Object> external = (Map<String, Object>) staticTags.get("external");
+        assertThat(external).containsEntry("hostname", "server001");
+        assertThat(external).containsEntry("environment", "production");
+        
+        // Validate custom metadata
+        @SuppressWarnings("unchecked")
+        Map<String, Object> custom = (Map<String, Object>) staticTags.get("custom");
+        assertThat(custom).containsEntry("category", "documents");
+        assertThat(custom).containsEntry("source", "filesystem");
     }
 }

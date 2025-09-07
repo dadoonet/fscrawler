@@ -30,6 +30,7 @@ public class Tags {
     @Config(defaultVal = Defaults.DEFAULT_META_FILENAME)
     private String metaFilename;
     
+    @Config
     private Map<String, Object> staticTags;
 
     public String getMetaFilename() {
