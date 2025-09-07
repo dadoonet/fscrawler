@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
+import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
@@ -93,6 +94,29 @@ public class DocUtils {
         } catch (Exception e) {
             logger.error("Error parsing tags", e);
             throw new FsCrawlerIllegalConfigurationException("Error parsing tags: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Merge static metadata to a document
+     * @param doc The document to merge
+     * @param staticTags The static metadata to merge
+     * @return The merged document
+     * @throws FsCrawlerIllegalConfigurationException If the static tags cannot be applied
+     */
+    public static Doc getMergedStaticDoc(Doc doc, Map<String, Object> staticTags) throws FsCrawlerIllegalConfigurationException {
+        if (staticTags == null || staticTags.isEmpty()) {
+            return doc;
+        }
+
+        try {
+            JsonNode staticTagsNode = mapper.convertValue(staticTags, JsonNode.class);
+            JsonNode docNode = mapper.convertValue(doc, JsonNode.class);
+            JsonNode mergedNode = merge(docNode, staticTagsNode);
+            return mapper.treeToValue(mergedNode, Doc.class);
+        } catch (Exception e) {
+            logger.error("Error applying static tags", e);
+            throw new FsCrawlerIllegalConfigurationException("Error applying static tags: " + e.getMessage());
         }
     }
 

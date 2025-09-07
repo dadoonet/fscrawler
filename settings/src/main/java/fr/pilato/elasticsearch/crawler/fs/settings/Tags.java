@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import org.github.gestalt.config.annotations.Config;
 
+import java.util.Map;
 import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
@@ -28,6 +29,8 @@ public class Tags {
 
     @Config(defaultVal = Defaults.DEFAULT_META_FILENAME)
     private String metaFilename;
+    
+    private Map<String, Object> staticTags;
 
     public String getMetaFilename() {
         return metaFilename;
@@ -37,10 +40,19 @@ public class Tags {
         this.metaFilename = metaFilename;
     }
 
+    public Map<String, Object> getStaticTags() {
+        return staticTags;
+    }
+
+    public void setStaticTags(Map<String, Object> staticTags) {
+        this.staticTags = staticTags;
+    }
+
     @Override
     public String toString() {
         return "Tags{" +
                 "metaFilename='" + metaFilename + '\'' +
+                ", staticTags=" + staticTags +
                 '}';
     }
 
@@ -48,11 +60,11 @@ public class Tags {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Tags tags = (Tags) o;
-        return Objects.equals(metaFilename, tags.metaFilename);
+        return Objects.equals(metaFilename, tags.metaFilename) && Objects.equals(staticTags, tags.staticTags);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(metaFilename);
+        return Objects.hash(metaFilename, staticTags);
     }
 }

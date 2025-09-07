@@ -41,10 +41,10 @@
       "pdf_strategy": "auto",
       "page_seg_mode": 1,
       "preserve_interword_spacing": true
-    },
-    "tags": {
-      "meta_filename": "meta_tags.json"
     }
+  },
+  "tags": {
+    "meta_filename": "meta_tags.json"
   },
   "server": {
     "hostname": "localhost",
