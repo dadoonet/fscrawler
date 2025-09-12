@@ -19,10 +19,7 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.MinioThreadFilter;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.*;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
@@ -34,15 +31,18 @@ import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 
 @ThreadLeakFilters(filters = {
+        WindowsSpecificThreadFilter.class,
         TestContainerThreadFilter.class,
         JNACleanerThreadFilter.class,
         MinioThreadFilter.class
@@ -56,6 +56,9 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
 
     @Before
     public void startMinioContainer() {
+        // We can only run this test if Docker is available on this machine
+        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+
         logger.info("Starting Minio");
         container = new MinIOContainer("minio/minio");
         container.start();

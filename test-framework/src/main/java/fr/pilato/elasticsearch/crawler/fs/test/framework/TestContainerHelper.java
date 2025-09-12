@@ -70,6 +70,8 @@ public class TestContainerHelper {
                         .withEnv("xpack.license.self_generated.type", "trial")
                         .withReuse(keepData)
                         .withPassword(DEFAULT_PASSWORD);
+                // TODO Change the WaitStrategy to allow more than the default 60s
+
                 elasticsearch.start();
 
                 String url = String.format(HTTPS_URL, elasticsearch.getHttpHostAddress());
