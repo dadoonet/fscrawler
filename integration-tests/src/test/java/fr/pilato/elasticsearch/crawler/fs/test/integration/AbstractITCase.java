@@ -464,7 +464,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         if (expected == null) {
             assertThat(hits)
-                    .as("checking if any document in " + request.getIndex())
+                    .as("checking if any document in %s", request.getIndex())
                     .withFailMessage(() -> {
                         logContentOfDir(path, Level.WARN);
                         return "got 0 documents in " + request.getIndex() + " while we expected at least one";
@@ -473,7 +473,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         } else {
             assertThat(hits)
-                    .as("checking documents in " + request.getIndex())
+                    .as("checking documents in %s", request.getIndex())
                     .withFailMessage(() -> {
                         logContentOfDir(path, Level.WARN);
                         return "got " + hits + " documents in " + request.getIndex() + " while we expected exactly " + expected;

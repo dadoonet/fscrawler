@@ -257,10 +257,10 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");
         logger.trace(" - {}, {}", real, virtual);
         assertThat(real)
-                .as("path.real[" + position + "]")
+                .as("path.real[%s]", position)
                 .endsWith(expectedReal);
         assertThat(virtual)
-                .as("path.virtual[" + position + "]")
+                .as("path.virtual[%s]", position)
                 .isEqualTo(expectedVirtual);
     }
 
@@ -269,10 +269,10 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");
         logger.trace(" - {}, {}", real, virtual);
         assertThat(real)
-                .as("path.real[" + position + "]")
+                .as("path.real[%s]", position)
                 .endsWith(expectedReal);
         assertThat(virtual)
-                .as("path.virtual[" + position + "]")
+                .as("path.virtual[%s]", position)
                 .endsWith(expectedVirtual);
     }
 }
