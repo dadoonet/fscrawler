@@ -368,6 +368,16 @@ public abstract class FsParserAbstract extends FsParser {
 
                 logger.trace("End of parsing the folder [{}]", filepath);
             }
+
+            // Close the metadata InputStream if it was opened
+            if (metadata != null) {
+                try {
+                    fileAbstractor.closeInputStream(metadata);
+                } catch (Exception e) {
+                    logger.warn("Error while closing metadata file stream: {}", e.getMessage());
+                    logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+                }
+            }
         }
 
         // TODO Optimize
