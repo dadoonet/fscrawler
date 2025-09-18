@@ -45,6 +45,7 @@ New
 Fix
 ---
 
+* Closed open file streams after use. Thanks to alexbluesteele.
 * ``fs.ocr.enabled`` was always false. Thanks to ywjung.
 * Do not hide YAML parsing errors. Thanks to dadoonet.
 * Fix duration parsing for the day unit ``d``. Thanks to dadoonet.
@@ -68,5 +69,5 @@ Removed
 
 * Remove the specific distributions depending on Elastic version. Thanks to dadoonet.
 
-Thanks to ``@dadoonet``, ``@ywjung``, ``@iadcode``, ``@bdauvissat``
+Thanks to ``@dadoonet``, ``@ywjung``, ``@iadcode``, ``@bdauvissat``, ``@alexbluesteele``
 for this release!
