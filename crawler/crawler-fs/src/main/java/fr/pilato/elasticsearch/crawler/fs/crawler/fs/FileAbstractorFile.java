@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.stream.Stream;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 
@@ -89,9 +90,8 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         logger.debug("Listing local files from {}", dir);
 
         final Collection<FileAbstractModel> result = new ArrayList<>();
-        try {
-            Files.list(Paths.get(dir))
-                    .filter(p -> fsSettings.getFs().isFollowSymlinks() || !Files.isSymbolicLink(p))
+        try (Stream<Path> paths = Files.list(Paths.get(dir))) {
+            paths.filter(p -> fsSettings.getFs().isFollowSymlinks() || !Files.isSymbolicLink(p))
                     // TODO We can add the filter directly here
                     // .filter(s -> s.toString().endsWith(".xml"))
                     .sorted(PATH_COMPARATOR.reversed())
