@@ -279,7 +279,7 @@ public abstract class FsParserAbstract extends FsParser {
 
         if (children != null) {
             boolean ignoreFolder = false;
-            InputStream metadata = null;
+            FileAbstractModel metadataFile = null;
             for (FileAbstractModel child : children) {
                 // We check if we have a .fscrawlerignore file within this folder in which case
                 // we want to ignore all files and subdirs
@@ -293,7 +293,7 @@ public abstract class FsParserAbstract extends FsParser {
                 // we want to merge its content with the current file metadata
                 if (child.getName().equalsIgnoreCase(metadataFilename)) {
                     logger.debug("We found a [{}] file in folder: [{}]", metadataFilename, filepath);
-                    metadata = fileAbstractor.getInputStream(child);
+                    metadataFile = child;
                 }
             }
 
@@ -325,11 +325,15 @@ public abstract class FsParserAbstract extends FsParser {
 
                                 if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
                                     InputStream inputStream = null;
+                                    InputStream metadataStream = null;
                                     try {
                                         if (fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource()) {
                                             inputStream = fileAbstractor.getInputStream(child);
                                         }
-                                        indexFile(child, stats, filepath, inputStream, child.getSize(), metadata);
+                                        if (metadataFile != null) {
+                                            metadataStream = fileAbstractor.getInputStream(metadataFile);
+                                        }
+                                        indexFile(child, stats, filepath, inputStream, child.getSize(), metadataStream);
                                         stats.addFile();
                                     } catch (Exception e) {
                                         if (fsSettings.getFs().isContinueOnError()) {
@@ -338,6 +342,9 @@ public abstract class FsParserAbstract extends FsParser {
                                             throw e;
                                         }
                                     } finally {
+                                        if (metadataStream != null) {
+                                            fileAbstractor.closeInputStream(metadataStream);
+                                        }
                                         if (inputStream != null) {
                                             fileAbstractor.closeInputStream(inputStream);
                                         }
