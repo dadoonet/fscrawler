@@ -68,5 +68,5 @@ Removed
 
 * Remove the specific distributions depending on Elastic version. Thanks to dadoonet.
 
-Thanks to ``@dadoonet``, ``@ywjung``, ``@iadcode``, ``@bdauvissat``
+Thanks to ``@dadoonet``, ``@ywjung``, ``@iadcode``, ``@bdauvissat``, ``@alexbluesteele``
 for this release!
