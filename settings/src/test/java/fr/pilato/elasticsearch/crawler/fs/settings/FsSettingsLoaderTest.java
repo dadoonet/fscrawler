@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -17,7 +18,11 @@ public class FsSettingsLoaderTest {
     private static final Logger logger = LogManager.getLogger();
 
     // Get the config path from resources
-    Path configPath = Path.of(FsSettingsLoaderTest.class.getResource("/config").getPath());
+    Path configPath;
+
+    public FsSettingsLoaderTest() throws URISyntaxException {
+        configPath = Path.of(FsSettingsLoaderTest.class.getResource("/config").toURI());
+    }
 
     @Test
     public void loadWrongSettings() {

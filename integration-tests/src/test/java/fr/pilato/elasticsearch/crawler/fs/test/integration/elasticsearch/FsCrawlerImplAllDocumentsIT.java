@@ -110,8 +110,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
         crawler.start();
 
-        // We wait until we have all docs
-        countTestHelper(new ESSearchRequest().withIndex(INDEX_NAME), numFiles, null);
+        // We wait until we have all docs up to 5 minutes
+        countTestHelper(new ESSearchRequest().withIndex(INDEX_NAME), numFiles, null, TimeValue.timeValueMinutes(5));
     }
 
     @AfterClass

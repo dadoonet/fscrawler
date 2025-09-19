@@ -47,6 +47,8 @@ import org.junit.Before;
 
 import javax.net.ssl.SSLHandshakeException;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.*;
@@ -158,7 +160,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @BeforeClass
-    public static void copyResourcesToTestDir() throws IOException {
+    public static void copyResourcesToTestDir() throws IOException, URISyntaxException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
         if (Files.notExists(testResourceTarget)) {
             logger.debug("  --> Creating test resources dir in [{}]", testResourceTarget);
@@ -179,7 +181,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      *                          the test documents or within a jar
      * @throws IOException In case of IO problem
      */
-    private static void copyTestDocumentsToTargetDir(Path target, String sourceDirName, String marker) throws IOException {
+    private static void copyTestDocumentsToTargetDir(Path target, String sourceDirName, String marker) throws IOException, URISyntaxException {
         URL resource = AbstractFSCrawlerTestCase.class.getResource(marker);
 
         switch (resource.getProtocol()) {
@@ -190,7 +192,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     Files.createDirectory(finalTarget);
                 }
                 // We are running our tests from the IDE most likely and documents are directly available in the classpath
-                Path source = Paths.get(resource.getPath()).getParent().resolve(sourceDirName);
+                Path source = Paths.get(resource.toURI()).getParent().resolve(sourceDirName);
                 if (Files.notExists(source)) {
                     logger.error("directory [{}] should be copied to [{}]", source, target);
                     throw new RuntimeException(source + " doesn't seem to exist. Check your JUnit tests.");
@@ -205,12 +207,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     logger.debug("  --> Creating test dir named [{}]", target);
                     Files.createDirectory(target);
                 }
-                // We are running our tests from the CLI most likely and documents are provided within a JAR as a dependency
+                // We are  running our tests from the CLI most likely and documents are provided within a JAR as a dependency
                 String fileInJar = resource.getPath();
                 int i = fileInJar.indexOf("!/");
                 String jarFileWithProtocol = fileInJar.substring(0, i);
-                // We remove the "file:" protocol
-                String jarFile = jarFileWithProtocol.substring("file:".length());
+                URI jarFile = new URI(jarFileWithProtocol);
                 unzip(Path.of(jarFile), target, Charset.defaultCharset());
                 break;
             }
@@ -463,7 +464,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         if (expected == null) {
             assertThat(hits)
-                    .as("checking if any document in " + request.getIndex())
+                    .as("checking if any document in %s", request.getIndex())
                     .withFailMessage(() -> {
                         logContentOfDir(path, Level.WARN);
                         return "got 0 documents in " + request.getIndex() + " while we expected at least one";
@@ -472,7 +473,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         } else {
             assertThat(hits)
-                    .as("checking documents in " + request.getIndex())
+                    .as("checking documents in %s", request.getIndex())
                     .withFailMessage(() -> {
                         logContentOfDir(path, Level.WARN);
                         return "got " + hits + " documents in " + request.getIndex() + " while we expected exactly " + expected;

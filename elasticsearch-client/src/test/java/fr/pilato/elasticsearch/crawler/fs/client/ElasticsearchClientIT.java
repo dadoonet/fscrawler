@@ -15,6 +15,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.*;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.MountableFile;
@@ -39,6 +40,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_S
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -867,6 +869,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
     @Test
     public void withHttpService() throws IOException, ElasticsearchClientException {
+        // We can only run this test if Docker is available on this machine
+        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+
         logger.debug("Starting Nginx from {}", rootTmpDir);
 
         // First we call Elasticsearch client
@@ -1030,11 +1035,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         if (expected == null) {
             assertThat(hits)
-                    .as("checking if any document in " + request.getIndex())
+                    .as("checking if any document in %s", request.getIndex())
                     .isGreaterThan(0);
         } else {
             assertThat(hits)
-                    .as("checking documents in " + request.getIndex())
+                    .as("checking documents in %s", request.getIndex())
                     .isEqualTo(expected);
         }
 
