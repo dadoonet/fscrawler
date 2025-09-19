@@ -68,6 +68,8 @@ Here is a list of Tags settings (under ``tags.`` prefix)`:
 +============================+=======================+=================================+
 | ``tags.metaFilename``      | ``".meta.yml"``       | `Meta Filename`_                |
 +----------------------------+-----------------------+---------------------------------+
+| ``tags.staticTags``        | ``null``              | `Static Metadata`_              |
++----------------------------+-----------------------+---------------------------------+
 
 Meta Filename
 ^^^^^^^^^^^^^
@@ -83,3 +85,38 @@ You can use another filename for the external tags file. For example, if you wan
 .. note::
 
     Only json and yaml files are supported.
+
+Static Metadata
+^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.10
+
+You can define static metadata that will be applied to ALL documents indexed by FSCrawler 
+without needing to add individual ``.meta.yml`` files in each directory. This is useful 
+for adding consistent metadata like hostname, environment, data source information, or 
+other static properties to all your documents.
+
+.. code:: yaml
+
+   tags:
+     staticTags:
+       external:
+         hostname: "server001"
+         environment: "production"
+       custom:
+         category: "documents"
+         source: "filesystem"
+
+The static metadata is applied to every document during indexing. It is merged with any
+existing external metadata from ``.meta.yml`` files, with file-based metadata taking
+precedence over static metadata.
+
+In the above example, every document will have the following additional fields:
+
+- ``external.hostname``: "server001"  
+- ``external.environment``: "production"
+- ``custom.category``: "documents"
+- ``custom.source``: "filesystem"
+
+The static metadata follows the same rules as external metadata - only supported fields 
+can be added to the document, and unsupported fields will be ignored.
