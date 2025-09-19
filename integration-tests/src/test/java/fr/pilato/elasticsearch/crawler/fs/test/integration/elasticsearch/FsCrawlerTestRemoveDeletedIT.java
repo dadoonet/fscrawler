@@ -98,7 +98,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         if (OsValidator.WINDOWS) {
             // On windows the deletion does not work as expected
-            // TODO this needs to be fixed
+            // TODO this needs to be fixed (see https://github.com/dadoonet/fscrawler/issues/2019)
             logger.warn("On Windows we don't detect properly the recursive removal of directories. So we skip the validation of this test");
             countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, currentTestResourceDir);
         } else {
