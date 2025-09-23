@@ -52,7 +52,7 @@
         <tika.version>3.2.3</tika.version>
         <jackson.version>2.20.0</jackson.version>
         <jsonpath.version>2.9.0</jsonpath.version>
-        <log4j.version>2.25.1</log4j.version>
+        <log4j.version>2.25.2</log4j.version>
         <jersey.version>3.1.11</jersey.version>
 
         <!-- Non Apache2 Compatible licenses -->
