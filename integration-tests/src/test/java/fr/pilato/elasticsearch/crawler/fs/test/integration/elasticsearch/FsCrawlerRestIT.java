@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
@@ -45,6 +46,7 @@ import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
@@ -63,6 +65,7 @@ import java.util.function.Predicate;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assume.assumeTrue;
 
 public class FsCrawlerRestIT extends AbstractRestITCase {
     private static final Logger logger = LogManager.getLogger();
@@ -364,7 +367,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         String json = "{\n" +
                 "  \"type\": \"local\",\n" +
                 "  \"local\": {\n" +
-                "    \"url\": \"" + fromDoesNotExist + "\"\n" +
+                "    \"url\": \"" + fromDoesNotExist.toString().replace("\\", "\\\\") + "\"\n" +
                 "  }\n" +
                 "}";
         UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
@@ -376,7 +379,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         json = "{\n" +
                 "  \"type\": \"local\",\n" +
                 "  \"local\": {\n" +
-                "    \"url\": \"" + fromExists + "\"\n" +
+                "    \"url\": \"" + fromExists.toString().replace("\\", "\\\\") + "\"\n" +
                 "  }\n" +
                 "}";
         uploadResponse = post(target, "/_document", json, UploadResponse.class);
@@ -391,6 +394,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     public void uploadDocumentWithS3Plugin() throws Exception {
+        // We can only run this test if Docker is available on this machine
+        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+
         logger.info("Starting Minio");
 
         try (MinIOContainer container = new MinIOContainer("minio/minio")) {
@@ -450,7 +456,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             // We wait until we have our document
             ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("roottxtfile.txt");
-            assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(12230);
+            // When on Windows the expected file size differs
+            int expectedFilesize = OsValidator.WINDOWS ? 12364 : 12230;
+            assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(expectedFilesize);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains("Nihil est enim virtute amabilius");
         }
     }
@@ -496,6 +504,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     public void uploadDocumentWithHttpPlugin() throws Exception {
+        // We can only run this test if Docker is available on this machine
+        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+
         logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
         Files.createDirectory(nginxRoot);

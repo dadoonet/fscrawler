@@ -49,12 +49,12 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         Path bucket = createFile("foo.txt", text);
         createFile("bar.txt", "This one should be ignored.");
 
-        logger.info("Starting Test");
+        logger.info("Starting Test with bucket [{}]", bucket);
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             provider.settings("{\n" +
                     "  \"type\": \"local\",\n" +
                     "  \"local\": {\n" +
-                    "    \"url\": \"" + bucket + "\"\n" +
+                    "    \"url\": \"" + bucket.toString().replace("\\", "\\\\") + "\"\n" +
                     "  }\n" +
                     "}");
             provider.start();

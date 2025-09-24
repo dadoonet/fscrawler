@@ -32,6 +32,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.MinioThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.logging.log4j.LogManager;
@@ -62,6 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ALL")
 @ThreadLeakFilters(filters = {
+        WindowsSpecificThreadFilter.class,
         TestContainerThreadFilter.class,
         JNACleanerThreadFilter.class,
         MinioThreadFilter.class

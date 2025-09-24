@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -30,6 +31,7 @@ import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Test attributes crawler settings
@@ -46,8 +48,8 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
             assertThat((String) document.read("$.attributes.owner")).isNotEmpty();
             if (OsValidator.WINDOWS) {
                 // We should not have values for group and permissions on Windows OS
-                assertThat((String) document.read("$.attributes.group")).isNull();
-                assertThat((Integer) document.read("$.attributes.permissions")).isNull();
+                assertThatThrownBy(() -> document.read("$.attributes.group")).isInstanceOf(PathNotFoundException.class);
+                assertThat((Integer) document.read("$.attributes.permissions")).isEqualTo(0);
             } else {
                 // We test group and permissions only on non Windows OS
                 assertThat((String) document.read("$.attributes.group")).isNotEmpty();
