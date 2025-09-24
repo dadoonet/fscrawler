@@ -137,25 +137,44 @@ public class FsSettingsLoader extends MetaFileHandler {
             settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
             settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class).orElse(null));
             
-            // Handle Tags configuration with special handling for staticTags
-            Tags tags = gestalt.getConfigOptional("tags", Tags.class).orElse(null);
-            if (tags == null) {
-                // Create default tags when none exist
-                tags = new Tags();
-                tags.setMetaFilename(Defaults.DEFAULT_META_FILENAME);
-            }
+            // Handle Tags configuration normally now that gestalt can load it properly
+            settings.setTags(gestalt.getConfigOptional("tags", Tags.class).orElse(null));
             
             // Manually load staticTags configuration since gestalt can't handle Map<String, Object> with @Config
             try {
+                // Try different approaches to load the nested configuration
                 @SuppressWarnings("unchecked")
-                Map<String, Object> staticTags = gestalt.getConfigOptional("tags.staticTags", Map.class).orElse(null);
-                tags.setStaticTags(staticTags);
+                Map<String, Object> staticTags = null;
+                
+                // Try approach 1: direct path
+                try {
+                    staticTags = gestalt.getConfigOptional("tags.staticTags", Map.class).orElse(null);
+                    logger.debug("Approach 1 - Loaded staticTags from 'tags.staticTags': {}", staticTags);
+                } catch (Exception e1) {
+                    logger.debug("Approach 1 failed: {}", e1.getMessage());
+                }
+                
+                // Try approach 2: get tags first, then extract staticTags
+                if (staticTags == null) {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> tagsMap = gestalt.getConfigOptional("tags", Map.class).orElse(null);
+                        if (tagsMap != null) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> extracted = (Map<String, Object>) tagsMap.get("staticTags");
+                            staticTags = extracted;
+                            logger.debug("Approach 2 - Loaded staticTags from tags map: {}", staticTags);
+                        }
+                    } catch (Exception e2) {
+                        logger.debug("Approach 2 failed: {}", e2.getMessage());
+                    }
+                }
+                
+                settings.setStaticTags(staticTags);
             } catch (Exception e) {
                 logger.debug("No staticTags configuration found or failed to load: {}", e.getMessage());
-                tags.setStaticTags(null);
+                settings.setStaticTags(null);
             }
-            
-            settings.setTags(tags);
             settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
             settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
 

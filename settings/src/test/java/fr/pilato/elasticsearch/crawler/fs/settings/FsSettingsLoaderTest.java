@@ -246,9 +246,9 @@ public class FsSettingsLoaderTest {
         // Validate static tags
         assertThat(settings.getTags()).isNotNull();
         assertThat(settings.getTags().getMetaFilename()).isEqualTo(".meta.yml");
-        assertThat(settings.getTags().getStaticTags()).isNotNull();
+        assertThat(settings.getStaticTags()).isNotNull();
         
-        Map<String, Object> staticTags = settings.getTags().getStaticTags();
+        Map<String, Object> staticTags = settings.getStaticTags();
         assertThat(staticTags).containsKey("external");
         assertThat(staticTags).containsKey("custom");
         

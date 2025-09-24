@@ -158,7 +158,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         
         // Configure static metadata
-        fsSettings.getTags().setStaticTags(Map.of(
+        fsSettings.setStaticTags(Map.of(
             "external", Map.of(
                 "hostname", "server001",
                 "environment", "production"
@@ -190,7 +190,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         
         // Configure static metadata
-        fsSettings.getTags().setStaticTags(Map.of(
+        fsSettings.setStaticTags(Map.of(
             "external", Map.of(
                 "hostname", "server001",
                 "environment", "production"  // This will be overridden by .meta.yml

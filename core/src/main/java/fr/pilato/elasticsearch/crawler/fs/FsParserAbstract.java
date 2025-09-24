@@ -499,8 +499,8 @@ public abstract class FsParserAbstract extends FsParser {
             Doc mergedDoc = DocUtils.getMergedDoc(doc, metadataFilename, externalTags);
 
             // Apply static metadata if configured
-            if (fsSettings.getTags() != null && fsSettings.getTags().getStaticTags() != null) {
-                mergedDoc = DocUtils.getMergedStaticDoc(mergedDoc, fsSettings.getTags().getStaticTags());
+            if (fsSettings.getStaticTags() != null) {
+                mergedDoc = DocUtils.getMergedStaticDoc(mergedDoc, fsSettings.getStaticTags());
             }
 
             // We index the data structure
