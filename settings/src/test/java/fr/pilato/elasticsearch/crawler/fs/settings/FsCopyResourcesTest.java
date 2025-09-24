@@ -78,10 +78,10 @@ public class FsCopyResourcesTest extends AbstractFSCrawlerTestCase {
                     }
                 });
 
-        // We have 2 dirs for now:
+        // We have 1 dir for now:
         // root test dir ".fscrawler-test-copy-resources"
-        // "_default" dir
-        assertThat(dirCounter.get()).isEqualTo(2);
+        // (_default dir is no longer created since there are no files to copy)
+        assertThat(dirCounter.get()).isEqualTo(1);
 
         // We have 0 files now (version 6 files have been removed).
         assertThat(fileCounter.get()).isEqualTo(0);
