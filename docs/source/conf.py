@@ -218,7 +218,6 @@ rst_prolog = rst_prolog + """
 .. |Tika_format| replace:: Tika
 .. |Tika_version| replace:: Tika {fmt_tika_version}
 .. |Tika_configuring| replace:: Configuring Tika
-.. |ES_version6| replace:: Elasticsearch {fmt_es_version6}
 .. |ES_version7| replace:: Elasticsearch {fmt_es_version7}
 .. |ES_version8| replace:: Elasticsearch {fmt_es_version8}
 .. |ES_version9| replace:: Elasticsearch {fmt_es_version9}
@@ -232,7 +231,6 @@ rst_prolog = rst_prolog + """
 .. _Tika_format: https://tika.apache.org/{fmt_tika_version}/formats.html#Supported_Document_Formats
 .. _Tika_version: https://tika.apache.org/{fmt_tika_version}/
 .. _Tika_configuring: https://tika.apache.org/{fmt_tika_version}/configuring.html
-.. _ES_version6: https://www.elastic.co/guide/en/elasticsearch/reference/6.8/index.html
 .. _ES_version7: https://www.elastic.co/guide/en/elasticsearch/reference/7.17/index.html
 .. _ES_version8: https://www.elastic.co/guide/en/elasticsearch/reference/8.18/index.html
 .. _ES_version9: https://www.elastic.co/docs/solutions/search
@@ -242,7 +240,6 @@ rst_prolog = rst_prolog + """
 .. _Sonatype: https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/
 """.format(
 fmt_tika_version=config.get('3rdParty', 'TikaVersion'),
-fmt_es_version6=config.get('3rdParty', 'ElasticsearchVersion6'),
 fmt_es_version7=config.get('3rdParty', 'ElasticsearchVersion7'),
 fmt_es_version8=config.get('3rdParty', 'ElasticsearchVersion8'),
 fmt_es_version9=config.get('3rdParty', 'ElasticsearchVersion9'),
