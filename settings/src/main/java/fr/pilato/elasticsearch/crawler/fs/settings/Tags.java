@@ -30,7 +30,8 @@ public class Tags {
     @Config(defaultVal = Defaults.DEFAULT_META_FILENAME)
     private String metaFilename;
     
-    @Config
+    // Note: staticTags is not configured via @Config because gestalt can't handle Map<String, Object>
+    // It is loaded manually in FsSettingsLoader and set programmatically
     private Map<String, Object> staticTags;
 
     public String getMetaFilename() {

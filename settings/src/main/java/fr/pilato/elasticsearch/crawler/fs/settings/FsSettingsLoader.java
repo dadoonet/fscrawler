@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -135,9 +136,26 @@ public class FsSettingsLoader extends MetaFileHandler {
             settings.setName(gestalt.getConfigOptional("name", String.class).orElse(null));
             settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
             settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class).orElse(null));
-            Tags defaultTags = new Tags();
-            defaultTags.setMetaFilename(Defaults.DEFAULT_META_FILENAME);
-            settings.setTags(gestalt.getConfigOptional("tags", Tags.class).orElse(defaultTags));
+            
+            // Handle Tags configuration with special handling for staticTags
+            Tags tags = gestalt.getConfigOptional("tags", Tags.class).orElse(null);
+            if (tags == null) {
+                // Create default tags when none exist
+                tags = new Tags();
+                tags.setMetaFilename(Defaults.DEFAULT_META_FILENAME);
+            }
+            
+            // Manually load staticTags configuration since gestalt can't handle Map<String, Object> with @Config
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> staticTags = gestalt.getConfigOptional("tags.staticTags", Map.class).orElse(null);
+                tags.setStaticTags(staticTags);
+            } catch (Exception e) {
+                logger.debug("No staticTags configuration found or failed to load: {}", e.getMessage());
+                tags.setStaticTags(null);
+            }
+            
+            settings.setTags(tags);
             settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
             settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
 
