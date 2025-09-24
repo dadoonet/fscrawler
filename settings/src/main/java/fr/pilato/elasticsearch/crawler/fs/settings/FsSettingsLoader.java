@@ -146,7 +146,7 @@ public class FsSettingsLoader extends MetaFileHandler {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> staticTags = null;
                 
-                // Try approach 1: direct path
+                // Try approach 1: camelCase path
                 try {
                     staticTags = gestalt.getConfigOptional("tags.staticTags", Map.class).orElse(null);
                     logger.debug("Approach 1 - Loaded staticTags from 'tags.staticTags': {}", staticTags);
@@ -154,19 +154,33 @@ public class FsSettingsLoader extends MetaFileHandler {
                     logger.debug("Approach 1 failed: {}", e1.getMessage());
                 }
                 
-                // Try approach 2: get tags first, then extract staticTags
+                // Try approach 2: snake_case path
+                if (staticTags == null) {
+                    try {
+                        staticTags = gestalt.getConfigOptional("tags.static_tags", Map.class).orElse(null);
+                        logger.debug("Approach 2 - Loaded staticTags from 'tags.static_tags': {}", staticTags);
+                    } catch (Exception e2) {
+                        logger.debug("Approach 2 failed: {}", e2.getMessage());
+                    }
+                }
+                
+                // Try approach 3: get tags first, then extract staticTags
                 if (staticTags == null) {
                     try {
                         @SuppressWarnings("unchecked")
                         Map<String, Object> tagsMap = gestalt.getConfigOptional("tags", Map.class).orElse(null);
                         if (tagsMap != null) {
+                            // Try both staticTags and static_tags keys
                             @SuppressWarnings("unchecked")
                             Map<String, Object> extracted = (Map<String, Object>) tagsMap.get("staticTags");
+                            if (extracted == null) {
+                                extracted = (Map<String, Object>) tagsMap.get("static_tags");
+                            }
                             staticTags = extracted;
-                            logger.debug("Approach 2 - Loaded staticTags from tags map: {}", staticTags);
+                            logger.debug("Approach 3 - Loaded staticTags from tags map: {}", staticTags);
                         }
-                    } catch (Exception e2) {
-                        logger.debug("Approach 2 failed: {}", e2.getMessage());
+                    } catch (Exception e3) {
+                        logger.debug("Approach 3 failed: {}", e3.getMessage());
                     }
                 }
                 

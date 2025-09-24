@@ -6,7 +6,7 @@ fs:
 
 tags:
   meta_filename: ".meta.yml"
-  staticTags:
+  static_tags:
     external:
       hostname: "server001"
       environment: "production"
