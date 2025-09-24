@@ -28,6 +28,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import java.util.Map;
+
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -149,5 +151,70 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         } else {
             assertThatThrownBy(() -> document.read("$.external")).isInstanceOf(PathNotFoundException.class);
         }
+    }
+
+    @Test
+    public void static_metadata_only() throws Exception {
+        FsSettings fsSettings = createTestSettings();
+        
+        // Configure static metadata
+        fsSettings.getTags().setStaticTags(Map.of(
+            "external", Map.of(
+                "hostname", "server001",
+                "environment", "production"
+            ),
+            "custom", Map.of(
+                "category", "documents"
+            )
+        ));
+        
+        crawler = startCrawler(fsSettings);
+
+        // We expect to have 1 file
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchHit hit = searchResponse.getHits().get(0);
+        DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+        
+        // Verify the document content
+        assertThat((String) document.read("$.content")).contains("This is a test document for static metadata only.");
+        assertThat((String) document.read("$.file.filename")).isEqualTo("test_file.txt");
+        
+        // Verify static metadata was applied
+        assertThat((String) document.read("$.external.hostname")).isEqualTo("server001");
+        assertThat((String) document.read("$.external.environment")).isEqualTo("production");
+        assertThat((String) document.read("$.custom.category")).isEqualTo("documents");
+    }
+
+    @Test
+    public void static_metadata_with_override() throws Exception {
+        FsSettings fsSettings = createTestSettings();
+        
+        // Configure static metadata
+        fsSettings.getTags().setStaticTags(Map.of(
+            "external", Map.of(
+                "hostname", "server001",
+                "environment", "production"  // This will be overridden by .meta.yml
+            ),
+            "custom", Map.of(
+                "category", "documents"
+            )
+        ));
+        
+        crawler = startCrawler(fsSettings);
+
+        // We expect to have 1 file
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchHit hit = searchResponse.getHits().get(0);
+        DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+        
+        // Verify the document content
+        assertThat((String) document.read("$.content")).contains("This is a test document for static metadata with override.");
+        assertThat((String) document.read("$.file.filename")).isEqualTo("test_file.txt");
+        
+        // Verify metadata precedence - .meta.yml should override static metadata
+        assertThat((String) document.read("$.external.hostname")).isEqualTo("server001");  // From static metadata
+        assertThat((String) document.read("$.external.environment")).isEqualTo("development");  // From .meta.yml, overrides static "production"
+        assertThat((String) document.read("$.external.priority")).isEqualTo("high");  // From .meta.yml, additional field
+        assertThat((String) document.read("$.custom.category")).isEqualTo("documents");  // From static metadata
     }
 }

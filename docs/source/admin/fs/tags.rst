@@ -118,5 +118,41 @@ In the above example, every document will have the following additional fields:
 - ``custom.category``: "documents"
 - ``custom.source``: "filesystem"
 
-The static metadata follows the same rules as external metadata - only supported fields 
+The static metadata follows `the same rules as external metadata`_ - only supported fields 
 can be added to the document, and unsupported fields will be ignored.
+
+.. _the same rules as external metadata: `Meta Filename`_
+
+Precedence Example
+""""""""""""""""""
+
+When both static metadata and `.meta.yml` files are present, the file-based metadata 
+takes precedence over static metadata for conflicting fields.
+
+For example, with this static configuration:
+
+.. code:: yaml
+
+   tags:
+     staticTags:
+       external:
+         hostname: "server001"
+         environment: "production"
+       custom:
+         category: "documents"
+
+And a `.meta.yml` file containing:
+
+.. code:: yaml
+
+   external:
+     environment: "development"
+   custom:
+     priority: "high"
+
+The resulting document will have:
+
+- ``external.hostname``: "server001" (from static metadata)
+- ``external.environment``: "development" (from .meta.yml, overriding static)
+- ``custom.category``: "documents" (from static metadata)
+- ``custom.priority``: "high" (from .meta.yml, additional field)

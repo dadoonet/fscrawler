@@ -150,8 +150,8 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
      #  data_path: "/path/to/tesseract/tessdata/if/needed"
 
    # optional: only needed if you want to change the default settings
-    tags:
-      metaFilename: "meta_tags.json" # default is ".meta.yml"
+   tags:
+     metaFilename: "meta_tags.json" # default is ".meta.yml"
 
    # optional: only required if you want to SSH to another server to index documents from there
    server:
