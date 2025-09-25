@@ -103,8 +103,6 @@ jobs:
       - name: Run the integration tests
         run: mvn --batch-mode install -Ddocker.skip -DskipUnitTests -Pes-7x -Dtests.parallelism=1 -Dtests.leaveTemporary=false
 
-
-
   # We run integration tests with Elastic Cloud Elasticsearch service (if secrets are set)
   it-cloud:
     runs-on: ubuntu-latest

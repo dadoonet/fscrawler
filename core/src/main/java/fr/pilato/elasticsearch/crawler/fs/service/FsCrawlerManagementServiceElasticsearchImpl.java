@@ -34,7 +34,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -51,9 +50,9 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     private final IElasticsearchClient client;
     private final FsSettings settings;
 
-    public FsCrawlerManagementServiceElasticsearchImpl(Path config, FsSettings settings) {
+    public FsCrawlerManagementServiceElasticsearchImpl(FsSettings settings) {
         this.settings = settings;
-        this.client = new ElasticsearchClient(config, settings);
+        this.client = new ElasticsearchClient(settings);
     }
 
     public IElasticsearchClient getClient() {

@@ -83,12 +83,10 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         client.deleteIndex(INDEX_NAME + INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
-        if (client.getMajorVersion() > 6) {
-            String templateName = INDEX_NAME + "_*";
-            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-            removeIndexTemplates(templateName);
-            removeComponentTemplates(templateName);
-        }
+        String templateName = INDEX_NAME + "_*";
+        logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+        removeIndexTemplates(templateName);
+        removeComponentTemplates(templateName);
 
         logger.info("🎬 Starting test [{}]", INDEX_NAME);
         logger.debug("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
@@ -126,13 +124,10 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             client.deleteIndex(INDEX_NAME);
             client.deleteIndex(INDEX_NAME + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
-            // Remove existing templates if any
-            if (client.getMajorVersion() > 6) {
-                String templateName = INDEX_NAME + "_*";
-                logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-                removeIndexTemplates(templateName);
-                removeComponentTemplates(templateName);
-            }
+            String templateName = INDEX_NAME + "_*";
+            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+            removeIndexTemplates(templateName);
+            removeComponentTemplates(templateName);
         }
 
         logger.info("✅ End of test [{}]", INDEX_NAME);

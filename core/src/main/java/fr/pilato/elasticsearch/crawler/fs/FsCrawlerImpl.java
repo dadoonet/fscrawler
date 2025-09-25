@@ -64,8 +64,8 @@ public class FsCrawlerImpl implements AutoCloseable {
         this.loop = loop;
         this.rest = rest;
 
-        this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(config, settings);
-        this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(config, settings);
+        this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(settings);
+        this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(settings);
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance

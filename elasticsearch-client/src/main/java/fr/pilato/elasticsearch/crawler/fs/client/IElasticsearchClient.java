@@ -30,12 +30,6 @@ import java.util.List;
  * Only needed methods are exposed.
  */
 public interface IElasticsearchClient extends Closeable {
-
-    /**
-     * Type name when using very old Elasticsearch versions like 6.x
-     */
-    String INDEX_TYPE_DOC = "_doc";
-
     /**
      * Start the client and its internal resources. This must be called before any operation can be performed.
      */
@@ -61,22 +55,6 @@ public interface IElasticsearchClient extends Closeable {
      * Get the major version about the node it's connected to
      */
     int getMajorVersion();
-
-    /**
-     * Create an index
-     * @param index index name
-     * @param ignoreExistingIndex don't fail if the index already exists
-     * @param indexSettings index settings if any
-     * @deprecated use index templates instead
-     */
-    @Deprecated
-    void createIndex(String index, boolean ignoreExistingIndex, String indexSettings) throws ElasticsearchClientException;
-
-    /**
-     * Create an index if not existing yet and wait for it to be allocated (at least YELLOW status).
-     * @param index index name
-     */
-    void createIndex(String index) throws ElasticsearchClientException;
 
     /**
      * Create or update a component template

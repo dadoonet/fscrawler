@@ -64,6 +64,7 @@ import java.util.zip.ZipFile;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
+import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDirs;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
@@ -141,12 +142,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void createFsCrawlerJobDir() throws IOException {
-        // We also need to create default mapping files
         metadataDir = rootTmpDir.resolve(".fscrawler");
         if (Files.notExists(metadataDir)) {
             Files.createDirectory(metadataDir);
         }
-        copyDefaultResources(metadataDir);
         logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
@@ -360,7 +359,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 fsSettings.getElasticsearch().getNodes().get(0).getUrl(),
                 fsSettings.getElasticsearch().getCaCertificate(),
                 fsSettings.getElasticsearch().isSslVerification());
-        ElasticsearchClient client = new ElasticsearchClient(null, fsSettings);
+        ElasticsearchClient client = new ElasticsearchClient(fsSettings);
         client.start();
         return client;
     }

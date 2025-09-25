@@ -54,20 +54,20 @@ Deprecated
 ----------
 
 * The ``_upload`` REST endpoint has been deprecated. Please now use the ``_document`` endpoint. Thanks to dadoonet.
-* Support for Elasticsearch 6.x is deprecated. Thanks to dadoonet.
 * Support for Basic Authentication is deprecated. You should use API keys instead. Thanks to dadoonet.
 
 Updated
 -------
 
 * Files are now sorted by date with a reverse order. So the most recent files should be indexed first. Thanks to dadoonet.
-* Add full support for Elasticsearch |ES_version8|_, |ES_version7|_, |ES_version6|_. Thanks to dadoonet.
+* Add full support for Elasticsearch |ES_version9|_, |ES_version8|_, |ES_version7|_. Thanks to dadoonet.
 * Update to Tika |Tika_version|_. Thanks to dadoonet.
 
 Removed
 -------
 
 * Remove the specific distributions depending on Elastic version. Thanks to dadoonet.
+* Support for Elasticsearch 6.x is removed. Thanks to dadoonet.
 
 Thanks to ``@dadoonet``, ``@ywjung``, ``@iadcode``, ``@bdauvissat``, ``@alexbluesteele``
 for this release!

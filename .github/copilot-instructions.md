@@ -108,7 +108,7 @@ Key directories and their purposes:
 The project uses several workflows:
 - `.github/workflows/pr.yml`: Pull request validation
 - `.github/workflows/maven.yml`: Master branch build and deploy
-- Build runs unit tests, integration tests for ES 6.x/7.x/8.x/9.x, Docker builds
+- Build runs unit tests, integration tests for ES 7.x/8.x/9.x, Docker builds
 
 ## Development Tips
 

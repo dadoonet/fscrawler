@@ -18,53 +18,71 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 
 public class FsCrawlerUtilForTests {
     private static final Logger logger = LogManager.getLogger();
 
-    private static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
-    private static final String[] MAPPING_RESOURCES = {
-    };
-
-    private FsCrawlerUtilForTests() {
-
-    }
-
     /**
-     * Copy default resources files which are available as project resources under
-     * fr.pilato.elasticsearch.crawler.fs._default package to a given configuration path
+     * Copy files from a source to a target
      * under a _default subdirectory.
-     * @param configPath The config path which is by default .fscrawler
+     * @param source The source dir
+     * @param target The target dir
+     * @param options Potential options
      * @throws IOException If copying does not work
      */
-    static void copyDefaultResources(Path configPath) throws IOException {
-        Path targetResourceDir = configPath.resolve("_default");
-
-        for (String filename : MAPPING_RESOURCES) {
-            Path target = targetResourceDir.resolve(filename);
-            if (target.toFile().exists()) {
-                logger.debug("Mapping [{}] already exists", filename);
-            } else {
-                logger.debug("Copying [{}]...", filename);
-                copyResourceFile(CLASSPATH_RESOURCES_ROOT + filename, target);
-            }
+    public static void copyDirs(Path source, Path target, CopyOption... options) throws IOException {
+        if (Files.notExists(target)) {
+            Files.createDirectory(target);
         }
+
+        logger.debug("  --> Copying resources from [{}]", source);
+        if (Files.notExists(source)) {
+            throw new RuntimeException(source + " doesn't seem to exist.");
+        }
+
+        Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                new InternalFileVisitor(source, target, options));
+
+        logger.debug("  --> Resources ready in [{}]", target);
     }
 
-    /**
-     * Copy a single resource file from the classpath or from a JAR.
-     * @param target The target
-     * @throws IOException If copying does not work
-     */
-    private static void copyResourceFile(String source, Path target) throws IOException {
-        InputStream resource = FsCrawlerUtilForTests.class.getResourceAsStream(source);
-        FileUtils.copyInputStreamToFile(resource, target.toFile());
+    private static class InternalFileVisitor extends SimpleFileVisitor<Path> {
+
+        private final Path fromPath;
+        private final Path toPath;
+        private final CopyOption[] copyOption;
+
+        public InternalFileVisitor(Path fromPath, Path toPath, CopyOption... copyOption) {
+            this.fromPath = fromPath;
+            this.toPath = toPath;
+            this.copyOption = copyOption;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+
+            Path targetPath = toPath.resolve(fromPath.relativize(dir));
+            if(!Files.exists(targetPath)){
+                Files.createDirectory(targetPath);
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            try {
+                Files.copy(file, toPath.resolve(fromPath.relativize(file)), copyOption);
+            } catch (FileAlreadyExistsException ignored) {
+                // The file already exists we just ignore it
+            }
+            return FileVisitResult.CONTINUE;
+        }
     }
 }

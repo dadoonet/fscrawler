@@ -58,7 +58,7 @@ import java.util.Map;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDirs;
+import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDirs;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ALL")
@@ -127,8 +127,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         // Add the rest interface
         fsSettings.getRest().setUrl("http://127.0.0.1:" + getRestPort() + "/fscrawler");
 
-        this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(metadataDir, fsSettings);
-        this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(metadataDir, fsSettings);
+        this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(fsSettings);
+        this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(fsSettings);
 
         managementService.start();
         documentService.start();

@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.copyDefaultResources;
 import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -51,12 +50,10 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void createFsCrawlerJobDir() throws IOException {
-        // We also need to create default mapping files
         metadataDir = rootTmpDir.resolve(".fscrawler");
         if (Files.notExists(metadataDir)) {
             Files.createDirectory(metadataDir);
         }
-        copyDefaultResources(metadataDir);
         logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 

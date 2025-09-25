@@ -251,9 +251,6 @@ public class FsCrawlerCli {
         // Create the config dir if needed
         FsCrawlerUtil.createDirIfMissing(configDir);
 
-        // We copy default mapping and settings to the default settings dir .fscrawler/_default/
-        copyDefaultResources(configDir);
-
         FsSettings fsSettings;
 
         String jobName;
@@ -337,8 +334,6 @@ public class FsCrawlerCli {
                 if (!startEsClient(fsCrawler)) {
                     return;
                 }
-                String elasticsearchVersion = fsCrawler.getManagementService().getVersion();
-                checkForDeprecatedResources(configDir, elasticsearchVersion);
 
                 // Start the REST Server if needed
                 if (command.rest) {
@@ -447,27 +442,6 @@ public class FsCrawlerCli {
 
     private static String separatorLine(String first, String last) {
         return first + StringUtils.center("", BANNER_LENGTH, "-") + last + "\n";
-    }
-
-    private static void checkForDeprecatedResources(Path configDir, String elasticsearchVersion) throws IOException {
-        try {
-            // If we are able to read an old configuration file, we should tell the user to check the documentation
-            readDefaultJsonVersionedFile(configDir, extractMajorVersion(elasticsearchVersion), "doc");
-            logger.warn("We found old configuration index settings: [{}/_default/doc.json]. You should look at the documentation" +
-                    " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
-                    configDir);
-        } catch (IllegalArgumentException ignored) {
-            // If we can't find the deprecated resource, it will throw an exception which needs to be ignored.
-        }
-        try {
-            // If we are able to read an old configuration file, we should tell the user to check the documentation
-            readDefaultJsonVersionedFile(configDir, extractMajorVersion(elasticsearchVersion), "folder");
-            logger.warn("We found old configuration index settings: [{}/_default/folder.json]. You should look at the documentation" +
-                    " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
-                    configDir);
-        } catch (IllegalArgumentException ignored) {
-            // If we can't find the deprecated resource, it will throw an exception which needs to be ignored.
-        }
     }
 
     private static void sleep() {
