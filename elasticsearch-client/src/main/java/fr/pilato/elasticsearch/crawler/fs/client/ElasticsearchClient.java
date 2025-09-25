@@ -517,7 +517,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     @Override
     public void createIndexAndComponentTemplates() throws Exception {
-        if (settings.getElasticsearch().isPushTemplates() && majorVersion >= 7) {
+        if (settings.getElasticsearch().isPushTemplates()) {
             logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndex());
             loadAndPushComponentTemplate(majorVersion, "fscrawler_alias", settings.getElasticsearch().getIndex());
             loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_total_fields", settings.getElasticsearch().getIndex());
@@ -680,11 +680,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
             // Parse
             DocumentContext document = parseJsonAsDocumentContext(response);
-            if (majorVersion < 7) {
-                esSearchResponse.setTotalHits(document.read("$.hits.total"));
-            } else {
-                esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
-            }
+            esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
 
             int numHits = document.read("$.hits.hits.length()");
             if (numHits < size) {
