@@ -93,7 +93,7 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
             provider.settings("{\n" +
                     "  \"type\": \"http\",\n" +
                     "  \"http\": {\n" +
-                    "    \"url\": \"https://www.elastic.co/robots.txt\"\n" +
+                    "    \"url\": \"https://www.google.fr/robots.txt\"\n" +
                     "  }\n" +
                     "}");
             provider.start();

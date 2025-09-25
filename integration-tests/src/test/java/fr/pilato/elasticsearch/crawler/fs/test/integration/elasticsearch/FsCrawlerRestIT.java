@@ -554,7 +554,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             json = "{\n" +
                     "  \"type\": \"http\",\n" +
                     "  \"http\": {\n" +
-                    "    \"url\": \"https://www.elastic.co/robots.txt\"\n" +
+                    "    \"url\": \"https://www.google.fr/robots.txt\"\n" +
                     "  }\n" +
                     "}";
             uploadResponse = post(target, "/_document", json, UploadResponse.class);
