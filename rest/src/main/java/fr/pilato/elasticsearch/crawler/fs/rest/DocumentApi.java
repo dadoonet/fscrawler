@@ -131,6 +131,7 @@ public class DocumentApi extends RestApi {
         logger.debug("Reading document from 3rd-party [{}]", type);
 
         try (FsCrawlerExtensionFsProvider provider = pluginsManager.findFsProvider(type)) {
+            logger.trace("Plugin [{}] found", provider.getType());
             provider.settings(document.jsonString());
             provider.start();
             InputStream inputStream = provider.readFile();
@@ -141,6 +142,7 @@ public class DocumentApi extends RestApi {
         } catch (Exception e) {
             logger.debug("Failed to add document from [{}] 3rd-party: [{}] - [{}]",
                     type, e.getClass().getSimpleName(), e.getMessage());
+            logger.trace("Full stacktrace:", e);
             UploadResponse response = new UploadResponse();
             response.setOk(false);
             response.setMessage("Failed to add document from [" + type + "] 3rd-party: ["

@@ -18,6 +18,7 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pf4j.DefaultPluginManager;
@@ -58,6 +59,10 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
 
     public FsCrawlerExtensionFsProvider findFsProvider(String type) {
         logger.debug("Load extension for type [{}]", type);
-        return fsProviders.get(type);
+        FsCrawlerExtensionFsProvider fsCrawlerExtensionFsProvider = fsProviders.get(type);
+        if (fsCrawlerExtensionFsProvider == null) {
+            throw new FsCrawlerIllegalConfigurationException("No FsProvider found for type [" + type + "]");
+        }
+        return fsCrawlerExtensionFsProvider;
     }
 }

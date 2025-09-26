@@ -463,6 +463,28 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
     }
 
+    @Test
+    public void uploadDocumentWithUnknownPlugin() {
+        Path fromExists = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        if (Files.notExists(fromExists)) {
+            logger.error("file [{}] should exist before we start tests", fromExists);
+            throw new RuntimeException(fromExists + " doesn't seem to exist. Check your JUnit tests.");
+        }
+
+        // We try with an existing document
+        String json = "{\n" +
+                "  \"type\": \"not_available\",\n" +
+                "  \"not_available\": {\n" +
+                "    \"url\": \"" + fromExists.toString().replace("\\", "\\\\") + "\"\n" +
+                "  }\n" +
+                "}";
+        UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
+        assertThat(uploadResponse).satisfies(response -> {
+            assertThat(response.isOk()).isFalse();
+            assertThat(response.getMessage()).contains("No FsProvider found for type [not_available]");
+        });
+    }
+
     private static class InternalFileVisitor extends SimpleFileVisitor<Path> {
         private final String bucket;
         private final MinioClient minioClient;
