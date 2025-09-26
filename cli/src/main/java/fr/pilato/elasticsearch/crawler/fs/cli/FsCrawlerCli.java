@@ -331,7 +331,7 @@ public class FsCrawlerCli {
             if (command.upgrade) {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
             } else {
-                if (!startEsClient(fsCrawler)) {
+                if (!startFsCrawlerThreadAndServices(fsCrawler)) {
                     return;
                 }
 
@@ -377,12 +377,12 @@ public class FsCrawlerCli {
                 configDir.resolve(jobName).resolve(FsSettingsLoader.SETTINGS_YAML));
     }
 
-    private static boolean startEsClient(FsCrawlerImpl fsCrawler) {
+    private static boolean startFsCrawlerThreadAndServices(FsCrawlerImpl fsCrawler) {
         try {
             fsCrawler.start();
             return true;
         } catch (Exception t) {
-            logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
+            logger.fatal("We can not start FSCrawler Thread and Services. Exiting.", t);
             return false;
         }
     }
