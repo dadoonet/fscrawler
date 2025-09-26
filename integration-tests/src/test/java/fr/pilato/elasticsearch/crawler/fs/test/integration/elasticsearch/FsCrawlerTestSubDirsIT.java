@@ -38,13 +38,14 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiLette
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test crawler with subdirs
  */
-@TimeoutSuite(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+@TimeoutSuite(millis = 10 * TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
@@ -164,7 +165,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    @Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+    @Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
     public void subdirs_very_deep_tree() throws Exception {
 
         long subdirs = randomLongBetween(30, 100);

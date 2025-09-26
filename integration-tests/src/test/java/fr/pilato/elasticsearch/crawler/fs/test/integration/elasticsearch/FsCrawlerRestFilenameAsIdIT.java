@@ -23,7 +23,6 @@ import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
@@ -34,6 +33,7 @@ import org.junit.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ALL")
@@ -78,8 +78,8 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all docs
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), Files.list(from).count(), null, TimeValue
-                .timeValueMinutes(2));
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()),
+                Files.list(from).count(), null, MAX_WAIT_FOR_SEARCH);
         for (ESSearchHit hit : response.getHits()) {
             assertThat(hit.getId()).isEqualTo((String) JsonPath.read(hit.getSource(), "$.file.filename"));
         }

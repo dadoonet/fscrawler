@@ -47,7 +47,6 @@ public class TestContainerHelper {
     //   matches 8.3 JSON logging with started message and some follow up content within the message field
     //   matches 8.0 JSON logging with no whitespace between message field and content
     //   matches 7.x JSON logging with whitespace between message field and content
-    //   matches 6.x text logging with node name in brackets and just a 'started' message till the end of the line
     private static final String WAIT_LOGS_REGEX = ".*(\"message\":\\s?\"started[\\s?|\"].*|] started\n$)";
     private static final WaitStrategy ELASTICSEARCH_WAIT_STRATEGY = Wait
             .forLogMessage(WAIT_LOGS_REGEX, 1)
@@ -87,7 +86,7 @@ public class TestContainerHelper {
                                 .withTag(elasticsearchVersion))
                         // As for 7.x clusters, there's no https, api keys are disabled by default. We force it.
                         .withEnv("xpack.security.authc.api_key.enabled", "true")
-                        // For 6.x clusters and for semantic search, we need to activate a trial
+                        // For semantic search tests, we need to activate a trial
                         .withEnv("xpack.license.self_generated.type", "trial")
                         .withReuse(keepData)
                         .withPassword(DEFAULT_PASSWORD)

@@ -5,26 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Set up JDK 21 and Maven Central Repository
-        uses: actions/setup-java@v5
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'maven'
-      - name: Cache Docker images
-        uses: AndreKurait/docker-cache@0.6.0
-        with:
-          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
-        continue-on-error: true
-      - name: Build the project
-        run: mvn --batch-mode install -DskipTests -Ddocker.skip
-
-  deploy:
-    needs: build
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -49,5 +30,5 @@ jobs:
         with:
           githubServer: false
           servers: '[{"id": "central", "username": "${{ secrets.CENTRAL_USERNAME }}", "password": "${{ secrets.CENTRAL_TOKEN }}"},{"id": "docker.io", "username": "${{ secrets.DOCKER_USERNAME }}", "password": "${{ secrets.DOCKER_PASSWORD }}"}]'
-      - name: Deploy with Maven (but docker - tmp test)
+      - name: Deploy with Maven
         run: mvn --batch-mode deploy -DskipTests

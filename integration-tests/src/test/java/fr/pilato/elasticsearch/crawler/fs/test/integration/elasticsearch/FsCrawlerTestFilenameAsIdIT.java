@@ -30,6 +30,7 @@ import org.junit.Test;
 import java.nio.file.Files;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

@@ -32,6 +32,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -41,8 +42,8 @@ import static org.assertj.core.api.Assumptions.assumeThat;
  * activated when it should.
  */
 @Nightly("Loading semantic models could take some minutes")
-@TimeoutSuite(millis = 5 * TIMEOUT_MINUTE_AS_MS)
-@Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+@TimeoutSuite(millis = 10 * TIMEOUT_MINUTE_AS_MS)
+@Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
     /**

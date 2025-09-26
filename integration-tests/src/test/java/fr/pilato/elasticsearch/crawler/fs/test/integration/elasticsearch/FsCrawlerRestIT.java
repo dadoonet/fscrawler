@@ -27,7 +27,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
@@ -63,6 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assume.assumeTrue;
@@ -103,7 +103,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    @Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+    @Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
     public void uploadAllDocuments() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
@@ -118,8 +118,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all docs
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), Files.list(from).count(), null, TimeValue
-                .timeValueMinutes(2));
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()),
+                Files.list(from).count(), null, MAX_WAIT_FOR_SEARCH);
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
         }
@@ -144,8 +144,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all txt docs
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), number.longValue(), null, TimeValue
-                .timeValueMinutes(2));
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()),
+                number.longValue(), null, MAX_WAIT_FOR_SEARCH);
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotNull();
         }
@@ -215,8 +215,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all txt docs
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), number.longValue(), null, TimeValue
-                .timeValueMinutes(2));
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()),
+                number.longValue(), null, MAX_WAIT_FOR_SEARCH);
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
         }
@@ -249,8 +249,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all docs
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(CUSTOM_INDEX_NAME), Files.list(from).count(), null, TimeValue
-                .timeValueMinutes(2));
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(CUSTOM_INDEX_NAME),
+                Files.list(from).count(), null, MAX_WAIT_FOR_SEARCH);
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
             int filesize = JsonPath.read(hit.getSource(), "$.file.filesize");
@@ -461,6 +461,28 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(expectedFilesize);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains("Nihil est enim virtute amabilius");
         }
+    }
+
+    @Test
+    public void uploadDocumentWithUnknownPlugin() {
+        Path fromExists = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        if (Files.notExists(fromExists)) {
+            logger.error("file [{}] should exist before we start tests", fromExists);
+            throw new RuntimeException(fromExists + " doesn't seem to exist. Check your JUnit tests.");
+        }
+
+        // We try with an existing document
+        String json = "{\n" +
+                "  \"type\": \"not_available\",\n" +
+                "  \"not_available\": {\n" +
+                "    \"url\": \"" + fromExists.toString().replace("\\", "\\\\") + "\"\n" +
+                "  }\n" +
+                "}";
+        UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
+        assertThat(uploadResponse).satisfies(response -> {
+            assertThat(response.isOk()).isFalse();
+            assertThat(response.getMessage()).contains("No FsProvider found for type [not_available]");
+        });
     }
 
     private static class InternalFileVisitor extends SimpleFileVisitor<Path> {

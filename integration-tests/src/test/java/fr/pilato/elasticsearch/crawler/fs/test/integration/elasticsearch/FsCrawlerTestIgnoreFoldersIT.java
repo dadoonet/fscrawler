@@ -20,15 +20,14 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.extractMajorVersion;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Test index_folders crawler setting
@@ -48,14 +47,8 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
 
         // The folder index should not exist
-        try {
-            client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
-            // If we have an answer, it means that we are running on version 6
-            ESSearchResponse response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER));
-            assertThat(response.getTotalHits()).isZero();
-            assertThat(extractMajorVersion(client.getVersion())).isEqualTo(6);
-        } catch (ElasticsearchClientException e) {
-            assertThat(e.getMessage()).isEqualTo("index " + getCrawlerName() + INDEX_SUFFIX_FOLDER + " does not exist.");
-        }
+        assertThatThrownBy(() -> client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER)))
+                .isInstanceOfSatisfying(ElasticsearchClientException.class, e ->
+                        assertThat(e.getMessage()).isEqualTo("index " + getCrawlerName() + INDEX_SUFFIX_FOLDER + " does not exist."));
     }
 }

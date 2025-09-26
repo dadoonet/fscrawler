@@ -24,7 +24,6 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.Await;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
@@ -48,8 +47,6 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import javax.net.ssl.*;
 import java.io.*;
 import java.net.ConnectException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -71,8 +68,6 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 public class ElasticsearchClient implements IElasticsearchClient {
 
     private static final Logger logger = LogManager.getLogger();
-    @Deprecated
-    private final Path config;
     private final FsSettings settings;
     private static final String USER_AGENT = "FSCrawler-Rest-Client-" + Version.getVersion();
 
@@ -95,8 +90,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private boolean vectorSearch = false;
     private boolean serverless;
 
-    public ElasticsearchClient(Path config, FsSettings settings) {
-        this.config = config;
+    public ElasticsearchClient(FsSettings settings) {
         this.settings = settings;
         this.hosts = new ArrayList<>(settings.getElasticsearch().getNodes().size());
         this.initialHosts = new ArrayList<>(settings.getElasticsearch().getNodes().size());
@@ -327,61 +321,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return majorVersion;
     }
 
-    /**
-     * Create an index
-     * @param index index name
-     * @param ignoreExistingIndex don't fail if the index already exists
-     * @param indexSettings index settings if any
-     */
-    @Override
-    @Deprecated
-    public void createIndex(String index, boolean ignoreExistingIndex, String indexSettings) throws ElasticsearchClientException {
-        String realIndexSettings = indexSettings;
-        logger.debug("create index [{}]", index);
-        if (indexSettings == null) {
-            // We need to pass an empty body because PUT requires a body
-            realIndexSettings = "{}";
-        }
-        logger.trace("index settings: [{}]", realIndexSettings);
-        try {
-            if (majorVersion < 7) {
-                // For version < 7 we need to pass include_type_name=false (true by default)
-                httpPut(index, realIndexSettings, new AbstractMap.SimpleImmutableEntry<>("include_type_name", "false"));
-            } else {
-                httpPut(index, realIndexSettings);
-            }
-            waitForHealthyIndex(index);
-        } catch (WebApplicationException e) {
-            if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
-                logger.debug("Response for create index [{}]: {}", index, e.getMessage());
-                DocumentContext document = parseJsonAsDocumentContext(e.getResponse().readEntity(String.class));
-                String errorType = document.read("$.error.type");
-                if (!errorType.contains("resource_already_exists_exception")) {
-                    throw new ElasticsearchClientException("error while creating index " + index + ": " +
-                            document.read("$"));
-                }
-                if (errorType.contains("resource_already_exists_exception") && !ignoreExistingIndex) {
-                    throw new ElasticsearchClientException("index already exists");
-                }
-            } else {
-                throw new ElasticsearchClientException("Error while creating index " + index, e);
-            }
-        }
-    }
-
-    @Override
-    public void createIndex(String index) throws ElasticsearchClientException {
-        if (index == null || index.isEmpty()) {
-            throw new FsCrawlerIllegalConfigurationException("Index name must not be null or empty");
-        }
-
-        if (!isExistingIndex(index)) {
-            httpPut(index, null);
-        }
-
-        waitForHealthyIndex(index);
-    }
-
     @Override
     public void pushComponentTemplate(String name, String json) throws ElasticsearchClientException {
         logger.debug("push component template [{}]", name);
@@ -534,7 +473,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void indexSingle(String index, String id, String json, String pipeline) throws ElasticsearchClientException {
         logger.trace("JSon indexed : {}", json);
-        String url = index + "/" + INDEX_TYPE_DOC + "/" + id;
+        String url = index + "/_doc/" + id;
         if (!isNullOrEmpty(pipeline)) {
             url += "?pipeline=" + pipeline;
         }
@@ -550,7 +489,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public void deleteSingle(String index, String id) throws ElasticsearchClientException {
         logger.debug("Removing document : {}/{}", index, id);
         try {
-            String response = httpDelete(index + "/" + INDEX_TYPE_DOC + "/" + id, null);
+            String response = httpDelete(index + "/_doc/" + id, null);
 
             DocumentContext document = parseJsonAsDocumentContext(response);
             String result = document.read("$.result");
@@ -576,41 +515,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    /**
-     * Creates needed indices. This is only called for ES < 7 cluster.
-     * @deprecated only used with ES < 7
-     * @throws Exception in case of error
-     */
-    @Deprecated
-    private void createIndices() throws Exception {
-        if (majorVersion < 7) {
-            logger.warn("We are running on a version of Elasticsearch {} which is lower than 7.0. " +
-                    "We will not create index templates nor component templates.", version);
-            logger.warn("Instead we will create indices based on files on disk (Deprecated).");
-            Path jobMappingDir = config.resolve(settings.getName()).resolve("_mappings");
-
-            // If needed, we create the new settings for this files index
-            if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
-                createIndexWithSettings(jobMappingDir, majorVersion, INDEX_SETTINGS_FILE, settings.getElasticsearch().getIndex());
-            } else {
-                createIndex(settings.getElasticsearch().getIndex());
-            }
-
-            // If needed, we create the new settings for this folder index
-            if (settings.getFs().isIndexFolders()) {
-                createIndexWithSettings(jobMappingDir, majorVersion, INDEX_SETTINGS_FOLDER_FILE, settings.getElasticsearch().getIndexFolder());
-            }
-        } else {
-            createIndex(settings.getElasticsearch().getIndex());
-            if (settings.getFs().isIndexFolders()) {
-                createIndex(settings.getElasticsearch().getIndexFolder());
-            }
-        }
-    }
-
     @Override
     public void createIndexAndComponentTemplates() throws Exception {
-        if (settings.getElasticsearch().isPushTemplates() && majorVersion >= 7) {
+        if (settings.getElasticsearch().isPushTemplates()) {
             logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndex());
             loadAndPushComponentTemplate(majorVersion, "fscrawler_alias", settings.getElasticsearch().getIndex());
             loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_total_fields", settings.getElasticsearch().getIndex());
@@ -645,9 +552,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 loadAndPushIndexTemplate(majorVersion, "fscrawler_folders", settings.getElasticsearch().getIndexFolder());
             }
         }
-
-        // Create the indices
-        createIndices();
     }
 
     private void loadAndPushComponentTemplate(int version, String name, String index) throws IOException, ElasticsearchClientException {
@@ -776,11 +680,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
             // Parse
             DocumentContext document = parseJsonAsDocumentContext(response);
-            if (majorVersion < 7) {
-                esSearchResponse.setTotalHits(document.read("$.hits.total"));
-            } else {
-                esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
-            }
+            esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
 
             int numHits = document.read("$.hits.hits.length()");
             if (numHits < size) {
@@ -929,7 +829,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public ESSearchHit get(String index, String id) throws ElasticsearchClientException {
         logger.debug("get document [{}/{}]", index, id);
-        String response = httpGet(index + "/" + INDEX_TYPE_DOC + "/" + id);
+        String response = httpGet(index + "/_doc/" + id);
 
         // Parse the response
         DocumentContext document = parseJsonAsDocumentContext(response);
@@ -945,7 +845,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public boolean exists(String index, String id) throws ElasticsearchClientException {
         logger.debug("get document [{}/{}]", index, id);
         try {
-            httpHead(index + "/" + INDEX_TYPE_DOC + "/" + id);
+            httpHead(index + "/_doc/" + id);
             logger.debug("document [{}/{}] exists", index, id);
             return true;
         } catch (NotFoundException e) {
@@ -972,16 +872,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         // Parse the response
         DocumentContext document = parseJsonAsDocumentContext(response);
         String id = document.read("$.id");
-        String encodedApiKey;
-        try {
-            encodedApiKey = document.read("$.encoded");
-        } catch (PathNotFoundException e) {
-            // We are probably running with a version 6 which does not provide the encoded key
-            String key = document.read("$.api_key");
-            String generatedIdWithKey = id + ":" + key;
-            encodedApiKey = Base64.getEncoder().encodeToString(generatedIdWithKey.getBytes(StandardCharsets.UTF_8));
-        }
-
+        String encodedApiKey = document.read("$.encoded");
         logger.debug("generated key [{}] for [{}]: [{}]", id, keyName, encodedApiKey);
         return encodedApiKey;
     }
@@ -989,19 +880,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public boolean isSemanticSupported() {
         return semanticSearch;
-    }
-
-    @Deprecated
-    private void createIndexWithSettings(Path jobMappingDir, int elasticsearchVersion, String indexSettingsFile, String indexName) throws Exception {
-        try {
-            // If needed, we create the new settings for this files index
-            String indexSettings = readJsonFile(jobMappingDir, config, elasticsearchVersion, indexSettingsFile);
-
-            createIndex(indexName, true, indexSettings);
-        } catch (Exception e) {
-            logger.warn("failed to create index [{}], disabling crawler...", indexName);
-            throw e;
-        }
     }
 
     /**

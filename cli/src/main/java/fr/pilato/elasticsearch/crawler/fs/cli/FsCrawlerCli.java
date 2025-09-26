@@ -251,9 +251,6 @@ public class FsCrawlerCli {
         // Create the config dir if needed
         FsCrawlerUtil.createDirIfMissing(configDir);
 
-        // We copy default mapping and settings to the default settings dir .fscrawler/_default/
-        copyDefaultResources(configDir);
-
         FsSettings fsSettings;
 
         String jobName;
@@ -334,11 +331,9 @@ public class FsCrawlerCli {
             if (command.upgrade) {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
             } else {
-                if (!startEsClient(fsCrawler)) {
+                if (!startFsCrawlerThreadAndServices(fsCrawler)) {
                     return;
                 }
-                String elasticsearchVersion = fsCrawler.getManagementService().getVersion();
-                checkForDeprecatedResources(configDir, elasticsearchVersion);
 
                 // Start the REST Server if needed
                 if (command.rest) {
@@ -382,12 +377,12 @@ public class FsCrawlerCli {
                 configDir.resolve(jobName).resolve(FsSettingsLoader.SETTINGS_YAML));
     }
 
-    private static boolean startEsClient(FsCrawlerImpl fsCrawler) {
+    private static boolean startFsCrawlerThreadAndServices(FsCrawlerImpl fsCrawler) {
         try {
             fsCrawler.start();
             return true;
         } catch (Exception t) {
-            logger.fatal("We can not start Elasticsearch Client. Exiting.", t);
+            logger.fatal("We can not start FSCrawler Thread and Services. Exiting.", t);
             return false;
         }
     }
@@ -447,27 +442,6 @@ public class FsCrawlerCli {
 
     private static String separatorLine(String first, String last) {
         return first + StringUtils.center("", BANNER_LENGTH, "-") + last + "\n";
-    }
-
-    private static void checkForDeprecatedResources(Path configDir, String elasticsearchVersion) throws IOException {
-        try {
-            // If we are able to read an old configuration file, we should tell the user to check the documentation
-            readDefaultJsonVersionedFile(configDir, extractMajorVersion(elasticsearchVersion), "doc");
-            logger.warn("We found old configuration index settings: [{}/_default/doc.json]. You should look at the documentation" +
-                    " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
-                    configDir);
-        } catch (IllegalArgumentException ignored) {
-            // If we can't find the deprecated resource, it will throw an exception which needs to be ignored.
-        }
-        try {
-            // If we are able to read an old configuration file, we should tell the user to check the documentation
-            readDefaultJsonVersionedFile(configDir, extractMajorVersion(elasticsearchVersion), "folder");
-            logger.warn("We found old configuration index settings: [{}/_default/folder.json]. You should look at the documentation" +
-                    " about upgrades: https://fscrawler.readthedocs.io/en/latest/installation.html#upgrade-fscrawler.",
-                    configDir);
-        } catch (IllegalArgumentException ignored) {
-            // If we can't find the deprecated resource, it will throw an exception which needs to be ignored.
-        }
     }
 
     private static void sleep() {
