@@ -45,6 +45,7 @@ import java.nio.file.Path;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -108,8 +109,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
         crawler.start();
 
-        // We wait until we have all docs up to 5 minutes
-        countTestHelper(new ESSearchRequest().withIndex(INDEX_NAME), numFiles, null, TimeValue.timeValueMinutes(10));
+        // We wait until we have all docs up to 10 minutes
+        countTestHelper(new ESSearchRequest().withIndex(INDEX_NAME), numFiles, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
     @AfterClass

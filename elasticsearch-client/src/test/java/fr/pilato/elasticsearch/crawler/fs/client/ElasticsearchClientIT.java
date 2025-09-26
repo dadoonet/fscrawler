@@ -41,6 +41,8 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.junit.Assume.assumeTrue;
@@ -60,8 +62,6 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static String testCaCertificate;
     private static ElasticsearchClient esClient;
 
-    private static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(5);
-    private static final TimeValue MAX_WAIT_FOR_SEARCH_LONG_TESTS = TimeValue.timeValueMinutes(10);
     private static TimeValue maxWaitForSearch;
 
     @BeforeClass
@@ -146,11 +146,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.info("✅ Starting integration tests against an external cluster running elasticsearch [{}]", version);
 
         if (esClient.isSemanticSupported()) {
-            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", MAX_WAIT_FOR_SEARCH_LONG_TESTS);
             maxWaitForSearch = MAX_WAIT_FOR_SEARCH_LONG_TESTS;
+            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", maxWaitForSearch);
         } else {
-            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", MAX_WAIT_FOR_SEARCH);
             maxWaitForSearch = MAX_WAIT_FOR_SEARCH;
+            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", maxWaitForSearch);
         }
     }
 
