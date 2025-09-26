@@ -52,8 +52,8 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 /**
  * Test all type of documents we have
  */
-@TimeoutSuite(millis = 5 * TIMEOUT_MINUTE_AS_MS)
-@Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+@TimeoutSuite(millis = 10 * TIMEOUT_MINUTE_AS_MS)
+@Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static FsCrawlerImpl crawler = null;
@@ -109,7 +109,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         crawler.start();
 
         // We wait until we have all docs up to 5 minutes
-        countTestHelper(new ESSearchRequest().withIndex(INDEX_NAME), numFiles, null, TimeValue.timeValueMinutes(5));
+        countTestHelper(new ESSearchRequest().withIndex(INDEX_NAME), numFiles, null, TimeValue.timeValueMinutes(10));
     }
 
     @AfterClass

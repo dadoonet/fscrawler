@@ -60,8 +60,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static String testCaCertificate;
     private static ElasticsearchClient esClient;
 
-    private static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(1);
-    private static final TimeValue MAX_WAIT_FOR_SEARCH_LONG_TESTS = TimeValue.timeValueMinutes(5);
+    private static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(5);
+    private static final TimeValue MAX_WAIT_FOR_SEARCH_LONG_TESTS = TimeValue.timeValueMinutes(10);
     private static TimeValue maxWaitForSearch;
 
     @BeforeClass

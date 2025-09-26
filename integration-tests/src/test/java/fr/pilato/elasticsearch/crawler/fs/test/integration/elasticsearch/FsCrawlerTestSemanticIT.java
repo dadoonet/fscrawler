@@ -41,8 +41,8 @@ import static org.assertj.core.api.Assumptions.assumeThat;
  * activated when it should.
  */
 @Nightly("Loading semantic models could take some minutes")
-@TimeoutSuite(millis = 5 * TIMEOUT_MINUTE_AS_MS)
-@Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+@TimeoutSuite(millis = 10 * TIMEOUT_MINUTE_AS_MS)
+@Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
     /**

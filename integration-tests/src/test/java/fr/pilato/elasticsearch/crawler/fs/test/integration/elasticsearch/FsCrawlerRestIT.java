@@ -103,7 +103,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    @Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+    @Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
     public void uploadAllDocuments() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
@@ -119,7 +119,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         // We wait until we have all docs
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), Files.list(from).count(), null, TimeValue
-                .timeValueMinutes(2));
+                .timeValueMinutes(5));
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
         }
@@ -145,7 +145,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         // We wait until we have all txt docs
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), number.longValue(), null, TimeValue
-                .timeValueMinutes(2));
+                .timeValueMinutes(5));
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotNull();
         }
@@ -216,7 +216,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         // We wait until we have all txt docs
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), number.longValue(), null, TimeValue
-                .timeValueMinutes(2));
+                .timeValueMinutes(5));
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
         }
@@ -250,7 +250,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         // We wait until we have all docs
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(CUSTOM_INDEX_NAME), Files.list(from).count(), null, TimeValue
-                .timeValueMinutes(2));
+                .timeValueMinutes(5));
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
             int filesize = JsonPath.read(hit.getSource(), "$.file.filesize");

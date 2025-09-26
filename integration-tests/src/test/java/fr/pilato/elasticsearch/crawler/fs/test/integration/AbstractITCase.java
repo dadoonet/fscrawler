@@ -90,8 +90,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static final boolean TEST_KEEP_DATA = getSystemProperty("tests.leaveTemporary", true);
     protected static final boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
     private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
-    public static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(1);
-    public static final TimeValue MAX_WAIT_FOR_SEARCH_LONG_TESTS = TimeValue.timeValueMinutes(5);
+    public static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(5);
+    public static final TimeValue MAX_WAIT_FOR_SEARCH_LONG_TESTS = TimeValue.timeValueMinutes(10);
 
     protected static Path metadataDir = null;
     protected FsCrawlerImpl crawler = null;

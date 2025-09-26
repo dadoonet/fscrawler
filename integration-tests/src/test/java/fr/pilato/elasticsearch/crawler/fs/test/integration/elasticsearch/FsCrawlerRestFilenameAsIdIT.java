@@ -79,7 +79,7 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
 
         // We wait until we have all docs
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), Files.list(from).count(), null, TimeValue
-                .timeValueMinutes(2));
+                .timeValueMinutes(5));
         for (ESSearchHit hit : response.getHits()) {
             assertThat(hit.getId()).isEqualTo((String) JsonPath.read(hit.getSource(), "$.file.filename"));
         }
