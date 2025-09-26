@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import java.util.Map;
 import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
@@ -30,6 +31,7 @@ public class FsSettings {
     private Elasticsearch elasticsearch;
     private Rest rest;
     private Tags tags;
+    private Map<String, Object> staticTags;
 
     public String getName() {
         return name;
@@ -79,6 +81,14 @@ public class FsSettings {
         this.tags = tags;
     }
 
+    public Map<String, Object> getStaticTags() {
+        return staticTags;
+    }
+
+    public void setStaticTags(Map<String, Object> staticTags) {
+        this.staticTags = staticTags;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -91,6 +101,7 @@ public class FsSettings {
         if (!Objects.equals(server, that.server)) return false;
         if (!Objects.equals(rest, that.rest)) return false;
         if (!Objects.equals(tags, that.tags)) return false;
+        if (!Objects.equals(staticTags, that.staticTags)) return false;
         return Objects.equals(elasticsearch, that.elasticsearch);
 
     }
@@ -102,6 +113,7 @@ public class FsSettings {
         result = 31 * result + (server != null ? server.hashCode() : 0);
         result = 31 * result + (rest != null ? rest.hashCode() : 0);
         result = 31 * result + (tags != null ? tags.hashCode() : 0);
+        result = 31 * result + (staticTags != null ? staticTags.hashCode() : 0);
         result = 31 * result + (elasticsearch != null ? elasticsearch.hashCode() : 0);
         return result;
     }
