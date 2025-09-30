@@ -65,4 +65,33 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
             assertThat(provider.getFilesize()).isEqualTo(16L);
         }
     }
+
+    @Test
+    public void readFileWithVirtualPath() throws Exception {
+        String text = "Hello virtual path world!";
+        // Create subdirectory structure: rootTmpDir/path/to/foo.txt
+        Path subDir = rootTmpDir.resolve("path").resolve("to");
+        Files.createDirectories(subDir);
+        Path file = subDir.resolve("foo.txt");
+        Files.writeString(file, text);
+
+        logger.info("Starting Test with file [{}] and root [{}]", file, rootTmpDir);
+        try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
+            provider.settings("{\n" +
+                    "  \"type\": \"local\",\n" +
+                    "  \"local\": {\n" +
+                    "    \"url\": \"" + file.toString().replace("\\", "\\\\") + "\",\n" +
+                    "    \"root\": \"" + rootTmpDir.toString().replace("\\", "\\\\") + "\"\n" +
+                    "  }\n" +
+                    "}");
+            provider.start();
+            InputStream inputStream = provider.readFile();
+            String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            assertThat(object).isEqualTo(text);
+            // The virtual path should be /path/to/foo.txt (relative to root)
+            String expectedVirtualPath = "/path/to/foo.txt".replace("/", java.io.File.separator);
+            assertThat(provider.getFilename()).isEqualTo(expectedVirtualPath);
+            assertThat(provider.getFilesize()).isEqualTo(text.length());
+        }
+    }
 }

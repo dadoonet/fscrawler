@@ -41,6 +41,7 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
     @Extension
     public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract {
         private Path path;
+        private String root;
 
         @Override
         public void start() {
@@ -64,6 +65,21 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
 
         @Override
         public String getFilename() {
+            // If root is provided, compute virtual path by removing the root
+            if (root != null && !root.isEmpty()) {
+                String fullPath = path.toString();
+                if (fullPath.startsWith(root)) {
+                    String virtualPath = fullPath.substring(root.length());
+                    // Ensure the virtual path starts with a separator if it's not empty
+                    if (!virtualPath.isEmpty() && !virtualPath.startsWith("/") && !virtualPath.startsWith("\\")) {
+                        String separator = root.contains("/") ? "/" : "\\";
+                        virtualPath = separator + virtualPath;
+                    }
+                    logger.debug("Computed virtual path [{}] from full path [{}] and root [{}]", virtualPath, fullPath, root);
+                    return virtualPath;
+                }
+            }
+            // Fallback to just the filename if no root or path doesn't start with root
             return path.getFileName().toString();
         }
 
@@ -77,6 +93,15 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             String url = document.read("$.local.url");
             logger.debug("Reading local file from [{}]", url);
             path = Path.of(url);
+            
+            // Try to read optional root parameter
+            try {
+                root = document.read("$.local.root");
+                logger.debug("Root path configured as [{}]", root);
+            } catch (PathNotFoundException e) {
+                logger.debug("No root path configured, will use filename only");
+                root = null;
+            }
         }
     }
 }
