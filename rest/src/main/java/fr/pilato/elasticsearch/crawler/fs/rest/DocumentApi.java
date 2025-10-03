@@ -129,6 +129,12 @@ public class DocumentApi extends RestApi {
         String type = document.read("$.type");
 
         logger.debug("Reading document from 3rd-party [{}]", type);
+        
+        // Inject the fs.url from settings into the document for the plugin to use
+        if (settings.getFs() != null && settings.getFs().getUrl() != null) {
+            document.put("$", "_fs_url", settings.getFs().getUrl());
+            logger.trace("Injected fs.url [{}] into plugin settings", settings.getFs().getUrl());
+        }
 
         try (FsCrawlerExtensionFsProvider provider = pluginsManager.findFsProvider(type)) {
             logger.trace("Plugin [{}] found", provider.getType());

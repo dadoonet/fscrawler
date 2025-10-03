@@ -77,18 +77,19 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
 
         logger.info("Starting Test with file [{}] and root [{}]", file, rootTmpDir);
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
+            // Simulate DocumentApi injecting _fs_url
             provider.settings("{\n" +
                     "  \"type\": \"local\",\n" +
                     "  \"local\": {\n" +
-                    "    \"url\": \"" + file.toString().replace("\\", "\\\\") + "\",\n" +
-                    "    \"root\": \"" + rootTmpDir.toString().replace("\\", "\\\\") + "\"\n" +
-                    "  }\n" +
+                    "    \"url\": \"" + file.toString().replace("\\", "\\\\") + "\"\n" +
+                    "  },\n" +
+                    "  \"_fs_url\": \"" + rootTmpDir.toString().replace("\\", "\\\\") + "\"\n" +
                     "}");
             provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).isEqualTo(text);
-            // The virtual path should be /path/to/foo.txt (relative to root)
+            // The virtual path should be /path/to/foo.txt (relative to fs.url)
             String expectedVirtualPath = "/path/to/foo.txt".replace("/", java.io.File.separator);
             assertThat(provider.getFilename()).isEqualTo(expectedVirtualPath);
             assertThat(provider.getFilesize()).isEqualTo(text.length());
