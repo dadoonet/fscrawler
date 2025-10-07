@@ -72,7 +72,8 @@ public class FileAbstractorFile extends FileAbstractor<File> {
                 file.length(),
                 getOwnerName(file),
                 getGroupName(file),
-                getFilePermissions(file));
+                getFilePermissions(file),
+                getFileAcls(file));
     }
 
     @Override

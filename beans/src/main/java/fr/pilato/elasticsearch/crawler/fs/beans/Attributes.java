@@ -19,6 +19,12 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Represents additional file attributes.
  */
@@ -27,6 +33,7 @@ public class Attributes {
     private String owner;
     private String group;
     private int permissions;
+    private List<FileAcl> acl;
 
     public String getOwner() {
         return owner;
@@ -50,5 +57,17 @@ public class Attributes {
 
     public void setPermissions(int permissions) {
         this.permissions = permissions;
+    }
+
+    public List<FileAcl> getAcl() {
+        return acl != null ? Collections.unmodifiableList(acl) : null;
+    }
+
+    public void setAcl(List<FileAcl> acl) {
+        if (acl == null || acl.isEmpty()) {
+            this.acl = null;
+        } else {
+            this.acl = new ArrayList<>(acl);
+        }
     }
 }

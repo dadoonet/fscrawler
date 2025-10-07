@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -77,7 +78,8 @@ public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
                 file.getAttributes().getSize(),
                 Integer.toString(file.getAttributes().getUserId()),
                 Integer.toString(file.getAttributes().getGroupId()),
-                file.getAttributes().getPermissions());
+                file.getAttributes().getPermissions(),
+                Collections.emptyList());
     }
 
     @Override

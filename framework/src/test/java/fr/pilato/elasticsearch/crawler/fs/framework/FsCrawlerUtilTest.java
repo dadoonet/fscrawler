@@ -76,6 +76,11 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    public void aclEntries() {
+        assertThat(FsCrawlerUtil.getFileAcls(file)).isNotNull();
+    }
+
+    @Test
     public void isFileSizeUnderLimit() {
         assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1)).isTrue();
         assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576)).isTrue();

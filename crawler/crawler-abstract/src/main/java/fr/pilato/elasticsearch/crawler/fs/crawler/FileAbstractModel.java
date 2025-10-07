@@ -38,8 +38,12 @@
 
 package fr.pilato.elasticsearch.crawler.fs.crawler;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class FileAbstractModel {
     private final String name;
@@ -55,9 +59,11 @@ public class FileAbstractModel {
     private final String group;
     private final int permissions;
     private final String extension;
+    private final List<FileAcl> acls;
 
     public FileAbstractModel(String name, boolean file, LocalDateTime lastModifiedDate, LocalDateTime creationDate, LocalDateTime accessDate,
-                             String extension, String path, String fullpath, long size, String owner, String group, int permissions) {
+                             String extension, String path, String fullpath, long size, String owner, String group, int permissions,
+                             List<FileAcl> acls) {
         this.name = name;
         this.file = file;
         this.directory = !file;
@@ -71,6 +77,11 @@ public class FileAbstractModel {
         this.group = group;
         this.permissions = permissions;
         this.extension = extension;
+        if (acls == null || acls.isEmpty()) {
+            this.acls = Collections.emptyList();
+        } else {
+            this.acls = Collections.unmodifiableList(new ArrayList<>(acls));
+        }
     }
 
     public String getName() {
@@ -125,6 +136,10 @@ public class FileAbstractModel {
         return extension;
     }
 
+    public List<FileAcl> getAcls() {
+        return acls;
+    }
+
     @Override
     public String toString() {
         return "FileAbstractModel{" + "name='" + name + '\'' +
@@ -137,6 +152,7 @@ public class FileAbstractModel {
                 ", owner='" + owner + '\'' +
                 ", group='" + group + '\'' +
                 ", permissions=" + permissions +
+                ", acls=" + acls +
                 ", extension='" + extension + '\'' +
                 ", fullpath='" + fullpath + '\'' +
                 ", size=" + size +
