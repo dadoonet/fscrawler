@@ -18,6 +18,7 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.IOUtils;
@@ -80,8 +81,9 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
                 InputStream inputStream = provider.readFile();
                 String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                 assertThat(object).isEqualTo(text);
-                assertThat(provider.getFilename()).isEqualTo("foo.txt");
-                assertThat(provider.getFilesize()).isEqualTo(16L);
+                Doc doc = provider.createDocument();
+                assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+                assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
             }
         }
     }
@@ -100,8 +102,9 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).contains("Sitemap");
-            assertThat(provider.getFilename()).isEqualTo("robots.txt");
-            assertThat(provider.getFilesize()).isGreaterThan(100L);
+            Doc doc = provider.createDocument();
+            assertThat(doc.getFile().getFilename()).isEqualTo("robots.txt");
+            assertThat(doc.getFile().getFilesize()).isEqualTo(100L);
         }
     }
 }

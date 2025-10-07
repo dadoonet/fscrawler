@@ -19,6 +19,7 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 
 import com.jayway.jsonpath.PathNotFoundException;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
@@ -64,13 +65,11 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
             return url.openStream();
         }
 
-        @Override
-        public String getFilename() {
+        private String getFilename() {
             return FilenameUtils.getName(url.getPath());
         }
 
-        @Override
-        public long getFilesize() throws IOException {
+        private long getFilesize() throws IOException {
             return url.openConnection().getContentLengthLong();
         }
 
@@ -83,6 +82,14 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
             } catch (MalformedURLException e) {
                 throw new FsCrawlerIllegalConfigurationException("Invalid url [" + url + "]");
             }
+        }
+
+        @Override
+        public Doc createDocument() throws IOException {
+            Doc doc = new Doc();
+            doc.getFile().setFilename(getFilename());
+            doc.getFile().setFilesize(getFilesize());
+            return doc;
         }
     }
 }

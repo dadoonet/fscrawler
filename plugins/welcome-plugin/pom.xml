@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>fscrawler-welcome-plugin</artifactId>
+    <name>FSCrawler Welcome Plugin (demo only)</name>
     <description>FSCrawler Welcome Plugin</description>
 
     <build>

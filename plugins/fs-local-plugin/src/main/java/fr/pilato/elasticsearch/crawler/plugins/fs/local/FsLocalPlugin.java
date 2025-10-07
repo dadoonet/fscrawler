@@ -19,6 +19,7 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
 import com.jayway.jsonpath.PathNotFoundException;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import org.apache.logging.log4j.LogManager;
@@ -62,14 +63,24 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             return Files.newInputStream(path);
         }
 
-        @Override
-        public String getFilename() {
+        private String getFilename() {
             return path.getFileName().toString();
         }
 
-        @Override
-        public long getFilesize() throws IOException {
+        private long getFilesize() throws IOException {
             return Files.size(path);
+        }
+
+        @Override
+        public Doc createDocument() throws IOException {
+            String filename = getFilename();
+
+            Doc doc = new Doc();
+            doc.getFile().setFilename(filename);
+            doc.getFile().setFilesize(getFilesize());
+            doc.getPath().setVirtual(filename);
+            doc.getPath().setReal(filename);
+            return doc;
         }
 
         @Override

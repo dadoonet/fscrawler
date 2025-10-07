@@ -37,14 +37,12 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Map;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.assertj.core.api.Assumptions.assumeThatCode;
 
@@ -880,25 +878,10 @@ public class TikaDocParserTest extends DocParserTestCase {
         logger.info("Test extraction of [{}]", filename);
         InputStream data = getBinaryContent(filename);
         Doc doc = new Doc();
-        MessageDigest messageDigest = null;
-        if (fsSettings.getFs() != null && fsSettings.getFs().getChecksum() != null) {
-            try {
-                messageDigest = MessageDigest.getInstance(fsSettings.getFs().getChecksum());
-            } catch (NoSuchAlgorithmException e) {
-                fail("Algorithm [" + fsSettings.getFs().getChecksum() + "] not found: " + e.getMessage());
-            }
-        }
 
         // We make sure we reload a new Tika instance any time we test
         TikaInstance.reloadTika();
-        TikaDocParser.generate(
-                fsSettings,
-                data,
-                filename,
-                "/documents/" + filename,
-                doc,
-                messageDigest,
-                0);
+        TikaDocParser.generate(fsSettings, data, doc, 0);
 
         logger.debug("Generated Content: [{}]", doc.getContent());
         logger.debug("Generated Raw Metadata: [{}]", doc.getMeta().getRaw());

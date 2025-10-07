@@ -19,6 +19,7 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.*;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.minio.BucketExistsArgs;
@@ -119,8 +120,9 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).isEqualTo(text);
-            assertThat(provider.getFilename()).isEqualTo("foo.txt");
-            assertThat(provider.getFilesize()).isEqualTo(16L);
+            Doc doc = provider.createDocument();
+            assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+            assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
         }
     }
 }

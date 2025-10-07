@@ -19,6 +19,7 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
 import com.jayway.jsonpath.PathNotFoundException;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
@@ -100,13 +101,11 @@ public class FsS3Plugin extends FsCrawlerPlugin {
             }
         }
 
-        @Override
-        public String getFilename() {
+        private String getFilename() {
             return object;
         }
 
-        @Override
-        public long getFilesize() throws IOException {
+        private long getFilesize() throws IOException {
             logger.debug("Reading S3 filesize for file [{}] from bucket [{}/{}]", object, url, bucket);
             GetObjectArgs getObjectArgs = GetObjectArgs.builder()
                     .bucket(bucket)
@@ -119,6 +118,14 @@ public class FsS3Plugin extends FsCrawlerPlugin {
                 logger.debug("Failed to read file", e);
                 throw new FsCrawlerIllegalConfigurationException(e.getMessage());
             }
+        }
+
+        @Override
+        public Doc createDocument() throws IOException {
+            Doc doc = new Doc();
+            doc.getFile().setFilename(getFilename());
+            doc.getFile().setFilesize(getFilesize());
+            return doc;
         }
     }
 }
