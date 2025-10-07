@@ -39,7 +39,7 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch9.version>9.1.4</elasticsearch9.version>
+        <elasticsearch9.version>9.1.5</elasticsearch9.version>
         <elasticsearch8.version>8.19.3</elasticsearch8.version>
         <elasticsearch7.version>7.17.29</elasticsearch7.version>
         <elasticsearch.version>${elasticsearch9.version}</elasticsearch.version>
