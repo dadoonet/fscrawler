@@ -65,6 +65,8 @@ public class Fs {
     @Config(defaultVal = "false")
     private boolean attributesSupport;
     @Config(defaultVal = "false")
+    private boolean aclSupport;
+    @Config(defaultVal = "false")
     private boolean storeSource;
     @Config(defaultVal = "true")
     private boolean indexContent;
@@ -198,6 +200,14 @@ public class Fs {
         this.attributesSupport = attributesSupport;
     }
 
+    public boolean isAclSupport() {
+        return aclSupport;
+    }
+
+    public void setAclSupport(boolean aclSupport) {
+        this.aclSupport = aclSupport;
+    }
+
     public boolean isRawMetadata() {
         return rawMetadata;
     }
@@ -307,6 +317,7 @@ public class Fs {
                 storeSource == fs.storeSource &&
                 indexContent == fs.indexContent &&
                 attributesSupport == fs.attributesSupport &&
+                aclSupport == fs.aclSupport &&
                 rawMetadata == fs.rawMetadata &&
                 xmlSupport == fs.xmlSupport &&
                 indexFolders == fs.indexFolders &&
@@ -328,7 +339,7 @@ public class Fs {
     @Override
     public int hashCode() {
         return Objects.hash(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
-                removeDeleted, addAsInnerObject, storeSource, indexContent, indexedChars, attributesSupport, rawMetadata, xmlSupport,
+                removeDeleted, addAsInnerObject, storeSource, indexContent, indexedChars, attributesSupport, aclSupport, rawMetadata, xmlSupport,
                 checksum, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks, tikaConfigPath);
     }
 
@@ -348,6 +359,7 @@ public class Fs {
                 ", indexContent=" + indexContent +
                 ", indexedChars=" + indexedChars +
                 ", attributesSupport=" + attributesSupport +
+                ", aclSupport=" + aclSupport +
                 ", rawMetadata=" + rawMetadata +
                 ", xmlSupport=" + xmlSupport +
                 ", checksum='" + checksum + '\'' +

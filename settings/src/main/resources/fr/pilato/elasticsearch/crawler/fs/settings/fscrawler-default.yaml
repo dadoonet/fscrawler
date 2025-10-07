@@ -47,6 +47,9 @@
   # include user/group of file only if needed
   #attributes_support: false
 
+  # optional: collect file ACL entries when available (requires attributes_support)
+  #acl_support: false
+
   # optional: this will try to detect the language of the extracted content
   #lang_detect: false
 

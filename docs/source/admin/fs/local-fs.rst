@@ -30,6 +30,8 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.attributes_support``  | ``false``             | `Adding file attributes`_       |
 +----------------------------+-----------------------+---------------------------------+
+| ``fs.acl_support``         | ``false``             | `Collecting ACL metadata`_      |
++----------------------------+-----------------------+---------------------------------+
 | ``fs.raw_metadata``        | ``false``             | `Enabling raw metadata`_        |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.filename_as_id``      | ``false``             | :ref:`filename-as-id`           |
@@ -421,6 +423,22 @@ and ``attributes.permissions``, you can set ``attributes_support`` to ``true``.
 
     On Windows systems, ``attributes.group`` and ``attributes.permissions`` are
     not generated.
+
+Collecting ACL metadata
+^^^^^^^^^^^^^^^^^^^^^^^
+
+To extract NTFS access control entries (principal, type, permissions and flags),
+enable both ``attributes_support`` and ``acl_support``:
+
+.. code:: yaml
+
+   name: "test"
+   fs:
+     attributes_support: true
+     acl_support: true
+
+When ``acl_support`` is disabled, FSCrawler skips resolving ACLs even if
+``attributes_support`` is active.
 
 Enabling raw metadata
 ^^^^^^^^^^^^^^^^^^^^^

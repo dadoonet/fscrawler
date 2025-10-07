@@ -489,9 +489,11 @@ public abstract class FsParserAbstract extends FsParser {
                 if (fileAbstractModel.getPermissions() >= 0) {
                     doc.getAttributes().setPermissions(fileAbstractModel.getPermissions());
                 }
-                List<FileAcl> fileAcls = fileAbstractModel.getAcls();
-                if (!fileAcls.isEmpty()) {
-                    doc.getAttributes().setAcl(fileAcls);
+                if (fsSettings.getFs().isAclSupport()) {
+                    List<FileAcl> fileAcls = fileAbstractModel.getAcls();
+                    if (!fileAcls.isEmpty()) {
+                        doc.getAttributes().setAcl(fileAcls);
+                    }
                 }
             }
             // Attributes
