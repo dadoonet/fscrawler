@@ -876,12 +876,13 @@ public class TikaDocParserTest extends DocParserTestCase {
 
     private Doc extractFromFile(String filename, FsSettings fsSettings) throws IOException {
         logger.info("Test extraction of [{}]", filename);
-        InputStream data = getBinaryContent(filename);
         Doc doc = new Doc();
+        doc.getPath().setReal(filename);
+        doc.getFile().setFilename(filename);
 
         // We make sure we reload a new Tika instance any time we test
         TikaInstance.reloadTika();
-        TikaDocParser.generate(fsSettings, data, doc, 0);
+        TikaDocParser.generate(fsSettings, getBinaryContent(filename), doc, 0);
 
         logger.debug("Generated Content: [{}]", doc.getContent());
         logger.debug("Generated Raw Metadata: [{}]", doc.getMeta().getRaw());

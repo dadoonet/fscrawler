@@ -86,6 +86,7 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
 
         @Override
         public Doc createDocument() throws IOException {
+            logger.debug("Creating document from {}", getFilename());
             Doc doc = new Doc();
             doc.getFile().setFilename(getFilename());
             doc.getFile().setFilesize(getFilesize());

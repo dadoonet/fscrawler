@@ -101,10 +101,6 @@ public class FsS3Plugin extends FsCrawlerPlugin {
             }
         }
 
-        private String getFilename() {
-            return object;
-        }
-
         private long getFilesize() throws IOException {
             logger.debug("Reading S3 filesize for file [{}] from bucket [{}/{}]", object, url, bucket);
             GetObjectArgs getObjectArgs = GetObjectArgs.builder()
@@ -122,8 +118,11 @@ public class FsS3Plugin extends FsCrawlerPlugin {
 
         @Override
         public Doc createDocument() throws IOException {
+            logger.debug("Creating document from {}", object);
             Doc doc = new Doc();
-            doc.getFile().setFilename(getFilename());
+            doc.getFile().setFilename(object);
+            doc.getPath().setVirtual(object);
+            doc.getPath().setReal(object);
             doc.getFile().setFilesize(getFilesize());
             return doc;
         }

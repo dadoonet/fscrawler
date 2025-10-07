@@ -73,6 +73,7 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
 
         @Override
         public Doc createDocument() throws IOException {
+            logger.debug("Creating document from {}", getFilename());
             String filename = getFilename();
 
             Doc doc = new Doc();

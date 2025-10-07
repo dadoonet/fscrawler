@@ -89,22 +89,22 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void readTxtFileFromElasticCo() throws Exception {
+    public void readTxtFileFromWebsite() throws Exception {
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
             provider.settings("{\n" +
                     "  \"type\": \"http\",\n" +
                     "  \"http\": {\n" +
-                    "    \"url\": \"https://www.google.fr/robots.txt\"\n" +
+                    "    \"url\": \"https://david.pilato.fr/robots.txt\"\n" +
                     "  }\n" +
                     "}");
             provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object).contains("Sitemap");
+            assertThat(object).contains("User-agent: *");
             Doc doc = provider.createDocument();
             assertThat(doc.getFile().getFilename()).isEqualTo("robots.txt");
-            assertThat(doc.getFile().getFilesize()).isEqualTo(100L);
+            assertThat(doc.getFile().getFilesize()).isEqualTo(13L);
         }
     }
 }

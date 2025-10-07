@@ -41,7 +41,6 @@ import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
@@ -55,7 +54,6 @@ public class DocumentApi extends RestApi {
 
     private final FsCrawlerDocumentService documentService;
     private final FsSettings settings;
-    private final MessageDigest messageDigest;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
     private final FsCrawlerPluginsManager pluginsManager;
 
@@ -63,14 +61,6 @@ public class DocumentApi extends RestApi {
         this.settings = settings;
         this.documentService = documentService;
         this.pluginsManager = pluginsManager;
-
-        // Create MessageDigest instance
-        try {
-            messageDigest = settings.getFs().getChecksum() == null ?
-                    null : MessageDigest.getInstance(settings.getFs().getChecksum());
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("This should never happen as we checked that previously");
-        }
     }
 
     @POST
@@ -137,7 +127,7 @@ public class DocumentApi extends RestApi {
             InputStream inputStream = provider.readFile();
 
             Doc doc = provider.createDocument();
-            enrichDoc(doc, settings, null, inputStream);
+            doc = enrichDoc(doc, settings, null, inputStream);
             return uploadToDocumentService(debug, simulate, id, index, doc);
         } catch (Exception e) {
             logger.debug("Failed to add document from [{}] 3rd-party: [{}] - [{}]",
@@ -205,10 +195,13 @@ public class DocumentApi extends RestApi {
         }
 
         Doc doc = new Doc();
-        doc.getFile().setFilename(new String(d.getFileName().getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
+        String filename = new String(d.getFileName().getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+        doc.getFile().setFilename(filename);
+        doc.getPath().setVirtual(filename);
+        doc.getPath().setReal(filename);
         doc.getFile().setFilesize(d.getSize());
 
-        enrichDoc(doc, settings, tags, filecontent);
+        doc = enrichDoc(doc, settings, tags, filecontent);
         return uploadToDocumentService(debug, simulate, id, index, doc);
     }
 
