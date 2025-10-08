@@ -54,6 +54,9 @@
         <log4j.version>2.25.2</log4j.version>
         <jersey.version>3.1.11</jersey.version>
 
+        <!-- For FSCrawler S3 plugin -->
+        <minio.version>8.6.0</minio.version>
+
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
         <jpeg.version>1.4.0</jpeg.version>
@@ -512,6 +515,23 @@
                 <groupId>org.pf4j</groupId>
                 <artifactId>pf4j</artifactId>
                 <version>${pl4j.version}</version>
+            </dependency>
+
+            <!-- For FSCrawler S3 plugin -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp-jvm</artifactId>
+                <version>5.2.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okio</groupId>
+                <artifactId>okio-jvm</artifactId>
+                <version>3.16.0</version>
             </dependency>
 
             <dependency>
