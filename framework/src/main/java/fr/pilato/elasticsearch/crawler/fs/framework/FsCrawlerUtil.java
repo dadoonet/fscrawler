@@ -392,20 +392,24 @@ public class FsCrawlerUtil {
      * Determines Access Control List entries for the given file.
      */
     public static List<FileAcl> getFileAcls(final File file) {
+        System.out.println("[ACL DEBUG] Resolving ACLs for " + file.getAbsolutePath());
         try {
             final Path path = Paths.get(file.getAbsolutePath());
             final AclFileAttributeView aclView = Files.getFileAttributeView(path, AclFileAttributeView.class);
             if (aclView == null) {
+                System.out.println("[ACL DEBUG] ACL view not supported for " + file.getAbsolutePath());
                 logger.trace("Determining 'acl' is skipped for file [{}] as ACL view is not supported", file);
                 return Collections.emptyList();
             }
 
             final List<AclEntry> aclEntries = aclView.getAcl();
             if (aclEntries == null || aclEntries.isEmpty()) {
+                System.out.println("[ACL DEBUG] No ACL entries found for " + file.getAbsolutePath());
                 return Collections.emptyList();
             }
 
             final List<FileAcl> result = new ArrayList<>(aclEntries.size());
+            System.out.println("[ACL DEBUG] Found " + aclEntries.size() + " ACL entries for " + file.getAbsolutePath());
             for (AclEntry entry : aclEntries) {
                 final String principal = entry.principal() != null ? entry.principal().getName() : null;
                 final String type = entry.type() != null ? entry.type().name() : null;
@@ -418,10 +422,12 @@ public class FsCrawlerUtil {
                         .sorted()
                         .collect(Collectors.toList());
                 result.add(new FileAcl(principal, type, permissions, flags));
+                System.out.println("[ACL DEBUG] Entry -> principal=" + principal + ", type=" + type + ", permissions=" + permissions + ", flags=" + flags);
             }
 
             return Collections.unmodifiableList(result);
         } catch (Exception e) {
+            System.out.println("[ACL DEBUG] Failed to resolve ACLs for " + file.getAbsolutePath() + ": " + e.getMessage());
             logger.warn("Failed to determine 'acl' of {}: {}", file, e.getMessage());
             logger.debug("Full stacktrace", e);
             return Collections.emptyList();
