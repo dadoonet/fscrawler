@@ -12,20 +12,10 @@
     <artifactId>fscrawler-fs-s3-plugin</artifactId>
     <description>FSCrawler S3 Plugin</description>
 
-    <properties>
-        <minio.version>8.6.0</minio.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>${minio.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp-jvm</artifactId>
-            <version>5.2.0</version>
         </dependency>
 
         <dependency>
