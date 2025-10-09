@@ -342,7 +342,7 @@ public class FsCrawlerUtil {
      */
     public static String getGroupName(final File file) {
         if (OsValidator.WINDOWS) {
-            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            logger.debug("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
             return null;
         }
         try {
@@ -396,7 +396,7 @@ public class FsCrawlerUtil {
             final Path path = Paths.get(file.getAbsolutePath());
             final AclFileAttributeView aclView = Files.getFileAttributeView(path, AclFileAttributeView.class);
             if (aclView == null) {
-                logger.trace("Determining 'acl' is skipped for file [{}] as ACL view is not supported", file);
+                logger.debug("Determining 'acl' is skipped for file [{}] as ACL view is not supported", file);
                 return Collections.emptyList();
             }
 
@@ -423,7 +423,6 @@ public class FsCrawlerUtil {
             return Collections.unmodifiableList(result);
         } catch (Exception e) {
             logger.warn("Failed to determine 'acl' of {}: {}", file, e.getMessage());
-            logger.debug("Full stacktrace", e);
             return Collections.emptyList();
         }
     }
