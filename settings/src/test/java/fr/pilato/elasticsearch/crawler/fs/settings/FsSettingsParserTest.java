@@ -91,4 +91,12 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setPathPrefix("/path/to/elasticsearch");
         settingsTester(fsSettings);
     }
+
+    @Test
+    public void parseSettingsWithAclSupport() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setAttributesSupport(true);
+        fsSettings.getFs().setAclSupport(true);
+        settingsTester(fsSettings);
+    }
 }

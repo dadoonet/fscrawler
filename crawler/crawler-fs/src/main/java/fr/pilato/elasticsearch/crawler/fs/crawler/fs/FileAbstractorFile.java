@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
@@ -60,6 +61,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
 
     @Override
     public FileAbstractModel toFileAbstractModel(String path, File file) {
+        final boolean collectAcls = fsSettings.getFs().isAclSupport();
         return new FileAbstractModel(
                 file.getName(),
                 file.isFile(),
@@ -72,7 +74,8 @@ public class FileAbstractorFile extends FileAbstractor<File> {
                 file.length(),
                 getOwnerName(file),
                 getGroupName(file),
-                getFilePermissions(file));
+                getFilePermissions(file),
+                collectAcls ? getFileAcls(file) : Collections.emptyList());
     }
 
     @Override
