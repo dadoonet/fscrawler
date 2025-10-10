@@ -41,6 +41,7 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
     @Extension
     public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract {
         private Path path;
+        private String fsUrl;
 
         @Override
         public void start() {
@@ -64,6 +65,21 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
 
         @Override
         public String getFilename() {
+            // If fs.url is available, compute virtual path by removing the root
+            if (fsUrl != null && !fsUrl.isEmpty()) {
+                String fullPath = path.toString();
+                if (fullPath.startsWith(fsUrl)) {
+                    String virtualPath = fullPath.substring(fsUrl.length());
+                    // Ensure the virtual path starts with a separator if it's not empty
+                    if (!virtualPath.isEmpty() && !virtualPath.startsWith("/") && !virtualPath.startsWith("\\")) {
+                        String separator = fsUrl.contains("/") ? "/" : "\\";
+                        virtualPath = separator + virtualPath;
+                    }
+                    logger.debug("Computed virtual path [{}] from full path [{}] and fs.url [{}]", virtualPath, fullPath, fsUrl);
+                    return virtualPath;
+                }
+            }
+            // Fallback to just the filename if no fs.url or path doesn't start with fs.url
             return path.getFileName().toString();
         }
 
@@ -77,6 +93,15 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             String url = document.read("$.local.url");
             logger.debug("Reading local file from [{}]", url);
             path = Path.of(url);
+            
+            // Try to read the injected _fs_url parameter from DocumentApi
+            try {
+                fsUrl = document.read("$._fs_url");
+                logger.debug("Using fs.url [{}] for virtual path computation", fsUrl);
+            } catch (PathNotFoundException e) {
+                logger.debug("No fs.url available, will use filename only");
+                fsUrl = null;
+            }
         }
     }
 }
