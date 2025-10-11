@@ -1,0 +1,3 @@
+external:
+  environment: "development"  # This will override the static "production" value
+  priority: "high"            # This is additional metadata from the file

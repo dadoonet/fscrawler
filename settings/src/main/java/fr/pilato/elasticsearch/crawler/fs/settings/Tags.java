@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import org.github.gestalt.config.annotations.Config;
 
+import java.util.Map;
 import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
@@ -53,6 +54,6 @@ public class Tags {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(metaFilename);
+        return Objects.hash(metaFilename);
     }
 }
