@@ -208,9 +208,10 @@ Local plugin
 ~~~~~~~~~~~~
 
 The ``local`` plugin reads a file from the server where FSCrawler is running (a local file).
-It needs the following parameter:
+It supports the following parameters:
 
-* ``url``: link to the local file
+* ``url``: link to the local file (required)
+* ``root``: root directory path for computing the virtual path (optional)
 
 For example, we can read the file ``bar.txt`` from the ``/path/to/foo`` directory with:
 
@@ -222,6 +223,22 @@ For example, we can read the file ``bar.txt`` from the ``/path/to/foo`` director
         "url": "/path/to/foo/bar.txt"
       }
     }'
+
+If you want the indexed document to have the proper virtual path (relative to a root directory),
+you can provide the ``root`` parameter. For example, if your FSCrawler is configured to crawl
+``/tmp/es`` and you want to index a file at ``/tmp/es/path/to/file.txt``, you can use:
+
+.. code:: sh
+
+    curl -XPOST http://127.0.0.1:8080/fscrawler/_document -H 'Content-Type: application/json' -d '{
+      "type": "local",
+      "local": {
+        "url": "/tmp/es/path/to/file.txt",
+        "root": "/tmp/es"
+      }
+    }'
+
+This will set the ``path.virtual`` field to ``/path/to/file.txt`` instead of just ``file.txt``.
 
 HTTP plugin
 ~~~~~~~~~~~
