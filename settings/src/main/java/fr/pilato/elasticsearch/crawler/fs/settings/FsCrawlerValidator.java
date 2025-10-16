@@ -89,6 +89,10 @@ public class FsCrawlerValidator {
             logger.info("attributes_support is set to true but getting group is not available on [{}].", OsValidator.OS);
         }
 
+        if (settings.getFs().isAclSupport() && !settings.getFs().isAttributesSupport()) {
+            logger.warn("acl_support is set to true but attributes_support is false. ACL collection is disabled.");
+        }
+
         return false;
     }
 }
