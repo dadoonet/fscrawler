@@ -90,6 +90,8 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
             Doc doc = new Doc();
             doc.getFile().setFilename(getFilename());
             doc.getFile().setFilesize(getFilesize());
+            doc.getPath().setVirtual(getFilename());
+            doc.getPath().setReal(getFilename());
             return doc;
         }
     }
