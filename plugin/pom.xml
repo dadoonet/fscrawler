@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>fscrawler-plugin</artifactId>
+    <name>FSCrawler Plugin Framework</name>
 
     <build>
         <plugins>
@@ -28,6 +29,10 @@
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-settings</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-beans</artifactId>
         </dependency>
     </dependencies>
 

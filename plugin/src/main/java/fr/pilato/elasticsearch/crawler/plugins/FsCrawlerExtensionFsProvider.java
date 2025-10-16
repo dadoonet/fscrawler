@@ -18,6 +18,7 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import org.pf4j.ExtensionPoint;
 
 import java.io.IOException;
@@ -29,6 +30,10 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
     void stop() throws Exception;
     String getType();
     InputStream readFile() throws IOException;
-    String getFilename();
-    long getFilesize() throws IOException;
+
+    /**
+     * Create the document with metadata from the provider
+     * @return the created document
+     */
+    Doc createDocument() throws IOException;
 }

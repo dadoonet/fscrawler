@@ -22,6 +22,8 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+
 public class ESSearchRequest {
 
     private String index;
@@ -93,5 +95,10 @@ public class ESSearchRequest {
     public ESSearchRequest withAggregation(ESTermsAggregation aggregation) {
         this.aggregations.add(aggregation);
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return serialize(this);
     }
 }

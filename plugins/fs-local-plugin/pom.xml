@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>fscrawler-fs-local-plugin</artifactId>
+    <name>FSCrawler Local Plugin</name>
     <description>FSCrawler Local Plugin</description>
 
     <build>

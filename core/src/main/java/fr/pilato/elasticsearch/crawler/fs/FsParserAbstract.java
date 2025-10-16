@@ -39,7 +39,6 @@ import java.io.*;
 import java.io.File;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -61,7 +60,6 @@ public abstract class FsParserAbstract extends FsParser {
     private final FsCrawlerManagementService managementService;
     private final FsCrawlerDocumentService documentService;
     private final Integer loop;
-    private final MessageDigest messageDigest;
     private final String pathSeparator;
     private final FileAbstractor<?> fileAbstractor;
     private final String metadataFilename;
@@ -77,17 +75,6 @@ public abstract class FsParserAbstract extends FsParser {
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
-
-        // Create MessageDigest instance
-        if (fsSettings.getFs().getChecksum() != null) {
-            try {
-                messageDigest = MessageDigest.getInstance(fsSettings.getFs().getChecksum());
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("This should never happen as we checked that previously");
-            }
-        } else {
-            messageDigest = null;
-        }
 
         pathSeparator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
         if (OsValidator.WINDOWS && fsSettings.getServer() == null) {
@@ -500,7 +487,7 @@ public abstract class FsParserAbstract extends FsParser {
                 doc.setObject(XmlDocParser.generateMap(inputStream));
             } else {
                 // Extracting content with Tika
-                TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
+                TikaDocParser.generate(fsSettings, inputStream, doc, filesize);
             }
 
             Doc mergedDoc = DocUtils.getMergedDoc(doc, metadataFilename, externalTags);

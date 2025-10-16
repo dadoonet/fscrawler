@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>fscrawler-fs-s3-plugin</artifactId>
+    <name>FSCrawler S3 Plugin</name>
     <description>FSCrawler S3 Plugin</description>
 
     <dependencies>
