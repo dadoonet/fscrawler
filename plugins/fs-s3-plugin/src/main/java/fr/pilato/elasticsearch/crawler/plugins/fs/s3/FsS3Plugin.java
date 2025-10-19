@@ -21,6 +21,8 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import io.minio.GetObjectArgs;
@@ -69,7 +71,21 @@ public class FsS3Plugin extends FsCrawlerPlugin {
         }
 
         @Override
-        public void start() {
+        protected void validateSettings() throws PathNotFoundException {
+            if (FsCrawlerUtil.isNullOrEmpty(url)) {
+                throw new FsCrawlerIllegalConfigurationException("S3 URL is missing");
+            }
+            if (FsCrawlerUtil.isNullOrEmpty(bucket)) {
+                throw new FsCrawlerIllegalConfigurationException("S3 bucket is missing");
+            }
+            if (FsCrawlerUtil.isNullOrEmpty(object)) {
+                throw new FsCrawlerIllegalConfigurationException("S3 object is missing");
+            }
+        }
+
+        @Override
+        public void start(FsSettings fsSettings, String restSettings) {
+            super.start(fsSettings, restSettings);
             minioClient = MinioClient.builder()
                     .endpoint(url)
                     .credentials(accesKey, secretKey)
@@ -78,6 +94,7 @@ public class FsS3Plugin extends FsCrawlerPlugin {
 
         @Override
         public void stop() throws Exception {
+            super.stop();
             logger.debug("Closing FsCrawlerExtensionFsProviderS3");
             if (minioClient != null) {
                 logger.debug("Closing minioClient");

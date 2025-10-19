@@ -20,6 +20,7 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.*;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.minio.BucketExistsArgs;
@@ -106,7 +107,7 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
 
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsS3Plugin.FsCrawlerExtensionFsProviderS3()) {
-            provider.settings("{\n" +
+            provider.start(FsSettingsLoader.load(), "{\n" +
                     "  \"type\": \"s3\",\n" +
                     "  \"s3\": {\n" +
                     "    \"url\": \"" + s3Url + "\",\n" +
@@ -116,7 +117,6 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
                     "    \"secret_key\": \"" + s3Password + "\"\n" +
                     "  }\n" +
                     "}");
-            provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).isEqualTo(text);

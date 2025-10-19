@@ -31,6 +31,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
+
 public class FsLocalPlugin extends FsCrawlerPlugin {
     private static final Logger logger = LogManager.getLogger();
 
@@ -42,16 +44,7 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
     @Extension
     public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract {
         private Path path;
-
-        @Override
-        public void start() {
-
-        }
-
-        @Override
-        public void stop() {
-
-        }
+        private String url;
 
         @Override
         public String getType() {
@@ -77,18 +70,35 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             String filename = getFilename();
 
             Doc doc = new Doc();
+            // The file name without the path
             doc.getFile().setFilename(filename);
             doc.getFile().setFilesize(getFilesize());
-            doc.getPath().setVirtual(filename);
-            doc.getPath().setReal(filename);
+            // The virtual URL (not including the initial root dir)
+            doc.getPath().setVirtual(computeVirtualPathName(fsSettings.getFs().getUrl(), filename));
+            // The real URL on the filesystem
+            doc.getPath().setReal(path.toAbsolutePath().toString());
             return doc;
         }
 
         @Override
         protected void parseSettings() throws PathNotFoundException {
-            String url = document.read("$.local.url");
-            logger.debug("Reading local file from [{}]", url);
-            path = Path.of(url);
+            url = document.read("$.local.url");
+        }
+
+        @Override
+        protected void validateSettings() throws IOException {
+            Path rootPath = Path.of(fsSettings.getFs().getUrl());
+            logger.debug("Reading file {} from {}", url, rootPath);
+
+            path = rootPath.resolve(url);
+            if (Files.notExists(path)) {
+                throw new IOException("File " + path.toAbsolutePath() + " does not exist");
+            }
+
+            // Check that the url is under the rootPath
+            if (!path.startsWith(rootPath.toAbsolutePath())) {
+                throw new IOException("File " + path.toAbsolutePath() + " is not within " + rootPath.toAbsolutePath());
+            }
         }
     }
 }

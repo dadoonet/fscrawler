@@ -19,14 +19,14 @@
 package fr.pilato.elasticsearch.crawler.plugins;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.pf4j.ExtensionPoint;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoCloseable {
-    void settings(String settings);
-    void start();
+    void start(FsSettings fsSettings, String restSettings);
     void stop() throws Exception;
     String getType();
     InputStream readFile() throws IOException;

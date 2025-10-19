@@ -352,34 +352,53 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     public void uploadDocumentWithFsPlugin() throws Exception {
-        Path fromDoesNotExist = rootTmpDir.resolve("resources").resolve("documents").resolve("foobar").resolve("foobar.txt");
-        Path fromExists = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
-        if (Files.notExists(fromExists)) {
-            logger.error("file [{}] should exist before we start tests", fromExists);
-            throw new RuntimeException(fromExists + " doesn't seem to exist. Check your JUnit tests.");
+        Path fileDoesNotExist = rootTmpDir.resolve("resources").resolve("documents").resolve("foobar").resolve("foobar.txt");
+        Path fileOutsideWatchedDir = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path correctFile = currentTestResourceDir.resolve("roottxtfile.txt");
+        if (Files.notExists(fileOutsideWatchedDir)) {
+            logger.error("file [{}] should exist before we start tests", fileOutsideWatchedDir);
+            throw new RuntimeException(fileOutsideWatchedDir + " doesn't seem to exist. Check your JUnit tests.");
         }
-        if (Files.exists(fromDoesNotExist)) {
-            logger.error("file [{}] should not exist before we start tests", fromDoesNotExist);
-            throw new RuntimeException(fromDoesNotExist + " exists. Check your JUnit tests.");
+        if (Files.exists(fileDoesNotExist)) {
+            logger.error("file [{}] should not exist before we start tests", fileDoesNotExist);
+            throw new RuntimeException(fileDoesNotExist + " exists. Check your JUnit tests.");
+        }
+        if (Files.notExists(correctFile)) {
+            logger.error("file [{}] should exist before we start tests", correctFile);
+            throw new RuntimeException(correctFile + " doesn't seem to exist. Check your JUnit tests.");
         }
 
         // We try with a document that does not exist
         String json = "{\n" +
                 "  \"type\": \"local\",\n" +
                 "  \"local\": {\n" +
-                "    \"url\": \"" + fromDoesNotExist.toString().replace("\\", "\\\\") + "\"\n" +
+                "    \"url\": \"" + fileDoesNotExist.toString().replace("\\", "\\\\") + "\"\n" +
                 "  }\n" +
                 "}";
         UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
         assertThat(uploadResponse.isOk()).isFalse();
-        assertThat(uploadResponse.getMessage()).contains("NoSuchFileException");
-        assertThat(uploadResponse.getMessage()).contains(fromDoesNotExist.toString());
+        assertThat(uploadResponse.getMessage()).contains("FsCrawlerIllegalConfigurationException");
+        assertThat(uploadResponse.getMessage()).contains(fileDoesNotExist.toString());
 
-        // We try with an existing document
+        // We try with an existing document which is not part of the crawler fs.url
         json = "{\n" +
                 "  \"type\": \"local\",\n" +
                 "  \"local\": {\n" +
-                "    \"url\": \"" + fromExists.toString().replace("\\", "\\\\") + "\"\n" +
+                "    \"url\": \"" + fileOutsideWatchedDir.toString().replace("\\", "\\\\") + "\"\n" +
+                "  }\n" +
+                "}";
+        uploadResponse = post(target, "/_document", json, UploadResponse.class);
+        assertThat(uploadResponse.isOk()).isFalse();
+        assertThat(uploadResponse.getMessage())
+                .contains("FsCrawlerIllegalConfigurationException")
+                .contains("is not within")
+                .contains(fileOutsideWatchedDir.toString());
+
+        // We try with an existing document which is part of the crawler fs.url
+        json = "{\n" +
+                "  \"type\": \"local\",\n" +
+                "  \"local\": {\n" +
+                "    \"url\": \"" + correctFile.toString().replace("\\", "\\\\") + "\"\n" +
                 "  }\n" +
                 "}";
         uploadResponse = post(target, "/_document", json, UploadResponse.class);
@@ -387,7 +406,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         // We wait until we have our document
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-        assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("test.txt");
+        assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("roottxtfile.txt");
         assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(30);
         assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains("This file contains some words.");
     }

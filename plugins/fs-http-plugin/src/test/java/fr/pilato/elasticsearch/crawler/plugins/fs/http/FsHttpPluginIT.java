@@ -19,6 +19,7 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.IOUtils;
@@ -71,13 +72,12 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
 
             logger.info("Starting Test");
             try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-                provider.settings("{\n" +
+                provider.start(FsSettingsLoader.load(), "{\n" +
                         "  \"type\": \"http\",\n" +
                         "  \"http\": {\n" +
                         "    \"url\": \"" + url + "/foo.txt\"\n" +
                         "  }\n" +
                         "}");
-                provider.start();
                 InputStream inputStream = provider.readFile();
                 String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                 assertThat(object).isEqualTo(text);
@@ -92,13 +92,12 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     public void readTxtFileFromWebsite() throws Exception {
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-            provider.settings("{\n" +
+            provider.start(FsSettingsLoader.load(), "{\n" +
                     "  \"type\": \"http\",\n" +
                     "  \"http\": {\n" +
                     "    \"url\": \"https://david.pilato.fr/robots.txt\"\n" +
                     "  }\n" +
                     "}");
-            provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).contains("User-agent: *");

@@ -245,11 +245,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
-        // Load all plugins
-        pluginsManager = new FsCrawlerPluginsManager();
-        pluginsManager.loadPlugins();
-        pluginsManager.startPlugins();
-
         logger.debug("Generate settings against [{}] with ssl check [{}]", testClusterUrl, testCheckCertificate);
 
         FsSettings fsSettings = FsSettingsLoader.load();
@@ -348,6 +343,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             // Start a new client with the Api Key
             client = startClient(fsSettings);
         }
+
+        // Load all plugins
+        pluginsManager = new FsCrawlerPluginsManager();
+        pluginsManager.loadPlugins();
+        pluginsManager.startPlugins();
 
         String version = client.getVersion();
         logger.info("✅ Starting integration tests against an external cluster running elasticsearch [{}]", version);

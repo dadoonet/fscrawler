@@ -122,8 +122,7 @@ public class DocumentApi extends RestApi {
 
         try (FsCrawlerExtensionFsProvider provider = pluginsManager.findFsProvider(type)) {
             logger.trace("Plugin [{}] found", provider.getType());
-            provider.settings(document.jsonString());
-            provider.start();
+            provider.start(settings, document.jsonString());
             InputStream inputStream = provider.readFile();
 
             Doc doc = provider.createDocument();

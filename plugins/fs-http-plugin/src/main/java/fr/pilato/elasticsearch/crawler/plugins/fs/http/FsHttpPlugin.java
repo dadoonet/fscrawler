@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import org.apache.commons.io.FilenameUtils;
@@ -43,17 +44,8 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
 
     @Extension
     public static class FsCrawlerExtensionFsProviderHttp extends FsCrawlerExtensionFsProviderAbstract {
+        private String urlFromJson;
         private URL url;
-
-        @Override
-        public void start() {
-
-        }
-
-        @Override
-        public void stop() {
-
-        }
 
         @Override
         public String getType() {
@@ -62,6 +54,7 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
 
         @Override
         public InputStream readFile() throws IOException {
+            logger.debug("Reading http file from [{}]", url);
             return url.openStream();
         }
 
@@ -75,8 +68,14 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
 
         @Override
         protected void parseSettings() throws PathNotFoundException {
-            String urlFromJson = document.read("$.http.url");
-            logger.debug("Reading http file from [{}]", urlFromJson);
+            urlFromJson = document.read("$.http.url");
+        }
+
+        @Override
+        protected void validateSettings() throws PathNotFoundException {
+            if (FsCrawlerUtil.isNullOrEmpty(urlFromJson)) {
+                throw new FsCrawlerIllegalConfigurationException("HTTP URL is missing");
+            }
             try {
                 url = new URL(urlFromJson);
             } catch (MalformedURLException e) {
