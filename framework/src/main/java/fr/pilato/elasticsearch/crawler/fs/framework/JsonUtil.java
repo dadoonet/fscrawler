@@ -70,7 +70,7 @@ public class JsonUtil {
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        mapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
 
         prettyMapper = new ObjectMapper();
         prettyMapper.registerModule(new JavaTimeModule());
@@ -81,7 +81,7 @@ public class JsonUtil {
         prettyMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         prettyMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         prettyMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        prettyMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        prettyMapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
 
         YAMLFactory yamlFactory = new YAMLFactory();
         ymlMapper = new ObjectMapper(yamlFactory);
@@ -93,7 +93,7 @@ public class JsonUtil {
         ymlMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         ymlMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         ymlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        ymlMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        ymlMapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
     }
 
     public static String serialize(Object object) {
