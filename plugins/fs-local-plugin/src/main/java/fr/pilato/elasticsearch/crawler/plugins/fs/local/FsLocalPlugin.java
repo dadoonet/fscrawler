@@ -87,17 +87,17 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
 
         @Override
         protected void validateSettings() throws IOException {
-            Path rootPath = Path.of(fsSettings.getFs().getUrl());
+            Path rootPath = Path.of(fsSettings.getFs().getUrl()).toAbsolutePath().normalize();
             logger.debug("Reading file {} from {}", url, rootPath);
 
-            path = rootPath.resolve(url);
+            path = rootPath.resolve(url).normalize();
             if (Files.notExists(path)) {
                 throw new IOException("File " + path.toAbsolutePath() + " does not exist");
             }
 
             // Check that the url is under the rootPath
-            if (!path.startsWith(rootPath.toAbsolutePath())) {
-                throw new IOException("File " + path.toAbsolutePath() + " is not within " + rootPath.toAbsolutePath());
+            if (!path.startsWith(rootPath)) {
+                throw new IOException("File " + path.toAbsolutePath() + " is not within " + rootPath);
             }
         }
     }

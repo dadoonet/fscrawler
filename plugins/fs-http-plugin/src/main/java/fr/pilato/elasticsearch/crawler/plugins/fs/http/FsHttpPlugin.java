@@ -79,7 +79,7 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
             try {
                 url = new URL(urlFromJson);
             } catch (MalformedURLException e) {
-                throw new FsCrawlerIllegalConfigurationException("Invalid url [" + url + "]");
+                throw new FsCrawlerIllegalConfigurationException("Invalid url [" + urlFromJson + "]");
             }
         }
 
