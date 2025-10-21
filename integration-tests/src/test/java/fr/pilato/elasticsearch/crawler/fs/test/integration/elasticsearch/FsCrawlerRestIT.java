@@ -409,6 +409,13 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("roottxtfile.txt");
         assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(30);
         assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains("This file contains some words.");
+        if (OsValidator.WINDOWS) {
+            assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.path.virtual")).isEqualTo("\\");
+        } else {
+            assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.path.virtual")).isEqualTo("/");
+        }
+        assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.path.real")).isEqualTo(correctFile.toAbsolutePath().toString());
+
     }
 
     @Test

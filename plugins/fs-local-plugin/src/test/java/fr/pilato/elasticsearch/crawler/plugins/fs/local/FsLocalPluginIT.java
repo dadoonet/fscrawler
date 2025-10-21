@@ -20,6 +20,7 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -73,7 +74,11 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
             Doc doc = provider.createDocument();
             assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
             assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
-            assertThat(doc.getPath().getVirtual()).isEqualTo("/");
+            if (OsValidator.WINDOWS) {
+                assertThat(doc.getPath().getVirtual()).isEqualTo("\\");
+            } else {
+                assertThat(doc.getPath().getVirtual()).isEqualTo("/");
+            }
             assertThat(doc.getPath().getReal()).isEqualTo(fileName.toAbsolutePath().toString());
         }
     }
@@ -99,7 +104,11 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
             Doc doc = provider.createDocument();
             assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
             assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
-            assertThat(doc.getPath().getVirtual()).isEqualTo("/");
+            if (OsValidator.WINDOWS) {
+                assertThat(doc.getPath().getVirtual()).isEqualTo("\\");
+            } else {
+                assertThat(doc.getPath().getVirtual()).isEqualTo("/");
+            }
             assertThat(doc.getPath().getReal()).isEqualTo(fileName.toAbsolutePath().toString());
         }
     }
