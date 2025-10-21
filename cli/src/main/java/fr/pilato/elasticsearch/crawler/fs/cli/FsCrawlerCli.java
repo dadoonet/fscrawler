@@ -57,7 +57,6 @@ public class FsCrawlerCli {
     private static final long CLOSE_POLLING_WAIT_MS = 100;
 
     private static final Logger logger = LogManager.getLogger();
-    private static FsCrawlerPluginsManager pluginsManager;
     private static RestServer restServer;
 
     @SuppressWarnings("CanBeFinal")
@@ -131,10 +130,6 @@ public class FsCrawlerCli {
 
             // Display the welcome banner
             banner();
-
-            // Load all plugins
-            pluginsManager = new FsCrawlerPluginsManager();
-            pluginsManager.loadPlugins();
 
             // We can now launch the crawler
             runner(command);
@@ -324,6 +319,9 @@ public class FsCrawlerCli {
             return;
         }
 
+        // Load all plugins
+        FsCrawlerPluginsManager pluginsManager = new FsCrawlerPluginsManager();
+        pluginsManager.loadPlugins();
         pluginsManager.startPlugins();
 
         try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, command.loop, command.rest)) {
@@ -392,7 +390,7 @@ public class FsCrawlerCli {
     /**
      * This is coming from: <a href="https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler">https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler</a>
      */
-    private static final String ASCII_ART = "" +
+    private static final String ASCII_ART =
             "    ,---,.  .--.--.     ,----..                                     ,--,                      \n" +
             "  ,'  .' | /  /    '.  /   /   \\                                  ,--.'|                      \n" +
             ",---.'   ||  :  /`. / |   :     :  __  ,-.                   .---.|  | :               __  ,-.\n" +

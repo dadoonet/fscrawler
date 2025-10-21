@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>fscrawler-plugins</artifactId>
+    <name>FSCrawler Plugins Parent</name>
     <packaging>pom</packaging>
 
     <modules>

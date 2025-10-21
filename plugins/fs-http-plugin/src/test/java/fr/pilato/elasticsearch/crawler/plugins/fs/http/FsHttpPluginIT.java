@@ -18,6 +18,8 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.IOUtils;
@@ -70,38 +72,38 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
 
             logger.info("Starting Test");
             try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-                provider.settings("{\n" +
+                provider.start(FsSettingsLoader.load(), "{\n" +
                         "  \"type\": \"http\",\n" +
                         "  \"http\": {\n" +
                         "    \"url\": \"" + url + "/foo.txt\"\n" +
                         "  }\n" +
                         "}");
-                provider.start();
                 InputStream inputStream = provider.readFile();
                 String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                 assertThat(object).isEqualTo(text);
-                assertThat(provider.getFilename()).isEqualTo("foo.txt");
-                assertThat(provider.getFilesize()).isEqualTo(16L);
+                Doc doc = provider.createDocument();
+                assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+                assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
             }
         }
     }
 
     @Test
-    public void readTxtFileFromElasticCo() throws Exception {
+    public void readTxtFileFromWebsite() throws Exception {
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-            provider.settings("{\n" +
+            provider.start(FsSettingsLoader.load(), "{\n" +
                     "  \"type\": \"http\",\n" +
                     "  \"http\": {\n" +
-                    "    \"url\": \"https://www.google.fr/robots.txt\"\n" +
+                    "    \"url\": \"https://david.pilato.fr/robots.txt\"\n" +
                     "  }\n" +
                     "}");
-            provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object).contains("Sitemap");
-            assertThat(provider.getFilename()).isEqualTo("robots.txt");
-            assertThat(provider.getFilesize()).isGreaterThan(100L);
+            assertThat(object).contains("User-agent: *");
+            Doc doc = provider.createDocument();
+            assertThat(doc.getFile().getFilename()).isEqualTo("robots.txt");
+            assertThat(doc.getFile().getFilesize()).isEqualTo(13L);
         }
     }
 }

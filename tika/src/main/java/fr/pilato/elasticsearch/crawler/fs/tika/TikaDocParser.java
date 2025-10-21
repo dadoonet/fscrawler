@@ -57,9 +57,20 @@ public class TikaDocParser {
 
     private static final Logger logger = LogManager.getLogger();
 
-    public static void generate(FsSettings fsSettings, InputStream inputStream, String filename, String fullFilename, Doc doc,
-                                MessageDigest messageDigest, long filesize) throws IOException {
-        logger.trace("Generating document [{}]", fullFilename);
+    private static MessageDigest findMessageDigest(FsSettings fsSettings) {
+        if (fsSettings.getFs().getChecksum() != null) {
+            try {
+                return MessageDigest.getInstance(fsSettings.getFs().getChecksum());
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException("This should never happen as we checked that previously");
+            }
+        } else {
+            return null;
+        }
+    }
+
+    public static void generate(FsSettings fsSettings, InputStream inputStream, Doc doc, long filesize) throws IOException {
+        logger.trace("Generating document [{}]", doc.getPath().getReal());
         // Extracting content with Tika
         // See #38: https://github.com/dadoonet/fscrawler/issues/38
         int indexedChars = 100000;
@@ -75,10 +86,11 @@ public class TikaDocParser {
             }
         }
         Metadata metadata = new Metadata();
-        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filename);
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, doc.getFile().getFilename());
 
         String parsedContent = null;
 
+        MessageDigest messageDigest = findMessageDigest(fsSettings);
         if (messageDigest != null) {
             logger.trace("Generating hash with [{}]", messageDigest.getAlgorithm());
             inputStream = new DigestInputStream(inputStream, messageDigest);
@@ -111,12 +123,12 @@ public class TikaDocParser {
 
                 try {
                     FSCrawlerLogger.documentError(
-                            fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign(fullFilename),
-                            computeVirtualPathName(fsSettings.getFs().getUrl(), fullFilename),
+                            fsSettings.getFs().isFilenameAsId() ? doc.getFile().getFilename() : SignTool.sign(doc.getPath().getReal()),
+                            computeVirtualPathName(fsSettings.getFs().getUrl(), doc.getPath().getReal()),
                             sb.toString());
                 } catch (NoSuchAlgorithmException ignored) { }
-                logger.warn("Failed to extract [{}] characters of text for [{}]: {}", indexedChars, fullFilename, sb.toString());
-                logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + fullFilename + "]", e);
+                logger.warn("Failed to extract [{}] characters of text for [{}]: {}", indexedChars, doc.getPath().getReal(), sb.toString());
+                logger.debug("Failed to extract [" + indexedChars + "] characters of text for [" + doc.getPath().getReal() + "]", e);
             }
 
             // Adding what we found to the document we want to index
@@ -147,25 +159,25 @@ public class TikaDocParser {
             // File
 
             // Standard Meta
-            setMeta(fullFilename, metadata, TikaCoreProperties.CREATOR, doc.getMeta()::setAuthor, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.TITLE, doc.getMeta()::setTitle, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.MODIFIED, doc.getMeta()::setDate, FsCrawlerUtil::localDateTimeToDate);
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.CREATOR, doc.getMeta()::setAuthor, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.TITLE, doc.getMeta()::setTitle, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.MODIFIED, doc.getMeta()::setDate, FsCrawlerUtil::localDateTimeToDate);
 
-            setMeta(fullFilename, metadata, Office.KEYWORDS, doc.getMeta()::setKeywords, TikaDocParser::commaDelimitedListToStringArray);
+            setMeta(doc.getPath().getReal(), metadata, Office.KEYWORDS, doc.getMeta()::setKeywords, TikaDocParser::commaDelimitedListToStringArray);
             // TODO Fix this with Tika 2.2.1+
             // See https://issues.apache.org/jira/browse/TIKA-3629
             if (doc.getMeta().getKeywords() == null) {
-                setMeta(fullFilename, metadata, Property.internalText("pdf:docinfo:keywords"), doc.getMeta()::setKeywords, TikaDocParser::commaDelimitedListToStringArray);
+                setMeta(doc.getPath().getReal(), metadata, Property.internalText("pdf:docinfo:keywords"), doc.getMeta()::setKeywords, TikaDocParser::commaDelimitedListToStringArray);
             }
 
-            setMeta(fullFilename, metadata, TikaCoreProperties.FORMAT, doc.getMeta()::setFormat, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.IDENTIFIER, doc.getMeta()::setIdentifier, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.CONTRIBUTOR, doc.getMeta()::setContributor, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.COVERAGE, doc.getMeta()::setCoverage, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.MODIFIER, doc.getMeta()::setModifier, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.CREATOR_TOOL, doc.getMeta()::setCreatorTool, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.FORMAT, doc.getMeta()::setFormat, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.IDENTIFIER, doc.getMeta()::setIdentifier, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.CONTRIBUTOR, doc.getMeta()::setContributor, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.COVERAGE, doc.getMeta()::setCoverage, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.MODIFIER, doc.getMeta()::setModifier, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.CREATOR_TOOL, doc.getMeta()::setCreatorTool, Function.identity());
             String finalParsedContent = parsedContent;
-            setMeta(fullFilename, metadata, TikaCoreProperties.LANGUAGE, doc.getMeta()::setLanguage, (lang) -> {
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.LANGUAGE, doc.getMeta()::setLanguage, (lang) -> {
                 if (lang != null) {
                     return lang;
                 } else if (fsSettings.getFs().isLangDetect() && finalParsedContent != null) {
@@ -178,20 +190,20 @@ public class TikaDocParser {
                 }
                 return null;
             });
-            setMeta(fullFilename, metadata, TikaCoreProperties.PUBLISHER, doc.getMeta()::setPublisher, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.RELATION, doc.getMeta()::setRelation, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.RIGHTS, doc.getMeta()::setRights, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.SOURCE, doc.getMeta()::setSource, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.TYPE, doc.getMeta()::setType, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.DESCRIPTION, doc.getMeta()::setDescription, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.CREATED, doc.getMeta()::setCreated, FsCrawlerUtil::localDateTimeToDate);
-            setMeta(fullFilename, metadata, TikaCoreProperties.PRINT_DATE, doc.getMeta()::setPrintDate, FsCrawlerUtil::localDateTimeToDate);
-            setMeta(fullFilename, metadata, TikaCoreProperties.METADATA_DATE, doc.getMeta()::setMetadataDate, FsCrawlerUtil::localDateTimeToDate);
-            setMeta(fullFilename, metadata, TikaCoreProperties.LATITUDE, doc.getMeta()::setLatitude, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.LONGITUDE, doc.getMeta()::setLongitude, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.ALTITUDE, doc.getMeta()::setAltitude, Function.identity());
-            setMeta(fullFilename, metadata, TikaCoreProperties.RATING, doc.getMeta()::setRating, (value) -> value == null ? null : Integer.parseInt(value));
-            setMeta(fullFilename, metadata, TikaCoreProperties.COMMENTS, doc.getMeta()::setComments, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.PUBLISHER, doc.getMeta()::setPublisher, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.RELATION, doc.getMeta()::setRelation, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.RIGHTS, doc.getMeta()::setRights, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.SOURCE, doc.getMeta()::setSource, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.TYPE, doc.getMeta()::setType, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.DESCRIPTION, doc.getMeta()::setDescription, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.CREATED, doc.getMeta()::setCreated, FsCrawlerUtil::localDateTimeToDate);
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.PRINT_DATE, doc.getMeta()::setPrintDate, FsCrawlerUtil::localDateTimeToDate);
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.METADATA_DATE, doc.getMeta()::setMetadataDate, FsCrawlerUtil::localDateTimeToDate);
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.LATITUDE, doc.getMeta()::setLatitude, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.LONGITUDE, doc.getMeta()::setLongitude, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.ALTITUDE, doc.getMeta()::setAltitude, Function.identity());
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.RATING, doc.getMeta()::setRating, (value) -> value == null ? null : Integer.parseInt(value));
+            setMeta(doc.getPath().getReal(), metadata, TikaCoreProperties.COMMENTS, doc.getMeta()::setComments, Function.identity());
 
             // Add support for more OOTB standard metadata
 

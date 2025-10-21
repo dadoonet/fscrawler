@@ -41,7 +41,6 @@ import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
@@ -55,7 +54,6 @@ public class DocumentApi extends RestApi {
 
     private final FsCrawlerDocumentService documentService;
     private final FsSettings settings;
-    private final MessageDigest messageDigest;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
     private final FsCrawlerPluginsManager pluginsManager;
 
@@ -63,14 +61,6 @@ public class DocumentApi extends RestApi {
         this.settings = settings;
         this.documentService = documentService;
         this.pluginsManager = pluginsManager;
-
-        // Create MessageDigest instance
-        try {
-            messageDigest = settings.getFs().getChecksum() == null ?
-                    null : MessageDigest.getInstance(settings.getFs().getChecksum());
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("This should never happen as we checked that previously");
-        }
     }
 
     @POST
@@ -132,13 +122,12 @@ public class DocumentApi extends RestApi {
 
         try (FsCrawlerExtensionFsProvider provider = pluginsManager.findFsProvider(type)) {
             logger.trace("Plugin [{}] found", provider.getType());
-            provider.settings(document.jsonString());
-            provider.start();
+            provider.start(settings, document.jsonString());
             InputStream inputStream = provider.readFile();
-            String filename = provider.getFilename();
-            long filesize = provider.getFilesize();
 
-            return uploadToDocumentService(debug, simulate, id, index, null, inputStream, filename, filesize);
+            Doc doc = provider.createDocument();
+            doc = enrichDoc(doc, settings, null, inputStream);
+            return uploadToDocumentService(debug, simulate, id, index, doc);
         } catch (Exception e) {
             logger.debug("Failed to add document from [{}] 3rd-party: [{}] - [{}]",
                     type, e.getClass().getSimpleName(), e.getMessage());
@@ -203,10 +192,33 @@ public class DocumentApi extends RestApi {
             response.setMessage("No file has been sent or you are not using [file] as the field name.");
             return response;
         }
-        String filename = new String(d.getFileName().getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
-        long filesize = d.getSize();
 
-        return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, filename, filesize);
+        Doc doc = new Doc();
+        String filename = new String(d.getFileName().getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+        doc.getFile().setFilename(filename);
+        doc.getPath().setVirtual(filename);
+        doc.getPath().setReal(filename);
+        doc.getFile().setFilesize(d.getSize());
+
+        doc = enrichDoc(doc, settings, tags, filecontent);
+        return uploadToDocumentService(debug, simulate, id, index, doc);
+    }
+
+    public static Doc enrichDoc(
+            Doc doc,
+            FsSettings settings,
+            InputStream tags,
+            InputStream filecontent) throws IOException {
+        // File
+        doc.getFile().setExtension(FilenameUtils.getExtension(doc.getFile().getFilename()).toLowerCase());
+        doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
+        // File
+
+        // Read the file content
+        TikaDocParser.generate(settings, filecontent, doc, doc.getFile().getFilesize());
+
+        // We merge tags if any and return the final doc
+        return getMergedJsonDoc(doc, tags);
     }
 
     private UploadResponse uploadToDocumentService(
@@ -214,67 +226,47 @@ public class DocumentApi extends RestApi {
             String simulate,
             String id,
             String index,
-            InputStream tags,
-            InputStream filecontent,
-            String filename,
-            long filesize) throws IOException, NoSuchAlgorithmException {
-        // Create the Doc object
-        Doc doc = new Doc();
-
-        // File
-        doc.getFile().setFilename(filename);
-        doc.getFile().setExtension(FilenameUtils.getExtension(filename).toLowerCase());
-        doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
-        doc.getFile().setFilesize(filesize);
-        // File
-
-        // Path
+            Doc doc) throws NoSuchAlgorithmException {
+        // Id
         if (id == null) {
             if (settings.getFs().isFilenameAsId()) {
-                id = filename;
+                id = doc.getFile().getFilename();
             } else {
-                id = SignTool.sign(filename);
+                id = SignTool.sign(doc.getFile().getFilename());
             }
         } else if (id.equals("_auto_")) {
             // We are using a specific id which tells us to generate a unique _id like elasticsearch does
             id = TIME_UUID_GENERATOR.getBase64UUID();
         }
 
-        //index
+        // Index
         if (index == null) {
             index = settings.getElasticsearch().getIndex();
         }
 
-        doc.getPath().setVirtual(filename);
-        doc.getPath().setReal(filename);
-        // Path
-
-        // Read the file content
-        TikaDocParser.generate(settings, filecontent, filename, filename, doc, messageDigest, filesize);
-
         // Elasticsearch entity coordinates (we use the first node address)
         ServerUrl node = settings.getElasticsearch().getNodes().get(0);
         String url = node.getUrl() + "/" + index + "/_doc/" + id;
-        final Doc mergedDoc = getMergedJsonDoc(doc, tags);
         if (Boolean.parseBoolean(simulate)) {
-            logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].", filename, url);
+            logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].",
+                    doc.getFile().getFilename(), url);
         } else {
-            logger.debug("Sending document [{}] to elasticsearch.", filename);
+            logger.debug("Sending document [{}] to elasticsearch.", doc.getFile().getFilename());
             documentService.index(
                     index,
                     id,
-                    mergedDoc,
+                    doc,
                     settings.getElasticsearch().getPipeline());
         }
 
         UploadResponse response = new UploadResponse();
         response.setOk(true);
-        response.setFilename(filename);
+        response.setFilename(doc.getFile().getFilename());
         response.setUrl(url);
 
         if (logger.isDebugEnabled() || Boolean.parseBoolean(debug)) {
             // We send the content back if debug is on or if we got in the query explicitly a debug command
-            response.setDoc(mergedDoc);
+            response.setDoc(doc);
         }
 
         return response;

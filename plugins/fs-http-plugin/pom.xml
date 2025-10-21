@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>fscrawler-fs-http-plugin</artifactId>
+    <name>FSCrawler HTTP/HTTPS Plugin</name>
     <description>FSCrawler HTTP/HTTPS Plugin</description>
 
     <build>

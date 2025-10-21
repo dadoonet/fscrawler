@@ -81,7 +81,8 @@ public class TestContainerHelper {
                         keepData ? " or reusing" : "",
                         elasticsearchVersion);
 
-                elasticsearch = new ElasticsearchContainer(
+                @SuppressWarnings("resource")
+                ElasticsearchContainer container = new ElasticsearchContainer(
                         DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
                                 .withTag(elasticsearchVersion))
                         // As for 7.x clusters, there's no https, api keys are disabled by default. We force it.
@@ -91,6 +92,7 @@ public class TestContainerHelper {
                         .withReuse(keepData)
                         .withPassword(DEFAULT_PASSWORD)
                         .waitingFor(ELASTICSEARCH_WAIT_STRATEGY);
+                elasticsearch = container;
                 elasticsearch.start();
 
                 String url = String.format(HTTPS_URL, elasticsearch.getHttpHostAddress());

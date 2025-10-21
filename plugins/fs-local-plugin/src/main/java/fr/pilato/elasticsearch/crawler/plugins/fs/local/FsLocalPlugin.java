@@ -19,6 +19,7 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
 import com.jayway.jsonpath.PathNotFoundException;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import org.apache.logging.log4j.LogManager;
@@ -29,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
 
 public class FsLocalPlugin extends FsCrawlerPlugin {
     private static final Logger logger = LogManager.getLogger();
@@ -41,16 +44,7 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
     @Extension
     public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract {
         private Path path;
-
-        @Override
-        public void start() {
-
-        }
-
-        @Override
-        public void stop() {
-
-        }
+        private String url;
 
         @Override
         public String getType() {
@@ -62,21 +56,49 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             return Files.newInputStream(path);
         }
 
-        @Override
-        public String getFilename() {
+        private String getFilename() {
             return path.getFileName().toString();
         }
 
-        @Override
-        public long getFilesize() throws IOException {
+        private long getFilesize() throws IOException {
             return Files.size(path);
         }
 
         @Override
+        public Doc createDocument() throws IOException {
+            logger.debug("Creating document from {}", getFilename());
+            String filename = getFilename();
+
+            Doc doc = new Doc();
+            // The file name without the path
+            doc.getFile().setFilename(filename);
+            doc.getFile().setFilesize(getFilesize());
+            // The virtual URL (not including the initial root dir)
+            doc.getPath().setVirtual(computeVirtualPathName(fsSettings.getFs().getUrl(), filename));
+            // The real URL on the filesystem
+            doc.getPath().setReal(path.toAbsolutePath().toString());
+            return doc;
+        }
+
+        @Override
         protected void parseSettings() throws PathNotFoundException {
-            String url = document.read("$.local.url");
-            logger.debug("Reading local file from [{}]", url);
-            path = Path.of(url);
+            url = document.read("$.local.url");
+        }
+
+        @Override
+        protected void validateSettings() throws IOException {
+            Path rootPath = Path.of(fsSettings.getFs().getUrl()).toAbsolutePath().normalize();
+            logger.debug("Reading file {} from {}", url, rootPath);
+
+            path = rootPath.resolve(url).normalize();
+            if (Files.notExists(path)) {
+                throw new IOException("File " + path.toAbsolutePath() + " does not exist");
+            }
+
+            // Check that the url is under the rootPath
+            if (!path.startsWith(rootPath)) {
+                throw new IOException("File " + path.toAbsolutePath() + " is not within " + rootPath);
+            }
         }
     }
 }

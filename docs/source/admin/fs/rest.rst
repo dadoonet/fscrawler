@@ -223,6 +223,12 @@ For example, we can read the file ``bar.txt`` from the ``/path/to/foo`` director
       }
     }'
 
+.. note::
+
+    For security reasons, the ``local`` plugin can only read files
+    which are under the path defined in the job settings file under
+    ``fs.url``.
+
 HTTP plugin
 ~~~~~~~~~~~
 

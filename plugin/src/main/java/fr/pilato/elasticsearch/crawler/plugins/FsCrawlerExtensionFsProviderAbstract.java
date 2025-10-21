@@ -21,32 +21,45 @@ package fr.pilato.elasticsearch.crawler.plugins;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerExtensionFsProvider {
     private static final Logger logger = LogManager.getLogger();
     protected DocumentContext document;
+    protected FsSettings fsSettings;
 
-    protected abstract void parseSettings() throws PathNotFoundException;
+    protected abstract void parseSettings() throws PathNotFoundException, IOException;
+    protected abstract void validateSettings() throws PathNotFoundException, IOException;
+
+    @Override
+    public void start(FsSettings fsSettings, String restSettings) {
+        this.fsSettings = fsSettings;
+
+        logger.trace("with rest settings {}", restSettings);
+        document = parseJsonAsDocumentContext(restSettings);
+
+        try {
+            parseSettings();
+            validateSettings();
+        } catch (PathNotFoundException|IOException e) {
+            throw new FsCrawlerIllegalConfigurationException(e.getMessage());
+        }
+    }
+
+    @Override
+    public void stop() throws Exception {
+
+    }
 
     @Override
     public void close() throws Exception {
         logger.debug("Closing FsCrawlerExtensionFsProviderAbstract");
         stop();
-    }
-
-    @Override
-    public void settings(String settings) {
-        logger.trace("with settings {}", settings);
-        document = parseJsonAsDocumentContext(settings);
-
-        try {
-            parseSettings();
-        } catch (PathNotFoundException e) {
-            throw new FsCrawlerIllegalConfigurationException(e.getMessage());
-        }
     }
 }

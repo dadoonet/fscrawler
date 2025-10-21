@@ -61,6 +61,7 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
         logger.debug("Load extension for type [{}]", type);
         FsCrawlerExtensionFsProvider fsCrawlerExtensionFsProvider = fsProviders.get(type);
         if (fsCrawlerExtensionFsProvider == null) {
+            logger.warn("Can not find FsProvider for type [{}]", type);
             throw new FsCrawlerIllegalConfigurationException("No FsProvider found for type [" + type + "]");
         }
         return fsCrawlerExtensionFsProvider;

@@ -18,6 +18,11 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.IOUtils;
@@ -31,38 +36,105 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     private static Path createFile(String objectName, String object) throws IOException {
-        logger.info("Create fake content [{}]; [{}]", objectName, object);
-        Path file = rootTmpDir.resolve(objectName);
+        return createFile(rootTmpDir, objectName, object);
+    }
+
+    private static Path createFile(Path dir, String objectName, String object) throws IOException {
+        logger.info("Create fake content [{}] in [{}]; [{}]", objectName, dir, object);
+        Path file = dir.resolve(objectName);
         Files.writeString(file, object);
         return file;
     }
 
     @Test
-    public void readFile() throws Exception {
+    public void readFileWithFullPath() throws Exception {
         String text = "Hello Foo world!";
-        Path bucket = createFile("foo.txt", text);
+        Path fileName = createFile("foo.txt", text);
         createFile("bar.txt", "This one should be ignored.");
 
-        logger.info("Starting Test with bucket [{}]", bucket);
+        logger.info("Starting Test with bucket [{}]", fileName);
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
-            provider.settings("{\n" +
+            FsSettings fsSettings = FsSettingsLoader.load();
+            fsSettings.getFs().setUrl(rootTmpDir.toString());
+            provider.start(fsSettings, "{\n" +
                     "  \"type\": \"local\",\n" +
                     "  \"local\": {\n" +
-                    "    \"url\": \"" + bucket.toString().replace("\\", "\\\\") + "\"\n" +
+                    "    \"url\": \"" + fileName.toString().replace("\\", "\\\\") + "\"\n" +
                     "  }\n" +
                     "}");
-            provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).isEqualTo(text);
-            assertThat(provider.getFilename()).isEqualTo("foo.txt");
-            assertThat(provider.getFilesize()).isEqualTo(16L);
+            Doc doc = provider.createDocument();
+            assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+            assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
+            if (OsValidator.WINDOWS) {
+                assertThat(doc.getPath().getVirtual()).isEqualTo("\\");
+            } else {
+                assertThat(doc.getPath().getVirtual()).isEqualTo("/");
+            }
+            assertThat(doc.getPath().getReal()).isEqualTo(fileName.toAbsolutePath().toString());
+        }
+    }
+
+    @Test
+    public void readFileWithRelativePath() throws Exception {
+        String text = "Hello Foo world!";
+        Path fileName = createFile("foo.txt", text);
+
+        logger.info("Starting Test with bucket [{}]", fileName);
+        try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
+            FsSettings fsSettings = FsSettingsLoader.load();
+            fsSettings.getFs().setUrl(rootTmpDir.toString());
+            provider.start(fsSettings, "{\n" +
+                    "  \"type\": \"local\",\n" +
+                    "  \"local\": {\n" +
+                    "    \"url\": \"foo.txt\"\n" +
+                    "  }\n" +
+                    "}");
+            InputStream inputStream = provider.readFile();
+            String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            assertThat(object).isEqualTo(text);
+            Doc doc = provider.createDocument();
+            assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+            assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
+            if (OsValidator.WINDOWS) {
+                assertThat(doc.getPath().getVirtual()).isEqualTo("\\");
+            } else {
+                assertThat(doc.getPath().getVirtual()).isEqualTo("/");
+            }
+            assertThat(doc.getPath().getReal()).isEqualTo(fileName.toAbsolutePath().toString());
+        }
+    }
+
+    @Test
+    public void readFileWithFullPathOutsideRootDir() throws Exception {
+        Path rootDir = rootTmpDir.resolve("root-dir");
+        Files.createDirectory(rootDir);
+        Path outsideRootDir = rootTmpDir.resolve("outside-root-dir");
+        Files.createDirectory(outsideRootDir);
+
+        String text = "Hello Foo world!";
+        Path fileName = createFile(outsideRootDir, "foo.txt", text);
+
+        logger.info("Starting Test with bucket [{}]", fileName);
+        try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
+            FsSettings fsSettings = FsSettingsLoader.load();
+            fsSettings.getFs().setUrl(rootDir.toString());
+            assertThatThrownBy(() -> provider.start(fsSettings, "{\n" +
+                    "  \"type\": \"local\",\n" +
+                    "  \"local\": {\n" +
+                    "    \"url\": \"" + fileName.toString().replace("\\", "\\\\") + "\"\n" +
+                    "  }\n" +
+                    "}"))
+                    .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                    .hasMessageContaining("is not within");
         }
     }
 }

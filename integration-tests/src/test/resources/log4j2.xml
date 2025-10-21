@@ -45,9 +45,6 @@
       <Logger name="org.pf4j" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="org.pf4j" level="error" additivity="false">
-         <AppenderRef ref="CONSOLE"/>
-      </Logger>
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
