@@ -52,7 +52,13 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
                 "      \"owner\":\"dpilato\",\n" +
                 "      \"group\":\"staff\",\n" +
                 "      \"permissions\":644,\n" +
-                "      \"foobar\":null\n" +
+                "      \"foobar\":null,\n" +
+                "      \"acl\":[{\n" +
+                "         \"principal\":\"dpilato\",\n" +
+                "         \"type\":\"ALLOW\",\n" +
+                "         \"permissions\":[\"READ_DATA\"],\n" +
+                "         \"flags\":[\"FILE_INHERIT\"]\n" +
+                "      }]\n" +
                 "   }\n" +
                 "}";
 
@@ -60,5 +66,7 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
         assertThat((String) context.read("$.attributes.owner")).isEqualTo("dpilato");
         assertThat((Integer) context.read("$.attributes.permissions")).isEqualTo(644);
         assertThat((Integer) context.read("$.attributes.foobar")).isNull();
+        assertThat((String) context.read("$.attributes.acl[0].principal")).isEqualTo("dpilato");
+        assertThat((String) context.read("$.attributes.acl[0].type")).isEqualTo("ALLOW");
     }
 }

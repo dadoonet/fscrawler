@@ -36,6 +36,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
@@ -280,7 +281,7 @@ public class FsCrawlerUtil {
      */
     public static String getGroupName(final File file) {
         if (OsValidator.WINDOWS) {
-            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            logger.debug("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
             return null;
         }
         try {
@@ -298,7 +299,7 @@ public class FsCrawlerUtil {
      */
     public static int getFilePermissions(final File file) {
         if (OsValidator.WINDOWS) {
-            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            logger.trace("Determining 'permissions' is skipped for file [{}] on [{}]", file, OsValidator.OS);
             return -1;
         }
         try {
@@ -323,6 +324,45 @@ public class FsCrawlerUtil {
         catch(Exception e) {
             logger.warn("Failed to determine 'permissions' of {}: {}", file, e.getMessage());
             return -1;
+        }
+    }
+
+    /**
+     * Determines Access Control List entries for the given file.
+     */
+    public static List<FileAcl> getFileAcls(final File file) {
+        try {
+            final Path path = Paths.get(file.getAbsolutePath());
+            final AclFileAttributeView aclView = Files.getFileAttributeView(path, AclFileAttributeView.class);
+            if (aclView == null) {
+                logger.debug("Determining 'acl' is skipped for file [{}] as ACL view is not supported", file);
+                return Collections.emptyList();
+            }
+
+            final List<AclEntry> aclEntries = aclView.getAcl();
+            if (aclEntries == null || aclEntries.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            final List<FileAcl> result = new ArrayList<>(aclEntries.size());
+            for (AclEntry entry : aclEntries) {
+                final String principal = entry.principal() != null ? entry.principal().getName() : null;
+                final String type = entry.type() != null ? entry.type().name() : null;
+                final List<String> permissions = entry.permissions().stream()
+                        .map(AclEntryPermission::name)
+                        .sorted()
+                        .collect(Collectors.toList());
+                final List<String> flags = entry.flags().stream()
+                        .map(AclEntryFlag::name)
+                        .sorted()
+                        .collect(Collectors.toList());
+                result.add(new FileAcl(principal, type, permissions, flags));
+            }
+
+            return Collections.unmodifiableList(result);
+        } catch (Exception e) {
+            logger.warn("Failed to determine 'acl' of {}: {}", file, e.getMessage());
+            return Collections.emptyList();
         }
     }
 
