@@ -7,6 +7,8 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.prettyPrint;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,6 +58,56 @@ public class DocUtilsTest {
         assertThat(mergedDoc.getExternal()).isNotNull();
         assertThat(mergedDoc.getExternal()).containsEntry("tenantId", 23);
         assertThat(mergedDoc.getAttachment()).isNull();
+        assertThat(mergedDoc.getAttributes()).isNull();
+    }
+
+    @Test
+    public void mergeDocsWithStaticMetadata() {
+        Map<String, Object> staticMetadata = new HashMap<>();
+        Map<String, Object> external = new HashMap<>();
+        external.put("hostname", "server001");
+        external.put("environment", "production");
+        staticMetadata.put("external", external);
+
+        Doc mergedDoc = DocUtils.getMergedDocWithStaticMetadata(getDocSample(), staticMetadata);
+        logger.trace("Merged doc with static metadata: {}", prettyPrint(mergedDoc));
+
+        assertThat(mergedDoc.getContent()).isEqualTo("This is a test");
+        assertThat(mergedDoc.getFile().getFilename()).isEqualTo("foo.txt");
+        assertThat(mergedDoc.getMeta()).isNotNull();
+        assertThat(mergedDoc.getPath()).isNotNull();
+        assertThat(mergedDoc.getExternal()).isNotNull();
+        assertThat(mergedDoc.getExternal()).containsEntry("hostname", "server001");
+        assertThat(mergedDoc.getExternal()).containsEntry("environment", "production");
+        assertThat(mergedDoc.getAttachment()).isNull();
+        assertThat(mergedDoc.getAttributes()).isNull();
+    }
+
+    @Test
+    public void mergeDocsWithStaticMetadataEmpty() {
+        Doc mergedDoc = DocUtils.getMergedDocWithStaticMetadata(getDocSample(), new HashMap<>());
+        logger.trace("Merged doc with empty static metadata: {}", prettyPrint(mergedDoc));
+
+        assertThat(mergedDoc.getContent()).isEqualTo("This is a test");
+        assertThat(mergedDoc.getFile().getFilename()).isEqualTo("foo.txt");
+        assertThat(mergedDoc.getMeta()).isNotNull();
+        assertThat(mergedDoc.getPath()).isNotNull();
+        assertThat(mergedDoc.getAttachment()).isNull();
+        assertThat(mergedDoc.getExternal()).isNull();
+        assertThat(mergedDoc.getAttributes()).isNull();
+    }
+
+    @Test
+    public void mergeDocsWithStaticMetadataNull() {
+        Doc mergedDoc = DocUtils.getMergedDocWithStaticMetadata(getDocSample(), null);
+        logger.trace("Merged doc with null static metadata: {}", prettyPrint(mergedDoc));
+
+        assertThat(mergedDoc.getContent()).isEqualTo("This is a test");
+        assertThat(mergedDoc.getFile().getFilename()).isEqualTo("foo.txt");
+        assertThat(mergedDoc.getMeta()).isNotNull();
+        assertThat(mergedDoc.getPath()).isNotNull();
+        assertThat(mergedDoc.getAttachment()).isNull();
+        assertThat(mergedDoc.getExternal()).isNull();
         assertThat(mergedDoc.getAttributes()).isNull();
     }
 

@@ -68,6 +68,8 @@ Here is a list of Tags settings (under ``tags.`` prefix)`:
 +============================+=======================+=================================+
 | ``tags.metaFilename``      | ``".meta.yml"``       | `Meta Filename`_                |
 +----------------------------+-----------------------+---------------------------------+
+| ``tags.staticMetadata``    | ``null``              | `Static Metadata`_              |
++----------------------------+-----------------------+---------------------------------+
 
 Meta Filename
 ^^^^^^^^^^^^^
@@ -83,3 +85,53 @@ You can use another filename for the external tags file. For example, if you wan
 .. note::
 
     Only json and yaml files are supported.
+
+Static Metadata
+^^^^^^^^^^^^^^^
+
+.. versionadded:: 3.0
+
+You can define static metadata that will be applied to all documents indexed by FSCrawler.
+This is useful when you want to add the same metadata to every document without needing
+to create a ``.meta.yml`` file in every directory.
+
+For example, if you want to add a hostname and environment to all documents:
+
+.. code:: yaml
+
+   fs:
+     url: "/path/to/docs"
+   tags:
+     staticMetadata:
+       external:
+         hostname: "server001"
+         environment: "production"
+
+All documents indexed will have the fields ``external.hostname`` and ``external.environment``
+with the values ``server001`` and ``production`` respectively.
+
+You can add complex nested structures:
+
+.. code:: yaml
+
+   tags:
+     staticMetadata:
+       external:
+         tenantId: 42
+         company: "my company"
+         region: "us-west-2"
+       custom:
+         projectId: 123
+         department: "engineering"
+
+.. note::
+
+    Static metadata is merged with per-directory metadata files. If both static metadata
+    and a ``.meta.yml`` file define the same field, the value from the ``.meta.yml`` file
+    takes precedence.
+
+.. tip::
+
+    Use static metadata for configuration-level metadata that applies to all documents,
+    and use per-directory ``.meta.yml`` files for metadata specific to certain directories
+    or files.

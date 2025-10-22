@@ -32,6 +32,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -89,6 +91,20 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     public void parseSettingsElasticsearchWithPathPrefix() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setPathPrefix("/path/to/elasticsearch");
+        settingsTester(fsSettings);
+    }
+
+    @Test
+    public void parseSettingsWithStaticMetadata() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        Tags tags = new Tags();
+        Map<String, Object> staticMetadata = new HashMap<>();
+        Map<String, Object> external = new HashMap<>();
+        external.put("hostname", "server001");
+        external.put("environment", "production");
+        staticMetadata.put("external", external);
+        tags.setStaticMetadata(staticMetadata);
+        fsSettings.setTags(tags);
         settingsTester(fsSettings);
     }
 }

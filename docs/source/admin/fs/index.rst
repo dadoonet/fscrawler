@@ -152,6 +152,11 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
    # optional: only needed if you want to change the default settings
     tags:
       metaFilename: "meta_tags.json" # default is ".meta.yml"
+      # optional: add static metadata to all indexed documents
+      staticMetadata:
+        external:
+          hostname: "server001"
+          environment: "production"
 
    # optional: only required if you want to SSH to another server to index documents from there
    server:
