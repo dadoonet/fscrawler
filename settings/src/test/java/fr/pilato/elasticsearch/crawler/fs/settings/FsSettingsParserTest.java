@@ -64,10 +64,10 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
         if (expected.getFs() != null) {
             assertThat(settings.getFs().getOcr()).as("Checking Ocr").isEqualTo(expected.getFs().getOcr());
+            assertThat(settings.getFs().getTags()).as("Checking Tags").isEqualTo(expected.getFs().getTags());
         }
         assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
         assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
-        assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
         assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
         assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
         assertThat(settings).as("Checking whole settings").isEqualTo(expected);
@@ -98,7 +98,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     public void parseSettingsWithStaticMetadata() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         // Get the existing tags (which has default metaFilename) or create new one
-        Tags tags = fsSettings.getTags();
+        Tags tags = fsSettings.getFs().getTags();
         if (tags == null) {
             tags = new Tags();
         }
@@ -108,7 +108,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         external.put("environment", "production");
         staticMetadata.put("external", external);
         tags.setStaticMetadata(staticMetadata);
-        fsSettings.setTags(tags);
+        fsSettings.getFs().setTags(tags);
         settingsTester(fsSettings);
     }
 }

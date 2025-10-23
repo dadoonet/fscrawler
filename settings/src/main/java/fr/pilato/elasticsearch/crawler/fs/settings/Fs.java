@@ -86,6 +86,9 @@ public class Fs {
     @Config
     @Nullable private Ocr ocr;
 
+    @Config
+    @Nullable private Tags tags;
+
     public String getUrl() {
         return url;
     }
@@ -294,6 +297,14 @@ public class Fs {
       this.tikaConfigPath = tikaConfigPath;
     }
 
+    public Tags getTags() {
+        return tags;
+    }
+
+    public void setTags(Tags tags) {
+        this.tags = tags;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -322,14 +333,15 @@ public class Fs {
                 Objects.equals(checksum, fs.checksum) &&
                 Objects.equals(ocr, fs.ocr) &&
                 Objects.equals(ignoreAbove, fs.ignoreAbove) &&
-                Objects.equals(tikaConfigPath, fs.tikaConfigPath);
+                Objects.equals(tikaConfigPath, fs.tikaConfigPath) &&
+                Objects.equals(tags, fs.tags);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
                 removeDeleted, addAsInnerObject, storeSource, indexContent, indexedChars, attributesSupport, rawMetadata, xmlSupport,
-                checksum, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks, tikaConfigPath);
+                checksum, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks, tikaConfigPath, tags);
     }
 
     @Override
@@ -358,6 +370,7 @@ public class Fs {
                 ", ignoreAbove=" + ignoreAbove +
                 ", followSymlinks=" + followSymlinks +
                 ", tikaConfigPath='" + tikaConfigPath + '\'' +
+                ", tags=" + tags +
                 '}';
     }
 }

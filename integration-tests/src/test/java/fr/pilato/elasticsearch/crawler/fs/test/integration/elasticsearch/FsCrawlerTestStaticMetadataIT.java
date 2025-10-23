@@ -49,7 +49,7 @@ public class FsCrawlerTestStaticMetadataIT extends AbstractFsCrawlerITCase {
         external.put("environment", "production");
         staticMetadata.put("external", external);
         tags.setStaticMetadata(staticMetadata);
-        fsSettings.setTags(tags);
+        fsSettings.getFs().setTags(tags);
         
         crawler = startCrawler(fsSettings);
 
@@ -92,7 +92,7 @@ public class FsCrawlerTestStaticMetadataIT extends AbstractFsCrawlerITCase {
         staticMetadata.put("external", external);
         staticMetadata.put("custom", customData);
         tags.setStaticMetadata(staticMetadata);
-        fsSettings.setTags(tags);
+        fsSettings.getFs().setTags(tags);
         
         crawler = startCrawler(fsSettings);
 
@@ -115,7 +115,7 @@ public class FsCrawlerTestStaticMetadataIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         Tags tags = new Tags();
         tags.setStaticMetadata(new HashMap<>());
-        fsSettings.setTags(tags);
+        fsSettings.getFs().setTags(tags);
         
         crawler = startCrawler(fsSettings);
 

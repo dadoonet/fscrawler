@@ -84,8 +84,8 @@ public abstract class FsParserAbstract extends FsParser {
 
         fileAbstractor = buildFileAbstractor(fsSettings);
 
-        if (fsSettings.getTags() != null && !StringUtils.isEmpty(fsSettings.getTags().getMetaFilename())) {
-            metadataFilename = fsSettings.getTags().getMetaFilename();
+        if (fsSettings.getFs().getTags() != null && !StringUtils.isEmpty(fsSettings.getFs().getTags().getMetaFilename())) {
+            metadataFilename = fsSettings.getFs().getTags().getMetaFilename();
             logger.debug("We are going to use [{}] as meta file if found while crawling dirs", metadataFilename);
         } else {
             metadataFilename = null;
@@ -493,8 +493,8 @@ public abstract class FsParserAbstract extends FsParser {
             Doc mergedDoc = DocUtils.getMergedDoc(doc, metadataFilename, externalTags);
             
             // Apply static metadata from settings if configured
-            if (fsSettings.getTags() != null && fsSettings.getTags().getStaticMetadata() != null) {
-                mergedDoc = DocUtils.getMergedDocWithStaticMetadata(mergedDoc, fsSettings.getTags().getStaticMetadata());
+            if (fsSettings.getFs().getTags() != null && fsSettings.getFs().getTags().getStaticMetadata() != null) {
+                mergedDoc = DocUtils.getMergedDocWithStaticMetadata(mergedDoc, fsSettings.getFs().getTags().getStaticMetadata());
             }
 
             // We index the data structure

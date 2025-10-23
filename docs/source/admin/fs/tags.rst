@@ -79,8 +79,9 @@ You can use another filename for the external tags file. For example, if you wan
 
 .. code:: yaml
 
-   tags:
-     metaFilename: "meta_tags.json"
+   fs:
+     tags:
+       metaFilename: "meta_tags.json"
 
 .. note::
 
@@ -101,11 +102,11 @@ For example, if you want to add a hostname and environment to all documents:
 
    fs:
      url: "/path/to/docs"
-   tags:
-     staticMetadata:
-       external:
-         hostname: "server001"
-         environment: "production"
+     tags:
+       staticMetadata:
+         external:
+           hostname: "server001"
+           environment: "production"
 
 All documents indexed will have the fields ``external.hostname`` and ``external.environment``
 with the values ``server001`` and ``production`` respectively.
@@ -114,15 +115,16 @@ You can add complex nested structures:
 
 .. code:: yaml
 
-   tags:
-     staticMetadata:
-       external:
-         tenantId: 42
-         company: "my company"
-         region: "us-west-2"
-       custom:
-         projectId: 123
-         department: "engineering"
+   fs:
+     tags:
+       staticMetadata:
+         external:
+           tenantId: 42
+           company: "my company"
+           region: "us-west-2"
+         custom:
+           projectId: 123
+           department: "engineering"
 
 .. note::
 
