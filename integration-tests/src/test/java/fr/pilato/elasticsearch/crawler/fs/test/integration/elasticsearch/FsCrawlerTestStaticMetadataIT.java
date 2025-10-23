@@ -125,8 +125,8 @@ public class FsCrawlerTestStaticMetadataIT extends AbstractFsCrawlerITCase {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             
             // Should still have file metadata
-            assertThat(document.read("$.file.filename")).isNotNull();
-            assertThat(document.read("$.path")).isNotNull();
+            assertThat((String) document.read("$.file.filename")).isNotNull();
+            assertThat((String) document.read("$.path")).isNotNull();
         }
     }
 }
