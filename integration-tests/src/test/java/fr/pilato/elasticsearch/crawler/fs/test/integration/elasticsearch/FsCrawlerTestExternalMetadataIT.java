@@ -65,7 +65,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     @Test
     public void external_metadata_yaml() throws Exception {
         FsSettings fsSettings = createTestSettings();
-        fsSettings.getTags().setMetaFilename("meta-as-yaml.yaml");
+        fsSettings.getFs().getTags().setMetaFilename("meta-as-yaml.yaml");
         crawler = startCrawler(fsSettings);
 
         // We expect to have 3 files
@@ -92,7 +92,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     @Test
     public void external_metadata_json() throws Exception {
         FsSettings fsSettings = createTestSettings();
-        fsSettings.getTags().setMetaFilename("meta-as-json.json");
+        fsSettings.getFs().getTags().setMetaFilename("meta-as-json.json");
         crawler = startCrawler(fsSettings);
 
         // We expect to have 3 files
