@@ -376,6 +376,31 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <!-- By default, We don't deploy our IT artifact to maven central -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- By default, We don't deploy our IT artifact to maven central -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- By default, We don't deploy our IT artifact to maven central -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- By default, we don't publish anything unless set explicitly -->
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
@@ -908,22 +933,6 @@
             </properties>
         </profile>
 
-        <profile>
-            <id>skip-docker-compose</id>
-            <activation>
-                <property>
-                    <name>tests.cluster.url</name>
-                </property>
-            </activation>
-        </profile>
-        <profile>
-            <id>run-docker-compose</id>
-            <activation>
-                <property>
-                    <name>!tests.cluster.url</name>
-                </property>
-            </activation>
-        </profile>
         <profile>
             <id>check_cve_anonymous</id>
             <activation>

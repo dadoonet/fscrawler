@@ -143,6 +143,14 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- Publish the distribution -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <configuration>
+                    <skipPublishing>false</skipPublishing>
+                </configuration>
+            </plugin>
             <!-- Generate and push the docker images -->
             <plugin>
                 <groupId>io.fabric8</groupId>
