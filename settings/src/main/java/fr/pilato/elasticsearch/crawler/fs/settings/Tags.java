@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import jakarta.annotation.Nullable;
 import org.github.gestalt.config.annotations.Config;
 
-import java.util.Map;
 import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
@@ -32,7 +31,8 @@ public class Tags {
     private String metaFilename;
 
     @Config
-    @Nullable private Map<String, Object> staticMetadata;
+    @Nullable
+    private String staticMetaFilename;
 
     public String getMetaFilename() {
         return metaFilename;
@@ -42,19 +42,20 @@ public class Tags {
         this.metaFilename = metaFilename;
     }
 
-    public Map<String, Object> getStaticMetadata() {
-        return staticMetadata;
+    @Nullable
+    public String getStaticMetaFilename() {
+        return staticMetaFilename;
     }
 
-    public void setStaticMetadata(Map<String, Object> staticMetadata) {
-        this.staticMetadata = staticMetadata;
+    public void setStaticMetaFilename(@Nullable String staticMetaFilename) {
+        this.staticMetaFilename = staticMetaFilename;
     }
 
     @Override
     public String toString() {
         return "Tags{" +
                 "metaFilename='" + metaFilename + '\'' +
-                ", staticMetadata=" + staticMetadata +
+                ", staticMetaFilename=" + staticMetaFilename +
                 '}';
     }
 
@@ -63,11 +64,11 @@ public class Tags {
         if (o == null || getClass() != o.getClass()) return false;
         Tags tags = (Tags) o;
         return Objects.equals(metaFilename, tags.metaFilename) &&
-                Objects.equals(staticMetadata, tags.staticMetadata);
+                Objects.equals(staticMetaFilename, tags.staticMetaFilename);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(metaFilename, staticMetadata);
+        return Objects.hash(metaFilename, staticMetaFilename);
     }
 }

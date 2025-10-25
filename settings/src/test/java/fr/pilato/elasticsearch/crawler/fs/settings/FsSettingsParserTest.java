@@ -97,18 +97,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     @Test
     public void parseSettingsWithStaticMetadata() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
-        // Get the existing tags (which has default metaFilename) or create new one
-        Tags tags = fsSettings.getFs().getTags();
-        if (tags == null) {
-            tags = new Tags();
-        }
-        Map<String, Object> staticMetadata = new HashMap<>();
-        Map<String, Object> external = new HashMap<>();
-        external.put("hostname", "server001");
-        external.put("environment", "production");
-        staticMetadata.put("external", external);
-        tags.setStaticMetadata(staticMetadata);
-        fsSettings.getFs().setTags(tags);
+        fsSettings.getTags().setStaticMetaFilename("/path/to/metadatafile.yml");
         settingsTester(fsSettings);
     }
 }

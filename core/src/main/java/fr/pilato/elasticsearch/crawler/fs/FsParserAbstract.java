@@ -63,6 +63,7 @@ public abstract class FsParserAbstract extends FsParser {
     private final String pathSeparator;
     private final FileAbstractor<?> fileAbstractor;
     private final String metadataFilename;
+    private final String staticMetadataFilename;
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
@@ -89,6 +90,13 @@ public abstract class FsParserAbstract extends FsParser {
             logger.debug("We are going to use [{}] as meta file if found while crawling dirs", metadataFilename);
         } else {
             metadataFilename = null;
+        }
+
+        if (fsSettings.getFs().getTags() != null && !StringUtils.isEmpty(fsSettings.getFs().getTags().getStaticMetaFilename())) {
+            staticMetadataFilename = fsSettings.getFs().getTags().getStaticMetaFilename();
+            logger.debug("We are going to use [{}] as the static meta file for every document", staticMetadataFilename);
+        } else {
+            staticMetadataFilename = null;
         }
     }
 

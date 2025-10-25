@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
@@ -143,7 +144,8 @@ public class FsSettingsLoaderTest {
         expected.getFs().setOcr(ocr);
         Tags tags = new Tags();
         tags.setMetaFilename("meta_tags.json");
-        expected.getFs().setTags(tags);
+        tags.setStaticMetaFilename("/path/to/metadatafile.yml");
+        expected.setTags(tags);
         expected.setServer(new Server());
         expected.getServer().setHostname("localhost");
         expected.getServer().setPort(22);
@@ -183,6 +185,7 @@ public class FsSettingsLoaderTest {
         }
         assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
         assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
+        assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
         assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
         assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
         assertThat(settings).as("Checking whole settings").isEqualTo(expected);
@@ -208,17 +211,16 @@ public class FsSettingsLoaderTest {
         ocr.setPdfStrategy("ocr_and_text");
         ocr.setPageSegMode(1);
         fs.setOcr(ocr);
-        
-        Tags tags = new Tags();
-        tags.setMetaFilename(".meta.yml");
-        fs.setTags(tags);
-        
         expected.setFs(fs);
 
         Server server = new Server();
         server.setProtocol("local");
         server.setPort(0);
         expected.setServer(server);
+
+        Tags tags = new Tags();
+        tags.setMetaFilename(".meta.yml");
+        expected.setTags(tags);
 
         Elasticsearch es = new Elasticsearch();
         es.setNodes(List.of(new ServerUrl("https://127.0.0.1:9200")));
