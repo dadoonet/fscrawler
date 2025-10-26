@@ -96,17 +96,6 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
-        /* removed by JC 2025-10-26
-        if (OsValidator.WINDOWS) {
-            // On windows the deletion does not work as expected
-            // TODO this needs to be fixed (see https://github.com/dadoonet/fscrawler/issues/2019)
-            logger.warn("On Windows we don't detect properly the recursive removal of directories. So we skip the validation of this test");
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, currentTestResourceDir);
-        } else {
-            // We expect to have 4 docs now
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L, currentTestResourceDir);
-        }
-        */
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L, currentTestResourceDir);
     }
 
