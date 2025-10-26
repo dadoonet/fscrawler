@@ -219,13 +219,15 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
                 .withSort("path.virtual"));
         assertThat(response.getTotalHits()).isEqualTo(subdirs + 2);
 
+        /*
+        excluded by JC 2025-10-26, will it now pass?
         if (OsValidator.WINDOWS) {
             // On windows the deletion does not work as expected
             // TODO this needs to be fixed
             logger.warn("On Windows we don't detect properly the recursive removal of directories. So we skip the validation of this test");
             return;
         }
-
+*/
         // Let's remove the main subdir and wait...
         logger.debug("  --> Removing all dirs from [{}]", mainDir);
         deleteRecursively(mainDir);
