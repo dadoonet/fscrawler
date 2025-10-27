@@ -148,25 +148,21 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void metadata_static_basic_json() throws Exception {
-        Path staticMetadataFile = currentTestTagDir.resolve("static-meta.json");
-        FsSettings fsSettings = createTestSettings();
-        fsSettings.getTags().setStaticMetaFilename(staticMetadataFile.toString());
-        crawler = startCrawler(fsSettings);
-
-        // We expect to have 1 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-        ESSearchHit hit = searchResponse.getHits().get(0);
-        DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
-        String filename = document.read("$.file.filename");
-        assertThat(filename).isEqualTo("roottxtfile.txt");
-
-        // We should have the static metadata
-        checkHit(document, filename, true, "Novo denique perniciosoque exemplo idem");
+        testStaticMetadataFilename("static-meta.json", true);
     }
 
     @Test
     public void metadata_static_basic_yaml() throws Exception {
-        Path staticMetadataFile = currentTestTagDir.resolve("static-meta.yaml");
+        testStaticMetadataFilename("static-meta.yaml", true);
+    }
+
+    @Test
+    public void metadata_static_empty() throws Exception {
+        testStaticMetadataFilename("static-meta.yaml", false);
+    }
+
+    private void testStaticMetadataFilename(String staticMetadataFilename, boolean hasExternal) throws Exception {
+        Path staticMetadataFile = currentTestTagDir.resolve(staticMetadataFilename);
         FsSettings fsSettings = createTestSettings();
         fsSettings.getTags().setStaticMetaFilename(staticMetadataFile.toString());
         crawler = startCrawler(fsSettings);
@@ -179,25 +175,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         assertThat(filename).isEqualTo("roottxtfile.txt");
 
         // We should have the static metadata
-        checkHit(document, filename, true, "Novo denique perniciosoque exemplo idem");
-    }
-
-    @Test
-    public void metadata_static_empty() throws Exception {
-        Path staticMetadataFile = currentTestTagDir.resolve("static-meta.yaml");
-        FsSettings fsSettings = createTestSettings();
-        fsSettings.getTags().setStaticMetaFilename(staticMetadataFile.toString());
-        crawler = startCrawler(fsSettings);
-
-        // We expect to have 1 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
-        ESSearchHit hit = searchResponse.getHits().get(0);
-        DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
-        String filename = document.read("$.file.filename");
-        assertThat(filename).isEqualTo("roottxtfile.txt");
-
-        // We should not have the static metadata
-        checkHit(document, filename, false, "Novo denique perniciosoque exemplo idem");
+        checkHit(document, filename, hasExternal, "Novo denique perniciosoque exemplo idem");
     }
 
     @Test
