@@ -97,35 +97,16 @@ public class DocUtils {
     }
 
     /**
-     * Merge a json document with static metadata from settings
-     * @param doc            The document to merge
-     * @param staticMetadata The static metadata map from settings
-     * @return The merged document
-     * @throws FsCrawlerIllegalConfigurationException If the static metadata can not be processed
-     */
-    public static Doc getMergedDocWithStaticMetadata(Doc doc, java.util.Map<String, Object> staticMetadata) throws FsCrawlerIllegalConfigurationException {
-        if (staticMetadata == null || staticMetadata.isEmpty()) {
-            return doc;
-        }
-
-        try {
-            JsonNode staticMetadataNode = mapper.convertValue(staticMetadata, JsonNode.class);
-            JsonNode docNode = mapper.convertValue(doc, JsonNode.class);
-            JsonNode mergedNode = merge(staticMetadataNode, docNode);
-            return mapper.treeToValue(mergedNode, Doc.class);
-        } catch (Exception e) {
-            logger.error("Error merging static metadata", e);
-            throw new FsCrawlerIllegalConfigurationException("Error merging static metadata: " + e.getMessage());
-        }
-    }
-
-    /**
      * Merges two json nodes into one. Main node overwrites the update node's values in the case if both nodes have the same key.
      * @param mainNode Json node that rules over update node
      * @param updateNode Json node that is subordinate to main node
      * @return the merged nodes
      */
     private static JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
+        if (mainNode.isEmpty()) {
+            return updateNode;
+        }
+
         Iterator<String> fieldNames = updateNode.fieldNames();
 
         while (fieldNames.hasNext()) {

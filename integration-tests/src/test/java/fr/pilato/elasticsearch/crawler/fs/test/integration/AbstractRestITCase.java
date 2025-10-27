@@ -50,15 +50,12 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDirs;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ALL")
@@ -76,7 +73,6 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     protected static WebTarget target;
     private static Client httpClient;
 
-    protected Path currentTestTagDir;
     private FsCrawlerManagementServiceElasticsearchImpl managementService;
     private FsCrawlerDocumentService documentService;
     private RestServer restServer;
@@ -99,26 +95,6 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     }
 
     public abstract FsSettings getFsSettings();
-
-    @Before
-    public void copyTags() throws IOException {
-        Path testResourceTarget = rootTmpDir.resolve("resources");
-        if (Files.notExists(testResourceTarget)) {
-            Files.createDirectory(testResourceTarget);
-        }
-
-        String currentTestName = getCurrentTestName();
-        // We copy files from the src dir to the temp dir
-        String url = getUrl("tags", currentTestName);
-        Path from = Paths.get(url);
-
-        currentTestTagDir = testResourceTarget.resolve(currentTestName + ".tags");
-        if (Files.exists(from)) {
-            logger.debug("  --> Copying test resources from [{}]", from);
-            copyDirs(from, currentTestTagDir);
-            logger.debug("  --> Tags ready in [{}]", currentTestTagDir);
-        }
-    }
 
     @Before
     public void startRestServer() throws Exception {

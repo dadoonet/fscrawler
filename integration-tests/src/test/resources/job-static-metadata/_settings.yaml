@@ -1,9 +1,0 @@
-name: "static_metadata"
-fs:
-  url: "/samples/static_metadata"
-  update_rate: "1s"
-  tags:
-    staticMetadata:
-      external:
-        hostname: "server001"
-        environment: "production"

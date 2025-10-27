@@ -64,9 +64,9 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
         if (expected.getFs() != null) {
             assertThat(settings.getFs().getOcr()).as("Checking Ocr").isEqualTo(expected.getFs().getOcr());
-            assertThat(settings.getFs().getTags()).as("Checking Tags").isEqualTo(expected.getFs().getTags());
         }
         assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
+        assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
         assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
         assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
         assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());

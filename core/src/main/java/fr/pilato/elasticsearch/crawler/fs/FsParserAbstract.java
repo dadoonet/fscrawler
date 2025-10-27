@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,7 +64,7 @@ public abstract class FsParserAbstract extends FsParser {
     private final String pathSeparator;
     private final FileAbstractor<?> fileAbstractor;
     private final String metadataFilename;
-    private final String staticMetadataFilename;
+    private final byte[] staticMetadata;
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
@@ -85,18 +86,27 @@ public abstract class FsParserAbstract extends FsParser {
 
         fileAbstractor = buildFileAbstractor(fsSettings);
 
-        if (fsSettings.getFs().getTags() != null && !StringUtils.isEmpty(fsSettings.getFs().getTags().getMetaFilename())) {
-            metadataFilename = fsSettings.getFs().getTags().getMetaFilename();
+        if (fsSettings.getTags() != null && !StringUtils.isEmpty(fsSettings.getTags().getMetaFilename())) {
+            metadataFilename = fsSettings.getTags().getMetaFilename();
             logger.debug("We are going to use [{}] as meta file if found while crawling dirs", metadataFilename);
         } else {
             metadataFilename = null;
         }
 
-        if (fsSettings.getFs().getTags() != null && !StringUtils.isEmpty(fsSettings.getFs().getTags().getStaticMetaFilename())) {
-            staticMetadataFilename = fsSettings.getFs().getTags().getStaticMetaFilename();
-            logger.debug("We are going to use [{}] as the static meta file for every document", staticMetadataFilename);
+        if (fsSettings.getTags() != null && !StringUtils.isEmpty(fsSettings.getTags().getStaticMetaFilename())) {
+            File staticMetadataFile = new File(fsSettings.getTags().getStaticMetaFilename());
+            if (!staticMetadataFile.exists() || !staticMetadataFile.isFile()) {
+                throw new FsCrawlerIllegalConfigurationException("Static meta file [" + staticMetadataFile.getAbsolutePath() + "] does not exist or is not a file.");
+            }
+            try {
+                // We are caching in memory the static metadata file content as it will be used for every document
+                staticMetadata = FileUtils.readFileToByteArray(staticMetadataFile);
+                logger.debug("We are going to use [{}] as the static meta file for every document", fsSettings.getTags().getStaticMetaFilename());
+            } catch (IOException e) {
+                throw new FsCrawlerIllegalConfigurationException("Static meta file [" + staticMetadataFile.getAbsolutePath() + "] cannot be read.", e);
+            }
         } else {
-            staticMetadataFilename = null;
+            staticMetadata = null;
         }
     }
 
@@ -498,11 +508,12 @@ public abstract class FsParserAbstract extends FsParser {
                 TikaDocParser.generate(fsSettings, inputStream, doc, filesize);
             }
 
+            // Merge metadata if available in the same folder
             Doc mergedDoc = DocUtils.getMergedDoc(doc, metadataFilename, externalTags);
-            
-            // Apply static metadata from settings if configured
-            if (fsSettings.getFs().getTags() != null && fsSettings.getFs().getTags().getStaticMetadata() != null) {
-                mergedDoc = DocUtils.getMergedDocWithStaticMetadata(mergedDoc, fsSettings.getFs().getTags().getStaticMetadata());
+            // Merge static metadata if available
+            if (staticMetadata != null) {
+                mergedDoc = DocUtils.getMergedDoc(mergedDoc, fsSettings.getTags().getStaticMetaFilename(),
+                        new ByteArrayInputStream(staticMetadata));
             }
 
             // We index the data structure

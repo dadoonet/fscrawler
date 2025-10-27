@@ -44,8 +44,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
-import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.getMergedJsonDoc;
+import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.getMergedDoc;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 @Path("/_document")
@@ -218,7 +219,7 @@ public class DocumentApi extends RestApi {
         TikaDocParser.generate(settings, filecontent, doc, doc.getFile().getFilesize());
 
         // We merge tags if any and return the final doc
-        return getMergedJsonDoc(doc, tags);
+        return getMergedDoc(doc, tags, mapper);
     }
 
     private UploadResponse uploadToDocumentService(
