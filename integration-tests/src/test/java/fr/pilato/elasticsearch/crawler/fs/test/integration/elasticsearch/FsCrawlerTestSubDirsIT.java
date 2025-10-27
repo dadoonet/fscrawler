@@ -101,17 +101,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         assertThat(response.getAggregations()).containsKey("folders");
         ESTermsAggregation aggregation = response.getAggregations().get("folders");
         List<ESTermsAggregation.ESTermsBucket> buckets = aggregation.getBuckets();
-
-        int expectedBuckets;
-        if (OsValidator.WINDOWS) {
-            // FIXME The number of buckets is different on Windows as the path separator is \ and not /
-            // because the path_hierarchy tokenizer is using `/` as the delimiter
-            // See https://github.com/elastic/elasticsearch/issues/133989
-            expectedBuckets = 7;
-        } else {
-            expectedBuckets = 10;
-        }
-        assertThat(buckets).hasSize(expectedBuckets);
+        assertThat(buckets).hasSize(10);
 
         // Check files
         response = client.search(new ESSearchRequest().withIndex(getCrawlerName()).withSort("path.virtual"));

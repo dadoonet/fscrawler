@@ -280,7 +280,7 @@ public class FsCrawlerUtil {
      */
     public static String getGroupName(final File file) {
         if (OsValidator.WINDOWS) {
-            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
             return null;
         }
         try {
@@ -298,7 +298,7 @@ public class FsCrawlerUtil {
      */
     public static int getFilePermissions(final File file) {
         if (OsValidator.WINDOWS) {
-            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
             return -1;
         }
         try {

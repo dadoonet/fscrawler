@@ -4,7 +4,16 @@
       "analysis": {
         "analyzer": {
           "fscrawler_path": {
-            "tokenizer": "fscrawler_path"
+            "tokenizer": "fscrawler_path",
+            "char_filter": [ "windows_separator" ]
+          }
+        },
+        "char_filter": {
+          "windows_separator": {
+            "type": "mapping",
+            "mappings": [
+              "\\\\ => /"
+            ]
           }
         },
         "tokenizer": {
