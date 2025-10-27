@@ -39,6 +39,7 @@ New
   to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. See :ref:`layout`. Thanks to dadoonet.
 * Add temporal information in folder index. Thanks to bdauvissat
 * Add support for external metadata files while crawling, defaults to ``.meta.yml``. See :ref:`tags` Thanks to dadoonet.
+* Add support for static external metadata for all documents. See :ref:`tags` Thanks to dadoonet.
 * The job name is not mandatory anymore and it will be ``fscrawler`` by default. Thanks to dadoonet.
 * FSCrawler also supports Elasticsearch 9. Thanks to dadoonet.
 

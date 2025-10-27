@@ -1,8 +1,0 @@
-Version 3.0
-============
-
-New
----
-
-* Add support for static metadata in settings. You can now define metadata that will be applied to all documents
-  indexed by FSCrawler without needing to create a ``.meta.yml`` file in every directory. See :ref:`tags`. Thanks to dadoonet.
