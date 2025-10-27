@@ -8,7 +8,33 @@ External Tags
 .. versionadded:: 2.10
 
 The goal of this feature is to allow users to provide additional metadata when
-crawling files. Whenever a directory is crawled, FSCrawler checks if a file named
+crawling files by providing a ``.meta.yml`` file in the directories being crawled or
+a global tag file which you can set by using the ``tags.staticMetaFilename`` setting.
+
+.. note::
+
+    Only json and yaml files are supported.
+
+Here is a list of Tags settings (under ``tags.`` prefix)`:
+
++----------------------------+-----------------------+---------------------------------+
+| Name                       | Default value         | Documentation                   |
++============================+=======================+=================================+
+| ``tags.metaFilename``      | ``".meta.yml"``       | `Meta Filename`_                |
++----------------------------+-----------------------+---------------------------------+
+| ``tags.staticMetaFilename``| ``null``              | `Static Metadata`_              |
++----------------------------+-----------------------+---------------------------------+
+
+.. tip::
+
+    Use static metadata for configuration-level metadata that applies to all documents,
+    and use per-directory ``.meta.yml`` files for metadata specific to certain directories
+    or files.
+
+Meta Filename
+^^^^^^^^^^^^^
+
+Whenever a directory is crawled, FSCrawler checks if a file named
 ``.meta.yml`` is present in the directory. If it is, the content of this file is
 used to enrich the document.
 
@@ -60,20 +86,6 @@ Then the ``content`` field will be replaced by ``HIDDEN`` even though something 
 
     The ``.meta.yml`` file is not indexed. It is only used to enrich the document.
 
-
-Here is a list of Tags settings (under ``tags.`` prefix)`:
-
-+----------------------------+-----------------------+---------------------------------+
-| Name                       | Default value         | Documentation                   |
-+============================+=======================+=================================+
-| ``tags.metaFilename``      | ``".meta.yml"``       | `Meta Filename`_                |
-+----------------------------+-----------------------+---------------------------------+
-| ``tags.staticMetaFilename``| ``null``              | `Static Metadata`_              |
-+----------------------------+-----------------------+---------------------------------+
-
-Meta Filename
-^^^^^^^^^^^^^
-
 You can use another filename for the external tags file. For example, if you want to use
 ``meta_tags.json`` instead of ``.meta.yml``, you can set:
 
@@ -82,10 +94,6 @@ You can use another filename for the external tags file. For example, if you wan
    fs:
      tags:
        metaFilename: "meta_tags.json"
-
-.. note::
-
-    Only json and yaml files are supported.
 
 Static Metadata
 ^^^^^^^^^^^^^^^
@@ -144,9 +152,3 @@ with the values ``server001`` and ``production`` respectively.
             category: "general"
             owner: "team-b"
             priority: "high"
-
-.. tip::
-
-    Use static metadata for configuration-level metadata that applies to all documents,
-    and use per-directory ``.meta.yml`` files for metadata specific to certain directories
-    or files.
