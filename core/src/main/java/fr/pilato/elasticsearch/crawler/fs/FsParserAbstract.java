@@ -508,13 +508,14 @@ public abstract class FsParserAbstract extends FsParser {
                 TikaDocParser.generate(fsSettings, inputStream, doc, filesize);
             }
 
-            // Merge metadata if available in the same folder
-            Doc mergedDoc = DocUtils.getMergedDoc(doc, metadataFilename, externalTags);
             // Merge static metadata if available
+            Doc mergedDoc = doc;
             if (staticMetadata != null) {
-                mergedDoc = DocUtils.getMergedDoc(mergedDoc, fsSettings.getTags().getStaticMetaFilename(),
+                mergedDoc = DocUtils.getMergedDoc(doc, fsSettings.getTags().getStaticMetaFilename(),
                         new ByteArrayInputStream(staticMetadata));
             }
+            // Merge metadata if available in the same folder
+            mergedDoc = DocUtils.getMergedDoc(mergedDoc, metadataFilename, externalTags);
 
             // We index the data structure
             if (isIndexable(mergedDoc.getContent(), fsSettings.getFs().getFilters())) {

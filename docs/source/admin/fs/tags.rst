@@ -68,7 +68,7 @@ Here is a list of Tags settings (under ``tags.`` prefix)`:
 +============================+=======================+=================================+
 | ``tags.metaFilename``      | ``".meta.yml"``       | `Meta Filename`_                |
 +----------------------------+-----------------------+---------------------------------+
-| ``tags.staticMetadata``    | ``null``              | `Static Metadata`_              |
+| ``tags.staticMetaFilename``| ``null``              | `Static Metadata`_              |
 +----------------------------+-----------------------+---------------------------------+
 
 Meta Filename
@@ -90,47 +90,60 @@ You can use another filename for the external tags file. For example, if you wan
 Static Metadata
 ^^^^^^^^^^^^^^^
 
-.. versionadded:: 3.0
+.. versionadded:: 2.10
 
 You can define static metadata that will be applied to all documents indexed by FSCrawler.
 This is useful when you want to add the same metadata to every document without needing
 to create a ``.meta.yml`` file in every directory.
 
-For example, if you want to add a hostname and environment to all documents:
+For example, if you want to add a ``hostname`` and ``environment`` field to all documents. Create a file
+named ``/path/to/static_metadata.yml`` with the following content:
+
+.. code:: yaml
+
+    external:
+      hostname: "server001"
+      environment: "production"
+
+Then, configure FSCrawler to use this static metadata file using the ``tags.staticMetaFilename`` setting:
 
 .. code:: yaml
 
    fs:
      url: "/path/to/docs"
-     tags:
-       staticMetadata:
-         external:
-           hostname: "server001"
-           environment: "production"
+   tags:
+     staticMetaFilename: "/path/to/static_metadata.yml"
 
 All documents indexed will have the fields ``external.hostname`` and ``external.environment``
 with the values ``server001`` and ``production`` respectively.
 
-You can add complex nested structures:
-
-.. code:: yaml
-
-   fs:
-     tags:
-       staticMetadata:
-         external:
-           tenantId: 42
-           company: "my company"
-           region: "us-west-2"
-         custom:
-           projectId: 123
-           department: "engineering"
-
 .. note::
 
-    Static metadata is merged with per-directory metadata files. If both static metadata
-    and a ``.meta.yml`` file define the same field, the value from the ``.meta.yml`` file
+    Static metadata is merged first and then the content within a ``.meta.yml`` is applied.
+    If you are overwriting the tags within the ``.meta.yml`` file, then that
     takes precedence.
+
+    Example: If the static metadata file contains:
+
+    .. code:: yaml
+         external:
+            category: "general"
+            owner: "team-a"
+
+    And the ``.meta.yml`` file contains:
+
+    .. code:: yaml
+         external:
+            owner: "team-b"
+            priority: "high"
+
+    The resulting document will have:
+
+    .. code:: yaml
+         external:
+            category: "general"
+            owner: "team-b"
+            priority: "high"
 
 .. tip::
 

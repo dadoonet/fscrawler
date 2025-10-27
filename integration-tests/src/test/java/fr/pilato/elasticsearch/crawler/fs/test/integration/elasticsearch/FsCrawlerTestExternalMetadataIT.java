@@ -228,18 +228,20 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
             switch (filename) {
                 case "root_dir.txt":
                     checkHit(document, filename, true, "This file contains some words.");
+                    assertThat((String) document.read("$.external.project")).isEqualTo("business development");
                     break;
                 case "with_meta.txt":
                     checkHit(document, filename, true, "This is a new content which is overwritten.");
+                    // We need to check that static metadata has been overwritten by the local one
+                    assertThat((String) document.read("$.external.project")).isEqualTo("business development overwritten");
                     break;
                 case "without_meta.txt":
                     checkHit(document, filename, true, "it does not have a metadata file.");
+                    assertThat((String) document.read("$.external.project")).isEqualTo("business development");
                     break;
             }
         }
     }
-
-    // TODO add a test about precedence of external metadata over static ones
 
     private void checkHit(DocumentContext document, String filename, boolean hasExternal, String expectedContent) {
         logger.debug("--> Checking hit for [{}], expecting {}external data and \"{}\" as part of the content",

@@ -3,7 +3,7 @@ external:
   tenantId: 23
   company: "shoe company"
   projectId: 34
-  project: "business development"
+  project: "business development overwritten"
   daysOpen:
     - "Mon"
     - "Tue"
