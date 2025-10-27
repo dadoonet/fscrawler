@@ -16,7 +16,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
 
 public class DocUtils {
 
@@ -69,17 +68,6 @@ public class DocUtils {
      * @return The merged document
      * @throws FsCrawlerIllegalConfigurationException If the tags can not be parsed
      */
-    public static Doc getMergedJsonDoc(Doc doc, InputStream tags) throws FsCrawlerIllegalConfigurationException {
-        return getMergedDoc(doc, tags, mapper);
-    }
-
-    /**
-     * Merge a json document with tags
-     * @param doc   The document to merge
-     * @param tags  The tags to merge
-     * @return The merged document
-     * @throws FsCrawlerIllegalConfigurationException If the tags can not be parsed
-     */
     public static Doc getMergedDoc(Doc doc, InputStream tags, ObjectMapper mapper) throws FsCrawlerIllegalConfigurationException {
         if (tags == null) {
             return doc;
@@ -87,6 +75,9 @@ public class DocUtils {
 
         try {
             JsonNode tagsNode = mapper.readTree(tags);
+            if (tagsNode.isEmpty()) {
+                return doc;
+            }
             JsonNode docNode = mapper.convertValue(doc, JsonNode.class);
             JsonNode mergedNode = merge(tagsNode, docNode);
             return mapper.treeToValue(mergedNode, Doc.class);
@@ -103,10 +94,6 @@ public class DocUtils {
      * @return the merged nodes
      */
     private static JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
-        if (mainNode.isEmpty()) {
-            return updateNode;
-        }
-
         Iterator<String> fieldNames = updateNode.fieldNames();
 
         while (fieldNames.hasNext()) {
