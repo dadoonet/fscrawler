@@ -135,7 +135,7 @@ public class FsSettingsLoader extends MetaFileHandler {
             settings.setName(gestalt.getConfigOptional("name", String.class).orElse(null));
             settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
             settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class).orElse(null));
-            settings.setTags(gestalt.getConfigOptional("fs.tags", Tags.class).orElse(null));
+            settings.setTags(gestalt.getConfigOptional("tags", Tags.class).orElse(null));
             settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
             settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
 

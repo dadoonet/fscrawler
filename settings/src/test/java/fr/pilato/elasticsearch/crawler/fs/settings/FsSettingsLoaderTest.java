@@ -143,6 +143,7 @@ public class FsSettingsLoaderTest {
         expected.getFs().setOcr(ocr);
         Tags tags = new Tags();
         tags.setMetaFilename("meta_tags.json");
+        tags.setStaticMetaFilename("/path/to/metadatafile.yml");
         expected.setTags(tags);
         expected.setServer(new Server());
         expected.getServer().setHostname("localhost");

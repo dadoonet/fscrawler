@@ -64,8 +64,8 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             assertThat(settings.getFs().getOcr()).as("Checking Ocr").isEqualTo(expected.getFs().getOcr());
         }
         assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
-        assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
         assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
+        assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
         assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
         assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
         assertThat(settings).as("Checking whole settings").isEqualTo(expected);
@@ -89,6 +89,13 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     public void parseSettingsElasticsearchWithPathPrefix() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setPathPrefix("/path/to/elasticsearch");
+        settingsTester(fsSettings);
+    }
+
+    @Test
+    public void parseSettingsWithStaticMetadata() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getTags().setStaticMetaFilename("/path/to/metadatafile.yml");
         settingsTester(fsSettings);
     }
 }

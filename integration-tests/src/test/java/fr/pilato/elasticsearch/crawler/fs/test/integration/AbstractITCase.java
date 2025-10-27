@@ -95,6 +95,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static Path metadataDir = null;
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
+    protected Path currentTestTagDir;
 
     private static String testCaCertificate = null;
 
@@ -132,6 +133,26 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         copyDirs(from, currentTestResourceDir);
 
         logger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
+    }
+
+    @Before
+    public void copyTags() throws IOException {
+        Path testResourceTarget = rootTmpDir.resolve("resources");
+        if (Files.notExists(testResourceTarget)) {
+            Files.createDirectory(testResourceTarget);
+        }
+
+        String currentTestName = getCurrentTestName();
+        // We copy files from the src dir to the temp dir
+        String url = getUrl("tags", currentTestName);
+        Path from = Paths.get(url);
+
+        currentTestTagDir = testResourceTarget.resolve(currentTestName + ".tags");
+        if (Files.exists(from)) {
+            logger.debug("  --> Copying test resources from [{}]", from);
+            copyDirs(from, currentTestTagDir);
+            logger.debug("  --> Tags ready in [{}]", currentTestTagDir);
+        }
     }
 
     @After

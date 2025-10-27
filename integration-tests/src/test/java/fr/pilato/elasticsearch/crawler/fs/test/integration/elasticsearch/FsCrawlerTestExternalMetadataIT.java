@@ -24,21 +24,26 @@ import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import java.nio.file.Path;
+
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Test crawler with external metadata files
  */
 public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
+    private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void external_metadata_default() throws Exception {
+    public void metadata_external_default() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 3 files
@@ -58,12 +63,15 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                 case "without_meta.txt":
                     checkHit(document, filename, false, "it does not have a metadata file.");
                     break;
+                default:
+                    //noinspection ResultOfMethodCallIgnored
+                    fail("Unexpected file: " + filename);
             }
         }
     }
 
     @Test
-    public void external_metadata_yaml() throws Exception {
+    public void metadata_external_yaml() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getTags().setMetaFilename("meta-as-yaml.yaml");
         crawler = startCrawler(fsSettings);
@@ -85,12 +93,15 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                 case "without_meta.txt":
                     checkHit(document, filename, false, "it does not have a metadata file.");
                     break;
+                default:
+                    //noinspection ResultOfMethodCallIgnored
+                    fail("Unexpected file: " + filename);
             }
         }
     }
 
     @Test
-    public void external_metadata_json() throws Exception {
+    public void metadata_external_json() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getTags().setMetaFilename("meta-as-json.json");
         crawler = startCrawler(fsSettings);
@@ -112,12 +123,15 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                 case "without_meta.txt":
                     checkHit(document, filename, false, "it does not have a metadata file.");
                     break;
+                default:
+                    //noinspection ResultOfMethodCallIgnored
+                    fail("Unexpected file: " + filename);
             }
         }
     }
 
     @Test
-    public void external_metadata_overwrite() throws Exception {
+    public void metadata_external_overwrite() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 3 files
@@ -137,11 +151,94 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                 case "without_meta.txt":
                     checkHit(document, filename, false, "it does not have a metadata file.");
                     break;
+                default:
+                    //noinspection ResultOfMethodCallIgnored
+                    fail("Unexpected file: " + filename);
+            }
+        }
+    }
+
+    @Test
+    public void metadata_static_basic_json() throws Exception {
+        testStaticMetadataFilename("static-meta.json", true);
+    }
+
+    @Test
+    public void metadata_static_basic_yaml() throws Exception {
+        testStaticMetadataFilename("static-meta.yaml", true);
+    }
+
+    @Test
+    public void metadata_static_empty() throws Exception {
+        testStaticMetadataFilename("static-meta.yaml", false);
+    }
+
+    private void testStaticMetadataFilename(String staticMetadataFilename, boolean hasExternal) throws Exception {
+        Path staticMetadataFile = currentTestTagDir.resolve(staticMetadataFilename);
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getTags().setStaticMetaFilename(staticMetadataFile.toString());
+        crawler = startCrawler(fsSettings);
+
+        // We expect to have 1 files
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchHit hit = searchResponse.getHits().get(0);
+        DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+        String filename = document.read("$.file.filename");
+        assertThat(filename).isEqualTo("roottxtfile.txt");
+
+        // We should have the static metadata
+        checkHit(document, filename, hasExternal, "Novo denique perniciosoque exemplo idem");
+    }
+
+    @Test
+    public void metadata_static_no_file() {
+        Path staticMetadataFile = currentTestTagDir.resolve("static-meta.yaml");
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getTags().setStaticMetaFilename(staticMetadataFile.toString());
+        assertThatThrownBy(() -> startCrawler(fsSettings))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("Static meta file")
+                .hasMessageContaining("does not exist or is not a file.");
+    }
+
+    @Test
+    public void metadata_static_and_external() throws Exception {
+        Path staticMetadataFile = currentTestTagDir.resolve("static-meta.yaml");
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getTags().setStaticMetaFilename(staticMetadataFile.toString());
+        crawler = startCrawler(fsSettings);
+
+        // We expect to have 3 files
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
+            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            String filename = document.read("$.file.filename");
+            assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
+
+            switch (filename) {
+                case "root_dir.txt":
+                    checkHit(document, filename, true, "This file contains some words.");
+                    assertThat((String) document.read("$.external.project")).isEqualTo("business development");
+                    break;
+                case "with_meta.txt":
+                    checkHit(document, filename, true, "This is a new content which is overwritten.");
+                    // We need to check that static metadata has been overwritten by the local one
+                    assertThat((String) document.read("$.external.project")).isEqualTo("business development overwritten");
+                    break;
+                case "without_meta.txt":
+                    checkHit(document, filename, true, "it does not have a metadata file.");
+                    assertThat((String) document.read("$.external.project")).isEqualTo("business development");
+                    break;
+                default:
+                    //noinspection ResultOfMethodCallIgnored
+                    fail("Unexpected file: " + filename);
             }
         }
     }
 
     private void checkHit(DocumentContext document, String filename, boolean hasExternal, String expectedContent) {
+        logger.debug("--> Checking hit for [{}], expecting {}external data and \"{}\" as part of the content",
+                filename, hasExternal ? "" : "no ", expectedContent);
         assertThat((String) document.read("$.content")).contains(expectedContent);
         assertThat((String) document.read("$.file.filename")).isEqualTo(filename);
         if (hasExternal) {
