@@ -63,6 +63,9 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                 case "without_meta.txt":
                     checkHit(document, filename, false, "it does not have a metadata file.");
                     break;
+                default:
+                    //noinspection ResultOfMethodCallIgnored
+                    fail("Unexpected file: " + filename);
             }
         }
     }
@@ -90,6 +93,9 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                 case "without_meta.txt":
                     checkHit(document, filename, false, "it does not have a metadata file.");
                     break;
+                default:
+                    //noinspection ResultOfMethodCallIgnored
+                    fail("Unexpected file: " + filename);
             }
         }
     }
@@ -117,6 +123,9 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                 case "without_meta.txt":
                     checkHit(document, filename, false, "it does not have a metadata file.");
                     break;
+                default:
+                    //noinspection ResultOfMethodCallIgnored
+                    fail("Unexpected file: " + filename);
             }
         }
     }
@@ -142,6 +151,9 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                 case "without_meta.txt":
                     checkHit(document, filename, false, "it does not have a metadata file.");
                     break;
+                default:
+                    //noinspection ResultOfMethodCallIgnored
+                    fail("Unexpected file: " + filename);
             }
         }
     }
@@ -217,6 +229,9 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                     checkHit(document, filename, true, "it does not have a metadata file.");
                     assertThat((String) document.read("$.external.project")).isEqualTo("business development");
                     break;
+                default:
+                    //noinspection ResultOfMethodCallIgnored
+                    fail("Unexpected file: " + filename);
             }
         }
     }
