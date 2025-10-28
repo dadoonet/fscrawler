@@ -24,19 +24,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import jakarta.annotation.Nullable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.github.gestalt.config.annotations.Config;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import static fr.pilato.elasticsearch.crawler.fs.settings.Defaults.ELASTICSEARCH_URL_DEFAULT;
 
 public class Elasticsearch {
-
-    private final Logger logger = LogManager.getLogger();
 
     @Config(defaultVal = ELASTICSEARCH_URL_DEFAULT)
     @Nullable private List<String> urls;
@@ -82,16 +77,8 @@ public class Elasticsearch {
     private boolean semanticSearch;
 
     @Deprecated
-    public void setNodes(@Nullable List<ServerUrl> nodes) {
-        logger.warn("Setting elasticsearch.nodes has been deprecated in favor of elasticsearch.urls");
-        if (nodes == null) {
-            return;
-        }
-        this.urls = new ArrayList<>(nodes.size());
-        for (ServerUrl node : nodes) {
-            urls.add(node.getUrl());
-        }
-    }
+    @Config
+    @Nullable private List<ServerUrl> nodes;
 
     @Nullable
     public List<String> getUrls() {

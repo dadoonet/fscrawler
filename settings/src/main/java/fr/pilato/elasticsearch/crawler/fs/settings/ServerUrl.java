@@ -19,10 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import jakarta.annotation.Nullable;
-import org.github.gestalt.config.annotations.Config;
-
-import java.util.Objects;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This class represents a ServerUrl which is basically just a String.
@@ -30,36 +28,12 @@ import java.util.Objects;
  */
 @Deprecated
 public class ServerUrl {
-    @Config
-    @Nullable private String url;
+    private final Logger logger = LogManager.getLogger();
 
-    /**
-     * Get the server URL: Scheme://host:port/endpoint
-     * @return the server URL
-     */
-    public String getUrl() {
-        return url;
-    }
+    private String url;
 
     public void setUrl(String url) {
-        this.url = url;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ServerUrl serverUrl = (ServerUrl) o;
-        return Objects.equals(url, serverUrl.url);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(url);
-    }
-
-    @Override
-    public String toString() {
-        return url;
+        logger.fatal("Setting elasticsearch.nodes.url has been removed in favor of elasticsearch.urls. " +
+                "Please update your configuration. See https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#node-settings.");
     }
 }

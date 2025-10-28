@@ -32,6 +32,12 @@ public class FsSettingsLoaderTest {
     }
 
     @Test
+    public void loadDeprecatedElasticsearchNodesSettings() throws IOException {
+        FsSettings fsSettings = new FsSettingsLoader(configPath).read("yaml-deprecated");
+        assertThat(fsSettings.getName()).isEqualTo("test_deprecated_elasticsearch");
+    }
+
+    @Test
     public void loadNonExistingSettings() throws IOException {
         FsSettings doesnotexist = new FsSettingsLoader(configPath).read("doesnotexist");
         FsSettings expected = generateExpectedDefaultFsSettings();
