@@ -69,8 +69,7 @@ public class RestServer implements AutoCloseable {
             final ResourceConfig rc = new ResourceConfig()
                     .registerInstances(
                             new ServerStatusApi(managementService, settings),
-                            new DocumentApi(settings, documentService, pluginsManager),
-                            new UploadApi(settings, documentService))
+                            new DocumentApi(settings, documentService, pluginsManager))
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)
                     .register(JacksonFeature.class)

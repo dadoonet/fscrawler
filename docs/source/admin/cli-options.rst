@@ -25,7 +25,7 @@ exits after the first run:
 
 .. code:: sh
 
-   FS_JAVA_OPTS="-Dfs.url=/tmp/test -Delasticsearch.nodes=https://elastic.mycompany.com -Delasticsearch.api-key=API_KEY" bin/fscrawler --loop 1
+   FS_JAVA_OPTS="-Dfs.url=/tmp/test -Delasticsearch.urls=https://elastic.mycompany.com -Delasticsearch.api-key=API_KEY" bin/fscrawler --loop 1
 
 ..note::
 

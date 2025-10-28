@@ -166,8 +166,8 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
 
    # required
    elasticsearch:
-     nodes:
-     - url: "https://127.0.0.1:9200"
+     urls:
+     - "https://127.0.0.1:9200"
      bulk_size: 1000
      flush_interval: "5s"
      byte_size: "10mb"

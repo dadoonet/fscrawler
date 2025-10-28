@@ -111,10 +111,10 @@ server:
 
 # optional: define this if you want to change the default Elasticsearch settings/behavior
 elasticsearch:
-  # optional: list of Elasticsearch nodes
-  nodes:
-  - url: "https://127.0.0.1:9200"
-  - url: "https://127.0.0.1:9201"
+  # optional: list of Elasticsearch node urls
+  urls:
+  - "https://127.0.0.1:9200"
+  - "https://127.0.0.1:9201"
   # optional: the index name to use. Defaults to name property
   index: "test_docs"
   # optional: the index name to use for folders. Defaults to name + "_folder"

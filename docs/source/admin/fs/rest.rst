@@ -65,9 +65,7 @@ It will give you a response similar to:
          "lang_detect" : false
        },
        "elasticsearch" : {
-         "nodes" : [ {
-           "url" : "http://127.0.0.1:9200"
-         } ],
+         "urls" : [ "http://127.0.0.1:9200" ],
          "index" : "fscrawler-rest-tests_doc",
          "index_folder" : "fscrawler-rest-tests_folder",
          "bulk_size" : 100,

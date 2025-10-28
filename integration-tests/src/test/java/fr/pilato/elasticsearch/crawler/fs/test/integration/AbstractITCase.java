@@ -29,7 +29,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
-import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
@@ -53,7 +52,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -289,7 +287,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         } else {
             logger.debug("No elasticsearch configuration found, using default settings");
             // We build the elasticsearch Client based on the parameters
-            fsSettings.getElasticsearch().setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)));
+            fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
             fsSettings.getElasticsearch().setSslVerification(testCheckCertificate);
             fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
             if (testApiKey != null) {
@@ -309,7 +307,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             ) {
                 logger.fatal("❌ SSL check is on but you are probably using a self-signed certificate on [{}]." +
                                 " You can bypass this SSL check using -Dtests.cluster.check_ssl=false",
-                        fsSettings.getElasticsearch().getNodes().get(0).getUrl());
+                        fsSettings.getElasticsearch().getUrls().get(0));
                 throw e;
             }
 
@@ -337,7 +335,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             } else {
                 testCaCertificate = null;
             }
-            fsSettings.getElasticsearch().setNodes(List.of(new ServerUrl(testClusterUrl)));
+            fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
             fsSettings.getElasticsearch().setSslVerification(testCaCertificate != null);
             fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
             client = startClient(fsSettings);
@@ -376,7 +374,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     private static ElasticsearchClient startClient(FsSettings fsSettings) throws ElasticsearchClientException {
         logger.debug("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
-                fsSettings.getElasticsearch().getNodes().get(0).getUrl(),
+                fsSettings.getElasticsearch().getUrls().get(0),
                 fsSettings.getElasticsearch().getCaCertificate(),
                 fsSettings.getElasticsearch().isSslVerification());
         ElasticsearchClient client = new ElasticsearchClient(fsSettings);
@@ -572,7 +570,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     protected static Elasticsearch clone(Elasticsearch source) {
         Elasticsearch elasticsearch = FsSettingsLoader.load().getElasticsearch();
-        elasticsearch.setNodes(Collections.singletonList(new ServerUrl(source.getNodes().get(0).getUrl())));
+        elasticsearch.setUrls(List.of(source.getUrls().get(0)));
         elasticsearch.setSslVerification(source.isSslVerification());
         elasticsearch.setCaCertificate(source.getCaCertificate());
         elasticsearch.setApiKey(source.getApiKey());

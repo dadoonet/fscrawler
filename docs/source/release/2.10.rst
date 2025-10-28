@@ -14,6 +14,9 @@ enough. Thanks to dadoonet.
 * When launching for the first time FSCrawler with a job name, FSCrawler does not create anymore the job
   configuration folder with default settings. You need to use the ``--setup`` option to create the job settings.
   Thanks to dadoonet.
+* We don't support anymore the ``elasticsearch.nodes.url`` setting. You need to use ``elasticsearch.urls``
+  instead. Thanks to dadoonet.
+* The ``_upload`` REST endpoint has been removed. Please now use the ``_document`` endpoint. Thanks to dadoonet.
 
 New
 ---
@@ -54,7 +57,6 @@ Fix
 Deprecated
 ----------
 
-* The ``_upload`` REST endpoint has been deprecated. Please now use the ``_document`` endpoint. Thanks to dadoonet.
 * Support for Basic Authentication is deprecated. You should use API keys instead. Thanks to dadoonet.
 
 Updated

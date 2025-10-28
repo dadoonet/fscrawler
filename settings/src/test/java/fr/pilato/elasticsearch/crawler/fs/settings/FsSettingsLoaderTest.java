@@ -32,6 +32,12 @@ public class FsSettingsLoaderTest {
     }
 
     @Test
+    public void loadDeprecatedElasticsearchNodesSettings() throws IOException {
+        FsSettings fsSettings = new FsSettingsLoader(configPath).read("yaml-deprecated");
+        assertThat(fsSettings.getName()).isEqualTo("test_deprecated_elasticsearch");
+    }
+
+    @Test
     public void loadNonExistingSettings() throws IOException {
         FsSettings doesnotexist = new FsSettingsLoader(configPath).read("doesnotexist");
         FsSettings expected = generateExpectedDefaultFsSettings();
@@ -152,10 +158,7 @@ public class FsSettingsLoaderTest {
         expected.getServer().setPassword("password");
         expected.getServer().setProtocol("ssh");
         expected.getServer().setPemPath("/path/to/pemfile");
-        expected.getElasticsearch().setNodes(List.of(
-                new ServerUrl("https://127.0.0.1:9200"),
-                new ServerUrl("https://127.0.0.1:9201")
-        ));
+        expected.getElasticsearch().setUrls(List.of("https://127.0.0.1:9200", "https://127.0.0.1:9201"));
         expected.getElasticsearch().setIndex("test_docs");
         expected.getElasticsearch().setIndexFolder("test_folder");
         expected.getElasticsearch().setBulkSize(1000);
@@ -222,7 +225,7 @@ public class FsSettingsLoaderTest {
         expected.setTags(tags);
 
         Elasticsearch es = new Elasticsearch();
-        es.setNodes(List.of(new ServerUrl("https://127.0.0.1:9200")));
+        es.setUrls(List.of("https://127.0.0.1:9200"));
         es.setIndex(expected.getName());
         es.setIndexFolder(expected.getName() + "_folder");
         es.setBulkSize(100);

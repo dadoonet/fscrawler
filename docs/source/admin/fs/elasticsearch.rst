@@ -26,7 +26,7 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.semantic_search`` | ``true``                  | :ref:`semantic_search`          |
 +-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.nodes``           | ``https://127.0.0.1:9200``| `Node settings`_                |
+| ``elasticsearch.urls``            | ``https://127.0.0.1:9200``| `Node settings`_                |
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.path_prefix``     | ``null``                  | `Path prefix`_                  |
 +-----------------------------------+---------------------------+---------------------------------+
@@ -311,8 +311,6 @@ FSCrawler supports all kind of Elasticsearch deployments:
 - `Hosted deployments <https://ela.st/dedicated-deployment-usage-info>`_
 - `Serverless projects <https://ela.st/serverless-learn-more>`_
 
-
-
 Of course, in production, you would probably change this and connect to
 a production cluster:
 
@@ -320,8 +318,8 @@ a production cluster:
 
    name: "test"
    elasticsearch:
-     nodes:
-     - url: "https://mynode1.mycompany.com:9200"
+     urls:
+     - "https://mynode1.mycompany.com:9200"
 
 You can define multiple nodes:
 
@@ -329,10 +327,10 @@ You can define multiple nodes:
 
    name: "test"
    elasticsearch:
-     nodes:
-     - url: "https://mynode1.mycompany.com:9200"
-     - url: "https://mynode2.mycompany.com:9200"
-     - url: "https://mynode3.mycompany.com:9200"
+     urls:
+     - "https://mynode1.mycompany.com:9200"
+     - "https://mynode2.mycompany.com:9200"
+     - "https://mynode3.mycompany.com:9200"
 
 .. note::
 
@@ -346,7 +344,7 @@ You can define multiple nodes:
 
        curl -fsSL https://elastic.co/start-local | sh
 
-    the url to use is ``http://localhost:9200`` and the API key to use is available in the ``.env`` generated file.
+    The url to use is ``http://localhost:9200`` and the API key to use is available in the ``.env`` generated file.
 
 Path prefix
 ^^^^^^^^^^^
@@ -358,8 +356,8 @@ you might have to specify a path prefix. This can be done with ``path_prefix`` s
 
    name: "test"
    elasticsearch:
-     nodes:
-     - url: "http://mynode1.mycompany.com:9200"
+     urls:
+     - "http://mynode1.mycompany.com:9200"
      path_prefix: "/path/to/elasticsearch"
 
 .. note::
@@ -529,8 +527,8 @@ And then, you can specify this file in the ``elasticsearch.ca_certificate`` opti
         name: "test"
         elasticsearch:
          api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
-         nodes:
-         - url: "https://localhost:9243"
+         urls:
+         - "https://localhost:9243"
 
     .. tip::
 
