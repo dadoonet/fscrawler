@@ -125,32 +125,6 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
     }
 
-    @Deprecated
-    @Test
-    public void uploadTxtDocumentsWithDeprecatedApi() throws Exception {
-        Path from = rootTmpDir.resolve("resources").resolve("documents");
-        if (Files.notExists(from)) {
-            logger.error("directory [{}] should exist before we start tests", from);
-            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
-        }
-        AtomicInteger number = new AtomicInteger();
-        Files.walk(from)
-                .filter(Files::isRegularFile)
-                .filter(path -> path.toString().endsWith("txt"))
-                .forEach(path -> {
-                    number.getAndIncrement();
-                    UploadResponse response = uploadFileUsingApi(target, path, null, null, "/_upload", null);
-            assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
-                });
-
-        // We wait until we have all txt docs
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()),
-                number.longValue(), null, MAX_WAIT_FOR_SEARCH);
-        for (ESSearchHit hit : response.getHits()) {
-            assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotNull();
-        }
-    }
-
     @Test
     public void uploadDocumentWithId() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");

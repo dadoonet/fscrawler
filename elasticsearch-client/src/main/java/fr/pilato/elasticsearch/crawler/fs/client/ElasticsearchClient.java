@@ -92,11 +92,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     public ElasticsearchClient(FsSettings settings) {
         this.settings = settings;
-        this.hosts = new ArrayList<>(settings.getElasticsearch().getNodes().size());
-        this.initialHosts = new ArrayList<>(settings.getElasticsearch().getNodes().size());
-        settings.getElasticsearch().getNodes().forEach(node -> {
-            hosts.add(node.decodedUrl());
-            initialHosts.add(node.decodedUrl());
+        this.hosts = new ArrayList<>(settings.getElasticsearch().getUrls().size());
+        this.initialHosts = new ArrayList<>(settings.getElasticsearch().getUrls().size());
+        settings.getElasticsearch().getUrls().forEach(url -> {
+            hosts.add(url);
+            initialHosts.add(url);
         });
         if (hosts.size() == 1) {
             // We have only one node, so we won't have to select a specific one but the only one.

@@ -152,10 +152,7 @@ public class FsSettingsLoaderTest {
         expected.getServer().setPassword("password");
         expected.getServer().setProtocol("ssh");
         expected.getServer().setPemPath("/path/to/pemfile");
-        expected.getElasticsearch().setNodes(List.of(
-                new ServerUrl("https://127.0.0.1:9200"),
-                new ServerUrl("https://127.0.0.1:9201")
-        ));
+        expected.getElasticsearch().setUrls(List.of("https://127.0.0.1:9200", "https://127.0.0.1:9201"));
         expected.getElasticsearch().setIndex("test_docs");
         expected.getElasticsearch().setIndexFolder("test_folder");
         expected.getElasticsearch().setBulkSize(1000);
@@ -222,7 +219,7 @@ public class FsSettingsLoaderTest {
         expected.setTags(tags);
 
         Elasticsearch es = new Elasticsearch();
-        es.setNodes(List.of(new ServerUrl("https://127.0.0.1:9200")));
+        es.setUrls(List.of("https://127.0.0.1:9200"));
         es.setIndex(expected.getName());
         es.setIndexFolder(expected.getName() + "_folder");
         es.setBulkSize(100);

@@ -39,7 +39,7 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         settings.getElasticsearch().setIndexFolder(getCurrentTestName() + INDEX_SUFFIX_FOLDER);
 
         assertThat(settings.getFs().getUrl()).isEqualTo(Defaults.DEFAULT_DIR);
-        assertThat(settings.getElasticsearch().getNodes()).contains(Defaults.NODE_DEFAULT);
+        assertThat(settings.getElasticsearch().getUrls()).contains(Defaults.ELASTICSEARCH_URL_DEFAULT);
         assertThat(settings.getElasticsearch().getIndex()).isEqualTo(getCurrentTestName());
         assertThat(settings.getElasticsearch().getIndexFolder()).isEqualTo(getCurrentTestName() + INDEX_SUFFIX_FOLDER);
         assertThat(settings.getServer().getProtocol()).isEqualTo("local");

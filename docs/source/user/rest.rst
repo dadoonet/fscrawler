@@ -31,7 +31,7 @@ Then you can start uploading your binary files:
 .. code:: sh
 
    echo "This is my text" > test.txt
-   curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_upload"
+   curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_document"
 
 It will index the file into elasticsearch and will give you back the
 elasticsearch URL for the created document, like:

@@ -24,15 +24,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import jakarta.annotation.Nullable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.github.gestalt.config.annotations.Config;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static fr.pilato.elasticsearch.crawler.fs.settings.Defaults.ELASTICSEARCH_URL_DEFAULT;
+
 public class Elasticsearch {
 
-    @Config
-    @Nullable private List<ServerUrl> nodes;
+    private final Logger logger = LogManager.getLogger();
+
+    @Config(defaultVal = ELASTICSEARCH_URL_DEFAULT)
+    @Nullable private List<String> urls;
     @Config
     @Nullable private String index;
     @Config
@@ -74,12 +81,33 @@ public class Elasticsearch {
     @Config(defaultVal = "true")
     private boolean semanticSearch;
 
-    public List<ServerUrl> getNodes() {
-        return nodes;
+    @Deprecated
+    public void setNodes(@Nullable List<ServerUrl> nodes) {
+        logger.warn("Setting elasticsearch.nodes has been deprecated in favor of elasticsearch.urls");
+        if (nodes == null) {
+            return;
+        }
+        this.urls = new ArrayList<>(nodes.size());
+        for (ServerUrl node : nodes) {
+            urls.add(node.getUrl());
+        }
     }
 
-    public void setNodes(@Nullable List<ServerUrl> nodes) {
-        this.nodes = nodes;
+    @Nullable
+    public List<String> getUrls() {
+        return urls;
+    }
+
+    public void setUrls(@Nullable List<String> urls) {
+        this.urls = urls;
+    }
+
+    /**
+     * Set a single URL. This is useful when using -Delasticsearch.urls=https://localhost:9200.
+     * @param url The URL
+     */
+    public void setUrls(@Nullable String url) {
+        this.urls = List.of(url);
     }
 
     public String getIndex() {
@@ -216,7 +244,7 @@ public class Elasticsearch {
         Elasticsearch that = (Elasticsearch) o;
 
         if (!Objects.equals(bulkSize, that.bulkSize)) return false;
-        if (!Objects.equals(nodes, that.nodes)) return false;
+        if (!Objects.equals(urls, that.urls)) return false;
         if (!Objects.equals(index, that.index)) return false;
         if (!Objects.equals(indexFolder, that.indexFolder)) return false;
         if (!Objects.equals(apiKey, that.apiKey)) return false;
@@ -233,7 +261,7 @@ public class Elasticsearch {
 
     @Override
     public int hashCode() {
-        int result = nodes != null ? nodes.hashCode() : 0;
+        int result = urls != null ? urls.hashCode() : 0;
         result = 31 * result + (index != null ? index.hashCode() : 0);
         result = 31 * result + (indexFolder != null ? indexFolder.hashCode() : 0);
         result = 31 * result + (username != null ? username.hashCode() : 0);
@@ -251,7 +279,7 @@ public class Elasticsearch {
     @Override
     public String toString() {
         return "Elasticsearch{" +
-                "nodes=" + nodes +
+                "urls=" + urls +
                 ", index='" + index + '\'' +
                 ", indexFolder='" + indexFolder + '\'' +
                 ", bulkSize=" + bulkSize +

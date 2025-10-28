@@ -56,14 +56,7 @@
     "pem_path": "/path/to/pemfile"
   },
   "elasticsearch": {
-    "nodes": [
-      {
-        "url": "https://127.0.0.1:9200"
-      },
-      {
-        "url": "https://127.0.0.1:9201"
-      }
-    ],
+    "urls": [ "https://127.0.0.1:9200", "https://127.0.0.1:9201" ],
     "index": "test_docs",
     "index_folder": "test_folder",
     "bulk_size": 1000,

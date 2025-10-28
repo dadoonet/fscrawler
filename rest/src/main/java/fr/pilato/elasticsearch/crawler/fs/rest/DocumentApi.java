@@ -24,7 +24,6 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
@@ -246,8 +245,7 @@ public class DocumentApi extends RestApi {
         }
 
         // Elasticsearch entity coordinates (we use the first node address)
-        ServerUrl node = settings.getElasticsearch().getNodes().get(0);
-        String url = node.getUrl() + "/" + index + "/_doc/" + id;
+        String url = settings.getElasticsearch().getUrls().get(0) + "/" + index + "/_doc/" + id;
         if (Boolean.parseBoolean(simulate)) {
             logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].",
                     doc.getFile().getFilename(), url);
