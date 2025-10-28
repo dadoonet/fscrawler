@@ -50,6 +50,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
     private void settingsTester(FsSettings source) throws IOException {
         String yaml = FsSettingsParser.toYaml(source);
+        logger.debug("generated yaml:\n{}", yaml);
         Path settingsFile = rootTmpDir.resolve("settings.yaml");
         Files.writeString(settingsFile, yaml);
         FsSettings generated = FsSettingsLoader.load(settingsFile);

@@ -102,14 +102,6 @@ public class Elasticsearch {
         this.urls = urls;
     }
 
-    /**
-     * Set a single URL. This is useful when using -Delasticsearch.urls=https://localhost:9200.
-     * @param url The URL
-     */
-    public void setUrls(@Nullable String url) {
-        this.urls = List.of(url);
-    }
-
     public String getIndex() {
         return index;
     }
