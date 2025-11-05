@@ -92,8 +92,9 @@ You can use another filename for the external tags file. For example, if you wan
 .. code:: yaml
 
    fs:
-     tags:
-       metaFilename: "meta_tags.json"
+     url: "/path/to/docs"
+   tags:
+     metaFilename: "meta_tags.json"
 
 Static Metadata
 ^^^^^^^^^^^^^^^
