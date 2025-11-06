@@ -32,11 +32,13 @@ public class Folder {
 
     private Path path;
     private File file;
+    private Attributes attributes;
 
     public Folder() {
         path = new Path();
         file = new File();
         file.setContentType(CONTENT_TYPE);
+        attributes = null;
     }
 
     /**
@@ -61,6 +63,7 @@ public class Folder {
         file.setLastModified(localDateTimeToDate(modification));
         file.setCreated(localDateTimeToDate(creation));
         file.setLastAccessed(localDateTimeToDate(lastAccess));
+        attributes = null;
     }
 
     public Path getPath() {
@@ -77,5 +80,13 @@ public class Folder {
 
     public void setFile(File file) {
         this.file = file;
+    }
+
+    public Attributes getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Attributes attributes) {
+        this.attributes = attributes;
     }
 }
