@@ -29,20 +29,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDefaultResources;
-
 public abstract class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     protected static Path metadataDir;
 
     @BeforeClass
     public static void createFsCrawlerJobDir() throws IOException {
-        // We also need to create default mapping files
         metadataDir = rootTmpDir.resolve(".fscrawler");
         if (!metadataDir.toFile().exists()) {
             Files.createDirectory(metadataDir);
         }
-        copyDefaultResources(metadataDir);
         logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 

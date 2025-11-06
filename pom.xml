@@ -39,21 +39,23 @@
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
-        <elasticsearch9.version>9.1.3</elasticsearch9.version>
-        <elasticsearch8.version>8.19.3</elasticsearch8.version>
+        <elasticsearch9.version>9.2.0</elasticsearch9.version>
+        <elasticsearch8.version>8.19.5</elasticsearch8.version>
         <elasticsearch7.version>7.17.29</elasticsearch7.version>
-        <elasticsearch6.version>6.8.23</elasticsearch6.version>
         <elasticsearch.version>${elasticsearch9.version}</elasticsearch.version>
 
         <pl4j.version>3.13.0</pl4j.version>
 
-        <gestalt.version>0.36.0</gestalt.version>
+        <gestalt.version>0.36.1</gestalt.version>
 
         <tika.version>3.2.3</tika.version>
-        <jackson.version>2.20.0</jackson.version>
-        <jsonpath.version>2.9.0</jsonpath.version>
-        <log4j.version>2.25.1</log4j.version>
+        <jackson.version>2.20.1</jackson.version>
+        <jsonpath.version>2.10.0</jsonpath.version>
+        <log4j.version>2.25.2</log4j.version>
         <jersey.version>3.1.11</jersey.version>
+
+        <!-- For FSCrawler S3 plugin -->
+        <minio.version>8.6.0</minio.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
@@ -131,7 +133,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.14.0</version>
+                    <version>3.14.1</version>
                     <configuration>
                         <release>${java.compiler.version}</release>
                         <encoding>UTF-8</encoding>
@@ -162,7 +164,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.19.0</version>
+                    <version>2.19.1</version>
                     <configuration>
                         <generateBackupPoms>false</generateBackupPoms>
                     </configuration>
@@ -178,7 +180,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.9.0</version>
                 </plugin>
                 <plugin>
                     <groupId>com.carrotsearch.randomizedtesting</groupId>
@@ -269,7 +271,7 @@
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.46.0</version>
+                    <version>0.47.0</version>
                 </plugin>
 
                 <!-- Generate the release zip file (run during package step) -->
@@ -281,7 +283,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.6.1</version>
+                    <version>3.6.2</version>
                     <configuration>
                         <rules>
                             <requireJavaVersion>
@@ -324,7 +326,7 @@
                 <plugin>
                     <groupId>org.sonatype.central</groupId>
                     <artifactId>central-publishing-maven-plugin</artifactId>
-                    <version>0.8.0</version>
+                    <version>0.9.0</version>
                     <extensions>true</extensions>
                     <configuration>
                         <autoPublish>true</autoPublish>
@@ -364,7 +366,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.11.3</version>
+                    <version>3.12.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -374,6 +376,31 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <!-- By default, We don't deploy our IT artifact to maven central -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- By default, We don't deploy our IT artifact to maven central -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- By default, We don't deploy our IT artifact to maven central -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- By default, we don't publish anything unless set explicitly -->
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
@@ -515,6 +542,23 @@
                 <version>${pl4j.version}</version>
             </dependency>
 
+            <!-- For FSCrawler S3 plugin -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp-jvm</artifactId>
+                <version>5.3.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okio</groupId>
+                <artifactId>okio-jvm</artifactId>
+                <version>3.16.2</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
@@ -616,7 +660,7 @@
             <dependency>
                 <groupId>org.ow2.asm</groupId>
                 <artifactId>asm</artifactId>
-                <version>9.8</version>
+                <version>9.9</version>
             </dependency>
 
             <!-- Version conflict between
@@ -643,7 +687,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.18.0</version>
+                <version>3.19.0</version>
             </dependency>
 
             <!-- Too old in org.apache.tika:tika-parser-scientific-module:2.9.1 deps -->
@@ -657,7 +701,7 @@
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
-                <version>4.32.1</version>
+                <version>4.33.0</version>
             </dependency>
 
             <!-- For Language detection -->
@@ -789,11 +833,34 @@
                 <version>2.20.0</version>
             </dependency>
 
+            <!-- Transitive dep issue:
+            com.squareup.okio:okio-jvm:jar:3.15.0:compile
+              brings org.jetbrains.kotlin:kotlin-stdlib:jar:2.1.21:compile
+             -->
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib</artifactId>
+                <version>2.2.21</version>
+            </dependency>
+
+            <!-- Transitive dep issue:
+             +-org.apache.tika:tika-langdetect-optimaize:jar:3.2.3:compile
+               +-org.jetbrains:annotations:jar:26.0.2:compile
+             +-org.jetbrains.kotlin:kotlin-stdlib:jar:2.2.0:compile
+               +-org.jetbrains:annotations:jar:13.0:compile
+            -->
+            <dependency>
+                <groupId>org.jetbrains</groupId>
+                <artifactId>annotations</artifactId>
+                <version>26.0.2-1</version>
+            </dependency>
+
+
             <!-- Test dependencies -->
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.27.4</version>
+                <version>3.27.6</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
@@ -865,29 +932,7 @@
                 <integ.elasticsearch.version>${elasticsearch7.version}</integ.elasticsearch.version>
             </properties>
         </profile>
-        <!-- Profile for ES6 -->
-        <profile>
-            <id>es-6x</id>
-            <properties>
-                <integ.elasticsearch.version>${elasticsearch6.version}</integ.elasticsearch.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>skip-docker-compose</id>
-            <activation>
-                <property>
-                    <name>tests.cluster.url</name>
-                </property>
-            </activation>
-        </profile>
-        <profile>
-            <id>run-docker-compose</id>
-            <activation>
-                <property>
-                    <name>!tests.cluster.url</name>
-                </property>
-            </activation>
-        </profile>
+
         <profile>
             <id>check_cve_anonymous</id>
             <activation>
@@ -947,6 +992,9 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <skip>false</skip>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -971,6 +1019,9 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
+                        <configuration>
+                            <skip>false</skip>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

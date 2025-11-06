@@ -57,7 +57,8 @@ public class FileAbstractorFile extends FileAbstractor<File> {
     }
 
     private static final Comparator<Path> PATH_COMPARATOR = Comparator.comparing(
-            file -> getModificationOrCreationTime(file.toFile()));
+            file -> getModificationOrCreationTime(file.toFile()),
+            Comparator.nullsLast(Comparator.naturalOrder()));
 
     @Override
     public FileAbstractModel toFileAbstractModel(String path, File file) {

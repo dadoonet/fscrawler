@@ -56,7 +56,11 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
 
     private static final String ALTERNATIVE_ENCODING = "GBK";
     private static final Comparator<FTPFile> FTP_FILE_COMPARATOR = Comparator.comparing(
-            file -> LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getTimestamp().getTimeInMillis()), ZoneId.systemDefault()));
+            file -> {
+                var timestamp = file.getTimestamp();
+                return timestamp != null ? LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp.getTimeInMillis()), ZoneId.systemDefault()) : null;
+            },
+            Comparator.nullsLast(Comparator.naturalOrder()));
     private final Predicate<FTPFile> IS_SYM_LINK = file -> {
         if (fsSettings.getFs().isFollowSymlinks()) return true;
         return !file.isSymbolicLink();

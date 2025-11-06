@@ -26,7 +26,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 
@@ -36,8 +35,8 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
 
     private final IElasticsearchClient client;
 
-    public FsCrawlerDocumentServiceElasticsearchImpl(Path config, FsSettings settings) {
-        this.client = new ElasticsearchClient(config, settings);
+    public FsCrawlerDocumentServiceElasticsearchImpl(FsSettings settings) {
+        this.client = new ElasticsearchClient(settings);
     }
 
     public IElasticsearchClient getClient() {

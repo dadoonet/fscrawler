@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +40,6 @@ import java.io.*;
 import java.io.File;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -62,10 +62,10 @@ public abstract class FsParserAbstract extends FsParser {
     private final FsCrawlerManagementService managementService;
     private final FsCrawlerDocumentService documentService;
     private final Integer loop;
-    private final MessageDigest messageDigest;
     private final String pathSeparator;
     private final FileAbstractor<?> fileAbstractor;
     private final String metadataFilename;
+    private final byte[] staticMetadata;
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
@@ -78,17 +78,6 @@ public abstract class FsParserAbstract extends FsParser {
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
-
-        // Create MessageDigest instance
-        if (fsSettings.getFs().getChecksum() != null) {
-            try {
-                messageDigest = MessageDigest.getInstance(fsSettings.getFs().getChecksum());
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("This should never happen as we checked that previously");
-            }
-        } else {
-            messageDigest = null;
-        }
 
         pathSeparator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
         if (OsValidator.WINDOWS && fsSettings.getServer() == null) {
@@ -103,6 +92,22 @@ public abstract class FsParserAbstract extends FsParser {
             logger.debug("We are going to use [{}] as meta file if found while crawling dirs", metadataFilename);
         } else {
             metadataFilename = null;
+        }
+
+        if (fsSettings.getTags() != null && !StringUtils.isEmpty(fsSettings.getTags().getStaticMetaFilename())) {
+            File staticMetadataFile = new File(fsSettings.getTags().getStaticMetaFilename());
+            if (!staticMetadataFile.exists() || !staticMetadataFile.isFile()) {
+                throw new FsCrawlerIllegalConfigurationException("Static meta file [" + staticMetadataFile.getAbsolutePath() + "] does not exist or is not a file.");
+            }
+            try {
+                // We are caching in memory the static metadata file content as it will be used for every document
+                staticMetadata = FileUtils.readFileToByteArray(staticMetadataFile);
+                logger.debug("We are going to use [{}] as the static meta file for every document", fsSettings.getTags().getStaticMetaFilename());
+            } catch (IOException e) {
+                throw new FsCrawlerIllegalConfigurationException("Static meta file [" + staticMetadataFile.getAbsolutePath() + "] cannot be read.", e);
+            }
+        } else {
+            staticMetadata = null;
         }
     }
 
@@ -507,10 +512,17 @@ public abstract class FsParserAbstract extends FsParser {
                 doc.setObject(XmlDocParser.generateMap(inputStream));
             } else {
                 // Extracting content with Tika
-                TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
+                TikaDocParser.generate(fsSettings, inputStream, doc, filesize);
             }
 
-            Doc mergedDoc = DocUtils.getMergedDoc(doc, metadataFilename, externalTags);
+            // Merge static metadata if available
+            Doc mergedDoc = doc;
+            if (staticMetadata != null) {
+                mergedDoc = DocUtils.getMergedDoc(doc, fsSettings.getTags().getStaticMetaFilename(),
+                        new ByteArrayInputStream(staticMetadata));
+            }
+            // Merge metadata if available in the same folder
+            mergedDoc = DocUtils.getMergedDoc(mergedDoc, metadataFilename, externalTags);
 
             // We index the data structure
             if (isIndexable(mergedDoc.getContent(), fsSettings.getFs().getFilters())) {

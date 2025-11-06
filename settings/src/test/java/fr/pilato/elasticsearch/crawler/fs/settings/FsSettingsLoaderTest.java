@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -17,13 +18,23 @@ public class FsSettingsLoaderTest {
     private static final Logger logger = LogManager.getLogger();
 
     // Get the config path from resources
-    Path configPath = Path.of(FsSettingsLoaderTest.class.getResource("/config").getPath());
+    Path configPath;
+
+    public FsSettingsLoaderTest() throws URISyntaxException {
+        configPath = Path.of(FsSettingsLoaderTest.class.getResource("/config").toURI());
+    }
 
     @Test
     public void loadWrongSettings() {
         assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class).isThrownBy(() ->
                 // This should fail
                 new FsSettingsLoader(configPath).read("yaml-wrong"));
+    }
+
+    @Test
+    public void loadDeprecatedElasticsearchNodesSettings() throws IOException {
+        FsSettings fsSettings = new FsSettingsLoader(configPath).read("yaml-deprecated");
+        assertThat(fsSettings.getName()).isEqualTo("test_deprecated_elasticsearch");
     }
 
     @Test
@@ -138,6 +149,7 @@ public class FsSettingsLoaderTest {
         expected.getFs().setOcr(ocr);
         Tags tags = new Tags();
         tags.setMetaFilename("meta_tags.json");
+        tags.setStaticMetaFilename("/path/to/metadatafile.yml");
         expected.setTags(tags);
         expected.setServer(new Server());
         expected.getServer().setHostname("localhost");
@@ -146,10 +158,7 @@ public class FsSettingsLoaderTest {
         expected.getServer().setPassword("password");
         expected.getServer().setProtocol("ssh");
         expected.getServer().setPemPath("/path/to/pemfile");
-        expected.getElasticsearch().setNodes(List.of(
-                new ServerUrl("https://127.0.0.1:9200"),
-                new ServerUrl("https://127.0.0.1:9201")
-        ));
+        expected.getElasticsearch().setUrls(List.of("https://127.0.0.1:9200", "https://127.0.0.1:9201"));
         expected.getElasticsearch().setIndex("test_docs");
         expected.getElasticsearch().setIndexFolder("test_folder");
         expected.getElasticsearch().setBulkSize(1000);
@@ -216,7 +225,7 @@ public class FsSettingsLoaderTest {
         expected.setTags(tags);
 
         Elasticsearch es = new Elasticsearch();
-        es.setNodes(List.of(new ServerUrl("https://127.0.0.1:9200")));
+        es.setUrls(List.of("https://127.0.0.1:9200"));
         es.setIndex(expected.getName());
         es.setIndexFolder(expected.getName() + "_folder");
         es.setBulkSize(100);

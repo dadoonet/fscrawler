@@ -54,7 +54,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                 .filter(path -> Files.exists(path.resolve(exec)))
                 .findFirst();
         assumeThat(tessPath.isPresent())
-                .as("tesseract executable [{}] should be present in PATH [{}]", exec, System.getenv("PATH"))
+                .as("tesseract executable [%s] should be present in PATH [%s]", exec, System.getenv("PATH"))
                 .isTrue();
         Path tessDirPath = tessPath.get();
         Path tesseract = tessDirPath.resolve(exec);

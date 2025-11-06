@@ -50,6 +50,7 @@ import static org.apache.commons.lang3.StringUtils.split;
 @ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
 @ThreadLeakLingering(linger = 5000) // 5 sec lingering
 @ThreadLeakFilters(filters = {
+        WindowsSpecificThreadFilter.class,
         TestContainerThreadFilter.class,
         JNACleanerThreadFilter.class
 })

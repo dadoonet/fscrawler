@@ -1,5 +1,5 @@
 # optional: if the filename is found in the directory, it will be used as a metadata
 # content of the file will be indexed
-fs:
-  tags:
-    meta_filename: "meta_tags.json" # default is ".meta.yml"
+tags:
+  meta_filename: "meta_tags.json" # default is ".meta.yml"
+  static_meta_filename: "/path/to/metadatafile.yml"

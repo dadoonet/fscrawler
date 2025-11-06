@@ -66,9 +66,7 @@ It will give you a response similar to:
          "lang_detect" : false
        },
        "elasticsearch" : {
-         "nodes" : [ {
-           "url" : "http://127.0.0.1:9200"
-         } ],
+         "urls" : [ "http://127.0.0.1:9200" ],
          "index" : "fscrawler-rest-tests_doc",
          "index_folder" : "fscrawler-rest-tests_folder",
          "bulk_size" : 100,
@@ -223,6 +221,12 @@ For example, we can read the file ``bar.txt`` from the ``/path/to/foo`` director
         "url": "/path/to/foo/bar.txt"
       }
     }'
+
+.. note::
+
+    For security reasons, the ``local`` plugin can only read files
+    which are under the path defined in the job settings file under
+    ``fs.url``.
 
 HTTP plugin
 ~~~~~~~~~~~

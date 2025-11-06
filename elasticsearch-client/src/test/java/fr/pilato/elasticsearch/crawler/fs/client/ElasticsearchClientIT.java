@@ -2,19 +2,21 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.Nightly;
+import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
-import fr.pilato.elasticsearch.crawler.fs.settings.ServerUrl;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.*;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.MountableFile;
@@ -27,7 +29,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
@@ -37,8 +38,12 @@ import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHEC
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -53,10 +58,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static final boolean TEST_KEEP_DATA = getSystemProperty("tests.leaveTemporary", true);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
     private static String testCaCertificate;
-    private static IElasticsearchClient esClient;
+    private static ElasticsearchClient esClient;
 
-    private static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(1);
-    private static final TimeValue MAX_WAIT_FOR_SEARCH_LONG_TESTS = TimeValue.timeValueMinutes(5);
     private static TimeValue maxWaitForSearch;
 
     @BeforeClass
@@ -64,7 +67,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.debug("Generate settings against [{}] with ssl check [{}]", testClusterUrl, TEST_CHECK_CERTIFICATE);
 
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.getElasticsearch().setNodes(Collections.singletonList(new ServerUrl(testClusterUrl)));
+        fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
         fsSettings.getElasticsearch().setSslVerification(TEST_CHECK_CERTIFICATE);
         fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
         if (testApiKey != null) {
@@ -83,7 +86,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             ) {
                 logger.fatal("❌ SSL check is on but you are probably using a self-signed certificate on [{}]." +
                                 " You can bypass this SSL check using -Dtests.cluster.check_ssl=false",
-                        fsSettings.getElasticsearch().getNodes().get(0).getUrl());
+                        fsSettings.getElasticsearch().getUrls().get(0));
                 throw e;
             }
 
@@ -111,7 +114,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             } else {
                 testCaCertificate = null;
             }
-            fsSettings.getElasticsearch().setNodes(List.of(new ServerUrl(testClusterUrl)));
+            fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
             fsSettings.getElasticsearch().setSslVerification(testCaCertificate != null);
             fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
             esClient = startClient(fsSettings);
@@ -141,20 +144,20 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.info("✅ Starting integration tests against an external cluster running elasticsearch [{}]", version);
 
         if (esClient.isSemanticSupported()) {
-            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", MAX_WAIT_FOR_SEARCH_LONG_TESTS);
             maxWaitForSearch = MAX_WAIT_FOR_SEARCH_LONG_TESTS;
+            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", maxWaitForSearch);
         } else {
-            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", MAX_WAIT_FOR_SEARCH);
             maxWaitForSearch = MAX_WAIT_FOR_SEARCH;
+            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", maxWaitForSearch);
         }
     }
 
     private static ElasticsearchClient startClient(FsSettings fsSettings) throws ElasticsearchClientException {
         logger.debug("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
-                fsSettings.getElasticsearch().getNodes().get(0).getUrl(),
+                fsSettings.getElasticsearch().getUrls().get(0),
                 fsSettings.getElasticsearch().getCaCertificate(),
                 fsSettings.getElasticsearch().isSslVerification());
-        ElasticsearchClient client = new ElasticsearchClient(null, fsSettings);
+        ElasticsearchClient client = new ElasticsearchClient(fsSettings);
         client.start();
         return client;
     }
@@ -176,11 +179,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.deleteIndex(getCrawlerName());
         esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
         // Remove existing templates if any
-        if (esClient.getMajorVersion() > 6) {
-            logger.debug(" -> Removing existing templates");
-            removeIndexTemplates();
-            removeComponentTemplates();
-        }
+        logger.debug(" -> Removing existing templates");
+        removeIndexTemplates();
+        removeComponentTemplates();
 
         logger.info("🎬 Starting test [{}]", getCurrentTestName());
     }
@@ -192,11 +193,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             esClient.deleteIndex(getCrawlerName());
             esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
-            if (esClient.getMajorVersion() > 6) {
-                logger.debug(" -> Removing existing templates");
-                removeIndexTemplates();
-                removeComponentTemplates();
-            }
+            logger.debug(" -> Removing existing templates");
+            removeIndexTemplates();
+            removeComponentTemplates();
         }
 
         logger.info("✅ End of test [{}]", getCurrentTestName());
@@ -205,7 +204,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Test
     public void deleteIndex() throws ElasticsearchClientException {
         esClient.deleteIndex("does-not-exist-index");
-        esClient.createIndex(getCrawlerName(), false, null);
+        createIndex();
         assertThat(esClient.isExistingIndex(getCrawlerName())).isTrue();
         esClient.deleteIndex(getCrawlerName());
         assertThat(esClient.isExistingIndex(getCrawlerName())).isFalse();
@@ -213,90 +212,21 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
     @Test
     public void waitForHealthyIndex() throws ElasticsearchClientException {
-        esClient.createIndex(getCrawlerName(), false, null);
+        createIndex();
         esClient.waitForHealthyIndex(getCrawlerName());
 
         // This one could take a long time as the index does not exist
         assertThatNoException().isThrownBy(() -> esClient.waitForHealthyIndex("does-not-exist-index"));
     }
 
-    /**
-     * We don't need to create indices anymore with ES >= 7
-     * @throws ElasticsearchClientException in case of error
-     */
-    @Test
-    @Deprecated
-    public void createIndexWithNoSettings() throws ElasticsearchClientException {
-        esClient.createIndex(getCrawlerName(), false, null);
-        boolean exists = esClient.isExistingIndex(getCrawlerName());
-        assertThat(exists).isTrue();
-    }
-
-    /**
-     * We don't need to create indices anymore with ES >= 7
-     * @throws ElasticsearchClientException in case of error
-     */
-    @Test
-    @Deprecated
-    public void createIndexWithSettings() throws ElasticsearchClientException {
-        esClient.createIndex(getCrawlerName(), false, "{\n" +
-                "  \"settings\": {\n" +
-                "    \"refresh_interval\": \"5s\"\n" +
-                "  }\n" +
-                "}\n");
-        boolean exists = esClient.isExistingIndex(getCrawlerName());
-        assertThat(exists).isTrue();
-    }
-
     @Test
     public void refresh() throws ElasticsearchClientException {
-        esClient.createIndex(getCrawlerName(), false, null);
+        createIndex();
         assertThatNoException().isThrownBy(() -> esClient.refresh(getCrawlerName()));
     }
 
-    /**
-     * We don't need to create indices anymore with ES >= 7
-     * @throws ElasticsearchClientException in case of error
-     */
-    @Test
-    @Deprecated
-    public void createIndexWithSettingsAlreadyExistsShouldFail() throws ElasticsearchClientException {
-        esClient.createIndex(getCrawlerName(), false, null);
-        esClient.waitForHealthyIndex(getCrawlerName());
-        assertThatExceptionOfType(ElasticsearchClientException.class)
-                .isThrownBy(() -> esClient.createIndex(getCrawlerName(), false, null))
-                .withMessageContaining("already exists");
-    }
-
-    /**
-     * We don't need to create indices anymore with ES >= 7
-     * @throws ElasticsearchClientException in case of error
-     */
-    @Test
-    @Deprecated
-    public void createIndexWithSettingsAlreadyExistsShouldBeIgnored() throws ElasticsearchClientException {
-        esClient.createIndex(getCrawlerName(), false, null);
-        esClient.waitForHealthyIndex(getCrawlerName());
-        assertThatNoException()
-                .isThrownBy(() -> esClient.createIndex(getCrawlerName(), true, null));
-    }
-
-    /**
-     * We don't need to create indices anymore with ES >= 7
-     */
-    @Test
-    @Deprecated
-    public void createIndexWithSettingsWithErrors() {
-        try {
-            esClient.createIndex(getCrawlerName(), false, "{this is wrong}");
-            fail("we should reject creation of an already existing index");
-        } catch (ElasticsearchClientException e) {
-            assertThat(e.getMessage()).contains("error while creating index");
-        }
-    }
-
     private void createSearchDataset() throws Exception {
-        esClient.createIndex(getCrawlerName(), false, "{\n" +
+        createIndex("{\n" +
                 "  \"mappings\": {\n" +
                 "    \"properties\": {\n" +
                 "      \"foo\": {\n" +
@@ -670,7 +600,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                     "  }\n" +
                     "}";
 
-            esClient.createIndex(getCrawlerName(), false, indexSettings);
+            createIndex(indexSettings);
 
             long nbItems = RandomizedTest.randomLongBetween(6, 20);
 
@@ -744,12 +674,10 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void withOnlyOneRunningNode() throws ElasticsearchClientException, IOException {
         // Build a client with a non-running node
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.getElasticsearch().setNodes(List.of(
-                new ServerUrl("http://127.0.0.1:9206"),
-                new ServerUrl(testClusterUrl)));
+        fsSettings.getElasticsearch().setUrls(List.of("http://127.0.0.1:9206", testClusterUrl));
         fsSettings.getElasticsearch().setApiKey(testApiKey);
         fsSettings.getElasticsearch().setSslVerification(false);
-        try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
+        try (IElasticsearchClient localClient = new ElasticsearchClient(fsSettings)) {
             assertThatNoException().isThrownBy(localClient::start);
             assertThat(localClient.isExistingIndex("foo")).isFalse();
             assertThat(localClient.isExistingIndex("bar")).isFalse();
@@ -761,16 +689,12 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void withTwoRunningNodes() throws ElasticsearchClientException, IOException {
         // Build a client with 2 running nodes (well, the same one is used twice) and one non-running node
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.getElasticsearch().setNodes(List.of(
-                        new ServerUrl(testClusterUrl),
-                        new ServerUrl(testClusterUrl),
-                        new ServerUrl("http://127.0.0.1:9206"),
-                        new ServerUrl(testClusterUrl)));
+        fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl, testClusterUrl, "http://127.0.0.1:9206", testClusterUrl));
         fsSettings.getElasticsearch().setApiKey(testApiKey);
         fsSettings.getElasticsearch().setSslVerification(false);
         fsSettings.getElasticsearch().setIndex(DOC_INDEX_NAME);
         fsSettings.getElasticsearch().setIndexFolder(FOLDER_INDEX_NAME);
-        try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
+        try (IElasticsearchClient localClient = new ElasticsearchClient(fsSettings)) {
             localClient.start();
 
             if (localClient.getMajorVersion() < 8) {
@@ -806,13 +730,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void withNonRunningNodes() throws IOException {
         // Build a client with a non-running node
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.getElasticsearch().setNodes(List.of(
-                new ServerUrl("http://127.0.0.1:9206"),
-                new ServerUrl("http://127.0.0.1:9207")));
+        fsSettings.getElasticsearch().setUrls(List.of("http://127.0.0.1:9206", "http://127.0.0.1:9207"));
         fsSettings.getElasticsearch().setApiKey(testApiKey);
         fsSettings.getElasticsearch().setSslVerification(false);
 
-        try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
+        try (IElasticsearchClient localClient = new ElasticsearchClient(fsSettings)) {
             assertThatExceptionOfType(ElasticsearchClientException.class)
                     .isThrownBy(localClient::start)
                     .withMessageContaining("All nodes are failing");
@@ -823,11 +745,11 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void withNonRunningNode() throws IOException {
         // Build a client with a non-running node
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.getElasticsearch().setNodes(List.of(new ServerUrl("http://127.0.0.1:9206")));
+        fsSettings.getElasticsearch().setUrls(List.of("http://127.0.0.1:9206"));
         fsSettings.getElasticsearch().setApiKey(testApiKey);
         fsSettings.getElasticsearch().setSslVerification(false);
 
-        try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
+        try (IElasticsearchClient localClient = new ElasticsearchClient(fsSettings)) {
             assertThatExceptionOfType(ElasticsearchClientException.class)
                     .isThrownBy(localClient::start)
                     .withMessageContaining("Can not execute GET")
@@ -841,10 +763,10 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void securedClusterWithBadCredentials() throws IOException, ElasticsearchClientException {
         // Build a client with a null password
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.getElasticsearch().setNodes(List.of(new ServerUrl(testClusterUrl)));
+        fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
         fsSettings.getElasticsearch().setSslVerification(false);
 
-        try (IElasticsearchClient localClient = new ElasticsearchClient(null, fsSettings)) {
+        try (IElasticsearchClient localClient = new ElasticsearchClient(fsSettings)) {
             localClient.start();
             fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
         } catch (NotAuthorizedException ex) {
@@ -867,6 +789,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
     @Test
     public void withHttpService() throws IOException, ElasticsearchClientException {
+        // We can only run this test if Docker is available on this machine
+        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+
         logger.debug("Starting Nginx from {}", rootTmpDir);
 
         // First we call Elasticsearch client
@@ -1030,14 +955,53 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         if (expected == null) {
             assertThat(hits)
-                    .as("checking if any document in " + request.getIndex())
+                    .as("checking if any document in %s", request.getIndex())
                     .isGreaterThan(0);
         } else {
             assertThat(hits)
-                    .as("checking documents in " + request.getIndex())
+                    .as("checking documents in %s", request.getIndex())
                     .isEqualTo(expected);
         }
 
         return response[0];
+    }
+
+    /**
+     * Create an index (for tests only)
+     */
+    private void createIndex() throws ElasticsearchClientException {
+        createIndex(null);
+    }
+
+    /**
+     * Create an index (for tests only)
+     *
+     * @param indexSettings index settings if any
+     */
+    private void createIndex(String indexSettings) throws ElasticsearchClientException {
+        String realIndexSettings = indexSettings;
+        String index = getCrawlerName();
+        logger.debug("create index [{}]", index);
+        if (indexSettings == null) {
+            // We need to pass an empty body because PUT requires a body
+            realIndexSettings = "{}";
+        }
+        logger.trace("index settings: [{}]", realIndexSettings);
+        try {
+            esClient.httpPut(index, realIndexSettings);
+            esClient.waitForHealthyIndex(index);
+        } catch (WebApplicationException e) {
+            if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
+                logger.debug("Response for create index [{}]: {}", index, e.getMessage());
+                DocumentContext document = parseJsonAsDocumentContext(e.getResponse().readEntity(String.class));
+                String errorType = document.read("$.error.type");
+                if (!errorType.contains("resource_already_exists_exception")) {
+                    throw new ElasticsearchClientException("error while creating index " + index + ": " +
+                            document.read("$"));
+                }
+            } else {
+                throw new ElasticsearchClientException("Error while creating index " + index, e);
+            }
+        }
     }
 }

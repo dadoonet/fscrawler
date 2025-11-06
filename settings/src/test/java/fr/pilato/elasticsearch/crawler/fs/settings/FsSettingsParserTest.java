@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,6 +50,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
     private void settingsTester(FsSettings source) throws IOException {
         String yaml = FsSettingsParser.toYaml(source);
+        logger.debug("generated yaml:\n{}", yaml);
         Path settingsFile = rootTmpDir.resolve("settings.yaml");
         Files.writeString(settingsFile, yaml);
         FsSettings generated = FsSettingsLoader.load(settingsFile);
@@ -64,8 +65,8 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
             assertThat(settings.getFs().getOcr()).as("Checking Ocr").isEqualTo(expected.getFs().getOcr());
         }
         assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
-        assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
         assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
+        assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
         assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
         assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
         assertThat(settings).as("Checking whole settings").isEqualTo(expected);
@@ -79,9 +80,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     @Test
     public void parseSettingsElasticsearchTwoNodes() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.getElasticsearch().setNodes(Arrays.asList(
-                new ServerUrl("https://127.0.0.1:9200"),
-                new ServerUrl("https://127.0.0.1:9201")));
+        fsSettings.getElasticsearch().setUrls(List.of("https://127.0.0.1:9200", "https://127.0.0.1:9201"));
         settingsTester(fsSettings);
     }
 
@@ -89,6 +88,13 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     public void parseSettingsElasticsearchWithPathPrefix() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setPathPrefix("/path/to/elasticsearch");
+        settingsTester(fsSettings);
+    }
+
+    @Test
+    public void parseSettingsWithStaticMetadata() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getTags().setStaticMetaFilename("/path/to/metadatafile.yml");
         settingsTester(fsSettings);
     }
 

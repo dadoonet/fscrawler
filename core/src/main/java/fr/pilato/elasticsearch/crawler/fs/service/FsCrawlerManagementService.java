@@ -21,7 +21,6 @@ package fr.pilato.elasticsearch.crawler.fs.service;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 
-import java.io.IOException;
 import java.util.Collection;
 
 public interface FsCrawlerManagementService extends FsCrawlerService {

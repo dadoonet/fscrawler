@@ -1,0 +1,7 @@
+---
+name: "test_deprecated_elasticsearch"
+elasticsearch:
+  # optional: list of Elasticsearch nodes
+  nodes:
+    - url: "https://127.0.0.1:9200"
+    - url: "https://127.0.0.1:9201"

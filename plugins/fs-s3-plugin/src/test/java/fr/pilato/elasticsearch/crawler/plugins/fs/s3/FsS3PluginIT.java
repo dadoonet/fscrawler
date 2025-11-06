@@ -19,10 +19,9 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.MinioThreadFilter;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.*;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
@@ -34,15 +33,18 @@ import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 
 @ThreadLeakFilters(filters = {
+        WindowsSpecificThreadFilter.class,
         TestContainerThreadFilter.class,
         JNACleanerThreadFilter.class,
         MinioThreadFilter.class
@@ -56,6 +58,9 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
 
     @Before
     public void startMinioContainer() {
+        // We can only run this test if Docker is available on this machine
+        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+
         logger.info("Starting Minio");
         container = new MinIOContainer("minio/minio");
         container.start();
@@ -102,7 +107,7 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
 
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsS3Plugin.FsCrawlerExtensionFsProviderS3()) {
-            provider.settings("{\n" +
+            provider.start(FsSettingsLoader.load(), "{\n" +
                     "  \"type\": \"s3\",\n" +
                     "  \"s3\": {\n" +
                     "    \"url\": \"" + s3Url + "\",\n" +
@@ -112,12 +117,12 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
                     "    \"secret_key\": \"" + s3Password + "\"\n" +
                     "  }\n" +
                     "}");
-            provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).isEqualTo(text);
-            assertThat(provider.getFilename()).isEqualTo("foo.txt");
-            assertThat(provider.getFilesize()).isEqualTo(16L);
+            Doc doc = provider.createDocument();
+            assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+            assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
         }
     }
 }

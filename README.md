@@ -14,9 +14,9 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 
 Current "most stable" versions are:
 
-| Elasticsearch      | FS Crawler    | Released   | Docs                                                                          |
-|--------------------|---------------|------------|-------------------------------------------------------------------------------|
-| 6.x, 7.x, 8.x, 9.x | 2.10-SNAPSHOT |            | [2.10-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)                  |
+| Elasticsearch | FS Crawler    | Released   | Docs                                                                          |
+|---------------|---------------|------------|-------------------------------------------------------------------------------|
+| 7.x, 8.x, 9.x | 2.10-SNAPSHOT |            | [2.10-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)                  |
 
 [![Maven Central](https://img.shields.io/maven-central/v/fr.pilato.elasticsearch.crawler/fscrawler-distribution)](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
 ![GitHub Release Date](https://img.shields.io/github/release-date/dadoonet/fscrawler)

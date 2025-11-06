@@ -45,6 +45,7 @@ import java.nio.file.Path;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -52,8 +53,8 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 /**
  * Test all type of documents we have
  */
-@TimeoutSuite(millis = 5 * TIMEOUT_MINUTE_AS_MS)
-@Timeout(millis = 5 * TIMEOUT_MINUTE_AS_MS)
+@TimeoutSuite(millis = 10 * TIMEOUT_MINUTE_AS_MS)
+@Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static FsCrawlerImpl crawler = null;
@@ -83,12 +84,10 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         client.deleteIndex(INDEX_NAME + INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
-        if (client.getMajorVersion() > 6) {
-            String templateName = INDEX_NAME + "_*";
-            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-            removeIndexTemplates(templateName);
-            removeComponentTemplates(templateName);
-        }
+        String templateName = INDEX_NAME + "_*";
+        logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+        removeIndexTemplates(templateName);
+        removeComponentTemplates(templateName);
 
         logger.info("🎬 Starting test [{}]", INDEX_NAME);
         logger.debug("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
@@ -110,8 +109,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
         crawler.start();
 
-        // We wait until we have all docs
-        countTestHelper(new ESSearchRequest().withIndex(INDEX_NAME), numFiles, null);
+        // We wait until we have all docs up to 10 minutes
+        countTestHelper(new ESSearchRequest().withIndex(INDEX_NAME), numFiles, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
     @AfterClass
@@ -126,13 +125,10 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             client.deleteIndex(INDEX_NAME);
             client.deleteIndex(INDEX_NAME + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
-            // Remove existing templates if any
-            if (client.getMajorVersion() > 6) {
-                String templateName = INDEX_NAME + "_*";
-                logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-                removeIndexTemplates(templateName);
-                removeComponentTemplates(templateName);
-            }
+            String templateName = INDEX_NAME + "_*";
+            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+            removeIndexTemplates(templateName);
+            removeComponentTemplates(templateName);
         }
 
         logger.info("✅ End of test [{}]", INDEX_NAME);

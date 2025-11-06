@@ -10,24 +10,16 @@
     </parent>
 
     <artifactId>fscrawler-plugin</artifactId>
-
-    <build>
-        <plugins>
-            <!-- Skip publishing this internal module -->
-            <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <configuration>
-                    <skipPublishing>true</skipPublishing>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+    <name>FSCrawler Plugin Framework</name>
 
     <dependencies>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-settings</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-beans</artifactId>
         </dependency>
     </dependencies>
 

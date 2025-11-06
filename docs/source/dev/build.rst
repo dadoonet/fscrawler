@@ -47,8 +47,8 @@ Run tests from your IDE
 To run integration tests from your IDE, you need to start tests in ``fscrawler-it`` module.
 But you can specify the Maven profile to use and rebuild the project.
 
+* ``es-8x`` for Elasticsearch 8.x
 * ``es-7x`` for Elasticsearch 7.x
-* ``es-6x`` for Elasticsearch 6.x
 
 Faster integration tests
 """"""""""""""""""""""""
@@ -79,13 +79,7 @@ cluster, you need to provide a ``tests.cluster.url`` value. This will skip launc
 
 To run the test suite against an elasticsearch instance running locally, just run::
 
-    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it -Dtests.cluster.url=http://localhost:9200
-
-.. tip::
-
-    If you want to run against a version 6, run::
-
-        mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it -Dtests.cluster.url=http://localhost:9200
+    mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it -Dtests.cluster.url=https://localhost:9200
 
 .. hint::
 

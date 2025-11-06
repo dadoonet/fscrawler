@@ -26,15 +26,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.CopyOption;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.*;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -46,63 +40,8 @@ import java.util.stream.Collectors;
 
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
-    public static final String INDEX_SETTINGS_FILE = "_settings";
-    public static final String INDEX_SETTINGS_FOLDER_FILE = "_settings_folder";
 
     private static final Logger logger = LogManager.getLogger();
-
-    /**
-     * Reads a mapping from config/_default/version/type.json file
-     *
-     * @param config Root dir where we can find the configuration (default to ~/.fscrawler)
-     * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
-     * @param type The expected type (will be expanded to type.json)
-     * @return the mapping
-     * @throws IOException If the mapping can not be read
-     */
-    public static String readDefaultJsonVersionedFile(Path config, int version, String type) throws IOException {
-        Path defaultConfigDir = config.resolve("_default");
-        try {
-            return readJsonVersionedFile(defaultConfigDir, version, type);
-        } catch (NoSuchFileException e) {
-            throw new IllegalArgumentException("Mapping file " + type + ".json does not exist for elasticsearch version " + version +
-                    " in [" + defaultConfigDir + "] dir");
-        }
-    }
-
-    /**
-     * Reads a mapping from dir/version/type.json file
-     *
-     * @param dir Directory containing mapping files per major version
-     * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
-     * @param type The expected type (will be expanded to type.json)
-     * @return the mapping
-     * @throws IOException If the mapping can not be read
-     */
-    private static String readJsonVersionedFile(Path dir, int version, String type) throws IOException {
-        Path file = dir.resolve("" + version).resolve(type + ".json");
-        return Files.readString(file);
-    }
-
-    /**
-     * Reads a Json file from dir/version/filename.json file.
-     * If not found, read from ~/.fscrawler/_default/version/filename.json
-     *
-     * @param dir Directory which might contain filename files per major version (job dir)
-     * @param config Root dir where we can find the configuration (default to ~/.fscrawler)
-     * @param version Elasticsearch major version number (only major digit is kept so for 2.3.4 it will be 2)
-     * @param filename The expected filename (will be expanded to filename.json)
-     * @return the mapping
-     * @throws IOException If the mapping can not be read
-     */
-    public static String readJsonFile(Path dir, Path config, int version, String filename) throws IOException {
-        try {
-            return readJsonVersionedFile(dir, version, filename);
-        } catch (NoSuchFileException e) {
-            // We fall back to default mappings in config dir
-            return readDefaultJsonVersionedFile(config, version, filename);
-        }
-    }
 
     /**
      * We check if we can index the file or if we should ignore it
@@ -360,7 +299,7 @@ public class FsCrawlerUtil {
      */
     public static int getFilePermissions(final File file) {
         if (OsValidator.WINDOWS) {
-            logger.trace("Determining 'permissions' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
             return -1;
         }
         try {
@@ -438,32 +377,6 @@ public class FsCrawlerUtil {
         return (read ? 4 : 0) + (write ? 2 : 0) + (execute ? 1 : 0);
     }
 
-    public static final String CLASSPATH_RESOURCES_ROOT = "/fr/pilato/elasticsearch/crawler/fs/_default/";
-    public static final String[] MAPPING_RESOURCES = {
-            "6/_settings.json", "6/_settings_folder.json"
-    };
-
-    /**
-     * Copy default resources files which are available as project resources under
-     * fr.pilato.elasticsearch.crawler.fs._default package to a given configuration path
-     * under a _default subdirectory.
-     * @param configPath The config path which is by default .fscrawler
-     * @throws IOException If copying does not work
-     */
-    public static void copyDefaultResources(Path configPath) throws IOException {
-        Path targetResourceDir = configPath.resolve("_default");
-
-        for (String filename : MAPPING_RESOURCES) {
-            Path target = targetResourceDir.resolve(filename);
-            if (Files.exists(target)) {
-                logger.debug("Mapping [{}] already exists", filename);
-            } else {
-                logger.debug("Copying [{}]...", filename);
-                copyResourceFile(CLASSPATH_RESOURCES_ROOT + filename, target);
-            }
-        }
-    }
-
     /**
      * Copy a single resource file from the classpath or from a JAR.
      * @param target The target
@@ -487,63 +400,6 @@ public class FsCrawlerUtil {
             throw new RuntimeException(e);
         }
         return properties;
-    }
-
-    /**
-     * Copy files from a source to a target
-     * under a _default subdirectory.
-     * @param source The source dir
-     * @param target The target dir
-     * @param options Potential options
-     * @throws IOException If copying does not work
-     */
-    public static void copyDirs(Path source, Path target, CopyOption... options) throws IOException {
-        if (Files.notExists(target)) {
-            Files.createDirectory(target);
-        }
-
-        logger.debug("  --> Copying resources from [{}]", source);
-        if (Files.notExists(source)) {
-            throw new RuntimeException(source + " doesn't seem to exist.");
-        }
-
-        Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
-                new InternalFileVisitor(source, target, options));
-
-        logger.debug("  --> Resources ready in [{}]", target);
-    }
-
-    private static class InternalFileVisitor extends SimpleFileVisitor<Path> {
-
-        private final Path fromPath;
-        private final Path toPath;
-        private final CopyOption[] copyOption;
-
-        public InternalFileVisitor(Path fromPath, Path toPath, CopyOption... copyOption) {
-            this.fromPath = fromPath;
-            this.toPath = toPath;
-            this.copyOption = copyOption;
-        }
-
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-
-            Path targetPath = toPath.resolve(fromPath.relativize(dir));
-            if(!Files.exists(targetPath)){
-                Files.createDirectory(targetPath);
-            }
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            try {
-                Files.copy(file, toPath.resolve(fromPath.relativize(file)), copyOption);
-            } catch (FileAlreadyExistsException ignored) {
-                // The file already exists we just ignore it
-            }
-            return FileVisitResult.CONTINUE;
-        }
     }
 
     public static boolean isNullOrEmpty(String string) {

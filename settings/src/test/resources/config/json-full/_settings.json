@@ -42,10 +42,11 @@
       "pdf_strategy": "auto",
       "page_seg_mode": 1,
       "preserve_interword_spacing": true
-    },
-    "tags": {
-      "meta_filename": "meta_tags.json"
     }
+  },
+  "tags": {
+    "meta_filename": "meta_tags.json",
+    "static_meta_filename": "/path/to/metadatafile.yml"
   },
   "server": {
     "hostname": "localhost",
@@ -56,14 +57,7 @@
     "pem_path": "/path/to/pemfile"
   },
   "elasticsearch": {
-    "nodes": [
-      {
-        "url": "https://127.0.0.1:9200"
-      },
-      {
-        "url": "https://127.0.0.1:9201"
-      }
-    ],
+    "urls": [ "https://127.0.0.1:9200", "https://127.0.0.1:9201" ],
     "index": "test_docs",
     "index_folder": "test_folder",
     "bulk_size": 1000,

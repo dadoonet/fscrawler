@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>fscrawler-plugins</artifactId>
+    <name>FSCrawler Plugins Parent</name>
     <packaging>pom</packaging>
 
     <modules>
@@ -54,14 +55,6 @@
                         <phase>none</phase>
                     </execution>
                 </executions>
-            </plugin>
-            <!-- Skip publishing this internal module -->
-            <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <configuration>
-                    <skipPublishing>true</skipPublishing>
-                </configuration>
             </plugin>
         </plugins>
     </build>

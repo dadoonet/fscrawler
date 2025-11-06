@@ -10,20 +10,8 @@
     </parent>
 
     <artifactId>fscrawler-fs-http-plugin</artifactId>
+    <name>FSCrawler HTTP/HTTPS Plugin</name>
     <description>FSCrawler HTTP/HTTPS Plugin</description>
-
-    <build>
-        <plugins>
-            <!-- Skip publishing this internal module -->
-            <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <configuration>
-                    <skipPublishing>true</skipPublishing>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
     <dependencies>
         <dependency>

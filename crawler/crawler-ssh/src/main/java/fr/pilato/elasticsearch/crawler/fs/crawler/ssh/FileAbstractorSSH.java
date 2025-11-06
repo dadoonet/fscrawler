@@ -47,7 +47,12 @@ public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
             !".".equals(file.getFilename()) &&
             !"..".equals(file.getFilename());
     private static final Comparator<SftpClient.DirEntry> SFTP_FILE_COMPARATOR = Comparator.comparing(
-            file -> LocalDateTime.ofInstant(file.getAttributes().getModifyTime().toInstant(), ZoneId.systemDefault()));
+            file -> {
+                var attributes = file.getAttributes();
+                var modifyTime = attributes != null ? attributes.getModifyTime() : null;
+                return modifyTime != null ? LocalDateTime.ofInstant(modifyTime.toInstant(), ZoneId.systemDefault()) : null;
+            },
+            Comparator.nullsLast(Comparator.naturalOrder()));
 
     public FileAbstractorSSH(FsSettings fsSettings) {
         super(fsSettings);

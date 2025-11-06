@@ -14,6 +14,9 @@ enough. Thanks to dadoonet.
 * When launching for the first time FSCrawler with a job name, FSCrawler does not create anymore the job
   configuration folder with default settings. You need to use the ``--setup`` option to create the job settings.
   Thanks to dadoonet.
+* We don't support anymore the ``elasticsearch.nodes.url`` setting. You need to use ``elasticsearch.urls``
+  instead. Thanks to dadoonet.
+* The ``_upload`` REST endpoint has been removed. Please now use the ``_document`` endpoint. Thanks to dadoonet.
 
 New
 ---
@@ -39,12 +42,14 @@ New
   to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. See :ref:`layout`. Thanks to dadoonet.
 * Add temporal information in folder index. Thanks to bdauvissat
 * Add support for external metadata files while crawling, defaults to ``.meta.yml``. See :ref:`tags` Thanks to dadoonet.
+* Add support for static external metadata for all documents. See :ref:`tags` Thanks to dadoonet.
 * The job name is not mandatory anymore and it will be ``fscrawler`` by default. Thanks to dadoonet.
 * FSCrawler also supports Elasticsearch 9. Thanks to dadoonet.
 
 Fix
 ---
 
+* Closed open file streams after use. Thanks to alexbluesteele.
 * ``fs.ocr.enabled`` was always false. Thanks to ywjung.
 * Do not hide YAML parsing errors. Thanks to dadoonet.
 * Fix duration parsing for the day unit ``d``. Thanks to dadoonet.
@@ -52,21 +57,20 @@ Fix
 Deprecated
 ----------
 
-* The ``_upload`` REST endpoint has been deprecated. Please now use the ``_document`` endpoint. Thanks to dadoonet.
-* Support for Elasticsearch 6.x is deprecated. Thanks to dadoonet.
 * Support for Basic Authentication is deprecated. You should use API keys instead. Thanks to dadoonet.
 
 Updated
 -------
 
 * Files are now sorted by date with a reverse order. So the most recent files should be indexed first. Thanks to dadoonet.
-* Add full support for Elasticsearch |ES_version8|_, |ES_version7|_, |ES_version6|_. Thanks to dadoonet.
+* Add full support for Elasticsearch |ES_version9|_, |ES_version8|_, |ES_version7|_. Thanks to dadoonet.
 * Update to Tika |Tika_version|_. Thanks to dadoonet.
 
 Removed
 -------
 
 * Remove the specific distributions depending on Elastic version. Thanks to dadoonet.
+* Support for Elasticsearch 6.x is removed. Thanks to dadoonet.
 
-Thanks to ``@dadoonet``, ``@ywjung``, ``@iadcode``, ``@bdauvissat``
+Thanks to ``@dadoonet``, ``@ywjung``, ``@iadcode``, ``@bdauvissat``, ``@alexbluesteele``
 for this release!

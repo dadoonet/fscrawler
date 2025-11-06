@@ -37,6 +37,7 @@ import java.io.IOException;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
@@ -49,12 +50,10 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
-        if (client.getMajorVersion() > 6) {
-            String templateName = "fscrawler_" + getCrawlerName() + "_*";
-            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-            removeIndexTemplates(templateName);
-            removeComponentTemplates(templateName);
-        }
+        String templateName = getCrawlerName() + "_*";
+        logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+        removeIndexTemplates(templateName);
+        removeComponentTemplates(templateName);
 
         logger.info("🎬 Starting test [{}] with [{}] as the crawler name", getCurrentTestName(), getCrawlerName());
     }
@@ -66,12 +65,10 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
             client.deleteIndex(getCrawlerName());
             client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
-            if (client.getMajorVersion() > 6) {
-                String templateName = "fscrawler_" + getCrawlerName() + "_*";
-                logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-                removeIndexTemplates(templateName);
-                removeComponentTemplates(templateName);
-            }
+            String templateName = "fscrawler_" + getCrawlerName() + "_*";
+            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+            removeIndexTemplates(templateName);
+            removeComponentTemplates(templateName);
         }
 
         logger.info("✅ End of test [{}] with [{}] as the crawler name", getCurrentTestName(), getCrawlerName());

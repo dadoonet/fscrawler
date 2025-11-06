@@ -22,10 +22,13 @@ package fr.pilato.elasticsearch.crawler.fs.test.framework;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -40,36 +43,56 @@ public class TestContainerHelper {
     private static final String HTTPS_URL = "https://%s";
     private static final String HTTP_URL = "http://%s";
 
+    // regex that
+    //   matches 8.3 JSON logging with started message and some follow up content within the message field
+    //   matches 8.0 JSON logging with no whitespace between message field and content
+    //   matches 7.x JSON logging with whitespace between message field and content
+    private static final String WAIT_LOGS_REGEX = ".*(\"message\":\\s?\"started[\\s?|\"].*|] started\n$)";
+    private static final WaitStrategy ELASTICSEARCH_WAIT_STRATEGY = Wait
+            .forLogMessage(WAIT_LOGS_REGEX, 1)
+            .withStartupTimeout(Duration.ofMinutes(5));
+    private final String elasticsearchVersion;
+
     private ElasticsearchContainer elasticsearch;
     private byte[] certAsBytes;
     private final AtomicBoolean starting = new AtomicBoolean(false);
     private boolean started = false;
 
+    public TestContainerHelper() {
+        try {
+            Properties props = new Properties();
+            props.load(TestContainerHelper.class.getResourceAsStream("/elasticsearch.version.properties"));
+            elasticsearchVersion = props.getProperty("version");
+        } catch (IOException e) {
+            log.error("Cannot load /elasticsearch.version.properties from the classpath");
+            throw new RuntimeException("Cannot load /elasticsearch.version.properties from the classpath", e);
+        }
+    }
+
     /**
      * Start the container. If the container was already started, it will be reused.
      * @param  keepData keep the cluster running after the test and reuse it if possible
-     * @throws IOException in case of error
      */
-    public synchronized String startElasticsearch(boolean keepData) throws IOException {
+    public synchronized String startElasticsearch(boolean keepData) {
         if (starting.compareAndSet(false, true)) {
-            Properties props = new Properties();
-            props.load(TestContainerHelper.class.getResourceAsStream("/elasticsearch.version.properties"));
-            String version = props.getProperty("version");
             if (!started) {
                 // Start the container. This step might take some time...
                 log.info("Starting{} testcontainers with Elasticsearch [{}].",
                         keepData ? " or reusing" : "",
-                        version);
+                        elasticsearchVersion);
 
-                elasticsearch = new ElasticsearchContainer(
+                @SuppressWarnings("resource")
+                ElasticsearchContainer container = new ElasticsearchContainer(
                         DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
-                                .withTag(version))
+                                .withTag(elasticsearchVersion))
                         // As for 7.x clusters, there's no https, api keys are disabled by default. We force it.
                         .withEnv("xpack.security.authc.api_key.enabled", "true")
-                        // For 6.x clusters and for semantic search, we need to activate a trial
+                        // For semantic search tests, we need to activate a trial
                         .withEnv("xpack.license.self_generated.type", "trial")
                         .withReuse(keepData)
-                        .withPassword(DEFAULT_PASSWORD);
+                        .withPassword(DEFAULT_PASSWORD)
+                        .waitingFor(ELASTICSEARCH_WAIT_STRATEGY);
+                elasticsearch = container;
                 elasticsearch.start();
 
                 String url = String.format(HTTPS_URL, elasticsearch.getHttpHostAddress());
@@ -79,9 +102,9 @@ public class TestContainerHelper {
                     certAsBytes = elasticsearch.copyFileFromContainer(
                             "/usr/share/elasticsearch/config/certs/http_ca.crt",
                             IOUtils::toByteArray);
-                    log.debug("Found an https elasticsearch cert for version [{}].", version);
+                    log.debug("Found an https elasticsearch cert for version [{}].", elasticsearchVersion);
                 } catch (Exception e) {
-                    log.debug("We did not find the https elasticsearch cert for version [{}]. We switch to http instead.", version);
+                    log.debug("We did not find the https elasticsearch cert for version [{}]. We switch to http instead.", elasticsearchVersion);
                     url = String.format(HTTP_URL, elasticsearch.getHttpHostAddress());
                 }
 
@@ -90,10 +113,10 @@ public class TestContainerHelper {
                 starting.set(false);
                 started = true;
 
-                waitForReadiness(version);
+                waitForReadiness();
                 return url;
             } else {
-                log.info("Testcontainers with Elasticsearch [{}] was previously started", version);
+                log.info("Testcontainers with Elasticsearch [{}] was previously started", elasticsearchVersion);
                 return String.format(HTTPS_URL, elasticsearch.getHttpHostAddress());
             }
         } else {
@@ -122,8 +145,12 @@ public class TestContainerHelper {
         return started;
     }
 
-    private synchronized void waitForReadiness(String version) {
-        if (Integer.parseInt(version.split("\\.")[0]) > 8) {
+    public String getElasticsearchVersion() {
+        return elasticsearchVersion;
+    }
+
+    private synchronized void waitForReadiness() {
+        if (Integer.parseInt(elasticsearchVersion.split("\\.")[0]) > 8) {
             log.warn("From 9.0.0, we need to wait a bit before all security indices are allocated");
             try {
                 wait(2000);

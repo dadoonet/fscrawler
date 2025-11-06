@@ -18,15 +18,15 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.MountableFile;
@@ -39,12 +39,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
-
-@ThreadLeakFilters(filters = {
-        TestContainerThreadFilter.class,
-        JNACleanerThreadFilter.class
-})
 public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String text = "Hello Foo world!";
@@ -57,6 +53,9 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
 
     @Test
     public void readFileFromNginx() throws Exception {
+        // We can only run this test if Docker is available on this machine
+        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+
         logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
         Files.createDirectory(nginxRoot);
@@ -73,38 +72,38 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
 
             logger.info("Starting Test");
             try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-                provider.settings("{\n" +
+                provider.start(FsSettingsLoader.load(), "{\n" +
                         "  \"type\": \"http\",\n" +
                         "  \"http\": {\n" +
                         "    \"url\": \"" + url + "/foo.txt\"\n" +
                         "  }\n" +
                         "}");
-                provider.start();
                 InputStream inputStream = provider.readFile();
                 String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                 assertThat(object).isEqualTo(text);
-                assertThat(provider.getFilename()).isEqualTo("foo.txt");
-                assertThat(provider.getFilesize()).isEqualTo(16L);
+                Doc doc = provider.createDocument();
+                assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+                assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
             }
         }
     }
 
     @Test
-    public void readTxtFileFromElasticCo() throws Exception {
+    public void readTxtFileFromWebsite() throws Exception {
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-            provider.settings("{\n" +
+            provider.start(FsSettingsLoader.load(), "{\n" +
                     "  \"type\": \"http\",\n" +
                     "  \"http\": {\n" +
-                    "    \"url\": \"https://www.elastic.co/robots.txt\"\n" +
+                    "    \"url\": \"https://david.pilato.fr/robots.txt\"\n" +
                     "  }\n" +
                     "}");
-            provider.start();
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object).contains("Sitemap");
-            assertThat(provider.getFilename()).isEqualTo("robots.txt");
-            assertThat(provider.getFilesize()).isGreaterThan(100L);
+            assertThat(object).contains("User-agent: *");
+            Doc doc = provider.createDocument();
+            assertThat(doc.getFile().getFilename()).isEqualTo("robots.txt");
+            assertThat(doc.getFile().getFilesize()).isEqualTo(13L);
         }
     }
 }

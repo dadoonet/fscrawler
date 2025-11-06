@@ -15,6 +15,21 @@
       <Logger name="org.glassfish" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
+      <Logger name="org.testcontainers" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="tc.docker.elastic" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="tc.minio/minio:latest" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="tc.nginx:latest" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="tc.testcontainers/ryuk:0" level="error" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
       <Root level="info">
          <AppenderRef ref="CONSOLE"/>
       </Root>

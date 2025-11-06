@@ -41,7 +41,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     @Test
     public void filter_visa_pattern() throws Exception {
         FsSettings fsSettings = createTestSettings();
-        fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"));
+        fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}"));
         crawler = startCrawler(fsSettings);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
     }
@@ -49,7 +49,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     @Test
     public void filter_visa_pattern_plus_foo() throws Exception {
         FsSettings fsSettings = createTestSettings();
-        fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$", ".*foo.*"));
+        fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}", ".*foo.*"));
         crawler = startCrawler(fsSettings);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
     }

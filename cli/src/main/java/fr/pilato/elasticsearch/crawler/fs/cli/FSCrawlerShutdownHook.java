@@ -1,4 +1,4 @@
-package fr.pilato.elasticsearch.crawler.fs.cli;/*
+/*
  * Licensed to David Pilato (the "Author") under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,6 +17,8 @@ package fr.pilato.elasticsearch.crawler.fs.cli;/*
  * under the License.
  */
 
+package fr.pilato.elasticsearch.crawler.fs.cli;
+
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
@@ -26,7 +28,7 @@ import java.io.IOException;
 /**
  * Shutdown hook so we make sure we close everything
  */
-class FSCrawlerShutdownHook extends Thread implements Runnable {
+class FSCrawlerShutdownHook extends Thread {
 
     private final FsCrawlerImpl fsCrawler;
     private final FsCrawlerPluginsManager pluginsManager;
