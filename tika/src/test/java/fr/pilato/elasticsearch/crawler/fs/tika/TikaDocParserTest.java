@@ -431,6 +431,97 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
+    public void extractFromJpg() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadata(true);
+
+        // We force not using OCR as we want to test only metadata extraction here
+        fsSettings.getFs().getOcr().setEnabled(false);
+
+        Doc doc = extractFromFile("test.jpg", fsSettings);
+
+        // Extracted content
+        assertThat(doc.getContent()).isNullOrEmpty();
+
+        // Content Type
+        assertThat(doc.getFile().getContentType()).isEqualTo("image/jpeg");
+
+        // Meta data
+        assertThat(doc.getMeta().getAuthor()).isNull();
+        assertThat(doc.getMeta().getDate()).isNull();
+        assertThat(doc.getMeta().getKeywords()).isNull();
+        assertThat(doc.getMeta().getTitle()).isNull();
+
+        Map<String, String> raw = doc.getMeta().getRaw();
+        assertThat(raw)
+                .hasSize(64)
+                .containsEntry("ICC:Profile Connection Space", "XYZ")
+                .containsEntry("Number of Tables", "4 Huffman tables")
+                .containsEntry("Compression Type", "Baseline")
+                .containsEntry("ICC:Profile Copyright", "Copyright Apple Inc., 2017")
+                .containsKey("ICC:Apple Multi-language Profile Name")
+                .containsKey("X-TIKA:Parsed-By-Full-Set")
+                .containsEntry("ICC:Class", "Display Device")
+                .containsKey("ICC:Green Colorant")
+                .containsKey("ICC:Video Card Gamma")
+                .containsEntry("Number of Components", "3")
+                .containsKey("Component 2")
+                .containsKey("Component 1")
+                .containsEntry("Exif SubIFD:Exif Image Width", "982 pixels")
+                .containsEntry("ICC:Device manufacturer", "APPL")
+                .containsEntry("Exif IFD0:X Resolution", "144 dots per inch")
+                .containsEntry("tiff:ResolutionUnit", "Inch")
+                .containsEntry("ICC:Signature", "acsp")
+                .containsKey("ICC:Green TRC")
+                .containsKey("ICC:Media White Point")
+                .containsEntry("ICC:CMM Type", "appl")
+                .containsKey("Component 3")
+                .containsEntry("Exif SubIFD:Components Configuration", "YCbCr")
+                .containsEntry("tiff:BitsPerSample", "8")
+                .containsEntry("Exif IFD0:YCbCr Positioning", "Center of pixel array")
+                .containsEntry("resourceName", "test.jpg")
+                .containsEntry("Exif IFD0:Orientation", "Top, left side (Horizontal / normal)")
+                .containsEntry("tiff:Orientation", "1")
+                .containsKey("ICC:Version")
+                .containsEntry("ICC:Profile Size", "3888")
+                .containsKey("X-TIKA:Parsed-By")
+                .containsKey("ICC:Blue Colorant")
+                .containsEntry("ICC:Tag Count", "17")
+                .containsEntry("tiff:YResolution", "144.0")
+                .containsEntry("Exif SubIFD:Scene Capture Type", "Standard")
+                .containsKey("ICC:Red TRC")
+                .containsEntry("Data Precision", "8 bits")
+                .containsEntry("tiff:ImageLength", "622")
+                .containsKey("ICC:Profile Date/Time")
+                .containsKey("ICC:Blue Parametric TRC")
+                .containsEntry("Exif SubIFD:Color Space", "sRGB")
+                .containsEntry("ICC:Profile Description", "Display")
+                .containsEntry("File Size", "41426 bytes")
+                .containsEntry("Exif SubIFD:Exif Version", "2.21")
+                .containsKey("ICC:Red Parametric TRC")
+                .hasEntrySatisfying("File Name", value -> assertThat(value).startsWith("apache-tika-"))
+                .containsEntry("Exif IFD0:Resolution Unit", "Inch")
+                .containsEntry("ICC:Color space", "RGB")
+                .containsKey("ICC:Green Parametric TRC")
+                .containsEntry("Content-Type", "image/jpeg")
+                .containsKey("ICC:Blue TRC")
+                .containsKey("ICC:XYZ values")
+                .containsKey("ICC:Native Display Information")
+                .containsKey("File Modified Date")
+                .containsEntry("tiff:XResolution", "144.0")
+                .containsEntry("Image Height", "622 pixels")
+                .containsEntry("Exif SubIFD:FlashPix Version", "1.00")
+                .containsKey("ICC:Make And Model")
+                .containsEntry("Exif SubIFD:Exif Image Height", "622 pixels")
+                .containsEntry("Image Width", "982 pixels")
+                .containsEntry("ICC:Primary Platform", "Apple Computer, Inc.")
+                .containsKey("ICC:Chromatic Adaptation")
+                .containsKey("ICC:Red Colorant")
+                .containsEntry("tiff:ImageWidth", "982")
+                .containsEntry("Exif IFD0:Y Resolution", "144 dots per inch");
+    }
+
+    @Test
     public void extractFromRtf() throws IOException {
         Doc doc = extractFromFileExtension("rtf");
 
