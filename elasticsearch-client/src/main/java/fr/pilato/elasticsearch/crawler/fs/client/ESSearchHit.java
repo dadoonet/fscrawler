@@ -79,4 +79,8 @@ public class ESSearchHit {
         this.version = version;
     }
 
+    @Override
+    public String toString() {
+        return "ESSearchHit(" + index + '/' + id + ')';
+    }
 }
