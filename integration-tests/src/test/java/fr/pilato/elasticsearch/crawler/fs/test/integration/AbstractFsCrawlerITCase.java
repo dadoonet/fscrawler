@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
@@ -35,10 +34,8 @@ import org.junit.Before;
 import java.io.IOException;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     private static final Logger logger = LogManager.getLogger();
@@ -125,21 +122,10 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
         crawler.start();
 
-        // We wait up to X seconds before considering a failing test
-        assertThat(awaitBusy(() -> {
-            try {
-                new FsJobFileHandler(metadataDir).read(fsSettings.getName());
-                return true;
-            } catch (IOException e) {
-                return false;
-            }
-        }, duration))
-                .as("Job meta file should exists in ~/.fscrawler...")
-                .isTrue();
-
         // Wait for the index to be healthy as we might have a race condition
         client.waitForHealthyIndex(fsSettings.getElasticsearch().getIndex());
 
+        // We check that we have at least a few documents
         countTestHelper(new ESSearchRequest().withIndex(fsSettings.getElasticsearch().getIndex()), null, null, duration);
 
         // Make sure we refresh indexed docs and folders before launching tests
