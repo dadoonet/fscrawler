@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,11 +61,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
 
         // Forcing a rescan by modifying the next scan date
         logger.info("  ---> changing next check date to now manually");
-        FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir);
-        FsJob fsJob = fsJobFileHandler.read(fsSettings.getName());
-        // We set the next check to now so that the crawler will rescan the directory
-        fsJob.setNextCheck(LocalDateTime.now());
-        fsJobFileHandler.write(getCrawlerName(), fsJob);
+        waitForFsJobAndSetDate(fsSettings.getName(), LocalDateTime.now());
 
         // We expect to have two files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
@@ -86,11 +83,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
 
         // Forcing a rescan by modifying the next scan date
         logger.info("  ---> removing next check date to force a manual rescan");
-        FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir);
-        FsJob fsJob = fsJobFileHandler.read(fsSettings.getName());
-        // We set the next check to null so that the crawler will rescan the directory
-        fsJob.setNextCheck(null);
-        fsJobFileHandler.write(getCrawlerName(), fsJob);
+        waitForFsJobAndSetDate(fsSettings.getName(), null);
 
         // We expect to have two files
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
@@ -146,5 +139,21 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
            ESSearchHit getHit = client.get(hit.getIndex(), hit.getId());
            assertThat(getHit.getVersion()).isLessThanOrEqualTo(maxVersion);
        });
+    }
+
+    private void waitForFsJobAndSetDate(String jobName, LocalDateTime dateTime) throws Exception {
+        awaitBusy(() -> {
+            try {
+                FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir);
+                FsJob fsJob = fsJobFileHandler.read(jobName);
+                fsJob.setNextCheck(dateTime);
+                fsJobFileHandler.write(jobName, fsJob);
+                return true;
+            } catch (Exception e) {
+                logger.warn("FsJob is not available yet: [{}] : {}", jobName, e.getMessage());
+                logger.debug("Error while reading FsJob", e);
+                return false;
+            }
+        });
     }
 }
