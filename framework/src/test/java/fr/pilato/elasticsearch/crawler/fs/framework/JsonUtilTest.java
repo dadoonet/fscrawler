@@ -152,6 +152,8 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
         String generated = mapper.writeValueAsString(country);
         logger.debug(generated);
-        assertThat(generated).isEqualTo(input);
+		/*automatically convert all \r\n (Windows) and \n (Unix) to a single \n before comparing the strings, making the test platform-independent.
+		*/
+		assertThat(generated).isEqualToNormalizingNewlines(input);
     }
 }
