@@ -151,4 +151,23 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         assertThat(response.getTotalHits()).isEqualTo(1L);
     }
+
+    /**
+     * Test for #1952: <a href="https://github.com/dadoonet/fscrawler/issues/1952">https://github.com/dadoonet/fscrawler/issues/1952</a>:
+     * When a directory has a space at the end, files inside are not indexed
+     */
+    @Test
+    public void dir_with_space_at_the_end() throws Exception {
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setUrl("/");
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(1));
+        fsSettings.getServer().setHostname(sshd.getHost());
+        fsSettings.getServer().setPort(sshd.getPort());
+        fsSettings.getServer().setUsername(SSH_USERNAME);
+        fsSettings.getServer().setPassword(SSH_PASSWORD);
+        fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
+        crawler = startCrawler(fsSettings);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        assertThat(response.getTotalHits()).isEqualTo(3L);
+    }
 }

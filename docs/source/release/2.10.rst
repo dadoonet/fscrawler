@@ -54,6 +54,7 @@ Fix
 * Do not hide YAML parsing errors. Thanks to dadoonet.
 * Fix duration parsing for the day unit ``d``. Thanks to dadoonet.
 * Image raw metadata extraction was not working. Thanks to dadoonet.
+* Fix issue when using crawling over SSH when the directory ends with a space. Thanks to dadoonet.
 
 Deprecated
 ----------

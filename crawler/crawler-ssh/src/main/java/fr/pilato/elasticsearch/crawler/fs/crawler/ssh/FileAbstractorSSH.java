@@ -101,8 +101,12 @@ public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
     public Collection<FileAbstractModel> getFiles(String dir) throws Exception {
         logger.debug("Listing local files from [{}]", dir);
 
-        Iterable<SftpClient.DirEntry> ls;
+        if (!exists(dir)) {
+            logger.trace("No local file found");
+            return java.util.Collections.emptyList();
+        }
 
+        Iterable<SftpClient.DirEntry> ls;
         ls = fsCrawlerSshClient.getSftpClient().readDir(dir);
 
         /*

@@ -9,10 +9,13 @@
       </Console>
    </Appenders>
    <Loggers>
-      <Logger name="fr.pilato.elasticsearch.crawler.fs.crawler.ftp" level="debug" additivity="false">
+      <Logger name="fr.pilato.elasticsearch.crawler.fs.crawler.ftp" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Logger name="commons-net" level="debug" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
+      <Logger name="org.mockftpserver" level="warn" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
       <Root level="info">
