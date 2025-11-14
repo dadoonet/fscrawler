@@ -165,10 +165,9 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         Path dirWithSpace = currentTestResourceDir.resolve("with_space ");
         try {
             Files.move(currentTestResourceDir.resolve("with_space"), dirWithSpace);
-        } catch (IOException e) {
-            // If we are running on Windows, just ignore the test
-            logger.debug("Cannot rename directory to have a space at the end on Windows. Ignoring the test.", e);
-            assumeFalse("We can not run this test on Windpws", OsValidator.WINDOWS);
+        } catch (InvalidPathException e) {
+            logger.warn("Cannot rename directory to have a space at the end on Windows. Ignoring the test.", e);
+            assumeFalse("We can not run this test on Windows", OsValidator.WINDOWS);
         }
 
         FsSettings fsSettings = createTestSettings();

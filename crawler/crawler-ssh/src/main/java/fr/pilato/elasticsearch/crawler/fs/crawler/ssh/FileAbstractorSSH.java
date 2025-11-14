@@ -28,11 +28,14 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.sshd.sftp.client.SftpClient;
+import org.apache.sshd.sftp.common.SftpConstants;
+import org.apache.sshd.sftp.common.SftpException;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -101,26 +104,33 @@ public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
     public Collection<FileAbstractModel> getFiles(String dir) throws Exception {
         logger.debug("Listing local files from [{}]", dir);
 
-        if (!exists(dir)) {
-            logger.trace("No local file found");
-            return java.util.Collections.emptyList();
-        }
-
-        Iterable<SftpClient.DirEntry> ls;
-        ls = fsCrawlerSshClient.getSftpClient().readDir(dir);
-
         /*
          Iterate other files
          We ignore here all files like "." and ".."
         */
-        Collection<FileAbstractModel> result = StreamSupport.stream(ls.spliterator(), false)
-                .filter(IS_DOT)
-                .sorted(SFTP_FILE_COMPARATOR.reversed())
-                .map(file -> toFileAbstractModel(dir, file))
-                .collect(Collectors.toList());
+        try {
+            Iterable<SftpClient.DirEntry> ls = fsCrawlerSshClient.getSftpClient().readDir(dir);
+            Collection<FileAbstractModel> result = StreamSupport.stream(ls.spliterator(), false)
+                    .filter(IS_DOT)
+                    .sorted(SFTP_FILE_COMPARATOR.reversed())
+                    .map(file -> toFileAbstractModel(dir, file))
+                    .collect(Collectors.toList());
 
-        logger.trace("{} local files found", result.size());
-        return result;
+            logger.trace("{} local files found", result.size());
+            return result;
+        } catch (Exception e) {
+            if (e.getCause() instanceof SftpException) {
+                SftpException cause = (SftpException) e.getCause();
+                if (cause.getStatus() == SftpConstants.SSH_FX_NO_SUCH_FILE) {
+                    logger.debug("Directory [{}] does not exist. We return an empty list.", dir);
+                    return Collections.emptyList();
+                } else {
+                    logger.warn("Failed to list local files from [{}] : status [{}]", dir, cause.getStatus());
+                }
+            }
+            logger.warn("Failed to list local files from [{}]", dir, e);
+            throw e;
+        }
     }
 
     @Override
