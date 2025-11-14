@@ -47,7 +47,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
-        String templateName = getCrawlerName() + "_*";
+        String templateName = "fscrawler_" + getCrawlerName() + "_*";
         logger.debug(" -> Removing existing index and component templates [{}]", templateName);
         removeIndexTemplates(templateName);
         removeComponentTemplates(templateName);
