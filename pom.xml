@@ -52,7 +52,7 @@
         <jackson.version>2.20.1</jackson.version>
         <jsonpath.version>2.10.0</jsonpath.version>
         <log4j.version>2.25.2</log4j.version>
-        <jersey.version>3.1.11</jersey.version>
+        <jersey.version>4.0.0</jersey.version>
 
         <!-- For FSCrawler S3 plugin -->
         <minio.version>8.6.0</minio.version>
