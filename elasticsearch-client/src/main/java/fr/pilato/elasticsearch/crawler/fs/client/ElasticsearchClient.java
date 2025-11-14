@@ -545,6 +545,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             // If needed, we create the component and index templates for the folder index
             if (settings.getFs().isIndexFolders()) {
                 logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndexFolder());
+                loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attributes", settings.getElasticsearch().getIndexFolder());
                 loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndexFolder());
                 loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndexFolder());
 
