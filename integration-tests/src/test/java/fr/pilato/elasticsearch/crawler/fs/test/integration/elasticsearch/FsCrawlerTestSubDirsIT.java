@@ -243,26 +243,26 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
         crawler = startCrawler();
 
-        // We should have 6 files and 2 folders (root and sub1)
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 6L, null);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 2L, null);
+        // We should have 7 files (1 existing from the test framework, 3 in root, 3 in sub1) and 1 folder (sub1).
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 1L, null);
 
         // Let's remove the subdir and wait...
         logger.debug("  --> Removing dir [{}]", sub1);
         deleteRecursively(sub1);
 
-        // We expect to have 3 docs now and 1 folder
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        // We expect to have 4 docs now (1 existing, 3 in root) and 0 folders
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 0L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // Let's remove the remaining files
         logger.debug("  --> Removing remaining files from root");
         Files.delete(currentTestResourceDir.resolve("file1.txt"));
-        Files.delete(currentTest_resourceDir.resolve("file2.txt"));
+        Files.delete(currentTestResourceDir.resolve("file2.txt"));
         Files.delete(currentTestResourceDir.resolve("file3.txt"));
 
-        // We expect to have 0 docs and 0 folders now
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 0L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        // We expect to have 1 doc (the original one) and 0 folders now
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 0L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
