@@ -341,7 +341,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
         try {
             httpPut(url, json);
         } catch (WebApplicationException e) {
-            throw new ElasticsearchClientException("Error while creating index template " + name, e);
+            String errorMessage = e.getResponse().readEntity(String.class);
+            logger.error("Error while creating index template [{}]: {}", name, errorMessage);
+            logger.error("PUT {}\n{}", url, json);
+            throw new ElasticsearchClientException("Error while creating index template " + name +
+                    ". Response is: " + errorMessage, e);
         }
     }
 
