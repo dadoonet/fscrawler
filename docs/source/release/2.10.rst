@@ -49,6 +49,7 @@ Fix
 * ``fs.ocr.enabled`` was always false. Thanks to ywjung.
 * Do not hide YAML parsing errors. Thanks to dadoonet.
 * Fix duration parsing for the day unit ``d``. Thanks to dadoonet.
+* On Windows, files and directories to be removed were not properly detected. Thanks to John Chapman
 
 Deprecated
 ----------
