@@ -227,6 +227,45 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
+    @Test
+    public void delete_subdir() throws Exception {
+        // Create 3 files in root
+        Files.createFile(currentTestResourceDir.resolve("file1.txt"));
+        Files.createFile(currentTestResourceDir.resolve("file2.txt"));
+        Files.createFile(currentTestResourceDir.resolve("file3.txt"));
+
+        // Create a subdirectory with 3 files
+        Path sub1 = currentTestResourceDir.resolve("sub1");
+        Files.createDirectory(sub1);
+        Files.createFile(sub1.resolve("file4.txt"));
+        Files.createFile(sub1.resolve("file5.txt"));
+        Files.createFile(sub1.resolve("file6.txt"));
+
+        crawler = startCrawler();
+
+        // We should have 6 files and 2 folders (root and sub1)
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 6L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 2L, null);
+
+        // Let's remove the subdir and wait...
+        logger.debug("  --> Removing dir [{}]", sub1);
+        deleteRecursively(sub1);
+
+        // We expect to have 3 docs now and 1 folder
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+
+        // Let's remove the remaining files
+        logger.debug("  --> Removing remaining files from root");
+        Files.delete(currentTestResourceDir.resolve("file1.txt"));
+        Files.delete(currentTest_resourceDir.resolve("file2.txt"));
+        Files.delete(currentTestResourceDir.resolve("file3.txt"));
+
+        // We expect to have 0 docs and 0 folders now
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 0L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 0L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+    }
+
     private void folderHitTester(DocumentContext document, int position, String expectedReal, String expectedVirtual,
                                  String expectedFilename) {
         pathHitTester(document, position, expectedReal, expectedVirtual);
