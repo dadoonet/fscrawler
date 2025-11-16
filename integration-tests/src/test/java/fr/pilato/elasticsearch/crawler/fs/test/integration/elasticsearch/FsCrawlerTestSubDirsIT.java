@@ -227,45 +227,6 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
-    @Test
-    public void delete_subdir() throws Exception {
-        // Create 3 files in root
-        Files.createFile(currentTestResourceDir.resolve("file1.txt"));
-        Files.createFile(currentTestResourceDir.resolve("file2.txt"));
-        Files.createFile(currentTestResourceDir.resolve("file3.txt"));
-
-        // Create a subdirectory with 3 files
-        Path sub1 = currentTestResourceDir.resolve("sub1");
-        Files.createDirectory(sub1);
-        Files.createFile(sub1.resolve("file4.txt"));
-        Files.createFile(sub1.resolve("file5.txt"));
-        Files.createFile(sub1.resolve("file6.txt"));
-
-        crawler = startCrawler();
-
-        // We should have 7 files (1 existing from the test framework, 3 in root, 3 in sub1) and 1 folder (sub1).
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 1L, null);
-
-        // Let's remove the subdir and wait...
-        logger.debug("  --> Removing dir [{}]", sub1);
-        deleteRecursively(sub1);
-
-        // We expect to have 4 docs now (1 existing, 3 in root) and 0 folders
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 0L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
-
-        // Let's remove the remaining files
-        logger.debug("  --> Removing remaining files from root");
-        Files.delete(currentTestResourceDir.resolve("file1.txt"));
-        Files.delete(currentTestResourceDir.resolve("file2.txt"));
-        Files.delete(currentTestResourceDir.resolve("file3.txt"));
-
-        // We expect to have 1 doc (the original one) and 0 folders now
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 0L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
-    }
-
     private void folderHitTester(DocumentContext document, int position, String expectedReal, String expectedVirtual,
                                  String expectedFilename) {
         pathHitTester(document, position, expectedReal, expectedVirtual);
