@@ -556,7 +556,7 @@
             <dependency>
                 <groupId>com.squareup.okio</groupId>
                 <artifactId>okio-jvm</artifactId>
-                <version>3.16.2</version>
+                <version>3.16.3</version>
             </dependency>
 
             <dependency>
