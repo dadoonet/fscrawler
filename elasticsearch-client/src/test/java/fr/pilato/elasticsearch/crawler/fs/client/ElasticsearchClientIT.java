@@ -180,8 +180,10 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
         // Remove existing templates if any
         logger.debug(" -> Removing existing templates");
-        removeIndexTemplates();
-        removeComponentTemplates();
+        String templateName = "fscrawler_" + getCrawlerName() + "_*";
+        logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+        removeIndexTemplates(templateName);
+        removeComponentTemplates(templateName);
 
         logger.info("🎬 Starting test [{}]", getCurrentTestName());
     }
@@ -194,8 +196,10 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
             logger.debug(" -> Removing existing templates");
-            removeIndexTemplates();
-            removeComponentTemplates();
+            String templateName = "fscrawler_" + getCrawlerName() + "_*";
+            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+            removeIndexTemplates(templateName);
+            removeComponentTemplates(templateName);
         }
 
         logger.info("✅ End of test [{}]", getCurrentTestName());
@@ -876,29 +880,29 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         }
     }
 
-    protected static void removeComponentTemplates() {
-        logger.trace("Removing component templates");
+    protected static void removeComponentTemplates(String componentTemplateName) {
+        logger.trace("Removing component templates for [{}]", componentTemplateName);
         try {
-            esClient.performLowLevelRequest("DELETE", "/_component_template/fscrawler_*", null);
+            esClient.performLowLevelRequest("DELETE", "/_component_template/" + componentTemplateName, null);
         } catch (ElasticsearchClientException | NotFoundException e) {
             // We ignore the error
         } catch (BadRequestException e) {
             // We ignore the error
-            logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_component_template/fscrawler_*]",
-                    e.getMessage());
+            logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_component_template/{}]",
+                    e.getMessage(), componentTemplateName);
         }
     }
 
-    protected static void removeIndexTemplates() {
-        logger.trace("Removing index templates");
+    protected static void removeIndexTemplates(String indexTemplateName) {
+        logger.trace("Removing index templates for [{}]", indexTemplateName);
         try {
-            esClient.performLowLevelRequest("DELETE", "/_index_template/fscrawler_*", null);
+            esClient.performLowLevelRequest("DELETE", "/_index_template/" + indexTemplateName, null);
         } catch (ElasticsearchClientException | NotFoundException e) {
             // We ignore the error
         } catch (BadRequestException e) {
             // We ignore the error
-            logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_index_template/fscrawler_*]",
-                    e.getMessage());
+            logger.warn("Failed to remove index templates. Got a [{}] when calling [DELETE /_index_template/{}]",
+                    e.getMessage(), indexTemplateName);
         }
     }
 
