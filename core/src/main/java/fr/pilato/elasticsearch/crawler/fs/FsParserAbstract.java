@@ -645,18 +645,17 @@ public abstract class FsParserAbstract extends FsParser {
         Collection<String> listFile = getFileDirectory(path);
 
         for (String esfile : listFile) {
-            String fullPath = path.concat(pathSeparator).concat(esfile);  
-            // On Windows, we must use / as a separator
-            String normalizedPath = fullPath.replace("\\", "/");
-            esDelete(managementService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, path));
+            String fullPath = path.concat(pathSeparator).concat(esfile);
             stats.removeFile();
         }
-
+        
+      
+      
         Collection<String> listFolder = getFolderDirectory(path);
         for (String esfolder : listFolder) {
             removeEsDirectoryRecursively(esfolder, stats);
         }
-
+        
         esDelete(managementService, fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path));
     }
 
