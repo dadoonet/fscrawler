@@ -648,7 +648,7 @@ public abstract class FsParserAbstract extends FsParser {
             String fullPath = path.concat(pathSeparator).concat(esfile);  
             // On Windows, we must use / as a separator
             String normalizedPath = fullPath.replace("\\", "/");
-            esDelete(managementService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, path));
+            esDelete(managementService, fsSettings.getElasticsearch().getIndex(), SignTool.sign(path.concat(pathSeparator).concat(esfile)));
             stats.removeFile();
         }
 
