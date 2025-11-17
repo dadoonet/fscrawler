@@ -1,0 +1,79 @@
+Version 2.10
+============
+
+Breaking changes
+----------------
+
+* If you want to exclude a specific folder, you need to use a wildcard character at the end of the folder name.
+  For example, to exclude the folder ``/tmp/foo``, you need to use ``/tmp/foo/*``. Thanks to dadoonet.
+* The way we run docker images has changed. We don't need anymore to specify the fscrawler binary.
+  So running ``docker run -it -v ~/.fscrawler:/root/.fscrawler -v /documents:/tmp/es:ro dadoonet/fscrawler job_name`` is
+enough. Thanks to dadoonet.
+* FSCrawler does not display anymore the list of existing jobs when no job name is provided.
+  You need to use the ``--list`` option to list the jobs. Thanks to dadoonet.
+* When launching for the first time FSCrawler with a job name, FSCrawler does not create anymore the job
+  configuration folder with default settings. You need to use the ``--setup`` option to create the job settings.
+  Thanks to dadoonet.
+* We don't support anymore the ``elasticsearch.nodes.url`` setting. You need to use ``elasticsearch.urls``
+  instead. Thanks to dadoonet.
+* The ``_upload`` REST endpoint has been removed. Please now use the ``_document`` endpoint. Thanks to dadoonet.
+
+New
+---
+
+* FSCrawler does not need to wait until the next planned scan to scan again the filesystem. You can just remove the
+  line ``next_check`` in the ``~/.fscrawler/{job_name}/_status.json`` file and FSCrawler will start a new scan
+  immediately.
+* Job settings can be defined by env variables and system properties and you can also split the configuration of
+  jobs using multiple files in the ``~/.fscrawler/job/_settings`` directory. Also note that the system properties
+  need to be set in the ``FS_JAVA_OPTS`` environment variable.
+* Add support for automatic semantic search when using a 8.17+ version with a trial or enterprise
+  license. See :ref:`semantic_search`. **Warning**: this might slow down the ingestion process. Thanks to dadoonet.
+* Add support for Elastic cloud serverless. Thanks to dadoonet.
+* Using the REST API ``_document``, you can now fetch a document from the local dir, from an http website
+  or from an S3 bucket. See :ref:`rest-service`. Thanks to dadoonet.
+* You can now remove a document in Elasticsearch using FSCrawler ``_document`` endpoint. See :ref:`rest-service`. Thanks to dadoonet.
+* Implement our own HTTP Client for Elasticsearch. Thanks to dadoonet.
+* Add option to set path to custom tika config file. See :ref:`local-fs-settings`. Thanks to iadcode.
+* Support for Index Templates. See :ref:`mappings`. Thanks to dadoonet.
+* Support for Aliases. You can now index to an alias. Thanks to dadoonet.
+* Support for Access Token and Api Keys instead of Basic Authentication. See :ref:`credentials`. Thanks to dadoonet.
+* Allow loading external jars. This adds a new ``external`` directory from where jars can be loaded
+  to the FSCrawler JVM. For example, you could provide your own Custom Tika Parser code. See :ref:`layout`. Thanks to dadoonet.
+* Add temporal information in folder index. Thanks to bdauvissat
+* Add support for external metadata files while crawling, defaults to ``.meta.yml``. See :ref:`tags` Thanks to dadoonet.
+* Add support for static external metadata for all documents. See :ref:`tags` Thanks to dadoonet.
+* The job name is not mandatory anymore and it will be ``fscrawler`` by default. Thanks to dadoonet.
+* FSCrawler also supports Elasticsearch 9. Thanks to dadoonet.
+
+Fix
+---
+
+* Closed open file streams after use. Thanks to alexbluesteele.
+* ``fs.ocr.enabled`` was always false. Thanks to ywjung.
+* Do not hide YAML parsing errors. Thanks to dadoonet.
+* Fix duration parsing for the day unit ``d``. Thanks to dadoonet.
+* Image raw metadata extraction was not working. Thanks to dadoonet.
+* Fix issue when using crawling over SSH when the directory ends with a space. Thanks to dadoonet.
+* On Windows, files and directories to be removed were not properly detected. Thanks to newschapmj1.
+
+Deprecated
+----------
+
+* Support for Basic Authentication is deprecated. You should use API keys instead. Thanks to dadoonet.
+
+Updated
+-------
+
+* Files are now sorted by date with a reverse order. So the most recent files should be indexed first. Thanks to dadoonet.
+* Add full support for Elasticsearch |ES_version9|_, |ES_version8|_, |ES_version7|_. Thanks to dadoonet.
+* Update to Tika |Tika_version|_. Thanks to dadoonet.
+
+Removed
+-------
+
+* Remove the specific distributions depending on Elastic version. Thanks to dadoonet.
+* Support for Elasticsearch 6.x is removed. Thanks to dadoonet.
+
+Thanks to ``@dadoonet``, ``@ywjung``, ``@iadcode``, ``@bdauvissat``, ``@alexbluesteele``
+for this release!
