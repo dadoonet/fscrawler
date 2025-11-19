@@ -121,14 +121,16 @@ If you want to define your own index settings and mapping to set
 analyzers for example, you can update the needed component template
 **before starting the FSCrawler**.
 
-Don't forget to set ``push_templates`` to ``false``, otherwise FSCrawler will
-override your changes:
+.. attention::
 
-.. code:: yaml
+    Don't forget to set ``push_templates`` to ``false``, otherwise FSCrawler will
+    override your changes:
 
-   name: "test"
-   elasticsearch:
-     push_templates: false
+    .. code:: yaml
+
+       name: "test"
+       elasticsearch:
+         push_templates: false
 
 The following example uses a ``french`` analyzer to index the
 ``content`` field and still allow using semantic search.
