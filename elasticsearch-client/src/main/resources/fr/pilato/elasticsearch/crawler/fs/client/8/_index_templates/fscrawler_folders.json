@@ -4,6 +4,7 @@
   ],
   "priority": 600,
   "composed_of": [
+    "fscrawler_INDEX_NAME_mapping_attributes",
     "fscrawler_INDEX_NAME_mapping_file",
     "fscrawler_INDEX_NAME_mapping_path"
   ],
