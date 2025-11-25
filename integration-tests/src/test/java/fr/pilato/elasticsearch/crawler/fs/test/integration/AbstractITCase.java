@@ -109,6 +109,10 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      */
     @Before
     public void copyTestResources() throws IOException {
+        copyTestResources(getCurrentTestName());
+    }
+
+    protected void copyTestResources(String sampleDirName) throws IOException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
         if (Files.notExists(testResourceTarget)) {
             Files.createDirectory(testResourceTarget);
@@ -118,7 +122,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         // We copy files from the src dir to the temp dir
         logger.info("  --> Launching test [{}]", currentTestName);
         currentTestResourceDir = testResourceTarget.resolve(currentTestName);
-        String url = getUrl("samples", currentTestName);
+        String url = getUrl("samples", sampleDirName);
         Path from = Paths.get(url);
 
         if (Files.exists(from)) {
