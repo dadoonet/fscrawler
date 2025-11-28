@@ -12,7 +12,7 @@ Welcome to the FS Crawler for |ES|_.
 
 This crawler helps to index binary documents such as PDF, Open Office, MS Office.
 
-.. image:: /_static/fscrawler_explained.png
+.. image:: /_static/fscrawler-explained.png
    :width: 100%
    :alt: FSCrawler Explained - Generated with Gemini
 
