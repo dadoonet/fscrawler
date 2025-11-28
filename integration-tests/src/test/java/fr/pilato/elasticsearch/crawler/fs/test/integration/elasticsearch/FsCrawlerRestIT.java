@@ -113,8 +113,15 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         Files.walk(from)
                 .filter(Files::isRegularFile)
                 .forEach(path -> {
-                    UploadResponse response = uploadFile(target, path);
-            assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
+                    UploadResponse response;
+                    if (path.toString().endsWith("test-protected.pdf")) {
+                        response = uploadFileUsingApi(target, path, null, null, null, null, "pdfpassword");
+                    } else if (path.toString().endsWith("test-protected.docx")) {
+                        response = uploadFileUsingApi(target, path, null, null, null, null, "david");
+                    } else {
+                        response = uploadFile(target, path);
+                    }
+                    assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
                 });
 
         // We wait until we have all docs
@@ -122,6 +129,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 Files.list(from).count(), null, MAX_WAIT_FOR_SEARCH);
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
+            assertThat((String) JsonPath.read(hit.getSource(), "$.content")).isNotEmpty();
         }
     }
 
@@ -182,7 +190,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 })
                 .forEach(path -> {
                     number.getAndIncrement();
-                    UploadResponse response = uploadFileUsingApi(target, path, null, null, "/_document", null);
+                    UploadResponse response = uploadFileUsingApi(target, path, null, null, "/_document", null, null);
             assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
 
                     toBeRemoved.add(response.getFilename());
@@ -248,7 +256,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 .forEach(path -> {
                     Path tagsFilePath = currentTestTagDir.resolve(path.getFileName().toString() + ".json");
                     logger.info("Upload file #[{}]: [{}] with tags [{}]", numFiles.incrementAndGet(), path.getFileName(), tagsFilePath.getFileName());
-                    UploadResponse response = uploadFileUsingApi(target, path, tagsFilePath, null, "/_document", null);
+                    UploadResponse response = uploadFileUsingApi(target, path, tagsFilePath, null, "/_document", null, null);
                     assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
                 });
 
