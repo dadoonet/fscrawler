@@ -44,7 +44,7 @@
         <elasticsearch7.version>7.17.29</elasticsearch7.version>
         <elasticsearch.version>${elasticsearch9.version}</elasticsearch.version>
 
-        <pl4j.version>3.13.0</pl4j.version>
+        <pl4j.version>3.14.0</pl4j.version>
 
         <gestalt.version>0.36.1</gestalt.version>
 
@@ -678,7 +678,7 @@
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk18on</artifactId>
-                <version>1.82</version>
+                <version>1.83</version>
             </dependency>
 
             <!-- Version conflict between
