@@ -446,7 +446,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        logger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
+        logger.info("  ⏳ Waiting up to {} for {} documents in {}", timeout.toString(),
                 expected == null ? "some" : expected, request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
         long hits = awaitBusy(() -> {
@@ -471,7 +471,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
             totalHits = response[0].getTotalHits();
 
-            logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+            logger.debug("  ≠ got so far [{}] hits on expected [{}]", totalHits, expected);
 
             return totalHits;
         }, expected, timeout);
