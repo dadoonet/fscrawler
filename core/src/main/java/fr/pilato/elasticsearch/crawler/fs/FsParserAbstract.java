@@ -66,6 +66,7 @@ public abstract class FsParserAbstract extends FsParser {
     private final String metadataFilename;
     private final byte[] staticMetadata;
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
+    private final TikaDocParser tikaDocParser;
 
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
         this.fsSettings = fsSettings;
@@ -108,6 +109,8 @@ public abstract class FsParserAbstract extends FsParser {
         } else {
             staticMetadata = null;
         }
+
+        tikaDocParser = new TikaDocParser(fsSettings);
     }
 
     protected abstract FileAbstractor<?> buildFileAbstractor(FsSettings fsSettings);
@@ -336,6 +339,8 @@ public abstract class FsParserAbstract extends FsParser {
                                             inputStream = fileAbstractor.getInputStream(child);
                                         }
                                         if (metadataFile != null) {
+                                            // As long as we stay within the same folder, we should reuse the same metadata file input stream
+                                            // TODO cache the content instead of reopening the stream each time
                                             metadataStream = fileAbstractor.getInputStream(metadataFile);
                                         }
                                         indexFile(child, stats, filepath, inputStream, child.getSize(), metadataStream);
@@ -505,7 +510,7 @@ public abstract class FsParserAbstract extends FsParser {
                 doc.setObject(XmlDocParser.generateMap(inputStream));
             } else {
                 // Extracting content with Tika
-                TikaDocParser.generate(fsSettings, inputStream, doc, filesize);
+                tikaDocParser.generate(inputStream, doc, filesize, null);
             }
 
             // Merge static metadata if available

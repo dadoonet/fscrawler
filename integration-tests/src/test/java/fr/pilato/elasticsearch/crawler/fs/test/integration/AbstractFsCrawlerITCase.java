@@ -100,7 +100,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     @After
     public void shutdownCrawler() throws InterruptedException, IOException {
         if (crawler != null) {
-            logger.info("  --> Stopping crawler");
+            logger.info("  🏁 Stopping crawler");
             crawler.close();
             crawler = null;
         }
@@ -116,7 +116,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
 
     protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, TimeValue duration)
             throws Exception {
-        logger.info("  --> starting crawler [{}]", fsSettings.getName());
+        logger.info("  🏎️ starting crawler [{}]", fsSettings.getName());
         logger.debug("     with settings [{}]", fsSettings);
 
         crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);

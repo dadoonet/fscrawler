@@ -387,7 +387,7 @@ The field ``external`` doesn't necessarily be a flat structure. This is a more a
       }
     }
 
-You can use this technique to add for example the filesize of the file your are uploading::
+You can use this technique to add for example the filesize of the file your are uploading:
 
 .. code:: sh
 
@@ -397,6 +397,23 @@ You can use this technique to add for example the filesize of the file your are 
       "http://127.0.0.1:8080/fscrawler/_document"
 
 .. attention:: Only standard :ref:`FSCrawler fields <generated_fields>` can be set outside ``external`` field name.
+
+Document password
+^^^^^^^^^^^^^^^^^
+
+If the document you are uploading is password protected, you can pass the password
+using the ``password`` parameter:
+
+.. code:: sh
+
+    # Using query string parameter
+    curl -F "file=@test.pdf" "http://127.0.0.1:8080/fscrawler/_document?password=MyStringPassword"
+
+    # Using form data
+    curl -F "file=@test.pdf" -F "password=MyStringPassword" "http://127.0.0.1:8080/fscrawler/_document"
+
+    # Using header parameter
+    curl -H "password: MyStringPassword" -F "file=@test.pdf" "http://127.0.0.1:8080/fscrawler/_document"
 
 Remove a document
 ^^^^^^^^^^^^^^^^^
