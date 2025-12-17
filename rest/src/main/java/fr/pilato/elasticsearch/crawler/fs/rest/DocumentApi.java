@@ -56,11 +56,13 @@ public class DocumentApi extends RestApi {
     private final FsSettings settings;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
     private final FsCrawlerPluginsManager pluginsManager;
+    private final TikaDocParser tikaDocParser;
 
     DocumentApi(FsSettings settings, FsCrawlerDocumentService documentService, FsCrawlerPluginsManager pluginsManager) {
         this.settings = settings;
         this.documentService = documentService;
         this.pluginsManager = pluginsManager;
+        this.tikaDocParser = new TikaDocParser(settings);
     }
 
     @POST
@@ -75,12 +77,16 @@ public class DocumentApi extends RestApi {
             @HeaderParam("index") String headerIndex,
             @QueryParam("id") String queryParamId,
             @QueryParam("index") String queryParamIndex,
+            @FormDataParam("password") String formDocumentPassword,
+            @HeaderParam("password") String headerDocumentPassword,
+            @QueryParam("password") String queryParamDocumentPassword,
             @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
         String id = formId != null ? formId : headerId != null ? headerId : queryParamId;
         String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
-        return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
+        String password = formDocumentPassword != null ? formDocumentPassword : headerDocumentPassword != null ? headerDocumentPassword : queryParamDocumentPassword;
+        return uploadToDocumentService(debug, simulate, id, index, password, tags, filecontent, d);
     }
 
     @PUT
@@ -94,13 +100,52 @@ public class DocumentApi extends RestApi {
             @FormDataParam("index") String formIndex,
             @HeaderParam("index") String headerIndex,
             @QueryParam("index") String queryParamIndex,
+            @FormDataParam("password") String formDocumentPassword,
+            @HeaderParam("password") String headerDocumentPassword,
+            @QueryParam("password") String queryParamDocumentPassword,
             @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
         String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
-        return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
+        String password = formDocumentPassword != null ? formDocumentPassword : headerDocumentPassword != null ? headerDocumentPassword : queryParamDocumentPassword;
+        return uploadToDocumentService(debug, simulate, id, index, password, tags, filecontent, d);
     }
 
+    /**
+     * REST entry point to add a document coming from a third-party provider (plugin).
+     * <br/>
+     * The JSON request body must contain at least a root field "type" that identifies a registered provider.
+     * The provider is located via {@code pluginsManager.findFsProvider(type)}. The provider is started
+     * with {@code settings} and the full JSON string. The provider is expected to provide:
+     * <ul>
+     * <li>{@code readFile()} : returns an {@code InputStream} with the file content</li>
+     * <li>{@code createDocument()} : creates and returns a {@code Doc}</li>
+     * </ul>
+     * <br/>
+     * Parameters:
+     * <ul>
+     * <li>{@code debug}: if true (or if the logger is in debug), the indexed {@code Doc} is returned in the response.</li>
+     * <li>{@code simulate}: if true, the document is not sent to Elasticsearch.</li>
+     * <li>{@code id}: optional document id - could be provided via header or query parameter.</li>
+     * <li>{@code index}: optional ES index (otherwise default from settings) - could be provided via header or query parameter.</li>
+     * <li>Request body : JSON describing the third-party resource (must contain {@code "type"}).</li>
+     * </ul>
+     * <br/>
+     * Examples using curl:
+     * <pre>
+     * curl -X POST \
+     *   -H "Content-Type: application/json" \
+     *   "http://localhost:8080/_document?simulate=true" \
+     *   -d '{"type":"s3","bucket":"my-bucket","key":"path/to/object"}'
+     *
+     * curl -X POST \
+     *   -H "Content-Type: application/json" \
+     *   "http://localhost:8080/_document?debug=true&index=my-index&id=my-id" \
+     *   -d '{"type":"s3","bucket":"my-bucket","key":"path/to/object"}'
+     * </pre>
+     *
+     * Returns an {@code UploadResponse} indicating success or failure.
+     */
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -109,6 +154,7 @@ public class DocumentApi extends RestApi {
             @QueryParam("simulate") String simulate,
             @QueryParam("id") String queryParamId,
             @QueryParam("index") String queryParamIndex,
+            @QueryParam("password") String documentPassword,
             @HeaderParam("id") String headerId,
             @HeaderParam("index") String headerIndex,
             InputStream json) {
@@ -126,7 +172,7 @@ public class DocumentApi extends RestApi {
             InputStream inputStream = provider.readFile();
 
             Doc doc = provider.createDocument();
-            doc = enrichDoc(doc, settings, null, inputStream);
+            doc = enrichDoc(doc, null, inputStream, documentPassword);
             return uploadToDocumentService(debug, simulate, id, index, doc);
         } catch (Exception e) {
             logger.debug("Failed to add document from [{}] 3rd-party: [{}] - [{}]",
@@ -183,6 +229,7 @@ public class DocumentApi extends RestApi {
             String simulate,
             String id,
             String index,
+            String documentPassword,
             InputStream tags,
             InputStream filecontent,
             FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
@@ -200,22 +247,22 @@ public class DocumentApi extends RestApi {
         doc.getPath().setReal(filename);
         doc.getFile().setFilesize(d.getSize());
 
-        doc = enrichDoc(doc, settings, tags, filecontent);
+        doc = enrichDoc(doc, tags, filecontent, documentPassword);
         return uploadToDocumentService(debug, simulate, id, index, doc);
     }
 
-    public static Doc enrichDoc(
+    public Doc enrichDoc(
             Doc doc,
-            FsSettings settings,
             InputStream tags,
-            InputStream filecontent) throws IOException {
+            InputStream filecontent,
+            String documentPassword) throws IOException {
         // File
         doc.getFile().setExtension(FilenameUtils.getExtension(doc.getFile().getFilename()).toLowerCase());
         doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
         // File
 
         // Read the file content
-        TikaDocParser.generate(settings, filecontent, doc, doc.getFile().getFilesize());
+        tikaDocParser.generate(filecontent, doc, doc.getFile().getFilesize(), documentPassword);
 
         // We merge tags if any and return the final doc
         return getMergedDoc(doc, tags, mapper);
