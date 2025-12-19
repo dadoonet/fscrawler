@@ -122,6 +122,9 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
      # inlcude user/group of file only if needed
      attributes_support: false
 
+     # collect ACL metadata when available
+     acl_support: false
+
      # do you REALLY want to store every file as a copy in the index ? Then set this to true
      store_source: false
 

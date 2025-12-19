@@ -36,6 +36,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
@@ -196,18 +197,60 @@ public class FsCrawlerUtil {
     }
 
     public static String computeVirtualPathName(String rootPath, String realPath) {
-        String result = getPathSeparator(rootPath);
-        if (realPath.startsWith(rootPath) && realPath.length() > rootPath.length()) {
-            if (rootPath.equals("/")) {
-                // "/" is very common for FTP
-                result = realPath;
+        if (rootPath == null || realPath == null) {
+            return getPathSeparator(rootPath);
+        }
+
+        String defaultSeparator = getPathSeparator(rootPath);
+        String result = defaultSeparator;
+
+        String normalizedRoot = normalizeForComparison(rootPath);
+        String normalizedReal = normalizeForComparison(realPath);
+
+        if (!normalizedRoot.isEmpty()) {
+            boolean matches;
+            if (OsValidator.WINDOWS) {
+                matches = normalizedReal.regionMatches(true, 0, normalizedRoot, 0, normalizedRoot.length());
             } else {
-                result = realPath.substring(rootPath.length());
+                matches = normalizedReal.startsWith(normalizedRoot);
             }
+
+            if (matches && hasBoundary(normalizedRoot, normalizedReal)) {
+                if ("/".equals(normalizedRoot)) {
+                    // "/" is very common for FTP
+                    result = normalizedReal;
+                } else {
+                    String suffix = normalizedReal.substring(normalizedRoot.length());
+                    result = suffix.isEmpty() ? defaultSeparator : suffix;
+                }
+            }
+        }
+
+        if (!"/".equals(defaultSeparator)) {
+            result = result.replace('/', defaultSeparator.charAt(0));
         }
 
         logger.debug("computeVirtualPathName({}, {}) = {}", rootPath, realPath, result);
         return result;
+    }
+
+    private static String normalizeForComparison(String path) {
+        if (path == null) {
+            return "";
+        }
+        String normalized = path.replace('\\', '/');
+        return normalized;
+    }
+
+    private static boolean hasBoundary(String normalizedRoot, String normalizedReal) {
+        if (normalizedReal.length() == normalizedRoot.length()) {
+            return true;
+        }
+        if (normalizedReal.length() > normalizedRoot.length()) {
+            char c = normalizedReal.charAt(normalizedRoot.length());
+            return c == '/';
+        }
+        return false;
     }
 
     private static LocalDateTime getFileTime(File file, Function<BasicFileAttributes, FileTime> timeFunction) {
@@ -280,7 +323,7 @@ public class FsCrawlerUtil {
      */
     public static String getGroupName(final File file) {
         if (OsValidator.WINDOWS) {
-            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            logger.debug("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
             return null;
         }
         try {
@@ -323,6 +366,46 @@ public class FsCrawlerUtil {
         catch(Exception e) {
             logger.warn("Failed to determine 'permissions' of {}: {}", file, e.getMessage());
             return -1;
+        }
+    }
+
+    /**
+     * Determines Access Control List entries for the given file.
+     */
+    public static List<FileAcl> getFileAcls(final Path path) {
+        logger.trace("Resolving ACLs for [{}]", path);
+        try {
+            final AclFileAttributeView aclView = Files.getFileAttributeView(path, AclFileAttributeView.class);
+            if (aclView == null) {
+                logger.trace("Determining 'acl' is skipped for file [{}] as ACL view is not supported", path);
+                return Collections.emptyList();
+            }
+
+            final List<AclEntry> aclEntries = aclView.getAcl();
+            if (aclEntries == null || aclEntries.isEmpty()) {
+                logger.trace("No ACL entries found for [{}]", path);
+                return Collections.emptyList();
+            }
+
+            final List<FileAcl> result = new ArrayList<>(aclEntries.size());
+            for (AclEntry entry : aclEntries) {
+                final String principal = entry.principal() != null ? entry.principal().getName() : null;
+                final String type = entry.type() != null ? entry.type().name() : null;
+                final List<String> permissions = entry.permissions().stream()
+                        .map(AclEntryPermission::name)
+                        .sorted()
+                        .collect(Collectors.toList());
+                final List<String> flags = entry.flags().stream()
+                        .map(AclEntryFlag::name)
+                        .sorted()
+                        .collect(Collectors.toList());
+                result.add(new FileAcl(principal, type, permissions, flags));
+            }
+            logger.debug("ACL entries found for [{}]: {}", path, result);
+            return result;
+        } catch (Exception e) {
+            logger.debug("Failed to determine 'acl' of {}: {}", path, e);
+            return Collections.emptyList();
         }
     }
 

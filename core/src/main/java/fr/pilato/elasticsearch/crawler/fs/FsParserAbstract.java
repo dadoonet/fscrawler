@@ -45,6 +45,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
@@ -493,6 +494,12 @@ public abstract class FsParserAbstract extends FsParser {
                 if (fileAbstractModel.getPermissions() >= 0) {
                     doc.getAttributes().setPermissions(fileAbstractModel.getPermissions());
                 }
+                if (fsSettings.getFs().isAclSupport()) {
+                    List<FileAcl> fileAcls = fileAbstractModel.getAcls();
+                    if (!fileAcls.isEmpty()) {
+                        doc.getAttributes().setAcl(fileAcls);
+                    }
+                }
             }
             // Attributes
 
@@ -633,6 +640,26 @@ public abstract class FsParserAbstract extends FsParser {
                 getCreationTime(folderInfo),
                 getModificationTime(folderInfo),
                 getLastAccessTime(folderInfo));
+
+        if (fsSettings.getFs().isAttributesSupport() && (fsSettings.getServer() == null || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol()))) {
+            Attributes attributes = new Attributes();
+            attributes.setOwner(getOwnerName(folderInfo));
+            attributes.setGroup(getGroupName(folderInfo));
+            int permissions = getFilePermissions(folderInfo);
+            if (permissions >= 0) {
+                attributes.setPermissions(permissions);
+            }
+            if (fsSettings.getFs().isAclSupport()) {
+                List<FileAcl> folderAcls = getFileAcls(folderInfo.toPath());
+                if (!folderAcls.isEmpty()) {
+                    attributes.setAcl(folderAcls);
+                }
+            }
+
+            if (attributes.getOwner() != null || attributes.getGroup() != null || attributes.getAcl() != null || permissions >= 0) {
+                folder.setAttributes(attributes);
+            }
+        }
 
         indexDirectory(SignTool.sign(path), folder);
     }

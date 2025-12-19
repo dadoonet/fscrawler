@@ -47,6 +47,9 @@ fs:
   # include user/group of file only if needed
   attributes_support: true
 
+  # optional: collect ACL metadata when available
+  acl_support: true
+
   # optional: this will try to detect the language of the extracted content
   lang_detect: true
 

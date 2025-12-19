@@ -29,6 +29,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import java.util.List;
+
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -54,6 +56,34 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
                 // We test group and permissions only on non Windows OS
                 assertThat((String) document.read("$.attributes.group")).isNotEmpty();
                 assertThat((Integer) document.read("$.attributes.permissions")).isGreaterThanOrEqualTo(400);
+            }
+        }
+    }
+
+    @Test
+    public void aclAttributes() throws Exception {
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setAttributesSupport(true);
+        fsSettings.getFs().setAclSupport(true);
+        crawler = startCrawler(fsSettings);
+
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
+            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+
+            List<?> aclEntries;
+            try {
+                aclEntries = document.read("$.attributes.acl");
+            } catch (PathNotFoundException e) {
+                aclEntries = null;
+            }
+
+            if (OsValidator.WINDOWS) {
+                assertThat(aclEntries).as("ACL metadata should be collected on Windows").isNotNull().isNotEmpty();
+                assertThat((String) document.read("$.attributes.acl[0].principal")).isNotBlank();
+                assertThat((String) document.read("$.attributes.acl[0].type")).isNotBlank();
+            } else {
+                assertThat(aclEntries).as("ACL metadata should not be present when the platform does not expose ACLs").isNullOrEmpty();
             }
         }
     }

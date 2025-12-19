@@ -32,6 +32,7 @@ public class Folder {
 
     private Path path;
     private File file;
+    private Attributes attributes;
 
     public Folder() {
         path = new Path();
@@ -77,5 +78,13 @@ public class Folder {
 
     public void setFile(File file) {
         this.file = file;
+    }
+
+    public Attributes getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Attributes attributes) {
+        this.attributes = attributes;
     }
 }
