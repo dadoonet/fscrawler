@@ -46,7 +46,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.List;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
@@ -651,7 +650,7 @@ public abstract class FsParserAbstract extends FsParser {
                 attributes.setPermissions(permissions);
             }
             if (fsSettings.getFs().isAclSupport()) {
-                List<FileAcl> folderAcls = getFileAcls(folderInfo);
+                List<FileAcl> folderAcls = getFileAcls(folderInfo.toPath());
                 if (!folderAcls.isEmpty()) {
                     attributes.setAcl(folderAcls);
                 }

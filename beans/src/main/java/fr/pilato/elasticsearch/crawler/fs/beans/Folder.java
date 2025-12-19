@@ -38,7 +38,6 @@ public class Folder {
         path = new Path();
         file = new File();
         file.setContentType(CONTENT_TYPE);
-        attributes = null;
     }
 
     /**
@@ -63,7 +62,6 @@ public class Folder {
         file.setLastModified(localDateTimeToDate(modification));
         file.setCreated(localDateTimeToDate(creation));
         file.setLastAccessed(localDateTimeToDate(lastAccess));
-        attributes = null;
     }
 
     public Path getPath() {

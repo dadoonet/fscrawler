@@ -197,18 +197,60 @@ public class FsCrawlerUtil {
     }
 
     public static String computeVirtualPathName(String rootPath, String realPath) {
-        String result = getPathSeparator(rootPath);
-        if (realPath.startsWith(rootPath) && realPath.length() > rootPath.length()) {
-            if (rootPath.equals("/")) {
-                // "/" is very common for FTP
-                result = realPath;
+        if (rootPath == null || realPath == null) {
+            return getPathSeparator(rootPath);
+        }
+
+        String defaultSeparator = getPathSeparator(rootPath);
+        String result = defaultSeparator;
+
+        String normalizedRoot = normalizeForComparison(rootPath);
+        String normalizedReal = normalizeForComparison(realPath);
+
+        if (!normalizedRoot.isEmpty()) {
+            boolean matches;
+            if (OsValidator.WINDOWS) {
+                matches = normalizedReal.regionMatches(true, 0, normalizedRoot, 0, normalizedRoot.length());
             } else {
-                result = realPath.substring(rootPath.length());
+                matches = normalizedReal.startsWith(normalizedRoot);
             }
+
+            if (matches && hasBoundary(normalizedRoot, normalizedReal)) {
+                if ("/".equals(normalizedRoot)) {
+                    // "/" is very common for FTP
+                    result = normalizedReal;
+                } else {
+                    String suffix = normalizedReal.substring(normalizedRoot.length());
+                    result = suffix.isEmpty() ? defaultSeparator : suffix;
+                }
+            }
+        }
+
+        if (!"/".equals(defaultSeparator)) {
+            result = result.replace('/', defaultSeparator.charAt(0));
         }
 
         logger.debug("computeVirtualPathName({}, {}) = {}", rootPath, realPath, result);
         return result;
+    }
+
+    private static String normalizeForComparison(String path) {
+        if (path == null) {
+            return "";
+        }
+        String normalized = path.replace('\\', '/');
+        return normalized;
+    }
+
+    private static boolean hasBoundary(String normalizedRoot, String normalizedReal) {
+        if (normalizedReal.length() == normalizedRoot.length()) {
+            return true;
+        }
+        if (normalizedReal.length() > normalizedRoot.length()) {
+            char c = normalizedReal.charAt(normalizedRoot.length());
+            return c == '/';
+        }
+        return false;
     }
 
     private static LocalDateTime getFileTime(File file, Function<BasicFileAttributes, FileTime> timeFunction) {
@@ -330,24 +372,22 @@ public class FsCrawlerUtil {
     /**
      * Determines Access Control List entries for the given file.
      */
-    public static List<FileAcl> getFileAcls(final File file) {
-        System.out.println("[ACL DEBUG] Resolving ACLs for " + file.getAbsolutePath());
+    public static List<FileAcl> getFileAcls(final Path path) {
+        logger.trace("Resolving ACLs for [{}]", path);
         try {
-            final Path path = Paths.get(file.getAbsolutePath());
             final AclFileAttributeView aclView = Files.getFileAttributeView(path, AclFileAttributeView.class);
             if (aclView == null) {
-                logger.debug("Determining 'acl' is skipped for file [{}] as ACL view is not supported", file);
+                logger.trace("Determining 'acl' is skipped for file [{}] as ACL view is not supported", path);
                 return Collections.emptyList();
             }
 
             final List<AclEntry> aclEntries = aclView.getAcl();
             if (aclEntries == null || aclEntries.isEmpty()) {
-                System.out.println("[ACL DEBUG] No ACL entries found for " + file.getAbsolutePath());
+                logger.trace("No ACL entries found for [{}]", path);
                 return Collections.emptyList();
             }
 
             final List<FileAcl> result = new ArrayList<>(aclEntries.size());
-            System.out.println("[ACL DEBUG] Found " + aclEntries.size() + " ACL entries for " + file.getAbsolutePath());
             for (AclEntry entry : aclEntries) {
                 final String principal = entry.principal() != null ? entry.principal().getName() : null;
                 final String type = entry.type() != null ? entry.type().name() : null;
@@ -360,13 +400,11 @@ public class FsCrawlerUtil {
                         .sorted()
                         .collect(Collectors.toList());
                 result.add(new FileAcl(principal, type, permissions, flags));
-                System.out.println("[ACL DEBUG] Entry -> principal=" + principal + ", type=" + type + ", permissions=" + permissions + ", flags=" + flags);
             }
-
-            return Collections.unmodifiableList(result);
+            logger.debug("ACL entries found for [{}]: {}", path, result);
+            return result;
         } catch (Exception e) {
-            System.out.println("[ACL DEBUG] Failed to resolve ACLs for " + file.getAbsolutePath() + ": " + e.getMessage());
-            logger.warn("Failed to determine 'acl' of {}: {}", file, e.getMessage());
+            logger.debug("Failed to determine 'acl' of {}: {}", path, e);
             return Collections.emptyList();
         }
     }

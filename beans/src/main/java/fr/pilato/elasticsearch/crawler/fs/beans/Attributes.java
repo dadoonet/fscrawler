@@ -60,14 +60,10 @@ public class Attributes {
     }
 
     public List<FileAcl> getAcl() {
-        return acl != null ? Collections.unmodifiableList(acl) : null;
+        return acl;
     }
 
     public void setAcl(List<FileAcl> acl) {
-        if (acl == null || acl.isEmpty()) {
-            this.acl = null;
-        } else {
-            this.acl = new ArrayList<>(acl);
-        }
+        this.acl = acl;
     }
 }

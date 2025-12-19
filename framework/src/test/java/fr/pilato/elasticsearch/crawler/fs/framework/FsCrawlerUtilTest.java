@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
@@ -81,7 +82,12 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void aclEntries() {
-        assertThat(FsCrawlerUtil.getFileAcls(file)).isNotNull();
+        List<FileAcl> aclEntries = FsCrawlerUtil.getFileAcls(file.toPath());
+        if (OsValidator.WINDOWS) {
+            assertThat(aclEntries).as("ACL entries should exist on Windows").isNotEmpty();
+        } else {
+            assertThat(aclEntries).as("ACL entries should be empty when ACL view is not supported").isEmpty();
+        }
     }
 
     @Test

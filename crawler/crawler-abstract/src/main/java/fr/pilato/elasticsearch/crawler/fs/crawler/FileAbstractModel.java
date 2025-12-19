@@ -41,8 +41,6 @@ package fr.pilato.elasticsearch.crawler.fs.crawler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class FileAbstractModel {
@@ -77,11 +75,7 @@ public class FileAbstractModel {
         this.group = group;
         this.permissions = permissions;
         this.extension = extension;
-        if (acls == null || acls.isEmpty()) {
-            this.acls = Collections.emptyList();
-        } else {
-            this.acls = Collections.unmodifiableList(new ArrayList<>(acls));
-        }
+        this.acls = acls;
     }
 
     public String getName() {

@@ -62,8 +62,6 @@ public class FileAbstractorFile extends FileAbstractor<File> {
 
     @Override
     public FileAbstractModel toFileAbstractModel(String path, File file) {
-        final boolean collectAcls = fsSettings.getFs().isAclSupport();
-        System.out.println("[ACL DEBUG] Collecting ACLs for file " + file.getAbsolutePath() + " -> " + collectAcls);
         return new FileAbstractModel(
                 file.getName(),
                 file.isFile(),
@@ -77,7 +75,7 @@ public class FileAbstractorFile extends FileAbstractor<File> {
                 getOwnerName(file),
                 getGroupName(file),
                 getFilePermissions(file),
-                collectAcls ? getFileAcls(file) : Collections.emptyList());
+                fsSettings.getFs().isAclSupport() ? getFileAcls(file.toPath()) : Collections.emptyList());
     }
 
     @Override
