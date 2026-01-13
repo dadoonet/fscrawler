@@ -46,7 +46,7 @@
 
         <pl4j.version>3.14.0</pl4j.version>
 
-        <gestalt.version>0.36.1</gestalt.version>
+        <gestalt.version>0.36.2</gestalt.version>
 
         <tika.version>3.2.3</tika.version>
         <jackson.version>2.20.1</jackson.version>
