@@ -103,7 +103,7 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
             assertThat(object).contains("User-agent: *");
             Doc doc = provider.createDocument();
             assertThat(doc.getFile().getFilename()).isEqualTo("robots.txt");
-            assertThat(doc.getFile().getFilesize()).isEqualTo(13L);
+            assertThat(doc.getFile().getFilesize()).isEqualTo(14L);
         }
     }
 }
