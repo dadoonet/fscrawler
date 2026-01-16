@@ -60,7 +60,7 @@ See :ref:`layout` to know more about the content of the distribution.
 Using docker
 ------------
 
-Pull the Docker image:
+Pull the Docker image from `Docker Hub <https://hub.docker.com/r/dadoonet/fscrawler>`__:
 
 .. code:: sh
 
@@ -68,9 +68,9 @@ Pull the Docker image:
 
 .. note::
 
-    This image is very big (1.2+gb) as it contains `Tesseract <https://tesseract-ocr.github.io/tessdoc/>`__ and
+    This image is very big (500+mb) as it contains `Tesseract <https://tesseract-ocr.github.io/tessdoc/>`__ and
     all the `trained language data <https://tesseract-ocr.github.io/tessdoc/Data-Files.html>`__.
-    If you don't want to use OCR at all, you can use a smaller image (around 530mb) by pulling instead
+    If you don't want to use OCR at all, you can use a smaller image (around 230mb) by pulling instead
     ``dadoonet/fscrawler:noocr``
 
     .. code:: sh
