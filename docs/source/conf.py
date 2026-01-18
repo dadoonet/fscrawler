@@ -55,6 +55,9 @@ downloadUrl = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fs
 if release.endswith('-SNAPSHOT'):
     downloadUrl = "https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/%s/" % release
 
+# Elasticsearch latest version
+es_stack_version=config.get('3rdParty', 'ElasticsearchVersion')
+
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -70,6 +73,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.ifconfig',
     'sphinx.ext.githubpages',
+    'sphinx_substitution_extensions',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -221,6 +225,8 @@ rst_prolog = rst_prolog + """
 .. |ES_version7| replace:: Elasticsearch {fmt_es_version7}
 .. |ES_version8| replace:: Elasticsearch {fmt_es_version8}
 .. |ES_version9| replace:: Elasticsearch {fmt_es_version9}
+.. |ES_stack_version| replace:: {fmt_es_stack_version}
+.. |FSCrawler_version| replace:: {fmt_fscrawler_version}
 .. |JPEG2000_version| replace:: jai-imageio-jpeg2000:{fmt_jpeg_version}
 .. |Download_URL| replace:: Sonatype
 .. |Maven_Central| replace:: Maven Central
@@ -245,5 +251,7 @@ fmt_es_version8=config.get('3rdParty', 'ElasticsearchVersion8'),
 fmt_es_version9=config.get('3rdParty', 'ElasticsearchVersion9'),
 fmt_jpeg_version=config.get('3rdParty', 'JpegVersion'),
 fmt_downloadUrl=downloadUrl,
-fmt_release=release
+fmt_es_stack_version=es_stack_version,
+fmt_fscrawler_version=version
 )
+# End of conf.py

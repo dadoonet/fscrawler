@@ -202,16 +202,17 @@ with docker compose:
 
 Prepare a ``.env`` file with the following content:
 
-.. code:: sh
+.. code-block:: sh
+   :substitutions:
 
-    # Chenge the FSCRAWLER_VERSION if needed
-    FSCRAWLER_VERSION=2.10-SNAPSHOT
+    # Change the FSCRAWLER_VERSION if needed
+    FSCRAWLER_VERSION=|FSCrawler_version|
     FSCRAWLER_PORT=8080
     # Optionally, you can change the log level settings
-    FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug"
+    # FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug"
 
-    # Chenge the STACK_VERSION if needed
-    STACK_VERSION=9.0.0
+    # Change the STACK_VERSION if needed
+    STACK_VERSION=|ES_stack_version|
     ELASTIC_PASSWORD=changeme
     KIBANA_PASSWORD=changeme
     CLUSTER_NAME=docker-cluster
@@ -339,7 +340,6 @@ And, prepare the following ``docker-compose.yml``. You will find this example in
           - ELASTICSEARCH_USERNAME=kibana_system
           - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
           - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
-          - ENTERPRISESEARCH_HOST=http://enterprisesearch:${ENTERPRISE_SEARCH_PORT}
         mem_limit: ${MEM_LIMIT}
         healthcheck:
           test:
