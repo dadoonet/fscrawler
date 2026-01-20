@@ -219,22 +219,22 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     }
 
     public static UploadResponse uploadFile(WebTarget target, Path file) {
-        return uploadFileUsingApi(target, file, null, null, null, null);
+        return uploadFileUsingApi(target, file, null, null, null, null, null);
     }
 
     public static UploadResponse uploadFileOnIndex(WebTarget target, Path file, String index) {
-        return uploadFileUsingApi(target, file, null, index, null, null);
+        return uploadFileUsingApi(target, file, null, index, null, null, null);
     }
 
     public static UploadResponse uploadFileWithId(WebTarget target, Path file, String id) {
-        return uploadFileUsingApi(target, file, null, null, null, id);
+        return uploadFileUsingApi(target, file, null, null, null, id, null);
     }
 
     public static UploadResponse uploadFile(WebTarget target, Path file, Path tagsFile, String index) {
-        return uploadFileUsingApi(target, file, tagsFile, index, null, null);
+        return uploadFileUsingApi(target, file, tagsFile, index, null, null, null);
     }
 
-    public static UploadResponse uploadFileUsingApi(WebTarget target, Path file, Path tagsFile, String index, String api, String id) {
+    public static UploadResponse uploadFileUsingApi(WebTarget target, Path file, Path tagsFile, String index, String api, String id, String password) {
         assertThat(file).exists();
 
         Map<String, Object> params = new HashMap<>();
@@ -272,6 +272,21 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
             } else {
                 logger.info("Force id to {} using a query string parameter", id);
                 params.put("id", id);
+            }
+             */
+        }
+
+        if (password != null) {
+            logger.trace("Uploading [{}] with a password", file.getFileName());
+            mp.field("password", password);
+            // Sadly this does not work
+            /*
+            if (rarely()) {
+                logger.info("Force password to {} using a form field", password);
+                mp.field("password", password);
+            } else {
+                logger.info("Force password to {} using a query string parameter", password);
+                params.put("password", password);
             }
              */
         }

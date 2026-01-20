@@ -944,9 +944,25 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void protectedDocument() throws IOException {
-        FsSettings fsSettings = FsSettingsLoader.load();
-        Doc doc = extractFromFile("test-protected.docx", fsSettings);
+        Doc doc = extractFromFile("test-protected.docx");
         assertThat(doc.getFile().getContentType()).isEqualTo("application/x-tika-ooxml-protected");
+        assertThat(doc.getContent()).isNullOrEmpty();
+
+        doc = extractFromFile("test-protected.docx", "david");
+        assertThat(doc.getFile().getContentType()).isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        assertThat(doc.getContent()).contains("This is a sample text available in page");
+
+        doc = extractFromFile("test-protected.pdf");
+        assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
+        assertThat(doc.getContent()).isNullOrEmpty();
+
+        doc = extractFromFile("test-protected.pdf", "pdfpassword");
+        assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
+        assertThat(doc.getContent()).contains("This is a sample text available in page");
+
+        doc = extractFromFile("test-protected.pdf", "thisdoesnotmatch");
+        assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
+        assertThat(doc.getContent()).isNullOrEmpty();
     }
 
     @Test
@@ -958,22 +974,29 @@ public class TikaDocParserTest extends DocParserTestCase {
     private Doc extractFromFileExtension(String extension) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
-        return extractFromFile("test." + extension, fsSettings);
+        return extractFromFile("test." + extension, fsSettings, null);
     }
 
     private Doc extractFromFile(String filename) throws IOException {
-        return extractFromFile(filename, FsSettingsLoader.load());
+        return extractFromFile(filename, FsSettingsLoader.load(), null);
+    }
+
+    private Doc extractFromFile(String filename, String password) throws IOException {
+        return extractFromFile(filename, FsSettingsLoader.load(), password);
     }
 
     private Doc extractFromFile(String filename, FsSettings fsSettings) throws IOException {
-        logger.info("Test extraction of [{}]", filename);
+        return extractFromFile(filename, fsSettings, null);
+    }
+
+    private Doc extractFromFile(String filename, FsSettings fsSettings, String password) throws IOException {
+        logger.info("Test extraction of [{}]{}", filename, password != null ? " with password" : "");
         Doc doc = new Doc();
         doc.getPath().setReal(filename);
         doc.getFile().setFilename(filename);
 
-        // We make sure we reload a new Tika instance any time we test
-        TikaInstance.reloadTika();
-        TikaDocParser.generate(fsSettings, getBinaryContent(filename), doc, 0);
+        TikaDocParser tikaDocParser = new TikaDocParser(fsSettings);
+        tikaDocParser.generate(getBinaryContent(filename), doc, 0, password);
 
         logger.debug("Generated Content: [{}]", doc.getContent());
         logger.debug("Generated Raw Metadata: [{}]", doc.getMeta().getRaw());
