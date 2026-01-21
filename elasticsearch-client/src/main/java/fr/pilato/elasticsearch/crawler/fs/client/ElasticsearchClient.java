@@ -247,7 +247,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         if (version != null) {
             return version;
         }
-        logger.debug("get version");
+        logger.trace("get version");
         String response = httpGet(null);
         // We parse the response
         DocumentContext document = parseJsonAsDocumentContext(response);
@@ -304,7 +304,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     private String getLicenseInternal() throws ElasticsearchClientException {
-        logger.debug("get license");
+        logger.trace("get license");
         String response = httpGet("_license");
 
         // We parse the response

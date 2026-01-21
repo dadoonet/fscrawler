@@ -217,7 +217,7 @@ public abstract class FsParserAbstract extends FsParser {
                             long waitTime = Math.min(CHECK_JOB_INTERVAL.millis(), maxWaitTime - totalWaitTime);
                             semaphore.wait(waitTime);
                             totalWaitTime += waitTime;
-                            logger.debug("Waking up after {} ms to check if the condition changed. We waited for {} in total...", waitTime, totalWaitTime);
+                            logger.trace("Waking up after {} ms to check if the condition changed. We waited for {} in total on {}...", waitTime, totalWaitTime, maxWaitTime);
 
                             // Read again the FsJob to check if we need to stop the crawler
                             try {
@@ -318,14 +318,14 @@ public abstract class FsParserAbstract extends FsParser {
                     // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
                     boolean isIndexable = isIndexable(child.isDirectory(), virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
 
-                    logger.debug("[{}] can be indexed: [{}]", virtualFileName, isIndexable);
+                    logger.trace("[{}] can be indexed: [{}]", virtualFileName, isIndexable);
                     if (isIndexable) {
                         if (child.isFile()) {
-                            logger.debug("  - file: {}", virtualFileName);
+                            logger.trace("  - file: {}", virtualFileName);
                             fsFiles.add(filename);
                             if (child.getLastModifiedDate().isAfter(lastScanDate) ||
                                     (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
-                                logger.debug("    - modified: creation date {} , file date {}, last scan date {}",
+                                logger.trace("    - modified: creation date {} , file date {}, last scan date {}",
                                         child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
 
                                 if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
@@ -359,7 +359,7 @@ public abstract class FsParserAbstract extends FsParser {
                                             new ByteSizeValue(child.getSize()), fsSettings.getFs().getIgnoreAbove());
                                 }
                             } else {
-                                logger.debug("    - not modified: creation date {} , file date {}, last scan date {}",
+                                logger.trace("    - not modified: creation date {} , file date {}, last scan date {}",
                                         child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
                             }
                         } else if (child.isDirectory()) {
@@ -451,7 +451,7 @@ public abstract class FsParserAbstract extends FsParser {
         final String extension = fileAbstractModel.getExtension();
         final long size = fileAbstractModel.getSize();
 
-        logger.debug("fetching content from [{}],[{}]", dirname, filename);
+        logger.trace("fetching content from [{}],[{}]", dirname, filename);
         String fullFilename = computeRealPathName(dirname, filename);
 
         // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't index json or xml)
