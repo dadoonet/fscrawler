@@ -252,6 +252,6 @@ fmt_es_version9=config.get('3rdParty', 'ElasticsearchVersion9'),
 fmt_jpeg_version=config.get('3rdParty', 'JpegVersion'),
 fmt_downloadUrl=downloadUrl,
 fmt_es_stack_version=es_stack_version,
-fmt_fscrawler_version=version
+fmt_fscrawler_version=release
 )
 # End of conf.py
