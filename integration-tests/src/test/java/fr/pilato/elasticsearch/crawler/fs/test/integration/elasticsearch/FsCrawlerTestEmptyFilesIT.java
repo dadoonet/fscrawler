@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +42,7 @@ public class FsCrawlerTestEmptyFilesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have 2 files
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withSort("file.filename"), 2L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withSort("file.filename"), 2L, null);
 
         DocumentContext doc01 = parseJsonAsDocumentContext(response.getHits().get(0).getSource());
         assertThat((String) doc01.read("$.file.filename")).isEqualTo("01-not-empty.txt");

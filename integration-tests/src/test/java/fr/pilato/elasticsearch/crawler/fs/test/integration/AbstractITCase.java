@@ -594,7 +594,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
 
         fsSettings.setElasticsearch(elasticsearch);
-        fsSettings.getElasticsearch().setIndex(name);
+        fsSettings.getElasticsearch().setIndex(name + INDEX_SUFFIX_DOCS);
         fsSettings.getElasticsearch().setIndexFolder(name + INDEX_SUFFIX_FOLDER);
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
         // We explicitly set semantic search to false because IT takes too long time

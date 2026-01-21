@@ -33,6 +33,8 @@ import org.mockftpserver.fake.filesystem.FileEntry;
 import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+
 /**
  * Test crawler with FTP
  */
@@ -77,7 +79,7 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setPort(port);
         crawler = startCrawler(fsSettings);
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
     }
 
     @Test
@@ -91,6 +93,6 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setPort(port);
         crawler = startCrawler(fsSettings);
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
     }
 }

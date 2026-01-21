@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 
@@ -58,7 +59,7 @@ public class FsCrawlerTestWeirdFilenamesIT extends AbstractFsCrawlerITCase {
 
         FsSettings fsSettings = createTestSettings();
         crawler = startCrawler(fsSettings);
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
         assertThat(response.getTotalHits()).isEqualTo(3L);
     }
 }

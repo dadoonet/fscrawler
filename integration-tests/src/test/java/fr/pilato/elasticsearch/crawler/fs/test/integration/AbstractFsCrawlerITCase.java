@@ -34,6 +34,7 @@ import org.junit.Before;
 import java.io.IOException;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 
@@ -43,7 +44,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     @Before
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
         logger.debug(" -> Removing existing index [{}*]", getCrawlerName());
-        client.deleteIndex(getCrawlerName());
+        client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
         client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
@@ -59,7 +60,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             logger.debug(" -> Removing index [{}*]", getCrawlerName());
-            client.deleteIndex(getCrawlerName());
+            client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
             client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
             String templateName = "fscrawler_" + getCrawlerName() + "_*";

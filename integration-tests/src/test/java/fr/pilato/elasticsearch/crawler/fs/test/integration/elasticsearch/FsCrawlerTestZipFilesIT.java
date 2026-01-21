@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -40,7 +41,7 @@ public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(createTestSettings());
 
         // We expect to have one file
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 }

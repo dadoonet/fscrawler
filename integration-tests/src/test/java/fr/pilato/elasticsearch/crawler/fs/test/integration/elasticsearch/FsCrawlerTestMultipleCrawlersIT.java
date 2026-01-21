@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,8 +44,10 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
     @Override
     public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
         // Also clean the specific indices for this test suite
-        client.deleteIndex(getCrawlerName() + "_1");
-        client.deleteIndex(getCrawlerName() + "_2");
+        client.deleteIndex(getCrawlerName() + "_1" + INDEX_SUFFIX_DOCS);
+        client.deleteIndex(getCrawlerName() + "_1" + INDEX_SUFFIX_FOLDER);
+        client.deleteIndex(getCrawlerName() + "_2" + INDEX_SUFFIX_DOCS);
+        client.deleteIndex(getCrawlerName() + "_2" + INDEX_SUFFIX_FOLDER);
         super.cleanExistingIndex();
     }
 
@@ -53,9 +56,9 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             // Also clean the specific indices for this test suite
-            client.deleteIndex(getCrawlerName() + "_1");
+            client.deleteIndex(getCrawlerName() + "_1" + INDEX_SUFFIX_DOCS);
             client.deleteIndex(getCrawlerName() + "_1" + INDEX_SUFFIX_FOLDER);
-            client.deleteIndex(getCrawlerName() + "_2");
+            client.deleteIndex(getCrawlerName() + "_2" + INDEX_SUFFIX_DOCS);
             client.deleteIndex(getCrawlerName() + "_2" + INDEX_SUFFIX_FOLDER);
         }
         super.cleanUp();
@@ -70,10 +73,10 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
 
         try (FsCrawlerImpl ignored1 = startCrawler(fsSettings1); FsCrawlerImpl ignored2 = startCrawler(fsSettings2)) {
             // We should have one doc in index 1...
-            ESSearchResponse response1 = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_1"), 1L, null);
+            ESSearchResponse response1 = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_1" + INDEX_SUFFIX_DOCS), 1L, null);
             assertThat(response1.getTotalHits()).isEqualTo(1L);
             // We should have one doc in index 2...
-            ESSearchResponse response2 = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_2"), 1L, null);
+            ESSearchResponse response2 = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + "_2" + INDEX_SUFFIX_DOCS), 1L, null);
             assertThat(response2.getTotalHits()).isEqualTo(1L);
         }
     }

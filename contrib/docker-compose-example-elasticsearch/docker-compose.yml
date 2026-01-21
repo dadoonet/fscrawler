@@ -44,14 +44,18 @@ services:
       - FSCRAWLER_ELASTICSEARCH_PASSWORD=${ES_LOCAL_PASSWORD}
       - FSCRAWLER_REST_URL=http://fscrawler:${FSCRAWLER_PORT}
     volumes:
+      # Mount your documents here into docs folder
+      # - ${PWD}/docs:/tmp/es:ro
+      # Or use test documents from FSCrawler repo
       - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
-      - ${PWD}/logs:/usr/share/fscrawler/logs
+      # Activate this volume if you want to keep FSCrawler logs outside the container
+#      - ${PWD}/logs:/usr/share/fscrawler/logs
     depends_on:
       elasticsearch:
         condition: service_healthy
     ports:
       - ${FSCRAWLER_PORT}:8080
-    command: --restart --rest
+    command: --rest
 
 volumes:
   dev-elasticsearch:

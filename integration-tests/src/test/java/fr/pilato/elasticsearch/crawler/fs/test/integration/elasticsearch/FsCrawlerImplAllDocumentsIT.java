@@ -43,6 +43,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
@@ -58,7 +59,7 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static FsCrawlerImpl crawler = null;
-    private static final String INDEX_NAME = getCrawlerName(FsCrawlerImplAllDocumentsIT.class, "all_documents");
+    private static final String JOB_NAME = getCrawlerName(FsCrawlerImplAllDocumentsIT.class, "all_documents");
 
     @BeforeClass
     public static void startCrawling() throws Exception {
@@ -79,29 +80,29 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        logger.debug(" -> Removing existing index [{}*]", INDEX_NAME);
-        client.deleteIndex(INDEX_NAME);
-        client.deleteIndex(INDEX_NAME + INDEX_SUFFIX_FOLDER);
+        logger.debug(" -> Removing existing index [{}*]", JOB_NAME);
+        client.deleteIndex(JOB_NAME + INDEX_SUFFIX_DOCS);
+        client.deleteIndex(JOB_NAME + INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
-        String templateName = "fscrawler_" + INDEX_NAME + "_*";
+        String templateName = "fscrawler_" + JOB_NAME + "_*";
         logger.debug(" -> Removing existing index and component templates [{}]", templateName);
         removeIndexTemplates(templateName);
         removeComponentTemplates(templateName);
 
-        logger.info("🎬 Starting test [{}]", INDEX_NAME);
+        logger.info("🎬 Starting test [{}]", JOB_NAME);
         logger.debug("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.setName(INDEX_NAME);
+        fsSettings.setName(JOB_NAME);
         fsSettings.getFs().setUrl(testResourceTarget.toString());
         fsSettings.getFs().setLangDetect(true);
         // Clone the elasticsearchConfiguration to avoid modifying the default one
         // We start with a clean configuration
         Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
         fsSettings.setElasticsearch(elasticsearch);
-        fsSettings.getElasticsearch().setIndex(INDEX_NAME);
-        fsSettings.getElasticsearch().setIndexFolder(INDEX_NAME + INDEX_SUFFIX_FOLDER);
+        fsSettings.getElasticsearch().setIndex(JOB_NAME + INDEX_SUFFIX_DOCS);
+        fsSettings.getElasticsearch().setIndexFolder(JOB_NAME + INDEX_SUFFIX_FOLDER);
         fsSettings.getElasticsearch().setBulkSize(5);
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
         fsSettings.getElasticsearch().setSemanticSearch(false);
@@ -112,7 +113,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         crawler.start();
 
         // We wait until we have all docs up to 10 minutes
-        countTestHelper(new ESSearchRequest().withIndex(INDEX_NAME), numFiles, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(new ESSearchRequest().withIndex(JOB_NAME + INDEX_SUFFIX_DOCS), numFiles, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
     @AfterClass
@@ -123,17 +124,17 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             crawler = null;
         }
         if (!TEST_KEEP_DATA) {
-            logger.debug(" -> Removing existing index [{}*]", INDEX_NAME);
-            client.deleteIndex(INDEX_NAME);
-            client.deleteIndex(INDEX_NAME + INDEX_SUFFIX_FOLDER);
+            logger.debug(" -> Removing existing index [{}*]", JOB_NAME);
+            client.deleteIndex(JOB_NAME + INDEX_SUFFIX_DOCS);
+            client.deleteIndex(JOB_NAME + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
-            String templateName = "fscrawler_" + INDEX_NAME + "_*";
+            String templateName = "fscrawler_" + JOB_NAME + "_*";
             logger.debug(" -> Removing existing index and component templates [{}]", templateName);
             removeIndexTemplates(templateName);
             removeComponentTemplates(templateName);
         }
 
-        logger.info("✅ End of test [{}]", INDEX_NAME);
+        logger.info("✅ End of test [{}]", JOB_NAME);
     }
 
     @Override
@@ -288,7 +289,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             query.addMust(new ESMatchQuery("content", content));
         }
         ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(INDEX_NAME)
+                        .withIndex(JOB_NAME + INDEX_SUFFIX_DOCS)
                         .withESQuery(query));
         assertThat(response.getTotalHits()).isEqualTo(1L);
         return response;

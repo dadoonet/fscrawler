@@ -36,6 +36,7 @@ import java.util.List;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiLettersOfLengthBetween;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
@@ -54,7 +55,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have two files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
 
         // We check that the subdir document has his meta path data correctly set
         String expectedVirtual1;
@@ -76,8 +77,8 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
                 });
 
         // Try to search within part of the full path, ie subdir
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("path.virtual.fulltext", "subdir")), 1L, null);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("path.real.fulltext", "subdir")), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("path.virtual.fulltext", "subdir")), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("path.real.fulltext", "subdir")), 1L, null);
     }
 
     @Test
@@ -85,14 +86,14 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have 7 files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 7L, null);
 
         // We expect to have 7 folders
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 7L, null);
 
         // Run aggs
         ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(getCrawlerName())
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                         .withSize(0)
                         .withAggregation(new ESTermsAggregation("folders", "path.virtual.tree")));
         assertThat(response.getTotalHits()).isEqualTo(7L);
@@ -104,7 +105,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         assertThat(buckets).hasSize(10);
 
         // Check files
-        response = client.search(new ESSearchRequest().withIndex(getCrawlerName()).withSort("path.virtual"));
+        response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withSort("path.virtual"));
         assertThat(response.getTotalHits()).isEqualTo(7L);
 
         DocumentContext document = parseJsonAsDocumentContext(response.getJson());
@@ -177,11 +178,11 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(createTestSettings(), MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // We expect to have x files (<- whoa that's funny Mulder!)
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), subdirs+1, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), subdirs+1, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // Run aggs
         ESSearchResponse response = client.search(new ESSearchRequest()
-                .withIndex(getCrawlerName())
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                 .withSize(0)
                 .withAggregation(new ESTermsAggregation("folders", "path.virtual.tree")));
         assertThat(response.getTotalHits()).isEqualTo(subdirs + 1);
@@ -195,7 +196,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
         // Check files
         response = client.search(new ESSearchRequest()
-                .withIndex(getCrawlerName())
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                 .withSize(1000)
                 .withSort("path.virtual"));
         assertThat(response.getTotalHits()).isEqualTo(subdirs + 1);
@@ -224,7 +225,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         deleteRecursively(mainDir);
 
         // We expect to have 1 doc now but this could take some time to happen
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
     private void folderHitTester(DocumentContext document, int position, String expectedReal, String expectedVirtual,

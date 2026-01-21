@@ -38,6 +38,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 public class FsCrawlerUtil {
+    public static final String INDEX_SUFFIX_DOCS = "_docs";
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
 
     private static final Logger logger = LogManager.getLogger();
