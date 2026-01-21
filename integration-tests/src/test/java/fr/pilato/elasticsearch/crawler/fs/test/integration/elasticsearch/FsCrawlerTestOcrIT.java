@@ -38,6 +38,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -68,7 +69,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
             crawler = startCrawler();
 
             // We expect to have one file
-            ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+            ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
 
             // Check that we extracted the content
             assertThat(searchResponse.getHits())
@@ -93,7 +94,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
             crawler = startCrawler(fsSettings);
 
             // We expect to have one file
-            ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+            ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
 
             // Check that we extracted the content
             assertThat(searchResponse.getHits())
@@ -118,7 +119,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
             crawler = startCrawler(fsSettings);
 
             // We expect to have one file
-            ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+            ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
 
             // Check that we extracted the content
             assertThat(searchResponse.getHits())
@@ -137,7 +138,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have one file
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
 
         // Check that we extracted the content
         assertThat(searchResponse.getHits())

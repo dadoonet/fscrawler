@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,7 +54,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have one doc first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
 
         // We add a file
         logger.info("  ---> Adding file new_roottxtfile.txt");
@@ -64,7 +65,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         waitForFsJobAndSetDate(fsSettings.getName(), LocalDateTime.now());
 
         // We expect to have two files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
     }
 
     @Test
@@ -75,7 +76,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have one doc first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
 
         // We add a file
         logger.info("  ---> Adding file new_roottxtfile.txt");
@@ -86,7 +87,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         waitForFsJobAndSetDate(fsSettings.getName(), null);
 
         // We expect to have two files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
     }
 
     /**
@@ -104,14 +105,14 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have one doc first
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
         checkDocVersions(response, 1L);
 
         logger.info(" ---> Creating a new file new_roottxtfile.txt");
         Files.write(currentTestResourceDir.resolve("new_roottxtfile.txt"), "This is a second file".getBytes());
 
         // We expect to have two files
-        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
+        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
 
         // It should be only version <= 2 for both docs
         checkDocVersions(response, 2L);
@@ -120,7 +121,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         Files.write(currentTestResourceDir.resolve("new_new_roottxtfile.txt"), "This is a third file".getBytes());
 
         // We expect to have three files
-        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, currentTestResourceDir);
+        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, currentTestResourceDir);
 
         // It should be only version <= 2 for all docs
         checkDocVersions(response, 2L);

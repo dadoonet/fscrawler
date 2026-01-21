@@ -144,6 +144,6 @@ elasticsearch:
 # only used when started with --rest option
 rest:
   # optional: the URL FSCrawler will listen to.
-  url: "http://127.0.0.1:8080/fscrawler"
+  url: "http://127.0.0.1:8080"
   # optional: if you want to enable Cross-Origin Resource Sharing
   enable_cors: true

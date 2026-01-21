@@ -30,6 +30,7 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -45,7 +46,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We should have one document indexed
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
         // Let's add manually some documents
         // The 1st document simulates that we are indexing a String field which contains something like a date
@@ -68,12 +69,12 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
         // This should not raise any exception even if the String is not a Date
         // because of the default mapping we are applying defines all meta raw fields as text
-        client.indexRawJson(getCrawlerName(), "1", json1, null);
+        client.indexRawJson(getCrawlerName() + INDEX_SUFFIX_DOCS, "1", json1, null);
         client.flush();
-        client.indexRawJson(getCrawlerName(), "2", json2, null);
+        client.indexRawJson(getCrawlerName() + INDEX_SUFFIX_DOCS, "2", json2, null);
         client.flush();
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
         assertThat(searchResponse.getHits())
                 .anySatisfy(hit -> assertThat(hit.getId()).containsAnyOf("1", "2"));
     }
@@ -86,7 +87,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
             fsSettings.getFs().setRawMetadata(false);
         }
         crawler = startCrawler(fsSettings);
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.meta.raw")).isInstanceOf(PathNotFoundException.class);
         }
@@ -97,7 +98,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRawMetadata(true);
         crawler = startCrawler(fsSettings);
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat((Object) JsonPath.read(hit.getSource(), "$.meta.raw"))
                     .asInstanceOf(InstanceOfAssertFactories.MAP)

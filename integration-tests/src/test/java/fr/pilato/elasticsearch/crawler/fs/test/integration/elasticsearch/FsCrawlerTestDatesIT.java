@@ -34,6 +34,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.List;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,7 +60,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
 
         // We expect to have two files
         ESSearchResponse responseNotModified = countTestHelper(new ESSearchRequest()
-                        .withIndex(getCrawlerName())
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                         .withSort("file.created")
                 , 2L, currentTestResourceDir);
 
@@ -78,7 +79,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
 
         // We expect to have 3 files
         ESSearchResponse responseModified = countTestHelper(new ESSearchRequest()
-                        .withIndex(getCrawlerName())
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                         .withSort("file.created")
                 , 3L, currentTestResourceDir);
 

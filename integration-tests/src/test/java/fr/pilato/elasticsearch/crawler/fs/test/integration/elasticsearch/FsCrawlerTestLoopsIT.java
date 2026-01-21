@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -40,7 +41,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
         crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 1, false);
         crawler.start();
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
         // Make sure that we wait enough for the crawler to be closed
         awaitBusy(() -> crawler.getFsParser().isClosed());
@@ -57,7 +58,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
         crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 2, false);
         crawler.start();
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
         // Make sure that we wait enough for the crawler to be closed
         awaitBusy(() -> crawler.getFsParser().isClosed());

@@ -71,7 +71,7 @@
     "semantic_search": "true"
   },
   "rest": {
-    "url": "http://127.0.0.1:8080/fscrawler",
+    "url": "http://127.0.0.1:8080",
     "enable_cors": true
   }
 }

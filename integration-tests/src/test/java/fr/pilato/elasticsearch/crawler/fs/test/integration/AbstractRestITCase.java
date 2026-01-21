@@ -55,6 +55,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -113,7 +114,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         restServer.start();
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
-        managementService.getClient().deleteIndex(getCrawlerName());
+        managementService.getClient().deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
         managementService.getClient().deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
 
         logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
@@ -197,7 +198,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
 
     protected void checkDocument(String filename, HitChecker checker) throws IOException, ElasticsearchClientException {
         ESSearchResponse response = documentService.search(new ESSearchRequest()
-                .withIndex(getCrawlerName())
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESTermQuery("file.filename", filename)));
 
         assertThat(response.getTotalHits()).isEqualTo(1L);

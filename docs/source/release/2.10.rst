@@ -68,6 +68,8 @@ Updated
 * Files are now sorted by date with a reverse order. So the most recent files should be indexed first. Thanks to dadoonet.
 * Add full support for Elasticsearch |ES_version9|_, |ES_version8|_, |ES_version7|_. Thanks to dadoonet.
 * Update to Tika |Tika_version|_. Thanks to dadoonet.
+* The default alias name is now the job name and not forced to ``fscrawler`` anymore. Thanks to dadoonet.
+* The default REST endpoint is now running at ``/`` instead of ``/fscrawler/``. Thanks to dadoonet.
 
 Removed
 -------

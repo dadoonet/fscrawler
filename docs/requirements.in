@@ -1,3 +1,4 @@
 # pip-compile requirements.in
-Sphinx>=5,<6
-sphinx_rtd_theme
+Sphinx>=7,<9
+sphinx_rtd_theme>=2
+sphinx-substitution-extensions

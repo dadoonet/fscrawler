@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
@@ -32,6 +33,7 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
@@ -48,7 +50,7 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have two files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
     }
 
     /**
@@ -75,6 +77,6 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have one doc first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
     }
 }

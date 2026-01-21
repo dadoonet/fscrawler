@@ -30,6 +30,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,7 +45,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have one file
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
         // The default configuration should not add file attributes
         for (ESSearchHit hit : searchResponse.getHits()) {
@@ -56,7 +57,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
     public void default_metadata() throws Exception {
         crawler = startCrawler();
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             assertThatThrownBy(() -> document.read("$.attachment")).isInstanceOf(PathNotFoundException.class);
@@ -79,7 +80,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We should have one doc
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")), 1L, null);
         assertThat(response.getTotalHits()).isEqualTo(1);
     }
 
@@ -92,11 +93,11 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have one file
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
         // Let's test highlighting
         ESSearchResponse response = client.search(new ESSearchRequest()
-                .withIndex(getCrawlerName())
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESMatchQuery("content", "exemplo"))
                 .addHighlighter("content"));
         assertThat(response.getTotalHits()).isEqualTo(1L);

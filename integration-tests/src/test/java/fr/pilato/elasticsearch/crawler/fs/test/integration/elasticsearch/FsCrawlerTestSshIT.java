@@ -50,6 +50,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 
@@ -134,7 +135,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
         assertThat(response.getTotalHits()).isEqualTo(2L);
     }
 
@@ -151,7 +152,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 
@@ -179,7 +180,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setPassword(SSH_PASSWORD);
         fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
         crawler = startCrawler(fsSettings);
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
         assertThat(response.getTotalHits()).isEqualTo(3L);
     }
 }

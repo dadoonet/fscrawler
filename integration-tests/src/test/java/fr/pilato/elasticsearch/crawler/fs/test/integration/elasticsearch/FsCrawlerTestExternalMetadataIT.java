@@ -33,6 +33,7 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.assertj.core.api.Assertions.*;
 
@@ -47,7 +48,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have 3 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
@@ -77,7 +78,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have 3 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
@@ -107,7 +108,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have 3 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
@@ -135,7 +136,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have 3 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
@@ -180,7 +181,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have 1 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         ESSearchHit hit = searchResponse.getHits().get(0);
         DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
         String filename = document.read("$.file.filename");
@@ -209,7 +210,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have 3 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");

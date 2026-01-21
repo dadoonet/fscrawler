@@ -27,6 +27,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -64,7 +65,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
 
         // We expect to have one file
         countTestHelper(new ESSearchRequest()
-                .withIndex(getCrawlerName())
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESMatchQuery("my_content_field", "perniciosoque")), 1L, currentTestResourceDir);
 
         // We expect to have one folder
@@ -109,7 +110,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have one file
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESTermQuery("ip_addr", "127.0.0.1")), 1L, currentTestResourceDir);
         assertThat(response.getTotalHits()).isEqualTo(1L);
     }

@@ -61,6 +61,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -118,7 +119,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all docs
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()),
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS),
                 Files.list(from).count(), null, MAX_WAIT_FOR_SEARCH);
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
@@ -136,7 +137,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         assertThat(uploadResponse.isOk()).isTrue();
 
         // We wait until we have our document
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         assertThat(response.getHits().get(0).getId()).isEqualTo("1234");
         assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isGreaterThan(0);
     }
@@ -152,7 +153,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         assertThat(uploadResponse.isOk()).isTrue();
 
         // We wait until we have our document
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         assertThat(response.getHits().get(0).getId()).isEqualTo("1234");
         assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isGreaterThan(0);
     }
@@ -189,7 +190,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all txt docs
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()),
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS),
                 number.longValue(), null, MAX_WAIT_FOR_SEARCH);
         for (ESSearchHit hit : response.getHits()) {
             assertThat((String) JsonPath.read(hit.getSource(), "$.file.extension")).isNotEmpty();
@@ -205,7 +206,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
 
         // We wait until we have removed all documents
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 0L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 0L, null);
     }
 
     @Test
@@ -253,7 +254,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 });
 
         // We wait until we have all our documents docs
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), numFiles.longValue(), null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), numFiles.longValue(), null);
 
         // Let's test every single document that has been enriched
         checkDocument("add_external.txt", hit -> {
@@ -379,7 +380,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         assertThat(uploadResponse.isOk()).isTrue();
 
         // We wait until we have our document
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("roottxtfile.txt");
         assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(30);
         assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains("This file contains some words.");
@@ -454,7 +455,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat(uploadResponse.isOk()).isTrue();
 
             // We wait until we have our document
-            ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+            ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("roottxtfile.txt");
             // When on Windows the expected file size differs
             int expectedFilesize = OsValidator.WINDOWS ? 12364 : 12230;
@@ -567,7 +568,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat(uploadResponse.isOk()).isTrue();
 
             // We wait until we have our document
-            ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+            ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("foo.txt");
             assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(16);
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains(text);
@@ -583,7 +584,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat(uploadResponse.getMessage()).isNull();
 
             // We wait until we have our document
-            response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withSort("file.indexing_date"), 2L, null);
+            response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withSort("file.indexing_date"), 2L, null);
             assertThat((String) JsonPath.read(response.getHits().get(1).getSource(), "$.file.filename")).isEqualTo("robots.txt");
             assertThat((Integer) JsonPath.read(response.getHits().get(1).getSource(), "$.file.filesize")).isGreaterThan(100);
             assertThat((String) JsonPath.read(response.getHits().get(1).getSource(), "$.content")).contains("Sitemap");

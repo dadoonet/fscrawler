@@ -36,6 +36,7 @@ import org.junit.Test;
 
 import java.nio.file.Files;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,7 +53,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIndexedChars(new Percentage(7));
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
 
@@ -68,7 +69,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIndexedChars(Percentage.parse("0.1%"));
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
 
@@ -84,7 +85,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIndexedChars(new Percentage(-1));
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
 
@@ -98,7 +99,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     public void filesize() throws Exception {
         crawler = startCrawler();
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         int expectedFilesize = OsValidator.WINDOWS ? 12364 : 12230;
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isEqualTo(expectedFilesize);
@@ -111,7 +112,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setAddFilesize(false);
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.file.filesize")).isInstanceOf(PathNotFoundException.class);
         }
@@ -126,7 +127,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIgnoreAbove(ByteSizeValue.parseBytesSizeValue("10kb"));
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         assertThat(response.getTotalHits()).isEqualTo(1);
     }
 }
