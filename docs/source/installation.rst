@@ -185,12 +185,6 @@ The ``.env`` file looks like this:
    ES_LOCAL_DISK_SPACE_REQUIRED=1gb
    ES_LOCAL_JAVA_OPTS="-XX:UseSVE=0 -Xms128m -Xmx2g"
 
-   # Increase or decrease based on the available host memory (in bytes)
-   # When using basic, that should be enough as we don't run ML jobs
-   MEM_LIMIT=1073741824
-   # When using trial, you need 4gb to be able to run inference with Elasticsearch
-   # MEM_LIMIT=4294967296
-
    # Project namespace (defaults to the current folder name if not set)
    COMPOSE_PROJECT_NAME=fscrawler
 
