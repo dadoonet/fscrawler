@@ -77,13 +77,8 @@ public abstract class FsParserAbstract extends FsParser {
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
         this.fsSettings = fsSettings;
         this.fsJobFileHandler = new FsJobFileHandler(config);
-        if (fsSettings.getFs().isAttributesSupport() && fsSettings.getFs().isAclSupport()) {
-            this.fsAclsFileHandler = new FsAclsFileHandler(config);
-            this.aclHashCache = loadAclHashCache(fsSettings.getName());
-        } else {
-            this.fsAclsFileHandler = null;
-            this.aclHashCache = null;
-        }
+        this.fsAclsFileHandler = initializeAclsFileHandler(fsSettings, config);
+        this.aclHashCache = initializeAclCache(fsSettings);
         this.aclHashCacheDirty = false;
         this.managementService = managementService;
         this.documentService = documentService;
@@ -93,36 +88,12 @@ public abstract class FsParserAbstract extends FsParser {
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
 
-        pathSeparator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
-        if (OsValidator.WINDOWS && fsSettings.getServer() == null) {
-            logger.debug("We are running on Windows without Server settings so we use the separator in accordance with fs.url");
-            FileAbstractorFile.separator = pathSeparator;
-        }
+        pathSeparator = determinePathSeparator(fsSettings);
 
         fileAbstractor = buildFileAbstractor(fsSettings);
 
-        if (fsSettings.getTags() != null && !StringUtils.isEmpty(fsSettings.getTags().getMetaFilename())) {
-            metadataFilename = fsSettings.getTags().getMetaFilename();
-            logger.debug("We are going to use [{}] as meta file if found while crawling dirs", metadataFilename);
-        } else {
-            metadataFilename = null;
-        }
-
-        if (fsSettings.getTags() != null && !StringUtils.isEmpty(fsSettings.getTags().getStaticMetaFilename())) {
-            File staticMetadataFile = new File(fsSettings.getTags().getStaticMetaFilename());
-            if (!staticMetadataFile.exists() || !staticMetadataFile.isFile()) {
-                throw new FsCrawlerIllegalConfigurationException("Static meta file [" + staticMetadataFile.getAbsolutePath() + "] does not exist or is not a file.");
-            }
-            try {
-                // We are caching in memory the static metadata file content as it will be used for every document
-                staticMetadata = FileUtils.readFileToByteArray(staticMetadataFile);
-                logger.debug("We are going to use [{}] as the static meta file for every document", fsSettings.getTags().getStaticMetaFilename());
-            } catch (IOException e) {
-                throw new FsCrawlerIllegalConfigurationException("Static meta file [" + staticMetadataFile.getAbsolutePath() + "] cannot be read.", e);
-            }
-        } else {
-            staticMetadata = null;
-        }
+        metadataFilename = resolveMetadataFilename(fsSettings);
+        staticMetadata = loadStaticMetadata(fsSettings);
     }
 
     protected abstract FileAbstractor<?> buildFileAbstractor(FsSettings fsSettings);
@@ -295,6 +266,56 @@ public abstract class FsParserAbstract extends FsParser {
             logger.warn("Failed to load ACL cache for [{}]: {}", jobName, e.getMessage());
             logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
             return new HashMap<>();
+        }
+    }
+
+    private FsAclsFileHandler initializeAclsFileHandler(FsSettings fsSettings, Path config) {
+        if (fsSettings.getFs().isAttributesSupport() && fsSettings.getFs().isAclSupport()) {
+            return new FsAclsFileHandler(config);
+        }
+        return null;
+    }
+
+    private Map<String, String> initializeAclCache(FsSettings fsSettings) {
+        if (fsAclsFileHandler == null) {
+            return null;
+        }
+        return loadAclHashCache(fsSettings.getName());
+    }
+
+    private String determinePathSeparator(FsSettings fsSettings) {
+        String separator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
+        if (OsValidator.WINDOWS && fsSettings.getServer() == null) {
+            logger.debug("We are running on Windows without Server settings so we use the separator in accordance with fs.url");
+            FileAbstractorFile.separator = separator;
+        }
+        return separator;
+    }
+
+    private String resolveMetadataFilename(FsSettings fsSettings) {
+        if (fsSettings.getTags() != null && !StringUtils.isEmpty(fsSettings.getTags().getMetaFilename())) {
+            String filename = fsSettings.getTags().getMetaFilename();
+            logger.debug("We are going to use [{}] as meta file if found while crawling dirs", filename);
+            return filename;
+        }
+        return null;
+    }
+
+    private byte[] loadStaticMetadata(FsSettings fsSettings) {
+        if (fsSettings.getTags() == null || StringUtils.isEmpty(fsSettings.getTags().getStaticMetaFilename())) {
+            return null;
+        }
+
+        File staticMetadataFile = new File(fsSettings.getTags().getStaticMetaFilename());
+        if (!staticMetadataFile.exists() || !staticMetadataFile.isFile()) {
+            throw new FsCrawlerIllegalConfigurationException("Static meta file [" + staticMetadataFile.getAbsolutePath() + "] does not exist or is not a file.");
+        }
+        try {
+            byte[] data = FileUtils.readFileToByteArray(staticMetadataFile);
+            logger.debug("We are going to use [{}] as the static meta file for every document", fsSettings.getTags().getStaticMetaFilename());
+            return data;
+        } catch (IOException e) {
+            throw new FsCrawlerIllegalConfigurationException("Static meta file [" + staticMetadataFile.getAbsolutePath() + "] cannot be read.", e);
         }
     }
 
