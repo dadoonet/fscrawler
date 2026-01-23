@@ -243,6 +243,12 @@ public class FsCrawlerUtil {
     }
 
     private static boolean hasBoundary(String normalizedRoot, String normalizedReal) {
+        if (normalizedRoot == null) {
+            return false;
+        }
+        if ("/".equals(normalizedRoot)) {
+            return true;
+        }
         if (normalizedReal.length() == normalizedRoot.length()) {
             return true;
         }
