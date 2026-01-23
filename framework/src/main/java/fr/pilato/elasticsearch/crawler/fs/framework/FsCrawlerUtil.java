@@ -206,44 +206,57 @@ public class FsCrawlerUtil {
         }
 
         String defaultSeparator = getPathSeparator(rootPath);
-        String result = defaultSeparator;
-
         String normalizedRoot = normalizeForComparison(rootPath);
         String normalizedReal = normalizeForComparison(realPath);
 
-        if (!normalizedRoot.isEmpty()) {
-            boolean matches;
-            if (OsValidator.WINDOWS) {
-                matches = normalizedReal.regionMatches(true, 0, normalizedRoot, 0, normalizedRoot.length());
-            } else {
-                matches = normalizedReal.startsWith(normalizedRoot);
-            }
-
-            if (matches && hasBoundary(normalizedRoot, normalizedReal)) {
-                if ("/".equals(normalizedRoot)) {
-                    // "/" is very common for FTP
-                    result = normalizedReal;
-                } else {
-                    String suffix = normalizedReal.substring(normalizedRoot.length());
-                    result = suffix.isEmpty() ? defaultSeparator : suffix;
-                }
-            }
+        String result = defaultSeparator;
+        if (shouldResolveRelativePath(normalizedRoot, normalizedReal)) {
+            result = resolveRelativePath(normalizedRoot, normalizedReal, defaultSeparator);
         }
 
-        if (!"/".equals(defaultSeparator)) {
-            result = result.replace('/', defaultSeparator.charAt(0));
+        if (needsSeparatorConversion(defaultSeparator)) {
+            result = convertSeparator(result, defaultSeparator);
         }
 
         logger.trace("computeVirtualPathName({}, {}) = {}", rootPath, realPath, result);
         return result;
     }
 
+    private static boolean shouldResolveRelativePath(String normalizedRoot, String normalizedReal) {
+        if (normalizedRoot.isEmpty()) {
+            return false;
+        }
+        boolean matches;
+        if (OsValidator.WINDOWS) {
+            matches = normalizedReal.regionMatches(true, 0, normalizedRoot, 0, normalizedRoot.length());
+        } else {
+            matches = normalizedReal.startsWith(normalizedRoot);
+        }
+        return matches && hasBoundary(normalizedRoot, normalizedReal);
+    }
+
+    private static String resolveRelativePath(String normalizedRoot, String normalizedReal, String defaultSeparator) {
+        if ("/".equals(normalizedRoot)) {
+            // "/" is very common for FTP
+            return normalizedReal;
+        }
+        String suffix = normalizedReal.substring(normalizedRoot.length());
+        return suffix.isEmpty() ? defaultSeparator : suffix;
+    }
+
+    private static boolean needsSeparatorConversion(String defaultSeparator) {
+        return !"/".equals(defaultSeparator);
+    }
+
+    private static String convertSeparator(String value, String defaultSeparator) {
+        return value.replace('/', defaultSeparator.charAt(0));
+    }
+
     private static String normalizeForComparison(String path) {
         if (path == null) {
             return "";
         }
-        String normalized = path.replace('\\', '/');
-        return normalized;
+        return path.replace('\\', '/');
     }
 
     private static boolean hasBoundary(String normalizedRoot, String normalizedReal) {

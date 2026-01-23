@@ -20,9 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
-
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**

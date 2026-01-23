@@ -287,7 +287,7 @@ public abstract class FsParserAbstract extends FsParser {
 
     private Map<String, String> loadAclHashCache(String jobName) {
         if (fsAclsFileHandler == null) {
-            return null;
+            return new HashMap<>();
         }
         try {
             return fsAclsFileHandler.read(jobName);
@@ -373,6 +373,22 @@ public abstract class FsParserAbstract extends FsParser {
         }
     }
 
+    private boolean shouldIndexBecauseOfChanges(FileAbstractModel child, LocalDateTime lastScanDate, String filename, String filepath)
+            throws NoSuchAlgorithmException {
+        if (child.getLastModifiedDate().isAfter(lastScanDate)) {
+            return true;
+        }
+        if (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate)) {
+            return true;
+        }
+        if (shouldTrackAclChanges() && fsSettings.getFs().isAttributesSupport() && fsSettings.getFs().isAclSupport()
+                && hasAclChanged(filename, filepath, child)) {
+            logger.trace("    - ACL change detected for {}", child.getFullpath());
+            return true;
+        }
+        return false;
+    }
+
     private void addFilesRecursively(final String filepath, final LocalDateTime lastScanDate, final ScanStatistic stats)
             throws Exception {
         logger.debug("indexing [{}] content", filepath);
@@ -427,15 +443,7 @@ public abstract class FsParserAbstract extends FsParser {
                         if (child.isFile()) {
                             logger.trace("  - file: {}", virtualFileName);
                             fsFiles.add(filename);
-                            boolean needsIndexing = child.getLastModifiedDate().isAfter(lastScanDate) ||
-                                    (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate));
-                            if (!needsIndexing && shouldTrackAclChanges() && fsSettings.getFs().isAttributesSupport() && fsSettings.getFs().isAclSupport()) {
-                                if (hasAclChanged(filename, filepath, child)) {
-                                    needsIndexing = true;
-                                    logger.trace("    - ACL change detected for {}", child.getFullpath());
-                                }
-                            }
-                            if (needsIndexing) {
+                            if (shouldIndexBecauseOfChanges(child, lastScanDate, filename, filepath)) {
                                 logger.trace("    - modified: creation date {} , file date {}, last scan date {}",
                                         child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
 
