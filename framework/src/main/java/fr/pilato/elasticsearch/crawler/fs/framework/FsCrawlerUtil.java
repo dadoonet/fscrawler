@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class FsCrawlerUtil {
+    public static final String INDEX_SUFFIX_DOCS = "_docs";
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
 
     private static final Logger logger = LogManager.getLogger();
@@ -66,7 +67,7 @@ public class FsCrawlerUtil {
      * @param excludes exclude rules, may be empty not null
      */
     public static boolean isIndexable(final boolean directory, final String filename, final List<String> includes, final List<String> excludes) {
-        logger.debug("directory = [{}], filename = [{}], includes = [{}], excludes = [{}]", directory, filename, includes, excludes);
+        logger.trace("directory = [{}], filename = [{}], includes = [{}], excludes = [{}]", directory, filename, includes, excludes);
 
         String originalFilename = filename;
 
@@ -93,7 +94,7 @@ public class FsCrawlerUtil {
      * @param excludes exclude rules, may be empty not null
      */
     public static boolean isExcluded(String filename, List<String> excludes) {
-        logger.debug("filename = [{}], excludes = [{}]", filename, excludes);
+        logger.trace("filename = [{}], excludes = [{}]", filename, excludes);
 
         // No rules ? Fine, we index everything
         if (excludes == null || excludes.isEmpty()) {
@@ -111,7 +112,7 @@ public class FsCrawlerUtil {
      * @param includes include rules, may be empty not null
      */
     public static boolean isIncluded(String filename, List<String> includes) {
-        logger.debug("filename = [{}], includes = [{}]", filename, includes);
+        logger.trace("filename = [{}], includes = [{}]", filename, includes);
 
         // No rules ? Fine, we index everything
         if (includes == null || includes.isEmpty()) {
@@ -123,7 +124,7 @@ public class FsCrawlerUtil {
     }
 
     public static boolean isMatching(final String filename, final List<String> matches, final String type) {
-        logger.debug("checking {} for filename = [{}], matches = [{}]", type, filename, matches);
+        logger.trace("checking {} for filename = [{}], matches = [{}]", type, filename, matches);
 
         // We are using a linux style virtual path, meaning that if we have a windows path, we need to convert it
         // to a linux path
@@ -230,7 +231,7 @@ public class FsCrawlerUtil {
             result = result.replace('/', defaultSeparator.charAt(0));
         }
 
-        logger.debug("computeVirtualPathName({}, {}) = {}", rootPath, realPath, result);
+        logger.trace("computeVirtualPathName({}, {}) = {}", rootPath, realPath, result);
         return result;
     }
 

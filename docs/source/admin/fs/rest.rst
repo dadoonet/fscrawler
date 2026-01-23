@@ -3,7 +3,7 @@
 REST service
 ------------
 
-FSCrawler can expose a REST service running at http://127.0.0.1:8080/fscrawler.
+FSCrawler can expose a REST service running at http://127.0.0.1:8080/.
 To activate it, launch FSCrawler with ``--rest`` option.
 
 .. contents:: :backlinks: entry
@@ -19,13 +19,13 @@ You can use a query string parameter:
 
 .. code:: sh
 
-   curl "http://127.0.0.1:8080/fscrawler/API?param1=foo&param2=bar"
+   curl "http://127.0.0.1:8080/API?param1=foo&param2=bar"
 
 You can use a header parameter:
 
 .. code:: sh
 
-   curl -H "param1=foo" -H "param2=bar" "http://127.0.0.1:8080/fscrawler/API"
+   curl -H "param1=foo" -H "param2=bar" "http://127.0.0.1:8080/API"
 
 The rest of this documentation will assume using a query string parameter unless stated otherwise.
 
@@ -37,25 +37,32 @@ endpoint:
 
 .. code:: sh
 
-   curl http://127.0.0.1:8080/fscrawler/
+   curl http://127.0.0.1:8080/
 
 It will give you a response similar to:
 
-.. code:: json
+.. code-block:: json
+   :substitutions:
 
    {
      "ok" : true,
-     "version" : "2.2",
-     "elasticsearch" : "5.1.1",
+     "version" : "|FSCrawler_version|",
+     "elasticsearch" : "|ES_stack_version|",
      "settings" : {
-       "name" : "fscrawler-rest-tests",
+       "name" : "fscrawler",
        "fs" : {
          "url" : "/tmp/es",
          "update_rate" : "15m",
+         "excludes" : [ "*/~*" ],
          "json_support" : false,
+         "add_as_inner_object" : false,
+         "xml_support" : false,
+         "follow_symlinks" : false,
+         "remove_deleted" : true,
+         "continue_on_error" : false,
          "filename_as_id" : false,
          "add_filesize" : true,
-         "remove_deleted" : true,
+         "attributes_support" : false,
          "store_source" : false,
          "index_content" : true,
          "attributes_support" : false,
@@ -63,20 +70,38 @@ It will give you a response similar to:
          "raw_metadata" : true,
          "xml_support" : false,
          "index_folders" : true,
-         "lang_detect" : false
+         "lang_detect" : false,
+         "ocr" : {
+           "enabled" : true,
+           "language" : "eng",
+           "output_type" : "txt",
+           "pdf_strategy" : "ocr_and_text",
+           "page_seg_mode" : 1,
+           "preserve_interword_spacing" : false
+         }
+       },
+       "server" : {
+         "port" : 0,
+         "protocol" : "local"
        },
        "elasticsearch" : {
-         "urls" : [ "http://127.0.0.1:9200" ],
-         "index" : "fscrawler-rest-tests_doc",
-         "index_folder" : "fscrawler-rest-tests_folder",
+         "urls" : [ "http://es-fscrawler:9200" ],
+         "index" : "fscrawler_docs",
+         "index_folder" : "fscrawler_folder",
          "bulk_size" : 100,
          "flush_interval" : "5s",
          "byte_size" : "10mb",
-         "username" : "elastic"
+         "username" : "elastic",
+         "ssl_verification" : true,
+         "push_templates" : true,
+         "semantic_search" : true
        },
        "rest" : {
-         "url" : "http://127.0.0.1:8080/fscrawler",
-         "enable_cors": false
+         "url" : "http://127.0.0.1:8080",
+         "enable_cors" : false
+       },
+       "tags" : {
+         "meta_filename" : ".meta.yml"
        }
      }
    }
@@ -89,7 +114,7 @@ To upload a binary, you can call ``POST /_document`` endpoint:
 .. code:: sh
 
    echo "This is my text" > test.txt
-   curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_document"
+   curl -F "file=@test.txt" "http://127.0.0.1:8080/_document"
 
 It will give you a response similar to:
 
@@ -98,7 +123,7 @@ It will give you a response similar to:
    {
      "ok" : true,
      "filename" : "test.txt",
-     "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/doc/dd18bf3a8ea2a3e53e2661c7fb53534"
+     "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/_doc/dd18bf3a8ea2a3e53e2661c7fb53534"
    }
 
 The ``url`` represents the elasticsearch address of the indexed
@@ -106,7 +131,7 @@ document. If you call:
 
 .. code:: sh
 
-   curl http://127.0.0.1:9200/fscrawler-rest-tests_doc/doc/dd18bf3a8ea2a3e53e2661c7fb53534?pretty
+   curl http://127.0.0.1:9200/fscrawler-rest-tests_doc/_doc/dd18bf3a8ea2a3e53e2661c7fb53534?pretty
 
 You will get back your document as it has been stored by elasticsearch:
 
@@ -147,7 +172,7 @@ complete:
 .. code:: sh
 
    echo "This is my text" > test.txt
-   curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_document?debug=true"
+   curl -F "file=@test.txt" "http://127.0.0.1:8080/_document?debug=true"
 
 will give
 
@@ -156,7 +181,7 @@ will give
    {
      "ok" : true,
      "filename" : "test.txt",
-     "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/doc/dd18bf3a8ea2a3e53e2661c7fb53534",
+     "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/_doc/dd18bf3a8ea2a3e53e2661c7fb53534",
      "doc" : {
        "content" : "This file contains some words.\n",
        "meta" : {
@@ -196,7 +221,7 @@ a JSON document which describes the service settings:
 
 .. code:: sh
 
-    curl -XPOST http://127.0.0.1:8080/fscrawler/_document -H 'Content-Type: application/json' -d '{
+    curl -XPOST http://127.0.0.1:8080/_document -H 'Content-Type: application/json' -d '{
       "type": "<TYPE>",
       "<TYPE>": {
         // Settings for the <TYPE>
@@ -215,7 +240,7 @@ For example, we can read the file ``bar.txt`` from the ``/path/to/foo`` director
 
 .. code:: sh
 
-    curl -XPOST http://127.0.0.1:8080/fscrawler/_document -H 'Content-Type: application/json' -d '{
+    curl -XPOST http://127.0.0.1:8080/_document -H 'Content-Type: application/json' -d '{
       "type": "local",
       "local": {
         "url": "/path/to/foo/bar.txt"
@@ -240,7 +265,7 @@ For example, we can read the file ``robots.txt`` from the ``https://www.elastic.
 
 .. code:: sh
 
-    curl -XPOST http://127.0.0.1:8080/fscrawler/_document -H 'Content-Type: application/json' -d '{
+    curl -XPOST http://127.0.0.1:8080/_document -H 'Content-Type: application/json' -d '{
       "type": "http",
       "http": {
         "url": "https://www.elastic.co/robots.txt"
@@ -263,7 +288,7 @@ For example, we can read the file ``foo.txt`` from the bucket ``foo`` running on
 
 .. code:: sh
 
-    curl -XPOST http://127.0.0.1:8080/fscrawler/_document -H 'Content-Type: application/json' -d '{
+    curl -XPOST http://127.0.0.1:8080/_document -H 'Content-Type: application/json' -d '{
       "type": "s3",
       "s3": {
         "url": "https://s3.amazonaws.com",
@@ -278,7 +303,7 @@ If you are using Minio, you can use:
 
 .. code:: sh
 
-    curl -XPOST http://127.0.0.1:8080/fscrawler/_document -H 'Content-Type: application/json' -d '{
+    curl -XPOST http://127.0.0.1:8080/_document -H 'Content-Type: application/json' -d '{
       "type": "s3",
       "s3": {
         "url": "http://localhost:9000",
@@ -301,7 +326,7 @@ parameter:
 .. code:: sh
 
    echo "This is my text" > test.txt
-   curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_document?debug=true&simulate=true"
+   curl -F "file=@test.txt" "http://127.0.0.1:8080/_document?debug=true&simulate=true"
 
 Document ID
 ^^^^^^^^^^^
@@ -316,14 +341,14 @@ You can force any id you wish by adding ``id=YOUR_ID`` as a parameter:
 .. code:: sh
 
    echo "This is my text" > test.txt
-   curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_document?id=my-test"
+   curl -F "file=@test.txt" "http://127.0.0.1:8080/_document?id=my-test"
 
 You can pass the ``id`` parameter within the form data:
 
 .. code:: sh
 
    echo "This is my text" > test.txt
-   curl -F "file=@test.txt" -F "id=my-test" "http://127.0.0.1:8080/fscrawler/_document"
+   curl -F "file=@test.txt" -F "id=my-test" "http://127.0.0.1:8080/_document"
 
 There is a specific id named ``_auto_`` where the ID will be
 autogenerated by elasticsearch. It means that sending twice the same
@@ -354,7 +379,7 @@ To upload a binary with additional tags, you can call ``POST /_document`` endpoi
 
     echo "This is my text" > test.txt
     echo "{\"content\":\"OVERWRITE CONTENT\",\"external\":{\"tenantId\": 23,\"projectId\": 34,\"description\":\"these are additional tags\"}}" > tags.txt
-    curl -F "file=@test.txt" -F "tags=@tags.txt" "http://127.0.0.1:8080/fscrawler/_document"
+    curl -F "file=@test.txt" -F "tags=@tags.txt" "http://127.0.0.1:8080/_document"
 
 The field ``external`` doesn't necessarily be a flat structure. This is a more advanced example:
 
@@ -395,7 +420,7 @@ You can use this technique to add for example the filesize of the file your are 
     echo "This is my text" > test.txt
     curl -F "file=@test.txt" \
       -F "tags={\"file\":{\"filesize\":$(ls -l test.txt | awk '{print $5}')}}" \
-      "http://127.0.0.1:8080/fscrawler/_document"
+      "http://127.0.0.1:8080/_document"
 
 .. attention:: Only standard :ref:`FSCrawler fields <generated_fields>` can be set outside ``external`` field name.
 
@@ -410,7 +435,7 @@ If you only know the filename, you can pass it to FSCrawler using the ``filename
 
 .. code:: sh
 
-   curl -X DELETE "http://127.0.0.1:8080/fscrawler/_document?filename=test.txt"
+   curl -X DELETE "http://127.0.0.1:8080/_document?filename=test.txt"
 
 It will give you a response similar to:
 
@@ -427,7 +452,7 @@ If you know the document id, you can pass it to FSCrawler within the url:
 
 .. code:: sh
 
-   curl -X DELETE "http://127.0.0.1:8080/fscrawler/_document/dd18bf3a8ea2a3e53e2661c7fb53534"
+   curl -X DELETE "http://127.0.0.1:8080/_document/dd18bf3a8ea2a3e53e2661c7fb53534"
 
 If the document does not exist, you will get the following response:
 
@@ -451,15 +476,15 @@ parameter:
 .. code:: sh
 
    echo "This is my text" > test.txt
-   curl -F "file=@test.txt" "http://127.0.0.1:8080/fscrawler/_document?index=my-index"
-   curl -X DELETE "http://127.0.0.1:8080/fscrawler/_document?filename=test.txt&index=my-index"
+   curl -F "file=@test.txt" "http://127.0.0.1:8080/_document?index=my-index"
+   curl -X DELETE "http://127.0.0.1:8080/_document?filename=test.txt&index=my-index"
 
 When uploading, you can pass the ``id`` parameter within the form data:
 
 .. code:: sh
 
    echo "This is my text" > test.txt
-   curl -F "file=@test.txt" -F "index=my-index" "http://127.0.0.1:8080/fscrawler/_document"
+   curl -F "file=@test.txt" -F "index=my-index" "http://127.0.0.1:8080/_document"
 
 
 Enabling CORS
@@ -467,13 +492,13 @@ Enabling CORS
 
 To enable Cross-Origin Request Sharing you will need to set ``enable_cors: true``
 under ``rest`` in your job settings. Doing so will enable the relevant access headers
-on all REST service resource responses (for example ``/fscrawler`` and ``/fscrawler/_document``).
+on all REST service resource responses (for example ``/`` and ``/_document``).
 
 You can check if CORS is enabled with:
 
 .. code:: sh
 
-   curl -I http://127.0.0.1:8080/fscrawler/
+   curl -I http://127.0.0.1:8080/
 
 The response header should contain ``Access-Control-Allow-*`` parameters like:
 ::
@@ -488,14 +513,14 @@ REST settings
 
 Here is a list of REST service settings (under ``rest.`` prefix)`:
 
-+----------------------+-------------------------------------+-------------------------------------------------------+
-| Name                 | Default value                       | Documentation                                         |
-+======================+=====================================+=======================================================+
-| ``rest.url``         | ``http://127.0.0.1:8080/fscrawler`` | Rest Service URL                                      |
-+----------------------+-------------------------------------+-------------------------------------------------------+
-| ``rest.enable_cors`` | ``false``                           | Enables or disables Cross-Origin Resource Sharing     |
-|                      |                                     | globally for all resources                            |
-+----------------------+-------------------------------------+-------------------------------------------------------+
++----------------------+---------------------------+-------------------------------------------------------+
+| Name                 | Default value             | Documentation                                         |
++======================+===========================+=======================================================+
+| ``rest.url``         | ``http://127.0.0.1:8080`` | Rest Service URL                                      |
++----------------------+---------------------------+-------------------------------------------------------+
+| ``rest.enable_cors`` | ``false``                 | Enables or disables Cross-Origin Resource Sharing     |
+|                      |                           | globally for all resources                            |
++----------------------+---------------------------+-------------------------------------------------------+
 
 .. tip::
 
@@ -504,7 +529,7 @@ Here is a list of REST service settings (under ``rest.`` prefix)`:
     Local FS settings that do **not** affect the REST service are those such
     as ``url``, ``update_rate``, ``includes``, ``excludes``.
 
-REST service is running at http://127.0.0.1:8080/fscrawler by default.
+REST service is running at http://127.0.0.1:8080/ by default.
 
 You can change it using ``rest`` settings:
 
@@ -514,5 +539,5 @@ You can change it using ``rest`` settings:
    rest:
      url: "http://192.168.0.1:8180/my_fscrawler"
 
-It also means that if you are running more than one instance of FS
-crawler locally, you can (must) change the port as it will conflict.
+It also means that if you are running more than one instance of FScrawler locally, you can (must) change the port as
+it will conflict.

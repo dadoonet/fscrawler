@@ -40,6 +40,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParserDecorator;
 import org.apache.tika.parser.gdal.GDALParser;
+import org.apache.tika.parser.image.*;
 import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.apache.tika.parser.pdf.PDFParser;
@@ -166,7 +167,12 @@ public class TikaInstance {
                             new ServiceLoader(),
                             Arrays.asList(PDFParser.class, TesseractOCRParser.class));
                 }
-                parser = new AutoDetectParser(defaultParser, pdfParser, gdalParser);
+                parser = new AutoDetectParser(defaultParser, pdfParser, gdalParser,
+                        new BPGParser(),
+                        new TiffParser(),
+                        new HeifParser(),
+                        new ImageParser(),
+                        new JpegParser());
             }
         }
     }

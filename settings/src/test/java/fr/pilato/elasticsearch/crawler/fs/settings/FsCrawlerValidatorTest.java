@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,15 +36,15 @@ public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         // Checking default values
         FsSettings settings = FsSettingsLoader.load();
         settings.setName(getCurrentTestName());
-        settings.getElasticsearch().setIndex(getCurrentTestName());
+        settings.getElasticsearch().setIndex(getCurrentTestName() + INDEX_SUFFIX_DOCS);
         settings.getElasticsearch().setIndexFolder(getCurrentTestName() + INDEX_SUFFIX_FOLDER);
 
         assertThat(settings.getFs().getUrl()).isEqualTo(Defaults.DEFAULT_DIR);
         assertThat(settings.getElasticsearch().getUrls()).contains(Defaults.ELASTICSEARCH_URL_DEFAULT);
-        assertThat(settings.getElasticsearch().getIndex()).isEqualTo(getCurrentTestName());
+        assertThat(settings.getElasticsearch().getIndex()).isEqualTo(getCurrentTestName() + INDEX_SUFFIX_DOCS);
         assertThat(settings.getElasticsearch().getIndexFolder()).isEqualTo(getCurrentTestName() + INDEX_SUFFIX_FOLDER);
         assertThat(settings.getServer().getProtocol()).isEqualTo("local");
-        assertThat(settings.getRest().getUrl()).isEqualTo("http://127.0.0.1:8080/fscrawler");
+        assertThat(settings.getRest().getUrl()).isEqualTo("http://127.0.0.1:8080");
 
         // Checking Checksum Algorithm
         settings = FsSettingsLoader.load();

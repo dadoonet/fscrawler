@@ -30,6 +30,7 @@ import org.junit.Test;
 import java.nio.file.Files;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,7 +51,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         assertThat(awaitBusy(() -> {
             try {
-                return client.exists(getCrawlerName(), "roottxtfile.txt");
+                return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "roottxtfile.txt");
             } catch (ElasticsearchClientException e) {
                 return false;
             }
@@ -70,11 +71,11 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have two docs first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
 
         assertThat(awaitBusy(() -> {
             try {
-                return client.exists(getCrawlerName(), "id1.txt");
+                return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "id1.txt");
             } catch (ElasticsearchClientException e) {
                 return false;
             }
@@ -83,7 +84,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
                 .isTrue();
         assertThat(awaitBusy(() -> {
             try {
-                return client.exists(getCrawlerName(), "id2.txt");
+                return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "id2.txt");
             } catch (ElasticsearchClientException e) {
                 return false;
             }
@@ -96,6 +97,6 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         Files.delete(currentTestResourceDir.resolve("id2.txt"));
 
         // We expect to have two files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, currentTestResourceDir);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
     }
 }

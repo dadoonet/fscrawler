@@ -209,16 +209,18 @@ public class TikaDocParser {
 
             if (fsSettings.getFs().isRawMetadata()) {
                 metadata("Listing all available metadata:");
-                metadata("  assertThat(raw.entrySet().hasSize({});", metadata.size());
+                metadata("  assertThat(raw)");
+                metadata("    .hasSize({})", metadata.size());
                 for (String metadataName : metadata.names()) {
                     String value = metadata.get(metadataName);
                     // This is a logger trick which helps to generate our unit tests
                     // You need to change test/resources/log4j2.xml fr.pilato.elasticsearch.crawler.fs.tika level to trace
-                    metadata("  assertThat(raw).containsEntry(\"{}\", \"{}\");", metadataName, value);
+                    metadata("    .containsEntry(\"{}\", \"{}\")", metadataName, value);
 
                     // We need to remove dots in field names if any. See https://github.com/dadoonet/fscrawler/issues/256
                     doc.getMeta().addRaw(metadataName.replaceAll("\\.", ":"), value);
                 }
+                metadata(";");
             }
             // Meta
 

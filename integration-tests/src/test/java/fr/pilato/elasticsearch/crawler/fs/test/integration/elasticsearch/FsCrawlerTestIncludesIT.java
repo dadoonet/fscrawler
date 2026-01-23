@@ -26,6 +26,8 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+
 /**
  * Test includes crawler settings
  */
@@ -35,7 +37,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIncludes(List.of("*/*_include\\.txt"));
         crawler = startCrawler(fsSettings);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
     }
 
     @Test
@@ -45,7 +47,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have seven files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 7L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 7L, null);
     }
 
     @Test
@@ -55,7 +57,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have two files: subdir/notsub/roottxtfile.txt and subdir/roottxtfile.txt
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
     }
 
     @Test
@@ -63,6 +65,6 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have 4 files as subdir1 should be ignored
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 4L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 4L, null);
     }
 }

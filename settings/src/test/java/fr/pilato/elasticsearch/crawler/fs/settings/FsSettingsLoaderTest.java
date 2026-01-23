@@ -93,7 +93,7 @@ public class FsSettingsLoaderTest {
             expected.setName("myname");
 
             // Elasticsearch index name depends on the crawler name value ${name}
-            expected.getElasticsearch().setIndex("myname");
+            expected.getElasticsearch().setIndex("myname_docs");
             expected.getElasticsearch().setIndexFolder("myname_folder");
 
             // This is set by the env variable
@@ -173,7 +173,7 @@ public class FsSettingsLoaderTest {
         expected.getElasticsearch().setPushTemplates(true);
         expected.getElasticsearch().setSemanticSearch(true);
         expected.setRest(new Rest());
-        expected.getRest().setUrl("http://127.0.0.1:8080/fscrawler");
+        expected.getRest().setUrl("http://127.0.0.1:8080");
         expected.getRest().setEnableCors(true);
 
         checkSettings(expected, settings);
@@ -227,7 +227,7 @@ public class FsSettingsLoaderTest {
 
         Elasticsearch es = new Elasticsearch();
         es.setUrls(List.of("https://127.0.0.1:9200"));
-        es.setIndex(expected.getName());
+        es.setIndex(expected.getName() + "_docs");
         es.setIndexFolder(expected.getName() + "_folder");
         es.setBulkSize(100);
         es.setFlushInterval(TimeValue.timeValueSeconds(5));
@@ -237,7 +237,7 @@ public class FsSettingsLoaderTest {
         expected.setElasticsearch(es);
 
         Rest rest = new Rest();
-        rest.setUrl("http://127.0.0.1:8080/fscrawler");
+        rest.setUrl("http://127.0.0.1:8080");
         rest.setEnableCors(false);
         expected.setRest(rest);
 

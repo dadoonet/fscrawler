@@ -31,6 +31,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -52,7 +53,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         assertThat(awaitBusy(() -> {
             try {
                 ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(getCrawlerName())
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESMatchQuery("text", "tweet")));
                 return response.getTotalHits() == 2;
             } catch (ElasticsearchClientException e) {
@@ -76,7 +77,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         assertThat(awaitBusy(() -> {
             try {
                 ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(getCrawlerName())
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESMatchQuery("text", "tweet")));
                 return response.getTotalHits() == 0;
             } catch (ElasticsearchClientException e) {
@@ -90,7 +91,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         assertThat(awaitBusy(() -> {
             try {
                 ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(getCrawlerName())
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESMatchQuery("content", "tweet")));
                 return response.getTotalHits() == 2;
             } catch (ElasticsearchClientException e) {
@@ -115,7 +116,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         assertThat(awaitBusy(() -> {
             try {
                 ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(getCrawlerName())
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESMatchQuery("object.text", "tweet")));
                 return response.getTotalHits() == 2;
             } catch (ElasticsearchClientException e) {
@@ -138,7 +139,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         assertThat(awaitBusy(() -> {
             try {
-                ESSearchResponse response = client.search(new ESSearchRequest().withIndex(getCrawlerName()));
+                ESSearchResponse response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS));
                 return response.getTotalHits() == 2;
             } catch (ElasticsearchClientException e) {
                 logger.warn("Caught exception while running the test", e);

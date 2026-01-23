@@ -145,7 +145,10 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         }
 
         FTPFile[] ftpFiles = ftp.listFiles(ftpDir);
-        if (ftpFiles == null) return null;
+        if (ftpFiles == null || ftpFiles.length == 0) {
+            logger.debug("No files found [{}]. Returning an empty array.", ftpDir);
+            return Collections.emptyList();
+        }
         List<FTPFile> files = Arrays.stream(ftpFiles)
                 .filter(IS_SYM_LINK)
                 .sorted(FTP_FILE_COMPARATOR.reversed())

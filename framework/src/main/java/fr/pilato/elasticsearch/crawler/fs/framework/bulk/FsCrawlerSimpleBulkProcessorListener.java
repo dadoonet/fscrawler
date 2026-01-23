@@ -40,13 +40,17 @@ public class FsCrawlerSimpleBulkProcessorListener<
     public void afterBulk(long executionId, REQ request, RES response) {
         logger.debug("Executed bulk composed of {} actions", request.numberOfActions());
         if (response.hasFailures()) {
-            logger.warn("There was failures while executing bulk", response.buildFailureMessage());
             if (logger.isDebugEnabled()) {
+                logger.warn("There was failures while executing bulk.", response.buildFailureMessage());
                 for (FsCrawlerBulkResponse.BulkItemResponse<O> item : response.getItems()) {
                     if (item.isFailed()) {
-                        logger.debug("Error for [{}]: {}", item.getOperation(), item.getFailureMessage());
+                        logger.warn("Error for [{}]: {}", item.getOperation(), item.getFailureMessage());
                     }
                 }
+            } else {
+                logger.warn("There was failures while executing bulk. If you want to see the details, " +
+                        "please activate DEBUG mode with FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\". " +
+                        "See https://fscrawler.readthedocs.io/en/latest/admin/logger.html for more details.", response.buildFailureMessage());
             }
         }
     }

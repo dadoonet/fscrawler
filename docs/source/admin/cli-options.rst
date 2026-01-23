@@ -73,7 +73,7 @@ a default configuration file named ``~/.fscrawler/fscrawler/_settings.yaml``:
 
    bin/fscrawler --setup
 
-..note::
+.. note::
 
     You can also use ``--setup job_name`` to create a job named ``job_name`` instead of the default ``fscrawler``.
 

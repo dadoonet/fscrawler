@@ -60,7 +60,7 @@ See :ref:`layout` to know more about the content of the distribution.
 Using docker
 ------------
 
-Pull the Docker image:
+Pull the Docker image from `Docker Hub <https://hub.docker.com/r/dadoonet/fscrawler>`__:
 
 .. code:: sh
 
@@ -68,9 +68,9 @@ Pull the Docker image:
 
 .. note::
 
-    This image is very big (1.2+gb) as it contains `Tesseract <https://tesseract-ocr.github.io/tessdoc/>`__ and
+    This image is very big (500+mb) as it contains `Tesseract <https://tesseract-ocr.github.io/tessdoc/>`__ and
     all the `trained language data <https://tesseract-ocr.github.io/tessdoc/Data-Files.html>`__.
-    If you don't want to use OCR at all, you can use a smaller image (around 530mb) by pulling instead
+    If you don't want to use OCR at all, you can use a smaller image (around 230mb) by pulling instead
     ``dadoonet/fscrawler:noocr``
 
     .. code:: sh
@@ -157,248 +157,121 @@ In this section, the following directory layout is assumed:
 .. code-block:: none
 
   .
-  ├── config
-  │   └── job_name
-  │       └── _settings.yaml
-  ├── data
-  │   └── <your files>
-  ├── external
-  │   └── <3rd party jars if needed>
-  ├── logs
-  │   └── <fscrawler logs>
+  ├── .env
+  ├── docs
+  │   └── <your PDF, DOC, ... files>
   └── docker-compose.yml
 
-With Elasticsearch
-~~~~~~~~~~~~~~~~~~
+The ``.env`` file looks like this:
 
-Here is a typical ``_settings.yaml``, you can use to connect FSCrawler with Elasticsearch when running
-with docker compose:
+.. code-block:: sh
+   :substitutions:
 
-.. code:: yaml
+   # Password for the 'elastic' user (at least 6 characters)
+   ES_LOCAL_PASSWORD=changeme
 
-    ---
-    name: "idx"
-    fs:
-      indexed_chars: 100%
-      lang_detect: true
-      continue_on_error: true
-      ocr:
-        language: "eng"
-        enabled: true
-        pdf_strategy: "ocr_and_text"
-    elasticsearch:
-      urls:
-        - "https://elasticsearch:9200"
-      username: "elastic"
-      password: "changeme"
-      ssl_verification: false
-    rest :
-      url: "http://fscrawler:8080"
+   # Version of Elastic products
+   ES_LOCAL_VERSION=|ES_stack_version|
 
-.. note::
+   # Set the ES container name
+   ES_LOCAL_CONTAINER_NAME=es-fscrawler
 
-    The configuration shown above is also meant to start the REST interface. It also activates the full indexation of
-    documents, lang detection and ocr using english. You can adapt this example for your needs.
+   # Set to 'basic' or 'trial' to automatically start the 30-day trial
+   ES_LOCAL_LICENSE=basic
+   #ES_LOCAL_LICENSE=trial
 
-Prepare a ``.env`` file with the following content:
+   # Port to expose Elasticsearch HTTP API to the host
+   ES_LOCAL_PORT=9200
+   ES_LOCAL_DISK_SPACE_REQUIRED=1gb
+   ES_LOCAL_JAVA_OPTS="-XX:UseSVE=0 -Xms128m -Xmx2g"
 
-.. code:: sh
+   # Project namespace (defaults to the current folder name if not set)
+   COMPOSE_PROJECT_NAME=fscrawler
 
-    # Chenge the FSCRAWLER_VERSION if needed
-    FSCRAWLER_VERSION=2.10-SNAPSHOT
-    FSCRAWLER_PORT=8080
-    # Optionally, you can change the log level settings
-    FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug"
+   # FSCrawler Settings
+   FSCRAWLER_VERSION=|FSCrawler_version|
+   FSCRAWLER_PORT=8080
 
-    # Chenge the STACK_VERSION if needed
-    STACK_VERSION=9.0.0
-    ELASTIC_PASSWORD=changeme
-    KIBANA_PASSWORD=changeme
-    CLUSTER_NAME=docker-cluster
-    LICENSE=trial
-    ES_PORT=9200
-    KIBANA_PORT=5601
-    MEM_LIMIT=4294967296
-    COMPOSE_PROJECT_NAME=fscrawler
+   # Optionally, you can change the log level settings
+   FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug"
 
 
-And, prepare the following ``docker-compose.yml``. You will find this example in the
-``contrib/docker-compose-example-elasticsearch`` project directory.
+And, the ``docker-compose.yml`` file looks like this:
 
 .. code:: yaml
 
-    ---
-    version: "2.2"
+   ---
+   services:
+     elasticsearch:
+       image: docker.elastic.co/elasticsearch/elasticsearch:${ES_LOCAL_VERSION}
+       container_name: ${ES_LOCAL_CONTAINER_NAME}
+       volumes:
+         - dev-elasticsearch:/usr/share/elasticsearch/data
+       ports:
+         - 127.0.0.1:${ES_LOCAL_PORT}:9200
+       environment:
+         - discovery.type=single-node
+         - ELASTIC_PASSWORD=${ES_LOCAL_PASSWORD}
+         - xpack.security.enabled=true
+         - xpack.security.http.ssl.enabled=false
+         - xpack.license.self_generated.type=${ES_LOCAL_LICENSE}
+         - xpack.ml.use_auto_machine_memory_percent=true
+         - ES_JAVA_OPTS=${ES_LOCAL_JAVA_OPTS}
+         - cluster.routing.allocation.disk.watermark.low=${ES_LOCAL_DISK_SPACE_REQUIRED}
+         - cluster.routing.allocation.disk.watermark.high=${ES_LOCAL_DISK_SPACE_REQUIRED}
+         - cluster.routing.allocation.disk.watermark.flood_stage=${ES_LOCAL_DISK_SPACE_REQUIRED}
+       ulimits:
+         memlock:
+           soft: -1
+           hard: -1
+       healthcheck:
+         test:
+           [
+             "CMD-SHELL",
+             "curl --output /dev/null --silent --head --fail -u elastic:${ES_LOCAL_PASSWORD} http://elasticsearch:9200",
+           ]
+         interval: 10s
+         timeout: 10s
+         retries: 30
 
-    services:
-      setup:
-        image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
-        volumes:
-          - certs:/usr/share/elasticsearch/config/certs
-        user: "0"
-        command: >
-          bash -c '
-            if [ x${ELASTIC_PASSWORD} == x ]; then
-              echo "Set the ELASTIC_PASSWORD environment variable in the .env file";
-              exit 1;
-            elif [ x${KIBANA_PASSWORD} == x ]; then
-              echo "Set the KIBANA_PASSWORD environment variable in the .env file";
-              exit 1;
-            fi;
-            if [ ! -f certs/ca.zip ]; then
-              echo "Creating CA";
-              bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
-              unzip config/certs/ca.zip -d config/certs;
-            fi;
-            if [ ! -f certs/certs.zip ]; then
-              echo "Creating certs";
-              echo -ne \
-              "instances:\n"\
-              "  - name: elasticsearch\n"\
-              "    dns:\n"\
-              "      - elasticsearch\n"\
-              "      - localhost\n"\
-              "    ip:\n"\
-              "      - 127.0.0.1\n"\
-              > config/certs/instances.yml;
-              bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
-              unzip config/certs/certs.zip -d config/certs;
-            fi;
-            echo "Setting file permissions"
-            chown -R root:root config/certs;
-            find . -type d -exec chmod 750 \{\} \;;
-            find . -type f -exec chmod 640 \{\} \;;
-            echo "Waiting for Elasticsearch availability";
-            until curl -s --cacert config/certs/ca/ca.crt https://elasticsearch:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
-            echo "Setting kibana_system password";
-            until curl -s -X POST --cacert config/certs/ca/ca.crt -u elastic:${ELASTIC_PASSWORD} -H "Content-Type: application/json" https://elasticsearch:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
-            echo "All done!";
-          '
-        healthcheck:
-          test: ["CMD-SHELL", "[ -f config/certs/elasticsearch/elasticsearch.crt ]"]
-          interval: 1s
-          timeout: 5s
-          retries: 120
+     # FSCrawler
+     fscrawler:
+       image: dadoonet/fscrawler:${FSCRAWLER_VERSION}
+       container_name: fscrawler
+       restart: always
+       environment:
+         - FS_JAVA_OPTS=${FS_JAVA_OPTS}
+         - FSCRAWLER_ELASTICSEARCH_URLS=http://${ES_LOCAL_CONTAINER_NAME}:9200
+         - FSCRAWLER_ELASTICSEARCH_USERNAME=elastic
+         - FSCRAWLER_ELASTICSEARCH_PASSWORD=${ES_LOCAL_PASSWORD}
+         - FSCRAWLER_REST_URL=http://fscrawler:${FSCRAWLER_PORT}
+       volumes:
+         - ${PWD}/docs:/tmp/es:ro
+       depends_on:
+         elasticsearch:
+           condition: service_healthy
+       ports:
+         - ${FSCRAWLER_PORT}:8080
+       command: --rest
 
-      elasticsearch:
-        depends_on:
-          setup:
-            condition: service_healthy
-        image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
-        volumes:
-          - certs:/usr/share/elasticsearch/config/certs
-          - esdata:/usr/share/elasticsearch/data
-        ports:
-          - ${ES_PORT}:9200
-        environment:
-          - node.name=elasticsearch
-          - cluster.name=${CLUSTER_NAME}
-          - cluster.initial_master_nodes=elasticsearch
-          - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-          - bootstrap.memory_lock=true
-          - xpack.security.enabled=true
-          - xpack.security.http.ssl.enabled=true
-          - xpack.security.http.ssl.key=certs/elasticsearch/elasticsearch.key
-          - xpack.security.http.ssl.certificate=certs/elasticsearch/elasticsearch.crt
-          - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
-          - xpack.security.http.ssl.verification_mode=certificate
-          - xpack.security.transport.ssl.enabled=true
-          - xpack.security.transport.ssl.key=certs/elasticsearch/elasticsearch.key
-          - xpack.security.transport.ssl.certificate=certs/elasticsearch/elasticsearch.crt
-          - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
-          - xpack.security.transport.ssl.verification_mode=certificate
-          - xpack.license.self_generated.type=${LICENSE}
-        mem_limit: ${MEM_LIMIT}
-        ulimits:
-          memlock:
-            soft: -1
-            hard: -1
-        healthcheck:
-          test:
-            [
-              "CMD-SHELL",
-              "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
-            ]
-          interval: 10s
-          timeout: 10s
-          retries: 120
+   volumes:
+     dev-elasticsearch:
 
-      kibana:
-        depends_on:
-          elasticsearch:
-            condition: service_healthy
-        image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
-        volumes:
-          - certs:/usr/share/kibana/config/certs
-          - kibanadata:/usr/share/kibana/data
-        ports:
-          - ${KIBANA_PORT}:5601
-        environment:
-          - SERVERNAME=kibana
-          - ELASTICSEARCH_HOSTS=https://elasticsearch:9200
-          - ELASTICSEARCH_USERNAME=kibana_system
-          - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
-          - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
-          - ENTERPRISESEARCH_HOST=http://enterprisesearch:${ENTERPRISE_SEARCH_PORT}
-        mem_limit: ${MEM_LIMIT}
-        healthcheck:
-          test:
-            [
-              "CMD-SHELL",
-              "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
-            ]
-          interval: 10s
-          timeout: 10s
-          retries: 120
+Copy your pdf/doc files into the ``docs`` directory and run the full stack, including FSCrawler with:
 
-      # FSCrawler
-      fscrawler:
-        image: dadoonet/fscrawler:${FSCRAWLER_VERSION}
-        container_name: fscrawler
-        restart: always
-        environment:
-          - FS_JAVA_OPTS=${FS_JAVA_OPTS}
-        volumes:
-          - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
-          - ${PWD}/config:/root/.fscrawler
-          - ${PWD}/logs:/usr/share/fscrawler/logs
-          - ${PWD}/external:/usr/share/fscrawler/external
-        depends_on:
-          elasticsearch:
-            condition: service_healthy
-        ports:
-          - ${FSCRAWLER_PORT}:8080
-        command: idx --restart --rest
+.. code:: sh
 
-    volumes:
-      certs:
-        driver: local
-      esdata:
-        driver: local
-      kibanadata:
-        driver: local
+    docker-compose up
+
+When the job has finished indexing, you can check your documents in Elasticsearch with:
+
+.. code:: sh
+
+   curl -u elastic:changeme "http://localhost:9200/fscrawler/_search"
 
 .. note::
 
-    The configuration shown above is also meant to start Kibana. You can skip that part if you don't need it.
-
-Then, you can run the full stack, including FSCrawler.
-
-.. code:: sh
-
-    docker-compose up -d
-
-Then if you need to read the logs from FSCrawler, you can run:
-
-.. code:: sh
-
-    docker-compose logs -f fscrawler
-
-Or just go in the ``logs`` directory to read the logs:
-
-.. code:: sh
-
-    tail -f logs/documents.log
+  You will find this example in the ``contrib/docker-compose-example-elasticsearch`` project directory.
 
 Running as a Service on Windows
 -------------------------------

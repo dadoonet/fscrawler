@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
@@ -44,17 +45,17 @@ public class FsCrawlerTestTikaConfigPathIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setExcludes(List.of("/config/*"));
         crawler = startCrawler(fsSettings);
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
         countTestHelper(new ESSearchRequest()
-                .withIndex(getCrawlerName())
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESMatchQuery("content", "Tika")), 2L, null);
         // HTML parsed as TXT will contain all tags in content
         // XHTML parsed as XML will remove tags from content
         countTestHelper(new ESSearchRequest()
-                .withIndex(getCrawlerName())
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESMatchQuery("content", "div")), 1L, null);
         countTestHelper(new ESSearchRequest()
-                .withIndex(getCrawlerName())
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESMatchQuery("meta.title", "Test Tika title")), 0L, null);
     }
 }

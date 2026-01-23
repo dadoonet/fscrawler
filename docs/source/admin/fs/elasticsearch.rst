@@ -10,7 +10,7 @@ Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 +-----------------------------------+---------------------------+---------------------------------+
 | Name                              | Default value             | Documentation                   |
 +===================================+===========================+=================================+
-| ``elasticsearch.index``           | job name                  | `Index settings for documents`_ |
+| ``elasticsearch.index``           | job name + ``_docs``      | `Index settings for documents`_ |
 +-----------------------------------+---------------------------+---------------------------------+
 | ``elasticsearch.index_folder``    | job name + ``_folder``    | `Index settings for folders`_   |
 +-----------------------------------+---------------------------+---------------------------------+
@@ -48,7 +48,8 @@ Index settings for documents
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, FSCrawler will index your data in an index which name is
-the same as the crawler name (``name`` property). You can change it by setting ``index`` field:
+the same as the crawler name (``name`` property) plus ``_docs`` suffix, like
+``test_docs``. You can change it by setting ``index`` field:
 
 .. code:: yaml
 
@@ -79,7 +80,7 @@ Mappings
 FSCrawler defines the following `Component Templates <https://www.elastic.co/guide/en/elasticsearch/reference/current/index-templates.html>`__
 to define the index settings and mappings (replace ``INDEX`` with the index name):
 
-- ``fscrawler_INDEX_alias``: defines the alias ``fscrawler`` so you can search using this alias.
+- ``fscrawler_INDEX_alias``: defines the alias which name is the same as the crawler name (``name`` property) so you can search using this alias.
 - ``fscrawler_INDEX_settings_total_fields``: defines the maximum number of fields for the index.
 - ``fscrawler_INDEX_mapping_attributes``: defines the mapping for the ``attributes`` field.
 - ``fscrawler_INDEX_mapping_file``: defines the mapping for the ``file`` field.
@@ -120,6 +121,17 @@ Creating your own mapping (analyzers)
 If you want to define your own index settings and mapping to set
 analyzers for example, you can update the needed component template
 **before starting the FSCrawler**.
+
+.. attention::
+
+    Don't forget to set ``push_templates`` to ``false``, otherwise FSCrawler will
+    override your changes:
+
+    .. code:: yaml
+
+       name: "test"
+       elasticsearch:
+         push_templates: false
 
 The following example uses a ``french`` analyzer to index the
 ``content`` field and still allow using semantic search.
@@ -162,6 +174,13 @@ The following example uses a ``french`` analyzer to index the
         }
       }
     }
+
+.. tip::
+
+    You can launch FSCrawler with ``push_templates`` to ``true`` in the job settings and with ``--loop 0``. This way,
+    FSCrawler will create the index templates which you can then edit from Kibana or using the Elasticsearch API.
+
+    Then set ``push_templates`` to ``false`` before restarting FSCrawler.
 
 Replace existing mapping
 """"""""""""""""""""""""

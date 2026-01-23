@@ -18,8 +18,6 @@
         <!--suppress UnresolvedMavenProperty -->
         <docker.skip>${env.DOCKER_SKIP}</docker.skip>
         <docker.username>dadoonet</docker.username>
-        <!-- The following assumes that each submodule will be overwritten. -->
-        <module.name>es7</module.name>
 
         <!-- Docker Image Definitions -->
         <!-- standard installation with no ocr -->
@@ -36,7 +34,7 @@
 
         <!-- install tesseract-ocr and all language files -->
         <docker.ocr.alias>${project.artifactId}-ocr</docker.ocr.alias>
-        <docker.ocr.name>${docker.username}/fscrawler:${project.version}-ocr-${module.name}</docker.ocr.name>
+        <docker.ocr.name>${docker.username}/fscrawler:${project.version}-ocr</docker.ocr.name>
         <docker.ocr.cacheFrom>${docker.ocr.name}</docker.ocr.cacheFrom>
         <docker.ocr.dockerFile>${docker.noocr.dockerFile}</docker.ocr.dockerFile>
         <docker.ocr.assembly.descriptor>${docker.noocr.assembly.descriptor}</docker.ocr.assembly.descriptor>

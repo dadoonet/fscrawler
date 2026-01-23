@@ -4,6 +4,8 @@ Welcome to the FS Crawler for [Elasticsearch](https://elastic.co/)
 
 This crawler helps to index binary documents such as PDF, Open Office, MS Office.
 
+![FSCrawler Explained - Generated with Gemini](fscrawler-explained.png)
+
 **Main features**:
 
 * Local file system (or a mounted drive) crawling and index new files, update existing ones and removes old ones.

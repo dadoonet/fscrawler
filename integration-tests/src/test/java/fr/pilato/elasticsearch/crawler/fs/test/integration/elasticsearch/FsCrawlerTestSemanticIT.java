@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
@@ -62,14 +63,14 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // We expect to have 3 files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 3L, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // 2 pdf and 1 txt
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.extension", "pdf")), 2L, null);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()).withESQuery(new ESTermQuery("file.extension", "txt")), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("file.extension", "pdf")), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("file.extension", "txt")), 1L, null);
 
         // We should have semantic information
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName())
+        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESSemanticQuery("content_semantic", "Someone understanding loans and finances")),
                 3L, null);
         DocumentContext document = parseJsonAsDocumentContext(response.getHits().get(0).getSource());
