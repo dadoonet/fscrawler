@@ -26,10 +26,13 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -414,6 +417,55 @@ public class FsCrawlerUtil {
             logger.debug("Failed to determine 'acl' of {}: {}", path, e);
             return Collections.emptyList();
         }
+    }
+
+    public static String computeAclHash(List<FileAcl> acls) {
+        if (acls == null || acls.isEmpty()) {
+            return null;
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            acls.stream()
+                    .sorted(Comparator
+                            .comparing(FileAcl::getPrincipal, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(FileAcl::getType, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(a -> joinAndSort(a.getPermissions()))
+                            .thenComparing(a -> joinAndSort(a.getFlags())))
+                    .forEach(entry -> {
+                        updateDigest(digest, entry.getPrincipal());
+                        updateDigest(digest, entry.getType());
+                        updateDigest(digest, joinAndSort(entry.getPermissions()));
+                        updateDigest(digest, joinAndSort(entry.getFlags()));
+                    });
+            return toHex(digest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Unable to compute ACL hash", e);
+        }
+    }
+
+    private static void updateDigest(MessageDigest digest, String value) {
+        if (value == null) {
+            digest.update((byte) 0);
+        } else {
+            digest.update(value.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    private static String joinAndSort(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "";
+        }
+        List<String> copy = new ArrayList<>(values);
+        copy.sort(String::compareTo);
+        return String.join(",", copy);
+    }
+
+    private static String toHex(byte[] data) {
+        StringBuilder builder = new StringBuilder(data.length * 2);
+        for (byte b : data) {
+            builder.append(String.format(Locale.ROOT, "%02x", b & 0xff));
+        }
+        return builder.toString();
     }
 
     public static int toOctalPermission(boolean read, boolean write, boolean execute) {

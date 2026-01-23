@@ -45,7 +45,10 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
@@ -58,10 +61,13 @@ public abstract class FsParserAbstract extends FsParser {
 
     final FsSettings fsSettings;
     private final FsJobFileHandler fsJobFileHandler;
+    private final FsAclsFileHandler fsAclsFileHandler;
 
     private final FsCrawlerManagementService managementService;
     private final FsCrawlerDocumentService documentService;
     private final Integer loop;
+    private Map<String, String> aclHashCache;
+    private boolean aclHashCacheDirty;
     private final String pathSeparator;
     private final FileAbstractor<?> fileAbstractor;
     private final String metadataFilename;
@@ -71,6 +77,14 @@ public abstract class FsParserAbstract extends FsParser {
     FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
         this.fsSettings = fsSettings;
         this.fsJobFileHandler = new FsJobFileHandler(config);
+        if (fsSettings.getFs().isAttributesSupport() && fsSettings.getFs().isAclSupport()) {
+            this.fsAclsFileHandler = new FsAclsFileHandler(config);
+            this.aclHashCache = loadAclHashCache(fsSettings.getName());
+        } else {
+            this.fsAclsFileHandler = null;
+            this.aclHashCache = null;
+        }
+        this.aclHashCacheDirty = false;
         this.managementService = managementService;
         this.documentService = documentService;
 
@@ -189,6 +203,7 @@ public abstract class FsParserAbstract extends FsParser {
                 logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
                 logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
             } finally {
+                persistAclHashCacheIfNeeded();
                 try {
                     logger.debug("Closing FS crawler file abstractor [{}].", fileAbstractor.getClass().getSimpleName());
                     fileAbstractor.close();
@@ -270,6 +285,94 @@ public abstract class FsParserAbstract extends FsParser {
                 jobName, scanDate, nextCheck, stats.getNbDocScan(), stats.getNbDocDeleted());
     }
 
+    private Map<String, String> loadAclHashCache(String jobName) {
+        if (fsAclsFileHandler == null) {
+            return null;
+        }
+        try {
+            return fsAclsFileHandler.read(jobName);
+        } catch (IOException e) {
+            logger.warn("Failed to load ACL cache for [{}]: {}", jobName, e.getMessage());
+            logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+            return new HashMap<>();
+        }
+    }
+
+    private void persistAclHashCacheIfNeeded() {
+        if (fsAclsFileHandler == null || !aclHashCacheDirty) {
+            return;
+        }
+        try {
+            fsAclsFileHandler.write(fsSettings.getName(), aclHashCache);
+            aclHashCacheDirty = false;
+        } catch (IOException e) {
+            logger.warn("Failed to store ACL cache for [{}]: {}", fsSettings.getName(), e.getMessage());
+            logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+        }
+    }
+
+    private boolean shouldTrackAclChanges() {
+        return fsAclsFileHandler != null;
+    }
+
+    private boolean hasAclChanged(String filename, String filepath, FileAbstractModel fileAbstractModel) throws NoSuchAlgorithmException {
+        if (!shouldTrackAclChanges()) {
+            return false;
+        }
+        if (aclHashCache == null) {
+            return false;
+        }
+        String id = generateIdFromFilename(filename, filepath);
+        List<FileAcl> acls = fileAbstractModel.getAcls();
+        if (acls == null || acls.isEmpty()) {
+            return aclHashCache.containsKey(id);
+        }
+        String currentHash = fileAbstractModel.getAclHash();
+        if (currentHash == null) {
+            currentHash = FsCrawlerUtil.computeAclHash(acls);
+        }
+        if (currentHash == null) {
+            return false;
+        }
+        String previousHash = aclHashCache.get(id);
+        if (previousHash == null) {
+            return true;
+        }
+        return !Objects.equals(previousHash, currentHash);
+    }
+
+    private void rememberCurrentAclHash(String id, FileAbstractModel fileAbstractModel) {
+        if (!shouldTrackAclChanges()) {
+            return;
+        }
+        String currentHash = fileAbstractModel.getAclHash();
+        if (currentHash == null) {
+            currentHash = FsCrawlerUtil.computeAclHash(fileAbstractModel.getAcls());
+        }
+        if (currentHash == null) {
+            if (aclHashCache != null && aclHashCache.remove(id) != null) {
+                aclHashCacheDirty = true;
+            }
+            return;
+        }
+        if (aclHashCache == null) {
+            aclHashCache = new HashMap<>();
+        }
+        String previous = aclHashCache.put(id, currentHash);
+        if (!Objects.equals(previous, currentHash)) {
+            aclHashCacheDirty = true;
+        }
+    }
+
+    private void removeStoredAclHash(String id) {
+        if (!shouldTrackAclChanges() || aclHashCache == null) {
+            return;
+        }
+        if (aclHashCache.remove(id) != null) {
+            aclHashCacheDirty = true;
+        }
+    }
+
     private void addFilesRecursively(final String filepath, final LocalDateTime lastScanDate, final ScanStatistic stats)
             throws Exception {
         logger.debug("indexing [{}] content", filepath);
@@ -324,8 +427,15 @@ public abstract class FsParserAbstract extends FsParser {
                         if (child.isFile()) {
                             logger.trace("  - file: {}", virtualFileName);
                             fsFiles.add(filename);
-                            if (child.getLastModifiedDate().isAfter(lastScanDate) ||
-                                    (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate))) {
+                            boolean needsIndexing = child.getLastModifiedDate().isAfter(lastScanDate) ||
+                                    (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate));
+                            if (!needsIndexing && shouldTrackAclChanges() && fsSettings.getFs().isAttributesSupport() && fsSettings.getFs().isAclSupport()) {
+                                if (hasAclChanged(filename, filepath, child)) {
+                                    needsIndexing = true;
+                                    logger.trace("    - ACL change detected for {}", child.getFullpath());
+                                }
+                            }
+                            if (needsIndexing) {
                                 logger.trace("    - modified: creation date {} , file date {}, last scan date {}",
                                         child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
 
@@ -535,6 +645,7 @@ public abstract class FsParserAbstract extends FsParser {
                             id,
                             mergedDoc,
                             fsSettings.getElasticsearch().getPipeline());
+                    rememberCurrentAclHash(id, fileAbstractModel);
                 } else {
                     logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
                             fsSettings.getElasticsearch().getIndex(), id);
@@ -560,6 +671,7 @@ public abstract class FsParserAbstract extends FsParser {
                                 id,
                                 jsonString,
                                 fsSettings.getElasticsearch().getPipeline());
+                        rememberCurrentAclHash(id, fileAbstractModel);
                     } else {
                         logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
                                 fsSettings.getElasticsearch().getIndex(), id);
@@ -585,6 +697,7 @@ public abstract class FsParserAbstract extends FsParser {
                                 id,
                                 XmlDocParser.generate(inputStream),
                                 fsSettings.getElasticsearch().getPipeline());
+                        rememberCurrentAclHash(id, fileAbstractModel);
                     } else {
                         logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
                                 fsSettings.getElasticsearch().getIndex(), id);
@@ -691,6 +804,7 @@ public abstract class FsParserAbstract extends FsParser {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed) {
             service.delete(index, id);
+            removeStoredAclHash(id);
         } else {
             logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }

@@ -58,10 +58,11 @@ public class FileAbstractModel {
     private final int permissions;
     private final String extension;
     private final List<FileAcl> acls;
+    private final String aclHash;
 
     public FileAbstractModel(String name, boolean file, LocalDateTime lastModifiedDate, LocalDateTime creationDate, LocalDateTime accessDate,
                              String extension, String path, String fullpath, long size, String owner, String group, int permissions,
-                             List<FileAcl> acls) {
+                             List<FileAcl> acls, String aclHash) {
         this.name = name;
         this.file = file;
         this.directory = !file;
@@ -76,6 +77,7 @@ public class FileAbstractModel {
         this.permissions = permissions;
         this.extension = extension;
         this.acls = acls;
+        this.aclHash = aclHash;
     }
 
     public String getName() {
@@ -134,6 +136,10 @@ public class FileAbstractModel {
         return acls;
     }
 
+    public String getAclHash() {
+        return aclHash;
+    }
+
     @Override
     public String toString() {
         return "FileAbstractModel{" + "name='" + name + '\'' +
@@ -147,6 +153,7 @@ public class FileAbstractModel {
                 ", group='" + group + '\'' +
                 ", permissions=" + permissions +
                 ", acls=" + acls +
+                ", aclHash='" + aclHash + '\'' +
                 ", extension='" + extension + '\'' +
                 ", fullpath='" + fullpath + '\'' +
                 ", size=" + size +

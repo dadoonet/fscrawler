@@ -91,6 +91,29 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    public void aclHashConsistency() {
+        FileAcl aclOne = new FileAcl();
+        aclOne.setPrincipal("user");
+        aclOne.setType("ALLOW");
+        aclOne.setPermissions(List.of("READ_DATA"));
+        aclOne.setFlags(List.of("FILE_INHERIT"));
+
+        FileAcl aclTwo = new FileAcl();
+        aclTwo.setPrincipal("user");
+        aclTwo.setType("ALLOW");
+        aclTwo.setPermissions(List.of("READ_DATA"));
+        aclTwo.setFlags(List.of("FILE_INHERIT"));
+
+        String hash1 = FsCrawlerUtil.computeAclHash(List.of(aclOne));
+        String hash2 = FsCrawlerUtil.computeAclHash(List.of(aclTwo));
+        assertThat(hash1).isEqualTo(hash2);
+
+        aclTwo.setPermissions(List.of("WRITE_DATA"));
+        String hash3 = FsCrawlerUtil.computeAclHash(List.of(aclTwo));
+        assertThat(hash3).isNotEqualTo(hash1);
+    }
+
+    @Test
     public void isFileSizeUnderLimit() {
         assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1)).isTrue();
         assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576)).isTrue();

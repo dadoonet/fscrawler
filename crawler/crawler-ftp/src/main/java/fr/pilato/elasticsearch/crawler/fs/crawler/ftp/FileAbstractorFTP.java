@@ -109,7 +109,8 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
                 file.getUser(),
                 file.getGroup(),
                 FTPUtils.getFilePermissions(file),
-                Collections.emptyList());
+                Collections.emptyList(),
+                null);
     }
 
     @Override

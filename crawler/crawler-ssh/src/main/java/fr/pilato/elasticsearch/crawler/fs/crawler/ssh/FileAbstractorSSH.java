@@ -86,7 +86,8 @@ public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
                 Integer.toString(file.getAttributes().getUserId()),
                 Integer.toString(file.getAttributes().getGroupId()),
                 file.getAttributes().getPermissions(),
-                Collections.emptyList());
+                Collections.emptyList(),
+                null);
     }
 
     @Override
