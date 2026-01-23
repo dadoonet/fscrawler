@@ -278,12 +278,12 @@ public abstract class FsParserAbstract extends FsParser {
 
     private Map<String, String> initializeAclCache(FsSettings fsSettings) {
         if (fsAclsFileHandler == null) {
-            return null;
+            return new HashMap<>();
         }
         return loadAclHashCache(fsSettings.getName());
     }
 
-    private String determinePathSeparator(FsSettings fsSettings) {
+    private static String determinePathSeparator(FsSettings fsSettings) {
         String separator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
         if (OsValidator.WINDOWS && fsSettings.getServer() == null) {
             logger.debug("We are running on Windows without Server settings so we use the separator in accordance with fs.url");
@@ -303,7 +303,7 @@ public abstract class FsParserAbstract extends FsParser {
 
     private byte[] loadStaticMetadata(FsSettings fsSettings) {
         if (fsSettings.getTags() == null || StringUtils.isEmpty(fsSettings.getTags().getStaticMetaFilename())) {
-            return null;
+            return new byte[0];
         }
 
         File staticMetadataFile = new File(fsSettings.getTags().getStaticMetaFilename());
@@ -656,7 +656,7 @@ public abstract class FsParserAbstract extends FsParser {
 
             // Merge static metadata if available
             Doc mergedDoc = doc;
-            if (staticMetadata != null) {
+            if (staticMetadata.length > 0 && fsSettings.getTags() != null) {
                 mergedDoc = DocUtils.getMergedDoc(doc, fsSettings.getTags().getStaticMetaFilename(),
                         new ByteArrayInputStream(staticMetadata));
             }
