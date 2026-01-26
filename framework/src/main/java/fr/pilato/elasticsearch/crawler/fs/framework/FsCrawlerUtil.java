@@ -201,79 +201,18 @@ public class FsCrawlerUtil {
     }
 
     public static String computeVirtualPathName(String rootPath, String realPath) {
-        if (rootPath == null || realPath == null) {
-            return getPathSeparator(rootPath);
-        }
-
-        String defaultSeparator = getPathSeparator(rootPath);
-        String normalizedRoot = normalizeForComparison(rootPath);
-        String normalizedReal = normalizeForComparison(realPath);
-
-        String result = defaultSeparator;
-        if (shouldResolveRelativePath(normalizedRoot, normalizedReal)) {
-            result = resolveRelativePath(normalizedRoot, normalizedReal, defaultSeparator);
-        }
-
-        if (needsSeparatorConversion(defaultSeparator)) {
-            result = convertSeparator(result, defaultSeparator);
+        String result = getPathSeparator(rootPath);
+        if (realPath.startsWith(rootPath) && realPath.length() > rootPath.length()) {
+            if (rootPath.equals("/")) {
+                // "/" is very common for FTP
+                result = realPath;
+            } else {
+                result = realPath.substring(rootPath.length());
+            }
         }
 
         logger.trace("computeVirtualPathName({}, {}) = {}", rootPath, realPath, result);
         return result;
-    }
-
-    private static boolean shouldResolveRelativePath(String normalizedRoot, String normalizedReal) {
-        if (normalizedRoot.isEmpty()) {
-            return false;
-        }
-        boolean matches;
-        if (OsValidator.WINDOWS) {
-            matches = normalizedReal.regionMatches(true, 0, normalizedRoot, 0, normalizedRoot.length());
-        } else {
-            matches = normalizedReal.startsWith(normalizedRoot);
-        }
-        return matches && hasBoundary(normalizedRoot, normalizedReal);
-    }
-
-    private static String resolveRelativePath(String normalizedRoot, String normalizedReal, String defaultSeparator) {
-        if ("/".equals(normalizedRoot)) {
-            // "/" is very common for FTP
-            return normalizedReal;
-        }
-        String suffix = normalizedReal.substring(normalizedRoot.length());
-        return suffix.isEmpty() ? defaultSeparator : suffix;
-    }
-
-    private static boolean needsSeparatorConversion(String defaultSeparator) {
-        return !"/".equals(defaultSeparator);
-    }
-
-    private static String convertSeparator(String value, String defaultSeparator) {
-        return value.replace('/', defaultSeparator.charAt(0));
-    }
-
-    private static String normalizeForComparison(String path) {
-        if (path == null) {
-            return "";
-        }
-        return path.replace('\\', '/');
-    }
-
-    private static boolean hasBoundary(String normalizedRoot, String normalizedReal) {
-        if (normalizedRoot == null) {
-            return false;
-        }
-        if ("/".equals(normalizedRoot)) {
-            return true;
-        }
-        if (normalizedReal.length() == normalizedRoot.length()) {
-            return true;
-        }
-        if (normalizedReal.length() > normalizedRoot.length()) {
-            char c = normalizedReal.charAt(normalizedRoot.length());
-            return c == '/';
-        }
-        return false;
     }
 
     private static LocalDateTime getFileTime(File file, Function<BasicFileAttributes, FileTime> timeFunction) {
