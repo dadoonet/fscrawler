@@ -65,10 +65,10 @@ It will give you a response similar to:
          "attributes_support" : false,
          "store_source" : false,
          "index_content" : true,
-         "attributes_support" : false,
+
          "acl_support" : false,
          "raw_metadata" : true,
-         "xml_support" : false,
+
          "index_folders" : true,
          "lang_detect" : false,
          "ocr" : {
