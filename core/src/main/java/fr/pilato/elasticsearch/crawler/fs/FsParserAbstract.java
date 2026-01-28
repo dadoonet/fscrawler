@@ -396,8 +396,7 @@ public abstract class FsParserAbstract extends FsParser {
         if (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate)) {
             return true;
         }
-        if (shouldTrackAclChanges() && fsSettings.getFs().isAttributesSupport() && fsSettings.getFs().isAclSupport()
-                && hasAclChanged(filename, filepath, child)) {
+        if (shouldTrackAclChanges() && hasAclChanged(filename, filepath, child)) {
             logger.trace("    - ACL change detected for {}", child.getFullpath());
             return true;
         }
