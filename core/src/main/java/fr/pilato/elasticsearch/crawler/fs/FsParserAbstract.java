@@ -846,6 +846,7 @@ public abstract class FsParserAbstract extends FsParser {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed) {
             service.delete(index, id);
+            removeStoredAclHash(id);
         } else {
             logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }
