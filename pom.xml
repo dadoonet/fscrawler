@@ -44,7 +44,7 @@
         <elasticsearch7.version>7.17.29</elasticsearch7.version>
         <elasticsearch.version>${elasticsearch9.version}</elasticsearch.version>
 
-        <pl4j.version>3.14.1</pl4j.version>
+        <pl4j.version>3.15.0</pl4j.version>
 
         <gestalt.version>0.37.0</gestalt.version>
 
