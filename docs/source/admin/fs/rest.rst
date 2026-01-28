@@ -65,7 +65,6 @@ It will give you a response similar to:
          "attributes_support" : false,
          "store_source" : false,
          "index_content" : true,
-
          "acl_support" : false,
          "raw_metadata" : true,
          "index_folders" : true,
