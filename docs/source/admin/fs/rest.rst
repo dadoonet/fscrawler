@@ -68,7 +68,6 @@ It will give you a response similar to:
 
          "acl_support" : false,
          "raw_metadata" : true,
-
          "index_folders" : true,
          "lang_detect" : false,
          "ocr" : {
