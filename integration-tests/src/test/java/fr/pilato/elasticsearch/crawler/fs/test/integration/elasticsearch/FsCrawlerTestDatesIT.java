@@ -61,7 +61,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         // We expect to have two files
         ESSearchResponse responseNotModified = countTestHelper(new ESSearchRequest()
                         .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                        .withSort("file.created")
+                        .withSort("file.filename")
                 , 2L, currentTestResourceDir);
 
         // We look at the dates.
@@ -80,7 +80,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         // We expect to have 3 files
         ESSearchResponse responseModified = countTestHelper(new ESSearchRequest()
                         .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                        .withSort("file.created")
+                        .withSort("file.filename")
                 , 3L, currentTestResourceDir);
 
         // We look at the dates.
