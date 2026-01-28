@@ -649,7 +649,7 @@ public abstract class FsParserAbstract extends FsParser {
 
             // Merge static metadata if available
             Doc mergedDoc = doc;
-            if (staticMetadata.length > 0 && fsSettings.getTags() != null) {
+            if (staticMetadata.length > 0) {
                 mergedDoc = DocUtils.getMergedDoc(doc, fsSettings.getTags().getStaticMetaFilename(),
                         new ByteArrayInputStream(staticMetadata));
             }
