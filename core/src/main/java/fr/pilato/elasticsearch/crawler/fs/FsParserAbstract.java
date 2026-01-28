@@ -340,9 +340,6 @@ public abstract class FsParserAbstract extends FsParser {
         if (!shouldTrackAclChanges()) {
             return false;
         }
-        if (aclHashCache == null) {
-            return false;
-        }
         String id = generateIdFromFilename(filename, filepath);
         List<FileAcl> acls = fileAbstractModel.getAcls();
         if (acls == null || acls.isEmpty()) {
@@ -371,13 +368,10 @@ public abstract class FsParserAbstract extends FsParser {
             currentHash = FsCrawlerUtil.computeAclHash(fileAbstractModel.getAcls());
         }
         if (currentHash == null) {
-            if (aclHashCache != null && aclHashCache.remove(id) != null) {
+            if (aclHashCache.remove(id) != null) {
                 aclHashCacheDirty = true;
             }
             return;
-        }
-        if (aclHashCache == null) {
-            aclHashCache = new HashMap<>();
         }
         String previous = aclHashCache.put(id, currentHash);
         if (!Objects.equals(previous, currentHash)) {
@@ -386,7 +380,7 @@ public abstract class FsParserAbstract extends FsParser {
     }
 
     private void removeStoredAclHash(String id) {
-        if (!shouldTrackAclChanges() || aclHashCache == null) {
+        if (!shouldTrackAclChanges()) {
             return;
         }
         if (aclHashCache.remove(id) != null) {
