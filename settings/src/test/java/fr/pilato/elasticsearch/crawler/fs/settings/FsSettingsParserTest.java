@@ -97,4 +97,12 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         fsSettings.getTags().setStaticMetaFilename("/path/to/metadatafile.yml");
         settingsTester(fsSettings);
     }
+
+    @Test
+    public void parseSettingsWithAclSupport() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setAttributesSupport(true);
+        fsSettings.getFs().setAclSupport(true);
+        settingsTester(fsSettings);
+    }
 }

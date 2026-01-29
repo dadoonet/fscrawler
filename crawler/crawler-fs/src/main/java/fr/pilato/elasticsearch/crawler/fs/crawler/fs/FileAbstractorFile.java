@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
+import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +35,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
@@ -61,6 +64,9 @@ public class FileAbstractorFile extends FileAbstractor<File> {
 
     @Override
     public FileAbstractModel toFileAbstractModel(String path, File file) {
+        List<FileAcl> fileAcls = fsSettings.getFs().isAclSupport() && fsSettings.getFs().isAttributesSupport()
+                ? getFileAcls(file.toPath())
+                : Collections.emptyList();
         return new FileAbstractModel(
                 file.getName(),
                 file.isFile(),
@@ -73,7 +79,9 @@ public class FileAbstractorFile extends FileAbstractor<File> {
                 file.length(),
                 getOwnerName(file),
                 getGroupName(file),
-                getFilePermissions(file));
+                getFilePermissions(file),
+                fileAcls,
+                computeAclHash(fileAcls));
     }
 
     @Override

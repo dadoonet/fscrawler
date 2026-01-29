@@ -25,6 +25,7 @@
     "index_content": false,
     "add_filesize": false,
     "attributes_support": true,
+    "acl_support": true,
     "lang_detect": true,
     "store_source": true,
     "indexed_chars": "10000.0",
