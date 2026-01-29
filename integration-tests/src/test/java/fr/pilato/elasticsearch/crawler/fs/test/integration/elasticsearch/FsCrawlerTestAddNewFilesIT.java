@@ -35,10 +35,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static java.lang.Thread.sleep;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Test moving/removing/adding files
@@ -143,7 +144,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
     }
 
     private void waitForFsJobAndSetDate(String jobName, LocalDateTime dateTime) throws Exception {
-        awaitBusy(() -> {
+        await().atMost(10, SECONDS).until(() -> {
             try {
                 FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir);
                 FsJob fsJob = fsJobFileHandler.read(jobName);

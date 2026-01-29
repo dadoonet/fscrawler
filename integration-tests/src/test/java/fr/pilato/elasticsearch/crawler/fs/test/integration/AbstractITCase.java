@@ -59,13 +59,15 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import java.time.Duration;
+
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
-import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDirs;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Integration tests expect to have an elasticsearch instance running on <a href="https://127.0.0.1:9200">https://127.0.0.1:9200</a>.
@@ -445,32 +447,38 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         logger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
                 expected == null ? "some" : expected, request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
-        long hits = awaitBusy(() -> {
-            long totalHits;
 
-            // Let's search for entries
-            try {
-                // Make sure we refresh indexed docs before counting
-                refresh(request.getIndex());
-                response[0] = client.search(request);
-                errorWhileWaiting.set(null);
-            } catch (RuntimeException e) {
-                logger.warn("error caught", e);
-                errorWhileWaiting.set(e);
-                return -1;
-            } catch (ElasticsearchClientException e) {
-                // TODO create a NOT FOUND Exception instead
-                logger.debug("error caught: [{}] ", e.getMessage());
-                logger.trace("error caught", e);
-                errorWhileWaiting.set(e);
-                return -1;
-            }
-            totalHits = response[0].getTotalHits();
+        await().atMost(Duration.ofMillis(timeout.millis()))
+                .pollInterval(Duration.ofMillis(500))
+                .until(() -> {
+                    long totalHits;
 
-            logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+                    // Let's search for entries
+                    try {
+                        // Make sure we refresh indexed docs before counting
+                        refresh(request.getIndex());
+                        response[0] = client.search(request);
+                        errorWhileWaiting.set(null);
+                    } catch (RuntimeException e) {
+                        logger.warn("error caught", e);
+                        errorWhileWaiting.set(e);
+                        return false;
+                    } catch (ElasticsearchClientException e) {
+                        // TODO create a NOT FOUND Exception instead
+                        logger.debug("error caught: [{}] ", e.getMessage());
+                        logger.trace("error caught", e);
+                        errorWhileWaiting.set(e);
+                        return false;
+                    }
+                    totalHits = response[0].getTotalHits();
 
-            return totalHits;
-        }, expected, timeout);
+                    logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+
+                    if (expected == null) {
+                        return totalHits >= 1;
+                    }
+                    return totalHits == expected;
+                });
 
         // We check that we did not catch an error while waiting
         assertThatNoException().isThrownBy(() -> {
@@ -479,6 +487,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             }
         });
 
+        long hits = response[0].getTotalHits();
         if (expected == null) {
             assertThat(hits)
                     .as("checking if any document in %s", request.getIndex())

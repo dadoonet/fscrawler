@@ -45,11 +45,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -125,18 +126,19 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
         addCustomAclEntry(file);
 
         AtomicReference<DocumentContext> updatedDocument = new AtomicReference<>();
-        boolean reindexed = awaitBusy(() -> {
-            try {
-                DocumentContext current = fetchSingleDocument(fsSettings);
-                updatedDocument.set(current);
-                String currentIndexingDate = current.read("$.file.indexing_date");
-                return !Objects.equals(initialIndexingDate, currentIndexingDate);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }, TimeValue.timeValueSeconds(60));
+        await().atMost(60, SECONDS)
+                .alias("Document should be reindexed when ACL metadata changes")
+                .until(() -> {
+                    try {
+                        DocumentContext current = fetchSingleDocument(fsSettings);
+                        updatedDocument.set(current);
+                        String currentIndexingDate = current.read("$.file.indexing_date");
+                        return !Objects.equals(initialIndexingDate, currentIndexingDate);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
 
-        assertThat(reindexed).as("Document should be reindexed when ACL metadata changes").isTrue();
         assertThat(readAclSize(updatedDocument.get())).isGreaterThan(initialAclSize);
     }
 

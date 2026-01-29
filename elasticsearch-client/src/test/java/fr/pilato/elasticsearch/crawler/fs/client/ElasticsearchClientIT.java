@@ -33,15 +33,17 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
+import java.time.Duration;
+
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHECK_NODES_EVERY;
-import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assume.assumeTrue;
 
 public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
@@ -923,31 +925,37 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.info("  ---> Waiting up to {} for {} documents in {}", maxWaitForSearch,
                 expected == null ? "some" : expected, request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
-        long hits = awaitBusy(() -> {
-            long totalHits;
 
-            // Let's search for entries
-            try {
-                // Make sure we refresh indexed docs before counting
-                esClient.refresh(request.getIndex());
-                response[0] = esClient.search(request);
-                errorWhileWaiting.set(null);
-            } catch (RuntimeException e) {
-                logger.warn("error caught", e);
-                errorWhileWaiting.set(e);
-                return -1;
-            } catch (ElasticsearchClientException e) {
-                // TODO create a NOT FOUND Exception instead
-                logger.debug("error caught", e);
-                errorWhileWaiting.set(e);
-                return -1;
-            }
-            totalHits = response[0].getTotalHits();
+        await().atMost(Duration.ofMillis(maxWaitForSearch.millis()))
+                .pollInterval(Duration.ofMillis(500))
+                .until(() -> {
+                    long totalHits;
 
-            logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+                    // Let's search for entries
+                    try {
+                        // Make sure we refresh indexed docs before counting
+                        esClient.refresh(request.getIndex());
+                        response[0] = esClient.search(request);
+                        errorWhileWaiting.set(null);
+                    } catch (RuntimeException e) {
+                        logger.warn("error caught", e);
+                        errorWhileWaiting.set(e);
+                        return false;
+                    } catch (ElasticsearchClientException e) {
+                        // TODO create a NOT FOUND Exception instead
+                        logger.debug("error caught", e);
+                        errorWhileWaiting.set(e);
+                        return false;
+                    }
+                    totalHits = response[0].getTotalHits();
 
-            return totalHits;
-        }, expected, maxWaitForSearch);
+                    logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+
+                    if (expected == null) {
+                        return totalHits >= 1;
+                    }
+                    return totalHits == expected;
+                });
 
         // We check that we did not catch an error while waiting
         assertThatNoException().isThrownBy(() -> {
@@ -956,6 +964,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             }
         });
 
+        long hits = response[0].getTotalHits();
         if (expected == null) {
             assertThat(hits)
                     .as("checking if any document in %s", request.getIndex())

@@ -23,7 +23,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.framework.Await;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
@@ -39,12 +38,16 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.core.ConditionTimeoutException;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.logging.LoggingFeature;
 
 import javax.net.ssl.*;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import java.io.*;
 import java.net.ConnectException;
 import java.security.*;
@@ -417,14 +420,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void waitForHealthyIndex(String index) throws ElasticsearchClientException {
         try {
-            Await.awaitBusy(() -> {
+            await().atMost(10, SECONDS).until(() -> {
                 String health = catIndicesHealth(index);
                 return "green".equals(health) || "yellow".equals(health);
             });
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ElasticsearchClientException("Await interrupted while waiting for healthy index [" +
-                    index + "]", e);
+        } catch (ConditionTimeoutException e) {
+            logger.warn("Index [{}] did not become healthy within 10 seconds", index);
         }
     }
 
