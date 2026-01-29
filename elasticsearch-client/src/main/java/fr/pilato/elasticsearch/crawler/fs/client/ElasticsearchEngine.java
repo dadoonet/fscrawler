@@ -53,15 +53,14 @@ public class ElasticsearchEngine implements Engine<ElasticsearchOperation, Elast
                     .append(r.getId())
                     .append("\"");
 
-            if (r instanceof ElasticsearchIndexOperation && ((ElasticsearchIndexOperation) r).getPipeline() != null) {
+            if (r instanceof ElasticsearchIndexOperation indexOp && indexOp.getPipeline() != null) {
                 bulkRequest
                         .append(",\"pipeline\":\"")
-                        .append(((ElasticsearchIndexOperation) r).getPipeline())
+                        .append(indexOp.getPipeline())
                         .append("\"");
             }
             bulkRequest.append("}}\n");
-            if (r instanceof ElasticsearchIndexOperation) {
-                ElasticsearchIndexOperation indexOp = (ElasticsearchIndexOperation) r;
+            if (r instanceof ElasticsearchIndexOperation indexOp) {
                 bulkRequest.append(JsonUtil.serialize(JsonUtil.deserialize(indexOp.getJson(), Object.class))).append("\n");
             }
             logger.trace("Adding to bulk request: {}", bulkRequest);

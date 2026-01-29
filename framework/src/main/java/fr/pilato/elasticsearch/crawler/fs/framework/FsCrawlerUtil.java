@@ -39,7 +39,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_DOCS = "_docs";
@@ -356,11 +355,11 @@ public class FsCrawlerUtil {
                 final List<String> permissions = entry.permissions().stream()
                         .map(AclEntryPermission::name)
                         .sorted()
-                        .collect(Collectors.toList());
+                        .toList();
                 final List<String> flags = entry.flags().stream()
                         .map(AclEntryFlag::name)
                         .sorted()
-                        .collect(Collectors.toList());
+                        .toList();
                 result.add(new FileAcl(principal, type, permissions, flags));
             }
             logger.debug("ACL entries found for [{}]: {}", path, result);

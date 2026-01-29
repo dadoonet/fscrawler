@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-public class ESSemanticQuery extends ESQuery {
+public final class ESSemanticQuery extends ESQuery {
     private final String value;
 
     public ESSemanticQuery(String field, String value) {

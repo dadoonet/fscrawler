@@ -109,10 +109,10 @@ public class DocUtils {
                     }
                 }
             } else {
-                if (mainNode instanceof ObjectNode) {
+                if (mainNode instanceof ObjectNode objectNode) {
                     // Overwrite field
                     JsonNode value = updateNode.get(fieldName);
-                    ((ObjectNode) mainNode).set(fieldName, value);
+                    objectNode.set(fieldName, value);
                 }
             }
         }

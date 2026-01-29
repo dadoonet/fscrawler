@@ -45,7 +45,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
     private static final Logger logger = LogManager.getLogger();
@@ -153,7 +152,7 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         List<FTPFile> files = Arrays.stream(ftpFiles)
                 .filter(IS_SYM_LINK)
                 .sorted(FTP_FILE_COMPARATOR.reversed())
-                .collect(Collectors.toList());
+                .toList();
 
         Collection<FileAbstractModel> result = new ArrayList<>(files.size());
         // Iterate other files
@@ -161,7 +160,7 @@ public class FileAbstractorFTP extends FileAbstractor<FTPFile> {
         result.addAll(files.stream().filter(file -> !".".equals(file.getName()) &&
                 !"..".equals(file.getName()))
                 .map(file -> toFileAbstractModel(dir, file))
-                .collect(Collectors.toList()));
+                .toList());
 
         logger.debug("{} files found", result.size());
         return result;

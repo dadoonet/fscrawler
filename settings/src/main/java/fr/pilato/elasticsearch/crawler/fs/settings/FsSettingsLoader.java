@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -98,7 +97,7 @@ public class FsSettingsLoader extends MetaFileHandler {
      */
     private List<Path> readDir(Path settingsDir) throws IOException {
         try (Stream<Path> files = Files.list(settingsDir)) {
-            return files.collect(Collectors.toList());
+            return files.toList();
         }
     }
 

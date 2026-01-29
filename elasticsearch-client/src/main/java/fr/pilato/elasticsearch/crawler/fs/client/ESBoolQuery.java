@@ -21,7 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ESBoolQuery extends ESQuery {
+public final class ESBoolQuery extends ESQuery {
 
     final List<ESQuery> mustClauses = new ArrayList<>();
 
