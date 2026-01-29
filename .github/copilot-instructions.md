@@ -4,7 +4,7 @@ Always reference these instructions first and fallback to search or bash command
 
 ## Project Overview
 
-FSCrawler is a Java-based file system crawler for Elasticsearch that helps index binary documents (PDF, Office docs, etc.). It's a multi-module Maven project built with Java ≥11, using TestContainers for integration tests and Docker for distribution.
+FSCrawler is a Java-based file system crawler for Elasticsearch that helps index binary documents (PDF, Office docs, etc.). It's a multi-module Maven project built with Java ≥17, using TestContainers for integration tests and Docker for distribution.
 
 ## Working Effectively
 

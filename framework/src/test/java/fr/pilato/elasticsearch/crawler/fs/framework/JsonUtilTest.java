@@ -39,37 +39,38 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void jsonPath() {
-        String json = "{\n" +
-                "   \"content\":\"Some Text\",\n" +
-                "   \"file\":{\n" +
-                "      \"extension\":\"txt\",\n" +
-                "      \"content_type\":\"text/plain; charset=ISO-8859-1\",\n" +
-                "      \"created\":\"2022-02-08T21:57:51.000+00:00\",\n" +
-                "      \"last_modified\":\"2022-02-08T21:57:51.394+00:00\",\n" +
-                "      \"last_accessed\":\"2022-02-08T21:57:51.394+00:00\",\n" +
-                "      \"indexing_date\":\"2022-02-08T21:57:52.033+00:00\",\n" +
-                "      \"filesize\":12230,\n" +
-                "      \"filename\":\"roottxtfile.txt\",\n" +
-                "      \"url\":\"file:///var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n" +
-                "   },\n" +
-                "   \"path\":{\n" +
-                "      \"root\":\"e366ee2f42db246720b82a82fdb4e15e\",\n" +
-                "      \"virtual\":\"/roottxtfile.txt\",\n" +
-                "      \"real\":\"/var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt\"\n" +
-                "   },\n" +
-                "   \"attributes\":{\n" +
-                "      \"owner\":\"dpilato\",\n" +
-                "      \"group\":\"staff\",\n" +
-                "      \"permissions\":644,\n" +
-                "      \"foobar\":null,\n" +
-                "      \"acl\":[{\n" +
-                "         \"principal\":\"dpilato\",\n" +
-                "         \"type\":\"ALLOW\",\n" +
-                "         \"permissions\":[\"READ_DATA\"],\n" +
-                "         \"flags\":[\"FILE_INHERIT\"]\n" +
-                "      }]\n" +
-                "   }\n" +
-                "}";
+        String json = """
+                {
+                   "content":"Some Text",
+                   "file":{
+                      "extension":"txt",
+                      "content_type":"text/plain; charset=ISO-8859-1",
+                      "created":"2022-02-08T21:57:51.000+00:00",
+                      "last_modified":"2022-02-08T21:57:51.394+00:00",
+                      "last_accessed":"2022-02-08T21:57:51.394+00:00",
+                      "indexing_date":"2022-02-08T21:57:52.033+00:00",
+                      "filesize":12230,
+                      "filename":"roottxtfile.txt",
+                      "url":"file:///var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt"
+                   },
+                   "path":{
+                      "root":"e366ee2f42db246720b82a82fdb4e15e",
+                      "virtual":"/roottxtfile.txt",
+                      "real":"/var/folders/xn/47mdpxd12vq4zrjhkwbhd5_r0000gn/T/junit16929133427221182897/resources/test_attributes/roottxtfile.txt"
+                   },
+                   "attributes":{
+                      "owner":"dpilato",
+                      "group":"staff",
+                      "permissions":644,
+                      "foobar":null,
+                      "acl":[{
+                         "principal":"dpilato",
+                         "type":"ALLOW",
+                         "permissions":["READ_DATA"],
+                         "flags":["FILE_INHERIT"]
+                      }]
+                   }
+                }""";
 
         DocumentContext context = parseJsonAsDocumentContext(json);
         assertThat((String) context.read("$.attributes.owner")).isEqualTo("dpilato");

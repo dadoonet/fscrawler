@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-public class ESTermQuery extends ESQuery {
+public final class ESTermQuery extends ESQuery {
     private final String value;
 
     public ESTermQuery(String field, String value) {

@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-public class ESPrefixQuery extends ESQuery {
+public final class ESPrefixQuery extends ESQuery {
     private final String value;
 
     public ESPrefixQuery(String field, String value) {

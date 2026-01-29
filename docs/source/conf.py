@@ -58,6 +58,9 @@ if release.endswith('-SNAPSHOT'):
 # Elasticsearch latest version
 es_stack_version=config.get('3rdParty', 'ElasticsearchVersion')
 
+# Java version
+java_version=config.get('FsCrawler', 'JavaVersion')
+
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -231,6 +234,7 @@ rst_prolog = rst_prolog + """
 .. |Download_URL| replace:: Sonatype
 .. |Maven_Central| replace:: Maven Central
 .. |Sonatype| replace:: Sonatype
+.. |java_version| replace:: {fmt_java_version}
 
 .. _Tika: https://tika.apache.org/{fmt_tika_version}/
 .. _ES: https://www.elastic.co/elasticsearch
@@ -252,6 +256,7 @@ fmt_es_version9=config.get('3rdParty', 'ElasticsearchVersion9'),
 fmt_jpeg_version=config.get('3rdParty', 'JpegVersion'),
 fmt_downloadUrl=downloadUrl,
 fmt_es_stack_version=es_stack_version,
-fmt_fscrawler_version=release
+fmt_fscrawler_version=release,
+fmt_java_version=java_version
 )
 # End of conf.py

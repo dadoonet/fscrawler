@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-public class ESRangeQuery extends ESQuery {
+public final class ESRangeQuery extends ESQuery {
     private Integer gte;
     private Integer lt;
 

@@ -9,7 +9,7 @@ using Kibana. For example location worked or the previous company, etc.
 Prerequisites
 ^^^^^^^^^^^^^
 
-* Java 11+ must be installed
+* Java |java_version|\ + must be installed
 * ``JAVA_HOME`` must be defined
 
 Install Elastic stack

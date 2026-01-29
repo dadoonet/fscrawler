@@ -38,7 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
@@ -116,13 +115,12 @@ public class FileAbstractorSSH extends FileAbstractor<SftpClient.DirEntry> {
                     .filter(IS_DOT)
                     .sorted(SFTP_FILE_COMPARATOR.reversed())
                     .map(file -> toFileAbstractModel(dir, file))
-                    .collect(Collectors.toList());
+                    .toList();
 
             logger.trace("{} local files found", result.size());
             return result;
         } catch (Exception e) {
-            if (e.getCause() instanceof SftpException) {
-                SftpException cause = (SftpException) e.getCause();
+            if (e.getCause() instanceof SftpException cause) {
                 if (cause.getStatus() == SftpConstants.SSH_FX_NO_SUCH_FILE) {
                     logger.debug("Directory [{}] does not exist. We return an empty list.", dir);
                     return Collections.emptyList();

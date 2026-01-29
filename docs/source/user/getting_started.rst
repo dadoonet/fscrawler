@@ -1,7 +1,7 @@
 Getting Started
 ---------------
 
-You need to have at least **Java 11** and have properly configured
+You need to have at least **Java** |java_version| and have properly configured
 ``JAVA_HOME`` to point to your Java installation directory. For example
 on MacOS if you are using sdkman you can define in your ``~/.bash_profile`` file:
 

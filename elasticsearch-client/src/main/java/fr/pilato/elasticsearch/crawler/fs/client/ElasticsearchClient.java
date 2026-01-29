@@ -767,24 +767,19 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     private String toElasticsearchQuery(ESQuery query) {
-        if (query instanceof ESTermQuery) {
-            ESTermQuery esQuery = (ESTermQuery) query;
+        if (query instanceof ESTermQuery esQuery) {
             return "\"term\": { \"" + esQuery.getField() +  "\": \"" + esQuery.getValue() + "\"}";
         }
-        if (query instanceof ESMatchQuery) {
-            ESMatchQuery esQuery = (ESMatchQuery) query;
+        if (query instanceof ESMatchQuery esQuery) {
             return "\"match\": { \"" + esQuery.getField() +  "\": \"" + esQuery.getValue() + "\"}";
         }
-        if (query instanceof ESSemanticQuery) {
-            ESSemanticQuery esQuery = (ESSemanticQuery) query;
+        if (query instanceof ESSemanticQuery esQuery) {
             return "\"semantic\": { \"field\":\"" + esQuery.getField() +  "\", \"query\":\"" + esQuery.getValue() + "\"}";
         }
-        if (query instanceof ESPrefixQuery) {
-            ESPrefixQuery esQuery = (ESPrefixQuery) query;
+        if (query instanceof ESPrefixQuery esQuery) {
             return "\"prefix\": { \"" + esQuery.getField() +  "\": \"" + esQuery.getValue() + "\"}";
         }
-        if (query instanceof ESRangeQuery) {
-            ESRangeQuery esQuery = (ESRangeQuery) query;
+        if (query instanceof ESRangeQuery esQuery) {
             String localQuery = "\"range\": { \"" + esQuery.getField() + "\": {";
             if (esQuery.getGte() != null) {
                 localQuery += "\"gte\": " + esQuery.getGte();
@@ -798,8 +793,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             localQuery += "}}";
             return localQuery;
         }
-        if (query instanceof ESBoolQuery) {
-            ESBoolQuery esQuery = (ESBoolQuery) query;
+        if (query instanceof ESBoolQuery esQuery) {
             StringBuilder localQuery = new StringBuilder("\"bool\": { \"must\" : [");
             boolean hasClauses = false;
             for (ESQuery clause : esQuery.getMustClauses()) {
