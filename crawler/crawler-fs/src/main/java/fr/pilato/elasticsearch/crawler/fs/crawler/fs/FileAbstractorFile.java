@@ -64,7 +64,9 @@ public class FileAbstractorFile extends FileAbstractor<File> {
 
     @Override
     public FileAbstractModel toFileAbstractModel(String path, File file) {
-        List<FileAcl> fileAcls = fsSettings.getFs().isAclSupport() ? getFileAcls(file.toPath()) : Collections.emptyList();
+        List<FileAcl> fileAcls = fsSettings.getFs().isAclSupport() && fsSettings.getFs().isAttributesSupport()
+                ? getFileAcls(file.toPath())
+                : Collections.emptyList();
         return new FileAbstractModel(
                 file.getName(),
                 file.isFile(),
