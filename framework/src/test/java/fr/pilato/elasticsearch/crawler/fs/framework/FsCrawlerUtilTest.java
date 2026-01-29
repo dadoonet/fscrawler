@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
@@ -77,6 +78,39 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
         int permissions = FsCrawlerUtil.getFilePermissions(file);
         assertThat(permissions).isEqualTo(700);
+    }
+
+    @Test
+    public void aclEntries() {
+        List<FileAcl> aclEntries = FsCrawlerUtil.getFileAcls(file.toPath());
+        if (OsValidator.WINDOWS) {
+            assertThat(aclEntries).as("ACL entries should exist on Windows").isNotEmpty();
+        } else {
+            assertThat(aclEntries).as("ACL entries should be empty when ACL view is not supported").isEmpty();
+        }
+    }
+
+    @Test
+    public void aclHashConsistency() {
+        FileAcl aclOne = new FileAcl();
+        aclOne.setPrincipal("user");
+        aclOne.setType("ALLOW");
+        aclOne.setPermissions(List.of("READ_DATA"));
+        aclOne.setFlags(List.of("FILE_INHERIT"));
+
+        FileAcl aclTwo = new FileAcl();
+        aclTwo.setPrincipal("user");
+        aclTwo.setType("ALLOW");
+        aclTwo.setPermissions(List.of("READ_DATA"));
+        aclTwo.setFlags(List.of("FILE_INHERIT"));
+
+        String hash1 = FsCrawlerUtil.computeAclHash(List.of(aclOne));
+        String hash2 = FsCrawlerUtil.computeAclHash(List.of(aclTwo));
+        assertThat(hash1).isEqualTo(hash2);
+
+        aclTwo.setPermissions(List.of("WRITE_DATA"));
+        String hash3 = FsCrawlerUtil.computeAclHash(List.of(aclTwo));
+        assertThat(hash3).isNotEqualTo(hash1);
     }
 
     @Test

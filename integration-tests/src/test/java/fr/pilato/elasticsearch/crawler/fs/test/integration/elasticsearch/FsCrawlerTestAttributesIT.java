@@ -24,16 +24,33 @@ import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryFlag;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.UserPrincipal;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Test attributes crawler settings
@@ -57,6 +74,106 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
                 assertThat((String) document.read("$.attributes.group")).isNotEmpty();
                 assertThat((Integer) document.read("$.attributes.permissions")).isGreaterThanOrEqualTo(400);
             }
+        }
+    }
+
+    @Test
+    public void aclAttributes() throws Exception {
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setAttributesSupport(true);
+        fsSettings.getFs().setAclSupport(true);
+        crawler = startCrawler(fsSettings);
+
+        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
+        for (ESSearchHit hit : searchResponse.getHits()) {
+            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+
+            List<?> aclEntries;
+            try {
+                aclEntries = document.read("$.attributes.acl");
+            } catch (PathNotFoundException e) {
+                aclEntries = null;
+            }
+
+            if (OsValidator.WINDOWS) {
+                assertThat(aclEntries).as("ACL metadata should be collected on Windows").isNotNull().isNotEmpty();
+                assertThat((String) document.read("$.attributes.acl[0].principal")).isNotBlank();
+                assertThat((String) document.read("$.attributes.acl[0].type")).isNotBlank();
+            } else {
+                assertThat(aclEntries).as("ACL metadata should not be present when the platform does not expose ACLs").isNullOrEmpty();
+            }
+        }
+    }
+
+    @Test
+    public void aclChangeTriggersReindex() throws Exception {
+        Path file = currentTestResourceDir.resolve("roottxtfile.txt");
+        AclFileAttributeView aclView = Files.getFileAttributeView(file, AclFileAttributeView.class);
+        assumeTrue("ACL change tests require an ACL-capable filesystem", aclView != null);
+
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setAttributesSupport(true);
+        fsSettings.getFs().setAclSupport(true);
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(1));
+
+        crawler = startCrawler(fsSettings);
+
+        DocumentContext initialDocument = fetchSingleDocument(fsSettings);
+        int initialAclSize = readAclSize(initialDocument);
+        String initialIndexingDate = initialDocument.read("$.file.indexing_date");
+
+        addCustomAclEntry(file);
+
+        AtomicReference<DocumentContext> updatedDocument = new AtomicReference<>();
+        boolean reindexed = awaitBusy(() -> {
+            try {
+                DocumentContext current = fetchSingleDocument(fsSettings);
+                updatedDocument.set(current);
+                String currentIndexingDate = current.read("$.file.indexing_date");
+                return !Objects.equals(initialIndexingDate, currentIndexingDate);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }, TimeValue.timeValueSeconds(60));
+
+        assertThat(reindexed).as("Document should be reindexed when ACL metadata changes").isTrue();
+        assertThat(readAclSize(updatedDocument.get())).isGreaterThan(initialAclSize);
+    }
+
+    private DocumentContext fetchSingleDocument(FsSettings fsSettings) throws Exception {
+        refresh(fsSettings.getElasticsearch().getIndex());
+        ESSearchResponse response = client.search(new ESSearchRequest()
+                .withIndex(fsSettings.getElasticsearch().getIndex())
+                .withSize(1));
+        assertThat(response.getHits()).isNotEmpty();
+        return parseJsonAsDocumentContext(response.getHits().get(0).getSource());
+    }
+
+    private void addCustomAclEntry(Path file) throws IOException {
+        AclFileAttributeView view = Files.getFileAttributeView(file, AclFileAttributeView.class);
+        if (view == null) {
+            throw new IOException("ACL view not supported");
+        }
+        List<AclEntry> entries = new ArrayList<>(view.getAcl());
+        UserPrincipal owner = Files.getOwner(file);
+        EnumSet<AclEntryPermission> permissions = EnumSet.of(AclEntryPermission.READ_ACL, AclEntryPermission.WRITE_ACL);
+        EnumSet<AclEntryFlag> flags = EnumSet.of(AclEntryFlag.FILE_INHERIT, AclEntryFlag.DIRECTORY_INHERIT);
+        AclEntry newEntry = AclEntry.newBuilder()
+                .setPrincipal(owner)
+                .setType(AclEntryType.ALLOW)
+                .setPermissions(permissions)
+                .setFlags(flags)
+                .build();
+        entries.add(newEntry);
+        view.setAcl(entries);
+    }
+
+    private int readAclSize(DocumentContext document) {
+        try {
+            List<?> aclEntries = document.read("$.attributes.acl");
+            return aclEntries != null ? aclEntries.size() : 0;
+        } catch (PathNotFoundException e) {
+            return 0;
         }
     }
 }

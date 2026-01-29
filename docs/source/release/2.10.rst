@@ -45,6 +45,7 @@ New
 * Add support for static external metadata for all documents. See :ref:`tags` Thanks to dadoonet.
 * The job name is not mandatory anymore and it will be ``fscrawler`` by default. Thanks to dadoonet.
 * FSCrawler also supports Elasticsearch 9. Thanks to dadoonet.
+* Add support for ACL metadata extraction for NTFS filesystems, including principals, permissions, and flags. Thanks to alexbluesteele.
 
 Fix
 ---

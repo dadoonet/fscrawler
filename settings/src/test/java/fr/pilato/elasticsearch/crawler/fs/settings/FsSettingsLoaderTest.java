@@ -130,6 +130,7 @@ public class FsSettingsLoaderTest {
         expected.getFs().setIndexContent(false);
         expected.getFs().setAddFilesize(false);
         expected.getFs().setAttributesSupport(true);
+        expected.getFs().setAclSupport(true);
         expected.getFs().setLangDetect(true);
         expected.getFs().setStoreSource(true);
         expected.getFs().setIndexedChars(new Percentage(10000.0));

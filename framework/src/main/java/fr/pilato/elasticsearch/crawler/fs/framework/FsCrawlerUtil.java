@@ -26,16 +26,20 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_DOCS = "_docs";
@@ -281,7 +285,7 @@ public class FsCrawlerUtil {
      */
     public static String getGroupName(final File file) {
         if (OsValidator.WINDOWS) {
-            logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
+            logger.debug("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
             return null;
         }
         try {
@@ -325,6 +329,95 @@ public class FsCrawlerUtil {
             logger.warn("Failed to determine 'permissions' of {}: {}", file, e.getMessage());
             return -1;
         }
+    }
+
+    /**
+     * Determines Access Control List entries for the given file.
+     */
+    public static List<FileAcl> getFileAcls(final Path path) {
+        logger.trace("Resolving ACLs for [{}]", path);
+        try {
+            final AclFileAttributeView aclView = Files.getFileAttributeView(path, AclFileAttributeView.class);
+            if (aclView == null) {
+                logger.trace("Determining 'acl' is skipped for file [{}] as ACL view is not supported", path);
+                return Collections.emptyList();
+            }
+
+            final List<AclEntry> aclEntries = aclView.getAcl();
+            if (aclEntries == null || aclEntries.isEmpty()) {
+                logger.trace("No ACL entries found for [{}]", path);
+                return Collections.emptyList();
+            }
+
+            final List<FileAcl> result = new ArrayList<>(aclEntries.size());
+            for (AclEntry entry : aclEntries) {
+                final String principal = entry.principal() != null ? entry.principal().getName() : null;
+                final String type = entry.type() != null ? entry.type().name() : null;
+                final List<String> permissions = entry.permissions().stream()
+                        .map(AclEntryPermission::name)
+                        .sorted()
+                        .collect(Collectors.toList());
+                final List<String> flags = entry.flags().stream()
+                        .map(AclEntryFlag::name)
+                        .sorted()
+                        .collect(Collectors.toList());
+                result.add(new FileAcl(principal, type, permissions, flags));
+            }
+            logger.debug("ACL entries found for [{}]: {}", path, result);
+            return result;
+        } catch (Exception e) {
+            logger.debug("Failed to determine 'acl' of {}: {}", path, e);
+            return Collections.emptyList();
+        }
+    }
+
+    public static String computeAclHash(List<FileAcl> acls) {
+        if (acls == null || acls.isEmpty()) {
+            return null;
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            acls.stream()
+                    .sorted(Comparator
+                            .comparing(FileAcl::getPrincipal, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(FileAcl::getType, Comparator.nullsFirst(String::compareTo))
+                            .thenComparing(a -> joinAndSort(a.getPermissions()))
+                            .thenComparing(a -> joinAndSort(a.getFlags())))
+                    .forEach(entry -> {
+                        updateDigest(digest, entry.getPrincipal());
+                        updateDigest(digest, entry.getType());
+                        updateDigest(digest, joinAndSort(entry.getPermissions()));
+                        updateDigest(digest, joinAndSort(entry.getFlags()));
+                    });
+            return toHex(digest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Unable to compute ACL hash", e);
+        }
+    }
+
+    private static void updateDigest(MessageDigest digest, String value) {
+        if (value == null) {
+            digest.update((byte) 0);
+        } else {
+            digest.update(value.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    private static String joinAndSort(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "";
+        }
+        List<String> copy = new ArrayList<>(values);
+        copy.sort(String::compareTo);
+        return String.join(",", copy);
+    }
+
+    private static String toHex(byte[] data) {
+        StringBuilder builder = new StringBuilder(data.length * 2);
+        for (byte b : data) {
+            builder.append(String.format(Locale.ROOT, "%02x", b & 0xff));
+        }
+        return builder.toString();
     }
 
     public static int toOctalPermission(boolean read, boolean write, boolean execute) {
