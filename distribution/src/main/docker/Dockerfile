@@ -1,16 +1,9 @@
-FROM eclipse-temurin:25-jdk
-
-ARG langsPkg
+FROM eclipse-temurin:25-jre-alpine
 
 RUN set -ex \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-    gettext-base \
+    && apk add --no-cache \
     procps \
-    curl \
-    ${langsPkg} \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    curl
 
 COPY maven /usr/share/fscrawler
 ENTRYPOINT [ "/usr/share/fscrawler/bin/fscrawler" ]
