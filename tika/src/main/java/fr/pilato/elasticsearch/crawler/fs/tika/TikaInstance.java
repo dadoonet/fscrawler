@@ -207,7 +207,7 @@ public class TikaInstance {
             TikaException {
         initTika(fsSettings.getFs());
         WriteOutContentHandler handler = new WriteOutContentHandler(indexedChars);
-        try (stream) {
+        try {
             parser.parse(stream, new BodyContentHandler(handler), metadata, context);
         } catch (WriteLimitReachedException e) {
             String resourceName = metadata.get("resourceName");
