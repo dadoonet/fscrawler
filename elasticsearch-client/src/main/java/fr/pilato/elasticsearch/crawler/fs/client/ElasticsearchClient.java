@@ -300,7 +300,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                         }
                     }, Objects::nonNull);
         } catch (ConditionTimeoutException e) {
-            throw new ElasticsearchClientException("License endpoint is not ready after " + Duration.ofMinutes(1) + " retries");
+            throw new ElasticsearchClientException("License endpoint is not ready after 1 minute");
         }
     }
 
