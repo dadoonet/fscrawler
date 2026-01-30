@@ -47,7 +47,6 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
         // Make sure that we wait enough for the crawler to be closed
         await().atMost(10, SECONDS).until(() -> crawler.getFsParser().isClosed());
 
-        assertThat(crawler.getFsParser().isClosed()).as("Job should stop after one run").isTrue();
         assertThat(crawler.getFsParser().getRunNumber()).isEqualTo(1);
     }
 
@@ -64,7 +63,6 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
         // Make sure that we wait enough for the crawler to be closed
         await().atMost(10, SECONDS).until(() -> crawler.getFsParser().isClosed());
 
-        assertThat(crawler.getFsParser().isClosed()).as("Job should stop after two runs").isTrue();
         assertThat(crawler.getFsParser().getRunNumber()).isEqualTo(2);
     }
 }
