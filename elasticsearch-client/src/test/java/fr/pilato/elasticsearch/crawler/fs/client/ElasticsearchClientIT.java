@@ -148,7 +148,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", maxWaitForSearch);
         } else {
             maxWaitForSearch = MAX_WAIT_FOR_SEARCH;
-            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", maxWaitForSearch);
+            logger.info("Semantic search is not supported on this cluster. We will give {} to run the tests.", maxWaitForSearch);
         }
     }
 
