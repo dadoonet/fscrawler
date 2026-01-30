@@ -24,6 +24,7 @@ import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -39,6 +40,7 @@ import java.nio.file.attribute.AclEntryPermission;
 import java.nio.file.attribute.AclEntryType;
 import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.UserPrincipal;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -69,7 +71,7 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
             if (OsValidator.WINDOWS) {
                 // We should not have values for group and permissions on Windows OS
                 assertThatThrownBy(() -> document.read("$.attributes.group")).isInstanceOf(PathNotFoundException.class);
-                assertThat((Integer) document.read("$.attributes.permissions")).isEqualTo(0);
+                assertThat((Integer) document.read("$.attributes.permissions")).isZero();
             } else {
                 // We test group and permissions only on non Windows OS
                 assertThat((String) document.read("$.attributes.group")).isNotEmpty();
@@ -128,6 +130,7 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
         AtomicReference<DocumentContext> updatedDocument = new AtomicReference<>();
         await().atMost(60, SECONDS)
                 .alias("Document should be reindexed when ACL metadata changes")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
                         DocumentContext current = fetchSingleDocument(fsSettings);

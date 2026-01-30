@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
@@ -55,6 +56,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -285,25 +287,21 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
 
         // License endpoint might not be ready in IT so we retry with exponential wait time up to 1 minute
-        int retries = 0;
-        int maxRetries = 5;
-        int waitTime = 1000;
-        while (retries < maxRetries) {
-            try {
-                return getLicenseInternal();
-            } catch (NotFoundException e) {
-                logger.warn("License endpoint is not ready yet. Retrying in {}ms", waitTime);
-                try {
-                    Thread.sleep(waitTime);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                }
-                waitTime *= 2;
-                retries++;
-            }
+        try {
+            return await()
+                    .atMost(Duration.ofMinutes(1))
+                    .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofSeconds(1), Duration.ofSeconds(10)))
+                    .until(() -> {
+                        try {
+                            return getLicenseInternal();
+                        } catch (NotFoundException e) {
+                            logger.warn("License endpoint is not ready yet. Retrying...");
+                            return null;
+                        }
+                    }, Objects::nonNull);
+        } catch (ConditionTimeoutException e) {
+            throw new ElasticsearchClientException("License endpoint is not ready after " + Duration.ofMinutes(1) + " retries");
         }
-
-        throw new ElasticsearchClientException("License endpoint is not ready after " + maxRetries + " retries");
     }
 
     private String getLicenseInternal() throws ElasticsearchClientException {
@@ -421,7 +419,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public void waitForHealthyIndex(String index) throws ElasticsearchClientException {
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
         try {
-            await().atMost(10, SECONDS).until(() -> {
+            await()
+                    .atMost(10, SECONDS)
+                    .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                    .until(() -> {
                 try {
                     String health = catIndicesHealth(index);
                     errorWhileWaiting.set(null);

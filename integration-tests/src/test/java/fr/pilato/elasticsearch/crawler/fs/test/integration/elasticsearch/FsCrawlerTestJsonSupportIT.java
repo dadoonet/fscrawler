@@ -23,11 +23,14 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+
+import java.time.Duration;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static org.awaitility.Awaitility.await;
@@ -49,6 +52,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("We should have 2 doc for tweet in text field...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
                         ESSearchResponse response = client.search(new ESSearchRequest()
@@ -73,6 +77,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("We should have 0 doc for tweet in text field...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
                         ESSearchResponse response = client.search(new ESSearchRequest()
@@ -87,6 +92,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("We should have 2 docs for tweet in content field...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
                         ESSearchResponse response = client.search(new ESSearchRequest()
@@ -112,6 +118,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("We should have 2 doc for tweet in object.text field...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
                         ESSearchResponse response = client.search(new ESSearchRequest()
@@ -136,6 +143,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
 
         await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("We should have 2 docs only...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
                         ESSearchResponse response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS));

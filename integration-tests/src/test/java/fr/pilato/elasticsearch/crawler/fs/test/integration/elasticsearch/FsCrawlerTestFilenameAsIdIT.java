@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
@@ -50,6 +51,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("Document should exists with [roottxtfile.txt] id...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
                         return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "roottxtfile.txt");
@@ -74,6 +76,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         await().atMost(Duration.ofSeconds(10))
                 .alias("Document should exists with [id1.txt] id...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
                         return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "id1.txt");
@@ -83,6 +86,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
                 });
         await().atMost(Duration.ofSeconds(10))
                 .alias("Document should exists with [id2.txt] id...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
                         return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "id2.txt");

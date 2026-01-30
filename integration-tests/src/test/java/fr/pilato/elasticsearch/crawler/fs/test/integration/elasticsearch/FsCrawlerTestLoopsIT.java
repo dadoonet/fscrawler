@@ -21,8 +21,11 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
+
+import java.time.Duration;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -45,7 +48,10 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
         // Make sure that we wait enough for the crawler to be closed
-        await().atMost(10, SECONDS).until(() -> crawler.getFsParser().isClosed());
+        await()
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .atMost(10, SECONDS)
+                .until(() -> crawler.getFsParser().isClosed());
 
         assertThat(crawler.getFsParser().getRunNumber()).isEqualTo(1);
     }
@@ -61,7 +67,10 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
         // Make sure that we wait enough for the crawler to be closed
-        await().atMost(10, SECONDS).until(() -> crawler.getFsParser().isClosed());
+        await()
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .atMost(10, SECONDS)
+                .until(() -> crawler.getFsParser().isClosed());
 
         assertThat(crawler.getFsParser().getRunNumber()).isEqualTo(2);
     }

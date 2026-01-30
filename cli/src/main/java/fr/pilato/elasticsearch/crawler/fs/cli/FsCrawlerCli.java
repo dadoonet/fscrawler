@@ -44,17 +44,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.List;
 import java.util.Scanner;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Main entry point to launch FsCrawler
  */
 public class FsCrawlerCli {
 
-    private static final long CLOSE_POLLING_WAIT_MS = 100;
+    private static final Duration CLOSE_POLLING_WAIT_TIME = Duration.ofMillis(100);
 
     private static final Logger logger = LogManager.getLogger();
     private static RestServer restServer;
@@ -343,9 +345,9 @@ public class FsCrawlerCli {
                 Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler, pluginsManager, restServer));
 
                 // We just have to wait until the process is stopped
-                while (!fsCrawler.getFsParser().isClosed()) {
-                    sleep();
-                }
+                await()
+                        .pollInterval(CLOSE_POLLING_WAIT_TIME)
+                        .until(() -> fsCrawler.getFsParser().isClosed());
             }
         } catch (Exception e) {
             logger.fatal("Fatal error received while running the crawler: [{}]", e.getMessage());
@@ -440,14 +442,5 @@ public class FsCrawlerCli {
 
     private static String separatorLine(String first, String last) {
         return first + StringUtils.center("", BANNER_LENGTH, "-") + last + "\n";
-    }
-
-    private static void sleep() {
-        try {
-            Thread.sleep(CLOSE_POLLING_WAIT_MS);
-        }
-        catch(InterruptedException ignored) {
-            Thread.currentThread().interrupt();
-        }
     }
 }
