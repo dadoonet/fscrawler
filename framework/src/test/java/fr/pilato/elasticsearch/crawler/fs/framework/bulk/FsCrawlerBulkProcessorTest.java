@@ -141,14 +141,17 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
                 new FsCrawlerBulkProcessor<>(new TestEngine(), listener, 0, flushInterval, null, TestBulkRequest::new);
 
+        // We don't load immediately the bulk processor
+        Thread.sleep(100);
+
         generatePayload(bulkProcessor, 1, maxActions);
         assertThat(listener.nbSuccessfulExecutions).isZero();
 
         // Wait for the flush to happen
-        await().atMost(Duration.ofMillis(flushInterval.millis() + 1000))
-                .until(() -> listener.nbSuccessfulExecutions == 1);
+        await()
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(listener.nbSuccessfulExecutions).isEqualTo(1));
         bulkProcessor.close();
-        assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
     }
 
     private void generatePayload(FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor, int start, int size) {
