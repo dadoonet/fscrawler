@@ -23,7 +23,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
@@ -136,7 +135,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
     public void json_support_and_other_files() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setJsonSupport(true);
-        crawler = startCrawler(fsSettings, TimeValue.timeValueSeconds(5));
+        crawler = startCrawler(fsSettings);
 
         await().atMost(Duration.ofMillis(MAX_WAIT_FOR_SEARCH.millis()))
                 .alias("We should have 2 docs only...")
