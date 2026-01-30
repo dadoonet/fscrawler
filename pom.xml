@@ -137,7 +137,6 @@
                     <configuration>
                         <release>${java.compiler.version}</release>
                         <encoding>UTF-8</encoding>
-                        <optimize>true</optimize>
                         <showDeprecation>true</showDeprecation>
                         <showWarnings>true</showWarnings>
                         <compilerArgument>-Xlint:all,-serial,-path,-rawtypes,-unchecked</compilerArgument>
