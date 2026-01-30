@@ -152,12 +152,15 @@ public class FsCrawlerImpl implements AutoCloseable {
                     .pollInterval(Duration.ofMillis(500))
                     .forever()
                     .until(() -> {
-                        // We check that the crawler has been closed effectively
-                        logger.debug("FS crawler thread is still running");
-                        if (logger.isDebugEnabled()) {
-                            Thread.dumpStack();
+                        if (fsCrawlerThread.isAlive()) {
+                            // We check that the crawler has been closed effectively
+                            logger.debug("FS crawler thread is still running");
+                            if (logger.isDebugEnabled()) {
+                                Thread.dumpStack();
+                            }
+                            return false;
                         }
-                        return !fsCrawlerThread.isAlive();
+                        return true;
                     });
             logger.debug("FS crawler thread is now stopped");
         }
