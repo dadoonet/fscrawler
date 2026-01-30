@@ -27,13 +27,13 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSemanticQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -59,7 +59,7 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setSemanticSearch(true);
-        fsSettings.getFs().setUpdateRate(MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(MAX_WAIT_FOR_SEARCH_LONG_TESTS.toSeconds()));
         crawler = startCrawler(fsSettings, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // We expect to have 3 files

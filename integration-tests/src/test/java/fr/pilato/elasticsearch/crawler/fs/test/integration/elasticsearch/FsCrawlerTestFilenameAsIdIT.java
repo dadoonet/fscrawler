@@ -31,7 +31,6 @@ import java.nio.file.Files;
 import java.time.Duration;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.awaitility.Awaitility.await;
 
 /**
@@ -49,7 +48,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setFilenameAsId(true);
         crawler = startCrawler(fsSettings);
 
-        await().atMost(Duration.ofMillis(MAX_WAIT_FOR_SEARCH.millis()))
+        await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("Document should exists with [roottxtfile.txt] id...")
                 .until(() -> {
                     try {

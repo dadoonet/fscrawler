@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -32,17 +31,17 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
+import java.time.Duration;
 
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 
 public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Before
-    public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
+    public void cleanExistingIndex() throws ElasticsearchClientException {
         logger.debug(" -> Removing existing index [{}*]", getCrawlerName());
         client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
         client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
@@ -115,7 +114,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         return startCrawler(fsSettings, MAX_WAIT_FOR_SEARCH);
     }
 
-    protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, TimeValue duration)
+    protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, Duration duration)
             throws Exception {
         logger.info("  --> starting crawler [{}]", fsSettings.getName());
         logger.debug("     with settings [{}]", fsSettings);

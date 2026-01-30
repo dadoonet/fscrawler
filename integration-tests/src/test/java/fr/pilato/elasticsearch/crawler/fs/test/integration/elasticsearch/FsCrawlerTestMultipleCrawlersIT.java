@@ -42,7 +42,7 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
 
     @Before
     @Override
-    public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
+    public void cleanExistingIndex() throws ElasticsearchClientException {
         // Also clean the specific indices for this test suite
         client.deleteIndex(getCrawlerName() + "_1" + INDEX_SUFFIX_DOCS);
         client.deleteIndex(getCrawlerName() + "_1" + INDEX_SUFFIX_FOLDER);

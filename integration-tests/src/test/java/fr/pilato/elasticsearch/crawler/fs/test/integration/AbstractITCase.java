@@ -63,7 +63,6 @@ import java.time.Duration;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDirs;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -436,21 +435,21 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      * @param request   Elasticsearch request to run.
      * @param expected  expected number of docs. Null if at least 1.
      * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
-     * @param timeout   Time before we declare a failure
+     * @param duration  Time before we declare a failure
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    public static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final Path path, final TimeValue timeout) throws Exception {
+    public static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final Path path, final Duration duration) throws Exception {
 
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        logger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
+        logger.info("  ---> Waiting up to {} for {} documents in {}", duration,
                 expected == null ? "some" : expected, request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
 
         try {
-            await().atMost(Duration.ofMillis(timeout.millis()))
+            await().atMost(duration)
                     .pollInterval(Duration.ofMillis(500))
                     .until(() -> {
                         long totalHits;
@@ -519,14 +518,15 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     try {
                         if (Files.isDirectory(file)) {
                             logger.log(level, " * in dir [{}] [{}]",
-                                    path.relativize(file).toString(),
+                                    path.relativize(file),
                                     Files.getLastModifiedTime(file));
                         } else {
                             logger.log(level, "   - [{}] [{}]",
-                                    file.getFileName().toString(),
+                                    file.getFileName(),
                                     Files.getLastModifiedTime(file));
                         }
                     } catch (IOException ignored) {
+                        // It's just for logging purposes.
                     }
                 });
             } catch (IOException ex) {

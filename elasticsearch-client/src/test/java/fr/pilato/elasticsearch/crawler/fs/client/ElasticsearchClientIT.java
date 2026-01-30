@@ -4,7 +4,6 @@ import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.Nightly;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
@@ -39,8 +38,6 @@ import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlpha
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHECK_NODES_EVERY;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.awaitility.Awaitility.await;
@@ -62,7 +59,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static String testCaCertificate;
     private static ElasticsearchClient esClient;
 
-    private static TimeValue maxWaitForSearch;
+    private static Duration maxWaitForSearch;
 
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
@@ -928,7 +925,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
 
         try {
-            await().atMost(Duration.ofMillis(maxWaitForSearch.millis()))
+            await().atMost(maxWaitForSearch)
                     .pollInterval(Duration.ofMillis(500))
                     .until(() -> {
                         long totalHits;

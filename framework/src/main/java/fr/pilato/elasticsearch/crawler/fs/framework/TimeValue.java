@@ -25,17 +25,6 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.format1
 @SuppressWarnings("WeakerAccess")
 public class TimeValue {
 
-    /**
-     * For tests only: maximum time to wait for a search when we want to be sure that something is in the index.
-     */
-    public static final TimeValue MAX_WAIT_FOR_SEARCH = TimeValue.timeValueMinutes(5);
-
-    /**
-     * For tests only: maximum time to wait for a search when we want to be sure that something is in the index,
-     * but we are running long tests (like with Tika OCR for instance).
-     */
-    public static final TimeValue MAX_WAIT_FOR_SEARCH_LONG_TESTS = TimeValue.timeValueMinutes(10);
-
     public static TimeValue timeValueNanos(long nanos) {
         return new TimeValue(nanos, TimeUnit.NANOSECONDS);
     }
@@ -231,7 +220,7 @@ public class TimeValue {
 
     @Override
     public int hashCode() {
-        int result = (int) (duration ^ (duration >>> 32));
+        int result = Long.hashCode(duration);
         result = 31 * result + (timeUnit != null ? timeUnit.hashCode() : 0);
         return result;
     }

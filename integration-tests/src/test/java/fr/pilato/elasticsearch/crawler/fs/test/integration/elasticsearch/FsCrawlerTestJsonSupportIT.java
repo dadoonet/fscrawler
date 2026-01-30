@@ -29,10 +29,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import java.time.Duration;
-
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.awaitility.Awaitility.await;
 
 /**
@@ -50,7 +47,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setJsonSupport(true);
         crawler = startCrawler(fsSettings);
 
-        await().atMost(Duration.ofMillis(MAX_WAIT_FOR_SEARCH.millis()))
+        await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("We should have 2 doc for tweet in text field...")
                 .until(() -> {
                     try {
@@ -74,7 +71,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setJsonSupport(false);
         crawler = startCrawler(fsSettings);
 
-        await().atMost(Duration.ofMillis(MAX_WAIT_FOR_SEARCH.millis()))
+        await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("We should have 0 doc for tweet in text field...")
                 .until(() -> {
                     try {
@@ -88,7 +85,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
                     }
                 });
 
-        await().atMost(Duration.ofMillis(MAX_WAIT_FOR_SEARCH.millis()))
+        await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("We should have 2 docs for tweet in content field...")
                 .until(() -> {
                     try {
@@ -113,7 +110,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setAddAsInnerObject(true);
         crawler = startCrawler(fsSettings);
 
-        await().atMost(Duration.ofMillis(MAX_WAIT_FOR_SEARCH.millis()))
+        await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("We should have 2 doc for tweet in object.text field...")
                 .until(() -> {
                     try {
@@ -137,7 +134,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setJsonSupport(true);
         crawler = startCrawler(fsSettings);
 
-        await().atMost(Duration.ofMillis(MAX_WAIT_FOR_SEARCH.millis()))
+        await().atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("We should have 2 docs only...")
                 .until(() -> {
                     try {
