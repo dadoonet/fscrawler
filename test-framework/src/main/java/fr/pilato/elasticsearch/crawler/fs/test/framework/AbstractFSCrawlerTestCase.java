@@ -38,6 +38,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -63,6 +64,17 @@ public abstract class AbstractFSCrawlerTestCase {
     private static final Locale savedLocale = Locale.getDefault();
     private static final TimeZone savedTimeZone = TimeZone.getDefault();
     protected static final String indexPrefix = getSystemProperty("tests.index.prefix", "");
+
+    /**
+     * For tests only: maximum time to wait for a search when we want to be sure that something is in the index.
+     */
+    public static final Duration MAX_WAIT_FOR_SEARCH = Duration.ofMinutes(5);
+
+    /**
+     * For tests only: maximum time to wait for a search when we want to be sure that something is in the index,
+     * but we are running long tests (like with Tika OCR for instance).
+     */
+    public static final Duration MAX_WAIT_FOR_SEARCH_LONG_TESTS = Duration.ofMinutes(10);
 
     @Rule
     public TestName name = new TestName();

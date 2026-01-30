@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
@@ -33,12 +34,13 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static java.lang.Thread.sleep;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Test moving/removing/adding files
@@ -97,7 +99,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
     public void add_new_file() throws Exception {
         // We need to wait for 2 seconds before starting the test as the file might have just been created
         // It's due to https://github.com/dadoonet/fscrawler/issues/82 which removes 2 seconds from the last scan date
-        sleep(2000L);
+        Thread.sleep(2000L);
 
         FsSettings fsSettings = createTestSettings();
         // We change the update rate to 5 seconds because the FsParser last scan date is set to 2 seconds less than the current time
@@ -142,8 +144,11 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
        });
     }
 
-    private void waitForFsJobAndSetDate(String jobName, LocalDateTime dateTime) throws Exception {
-        awaitBusy(() -> {
+    private void waitForFsJobAndSetDate(String jobName, LocalDateTime dateTime) {
+        await()
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .atMost(10, SECONDS)
+                .until(() -> {
             try {
                 FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir);
                 FsJob fsJob = fsJobFileHandler.read(jobName);

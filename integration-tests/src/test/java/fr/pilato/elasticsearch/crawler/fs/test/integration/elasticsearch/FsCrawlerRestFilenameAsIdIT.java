@@ -34,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ALL")

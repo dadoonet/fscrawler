@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -59,13 +60,15 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import java.time.Duration;
+
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
-import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDirs;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.awaitility.Awaitility.await;
+import org.awaitility.core.ConditionTimeoutException;
 
 /**
  * Integration tests expect to have an elasticsearch instance running on <a href="https://127.0.0.1:9200">https://127.0.0.1:9200</a>.
@@ -433,52 +436,60 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      * @param request   Elasticsearch request to run.
      * @param expected  expected number of docs. Null if at least 1.
      * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
-     * @param timeout   Time before we declare a failure
+     * @param duration  Time before we declare a failure
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    public static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final Path path, final TimeValue timeout) throws Exception {
+    public static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final Path path, final Duration duration) throws Exception {
 
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        logger.info("  ---> Waiting up to {} for {} documents in {}", timeout.toString(),
+        logger.info("  ---> Waiting up to {} for {} documents in {}", duration,
                 expected == null ? "some" : expected, request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
-        long hits = awaitBusy(() -> {
-            long totalHits;
 
-            // Let's search for entries
-            try {
-                // Make sure we refresh indexed docs before counting
-                refresh(request.getIndex());
-                response[0] = client.search(request);
-                errorWhileWaiting.set(null);
-            } catch (RuntimeException e) {
-                logger.warn("error caught", e);
-                errorWhileWaiting.set(e);
-                return -1;
-            } catch (ElasticsearchClientException e) {
-                // TODO create a NOT FOUND Exception instead
-                logger.debug("error caught: [{}] ", e.getMessage());
-                logger.trace("error caught", e);
-                errorWhileWaiting.set(e);
-                return -1;
-            }
-            totalHits = response[0].getTotalHits();
+        try {
+            await().atMost(duration)
+                    .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                    .until(() -> {
+                        long totalHits;
 
-            logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+                        // Let's search for entries
+                        try {
+                            // Make sure we refresh indexed docs before counting
+                            refresh(request.getIndex());
+                            response[0] = client.search(request);
+                            errorWhileWaiting.set(null);
+                        } catch (RuntimeException e) {
+                            logger.warn("error caught", e);
+                            errorWhileWaiting.set(e);
+                            return false;
+                        } catch (ElasticsearchClientException e) {
+                            // TODO create a NOT FOUND Exception instead
+                            logger.debug("error caught: [{}] ", e.getMessage());
+                            logger.trace("error caught", e);
+                            errorWhileWaiting.set(e);
+                            return false;
+                        }
+                        totalHits = response[0].getTotalHits();
 
-            return totalHits;
-        }, expected, timeout);
+                        logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
-        // We check that we did not catch an error while waiting
-        assertThatNoException().isThrownBy(() -> {
+                        if (expected == null) {
+                            return totalHits >= 1;
+                        }
+                        return totalHits == expected;
+                    });
+        } catch (ConditionTimeoutException e) {
+            // If we caught an exception during waiting, throw it instead of the timeout
             if (errorWhileWaiting.get() != null) {
                 throw errorWhileWaiting.get();
             }
-        });
+            throw e;
+        }
 
+        long hits = response[0].getTotalHits();
         if (expected == null) {
             assertThat(hits)
                     .as("checking if any document in %s", request.getIndex())
@@ -508,14 +519,15 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     try {
                         if (Files.isDirectory(file)) {
                             logger.log(level, " * in dir [{}] [{}]",
-                                    path.relativize(file).toString(),
+                                    path.relativize(file),
                                     Files.getLastModifiedTime(file));
                         } else {
                             logger.log(level, "   - [{}] [{}]",
-                                    file.getFileName().toString(),
+                                    file.getFileName(),
                                     Files.getLastModifiedTime(file));
                         }
                     } catch (IOException ignored) {
+                        // It's just for logging purposes.
                     }
                 });
             } catch (IOException ex) {

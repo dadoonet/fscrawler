@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
@@ -28,11 +29,10 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import java.nio.file.Files;
+import java.time.Duration;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Test filename_as_id crawler setting
@@ -49,15 +49,16 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setFilenameAsId(true);
         crawler = startCrawler(fsSettings);
 
-        assertThat(awaitBusy(() -> {
-            try {
-                return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "roottxtfile.txt");
-            } catch (ElasticsearchClientException e) {
-                return false;
-            }
-        }, MAX_WAIT_FOR_SEARCH))
-                .as("Document should exists with [roottxtfile.txt] id...")
-                .isTrue();
+        await().atMost(MAX_WAIT_FOR_SEARCH)
+                .alias("Document should exists with [roottxtfile.txt] id...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .until(() -> {
+                    try {
+                        return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "roottxtfile.txt");
+                    } catch (ElasticsearchClientException e) {
+                        return false;
+                    }
+                });
     }
 
     /**
@@ -73,24 +74,26 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         // We should have two docs first
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
 
-        assertThat(awaitBusy(() -> {
-            try {
-                return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "id1.txt");
-            } catch (ElasticsearchClientException e) {
-                return false;
-            }
-        }))
-                .as("Document should exists with [id1.txt] id...")
-                .isTrue();
-        assertThat(awaitBusy(() -> {
-            try {
-                return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "id2.txt");
-            } catch (ElasticsearchClientException e) {
-                return false;
-            }
-        }))
-                .as("Document should exists with [id2.txt] id...")
-                .isTrue();
+        await().atMost(Duration.ofSeconds(10))
+                .alias("Document should exists with [id1.txt] id...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .until(() -> {
+                    try {
+                        return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "id1.txt");
+                    } catch (ElasticsearchClientException e) {
+                        return false;
+                    }
+                });
+        await().atMost(Duration.ofSeconds(10))
+                .alias("Document should exists with [id2.txt] id...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .until(() -> {
+                    try {
+                        return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "id2.txt");
+                    } catch (ElasticsearchClientException e) {
+                        return false;
+                    }
+                });
 
         // We remove a file
         logger.info("  ---> Removing file id2.txt");

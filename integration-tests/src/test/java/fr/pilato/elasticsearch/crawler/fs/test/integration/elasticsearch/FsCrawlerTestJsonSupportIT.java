@@ -23,17 +23,17 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
+import java.time.Duration;
+
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Test json support crawler setting
@@ -50,19 +50,20 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setJsonSupport(true);
         crawler = startCrawler(fsSettings);
 
-        assertThat(awaitBusy(() -> {
-            try {
-                ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                        .withESQuery(new ESMatchQuery("text", "tweet")));
-                return response.getTotalHits() == 2;
-            } catch (ElasticsearchClientException e) {
-                logger.warn("Caught exception while running the test", e);
-                return false;
-            }
-        }, MAX_WAIT_FOR_SEARCH))
-                .as("We should have 2 doc for tweet in text field...")
-                .isTrue();
+        await().atMost(MAX_WAIT_FOR_SEARCH)
+                .alias("We should have 2 doc for tweet in text field...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .until(() -> {
+                    try {
+                        ESSearchResponse response = client.search(new ESSearchRequest()
+                                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                                .withESQuery(new ESMatchQuery("text", "tweet")));
+                        return response.getTotalHits() == 2;
+                    } catch (ElasticsearchClientException e) {
+                        logger.warn("Caught exception while running the test", e);
+                        return false;
+                    }
+                });
     }
 
     /**
@@ -74,33 +75,35 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setJsonSupport(false);
         crawler = startCrawler(fsSettings);
 
-        assertThat(awaitBusy(() -> {
-            try {
-                ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                        .withESQuery(new ESMatchQuery("text", "tweet")));
-                return response.getTotalHits() == 0;
-            } catch (ElasticsearchClientException e) {
-                logger.warn("Caught exception while running the test", e);
-                return false;
-            }
-        }, MAX_WAIT_FOR_SEARCH))
-                .as("We should have 0 doc for tweet in text field...")
-                .isTrue();
+        await().atMost(MAX_WAIT_FOR_SEARCH)
+                .alias("We should have 0 doc for tweet in text field...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .until(() -> {
+                    try {
+                        ESSearchResponse response = client.search(new ESSearchRequest()
+                                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                                .withESQuery(new ESMatchQuery("text", "tweet")));
+                        return response.getTotalHits() == 0;
+                    } catch (ElasticsearchClientException e) {
+                        logger.warn("Caught exception while running the test", e);
+                        return false;
+                    }
+                });
 
-        assertThat(awaitBusy(() -> {
-            try {
-                ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                        .withESQuery(new ESMatchQuery("content", "tweet")));
-                return response.getTotalHits() == 2;
-            } catch (ElasticsearchClientException e) {
-                logger.warn("Caught exception while running the test", e);
-                return false;
-            }
-        }, MAX_WAIT_FOR_SEARCH))
-                .as("We should have 2 docs for tweet in content field...")
-                .isTrue();
+        await().atMost(MAX_WAIT_FOR_SEARCH)
+                .alias("We should have 2 docs for tweet in content field...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .until(() -> {
+                    try {
+                        ESSearchResponse response = client.search(new ESSearchRequest()
+                                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                                .withESQuery(new ESMatchQuery("content", "tweet")));
+                        return response.getTotalHits() == 2;
+                    } catch (ElasticsearchClientException e) {
+                        logger.warn("Caught exception while running the test", e);
+                        return false;
+                    }
+                });
     }
 
     /**
@@ -113,19 +116,20 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setAddAsInnerObject(true);
         crawler = startCrawler(fsSettings);
 
-        assertThat(awaitBusy(() -> {
-            try {
-                ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                        .withESQuery(new ESMatchQuery("object.text", "tweet")));
-                return response.getTotalHits() == 2;
-            } catch (ElasticsearchClientException e) {
-                logger.warn("Caught exception while running the test", e);
-                return false;
-            }
-        }, MAX_WAIT_FOR_SEARCH))
-                .as("We should have 2 doc for tweet in object.text field...")
-                .isTrue();
+        await().atMost(MAX_WAIT_FOR_SEARCH)
+                .alias("We should have 2 doc for tweet in object.text field...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .until(() -> {
+                    try {
+                        ESSearchResponse response = client.search(new ESSearchRequest()
+                                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                                .withESQuery(new ESMatchQuery("object.text", "tweet")));
+                        return response.getTotalHits() == 2;
+                    } catch (ElasticsearchClientException e) {
+                        logger.warn("Caught exception while running the test", e);
+                        return false;
+                    }
+                });
     }
 
     /**
@@ -135,18 +139,19 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
     public void json_support_and_other_files() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setJsonSupport(true);
-        crawler = startCrawler(fsSettings, TimeValue.timeValueSeconds(5));
+        crawler = startCrawler(fsSettings);
 
-        assertThat(awaitBusy(() -> {
-            try {
-                ESSearchResponse response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS));
-                return response.getTotalHits() == 2;
-            } catch (ElasticsearchClientException e) {
-                logger.warn("Caught exception while running the test", e);
-                return false;
-            }
-        }, MAX_WAIT_FOR_SEARCH))
-                .as("We should have 2 docs only...")
-                .isTrue();
+        await().atMost(MAX_WAIT_FOR_SEARCH)
+                .alias("We should have 2 docs only...")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .until(() -> {
+                    try {
+                        ESSearchResponse response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS));
+                        return response.getTotalHits() == 2;
+                    } catch (ElasticsearchClientException e) {
+                        logger.warn("Caught exception while running the test", e);
+                        return false;
+                    }
+                });
     }
 }

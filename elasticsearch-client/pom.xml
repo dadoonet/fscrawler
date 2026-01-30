@@ -57,6 +57,12 @@
             <artifactId>json-path</artifactId>
         </dependency>
 
+        <!-- Awaitility for waiting operations -->
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>

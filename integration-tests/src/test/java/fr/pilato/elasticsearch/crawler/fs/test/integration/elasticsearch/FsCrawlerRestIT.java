@@ -63,7 +63,6 @@ import java.util.function.Predicate;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assume.assumeTrue;
@@ -78,7 +77,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Before
     @Override
-    public void cleanExistingIndex() throws IOException, ElasticsearchClientException {
+    public void cleanExistingIndex() throws ElasticsearchClientException {
         // Also clean the specific indices for this test suite
         client.deleteIndex(CUSTOM_INDEX_NAME);
         client.deleteIndex(CUSTOM_INDEX_NAME + INDEX_SUFFIX_FOLDER);

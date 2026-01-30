@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
@@ -34,6 +33,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+
+import static org.awaitility.Awaitility.await;
 
 /**
  * @author dadoonet (David Pilato)
@@ -46,7 +48,6 @@ public class FsCrawlerImpl implements AutoCloseable {
     private static final Logger logger = LogManager.getLogger();
 
     public static final int LOOP_INFINITE = -1;
-    public static final long MAX_SLEEP_RETRY_TIME = TimeValue.timeValueSeconds(30).millis();
 
     private final FsSettings settings;
     private final boolean rest;
@@ -147,14 +148,20 @@ public class FsCrawlerImpl implements AutoCloseable {
         }
 
         if (this.fsCrawlerThread != null) {
-            while (fsCrawlerThread.isAlive()) {
-                // We check that the crawler has been closed effectively
-                logger.debug("FS crawler thread is still running");
-                if (logger.isDebugEnabled()) {
-                    Thread.dumpStack();
-                }
-                Thread.sleep(500);
-            }
+            await()
+                    .pollInterval(Duration.ofMillis(500))
+                    .forever()
+                    .until(() -> {
+                        if (fsCrawlerThread.isAlive()) {
+                            // We check that the crawler has been closed effectively
+                            logger.debug("FS crawler thread is still running");
+                            if (logger.isDebugEnabled()) {
+                                Thread.dumpStack();
+                            }
+                            return false;
+                        }
+                        return true;
+                    });
             logger.debug("FS crawler thread is now stopped");
         }
 

@@ -29,9 +29,12 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import java.time.Duration;
+
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -144,11 +147,11 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         generatePayload(bulkProcessor, 1, maxActions);
         assertThat(listener.nbSuccessfulExecutions).isZero();
 
-        Thread.sleep(flushInterval.millis());
-
-        assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
+        // Wait for the flush to happen
+        await()
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(listener.nbSuccessfulExecutions).isEqualTo(1));
         bulkProcessor.close();
-        assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
     }
 
     private void generatePayload(FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor, int start, int size) {

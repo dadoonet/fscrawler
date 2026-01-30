@@ -23,7 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.framework.Await;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
@@ -39,12 +39,16 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.core.ConditionTimeoutException;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.logging.LoggingFeature;
 
 import javax.net.ssl.*;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import java.io.*;
 import java.net.ConnectException;
 import java.security.*;
@@ -52,6 +56,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -282,25 +287,21 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
 
         // License endpoint might not be ready in IT so we retry with exponential wait time up to 1 minute
-        int retries = 0;
-        int maxRetries = 5;
-        int waitTime = 1000;
-        while (retries < maxRetries) {
-            try {
-                return getLicenseInternal();
-            } catch (NotFoundException e) {
-                logger.warn("License endpoint is not ready yet. Retrying in {}ms", waitTime);
-                try {
-                    Thread.sleep(waitTime);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                }
-                waitTime *= 2;
-                retries++;
-            }
+        try {
+            return await()
+                    .atMost(Duration.ofMinutes(1))
+                    .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofSeconds(1), Duration.ofSeconds(10)))
+                    .until(() -> {
+                        try {
+                            return getLicenseInternal();
+                        } catch (NotFoundException e) {
+                            logger.warn("License endpoint is not ready yet. Retrying...");
+                            return null;
+                        }
+                    }, Objects::nonNull);
+        } catch (ConditionTimeoutException e) {
+            throw new ElasticsearchClientException("License endpoint is not ready after 1 minute");
         }
-
-        throw new ElasticsearchClientException("License endpoint is not ready after " + maxRetries + " retries");
     }
 
     private String getLicenseInternal() throws ElasticsearchClientException {
@@ -416,15 +417,29 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @Override
     public void waitForHealthyIndex(String index) throws ElasticsearchClientException {
+        AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
         try {
-            Await.awaitBusy(() -> {
-                String health = catIndicesHealth(index);
-                return "green".equals(health) || "yellow".equals(health);
+            await()
+                    .atMost(10, SECONDS)
+                    .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                    .until(() -> {
+                try {
+                    String health = catIndicesHealth(index);
+                    errorWhileWaiting.set(null);
+                    return "green".equals(health) || "yellow".equals(health);
+                } catch (Exception e) {
+                    errorWhileWaiting.set(e);
+                    return false;
+                }
             });
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ElasticsearchClientException("Await interrupted while waiting for healthy index [" +
-                    index + "]", e);
+        } catch (ConditionTimeoutException e) {
+            // If we caught an exception during waiting, throw it instead of the timeout
+            if (errorWhileWaiting.get() != null) {
+                Exception cause = errorWhileWaiting.get();
+                throw new ElasticsearchClientException("Error while waiting for healthy index [" +
+                        index + "]", cause);
+            }
+            logger.warn("Index [{}] did not become healthy within 10 seconds", index);
         }
     }
 

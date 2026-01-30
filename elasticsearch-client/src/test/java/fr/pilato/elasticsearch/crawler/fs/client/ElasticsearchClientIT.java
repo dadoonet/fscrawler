@@ -4,7 +4,7 @@ import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.Nightly;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
@@ -33,15 +33,16 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
+import java.time.Duration;
+
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
 import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHECK_NODES_EVERY;
-import static fr.pilato.elasticsearch.crawler.fs.framework.Await.awaitBusy;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH;
-import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FOR_SEARCH_LONG_TESTS;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.awaitility.Awaitility.await;
+import org.awaitility.core.ConditionTimeoutException;
 import static org.junit.Assume.assumeTrue;
 
 public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
@@ -59,7 +60,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static String testCaCertificate;
     private static ElasticsearchClient esClient;
 
-    private static TimeValue maxWaitForSearch;
+    private static Duration maxWaitForSearch;
 
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
@@ -147,7 +148,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", maxWaitForSearch);
         } else {
             maxWaitForSearch = MAX_WAIT_FOR_SEARCH;
-            logger.info("Semantic search is supported on this cluster. We will give {} to run the tests.", maxWaitForSearch);
+            logger.info("Semantic search is not supported on this cluster. We will give {} to run the tests.", maxWaitForSearch);
         }
     }
 
@@ -923,39 +924,47 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.info("  ---> Waiting up to {} for {} documents in {}", maxWaitForSearch,
                 expected == null ? "some" : expected, request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
-        long hits = awaitBusy(() -> {
-            long totalHits;
 
-            // Let's search for entries
-            try {
-                // Make sure we refresh indexed docs before counting
-                esClient.refresh(request.getIndex());
-                response[0] = esClient.search(request);
-                errorWhileWaiting.set(null);
-            } catch (RuntimeException e) {
-                logger.warn("error caught", e);
-                errorWhileWaiting.set(e);
-                return -1;
-            } catch (ElasticsearchClientException e) {
-                // TODO create a NOT FOUND Exception instead
-                logger.debug("error caught", e);
-                errorWhileWaiting.set(e);
-                return -1;
-            }
-            totalHits = response[0].getTotalHits();
+        try {
+            await().atMost(maxWaitForSearch)
+                    .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                    .until(() -> {
+                        long totalHits;
 
-            logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+                        // Let's search for entries
+                        try {
+                            // Make sure we refresh indexed docs before counting
+                            esClient.refresh(request.getIndex());
+                            response[0] = esClient.search(request);
+                            errorWhileWaiting.set(null);
+                        } catch (RuntimeException e) {
+                            logger.warn("error caught", e);
+                            errorWhileWaiting.set(e);
+                            return false;
+                        } catch (ElasticsearchClientException e) {
+                            // TODO create a NOT FOUND Exception instead
+                            logger.debug("error caught", e);
+                            errorWhileWaiting.set(e);
+                            return false;
+                        }
+                        totalHits = response[0].getTotalHits();
 
-            return totalHits;
-        }, expected, maxWaitForSearch);
+                        logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
-        // We check that we did not catch an error while waiting
-        assertThatNoException().isThrownBy(() -> {
+                        if (expected == null) {
+                            return totalHits >= 1;
+                        }
+                        return totalHits == expected;
+                    });
+        } catch (ConditionTimeoutException e) {
+            // If we caught an exception during waiting, throw it instead of the timeout
             if (errorWhileWaiting.get() != null) {
                 throw errorWhileWaiting.get();
             }
-        });
+            throw e;
+        }
 
+        long hits = response[0].getTotalHits();
         if (expected == null) {
             assertThat(hits)
                     .as("checking if any document in %s", request.getIndex())
