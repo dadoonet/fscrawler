@@ -419,17 +419,24 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @Override
     public void waitForHealthyIndex(String index) throws ElasticsearchClientException {
+        AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
         try {
             await().atMost(10, SECONDS).until(() -> {
-                String health = catIndicesHealth(index);
-                return "green".equals(health) || "yellow".equals(health);
+                try {
+                    String health = catIndicesHealth(index);
+                    errorWhileWaiting.set(null);
+                    return "green".equals(health) || "yellow".equals(health);
+                } catch (Exception e) {
+                    errorWhileWaiting.set(e);
+                    return false;
+                }
             });
         } catch (ConditionTimeoutException e) {
-            // Check if the timeout was caused by an interrupt
-            if (e.getCause() instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-                throw new ElasticsearchClientException("Await interrupted while waiting for healthy index [" +
-                        index + "]", e.getCause());
+            // If we caught an exception during waiting, throw it instead of the timeout
+            if (errorWhileWaiting.get() != null) {
+                Exception cause = errorWhileWaiting.get();
+                throw new ElasticsearchClientException("Error while waiting for healthy index [" +
+                        index + "]", cause);
             }
             logger.warn("Index [{}] did not become healthy within 10 seconds", index);
         }
