@@ -150,6 +150,7 @@ public class FsCrawlerImpl implements AutoCloseable {
         if (this.fsCrawlerThread != null) {
             await()
                     .pollInterval(Duration.ofMillis(500))
+                    .forever()
                     .until(() -> {
                         // We check that the crawler has been closed effectively
                         logger.debug("FS crawler thread is still running");
