@@ -36,7 +36,7 @@
         <docker.ocr.alias>${project.artifactId}-ocr</docker.ocr.alias>
         <docker.ocr.name>${docker.username}/fscrawler:${project.version}-ocr</docker.ocr.name>
         <docker.ocr.cacheFrom>${docker.ocr.name}</docker.ocr.cacheFrom>
-        <docker.ocr.dockerFile>${docker.noocr.dockerFile}</docker.ocr.dockerFile>
+        <docker.ocr.dockerFile>${project.basedir}/src/main/docker/Dockerfile.ocr</docker.ocr.dockerFile>
         <docker.ocr.assembly.descriptor>${docker.noocr.assembly.descriptor}</docker.ocr.assembly.descriptor>
         <docker.ocr.assembly.mode>${docker.noocr.assembly.mode}</docker.ocr.assembly.mode>
         <docker.ocr.args.langsPkg>imagemagick tesseract-ocr tesseract-ocr-all</docker.ocr.args.langsPkg>

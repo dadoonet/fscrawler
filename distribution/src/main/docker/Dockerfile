@@ -1,16 +1,17 @@
-FROM eclipse-temurin:25-jdk
-
-ARG langsPkg
+FROM eclipse-temurin:25-jre-alpine
 
 RUN set -ex \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-    gettext-base \
+    && apk add --no-cache \
     procps \
     curl \
-    ${langsPkg} \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && addgroup -g 10001 fscrawler \
+    && adduser -u 10001 -G fscrawler -h /home/fscrawler -D fscrawler
 
-COPY maven /usr/share/fscrawler
+COPY --chmod=555 maven /usr/share/fscrawler
+RUN mkdir -p /usr/share/fscrawler/logs \
+    && chown fscrawler:fscrawler /usr/share/fscrawler/logs
+
+USER fscrawler
+WORKDIR /home/fscrawler
+
 ENTRYPOINT [ "/usr/share/fscrawler/bin/fscrawler" ]

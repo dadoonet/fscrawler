@@ -1,0 +1,23 @@
+FROM eclipse-temurin:25-jre
+
+ARG langsPkg
+
+RUN set -ex \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    procps \
+    curl \
+    ${langsPkg} \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -g 10001 fscrawler \
+    && useradd -u 10001 -g fscrawler -m -d /home/fscrawler fscrawler
+
+COPY --chmod=555 maven /usr/share/fscrawler
+RUN mkdir -p /usr/share/fscrawler/logs \
+    && chown fscrawler:fscrawler /usr/share/fscrawler/logs
+
+USER fscrawler
+WORKDIR /home/fscrawler
+
+ENTRYPOINT [ "/usr/share/fscrawler/bin/fscrawler" ]
