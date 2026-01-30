@@ -346,6 +346,7 @@ public class FsCrawlerCli {
 
                 // We just have to wait until the process is stopped
                 await()
+                        .forever()
                         .pollInterval(CLOSE_POLLING_WAIT_TIME)
                         .until(() -> fsCrawler.getFsParser().isClosed());
             }
