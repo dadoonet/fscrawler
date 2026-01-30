@@ -425,6 +425,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 return "green".equals(health) || "yellow".equals(health);
             });
         } catch (ConditionTimeoutException e) {
+            // Check if the timeout was caused by an interrupt
+            if (e.getCause() instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+                throw new ElasticsearchClientException("Await interrupted while waiting for healthy index [" +
+                        index + "]", e.getCause());
+            }
             logger.warn("Index [{}] did not become healthy within 10 seconds", index);
         }
     }
