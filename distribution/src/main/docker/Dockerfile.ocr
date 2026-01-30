@@ -9,7 +9,13 @@ RUN set -ex \
     curl \
     ${langsPkg} \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -g 10001 fscrawler \
+    && useradd -u 10001 -g fscrawler -m -d /home/fscrawler fscrawler
 
-COPY maven /usr/share/fscrawler
+COPY --chown=fscrawler:fscrawler maven /usr/share/fscrawler
+
+USER fscrawler
+WORKDIR /home/fscrawler
+
 ENTRYPOINT [ "/usr/share/fscrawler/bin/fscrawler" ]
