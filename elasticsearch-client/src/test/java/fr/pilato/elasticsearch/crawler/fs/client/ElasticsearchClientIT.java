@@ -44,6 +44,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.MAX_WAIT_FO
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.awaitility.Awaitility.await;
+import org.awaitility.core.ConditionTimeoutException;
 import static org.junit.Assume.assumeTrue;
 
 public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
@@ -926,43 +927,44 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 expected == null ? "some" : expected, request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
 
-        await().atMost(Duration.ofMillis(maxWaitForSearch.millis()))
-                .pollInterval(Duration.ofMillis(500))
-                .until(() -> {
-                    long totalHits;
+        try {
+            await().atMost(Duration.ofMillis(maxWaitForSearch.millis()))
+                    .pollInterval(Duration.ofMillis(500))
+                    .until(() -> {
+                        long totalHits;
 
-                    // Let's search for entries
-                    try {
-                        // Make sure we refresh indexed docs before counting
-                        esClient.refresh(request.getIndex());
-                        response[0] = esClient.search(request);
-                        errorWhileWaiting.set(null);
-                    } catch (RuntimeException e) {
-                        logger.warn("error caught", e);
-                        errorWhileWaiting.set(e);
-                        return false;
-                    } catch (ElasticsearchClientException e) {
-                        // TODO create a NOT FOUND Exception instead
-                        logger.debug("error caught", e);
-                        errorWhileWaiting.set(e);
-                        return false;
-                    }
-                    totalHits = response[0].getTotalHits();
+                        // Let's search for entries
+                        try {
+                            // Make sure we refresh indexed docs before counting
+                            esClient.refresh(request.getIndex());
+                            response[0] = esClient.search(request);
+                            errorWhileWaiting.set(null);
+                        } catch (RuntimeException e) {
+                            logger.warn("error caught", e);
+                            errorWhileWaiting.set(e);
+                            return false;
+                        } catch (ElasticsearchClientException e) {
+                            // TODO create a NOT FOUND Exception instead
+                            logger.debug("error caught", e);
+                            errorWhileWaiting.set(e);
+                            return false;
+                        }
+                        totalHits = response[0].getTotalHits();
 
-                    logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
+                        logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
-                    if (expected == null) {
-                        return totalHits >= 1;
-                    }
-                    return totalHits == expected;
-                });
-
-        // We check that we did not catch an error while waiting
-        assertThatNoException().isThrownBy(() -> {
+                        if (expected == null) {
+                            return totalHits >= 1;
+                        }
+                        return totalHits == expected;
+                    });
+        } catch (ConditionTimeoutException e) {
+            // If we caught an exception during waiting, throw it instead of the timeout
             if (errorWhileWaiting.get() != null) {
                 throw errorWhileWaiting.get();
             }
-        });
+            throw e;
+        }
 
         long hits = response[0].getTotalHits();
         if (expected == null) {
