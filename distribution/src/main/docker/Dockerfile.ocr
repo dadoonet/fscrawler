@@ -13,7 +13,9 @@ RUN set -ex \
     && groupadd -g 10001 fscrawler \
     && useradd -u 10001 -g fscrawler -m -d /home/fscrawler fscrawler
 
-COPY --chown=fscrawler:fscrawler maven /usr/share/fscrawler
+COPY --chmod=555 maven /usr/share/fscrawler
+RUN mkdir -p /usr/share/fscrawler/logs \
+    && chown fscrawler:fscrawler /usr/share/fscrawler/logs
 
 USER fscrawler
 WORKDIR /home/fscrawler
