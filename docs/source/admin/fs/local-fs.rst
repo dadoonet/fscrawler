@@ -54,6 +54,8 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.checksum``            | ``null``              | `File Checksum`_                |
 +----------------------------+-----------------------+---------------------------------+
+| ``fs.temp_dir``            | ``null``              | `Temporary Directory`_          |
++----------------------------+-----------------------+---------------------------------+
 | ``fs.follow_symlinks``     | ``false``             | `Follow Symlinks`_              |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.tika_config_path``    | ``null``              | `Tika Config Path`_             |
@@ -781,6 +783,34 @@ such as ``MD5`` or ``SHA-1``.
      index_content: true
      #indexed_chars: 0
      checksum: "MD5"
+
+Temporary Directory
+^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.10
+
+When ``checksum`` or ``store_source`` is enabled, FSCrawler may need to create
+temporary files to process large documents without loading them entirely into memory.
+By default, temporary files are created in ``~/.fscrawler/<job_name>/tmp/``.
+
+You can override this location using the ``temp_dir`` option:
+
+.. code:: yaml
+
+   name: "test"
+   fs:
+     checksum: "MD5"
+     temp_dir: "/path/to/custom/temp"
+
+.. note::
+
+    For small files (64KB or less), FSCrawler uses an in-memory buffer instead of
+    temporary files for better performance. Temporary files are only created for
+    larger files to avoid ``OutOfMemoryError``.
+
+.. note::
+
+    Temporary files are automatically deleted after processing each document.
 
 Follow Symlinks
 ^^^^^^^^^^^^^^^

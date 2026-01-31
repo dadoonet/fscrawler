@@ -82,6 +82,13 @@ public class FsCrawlerImpl implements AutoCloseable {
             throw new RuntimeException("Can not create the job config directory", e);
         }
 
+        // Set default temp directory if not configured
+        if (settings.getFs().getTempDir() == null) {
+            Path tempDir = jobSettingsFolder.resolve("tmp");
+            settings.getFs().setTempDir(tempDir.toString());
+            logger.debug("Using default temp directory: [{}]", tempDir);
+        }
+
         // Create the fsParser instance depending on the settings
         if (loop != 0) {
             // What is the protocol used?

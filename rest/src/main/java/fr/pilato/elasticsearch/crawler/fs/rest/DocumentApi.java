@@ -123,11 +123,11 @@ public class DocumentApi extends RestApi {
         try (FsCrawlerExtensionFsProvider provider = pluginsManager.findFsProvider(type)) {
             logger.trace("Plugin [{}] found", provider.getType());
             provider.start(settings, document.jsonString());
-            InputStream inputStream = provider.readFile();
-
-            Doc doc = provider.createDocument();
-            doc = enrichDoc(doc, settings, null, inputStream);
-            return uploadToDocumentService(debug, simulate, id, index, doc);
+            try (InputStream inputStream = provider.readFile()) {
+                Doc doc = provider.createDocument();
+                doc = enrichDoc(doc, settings, null, inputStream);
+                return uploadToDocumentService(debug, simulate, id, index, doc);
+            }
         } catch (Exception e) {
             logger.debug("Failed to add document from [{}] 3rd-party: [{}] - [{}]",
                     type, e.getClass().getSimpleName(), e.getMessage());
@@ -200,8 +200,10 @@ public class DocumentApi extends RestApi {
         doc.getPath().setReal(filename);
         doc.getFile().setFilesize(d.getSize());
 
-        doc = enrichDoc(doc, settings, tags, filecontent);
-        return uploadToDocumentService(debug, simulate, id, index, doc);
+        try (filecontent) {
+            doc = enrichDoc(doc, settings, tags, filecontent);
+            return uploadToDocumentService(debug, simulate, id, index, doc);
+        }
     }
 
     public static Doc enrichDoc(

@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 
+import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -625,6 +626,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     public void extractFromTxtAndStoreSource() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
+        fsSettings.getFs().setTempDir(rootTmpDir.toString());
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
@@ -637,6 +639,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
         fsSettings.getFs().setIndexContent(false);
+        fsSettings.getFs().setTempDir(rootTmpDir.toString());
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
@@ -651,6 +654,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
         fsSettings.getFs().setChecksum("MD5");
+        fsSettings.getFs().setTempDir(rootTmpDir.toString());
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
@@ -665,12 +669,127 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("MD5");
+        fsSettings.getFs().setTempDir(rootTmpDir.toString());
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
         assertThat(doc.getContent()).contains("This file contains some words.");
         assertThat(doc.getAttachment()).isNull();
         assertThat(doc.getFile().getChecksum()).isNotNull();
+    }
+
+    /**
+     * Test case for checksum calculation on small files (below 64KB threshold).
+     * Small files are processed in-memory for better performance.
+     * @throws Exception In case something goes wrong
+     */
+    @Test
+    public void checksumForSmallFile() throws Exception {
+        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
+
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setChecksum("MD5");
+        fsSettings.getFs().setTempDir(rootTmpDir.toString());
+        Doc doc = extractFromFile("test.txt", fsSettings);
+
+        // Verify the checksum is computed
+        assertThat(doc.getFile().getChecksum())
+                .as("Checksum should be computed for small files using in-memory buffer")
+                .isNotNull()
+                .isNotEmpty();
+
+        // Verify the checksum is correct by computing it manually
+        byte[] content = getBinaryContent("test.txt").readAllBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        byte[] expectedDigest = md.digest(content);
+        StringBuilder expectedChecksum = new StringBuilder();
+        for (byte b : expectedDigest) {
+            expectedChecksum.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+        }
+        assertThat(doc.getFile().getChecksum()).isEqualTo(expectedChecksum.toString());
+    }
+
+    /**
+     * Test case for checksum calculation when filesize is unknown (0 or -1).
+     * This can happen with REST API uploads when the client doesn't provide file size.
+     * The code should use the temp file approach to be safe and avoid OOM.
+     * @throws Exception In case something goes wrong
+     */
+    @Test
+    public void checksumWithUnknownFilesize() throws Exception {
+        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
+
+        // Use test.txt content but pass filesize as 0 (unknown)
+        byte[] content = getBinaryContent("test.txt").readAllBytes();
+
+        // Calculate expected MD5 hash
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        byte[] expectedDigest = md.digest(content);
+        StringBuilder expectedChecksum = new StringBuilder();
+        for (byte b : expectedDigest) {
+            expectedChecksum.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+        }
+
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setChecksum("MD5");
+        fsSettings.getFs().setTempDir(rootTmpDir.toString());
+
+        Doc doc = new Doc();
+        doc.getPath().setReal("test.txt");
+        doc.getFile().setFilename("test.txt");
+
+        TikaInstance.reloadTika();
+        // Pass filesize as 0 (unknown) - should use temp file path, not in-memory
+        TikaDocParser.generate(fsSettings, new ByteArrayInputStream(content), doc, 0);
+
+        // Verify the checksum is still correctly computed
+        assertThat(doc.getFile().getChecksum())
+                .as("Checksum should be computed correctly even with unknown filesize")
+                .isEqualTo(expectedChecksum.toString());
+    }
+
+    /**
+     * Test case for checksum calculation on large binary files.
+     * This verifies that the MD5 checksum is computed over the entire file content,
+     * not just the first 64KB that Tika reads for content type detection.
+     * Large files are processed using a temporary file to avoid OOM.
+     * @throws Exception In case something goes wrong
+     */
+    @Test
+    public void checksumForLargeBinaryFile() throws Exception {
+        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
+
+        // Create a binary file larger than 64KB (100KB)
+        int size = 100 * 1024;
+        byte[] data = new byte[size];
+        // Fill with some pattern to make it deterministic
+        for (int i = 0; i < size; i++) {
+            data[i] = (byte) (i % 256);
+        }
+
+        // Calculate expected MD5 hash over the entire content
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        byte[] expectedDigest = md.digest(data);
+        StringBuilder expectedChecksum = new StringBuilder();
+        for (byte b : expectedDigest) {
+            expectedChecksum.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+        }
+
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setChecksum("MD5");
+        fsSettings.getFs().setTempDir(rootTmpDir.toString());
+
+        Doc doc = new Doc();
+        doc.getPath().setReal("large-binary-file.bin");
+        doc.getFile().setFilename("large-binary-file.bin");
+
+        TikaInstance.reloadTika();
+        TikaDocParser.generate(fsSettings, new ByteArrayInputStream(data), doc, size);
+
+        // Verify the checksum is computed over the entire file
+        assertThat(doc.getFile().getChecksum())
+                .as("Checksum should be computed over the entire file, not just the first 64KB")
+                .isEqualTo(expectedChecksum.toString());
     }
 
     @Test
