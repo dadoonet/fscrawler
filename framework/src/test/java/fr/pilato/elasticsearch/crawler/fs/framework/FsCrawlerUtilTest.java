@@ -292,4 +292,30 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
                 date);
         assertThat(date).isNotNull();
     }
+
+    /**
+     * Test for getPathSeparator with various path formats.
+     * This is related to <a href="https://github.com/dadoonet/fscrawler/issues/2134">#2134</a>
+     */
+    @Test
+    public void getPathSeparator() {
+        // Linux-style paths
+        assertThat(FsCrawlerUtil.getPathSeparator("/tmp/dir")).isEqualTo("/");
+        assertThat(FsCrawlerUtil.getPathSeparator("/")).isEqualTo("/");
+        assertThat(FsCrawlerUtil.getPathSeparator("//SOMEONE/share")).isEqualTo("/");
+
+        // Windows-style paths with backslashes
+        assertThat(FsCrawlerUtil.getPathSeparator("C:\\tmp\\dir")).isEqualTo("\\");
+        assertThat(FsCrawlerUtil.getPathSeparator("C:\\")).isEqualTo("\\");
+        assertThat(FsCrawlerUtil.getPathSeparator("\\\\SOMEONE\\share")).isEqualTo("\\");
+
+        // Windows-style paths with forward slashes (common user mistake on Windows)
+        // These should return "/" because they contain "/" but not "\"
+        assertThat(FsCrawlerUtil.getPathSeparator("C:/tmp/dir")).isEqualTo("/");
+        assertThat(FsCrawlerUtil.getPathSeparator("C:/")).isEqualTo("/");
+
+        // Edge case: just a drive letter with colon but no slashes
+        // Should return "\" because it contains ":" but no "/"
+        assertThat(FsCrawlerUtil.getPathSeparator("C:")).isEqualTo("\\");
+    }
 }
