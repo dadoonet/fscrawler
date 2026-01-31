@@ -288,6 +288,13 @@ public abstract class FsParserAbstract extends FsParser {
         if (OsValidator.WINDOWS && fsSettings.getServer() == null) {
             logger.debug("We are running on Windows without Server settings so we use the separator in accordance with fs.url");
             FileAbstractorFile.separator = separator;
+            // Warn users about potential issues with forward slashes on Windows
+            String url = fsSettings.getFs().getUrl();
+            if (url.contains("/") && url.contains(":") && !url.contains("\\")) {
+                logger.warn("On Windows, using forward slashes in fs.url [{}] may cause issues. " +
+                        "It is recommended to use backslashes instead: [{}]",
+                        url, url.replace("/", "\\"));
+            }
         }
         return separator;
     }
@@ -763,8 +770,16 @@ public abstract class FsParserAbstract extends FsParser {
      * @param rootPath the root path we started from
      */
     private void indexDirectory(String path, String rootPath) throws Exception {
-        String name = path.substring(path.lastIndexOf(pathSeparator) + 1);
-        String rootdir = path.substring(0, path.lastIndexOf(pathSeparator));
+        // Find the last separator regardless of type to handle mixed separator scenarios on Windows
+        int lastSepIndex = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+        if (lastSepIndex < 0) {
+            // Edge case: no separator found (e.g., root path like "C:")
+            logger.warn("Cannot index directory [{}]: no path separator found. " +
+                    "On Windows, please use backslashes (e.g., C:\\\\path\\\\to\\\\dir) in fs.url setting.", path);
+            return;
+        }
+        String name = path.substring(lastSepIndex + 1);
+        String rootdir = path.substring(0, lastSepIndex);
 
         File folderInfo = new File(path);
 
