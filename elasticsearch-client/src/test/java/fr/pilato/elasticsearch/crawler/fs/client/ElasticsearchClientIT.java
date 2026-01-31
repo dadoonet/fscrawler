@@ -67,6 +67,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.debug("Generate settings against [{}] with ssl check [{}]", testClusterUrl, TEST_CHECK_CERTIFICATE);
 
         FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName(DOC_INDEX_NAME);
+        fsSettings.getElasticsearch().setIndex(DOC_INDEX_NAME);
+        fsSettings.getElasticsearch().setIndexFolder(FOLDER_INDEX_NAME);
         fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
         fsSettings.getElasticsearch().setSslVerification(TEST_CHECK_CERTIFICATE);
         fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
@@ -180,10 +183,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
         // Remove existing templates if any
         logger.debug(" -> Removing existing templates");
-        String templateName = "fscrawler_" + getCrawlerName() + "_*";
-        logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-        removeIndexTemplates(templateName);
-        removeComponentTemplates(templateName);
+        removeTemplatesForIndex(getCrawlerName());
+        removeTemplatesForIndex(DOC_INDEX_NAME);
 
         logger.info("🎬 Starting test [{}]", getCurrentTestName());
     }
@@ -196,13 +197,18 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
             logger.debug(" -> Removing existing templates");
-            String templateName = "fscrawler_" + getCrawlerName() + "_*";
-            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-            removeIndexTemplates(templateName);
-            removeComponentTemplates(templateName);
+            removeTemplatesForIndex(getCrawlerName());
+            removeTemplatesForIndex(DOC_INDEX_NAME);
         }
 
         logger.info("✅ End of test [{}]", getCurrentTestName());
+    }
+
+    private static void removeTemplatesForIndex(String indexName) {
+        String templateName = "fscrawler_" + indexName + "_*";
+        logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+        removeIndexTemplates(templateName);
+        removeComponentTemplates(templateName);
     }
 
     @Test
@@ -825,6 +831,29 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void license() throws ElasticsearchClientException {
         String license = esClient.getLicense();
         assertThat(license).isNotEmpty();
+    }
+
+    @Test
+    public void componentTemplate() throws ElasticsearchClientException {
+        String crawlerName = getCrawlerName();
+
+        // Check it does not exist
+        assertThat(esClient.isExistingComponentTemplate(crawlerName)).isFalse();
+
+        // Create a simple component template
+        String componentTemplate = "{\n" +
+                "  \"template\": {\n" +
+                "    \"mappings\": {\n" +
+                "      \"properties\": {\n" +
+                "        \"foo\": { \"type\": \"keyword\" }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        esClient.pushComponentTemplate(crawlerName, componentTemplate);
+
+        assertThat(esClient.isExistingComponentTemplate(crawlerName)).isTrue();
+        assertThat(esClient.isExistingComponentTemplate(crawlerName + "_foo")).isFalse();
     }
 
     @Nightly("This test is only run in nightly builds as semantic search could take a long time")

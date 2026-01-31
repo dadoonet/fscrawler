@@ -87,6 +87,13 @@ public interface IElasticsearchClient extends Closeable {
     boolean isExistingPipeline(String pipeline) throws ElasticsearchClientException;
 
     /**
+     * Check if a component template exists
+     * @param templateName component template name
+     * @return true if the component template exists, false otherwise
+     */
+    boolean isExistingComponentTemplate(String templateName) throws ElasticsearchClientException;
+
+    /**
      * Refresh an index
      * @param index index name
      */
