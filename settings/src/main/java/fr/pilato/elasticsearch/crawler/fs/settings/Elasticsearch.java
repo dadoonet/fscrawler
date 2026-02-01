@@ -73,6 +73,8 @@ public class Elasticsearch {
     private boolean sslVerification;
     @Config(defaultVal = "true")
     private boolean pushTemplates;
+    @Config(defaultVal = "false")
+    private boolean forcePushTemplates;
     @Config(defaultVal = "true")
     private boolean semanticSearch;
 
@@ -199,6 +201,14 @@ public class Elasticsearch {
         this.pushTemplates = pushTemplates;
     }
 
+    public boolean isForcePushTemplates() {
+        return forcePushTemplates;
+    }
+
+    public void setForcePushTemplates(boolean forcePushTemplates) {
+        this.forcePushTemplates = forcePushTemplates;
+    }
+
     public String getCaCertificate() {
         return caCertificate;
     }
@@ -234,6 +244,7 @@ public class Elasticsearch {
         if (!Objects.equals(sslVerification, that.sslVerification)) return false;
         if (!Objects.equals(caCertificate, that.caCertificate)) return false;
         if (!Objects.equals(pushTemplates, that.pushTemplates)) return false;
+        if (!Objects.equals(forcePushTemplates, that.forcePushTemplates)) return false;
         return Objects.equals(flushInterval, that.flushInterval);
 
     }
@@ -252,6 +263,7 @@ public class Elasticsearch {
         result = 31 * result + (caCertificate != null ? caCertificate.hashCode() : 0);
         result = 31 * result + (sslVerification? 1: 0);
         result = 31 * result + (pushTemplates? 1: 0);
+        result = 31 * result + (forcePushTemplates? 1: 0);
         return result;
     }
 
@@ -271,6 +283,7 @@ public class Elasticsearch {
                 ", sslVerification=" + sslVerification +
                 ", caCertificate='" + caCertificate + '\'' +
                 ", pushTemplates=" + pushTemplates +
+                ", forcePushTemplates=" + forcePushTemplates +
                 '}';
     }
 }
