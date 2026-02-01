@@ -343,24 +343,28 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
 
         // We try with a document that does not exist
-        String json = "{\n" +
-                "  \"type\": \"local\",\n" +
-                "  \"local\": {\n" +
-                "    \"url\": \"" + fileDoesNotExist.toString().replace("\\", "\\\\") + "\"\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "type": "local",
+                  "local": {
+                    "url": "%s"
+                  }
+                }
+                """.formatted(fileDoesNotExist.toString().replace("\\", "\\\\"));
         UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
         assertThat(uploadResponse.isOk()).isFalse();
         assertThat(uploadResponse.getMessage()).contains("FsCrawlerIllegalConfigurationException");
         assertThat(uploadResponse.getMessage()).contains(fileDoesNotExist.toString());
 
         // We try with an existing document which is not part of the crawler fs.url
-        json = "{\n" +
-                "  \"type\": \"local\",\n" +
-                "  \"local\": {\n" +
-                "    \"url\": \"" + fileOutsideWatchedDir.toString().replace("\\", "\\\\") + "\"\n" +
-                "  }\n" +
-                "}";
+        json = """
+                {
+                  "type": "local",
+                  "local": {
+                    "url": "%s"
+                  }
+                }
+                """.formatted(fileOutsideWatchedDir.toString().replace("\\", "\\\\"));
         uploadResponse = post(target, "/_document", json, UploadResponse.class);
         assertThat(uploadResponse.isOk()).isFalse();
         assertThat(uploadResponse.getMessage())
@@ -369,12 +373,14 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                 .contains(fileOutsideWatchedDir.toString());
 
         // We try with an existing document which is part of the crawler fs.url
-        json = "{\n" +
-                "  \"type\": \"local\",\n" +
-                "  \"local\": {\n" +
-                "    \"url\": \"" + correctFile.toString().replace("\\", "\\\\") + "\"\n" +
-                "  }\n" +
-                "}";
+        json = """
+                {
+                  "type": "local",
+                  "local": {
+                    "url": "%s"
+                  }
+                }
+                """.formatted(correctFile.toString().replace("\\", "\\\\"));
         uploadResponse = post(target, "/_document", json, UploadResponse.class);
         assertThat(uploadResponse.isOk()).isTrue();
 
@@ -423,16 +429,18 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             }
 
             // We try with a document that does not exist
-            String json = "{\n" +
-                    "  \"type\": \"s3\",\n" +
-                    "  \"s3\": {\n" +
-                    "    \"url\": \"" + s3Url +"\",\n" +
-                    "    \"bucket\": \"documents\",\n" +
-                    "    \"object\": \"foobar/foobar.txt\",\n" +
-                    "    \"access_key\": \"" + s3Username + "\",\n" +
-                    "    \"secret_key\": \"" + s3Password + "\" \n" +
-                    "  }\n" +
-                    "}";
+            String json = """
+                    {
+                      "type": "s3",
+                      "s3": {
+                        "url": "%s",
+                        "bucket": "documents",
+                        "object": "foobar/foobar.txt",
+                        "access_key": "%s",
+                        "secret_key": "%s"
+                      }
+                    }
+                    """.formatted(s3Url, s3Username, s3Password);
 
             UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.isOk()).isFalse();
@@ -440,16 +448,18 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat(uploadResponse.getMessage()).contains("The specified key does not exist");
 
             // We try with an existing document
-            json = "{\n" +
-                    "  \"type\": \"s3\",\n" +
-                    "  \"s3\": {\n" +
-                    "    \"url\": \"" + s3Url +"\",\n" +
-                    "    \"bucket\": \"documents\",\n" +
-                    "    \"object\": \"roottxtfile.txt\",\n" +
-                    "    \"access_key\": \"" + s3Username + "\",\n" +
-                    "    \"secret_key\": \"" + s3Password + "\" \n" +
-                    "  }\n" +
-                    "}";
+            json = """
+                    {
+                      "type": "s3",
+                      "s3": {
+                        "url": "%s",
+                        "bucket": "documents",
+                        "object": "roottxtfile.txt",
+                        "access_key": "%s",
+                        "secret_key": "%s"
+                      }
+                    }
+                    """.formatted(s3Url, s3Username, s3Password);
             uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.isOk()).isTrue();
 
@@ -472,12 +482,14 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
 
         // We try with an existing document
-        String json = "{\n" +
-                "  \"type\": \"not_available\",\n" +
-                "  \"not_available\": {\n" +
-                "    \"url\": \"" + fromExists.toString().replace("\\", "\\\\") + "\"\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "type": "not_available",
+                  "not_available": {
+                    "url": "%s"
+                  }
+                }
+                """.formatted(fromExists.toString().replace("\\", "\\\\"));
         UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
         assertThat(uploadResponse).satisfies(response -> {
             assertThat(response.isOk()).isFalse();
@@ -545,24 +557,28 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             logger.info("Nginx started on {}.", url);
 
             // We try with a document that does not exist
-            String json = "{\n" +
-                    "  \"type\": \"http\",\n" +
-                    "  \"http\": {\n" +
-                    "    \"url\": \"" + url + "/doesnotexist.txt\"\n" +
-                    "  }\n" +
-                    "}";
+            String json = """
+                    {
+                      "type": "http",
+                      "http": {
+                        "url": "%s/doesnotexist.txt"
+                      }
+                    }
+                    """.formatted(url);
             UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.isOk()).isFalse().isFalse();
             assertThat(uploadResponse.getMessage()).contains("FileNotFoundException");
             assertThat(uploadResponse.getMessage()).contains("doesnotexist.txt");
 
             // We try with an existing document
-            json = "{\n" +
-                    "  \"type\": \"http\",\n" +
-                    "  \"http\": {\n" +
-                    "    \"url\": \"" + url + "/foo.txt\"\n" +
-                    "  }\n" +
-                    "}";
+            json = """
+                    {
+                      "type": "http",
+                      "http": {
+                        "url": "%s/foo.txt"
+                      }
+                    }
+                    """.formatted(url);
             uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.isOk()).isTrue();
 
@@ -573,12 +589,14 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains(text);
 
             // We try with an existing document running on https
-            json = "{\n" +
-                    "  \"type\": \"http\",\n" +
-                    "  \"http\": {\n" +
-                    "    \"url\": \"https://www.google.fr/robots.txt\"\n" +
-                    "  }\n" +
-                    "}";
+            json = """
+                    {
+                      "type": "http",
+                      "http": {
+                        "url": "https://www.google.fr/robots.txt"
+                      }
+                    }
+                    """;
             uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.getMessage()).isNull();
 

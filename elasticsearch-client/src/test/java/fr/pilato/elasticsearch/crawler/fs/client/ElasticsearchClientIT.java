@@ -236,25 +236,26 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     }
 
     private void createSearchDataset() throws Exception {
-        createIndex("{\n" +
-                "  \"mappings\": {\n" +
-                "    \"properties\": {\n" +
-                "      \"foo\": {\n" +
-                "        \"properties\": {\n" +
-                "          \"bar\": {\n" +
-                "            \"type\": \"text\",\n" +
-                "            \"store\": true,\n" +
-                "            \"fields\": {\n" +
-                "              \"raw\": { \n" +
-                "                \"type\":  \"keyword\"\n" +
-                "              }\n" +
-                "            }\n" +
-                "          }\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }\n" +
-                "}");
+        createIndex("""
+                {
+                  "mappings": {
+                    "properties": {
+                      "foo": {
+                        "properties": {
+                          "bar": {
+                            "type": "text",
+                            "store": true,
+                            "fields": {
+                              "raw": {
+                                "type":  "keyword"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }""");
 
         esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
         esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "2", "{ \"foo\": { \"bar\": \"baz\" } }", null);
@@ -492,26 +493,27 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         String crawlerName = getCrawlerName();
 
         // Create an empty ingest pipeline
-        String pipeline = "{\n" +
-                "  \"description\": \"Testing Grok on PDF upload\",\n" +
-                "  \"processors\": [\n" +
-                "    {\n" +
-                "      \"gsub\": {\n" +
-                "        \"field\": \"content\",\n" +
-                "        \"pattern\": \"\\n\",\n" +
-                "        \"replacement\": \"-\"\n" +
-                "      }\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"grok\": {\n" +
-                "        \"field\": \"content\",\n" +
-                "        \"patterns\": [\n" +
-                "          \"%{DATA}%{IP:ip_addr} %{GREEDYDATA}\"\n" +
-                "        ]\n" +
-                "      }\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}";
+        String pipeline = """
+                {
+                  "description": "Testing Grok on PDF upload",
+                  "processors": [
+                    {
+                      "gsub": {
+                        "field": "content",
+                        "pattern": "\\n",
+                        "replacement": "-"
+                      }
+                    },
+                    {
+                      "grok": {
+                        "field": "content",
+                        "patterns": [
+                          "%{DATA}%{IP:ip_addr} %{GREEDYDATA}"
+                        ]
+                      }
+                    }
+                  ]
+                }""";
         esClient.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         assertThat(esClient.isExistingPipeline(crawlerName)).isTrue();
@@ -579,11 +581,12 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
                         "" + i,
                         null,
-                        "{\n" +
-                                "          \"foo\" : {\n" +
-                                "            \"bar\" : \"baz\"\n" +
-                                "          }\n" +
-                                "        }"));
+                        """
+                                {
+                                  "foo" : {
+                                    "bar" : "baz"
+                                  }
+                                }"""));
             }
 
             ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
@@ -596,19 +599,20 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         }
         {
             esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            String indexSettings = "{\n" +
-                    "  \"mappings\": {\n" +
-                    "    \"properties\": {\n" +
-                    "      \"foo\": {\n" +
-                    "        \"properties\": {\n" +
-                    "          \"number\": {\n" +
-                    "            \"type\": \"long\"\n" +
-                    "          }\n" +
-                    "        }\n" +
-                    "      }\n" +
-                    "    }\n" +
-                    "  }\n" +
-                    "}";
+            String indexSettings = """
+                    {
+                      "mappings": {
+                        "properties": {
+                          "foo": {
+                            "properties": {
+                              "number": {
+                                "type": "long"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }""";
 
             createIndex(indexSettings);
 
@@ -844,15 +848,16 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         assertThat(esClient.isExistingComponentTemplate(crawlerName)).isFalse();
 
         // Create a simple component template
-        String componentTemplate = "{\n" +
-                "  \"template\": {\n" +
-                "    \"mappings\": {\n" +
-                "      \"properties\": {\n" +
-                "        \"foo\": { \"type\": \"keyword\" }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
+        String componentTemplate = """
+                {
+                  "template": {
+                    "mappings": {
+                      "properties": {
+                        "foo": { "type": "keyword" }
+                      }
+                    }
+                  }
+                }""";
         esClient.pushComponentTemplate(crawlerName, componentTemplate);
 
         assertThat(esClient.isExistingComponentTemplate(crawlerName)).isTrue();
