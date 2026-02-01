@@ -187,17 +187,16 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
         } catch (Exception e) {
             logger.warn("Failed to create elasticsearch client on {}. Message: {}.",
-                    settings.getElasticsearch().toString(),
+                    settings.getElasticsearch(),
                     e.getMessage());
             throw e;
         }
 
-        if (settings.getElasticsearch().getPipeline() != null) {
-            // Check that the pipeline exists
-            if (!isExistingPipeline(settings.getElasticsearch().getPipeline())) {
-                throw new RuntimeException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
+        // Check that the pipeline exists when one is defined
+        if (settings.getElasticsearch().getPipeline() != null
+                && !isExistingPipeline(settings.getElasticsearch().getPipeline())) {
+                throw new ElasticsearchClientException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
                         ", but it does not exist.");
-            }
         }
 
         if (semanticSearch) {
@@ -472,7 +471,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    private String catIndicesHealth(String index) {
+    private String catIndicesHealth(String index) throws ElasticsearchClientException {
         try {
             String response = httpGet("_cat/indices/" + index,
                     new AbstractMap.SimpleImmutableEntry<>("h", "health"));
@@ -486,8 +485,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 return null;
             }
             throw e;
-        } catch (ElasticsearchClientException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -666,7 +663,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         String json = loadResourceFile(version + "/_index_templates/" + name + ".json");
 
         // We need to replace the placeholder values
-        json = json.replaceAll("INDEX_NAME", index);
+        json = json.replace("INDEX_NAME", index);
 
         String indexTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
         pushIndexTemplate(indexTemplateName, json);
@@ -822,7 +819,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 aggs.forEach((aggName, v) -> {
                     ESTermsAggregation aggregation = new ESTermsAggregation(aggName, null);
                     List<Map<String, Object>> buckets = document.read("$.aggregations." + aggName + ".buckets");
-                    buckets.forEach((map) -> {
+                    buckets.forEach(map -> {
                         String key = (String) map.get("key");
                         long docCount = Integer.toUnsignedLong((Integer) map.get("doc_count"));
                         aggregation.addBucket(new ESTermsAggregation.ESTermsBucket(key, docCount));
@@ -1014,9 +1011,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     // Marker to indicate a successful call with null response (e.g., HEAD requests)
     private static final String SUCCESS_MARKER = "__SUCCESS__";
-    
-    // Marker to signal that a 429 error was received and we should switch to longer retry config
-    private static final String RATE_LIMITED_MARKER = "__RATE_LIMITED__";
 
     /**
      * Execute an HTTP call with retry logic for GET and HEAD methods.
@@ -1104,10 +1098,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                             }
 
                             // Other client errors (4xx) should not be retried
-                            throw new RuntimeException(e);
-                        } catch (ElasticsearchClientException e) {
-                            // Connection errors should not be retried (httpCall already handles node failover)
-                            throw new RuntimeException(e);
+                            throw new ElasticsearchClientException(e.getMessage());
                         }
                     }, Objects::nonNull);
             // Convert marker back to null for HEAD requests
@@ -1125,11 +1116,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
             throw e;
         } catch (RuntimeException e) {
             // Unwrap non-retryable exceptions
-            if (e.getCause() instanceof WebApplicationException) {
-                throw (WebApplicationException) e.getCause();
+            if (e.getCause() instanceof WebApplicationException wae) {
+                throw wae;
             }
-            if (e.getCause() instanceof ElasticsearchClientException) {
-                throw (ElasticsearchClientException) e.getCause();
+            if (e.getCause() instanceof ElasticsearchClientException ece) {
+                throw ece;
             }
             throw e;
         }
