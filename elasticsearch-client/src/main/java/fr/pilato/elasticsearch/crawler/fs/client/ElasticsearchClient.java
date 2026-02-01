@@ -610,8 +610,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
     /**
      * Wait for all component templates to be available
      * @param templateNames list of component template names to wait for
+     * @throws ElasticsearchClientException if a component template does not become available within timeout
      */
-    private void waitForComponentTemplates(List<String> templateNames) {
+    private void waitForComponentTemplates(List<String> templateNames) throws ElasticsearchClientException {
         logger.debug("Waiting for component templates to be available: {}", templateNames);
         for (String templateName : templateNames) {
             try {
@@ -628,7 +629,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
                         });
                 logger.debug("Component template [{}] is now available", templateName);
             } catch (ConditionTimeoutException e) {
-                logger.warn("Component template [{}] did not become available within 30 seconds", templateName);
+                throw new ElasticsearchClientException("Component template [" + templateName + 
+                        "] did not become available within 30 seconds");
             }
         }
     }

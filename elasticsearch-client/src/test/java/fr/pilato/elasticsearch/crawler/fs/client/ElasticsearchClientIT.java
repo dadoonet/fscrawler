@@ -837,6 +837,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void componentTemplate() throws ElasticsearchClientException {
         String crawlerName = getCrawlerName();
 
+        // Clean up any existing template from previous test runs
+        removeComponentTemplates(crawlerName);
+
         // Check it does not exist
         assertThat(esClient.isExistingComponentTemplate(crawlerName)).isFalse();
 
