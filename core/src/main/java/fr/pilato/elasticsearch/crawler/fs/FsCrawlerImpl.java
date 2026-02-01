@@ -122,14 +122,14 @@ public class FsCrawlerImpl implements AutoCloseable {
     }
 
     public void start() throws Exception {
+        managementService.start();
+        documentService.start();
+        documentService.createSchema();
+
         if (loop == 0 && !rest) {
             logger.warn("Number of runs is set to 0 and rest layer has not been started. Exiting");
             return;
         }
-
-        managementService.start();
-        documentService.start();
-        documentService.createSchema();
 
         logger.info("FSCrawler is now connected to Elasticsearch version [{}]", managementService.getVersion());
 
