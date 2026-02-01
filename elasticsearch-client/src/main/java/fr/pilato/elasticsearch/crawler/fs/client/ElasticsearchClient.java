@@ -1011,7 +1011,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Execute an HTTP call with retry logic for GET and HEAD methods.
-     * This method will retry the call with exponential backoff when a 5xx server error is received.
+     * This method will retry the call with exponential backoff when a 5xx server error
+     * or a 429 (Too Many Requests) rate limiting error is received.
      *
      * @param method HTTP method (should be GET or HEAD for retry to be applied)
      * @param path   the path to call
@@ -1034,14 +1035,18 @@ public class ElasticsearchClient implements IElasticsearchClient {
                             // HEAD requests return null on success, use marker to distinguish from retry signal
                             return response == null ? SUCCESS_MARKER : response;
                         } catch (WebApplicationException e) {
-                            // Only retry on server errors (5xx)
-                            if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                                logger.warn("Server error {} on {} {}. Retrying...",
-                                        e.getResponse().getStatus(), method, path == null ? "" : path);
+                            int status = e.getResponse().getStatus();
+                            boolean isServerError = e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR;
+                            boolean isTooManyRequests = status == Response.Status.TOO_MANY_REQUESTS.getStatusCode();
+                            
+                            // Retry on server errors (5xx) and rate limiting (429)
+                            if (isServerError || isTooManyRequests) {
+                                logger.warn("Retryable error {} on {} {}. Retrying...",
+                                        status, method, path == null ? "" : path);
                                 lastServerError.set(e);
                                 return null;
                             }
-                            // Non-server errors (4xx, etc.) should not be retried, rethrow as RuntimeException
+                            // Other client errors (4xx) should not be retried, rethrow as RuntimeException
                             throw new RuntimeException(e);
                         } catch (ElasticsearchClientException e) {
                             // Connection errors should not be retried (httpCall already handles node failover)

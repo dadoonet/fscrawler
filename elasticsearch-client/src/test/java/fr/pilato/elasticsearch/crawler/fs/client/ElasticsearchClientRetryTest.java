@@ -195,6 +195,52 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     }
 
     /**
+     * Test that 429 (Too Many Requests) errors trigger retry.
+     * This is important for handling Elasticsearch rate limiting.
+     * See: https://github.com/dadoonet/fscrawler/issues/2119
+     */
+    @Test
+    public void testRetryOn429TooManyRequests() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+        
+        // Use WireMock Scenarios to simulate: 429 -> 429 -> Success
+        stubFor(get(urlEqualTo("/"))
+                .inScenario("429 Retry")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse()
+                        .withStatus(429)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"error\": \"Too Many Requests\"}"))
+                .willSetStateTo("First 429"));
+
+        stubFor(get(urlEqualTo("/"))
+                .inScenario("429 Retry")
+                .whenScenarioStateIs("First 429")
+                .willReturn(aResponse()
+                        .withStatus(429)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"error\": \"Too Many Requests\"}"))
+                .willSetStateTo("Second 429"));
+
+        stubFor(get(urlEqualTo("/"))
+                .inScenario("429 Retry")
+                .whenScenarioStateIs("Second 429")
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            assertThat(client.getVersion()).isEqualTo(elasticsearchVersion);
+        }
+
+        // Verify that 3 requests were made (2 failures + 1 success)
+        verify(3, getRequestedFor(urlEqualTo("/")));
+        logger.info("Test passed: retry mechanism worked correctly on 429");
+    }
+
+    /**
      * Test that successful requests don't trigger any retry.
      */
     @Test
