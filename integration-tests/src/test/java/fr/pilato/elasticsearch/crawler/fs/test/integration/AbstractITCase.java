@@ -119,21 +119,21 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         String currentTestName = getCurrentTestName();
         // We copy files from the src dir to the temp dir
-        logger.info("  --> Launching test [{}]", currentTestName);
+        logger.info("🎬 Launching test [{}]", currentTestName);
         currentTestResourceDir = testResourceTarget.resolve(currentTestName);
         String url = getUrl("samples", currentTestName);
         Path from = Paths.get(url);
 
         if (Files.exists(from)) {
-            logger.debug("  --> Copying test resources from [{}]", from);
+            logger.trace("📂 Copying test resources from [{}]", from);
         } else {
-            logger.debug("  --> Copying test resources from [{}]", DEFAULT_RESOURCES);
+            logger.trace("📂 Copying test resources from [{}]", DEFAULT_RESOURCES);
             from = DEFAULT_RESOURCES;
         }
 
         copyDirs(from, currentTestResourceDir);
 
-        logger.debug("  --> Test resources ready in [{}]", currentTestResourceDir);
+        logger.debug("✅ Test resources ready in [{}]", currentTestResourceDir);
     }
 
     @Before
@@ -150,15 +150,15 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         currentTestTagDir = testResourceTarget.resolve(currentTestName + ".tags");
         if (Files.exists(from)) {
-            logger.debug("  --> Copying test resources from [{}]", from);
+            logger.trace("📂 Copying test resources from [{}]", from);
             copyDirs(from, currentTestTagDir);
-            logger.debug("  --> Tags ready in [{}]", currentTestTagDir);
+            logger.debug("✅ Tags ready in [{}]", currentTestTagDir);
         }
     }
 
     @After
     public void cleanTestResources() {
-        logger.info("  --> Test [{}] is now stopped", getCurrentTestName());
+        logger.info("🏁 Test [{}] is now stopped", getCurrentTestName());
     }
 
     @BeforeClass
@@ -167,7 +167,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         if (Files.notExists(metadataDir)) {
             Files.createDirectory(metadataDir);
         }
-        logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
+        logger.debug("🚦 Test metadata dir ready in [{}]", metadataDir);
     }
 
     @AfterClass
@@ -183,14 +183,14 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     public static void copyResourcesToTestDir() throws IOException, URISyntaxException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
         if (Files.notExists(testResourceTarget)) {
-            logger.debug("  --> Creating test resources dir in [{}]", testResourceTarget);
+            logger.debug("⛏️ Creating test resources dir in [{}]", testResourceTarget);
             Files.createDirectory(testResourceTarget);
         }
 
         // We copy files from the src dir to the temp dir
         copyTestDocumentsToTargetDir(testResourceTarget, "documents", "/fscrawler-test-documents-marker.txt");
 
-        logger.debug("  --> Test resources ready in [{}]:", testResourceTarget);
+        logger.debug("🚦 Test resources ready in [{}]:", testResourceTarget);
     }
 
     /**
@@ -208,7 +208,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             case "file" : {
                 Path finalTarget = target.resolve(sourceDirName);
                 if (Files.notExists(finalTarget)) {
-                    logger.debug("  --> Creating test dir named [{}]", finalTarget);
+                    logger.debug("⛏️ Creating test dir named [{}]", finalTarget);
                     Files.createDirectory(finalTarget);
                 }
                 // We are running our tests from the IDE most likely and documents are directly available in the classpath
@@ -218,13 +218,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     throw new RuntimeException(source + " doesn't seem to exist. Check your JUnit tests.");
                 }
 
-                logger.debug("-> Copying test documents from [{}] to [{}]", source, finalTarget);
+                logger.debug("📂 Copying test documents from [{}] to [{}]", source, finalTarget);
                 copyDirs(source, finalTarget);
                 break;
             }
             case "jar" : {
                 if (Files.notExists(target)) {
-                    logger.debug("  --> Creating test dir named [{}]", target);
+                    logger.debug("⛏️ Creating test dir named [{}]", target);
                     Files.createDirectory(target);
                 }
                 // We are  running our tests from the CLI most likely and documents are provided within a JAR as a dependency
@@ -242,7 +242,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     private static void unzip(Path zip, Path outputFolder, Charset charset) throws IOException {
-        logger.debug("-> Unzipping test documents from [{}] to [{}]", zip, outputFolder);
+        logger.debug("🗜️ Unzipping test documents from [{}] to [{}]", zip, outputFolder);
 
         try (ZipFile zipFile = new ZipFile(zip.toFile(), ZipFile.OPEN_READ, charset)) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -267,7 +267,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @BeforeClass
     public static void startServices() throws IOException, ElasticsearchClientException {
-        logger.debug("Generate settings against [{}] with ssl check [{}]", testClusterUrl, testCheckCertificate);
+        logger.debug("⛏️ Generate settings against [{}] with ssl check [{}]", testClusterUrl, testCheckCertificate);
 
         FsSettings fsSettings = FsSettingsLoader.load();
         // If we already have the elasticsearch settings, there's no need to load them again
@@ -387,11 +387,11 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     @AfterClass
     public static void stopServices() throws IOException {
-        logger.debug("Stopping integration tests against an external cluster");
+        logger.debug("🏁 Stopping integration tests against an external cluster");
         if (client != null) {
             client.close();
             client = null;
-            logger.debug("Elasticsearch client stopped");
+            logger.debug("🏁 Elasticsearch client stopped");
         }
         if (pluginsManager != null) {
             pluginsManager.close();
@@ -445,7 +445,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        logger.info("  ---> Waiting up to {} for {} documents in {}", duration,
+        logger.info("⏳ Waiting up to {} for {} documents in {}", duration,
                 expected == null ? "some" : expected, request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
 

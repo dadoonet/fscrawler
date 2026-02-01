@@ -42,13 +42,13 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
 
     @Before
     public void cleanExistingIndex() throws ElasticsearchClientException {
-        logger.debug(" -> Removing existing index [{}*]", getCrawlerName());
+        logger.debug("🧹 Removing existing index [{}*]", getCrawlerName());
         client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
         client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
         String templateName = "fscrawler_" + getCrawlerName() + "_*";
-        logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+        logger.debug("🧹 Removing existing index and component templates [{}]", templateName);
         removeIndexTemplates(templateName);
         removeComponentTemplates(templateName);
 
@@ -58,12 +58,12 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     @After
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
-            logger.debug(" -> Removing index [{}*]", getCrawlerName());
+            logger.debug("🧹 Removing index [{}*]", getCrawlerName());
             client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
             client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
             String templateName = "fscrawler_" + getCrawlerName() + "_*";
-            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
+            logger.debug("🧹 Removing existing index and component templates [{}]", templateName);
             removeIndexTemplates(templateName);
             removeComponentTemplates(templateName);
         }
@@ -72,7 +72,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     protected static void removeComponentTemplates(String componentTemplateName) {
-        logger.trace("Removing component templates for [{}]", componentTemplateName);
+        logger.trace("🧹 Removing component templates for [{}]", componentTemplateName);
         try {
             client.performLowLevelRequest("DELETE", "/_component_template/" + componentTemplateName, null);
         } catch (ElasticsearchClientException | NotFoundException e) {
@@ -85,7 +85,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     protected static void removeIndexTemplates(String indexTemplateName) {
-        logger.trace("Removing index templates for [{}]", indexTemplateName);
+        logger.trace("🧹 Removing index templates for [{}]", indexTemplateName);
         try {
             client.performLowLevelRequest("DELETE", "/_index_template/" + indexTemplateName, null);
         } catch (ElasticsearchClientException | NotFoundException e) {
@@ -100,7 +100,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     @After
     public void shutdownCrawler() throws InterruptedException, IOException {
         if (crawler != null) {
-            logger.info("  --> Stopping crawler");
+            logger.info("🏁 Stopping crawler");
             crawler.close();
             crawler = null;
         }

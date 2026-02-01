@@ -366,7 +366,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @Override
     public boolean isExistingIndex(String index) throws ElasticsearchClientException {
-        logger.debug("is existing index [{}]", index);
+        logger.trace("is existing index [{}]", index);
         try {
             httpGet(index);
             logger.debug("Index [{}] was found", index);
@@ -384,7 +384,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @Override
     public boolean isExistingPipeline(String pipelineName) throws ElasticsearchClientException {
-        logger.debug("is existing pipeline [{}]", pipelineName);
+        logger.trace("is existing pipeline [{}]", pipelineName);
         try {
             httpGet("_ingest/pipeline/" + pipelineName);
             logger.debug("Pipeline [{}] was found", pipelineName);
@@ -402,7 +402,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @Override
     public boolean isExistingComponentTemplate(String templateName) throws ElasticsearchClientException {
-        logger.debug("is existing component template [{}]", templateName);
+        logger.trace("is existing component template [{}]", templateName);
         try {
             httpGet("_component_template/" + templateName);
             logger.debug("Component template [{}] was found", templateName);
@@ -420,7 +420,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @Override
     public boolean isExistingIndexTemplate(String templateName) throws ElasticsearchClientException {
-        logger.debug("is existing index template [{}]", templateName);
+        logger.trace("is existing index template [{}]", templateName);
         try {
             httpGet("_index_template/" + templateName);
             logger.debug("Index template [{}] was found", templateName);
@@ -1223,7 +1223,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                         e.getResponse().getStatusInfo().getReasonPhrase(),
                         e.getResponse().readEntity(String.class));
             } else {
-                logger.debug("Error while running {} {}/{}: {}", method, node, path == null ? "" : path, e.getResponse().readEntity(String.class));
+                logger.trace("Error while running {} {}/{}: {}", method, node, path == null ? "" : path, e.getResponse().readEntity(String.class));
             }
             throw e;
         } catch (ProcessingException e) {
