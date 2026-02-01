@@ -79,7 +79,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
     // TODO this should be configurable
     public static final int CHECK_NODES_EVERY = 10;
 
-    // Retry configuration for GET/HEAD requests
     // Retry configuration for server errors (5xx)
     private static final Duration RETRY_MAX_DURATION = Duration.ofSeconds(10);
     private static final Duration RETRY_INITIAL_DELAY = Duration.ofMillis(500);
