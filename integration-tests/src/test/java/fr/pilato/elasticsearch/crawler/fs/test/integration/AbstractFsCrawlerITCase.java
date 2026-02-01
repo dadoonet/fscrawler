@@ -116,8 +116,8 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
 
     protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, Duration duration)
             throws Exception {
-        logger.info("  --> starting crawler [{}]", fsSettings.getName());
-        logger.debug("     with settings [{}]", fsSettings);
+        logger.info("🎬 starting crawler [{}]", fsSettings.getName());
+        logger.debug("⚙️ with settings [{}]", fsSettings);
 
         crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
         crawler.start();
