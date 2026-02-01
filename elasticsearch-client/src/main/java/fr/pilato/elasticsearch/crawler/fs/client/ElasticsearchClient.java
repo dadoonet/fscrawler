@@ -80,9 +80,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public static final int CHECK_NODES_EVERY = 10;
 
     // Retry configuration for GET/HEAD requests
+    // Retry configuration for server errors (5xx)
     private static final Duration RETRY_MAX_DURATION = Duration.ofSeconds(10);
     private static final Duration RETRY_INITIAL_DELAY = Duration.ofMillis(500);
     private static final Duration RETRY_MAX_DELAY = Duration.ofSeconds(5);
+
+    // Retry configuration for rate limiting (429) - longer delays to let the server recover
+    private static final Duration RETRY_429_MAX_DURATION = Duration.ofMinutes(5);
+    private static final Duration RETRY_429_INITIAL_DELAY = Duration.ofSeconds(1);
+    private static final Duration RETRY_429_MAX_DELAY = Duration.ofSeconds(30);
 
     private Client client = null;
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> bulkProcessor = null;
@@ -1008,11 +1014,17 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     // Marker to indicate a successful call with null response (e.g., HEAD requests)
     private static final String SUCCESS_MARKER = "__SUCCESS__";
+    
+    // Marker to signal that a 429 error was received and we should switch to longer retry config
+    private static final String RATE_LIMITED_MARKER = "__RATE_LIMITED__";
 
     /**
      * Execute an HTTP call with retry logic for GET and HEAD methods.
      * This method will retry the call with exponential backoff when a 5xx server error
      * or a 429 (Too Many Requests) rate limiting error is received.
+     * <p>
+     * For 5xx errors, uses short retry intervals (500ms to 5s, max 10s total).
+     * For 429 errors, uses longer retry intervals (1s to 30s, max 5 minutes total) to allow server recovery.
      *
      * @param method HTTP method (should be GET or HEAD for retry to be applied)
      * @param path   the path to call
@@ -1023,12 +1035,42 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @SafeVarargs
     private String httpCallWithRetry(String method, String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+        // First try with standard retry config (handles 5xx errors)
+        // If we get a 429, we switch to longer retry intervals
+        try {
+            return executeWithRetry(method, path, data, 
+                    RETRY_MAX_DURATION, RETRY_INITIAL_DELAY, RETRY_MAX_DELAY, 
+                    false, params);
+        } catch (RateLimitedException e) {
+            // Got 429 on first attempt, switch to longer retry config
+            logger.info("Rate limited (429) on {} {}. Switching to longer retry intervals (up to {})...",
+                    method, path == null ? "" : path, RETRY_429_MAX_DURATION);
+            return executeWithRetry(method, path, data,
+                    RETRY_429_MAX_DURATION, RETRY_429_INITIAL_DELAY, RETRY_429_MAX_DELAY,
+                    true, params);
+        }
+    }
+
+    /**
+     * Internal exception to signal rate limiting (429) so we can switch retry configuration.
+     */
+    private static class RateLimitedException extends RuntimeException {
+        RateLimitedException(WebApplicationException cause) {
+            super(cause);
+        }
+    }
+
+    @SafeVarargs
+    private String executeWithRetry(String method, String path, Object data,
+                                    Duration maxDuration, Duration initialDelay, Duration maxDelay,
+                                    boolean handle429,
+                                    Map.Entry<String, Object>... params) throws ElasticsearchClientException {
         AtomicReference<WebApplicationException> lastServerError = new AtomicReference<>();
 
         try {
             String result = await()
-                    .atMost(RETRY_MAX_DURATION)
-                    .pollInterval(ExponentialBackoffPollInterval.exponential(RETRY_INITIAL_DELAY, RETRY_MAX_DELAY))
+                    .atMost(maxDuration)
+                    .pollInterval(ExponentialBackoffPollInterval.exponential(initialDelay, maxDelay))
                     .until(() -> {
                         try {
                             String response = httpCall(method, path, data, params);
@@ -1038,19 +1080,33 @@ public class ElasticsearchClient implements IElasticsearchClient {
                             int status = e.getResponse().getStatus();
                             boolean isServerError = e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR;
                             boolean isTooManyRequests = status == Response.Status.TOO_MANY_REQUESTS.getStatusCode();
-                            
-                            // Retry on server errors (5xx) and rate limiting (429)
-                            if (isServerError || isTooManyRequests) {
-                                logger.warn("Retryable error {} on {} {}. Retrying...",
+
+                            // Handle server errors (5xx) - always retry
+                            if (isServerError) {
+                                logger.warn("Server error {} on {} {}. Retrying...",
                                         status, method, path == null ? "" : path);
                                 lastServerError.set(e);
                                 return null;
                             }
-                            // Other client errors (4xx) should not be retried, rethrow as RuntimeException
+
+                            // Handle rate limiting (429)
+                            if (isTooManyRequests) {
+                                if (handle429) {
+                                    // We're already in 429 retry mode, continue retrying
+                                    logger.warn("Rate limited (429) on {} {}. Retrying in up to {}...",
+                                            method, path == null ? "" : path, maxDelay);
+                                    lastServerError.set(e);
+                                    return null;
+                                } else {
+                                    // Signal to switch to 429 retry mode
+                                    throw new RateLimitedException(e);
+                                }
+                            }
+
+                            // Other client errors (4xx) should not be retried
                             throw new RuntimeException(e);
                         } catch (ElasticsearchClientException e) {
                             // Connection errors should not be retried (httpCall already handles node failover)
-                            // Wrap and rethrow to preserve the original error context
                             throw new RuntimeException(e);
                         }
                     }, Objects::nonNull);
@@ -1058,12 +1114,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return SUCCESS_MARKER.equals(result) ? null : result;
         } catch (ConditionTimeoutException e) {
             logger.error("Retries exhausted for {} {} after {}. Last error: {}",
-                    method, path == null ? "" : path, RETRY_MAX_DURATION,
+                    method, path == null ? "" : path, maxDuration,
                     lastServerError.get() != null ? lastServerError.get().getMessage() : "unknown");
             if (lastServerError.get() != null) {
                 throw lastServerError.get();
             }
             throw new ElasticsearchClientException("Retries exhausted for " + method + " " + (path == null ? "" : path), e);
+        } catch (RateLimitedException e) {
+            // Propagate to switch retry configuration
+            throw e;
         } catch (RuntimeException e) {
             // Unwrap non-retryable exceptions
             if (e.getCause() instanceof WebApplicationException) {
