@@ -1004,6 +1004,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return httpCall("DELETE", path, data);
     }
 
+    // Marker to indicate a successful call with null response (e.g., HEAD requests)
+    private static final String SUCCESS_MARKER = "__SUCCESS__";
+
     /**
      * Execute an HTTP call with retry logic for GET and HEAD methods.
      * This method will retry the call with exponential backoff when a 5xx server error is received.
@@ -1012,7 +1015,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * @param path   the path to call
      * @param data   the data to send (should be null for GET/HEAD)
      * @param params optional query parameters
-     * @return the response body as a String
+     * @return the response body as a String (null for HEAD requests)
      * @throws ElasticsearchClientException if all retries fail or a non-retryable error occurs
      */
     @SafeVarargs
@@ -1020,12 +1023,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
         AtomicReference<WebApplicationException> lastServerError = new AtomicReference<>();
 
         try {
-            return await()
+            String result = await()
                     .atMost(RETRY_MAX_DURATION)
                     .pollInterval(ExponentialBackoffPollInterval.exponential(RETRY_INITIAL_DELAY, RETRY_MAX_DELAY))
                     .until(() -> {
                         try {
-                            return httpCall(method, path, data, params);
+                            String response = httpCall(method, path, data, params);
+                            // HEAD requests return null on success, use marker to distinguish from retry signal
+                            return response == null ? SUCCESS_MARKER : response;
                         } catch (WebApplicationException e) {
                             // Only retry on server errors (5xx)
                             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
@@ -1038,6 +1043,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
                             throw new RuntimeException(e);
                         }
                     }, Objects::nonNull);
+            // Convert marker back to null for HEAD requests
+            return SUCCESS_MARKER.equals(result) ? null : result;
         } catch (ConditionTimeoutException e) {
             logger.error("Retries exhausted for {} {} after {}. Last error: {}",
                     method, path == null ? "" : path, RETRY_MAX_DURATION,

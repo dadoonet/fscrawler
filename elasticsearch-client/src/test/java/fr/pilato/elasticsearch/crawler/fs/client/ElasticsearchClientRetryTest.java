@@ -217,4 +217,79 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         verify(1, getRequestedFor(urlEqualTo("/")));
         logger.info("Test passed: immediate success without retry");
     }
+
+    /**
+     * Test that HEAD requests work correctly (they return null body but should not retry).
+     * This tests the exists() method which uses httpHead().
+     */
+    @Test
+    public void testHeadRequestSuccess() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        // Stub for client initialization
+        stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        // HEAD request returns 200 with no body (document exists)
+        stubFor(head(urlEqualTo("/test-index/_doc/doc1"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            // exists() uses HEAD request
+            boolean exists = client.exists("test-index", "doc1");
+            assertThat(exists).isTrue();
+        }
+
+        // Verify only 1 HEAD request was made (no retry loop due to null response)
+        verify(1, headRequestedFor(urlEqualTo("/test-index/_doc/doc1")));
+        logger.info("Test passed: HEAD request works correctly without infinite retry");
+    }
+
+    /**
+     * Test that HEAD requests with 503 errors are retried correctly.
+     */
+    @Test
+    public void testHeadRequestRetryOnServerError() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        // Stub for client initialization
+        stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        // HEAD request: first returns 503, then 200
+        stubFor(head(urlEqualTo("/test-index/_doc/doc1"))
+                .inScenario("HEAD Retry")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse()
+                        .withStatus(503))
+                .willSetStateTo("Recovered"));
+
+        stubFor(head(urlEqualTo("/test-index/_doc/doc1"))
+                .inScenario("HEAD Retry")
+                .whenScenarioStateIs("Recovered")
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            boolean exists = client.exists("test-index", "doc1");
+            assertThat(exists).isTrue();
+        }
+
+        // Verify 2 HEAD requests were made (1 failure + 1 success)
+        verify(2, headRequestedFor(urlEqualTo("/test-index/_doc/doc1")));
+        logger.info("Test passed: HEAD request retry on server error works correctly");
+    }
 }
