@@ -45,17 +45,18 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         String crawlerName = getCrawlerName();
 
         // Create an empty ingest pipeline
-        String pipeline = "{\n" +
-                "  \"description\" : \"describe pipeline\",\n" +
-                "  \"processors\" : [\n" +
-                "    {\n" +
-                "      \"rename\": {\n" +
-                "        \"field\": \"content\",\n" +
-                "        \"target_field\": \"my_content_field\"\n" +
-                "      }\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}";
+        String pipeline = """
+                {
+                  "description" : "describe pipeline",
+                  "processors" : [
+                    {
+                      "rename": {
+                        "field": "content",
+                        "target_field": "my_content_field"
+                      }
+                    }
+                  ]
+                }""";
         client.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         FsSettings fsSettings = createTestSettings();
@@ -82,26 +83,27 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         String crawlerName = getCrawlerName();
 
         // Create an empty ingest pipeline
-        String pipeline = "{\n" +
-                "  \"description\": \"Testing Grok on PDF upload\",\n" +
-                "  \"processors\": [\n" +
-                "    {\n" +
-                "      \"gsub\": {\n" +
-                "        \"field\": \"content\",\n" +
-                "        \"pattern\": \"\\n\",\n" +
-                "        \"replacement\": \"-\"\n" +
-                "      }\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"grok\": {\n" +
-                "        \"field\": \"content\",\n" +
-                "        \"patterns\": [\n" +
-                "          \"%{DATA}%{IP:ip_addr} %{GREEDYDATA}\"\n" +
-                "        ]\n" +
-                "      }\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}";
+        String pipeline = """
+                {
+                  "description": "Testing Grok on PDF upload",
+                  "processors": [
+                    {
+                      "gsub": {
+                        "field": "content",
+                        "pattern": "\\n",
+                        "replacement": "-"
+                      }
+                    },
+                    {
+                      "grok": {
+                        "field": "content",
+                        "patterns": [
+                          "%{DATA}%{IP:ip_addr} %{GREEDYDATA}"
+                        ]
+                      }
+                    }
+                  ]
+                }""";
         client.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
         FsSettings fsSettings = createTestSettings();
