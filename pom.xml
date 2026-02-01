@@ -896,6 +896,11 @@
                 <artifactId>nginx</artifactId>
                 <version>${testcontainers.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wiremock</groupId>
+                <artifactId>wiremock-standalone</artifactId>
+                <version>3.13.2</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

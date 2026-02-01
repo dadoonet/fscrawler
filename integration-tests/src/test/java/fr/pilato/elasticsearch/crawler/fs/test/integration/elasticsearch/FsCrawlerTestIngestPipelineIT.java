@@ -19,10 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
-import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.*;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
@@ -129,8 +126,8 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
 
         try {
             crawler = startCrawler(fsSettings);
-            fail("We should have caught a RuntimeException");
-        } catch (RuntimeException e) {
+            fail("We should have caught an ElasticsearchClientException");
+        } catch (ElasticsearchClientException e) {
             assertThat(e.getMessage()).contains("You defined pipeline:" + crawlerName + ", but it does not exist.");
         }
     }
