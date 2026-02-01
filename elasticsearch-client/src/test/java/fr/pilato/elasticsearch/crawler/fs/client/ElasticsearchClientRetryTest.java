@@ -1,0 +1,220 @@
+/*
+ * Licensed to David Pilato (the "Author") under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. Author licenses this
+ * file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package fr.pilato.elasticsearch.crawler.fs.client;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.WireMockThreadFilter;
+import jakarta.ws.rs.ServiceUnavailableException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+/**
+ * Integration tests for the retry mechanism on GET/HEAD requests.
+ * Uses WireMock to simulate server errors (503) and verify retry behavior.
+ */
+@ThreadLeakFilters(filters = {WireMockThreadFilter.class})
+public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
+    private static final Logger logger = LogManager.getLogger();
+    private static WireMockServer wireMockServer;
+    private static String elasticsearchVersion;
+
+    @BeforeClass
+    public static void startWireMock() throws IOException {
+        // Load the Elasticsearch version from properties
+        Properties props = new Properties();
+        props.load(ElasticsearchClientRetryTest.class.getResourceAsStream("/elasticsearch.version.properties"));
+        elasticsearchVersion = props.getProperty("version");
+        logger.info("Using Elasticsearch version {} for mock responses", elasticsearchVersion);
+
+        wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
+        wireMockServer.start();
+        WireMock.configureFor("localhost", wireMockServer.port());
+        logger.info("WireMock server started on port {}", wireMockServer.port());
+    }
+
+    @AfterClass
+    public static void stopWireMock() {
+        if (wireMockServer != null) {
+            wireMockServer.stop();
+            logger.info("WireMock server stopped");
+        }
+    }
+
+    private ElasticsearchClient createClient() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName("test-retry");
+        fsSettings.getElasticsearch().setUrls(List.of("http://localhost:" + wireMockServer.port()));
+        fsSettings.getElasticsearch().setSslVerification(false);
+        // Disable semantic search to avoid calling getLicense() during start()
+        fsSettings.getElasticsearch().setSemanticSearch(false);
+        return new ElasticsearchClient(fsSettings);
+    }
+
+    /**
+     * Test that the client retries on 503 errors and eventually succeeds.
+     * The mock is configured to return 503 twice, then succeed on the third attempt.
+     * Since start() calls getVersion(), this tests the retry mechanism during client initialization.
+     */
+    @Test
+    public void testRetryOnServerError() throws IOException, ElasticsearchClientException {
+        // Setup: First 2 calls return 503, third call succeeds
+        wireMockServer.resetAll();
+        
+        stubFor(get(urlEqualTo("/"))
+                .inScenario("Retry Test")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse()
+                        .withStatus(503)
+                        .withBody("{\"error\": \"Service Unavailable\"}"))
+                .willSetStateTo("First Failure"));
+
+        stubFor(get(urlEqualTo("/"))
+                .inScenario("Retry Test")
+                .whenScenarioStateIs("First Failure")
+                .willReturn(aResponse()
+                        .withStatus(503)
+                        .withBody("{\"error\": \"Service Unavailable\"}"))
+                .willSetStateTo("Second Failure"));
+
+        stubFor(get(urlEqualTo("/"))
+                .inScenario("Retry Test")
+                .whenScenarioStateIs("Second Failure")
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        try (ElasticsearchClient client = createClient()) {
+            // start() calls getVersion() internally, which will trigger retries
+            client.start();
+            // Verify the version was retrieved successfully
+            assertThat(client.getVersion()).isEqualTo(elasticsearchVersion);
+        }
+
+        // Verify that 3 requests were made (2 failures + 1 success)
+        verify(3, getRequestedFor(urlEqualTo("/")));
+        logger.info("Test passed: retry mechanism worked correctly after 2 failures");
+    }
+
+    /**
+     * Test that the client throws an exception after all retries are exhausted.
+     */
+    @Test
+    public void testRetryExhausted() throws IOException {
+        // Setup: All calls return 503
+        wireMockServer.resetAll();
+        
+        stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(503)
+                        .withBody("{\"error\": \"Service Unavailable\"}")));
+
+        try (ElasticsearchClient client = createClient()) {
+            // start() calls getVersion() which should fail after retries are exhausted
+            assertThatThrownBy(client::start)
+                    .isInstanceOf(ServiceUnavailableException.class);
+        }
+
+        // Verify that multiple retry attempts were made
+        verify(moreThan(1), getRequestedFor(urlEqualTo("/")));
+        logger.info("Test passed: exception thrown after retries exhausted");
+    }
+
+    /**
+     * Test that 4xx errors are not retried (only 5xx server errors should be retried).
+     */
+    @Test
+    public void testNoRetryOn4xxErrors() throws IOException, ElasticsearchClientException {
+        // Setup: Root endpoint works, but specific endpoint returns 404
+        wireMockServer.resetAll();
+
+        // First, we need to stub the root endpoint for client initialization
+        stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+        
+        // isExistingIndex calls httpGet(index), so it's a GET on /test-index
+        stubFor(get(urlEqualTo("/test-index"))
+                .willReturn(aResponse()
+                        .withStatus(404)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"error\": \"index_not_found_exception\"}")));
+
+        try (ElasticsearchClient client = createClient()) {
+            // Initialize the client first
+            client.start();
+            
+            // Reset the count after initialization
+            wireMockServer.resetRequests();
+            
+            // This should fail immediately without retry (404 is a client error)
+            boolean exists = client.isExistingIndex("test-index");
+            assertThat(exists).isFalse();
+        }
+
+        // Verify that only 1 request was made (no retry on 404)
+        verify(1, getRequestedFor(urlEqualTo("/test-index")));
+        logger.info("Test passed: no retry on 404 client error");
+    }
+
+    /**
+     * Test that successful requests don't trigger any retry.
+     */
+    @Test
+    public void testImmediateSuccessNoRetry() throws IOException, ElasticsearchClientException {
+        // Setup: First call succeeds immediately
+        wireMockServer.resetAll();
+        
+        stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            assertThat(client.getVersion()).isEqualTo(elasticsearchVersion);
+        }
+
+        // Verify that only 1 request was made
+        verify(1, getRequestedFor(urlEqualTo("/")));
+        logger.info("Test passed: immediate success without retry");
+    }
+}
