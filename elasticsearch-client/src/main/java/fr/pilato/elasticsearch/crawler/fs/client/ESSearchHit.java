@@ -81,6 +81,21 @@ public class ESSearchHit {
 
     @Override
     public String toString() {
-        return "ESSearchHit(" + index + '/' + id + ')';
+        StringBuilder sb = new StringBuilder("ESSearchHit(");
+        sb.append(index).append('/').append(id);
+        if (version != null) {
+            sb.append(", version=").append(version);
+        }
+        if (source != null) {
+            sb.append(", source=").append(source);
+        }
+        if (storedFields != null && !storedFields.isEmpty()) {
+            sb.append(", storedFields=").append(storedFields);
+        }
+        if (!highlightFields.isEmpty()) {
+            sb.append(", highlightFields=").append(highlightFields);
+        }
+        sb.append(')');
+        return sb.toString();
     }
 }
