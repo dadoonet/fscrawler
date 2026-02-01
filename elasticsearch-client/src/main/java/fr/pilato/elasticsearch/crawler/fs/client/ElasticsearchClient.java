@@ -678,26 +678,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    private String loadAndPushComponentTemplate(int version, String name, String index) throws IOException, ElasticsearchClientException {
-        logger.trace("Loading component template [{}]", name);
-        String json = loadResourceFile(version + "/_component_templates/" + name + ".json");
-        String componentTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
-        pushComponentTemplate(componentTemplateName, json);
-        return componentTemplateName;
-    }
-
-    private String loadAndPushComponentTemplate(int version, String name, String index, String alias) throws IOException, ElasticsearchClientException {
-        logger.trace("Loading component template [{}]", name);
-        String json = loadResourceFile(version + "/_component_templates/" + name + ".json");
-
-        // We need to replace the placeholder values
-        json = json.replace("ALIAS", alias != null ? alias : "fscrawler");
-
-        String componentTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
-        pushComponentTemplate(componentTemplateName, json);
-        return componentTemplateName;
-    }
-
     /**
      * Load and push a component template only if it doesn't already exist (unless forcePush is true)
      * @param version   the Elasticsearch major version
