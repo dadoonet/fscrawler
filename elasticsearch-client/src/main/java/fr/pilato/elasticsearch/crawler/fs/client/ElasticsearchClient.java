@@ -1041,6 +1041,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
                             }
                             // Non-server errors (4xx, etc.) should not be retried, rethrow as RuntimeException
                             throw new RuntimeException(e);
+                        } catch (ElasticsearchClientException e) {
+                            // Connection errors should not be retried (httpCall already handles node failover)
+                            // Wrap and rethrow to preserve the original error context
+                            throw new RuntimeException(e);
                         }
                     }, Objects::nonNull);
             // Convert marker back to null for HEAD requests
@@ -1054,9 +1058,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
             throw new ElasticsearchClientException("Retries exhausted for " + method + " " + (path == null ? "" : path), e);
         } catch (RuntimeException e) {
-            // Unwrap non-retryable WebApplicationException
+            // Unwrap non-retryable exceptions
             if (e.getCause() instanceof WebApplicationException) {
                 throw (WebApplicationException) e.getCause();
+            }
+            if (e.getCause() instanceof ElasticsearchClientException) {
+                throw (ElasticsearchClientException) e.getCause();
             }
             throw e;
         }

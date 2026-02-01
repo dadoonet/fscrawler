@@ -292,4 +292,30 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         verify(2, headRequestedFor(urlEqualTo("/test-index/_doc/doc1")));
         logger.info("Test passed: HEAD request retry on server error works correctly");
     }
+
+    /**
+     * Test that connection errors are propagated immediately without silent retry.
+     * This ensures the original error message is preserved.
+     */
+    @Test
+    public void testConnectionErrorNotSilentlyRetried() throws IOException {
+        // Use a port where nothing is listening to simulate connection error
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName("test-connection-error");
+        fsSettings.getElasticsearch().setUrls(List.of("http://localhost:1")); // Port 1 should refuse connections
+        fsSettings.getElasticsearch().setSslVerification(false);
+        fsSettings.getElasticsearch().setSemanticSearch(false);
+
+        try (ElasticsearchClient client = new ElasticsearchClient(fsSettings)) {
+            long startTime = System.currentTimeMillis();
+            assertThatThrownBy(client::start)
+                    .isInstanceOf(ElasticsearchClientException.class)
+                    .hasMessageContaining("Can not execute GET");
+            long duration = System.currentTimeMillis() - startTime;
+
+            // Should fail quickly (not wait for retry timeout of 10s)
+            assertThat(duration).isLessThan(5000);
+            logger.info("Test passed: connection error propagated immediately in {}ms", duration);
+        }
+    }
 }
