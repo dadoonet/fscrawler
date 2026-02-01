@@ -79,6 +79,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
     // TODO this should be configurable
     public static final int CHECK_NODES_EVERY = 10;
 
+    // Retry configuration for GET/HEAD requests
+    private static final Duration RETRY_MAX_DURATION = Duration.ofSeconds(10);
+    private static final Duration RETRY_INITIAL_DELAY = Duration.ofMillis(500);
+    private static final Duration RETRY_MAX_DELAY = Duration.ofSeconds(5);
+
     private Client client = null;
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> bulkProcessor = null;
     private final List<String> hosts;
@@ -976,12 +981,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     void httpHead(String path) throws ElasticsearchClientException {
-        httpCall("HEAD", path, null);
+        httpCallWithRetry("HEAD", path, null);
     }
 
     @SafeVarargs
     final String httpGet(String path, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
-        return httpCall("GET", path, null, params);
+        return httpCallWithRetry("GET", path, null, params);
     }
 
     @SafeVarargs
@@ -997,6 +1002,57 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     private String httpDelete(String path, Object data) throws ElasticsearchClientException {
         return httpCall("DELETE", path, data);
+    }
+
+    /**
+     * Execute an HTTP call with retry logic for GET and HEAD methods.
+     * This method will retry the call with exponential backoff when a 5xx server error is received.
+     *
+     * @param method HTTP method (should be GET or HEAD for retry to be applied)
+     * @param path   the path to call
+     * @param data   the data to send (should be null for GET/HEAD)
+     * @param params optional query parameters
+     * @return the response body as a String
+     * @throws ElasticsearchClientException if all retries fail or a non-retryable error occurs
+     */
+    @SafeVarargs
+    private String httpCallWithRetry(String method, String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+        AtomicReference<WebApplicationException> lastServerError = new AtomicReference<>();
+
+        try {
+            return await()
+                    .atMost(RETRY_MAX_DURATION)
+                    .pollInterval(ExponentialBackoffPollInterval.exponential(RETRY_INITIAL_DELAY, RETRY_MAX_DELAY))
+                    .until(() -> {
+                        try {
+                            return httpCall(method, path, data, params);
+                        } catch (WebApplicationException e) {
+                            // Only retry on server errors (5xx)
+                            if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
+                                logger.warn("Server error {} on {} {}. Retrying...",
+                                        e.getResponse().getStatus(), method, path == null ? "" : path);
+                                lastServerError.set(e);
+                                return null;
+                            }
+                            // Non-server errors (4xx, etc.) should not be retried, rethrow as RuntimeException
+                            throw new RuntimeException(e);
+                        }
+                    }, Objects::nonNull);
+        } catch (ConditionTimeoutException e) {
+            logger.error("Retries exhausted for {} {} after {}. Last error: {}",
+                    method, path == null ? "" : path, RETRY_MAX_DURATION,
+                    lastServerError.get() != null ? lastServerError.get().getMessage() : "unknown");
+            if (lastServerError.get() != null) {
+                throw lastServerError.get();
+            }
+            throw new ElasticsearchClientException("Retries exhausted for " + method + " " + (path == null ? "" : path), e);
+        } catch (RuntimeException e) {
+            // Unwrap non-retryable WebApplicationException
+            if (e.getCause() instanceof WebApplicationException) {
+                throw (WebApplicationException) e.getCause();
+            }
+            throw e;
+        }
     }
 
     @SafeVarargs
