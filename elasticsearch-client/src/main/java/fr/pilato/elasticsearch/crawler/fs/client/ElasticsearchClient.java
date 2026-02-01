@@ -1098,7 +1098,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
                             }
 
                             // Other client errors (4xx) should not be retried
-                            throw new ElasticsearchClientException(e.getMessage());
+                            throw new RuntimeException(e);
+                        } catch (ElasticsearchClientException e) {
+                            // Connection errors should not be retried (httpCall already handles node failover)
+                            throw new RuntimeException(e);
                         }
                     }, Objects::nonNull);
             // Convert marker back to null for HEAD requests
