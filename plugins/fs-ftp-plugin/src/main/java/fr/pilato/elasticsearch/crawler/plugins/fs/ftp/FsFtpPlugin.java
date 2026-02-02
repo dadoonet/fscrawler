@@ -100,18 +100,65 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         protected void doValidateFile() throws FsCrawlerPluginException {
             try {
                 // Get file info to validate it exists
+                // Use mlistFile() which returns info about the path itself (like SSH stat())
+                // rather than listFiles() which returns directory contents when given a directory
                 String ftpPath = encodePathForFtp(remotePath);
-                FTPFile[] files = ftp.listFiles(ftpPath);
-                if (files == null || files.length == 0) {
+                fileInfo = ftp.mlistFile(ftpPath);
+                
+                if (fileInfo == null) {
+                    // mlistFile() may not be supported by all FTP servers (requires MLST command)
+                    // Fall back to listing the parent directory and finding the entry
+                    fileInfo = getFileInfoFromParentListing();
+                }
+                
+                if (fileInfo == null) {
                     throw new FsCrawlerPluginException("File [" + remotePath + "] does not exist on FTP server");
                 }
-                fileInfo = files[0];
+                
                 if (fileInfo.isDirectory()) {
                     throw new FsCrawlerPluginException("Path [" + remotePath + "] is a directory, not a file");
                 }
             } catch (IOException e) {
                 throw new FsCrawlerPluginException("Failed to access file [" + remotePath + "] via FTP: " + e.getMessage(), e);
             }
+        }
+        
+        /**
+         * Get file info by listing the parent directory and finding the matching entry.
+         * This is a fallback when mlistFile() is not supported by the FTP server.
+         *
+         * @return the FTPFile info, or null if not found
+         * @throws IOException if an I/O error occurs
+         */
+        private FTPFile getFileInfoFromParentListing() throws IOException {
+            // Extract parent directory and filename
+            String parentDir;
+            String filename;
+            int lastSlash = remotePath.lastIndexOf('/');
+            if (lastSlash <= 0) {
+                parentDir = "/";
+                filename = lastSlash == 0 ? remotePath.substring(1) : remotePath;
+            } else {
+                parentDir = remotePath.substring(0, lastSlash);
+                filename = remotePath.substring(lastSlash + 1);
+            }
+            
+            // List the parent directory
+            String encodedParentDir = encodePathForFtp(parentDir);
+            FTPFile[] files = ftp.listFiles(encodedParentDir);
+            
+            if (files == null) {
+                return null;
+            }
+            
+            // Find the entry matching our filename
+            for (FTPFile file : files) {
+                if (filename.equals(file.getName())) {
+                    return file;
+                }
+            }
+            
+            return null;
         }
 
         // ========== REST API methods ==========
@@ -238,12 +285,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         public boolean exists(String directory) {
             try {
                 logger.debug("Checking dir existence: {}", directory);
-                String dir;
-                if (isUtf8) {
-                    dir = new String(directory.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
-                } else {
-                    dir = new String(directory.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
-                }
+                String dir = encodePathForFtp(directory);
                 return ftp.changeWorkingDirectory(dir);
             } catch (IOException e) {
                 return false;
@@ -254,10 +296,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         public Collection<FileAbstractModel> getFiles(String dir) throws FsCrawlerPluginException {
             try {
                 logger.debug("Listing files from {}", dir);
-                String ftpDir = new String(dir.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
-                if (isUtf8) {
-                    ftpDir = new String(dir.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
-                }
+                String ftpDir = encodePathForFtp(dir);
 
                 FTPFile[] ftpFiles = ftp.listFiles(ftpDir);
                 if (ftpFiles == null || ftpFiles.length == 0) {
@@ -287,12 +326,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         @Override
         public InputStream getInputStream(FileAbstractModel file) throws FsCrawlerPluginException {
             try {
-                String fullPath = file.getFullpath();
-                if (isUtf8) {
-                    fullPath = new String(fullPath.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
-                } else {
-                    fullPath = new String(fullPath.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
-                }
+                String fullPath = encodePathForFtp(file.getFullpath());
 
                 InputStream inputStream = ftp.retrieveFileStream(fullPath);
                 if (inputStream != null) {
