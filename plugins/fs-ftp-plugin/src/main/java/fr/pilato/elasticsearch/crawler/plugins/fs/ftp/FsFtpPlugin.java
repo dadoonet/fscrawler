@@ -22,7 +22,6 @@ import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import org.apache.commons.io.FilenameUtils;
@@ -64,8 +63,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class FsCrawlerExtensionFsProviderFtp extends FsCrawlerExtensionFsProviderAbstract
-            implements FsCrawlerExtensionFsCrawler {
+    public static class FsCrawlerExtensionFsProviderFtp extends FsCrawlerExtensionFsProviderAbstract {
 
         private static final String ALTERNATIVE_ENCODING = "GBK";
         private static final Comparator<FTPFile> FTP_FILE_COMPARATOR = Comparator.comparing(
@@ -87,6 +85,11 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         @Override
         public String getType() {
             return "ftp";
+        }
+
+        @Override
+        public boolean supportsCrawling() {
+            return true;
         }
 
         // ========== FsCrawlerExtensionFsProvider methods (REST API) ==========
@@ -116,7 +119,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
             // This would be extended when REST API support is added
         }
 
-        // ========== FsCrawlerExtensionFsCrawler methods (Crawling) ==========
+        // ========== Crawling methods ==========
 
         @Override
         public void openConnection() throws Exception {

@@ -22,7 +22,6 @@ import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import org.apache.logging.log4j.LogManager;
@@ -54,8 +53,7 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract
-            implements FsCrawlerExtensionFsCrawler {
+    public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract {
 
         private Path path;
         private String url;
@@ -67,6 +65,11 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
         @Override
         public String getType() {
             return "local";
+        }
+
+        @Override
+        public boolean supportsCrawling() {
+            return true;
         }
 
         // ========== FsCrawlerExtensionFsProvider methods (REST API) ==========
@@ -121,7 +124,7 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             }
         }
 
-        // ========== FsCrawlerExtensionFsCrawler methods (Crawling) ==========
+        // ========== Crawling methods ==========
 
         @Override
         public void openConnection() {

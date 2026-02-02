@@ -28,7 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElas
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -104,8 +104,8 @@ public class FsCrawlerImpl implements AutoCloseable {
             String protocolType = determineProtocolType(settings);
             logger.debug("Using crawler plugin for protocol type [{}]", protocolType);
 
-            // Get the crawler plugin from the plugin manager
-            FsCrawlerExtensionFsCrawler crawlerPlugin = pluginsManager.findFsCrawler(protocolType);
+            // Get the crawler plugin from the plugin manager (validates that it supports crawling)
+            FsCrawlerExtensionFsProvider crawlerPlugin = pluginsManager.findFsProviderForCrawling(protocolType);
 
             // Initialize the plugin with settings
             crawlerPlugin.start(settings, "{}");

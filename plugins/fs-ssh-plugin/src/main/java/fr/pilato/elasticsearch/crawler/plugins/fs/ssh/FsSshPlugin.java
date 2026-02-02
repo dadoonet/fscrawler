@@ -22,7 +22,6 @@ import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import org.apache.commons.io.FilenameUtils;
@@ -59,8 +58,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class FsCrawlerExtensionFsProviderSsh extends FsCrawlerExtensionFsProviderAbstract
-            implements FsCrawlerExtensionFsCrawler {
+    public static class FsCrawlerExtensionFsProviderSsh extends FsCrawlerExtensionFsProviderAbstract {
 
         private static final Predicate<SftpClient.DirEntry> IS_DOT = file ->
                 !".".equals(file.getFilename()) &&
@@ -80,6 +78,11 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         @Override
         public String getType() {
             return "ssh";
+        }
+
+        @Override
+        public boolean supportsCrawling() {
+            return true;
         }
 
         // ========== FsCrawlerExtensionFsProvider methods (REST API) ==========
@@ -106,7 +109,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
             // For REST API usage, validate settings
         }
 
-        // ========== FsCrawlerExtensionFsCrawler methods (Crawling) ==========
+        // ========== Crawling methods ==========
 
         @Override
         public void openConnection() throws Exception {

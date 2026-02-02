@@ -22,7 +22,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
@@ -208,7 +208,7 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         assertThat(sshPlugin.getType()).isEqualTo("ssh");
     }
 
-    private void testFilesInDir(FsCrawlerExtensionFsCrawler plugin, String path, Tuple... values) throws Exception {
+    private void testFilesInDir(FsCrawlerExtensionFsProvider plugin, String path, Tuple... values) throws Exception {
         assertThat(plugin.exists(path)).isEqualTo(values.length > 0);
         Collection<FileAbstractModel> files = plugin.getFiles(path);
         assertThat(files).hasSize(values.length);

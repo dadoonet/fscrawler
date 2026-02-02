@@ -31,12 +31,10 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
     private static final Logger logger = LogManager.getLogger();
     private final PluginManager pluginManager;
     private final HashMap<String, FsCrawlerExtensionFsProvider> fsProviders;
-    private final HashMap<String, FsCrawlerExtensionFsCrawler> fsCrawlers;
 
     public FsCrawlerPluginsManager() {
         pluginManager = new DefaultPluginManager();
         fsProviders = new HashMap<>();
-        fsCrawlers = new HashMap<>();
     }
 
     public void loadPlugins() {
@@ -49,13 +47,9 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
         pluginManager.startPlugins();
 
         for (FsCrawlerExtensionFsProvider extension : pluginManager.getExtensions(FsCrawlerExtensionFsProvider.class)) {
-            logger.debug("Found FsCrawlerExtensionFsProvider extension for type [{}]", extension.getType());
+            logger.debug("Found FsCrawlerExtensionFsProvider extension for type [{}], supportsCrawling=[{}]",
+                    extension.getType(), extension.supportsCrawling());
             fsProviders.put(extension.getType(), extension);
-        }
-
-        for (FsCrawlerExtensionFsCrawler extension : pluginManager.getExtensions(FsCrawlerExtensionFsCrawler.class)) {
-            logger.debug("Found FsCrawlerExtensionFsCrawler extension for type [{}]", extension.getType());
-            fsCrawlers.put(extension.getType(), extension);
         }
     }
 
@@ -82,19 +76,28 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
     }
 
     /**
-     * Find a filesystem crawler for directory crawling operations.
+     * Find a filesystem provider for directory crawling operations.
+     * <p>
+     * This method finds a provider and validates that it supports crawling.
+     * </p>
      *
-     * @param type the crawler type (e.g., "local", "ftp", "ssh")
-     * @return the crawler for the given type
-     * @throws FsCrawlerIllegalConfigurationException if no crawler is found for the type
+     * @param type the provider type (e.g., "local", "ftp", "ssh")
+     * @return the provider for the given type (guaranteed to support crawling)
+     * @throws FsCrawlerIllegalConfigurationException if no provider is found or if it doesn't support crawling
      */
-    public FsCrawlerExtensionFsCrawler findFsCrawler(String type) {
-        logger.debug("Load FsCrawler extension for type [{}]", type);
-        FsCrawlerExtensionFsCrawler fsCrawlerExtensionFsCrawler = fsCrawlers.get(type);
-        if (fsCrawlerExtensionFsCrawler == null) {
-            logger.warn("Can not find FsCrawler for type [{}]", type);
-            throw new FsCrawlerIllegalConfigurationException("No FsCrawler found for type [" + type + "]");
+    public FsCrawlerExtensionFsProvider findFsProviderForCrawling(String type) {
+        logger.debug("Load FsProvider extension for crawling, type [{}]", type);
+        FsCrawlerExtensionFsProvider provider = fsProviders.get(type);
+        if (provider == null) {
+            logger.warn("Can not find FsProvider for type [{}]", type);
+            throw new FsCrawlerIllegalConfigurationException("No FsProvider found for type [" + type + "]");
         }
-        return fsCrawlerExtensionFsCrawler;
+        if (!provider.supportsCrawling()) {
+            logger.warn("FsProvider [{}] does not support directory crawling", type);
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Provider [" + type + "] does not support directory crawling. " +
+                    "Only local, ftp, and ssh providers support crawling.");
+        }
+        return provider;
     }
 }

@@ -29,7 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -67,14 +67,14 @@ public class FsParserAbstract extends FsParser {
     private final Integer loop;
     private Map<String, String> aclHashCache;
     private boolean aclHashCacheDirty;
-    private final FsCrawlerExtensionFsCrawler crawlerPlugin;
+    private final FsCrawlerExtensionFsProvider crawlerPlugin;
     private final String metadataFilename;
     private final byte[] staticMetadata;
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
     public FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
                            FsCrawlerDocumentService documentService, Integer loop,
-                           FsCrawlerExtensionFsCrawler crawlerPlugin) {
+                           FsCrawlerExtensionFsProvider crawlerPlugin) {
         this.fsSettings = fsSettings;
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.fsAclsFileHandler = initializeAclsFileHandler(fsSettings, config);
@@ -159,7 +159,7 @@ public class FsParserAbstract extends FsParser {
                                 "Started at [{}], finished at [{}], took [{}]. " +
                                 "Will restart at [{}].", run, fsSettings.getName(),
                         stats.getNbDocScan(), stats.getNbDocDeleted(), scanDatenew,
-                        stats.getStartTime(), stats.getEndTime(), stats.computeDuration(),
+                        stats.getStartTime(), stats.getEndTime(), durationToString(stats.computeDuration()),
                         nextCheck);
 
                 updateFsJob(fsSettings.getName(), scanDatenew, nextCheck, stats);
