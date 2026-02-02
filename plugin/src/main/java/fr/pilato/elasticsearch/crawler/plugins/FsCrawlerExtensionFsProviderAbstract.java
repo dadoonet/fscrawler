@@ -41,6 +41,12 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
     public void start(FsSettings fsSettings, String restSettings) {
         this.fsSettings = fsSettings;
 
+        // For batch crawling, restSettings may be null or empty - skip REST settings parsing
+        if (restSettings == null || restSettings.isEmpty() || "{}".equals(restSettings)) {
+            logger.trace("No REST settings provided, skipping parseSettings/validateSettings");
+            return;
+        }
+
         logger.trace("with rest settings {}", restSettings);
         document = parseJsonAsDocumentContext(restSettings);
 

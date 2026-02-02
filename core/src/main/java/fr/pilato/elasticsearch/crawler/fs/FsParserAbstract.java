@@ -21,9 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs;
 
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.*;
-import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractor;
-import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FileAbstractorFile;
+import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.*;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
@@ -31,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -53,7 +52,7 @@ import java.util.Objects;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
 
-public abstract class FsParserAbstract extends FsParser {
+public class FsParserAbstract extends FsParser {
     private static final Logger logger = LogManager.getLogger();
 
     private static final String FSCRAWLER_IGNORE_FILENAME = ".fscrawlerignore";
@@ -69,12 +68,14 @@ public abstract class FsParserAbstract extends FsParser {
     private Map<String, String> aclHashCache;
     private boolean aclHashCacheDirty;
     private final String pathSeparator;
-    private final FileAbstractor<?> fileAbstractor;
+    private final FsCrawlerExtensionFsCrawler crawlerPlugin;
     private final String metadataFilename;
     private final byte[] staticMetadata;
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
-    FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
+    public FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
+                           FsCrawlerDocumentService documentService, Integer loop,
+                           FsCrawlerExtensionFsCrawler crawlerPlugin) {
         this.fsSettings = fsSettings;
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.fsAclsFileHandler = initializeAclsFileHandler(fsSettings, config);
@@ -82,6 +83,7 @@ public abstract class FsParserAbstract extends FsParser {
         this.aclHashCacheDirty = false;
         this.managementService = managementService;
         this.documentService = documentService;
+        this.crawlerPlugin = crawlerPlugin;
 
         this.loop = loop;
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
@@ -90,22 +92,18 @@ public abstract class FsParserAbstract extends FsParser {
 
         pathSeparator = determinePathSeparator(fsSettings);
 
-        fileAbstractor = buildFileAbstractor(fsSettings);
-
         metadataFilename = resolveMetadataFilename(fsSettings);
         staticMetadata = loadStaticMetadata(fsSettings);
     }
-
-    protected abstract FileAbstractor<?> buildFileAbstractor(FsSettings fsSettings);
 
     @Override
     public void close() {
         super.close();
         logger.trace("Closing the parser {}", this.getClass().getSimpleName());
         try {
-            fileAbstractor.close();
+            crawlerPlugin.closeConnection();
         } catch (Exception e) {
-            logger.error("Error while closing file abstractor", e);
+            logger.error("Error while closing crawler plugin", e);
             throw new RuntimeException(e);
         }
     }
@@ -130,9 +128,9 @@ public abstract class FsParserAbstract extends FsParser {
                 LocalDateTime startDate = LocalDateTime.now();
                 stats.setStartTime(startDate);
 
-                fileAbstractor.open();
+                crawlerPlugin.openConnection();
 
-                if (!fileAbstractor.exists(fsSettings.getFs().getUrl())) {
+                if (!crawlerPlugin.exists(fsSettings.getFs().getUrl())) {
                     throw new RuntimeException(fsSettings.getFs().getUrl() + " doesn't exists.");
                 }
 
@@ -176,8 +174,8 @@ public abstract class FsParserAbstract extends FsParser {
             } finally {
                 persistAclHashCacheIfNeeded();
                 try {
-                    logger.debug("Closing FS crawler file abstractor [{}].", fileAbstractor.getClass().getSimpleName());
-                    fileAbstractor.close();
+                    logger.debug("Closing FS crawler plugin [{}].", crawlerPlugin.getType());
+                    crawlerPlugin.closeConnection();
                 } catch (Exception e) {
                     logger.warn("Error while closing the connection: {}", e.getMessage());
                     logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
@@ -287,7 +285,6 @@ public abstract class FsParserAbstract extends FsParser {
         String separator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
         if (OsValidator.WINDOWS && fsSettings.getServer() == null) {
             logger.debug("We are running on Windows without Server settings so we use the separator in accordance with fs.url");
-            FileAbstractorFile.separator = separator;
             // Warn users about potential issues with forward slashes on Windows
             String url = fsSettings.getFs().getUrl();
             if (url.contains("/") && url.contains(":") && !url.contains("\\")) {
@@ -419,7 +416,7 @@ public abstract class FsParserAbstract extends FsParser {
             return;
         }
 
-        final Collection<FileAbstractModel> children = fileAbstractor.getFiles(filepath);
+        final Collection<FileAbstractModel> children = crawlerPlugin.getFiles(filepath);
         Collection<String> fsFiles = new ArrayList<>();
         Collection<String> fsFolders = new ArrayList<>();
 
@@ -473,10 +470,10 @@ public abstract class FsParserAbstract extends FsParser {
                                     InputStream metadataStream = null;
                                     try {
                                         if (fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource()) {
-                                            inputStream = fileAbstractor.getInputStream(child);
+                                            inputStream = crawlerPlugin.getInputStream(child);
                                         }
                                         if (metadataFile != null) {
-                                            metadataStream = fileAbstractor.getInputStream(metadataFile);
+                                            metadataStream = crawlerPlugin.getInputStream(metadataFile);
                                         }
                                         indexFile(child, stats, filepath, inputStream, child.getSize(), metadataStream);
                                         stats.addFile();
@@ -488,10 +485,10 @@ public abstract class FsParserAbstract extends FsParser {
                                         }
                                     } finally {
                                         if (metadataStream != null) {
-                                            fileAbstractor.closeInputStream(metadataStream);
+                                            crawlerPlugin.closeInputStream(metadataStream);
                                         }
                                         if (inputStream != null) {
-                                            fileAbstractor.closeInputStream(inputStream);
+                                            crawlerPlugin.closeInputStream(inputStream);
                                         }
                                     }
                                 } else {
@@ -710,7 +707,7 @@ public abstract class FsParserAbstract extends FsParser {
                     logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
                 } finally {
                     if (inputStream != null) {
-                        fileAbstractor.closeInputStream(inputStream);
+                        crawlerPlugin.closeInputStream(inputStream);
                     }
                 }
             } else if (fsSettings.getFs().isXmlSupport()) {
@@ -736,7 +733,7 @@ public abstract class FsParserAbstract extends FsParser {
                     logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
                 } finally {
                     if (inputStream != null) {
-                        fileAbstractor.closeInputStream(inputStream);
+                        crawlerPlugin.closeInputStream(inputStream);
                     }
                 }
             }

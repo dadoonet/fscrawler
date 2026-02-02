@@ -20,7 +20,7 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;

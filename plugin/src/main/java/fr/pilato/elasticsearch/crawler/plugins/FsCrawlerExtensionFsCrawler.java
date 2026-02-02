@@ -18,7 +18,7 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
-import fr.pilato.elasticsearch.crawler.fs.crawler.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 
 import java.io.InputStream;
 import java.util.Collection;

@@ -27,6 +27,8 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElas
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -55,6 +57,7 @@ public class FsCrawlerImpl implements AutoCloseable {
 
     private final FsCrawlerDocumentService documentService;
     private final FsCrawlerManagementService managementService;
+    private final FsCrawlerPluginsManager pluginsManager;
     private final FsParser fsParser;
     private final Thread fsCrawlerThread;
 
@@ -67,6 +70,11 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(settings);
         this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(settings);
+
+        // Initialize and start the plugin manager
+        this.pluginsManager = new FsCrawlerPluginsManager();
+        pluginsManager.loadPlugins();
+        pluginsManager.startPlugins();
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
@@ -91,26 +99,47 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         // Create the fsParser instance depending on the settings
         if (loop != 0) {
-            // What is the protocol used?
-            if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
-                // Local FS
-                fsParser = new FsParserLocal(settings, config, managementService, documentService, loop);
-            } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
-                // Remote SSH FS
-                fsParser = new FsParserSsh(settings, config, managementService, documentService, loop);
-            } else if (Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
-                // Remote FTP FS
-                fsParser = new FsParserFTP(settings, config, managementService, documentService, loop);
-            } else {
-                // Non supported protocol
-                throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +
-                        Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH);
-            }
+            // Determine the protocol type
+            String protocolType = determineProtocolType(settings);
+            logger.debug("Using crawler plugin for protocol type [{}]", protocolType);
+
+            // Get the crawler plugin from the plugin manager
+            FsCrawlerExtensionFsCrawler crawlerPlugin = pluginsManager.findFsCrawler(protocolType);
+
+            // Initialize the plugin with settings
+            crawlerPlugin.start(settings, "{}");
+
+            // Create the parser with the plugin
+            fsParser = new FsParserAbstract(settings, config, managementService, documentService, loop, crawlerPlugin);
         } else {
             // We start a No-OP parser
             fsParser = new FsParserNoop(settings);
         }
         fsCrawlerThread = new Thread(fsParser, "fs-crawler");
+    }
+
+    /**
+     * Determine the protocol type from settings.
+     * Maps the server protocol to the plugin type name.
+     *
+     * @param settings the FSCrawler settings
+     * @return the protocol type string (e.g., "local", "ftp", "ssh")
+     */
+    private static String determineProtocolType(FsSettings settings) {
+        if (settings.getServer() == null) {
+            return "local";
+        }
+        String protocol = settings.getServer().getProtocol();
+        if (protocol == null || Server.PROTOCOL.LOCAL.equals(protocol)) {
+            return "local";
+        } else if (Server.PROTOCOL.FTP.equals(protocol)) {
+            return "ftp";
+        } else if (Server.PROTOCOL.SSH.equals(protocol)) {
+            return "ssh";
+        } else {
+            throw new RuntimeException(protocol + " is not supported yet. Please use " +
+                    Server.PROTOCOL.LOCAL + ", " + Server.PROTOCOL.FTP + " or " + Server.PROTOCOL.SSH);
+        }
     }
 
     public FsCrawlerDocumentService getDocumentService() {
@@ -119,6 +148,10 @@ public class FsCrawlerImpl implements AutoCloseable {
 
     public FsCrawlerManagementService getManagementService() {
         return managementService;
+    }
+
+    public FsCrawlerPluginsManager getPluginsManager() {
+        return pluginsManager;
     }
 
     public void start() throws Exception {
@@ -175,6 +208,9 @@ public class FsCrawlerImpl implements AutoCloseable {
         managementService.close();
         documentService.close();
         logger.debug("ES Client Manager stopped");
+
+        pluginsManager.close();
+        logger.debug("Plugins Manager stopped");
 
         logger.info("FS crawler [{}] stopped", settings.getName());
     }
