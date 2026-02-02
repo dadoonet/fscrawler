@@ -39,7 +39,7 @@ import java.util.Collection;
  * <p>
  * Plugins that only support single file operations (like HTTP or S3) should not override
  * {@link #supportsCrawling()} and will use the default implementations that throw
- * {@link UnsupportedOperationException}.
+ * {@link FsCrawlerPluginException}.
  * </p>
  * <p>
  * Plugins that support directory crawling (like local, FTP, SSH) must override
@@ -109,17 +109,17 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
         return false;
     }
 
-    // ========== Crawling methods (optional - default throws UnsupportedOperationException) ==========
+    // ========== Crawling methods (optional - default throws FsCrawlerPluginException) ==========
 
     /**
      * Open a connection to the filesystem.
      * This method is called before starting a crawl operation.
      *
      * @throws Exception if the connection cannot be established
-     * @throws UnsupportedOperationException if crawling is not supported
+     * @throws FsCrawlerPluginException if crawling is not supported
      */
     default void openConnection() throws Exception {
-        throw new UnsupportedOperationException("Crawling not supported by " + getType() + " provider");
+        throw new FsCrawlerPluginException("Crawling not supported by " + getType() + " provider");
     }
 
     /**
@@ -127,10 +127,10 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
      * This method is called after a crawl operation completes.
      *
      * @throws Exception if an error occurs while closing the connection
-     * @throws UnsupportedOperationException if crawling is not supported
+     * @throws FsCrawlerPluginException if crawling is not supported
      */
     default void closeConnection() throws Exception {
-        throw new UnsupportedOperationException("Crawling not supported by " + getType() + " provider");
+        throw new FsCrawlerPluginException("Crawling not supported by " + getType() + " provider");
     }
 
     /**
@@ -138,10 +138,10 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
      *
      * @param directory the path to check
      * @return true if the directory exists, false otherwise
-     * @throws UnsupportedOperationException if crawling is not supported
+     * @throws FsCrawlerPluginException if crawling is not supported
      */
     default boolean exists(String directory) {
-        throw new UnsupportedOperationException("Crawling not supported by " + getType() + " provider");
+        throw new FsCrawlerPluginException("Crawling not supported by " + getType() + " provider");
     }
 
     /**
@@ -150,10 +150,10 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
      * @param directory the directory to list
      * @return a collection of file abstract models representing the directory contents
      * @throws Exception if an error occurs while listing the directory
-     * @throws UnsupportedOperationException if crawling is not supported
+     * @throws FsCrawlerPluginException if crawling is not supported
      */
     default Collection<FileAbstractModel> getFiles(String directory) throws Exception {
-        throw new UnsupportedOperationException("Crawling not supported by " + getType() + " provider");
+        throw new FsCrawlerPluginException("Crawling not supported by " + getType() + " provider");
     }
 
     /**
@@ -162,10 +162,10 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
      * @param file the file to read
      * @return an input stream for the file content
      * @throws Exception if an error occurs while opening the stream
-     * @throws UnsupportedOperationException if crawling is not supported
+     * @throws FsCrawlerPluginException if crawling is not supported
      */
     default InputStream getInputStream(FileAbstractModel file) throws Exception {
-        throw new UnsupportedOperationException("Crawling not supported by " + getType() + " provider");
+        throw new FsCrawlerPluginException("Crawling not supported by " + getType() + " provider");
     }
 
     /**
@@ -177,9 +177,9 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
      *
      * @param inputStream the input stream to close
      * @throws Exception if an error occurs while closing the stream
-     * @throws UnsupportedOperationException if crawling is not supported
+     * @throws FsCrawlerPluginException if crawling is not supported
      */
     default void closeInputStream(InputStream inputStream) throws Exception {
-        throw new UnsupportedOperationException("Crawling not supported by " + getType() + " provider");
+        throw new FsCrawlerPluginException("Crawling not supported by " + getType() + " provider");
     }
 }
