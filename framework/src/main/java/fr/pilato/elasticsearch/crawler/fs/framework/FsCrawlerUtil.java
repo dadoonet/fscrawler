@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -511,5 +512,17 @@ public class FsCrawlerUtil {
 
     public static int extractMinorVersion(String version) {
         return Integer.parseInt(version.split("\\.")[1]);
+    }
+
+    // Source - https://stackoverflow.com/a/40487511
+    // Posted by lucasls, modified by community. See post 'Timeline' for change history
+    // Retrieved 2026-02-02, License - CC BY-SA 3.0
+    public static String durationToString(Duration duration) {
+        if (duration == null) {
+            return null;
+        }
+        return duration.toString()
+                .substring(2)
+                .toLowerCase();
     }
 }
