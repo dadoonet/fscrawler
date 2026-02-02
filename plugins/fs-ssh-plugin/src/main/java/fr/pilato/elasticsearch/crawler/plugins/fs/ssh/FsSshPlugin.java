@@ -49,6 +49,8 @@ import java.util.Comparator;
 import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
+
 public class FsSshPlugin extends FsCrawlerPlugin {
     private static final Logger logger = LogManager.getLogger();
 
@@ -75,6 +77,16 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         private SshClient sshClient;
         private SftpClient sftpClient;
 
+        // REST API specific fields
+        private String remotePath;
+        private SftpClient.Attributes fileAttributes;
+        // Server connection details (can be overridden via JSON)
+        private String hostname;
+        private int port;
+        private String username;
+        private String password;
+        private String pemPath;
+
         @Override
         public String getType() {
             return "ssh";
@@ -89,24 +101,103 @@ public class FsSshPlugin extends FsCrawlerPlugin {
 
         @Override
         public InputStream readFile() throws IOException {
-            // For REST API, we would need to implement single file reading
-            throw new UnsupportedOperationException("Single file reading via REST API not yet implemented for SSH");
+            logger.debug("Reading SSH file from [{}]", remotePath);
+            try {
+                return sftpClient.read(remotePath);
+            } catch (IOException e) {
+                throw new IOException("Failed to read file [" + remotePath + "] via SSH: " + e.getMessage(), e);
+            }
+        }
+
+        private String getFilename() {
+            return FilenameUtils.getName(remotePath);
+        }
+
+        private long getFilesize() {
+            return fileAttributes != null ? fileAttributes.getSize() : 0;
         }
 
         @Override
         public Doc createDocument() throws IOException {
-            // For REST API, we would create a document from the current file
-            throw new UnsupportedOperationException("Document creation via REST API not yet implemented for SSH");
+            logger.debug("Creating document from SSH file {}", getFilename());
+            String filename = getFilename();
+
+            Doc doc = new Doc();
+            // The file name without the path
+            doc.getFile().setFilename(filename);
+            doc.getFile().setFilesize(getFilesize());
+            // The virtual URL (not including the initial root dir)
+            doc.getPath().setVirtual(computeVirtualPathName(fsSettings.getFs().getUrl(), remotePath));
+            // The real URL on the SSH server
+            doc.getPath().setReal(remotePath);
+            return doc;
         }
 
         @Override
         protected void parseSettings() throws PathNotFoundException {
-            // For REST API usage, parse settings from JSON
+            remotePath = document.read("$.ssh.path");
+            // Parse optional server connection details from JSON
+            try {
+                hostname = document.read("$.ssh.hostname");
+            } catch (PathNotFoundException e) {
+                // Will use fsSettings.getServer().getHostname()
+            }
+            try {
+                port = document.read("$.ssh.port");
+            } catch (PathNotFoundException e) {
+                // Will use fsSettings.getServer().getPort()
+            }
+            try {
+                username = document.read("$.ssh.username");
+            } catch (PathNotFoundException e) {
+                // Will use fsSettings.getServer().getUsername()
+            }
+            try {
+                password = document.read("$.ssh.password");
+            } catch (PathNotFoundException e) {
+                // Will use fsSettings.getServer().getPassword()
+            }
+            try {
+                pemPath = document.read("$.ssh.pem_path");
+            } catch (PathNotFoundException e) {
+                // Will use fsSettings.getServer().getPemPath()
+            }
         }
 
         @Override
         protected void validateSettings() throws IOException {
-            // For REST API usage, validate settings
+            if (remotePath == null || remotePath.isEmpty()) {
+                throw new IOException("SSH path is missing");
+            }
+
+            // Normalize the path
+            String rootPath = fsSettings.getFs().getUrl();
+            if (!remotePath.startsWith("/")) {
+                // Relative path - resolve against root
+                remotePath = rootPath.endsWith("/") ? rootPath + remotePath : rootPath + "/" + remotePath;
+            }
+
+            // Open SSH connection to validate and get file attributes
+            try {
+                openConnection();
+                // Check if file exists and get its attributes
+                fileAttributes = sftpClient.stat(remotePath);
+                if (fileAttributes.isDirectory()) {
+                    throw new IOException("Path [" + remotePath + "] is a directory, not a file");
+                }
+            } catch (SftpException e) {
+                if (e.getStatus() == SftpConstants.SSH_FX_NO_SUCH_FILE) {
+                    throw new IOException("File [" + remotePath + "] does not exist on SSH server");
+                }
+                throw new IOException("Failed to access file [" + remotePath + "] via SSH: " + e.getMessage(), e);
+            } catch (Exception e) {
+                throw new IOException("Failed to connect to SSH server: " + e.getMessage(), e);
+            }
+        }
+
+        @Override
+        public void stop() throws Exception {
+            closeConnection();
         }
 
         // ========== Crawling methods ==========
@@ -116,14 +207,21 @@ public class FsSshPlugin extends FsCrawlerPlugin {
             logger.debug("Opening SSH connection");
             Server server = fsSettings.getServer();
 
+            // Use JSON settings if available, otherwise fall back to fsSettings.getServer()
+            String effectiveHostname = hostname != null ? hostname : server.getHostname();
+            int effectivePort = port > 0 ? port : server.getPort();
+            String effectiveUsername = username != null ? username : server.getUsername();
+            String effectivePassword = password != null ? password : server.getPassword();
+            String effectivePemPath = pemPath != null ? pemPath : server.getPemPath();
+
             sshClient = createSshClient();
             sftpClient = createSftpClient(openSshSession(
                     sshClient,
-                    server.getUsername(),
-                    server.getPassword(),
-                    server.getPemPath(),
-                    server.getHostname(),
-                    server.getPort()));
+                    effectiveUsername,
+                    effectivePassword,
+                    effectivePemPath,
+                    effectiveHostname,
+                    effectivePort));
         }
 
         @Override

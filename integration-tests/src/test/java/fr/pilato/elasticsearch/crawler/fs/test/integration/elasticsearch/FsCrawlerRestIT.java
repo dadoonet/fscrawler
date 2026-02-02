@@ -45,17 +45,33 @@ import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
+import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.config.keys.AuthorizedKeysAuthenticator;
+import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
+import org.apache.sshd.sftp.server.SftpFileSystemAccessor;
+import org.apache.sshd.sftp.server.SftpSubsystemFactory;
+import org.apache.sshd.sftp.server.SftpSubsystemProxy;
+import org.mockftpserver.fake.FakeFtpServer;
+import org.mockftpserver.fake.UserAccount;
+import org.mockftpserver.fake.filesystem.FileEntry;
+import org.mockftpserver.fake.filesystem.FileSystem;
+import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.MountableFile;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -605,6 +621,185 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             assertThat((String) JsonPath.read(response.getHits().get(1).getSource(), "$.file.filename")).isEqualTo("robots.txt");
             assertThat((Integer) JsonPath.read(response.getHits().get(1).getSource(), "$.file.filesize")).isGreaterThan(100);
             assertThat((String) JsonPath.read(response.getHits().get(1).getSource(), "$.content")).contains("Sitemap");
+        }
+    }
+
+    @Test
+    public void uploadDocumentWithSshPlugin() throws Exception {
+        logger.info("Starting SSH server for test");
+
+        // Create test directory for SSH
+        Path sshTestDir = rootTmpDir.resolve("test-ssh-rest");
+        if (Files.notExists(sshTestDir)) {
+            Files.createDirectory(sshTestDir);
+        }
+
+        // Create test files
+        String textContent = "Hello SSH world!";
+        createFile(sshTestDir, "testfile.txt", textContent);
+        createFile(sshTestDir, "anotherfile.txt", "This one should be ignored.");
+
+        // Generate key files for SSH tests
+        KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+        saveKeyPair(rootTmpDir, keyPair);
+
+        // Setup SFTP file system accessor
+        SftpSubsystemFactory factory = new SftpSubsystemFactory.Builder()
+                .withFileSystemAccessor(new SftpFileSystemAccessor() {
+                    @Override
+                    public Path resolveLocalFilePath(SftpSubsystemProxy subsystem, Path rootDir, String remotePath) throws InvalidPathException {
+                        String path = remotePath;
+                        if (remotePath.startsWith("/")) {
+                            path = remotePath.substring(1);
+                        }
+                        return sshTestDir.resolve(path);
+                    }
+                })
+                .build();
+
+        String sshUsername = "testuser";
+        String sshPassword = "testpass";
+
+        SshServer sshd = SshServer.setUpDefaultServer();
+        sshd.setHost("localhost");
+        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(rootTmpDir.resolve("host.ser")));
+        sshd.setPasswordAuthenticator((username, password, session) ->
+                sshUsername.equals(username) && sshPassword.equals(password));
+        sshd.setPublickeyAuthenticator(new AuthorizedKeysAuthenticator(rootTmpDir.resolve("public.key")));
+        sshd.setSubsystemFactories(Collections.singletonList(factory));
+        sshd.start();
+
+        try {
+            int sshPort = sshd.getPort();
+            logger.info("SSH server started on localhost:{}", sshPort);
+
+            // We try with a document that does not exist
+            String json = """
+                    {
+                      "type": "ssh",
+                      "ssh": {
+                        "hostname": "localhost",
+                        "port": %d,
+                        "username": "%s",
+                        "password": "%s",
+                        "path": "/doesnotexist.txt"
+                      }
+                    }
+                    """.formatted(sshPort, sshUsername, sshPassword);
+            UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
+            assertThat(uploadResponse.isOk()).isFalse();
+            assertThat(uploadResponse.getMessage()).contains("does not exist");
+
+            // We try with an existing document
+            json = """
+                    {
+                      "type": "ssh",
+                      "ssh": {
+                        "hostname": "localhost",
+                        "port": %d,
+                        "username": "%s",
+                        "password": "%s",
+                        "path": "/testfile.txt"
+                      }
+                    }
+                    """.formatted(sshPort, sshUsername, sshPassword);
+            uploadResponse = post(target, "/_document", json, UploadResponse.class);
+            assertThat(uploadResponse.isOk()).isTrue();
+
+            // We wait until we have our document
+            ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+            assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("testfile.txt");
+            assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(textContent.length());
+            assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains(textContent);
+        } finally {
+            sshd.stop(true);
+            sshd.close();
+            logger.info("SSH server stopped");
+        }
+    }
+
+    @Test
+    public void uploadDocumentWithFtpPlugin() throws Exception {
+        logger.info("Starting FTP server for test");
+
+        String ftpUser = "testuser";
+        String ftpPass = "testpass";
+        String textContent = "Hello FTP world!";
+
+        // Setup fake FTP server
+        FakeFtpServer fakeFtpServer = new FakeFtpServer();
+        fakeFtpServer.setServerControlPort(0); // Use random available port
+        fakeFtpServer.addUserAccount(new UserAccount(ftpUser, ftpPass, "/"));
+
+        // Create a fake filesystem
+        FileSystem fileSystem = new UnixFakeFileSystem();
+        fileSystem.add(new FileEntry("/testfile.txt", textContent));
+        fileSystem.add(new FileEntry("/anotherfile.txt", "This one should be ignored."));
+
+        fakeFtpServer.setFileSystem(fileSystem);
+        fakeFtpServer.start();
+
+        try {
+            int ftpPort = fakeFtpServer.getServerControlPort();
+            logger.info("FTP server started on localhost:{}", ftpPort);
+
+            // We try with a document that does not exist
+            String json = """
+                    {
+                      "type": "ftp",
+                      "ftp": {
+                        "hostname": "localhost",
+                        "port": %d,
+                        "username": "%s",
+                        "password": "%s",
+                        "path": "/doesnotexist.txt"
+                      }
+                    }
+                    """.formatted(ftpPort, ftpUser, ftpPass);
+            UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
+            assertThat(uploadResponse.isOk()).isFalse();
+            assertThat(uploadResponse.getMessage()).contains("does not exist");
+
+            // We try with an existing document
+            json = """
+                    {
+                      "type": "ftp",
+                      "ftp": {
+                        "hostname": "localhost",
+                        "port": %d,
+                        "username": "%s",
+                        "password": "%s",
+                        "path": "/testfile.txt"
+                      }
+                    }
+                    """.formatted(ftpPort, ftpUser, ftpPass);
+            uploadResponse = post(target, "/_document", json, UploadResponse.class);
+            assertThat(uploadResponse.isOk()).isTrue();
+
+            // We wait until we have our document
+            ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+            assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filename")).isEqualTo("testfile.txt");
+            assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize")).isEqualTo(textContent.length());
+            assertThat((String) JsonPath.read(response.getHits().get(0).getSource(), "$.content")).contains(textContent);
+        } finally {
+            fakeFtpServer.stop();
+            logger.info("FTP server stopped");
+        }
+    }
+
+    private void saveKeyPair(Path path, KeyPair keyPair) {
+        OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
+
+        try (FileOutputStream fos = new FileOutputStream(path.resolve("public.key").toFile())) {
+            writer.writePublicKey(keyPair.getPublic(), "Public Key for tests", fos);
+        } catch (GeneralSecurityException | IOException e) {
+            logger.error("Failed to save public key", e);
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(path.resolve("private.key").toFile())) {
+            writer.writePrivateKey(keyPair, "Private Key for tests", null, fos);
+        } catch (GeneralSecurityException | IOException e) {
+            logger.error("Failed to save private key", e);
         }
     }
 }

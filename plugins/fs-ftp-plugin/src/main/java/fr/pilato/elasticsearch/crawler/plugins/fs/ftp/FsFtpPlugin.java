@@ -52,6 +52,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.toOctalPermission;
 
 public class FsFtpPlugin extends FsCrawlerPlugin {
@@ -77,6 +78,15 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         private FTPClient ftp;
         private boolean isUtf8 = false;
 
+        // REST API specific fields
+        private String remotePath;
+        private FTPFile fileInfo;
+        // Server connection details (can be overridden via JSON)
+        private String hostname;
+        private int port;
+        private String username;
+        private String password;
+
         private final Predicate<FTPFile> isNotSymLink = file -> {
             if (fsSettings != null && fsSettings.getFs().isFollowSymlinks()) return true;
             return !file.isSymbolicLink();
@@ -96,27 +106,113 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
 
         @Override
         public InputStream readFile() throws IOException {
-            // For REST API, we would need to implement single file reading
-            // This is a placeholder - the actual path would come from parseSettings
-            throw new UnsupportedOperationException("Single file reading via REST API not yet implemented for FTP");
+            logger.debug("Reading FTP file from [{}]", remotePath);
+            String ftpPath = encodePathForFtp(remotePath);
+            InputStream inputStream = ftp.retrieveFileStream(ftpPath);
+            if (inputStream != null) {
+                return inputStream;
+            } else {
+                throw new IOException("FTP client cannot retrieve stream for [" + remotePath + "]");
+            }
+        }
+
+        private String getFilename() {
+            return FilenameUtils.getName(remotePath);
+        }
+
+        private long getFilesize() {
+            return fileInfo != null ? fileInfo.getSize() : 0;
         }
 
         @Override
         public Doc createDocument() throws IOException {
-            // For REST API, we would create a document from the current file
-            throw new UnsupportedOperationException("Document creation via REST API not yet implemented for FTP");
+            logger.debug("Creating document from FTP file {}", getFilename());
+            String filename = getFilename();
+
+            Doc doc = new Doc();
+            // The file name without the path
+            doc.getFile().setFilename(filename);
+            doc.getFile().setFilesize(getFilesize());
+            // The virtual URL (not including the initial root dir)
+            doc.getPath().setVirtual(computeVirtualPathName(fsSettings.getFs().getUrl(), remotePath));
+            // The real URL on the FTP server
+            doc.getPath().setReal(remotePath);
+            return doc;
         }
 
         @Override
         protected void parseSettings() throws PathNotFoundException {
-            // For REST API usage, parse settings from JSON
-            // This would be extended when REST API support is added
+            remotePath = document.read("$.ftp.path");
+            // Parse optional server connection details from JSON
+            try {
+                hostname = document.read("$.ftp.hostname");
+            } catch (PathNotFoundException e) {
+                // Will use fsSettings.getServer().getHostname()
+            }
+            try {
+                port = document.read("$.ftp.port");
+            } catch (PathNotFoundException e) {
+                // Will use fsSettings.getServer().getPort()
+            }
+            try {
+                username = document.read("$.ftp.username");
+            } catch (PathNotFoundException e) {
+                // Will use fsSettings.getServer().getUsername()
+            }
+            try {
+                password = document.read("$.ftp.password");
+            } catch (PathNotFoundException e) {
+                // Will use fsSettings.getServer().getPassword()
+            }
         }
 
         @Override
         protected void validateSettings() throws IOException {
-            // For REST API usage, validate settings
-            // This would be extended when REST API support is added
+            if (remotePath == null || remotePath.isEmpty()) {
+                throw new IOException("FTP path is missing");
+            }
+
+            // Normalize the path
+            String rootPath = fsSettings.getFs().getUrl();
+            if (!remotePath.startsWith("/")) {
+                // Relative path - resolve against root
+                remotePath = rootPath.endsWith("/") ? rootPath + remotePath : rootPath + "/" + remotePath;
+            }
+
+            // Open FTP connection to validate and get file info
+            try {
+                openConnection();
+                // Get file info to validate it exists
+                String ftpPath = encodePathForFtp(remotePath);
+                FTPFile[] files = ftp.listFiles(ftpPath);
+                if (files == null || files.length == 0) {
+                    throw new IOException("File [" + remotePath + "] does not exist on FTP server");
+                }
+                fileInfo = files[0];
+                if (fileInfo.isDirectory()) {
+                    throw new IOException("Path [" + remotePath + "] is a directory, not a file");
+                }
+            } catch (IOException e) {
+                throw new IOException("Failed to access file [" + remotePath + "] via FTP: " + e.getMessage(), e);
+            } catch (Exception e) {
+                throw new IOException("Failed to connect to FTP server: " + e.getMessage(), e);
+            }
+        }
+
+        @Override
+        public void stop() throws Exception {
+            closeConnection();
+        }
+
+        /**
+         * Encode the path with the appropriate encoding for FTP.
+         */
+        private String encodePathForFtp(String path) throws UnsupportedEncodingException {
+            if (isUtf8) {
+                return new String(path.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
+            } else {
+                return new String(path.getBytes(ALTERNATIVE_ENCODING), FTP.DEFAULT_CONTROL_ENCODING);
+            }
         }
 
         // ========== Crawling methods ==========
@@ -133,19 +229,26 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
             ftp.setControlKeepAliveTimeout(Duration.ofSeconds(300));
 
             Server server = fsSettings.getServer();
-            logger.debug("Opening FTP connection to {}@{}", server.getUsername(), server.getHostname());
 
-            ftp.connect(server.getHostname(), server.getPort());
+            // Use JSON settings if available, otherwise fall back to fsSettings.getServer()
+            String effectiveHostname = hostname != null ? hostname : server.getHostname();
+            int effectivePort = port > 0 ? port : server.getPort();
+            String effectiveUsername = username != null ? username : server.getUsername();
+            String effectivePassword = password != null ? password : server.getPassword();
+
+            logger.debug("Opening FTP connection to {}@{}", effectiveUsername, effectiveHostname);
+
+            ftp.connect(effectiveHostname, effectivePort);
 
             // Check FTP client connection
             int reply = ftp.getReplyCode();
             if (!FTPReply.isPositiveCompletion(reply)) {
                 ftp.disconnect();
-                logger.warn("Cannot connect with FTP to {}@{}", server.getUsername(), server.getHostname());
-                throw new RuntimeException("Can not connect to " + server.getUsername() + "@" + server.getHostname());
+                logger.warn("Cannot connect with FTP to {}@{}", effectiveUsername, effectiveHostname);
+                throw new RuntimeException("Can not connect to " + effectiveUsername + "@" + effectiveHostname);
             }
 
-            if (!ftp.login(server.getUsername(), server.getPassword())) {
+            if (!ftp.login(effectiveUsername, effectivePassword)) {
                 ftp.disconnect();
                 throw new RuntimeException("Please check ftp user or password");
             }
