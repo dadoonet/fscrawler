@@ -67,7 +67,6 @@ public class FsParserAbstract extends FsParser {
     private final Integer loop;
     private Map<String, String> aclHashCache;
     private boolean aclHashCacheDirty;
-    private final String pathSeparator;
     private final FsCrawlerExtensionFsCrawler crawlerPlugin;
     private final String metadataFilename;
     private final byte[] staticMetadata;
@@ -89,8 +88,6 @@ public class FsParserAbstract extends FsParser {
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
-
-        pathSeparator = determinePathSeparator(fsSettings);
 
         metadataFilename = resolveMetadataFilename(fsSettings);
         staticMetadata = loadStaticMetadata(fsSettings);
@@ -279,21 +276,6 @@ public class FsParserAbstract extends FsParser {
             return new HashMap<>();
         }
         return loadAclHashCache(fsSettings.getName());
-    }
-
-    private static String determinePathSeparator(FsSettings fsSettings) {
-        String separator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
-        if (OsValidator.WINDOWS && fsSettings.getServer() == null) {
-            logger.debug("We are running on Windows without Server settings so we use the separator in accordance with fs.url");
-            // Warn users about potential issues with forward slashes on Windows
-            String url = fsSettings.getFs().getUrl();
-            if (url.contains("/") && url.contains(":") && !url.contains("\\")) {
-                logger.warn("On Windows, using forward slashes in fs.url [{}] may cause issues. " +
-                        "It is recommended to use backslashes instead: [{}]",
-                        url, url.replace("/", "\\"));
-            }
-        }
-        return separator;
     }
 
     private String resolveMetadataFilename(FsSettings fsSettings) {

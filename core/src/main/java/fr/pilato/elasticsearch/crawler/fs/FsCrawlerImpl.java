@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
@@ -126,12 +127,15 @@ public class FsCrawlerImpl implements AutoCloseable {
      *
      * @param settings the FSCrawler settings
      * @return the provider type string (e.g., "local", "ftp", "ssh")
+     * @throws FsCrawlerIllegalConfigurationException if server settings are required but missing
      */
     private static String determineProtocolType(FsSettings settings) {
         // Check if fs.provider is explicitly set (new way)
         String provider = settings.getFs().getProvider();
         if (provider != null && !provider.isEmpty()) {
             logger.debug("Using fs.provider [{}]", provider);
+            // Validate server settings for remote providers
+            validateServerSettings(provider, settings);
             return provider;
         }
 
@@ -147,6 +151,27 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         // Default to local
         return "local";
+    }
+
+    /**
+     * Validate that server settings are properly configured for remote providers.
+     *
+     * @param provider the provider type
+     * @param settings the FSCrawler settings
+     * @throws FsCrawlerIllegalConfigurationException if server settings are required but missing
+     */
+    private static void validateServerSettings(String provider, FsSettings settings) {
+        // Remote providers require server settings
+        if ("ftp".equals(provider) || "ssh".equals(provider)) {
+            if (settings.getServer() == null) {
+                throw new FsCrawlerIllegalConfigurationException(
+                        "Provider [" + provider + "] requires server settings (hostname, username, etc.)");
+            }
+            if (settings.getServer().getHostname() == null || settings.getServer().getHostname().isEmpty()) {
+                throw new FsCrawlerIllegalConfigurationException(
+                        "Provider [" + provider + "] requires server.hostname to be set");
+            }
+        }
     }
 
     public FsCrawlerDocumentService getDocumentService() {

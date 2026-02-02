@@ -97,14 +97,4 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
         }
         return fsCrawlerExtensionFsCrawler;
     }
-
-    /**
-     * Check if a crawler plugin is available for the given type.
-     *
-     * @param type the crawler type to check
-     * @return true if a crawler is available, false otherwise
-     */
-    public boolean hasFsCrawler(String type) {
-        return fsCrawlers.containsKey(type);
-    }
 }
