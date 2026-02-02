@@ -97,7 +97,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        protected void validateProtocolSpecificSettings() throws IOException {
+        protected void validateProtocolSpecificSettings() throws FsCrawlerPluginException {
             // Open FTP connection to validate and get file info
             boolean success = false;
             try {
@@ -106,17 +106,17 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                 String ftpPath = encodePathForFtp(remotePath);
                 FTPFile[] files = ftp.listFiles(ftpPath);
                 if (files == null || files.length == 0) {
-                    throw new IOException("File [" + remotePath + "] does not exist on FTP server");
+                    throw new FsCrawlerPluginException("File [" + remotePath + "] does not exist on FTP server");
                 }
                 fileInfo = files[0];
                 if (fileInfo.isDirectory()) {
-                    throw new IOException("Path [" + remotePath + "] is a directory, not a file");
+                    throw new FsCrawlerPluginException("Path [" + remotePath + "] is a directory, not a file");
                 }
                 success = true;
             } catch (IOException e) {
-                throw new IOException("Failed to access file [" + remotePath + "] via FTP: " + e.getMessage(), e);
+                throw new FsCrawlerPluginException("Failed to access file [" + remotePath + "] via FTP: " + e.getMessage(), e);
             } catch (Exception e) {
-                throw new IOException("Failed to connect to FTP server: " + e.getMessage(), e);
+                throw new FsCrawlerPluginException("Failed to connect to FTP server: " + e.getMessage(), e);
             } finally {
                 if (!success) {
                     // Close connection on validation failure to prevent resource leak

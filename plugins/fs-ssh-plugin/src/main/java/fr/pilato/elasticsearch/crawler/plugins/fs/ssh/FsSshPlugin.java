@@ -20,7 +20,6 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionRemoteProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
@@ -98,7 +97,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        protected void validateProtocolSpecificSettings() throws IOException {
+        protected void validateProtocolSpecificSettings() throws FsCrawlerPluginException {
             // Open SSH connection to validate and get file attributes
             boolean success = false;
             try {
@@ -106,18 +105,16 @@ public class FsSshPlugin extends FsCrawlerPlugin {
                 // Check if file exists and get its attributes
                 fileAttributes = sftpClient.stat(remotePath);
                 if (fileAttributes.isDirectory()) {
-                    throw new IOException("Path [" + remotePath + "] is a directory, not a file");
+                    throw new FsCrawlerPluginException("Path [" + remotePath + "] is a directory, not a file");
                 }
                 success = true;
             } catch (SftpException e) {
                 if (e.getStatus() == SftpConstants.SSH_FX_NO_SUCH_FILE) {
-                    throw new IOException("File [" + remotePath + "] does not exist on SSH server");
+                    throw new FsCrawlerPluginException("File [" + remotePath + "] does not exist on SSH server");
                 }
-                throw new IOException("Failed to access file [" + remotePath + "] via SSH: " + e.getMessage(), e);
-            } catch (IOException e) {
-                throw e;
+                throw new FsCrawlerPluginException("Failed to access file [" + remotePath + "] via SSH: " + e.getMessage(), e);
             } catch (Exception e) {
-                throw new IOException("Failed to connect to SSH server: " + e.getMessage(), e);
+                throw new FsCrawlerPluginException("Failed to connect to SSH server: " + e.getMessage(), e);
             } finally {
                 if (!success) {
                     // Close connection on validation failure to prevent resource leak
