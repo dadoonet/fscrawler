@@ -172,41 +172,53 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     /**
      * Get the effective hostname, using JSON settings if available, otherwise falling back to job settings.
      *
-     * @return the effective hostname
+     * @return the effective hostname, or null if not configured
      */
     protected String getEffectiveHostname() {
+        if (hostname != null) {
+            return hostname;
+        }
         Server server = fsSettings.getServer();
-        return hostname != null ? hostname : server.getHostname();
+        return server != null ? server.getHostname() : null;
     }
 
     /**
      * Get the effective port, using JSON settings if available, otherwise falling back to job settings.
      *
-     * @return the effective port
+     * @return the effective port, or 0 if not configured
      */
     protected int getEffectivePort() {
+        if (port > 0) {
+            return port;
+        }
         Server server = fsSettings.getServer();
-        return port > 0 ? port : server.getPort();
+        return server != null ? server.getPort() : 0;
     }
 
     /**
      * Get the effective username, using JSON settings if available, otherwise falling back to job settings.
      *
-     * @return the effective username
+     * @return the effective username, or null if not configured
      */
     protected String getEffectiveUsername() {
+        if (username != null) {
+            return username;
+        }
         Server server = fsSettings.getServer();
-        return username != null ? username : server.getUsername();
+        return server != null ? server.getUsername() : null;
     }
 
     /**
      * Get the effective password, using JSON settings if available, otherwise falling back to job settings.
      *
-     * @return the effective password
+     * @return the effective password, or null if not configured
      */
     protected String getEffectivePassword() {
+        if (password != null) {
+            return password;
+        }
         Server server = fsSettings.getServer();
-        return password != null ? password : server.getPassword();
+        return server != null ? server.getPassword() : null;
     }
 
     /**
