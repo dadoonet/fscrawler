@@ -132,7 +132,7 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop() throws FsCrawlerPluginException {
         closeConnection();
     }
 

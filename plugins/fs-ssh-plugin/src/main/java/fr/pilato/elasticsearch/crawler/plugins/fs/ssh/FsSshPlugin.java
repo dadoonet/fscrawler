@@ -20,9 +20,11 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionRemoteProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -131,19 +133,19 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         // ========== REST API methods ==========
 
         @Override
-        public InputStream readFile() throws IOException {
+        public InputStream readFile() throws FsCrawlerPluginException {
             logger.debug("Reading SSH file from [{}]", remotePath);
             try {
                 return sftpClient.read(remotePath);
             } catch (IOException e) {
-                throw new IOException("Failed to read file [" + remotePath + "] via SSH: " + e.getMessage(), e);
+                throw new FsCrawlerPluginException("Failed to read file [" + remotePath + "] via SSH: " + e.getMessage(), e);
             }
         }
 
         // ========== Crawling methods ==========
 
         @Override
-        public void openConnection() throws Exception {
+        public void openConnection() throws FsCrawlerPluginException {
             logger.debug("Opening SSH connection");
 
             String effectivePemPath = getEffectivePemPath();
@@ -172,11 +174,15 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        public void closeConnection() throws Exception {
+        public void closeConnection() throws FsCrawlerPluginException {
             logger.debug("Closing SSH connection");
             if (sshClient != null) {
                 logger.trace("Closing SSH Client");
-                sshClient.close();
+                try {
+                    sshClient.close();
+                } catch (IOException e) {
+                    throw new FsCrawlerPluginException("Can not close connection", e);
+                }
             }
         }
 
@@ -192,7 +198,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        public Collection<FileAbstractModel> getFiles(String dir) throws Exception {
+        public Collection<FileAbstractModel> getFiles(String dir) throws FsCrawlerPluginException {
             logger.debug("Listing files from [{}]", dir);
 
             try {
@@ -215,20 +221,28 @@ public class FsSshPlugin extends FsCrawlerPlugin {
                     }
                 }
                 logger.warn("Failed to list files from [{}]", dir, e);
-                throw e;
+                throw new FsCrawlerPluginException("can not list files from " + dir, e);
             }
         }
 
         @Override
-        public InputStream getInputStream(FileAbstractModel file) throws Exception {
+        public InputStream getInputStream(FileAbstractModel file) throws FsCrawlerPluginException {
             logger.trace("Getting input stream for [{}]", file.getFullpath());
-            return sftpClient.read(file.getFullpath());
+            try {
+                return sftpClient.read(file.getFullpath());
+            } catch (IOException e) {
+                throw new FsCrawlerPluginException("Can not get input stream for " + file.getFullpath(), e);
+            }
         }
 
         @Override
-        public void closeInputStream(InputStream inputStream) throws Exception {
+        public void closeInputStream(InputStream inputStream) throws FsCrawlerPluginException {
             logger.trace("Closing input stream");
-            inputStream.close();
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                throw new FsCrawlerPluginException("Can not stream", e);
+            }
         }
 
         /**
@@ -269,32 +283,40 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         private ClientSession openSshSession(SshClient sshClient,
                                              String username, String password,
                                              String pemPath,
-                                             String hostname, int port) throws Exception {
-            logger.debug("Opening SSH connection to {}@{}", username, hostname);
+                                             String hostname, int port) throws FsCrawlerPluginException {
+            try {
+                logger.debug("Opening SSH connection to {}@{}", username, hostname);
 
-            ClientSession session = sshClient.connect(username, hostname, port).verify().getSession();
+                ClientSession session = sshClient.connect(username, hostname, port).verify().getSession();
 
-            if (password != null) {
-                session.addPasswordIdentity(password); // for password-based authentication
-            }
-
-            if (pemPath != null) {
-                // for password-less authentication
-                FileKeyPairProvider fileKeyPairProvider = new FileKeyPairProvider(Paths.get(pemPath));
-                Iterable<KeyPair> keyPairs = fileKeyPairProvider.loadKeys(null);
-                for (KeyPair keyPair : keyPairs) {
-                    session.addPublicKeyIdentity(keyPair);
+                if (password != null) {
+                    session.addPasswordIdentity(password); // for password-based authentication
                 }
+
+                if (pemPath != null) {
+                    // for password-less authentication
+                    FileKeyPairProvider fileKeyPairProvider = new FileKeyPairProvider(Paths.get(pemPath));
+                    Iterable<KeyPair> keyPairs = fileKeyPairProvider.loadKeys(null);
+                    for (KeyPair keyPair : keyPairs) {
+                        session.addPublicKeyIdentity(keyPair);
+                    }
+                }
+
+                session.auth().verify();
+
+                logger.debug("SSH connection successful");
+                return session;
+            } catch (Exception e) {
+                throw new FsCrawlerPluginException("Failed to open SSH session to " + username + "@" + hostname + ":" + port, e);
             }
-
-            session.auth().verify();
-
-            logger.debug("SSH connection successful");
-            return session;
         }
 
-        private SftpClient createSftpClient(ClientSession session) throws Exception {
-            return SftpClientFactory.instance().createSftpClient(session);
+        private SftpClient createSftpClient(ClientSession session) throws FsCrawlerPluginException {
+            try {
+                return SftpClientFactory.instance().createSftpClient(session);
+            } catch (IOException e) {
+                throw new FsCrawlerPluginException("Can not create sftp session", e);
+            }
         }
     }
 }

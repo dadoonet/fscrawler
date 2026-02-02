@@ -456,7 +456,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
             UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.isOk()).isFalse();
-            assertThat(uploadResponse.getMessage()).contains("FsCrawlerIllegalConfigurationException");
+            assertThat(uploadResponse.getMessage()).contains("FsCrawlerPluginException");
+            assertThat(uploadResponse.getMessage()).contains("foobar/foobar.txt");
             assertThat(uploadResponse.getMessage()).contains("The specified key does not exist");
 
             // We try with an existing document
@@ -579,7 +580,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                     """.formatted(url);
             UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.isOk()).isFalse().isFalse();
-            assertThat(uploadResponse.getMessage()).contains("FileNotFoundException");
+            assertThat(uploadResponse.getMessage()).contains("FsCrawlerPluginException");
             assertThat(uploadResponse.getMessage()).contains("doesnotexist.txt");
 
             // We try with an existing document

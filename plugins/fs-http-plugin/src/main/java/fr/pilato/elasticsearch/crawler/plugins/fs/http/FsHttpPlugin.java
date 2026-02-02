@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfiguratio
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,17 +54,25 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        public InputStream readFile() throws IOException {
+        public InputStream readFile() throws FsCrawlerPluginException {
             logger.debug("Reading http file from [{}]", url);
-            return url.openStream();
+            try {
+                return url.openStream();
+            } catch (IOException e) {
+                throw new FsCrawlerPluginException("Can not open stream for " + url, e);
+            }
         }
 
         private String getFilename() {
             return FilenameUtils.getName(url.getPath());
         }
 
-        private long getFilesize() throws IOException {
-            return url.openConnection().getContentLengthLong();
+        private long getFilesize() throws FsCrawlerPluginException {
+            try {
+                return url.openConnection().getContentLengthLong();
+            } catch (IOException e) {
+                throw new FsCrawlerPluginException("Can not get filesize from url " + url, e);
+            }
         }
 
         @Override
@@ -84,7 +93,7 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        public Doc createDocument() throws IOException {
+        public Doc createDocument() throws FsCrawlerPluginException {
             logger.debug("Creating document from {}", getFilename());
             Doc doc = new Doc();
             doc.getFile().setFilename(getFilename());
