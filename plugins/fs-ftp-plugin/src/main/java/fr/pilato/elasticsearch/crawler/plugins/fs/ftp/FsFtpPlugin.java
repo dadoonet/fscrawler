@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.io.IoBuilder;
 import org.pf4j.Extension;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -135,9 +136,39 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
             String ftpPath = encodePathForFtp(remotePath);
             InputStream inputStream = ftp.retrieveFileStream(ftpPath);
             if (inputStream != null) {
-                return inputStream;
+                // Wrap the stream to ensure completePendingCommand() is called when closed
+                return new FtpInputStream(inputStream, ftp);
             } else {
                 throw new IOException("FTP client cannot retrieve stream for [" + remotePath + "]");
+            }
+        }
+
+        /**
+         * Wrapper InputStream that ensures FTP completePendingCommand() is called when the stream is closed.
+         * This is required by the FTP protocol after using retrieveFileStream().
+         */
+        private static class FtpInputStream extends FilterInputStream {
+            private final FTPClient ftpClient;
+
+            FtpInputStream(InputStream in, FTPClient ftpClient) {
+                super(in);
+                this.ftpClient = ftpClient;
+            }
+
+            @Override
+            public void close() throws IOException {
+                try {
+                    super.close();
+                } finally {
+                    // Must call completePendingCommand() after closing the stream
+                    // to properly complete the FTP data transfer
+                    try {
+                        ftpClient.completePendingCommand();
+                    } catch (IOException e) {
+                        // Log but don't throw - the stream is already closed
+                        LogManager.getLogger(FtpInputStream.class).warn("Failed to complete FTP pending command", e);
+                    }
+                }
             }
         }
 

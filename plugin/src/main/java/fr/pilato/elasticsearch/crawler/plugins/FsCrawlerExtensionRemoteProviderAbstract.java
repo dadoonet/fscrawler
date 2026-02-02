@@ -143,15 +143,6 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     }
 
     /**
-     * Get the remote path.
-     *
-     * @return the remote path
-     */
-    protected String getRemotePath() {
-        return remotePath;
-    }
-
-    /**
      * Normalize the remote path, resolving relative paths against the root URL.
      *
      * @param path the path to normalize
