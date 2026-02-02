@@ -10,6 +10,8 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | Name                       | Default value         | Documentation                   |
 +============================+=======================+=================================+
+| ``fs.provider``            | ``"local"``           | `Crawler Provider`_             |
++----------------------------+-----------------------+---------------------------------+
 | ``fs.url``                 | ``"/tmp/es"``         | `Root directory`_               |
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.update_rate``         | ``"15m"``             | `Update Rate`_                  |
@@ -62,6 +64,54 @@ Here is a list of Local FS settings (under ``fs.`` prefix)`:
 +----------------------------+-----------------------+---------------------------------+
 | ``fs.ocr.enabled``         | ``true``              | :ref:`ocr_integration`          |
 +----------------------------+-----------------------+---------------------------------+
+
+.. _crawler-provider:
+
+Crawler Provider
+^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.10
+
+The ``fs.provider`` setting specifies which crawler plugin to use for scanning files.
+Available providers are:
+
+* ``local`` (default): Crawl files from the local filesystem
+* ``ftp``: Crawl files from a remote FTP server (see :ref:`ftp-settings`)
+* ``ssh``: Crawl files from a remote server via SSH/SFTP (see :ref:`ssh-settings`)
+
+.. code:: yaml
+
+   name: "test"
+   fs:
+     provider: "local"
+     url: "/path/to/data/dir"
+
+.. note::
+
+    The ``fs.provider`` setting replaces the deprecated ``server.protocol`` setting.
+    If you are currently using ``server.protocol``, you should migrate to ``fs.provider``.
+
+    Old configuration (deprecated):
+
+    .. code:: yaml
+
+       name: "test"
+       fs:
+         url: "/path/to/data/dir"
+       server:
+         hostname: "mynode.mydomain.com"
+         protocol: "ftp"
+
+    New configuration (recommended):
+
+    .. code:: yaml
+
+       name: "test"
+       fs:
+         provider: "ftp"
+         url: "/path/to/data/dir"
+       server:
+         hostname: "mynode.mydomain.com"
 
 .. _root-directory:
 
