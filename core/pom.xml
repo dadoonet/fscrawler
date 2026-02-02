@@ -64,18 +64,10 @@
             <artifactId>fscrawler-tika</artifactId>
         </dependency>
 
-        <!-- Our crawlers -->
+        <!-- Plugin system -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-crawler-fs</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-crawler-ftp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-crawler-ssh</artifactId>
+            <artifactId>fscrawler-plugin</artifactId>
         </dependency>
 
         <!-- Our Elasticsearch Client -->

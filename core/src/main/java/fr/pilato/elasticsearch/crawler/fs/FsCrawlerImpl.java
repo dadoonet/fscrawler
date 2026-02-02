@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
@@ -27,6 +28,8 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElas
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -55,6 +58,7 @@ public class FsCrawlerImpl implements AutoCloseable {
 
     private final FsCrawlerDocumentService documentService;
     private final FsCrawlerManagementService managementService;
+    private final FsCrawlerPluginsManager pluginsManager;
     private final FsParser fsParser;
     private final Thread fsCrawlerThread;
 
@@ -67,6 +71,11 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(settings);
         this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(settings);
+
+        // Initialize and start the plugin manager
+        this.pluginsManager = new FsCrawlerPluginsManager();
+        pluginsManager.loadPlugins();
+        pluginsManager.startPlugins();
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
@@ -91,26 +100,78 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         // Create the fsParser instance depending on the settings
         if (loop != 0) {
-            // What is the protocol used?
-            if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
-                // Local FS
-                fsParser = new FsParserLocal(settings, config, managementService, documentService, loop);
-            } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
-                // Remote SSH FS
-                fsParser = new FsParserSsh(settings, config, managementService, documentService, loop);
-            } else if (Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
-                // Remote FTP FS
-                fsParser = new FsParserFTP(settings, config, managementService, documentService, loop);
-            } else {
-                // Non supported protocol
-                throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +
-                        Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH);
-            }
+            // Determine the protocol type
+            String protocolType = determineProtocolType(settings);
+            logger.debug("Using crawler plugin for protocol type [{}]", protocolType);
+
+            // Get the crawler plugin from the plugin manager
+            FsCrawlerExtensionFsCrawler crawlerPlugin = pluginsManager.findFsCrawler(protocolType);
+
+            // Initialize the plugin with settings
+            crawlerPlugin.start(settings, "{}");
+
+            // Create the parser with the plugin
+            fsParser = new FsParserAbstract(settings, config, managementService, documentService, loop, crawlerPlugin);
         } else {
             // We start a No-OP parser
             fsParser = new FsParserNoop(settings);
         }
         fsCrawlerThread = new Thread(fsParser, "fs-crawler");
+    }
+
+    /**
+     * Determine the provider type from settings.
+     * <p>
+     * Uses fs.provider if specified, otherwise falls back to server.protocol (deprecated).
+     * </p>
+     *
+     * @param settings the FSCrawler settings
+     * @return the provider type string (e.g., "local", "ftp", "ssh")
+     * @throws FsCrawlerIllegalConfigurationException if server settings are required but missing
+     */
+    private static String determineProtocolType(FsSettings settings) {
+        // Check if fs.provider is explicitly set (new way)
+        String provider = settings.getFs().getProvider();
+        if (provider != null && !provider.isEmpty()) {
+            logger.debug("Using fs.provider [{}]", provider);
+            // Validate server settings for remote providers
+            validateServerSettings(provider, settings);
+            return provider;
+        }
+
+        // Fall back to server.protocol (deprecated)
+        if (settings.getServer() != null) {
+            String protocol = settings.getServer().getProtocol();
+            if (protocol != null && !Server.PROTOCOL.LOCAL.equals(protocol)) {
+                logger.warn("Setting server.protocol is deprecated and will be removed in a future version. " +
+                        "Please use fs.provider: \"{}\" instead.", protocol);
+                return protocol;
+            }
+        }
+
+        // Default to local
+        return "local";
+    }
+
+    /**
+     * Validate that server settings are properly configured for remote providers.
+     *
+     * @param provider the provider type
+     * @param settings the FSCrawler settings
+     * @throws FsCrawlerIllegalConfigurationException if server settings are required but missing
+     */
+    private static void validateServerSettings(String provider, FsSettings settings) {
+        // Remote providers require server settings
+        if ("ftp".equals(provider) || "ssh".equals(provider)) {
+            if (settings.getServer() == null) {
+                throw new FsCrawlerIllegalConfigurationException(
+                        "Provider [" + provider + "] requires server settings (hostname, username, etc.)");
+            }
+            if (settings.getServer().getHostname() == null || settings.getServer().getHostname().isEmpty()) {
+                throw new FsCrawlerIllegalConfigurationException(
+                        "Provider [" + provider + "] requires server.hostname to be set");
+            }
+        }
     }
 
     public FsCrawlerDocumentService getDocumentService() {
@@ -119,6 +180,10 @@ public class FsCrawlerImpl implements AutoCloseable {
 
     public FsCrawlerManagementService getManagementService() {
         return managementService;
+    }
+
+    public FsCrawlerPluginsManager getPluginsManager() {
+        return pluginsManager;
     }
 
     public void start() throws Exception {
@@ -175,6 +240,9 @@ public class FsCrawlerImpl implements AutoCloseable {
         managementService.close();
         documentService.close();
         logger.debug("ES Client Manager stopped");
+
+        pluginsManager.close();
+        logger.debug("Plugins Manager stopped");
 
         logger.info("FS crawler [{}] stopped", settings.getName());
     }

@@ -20,18 +20,30 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pf4j.Extension;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Stream;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 
 public class FsLocalPlugin extends FsCrawlerPlugin {
     private static final Logger logger = LogManager.getLogger();
@@ -42,14 +54,22 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract {
+    public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract
+            implements FsCrawlerExtensionFsCrawler {
+
         private Path path;
         private String url;
+
+        private static final Comparator<Path> PATH_COMPARATOR = Comparator.comparing(
+                file -> getModificationOrCreationTime(file.toFile()),
+                Comparator.nullsLast(Comparator.naturalOrder()));
 
         @Override
         public String getType() {
             return "local";
         }
+
+        // ========== FsCrawlerExtensionFsProvider methods (REST API) ==========
 
         @Override
         public InputStream readFile() throws IOException {
@@ -99,6 +119,86 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             if (!path.startsWith(rootPath)) {
                 throw new IOException("File " + path.toAbsolutePath() + " is not within " + rootPath);
             }
+        }
+
+        // ========== FsCrawlerExtensionFsCrawler methods (Crawling) ==========
+
+        @Override
+        public void openConnection() {
+            // No connection needed for local filesystem
+            logger.debug("Opening local filesystem connection");
+        }
+
+        @Override
+        public void closeConnection() {
+            // No connection to close for local filesystem
+            logger.debug("Closing local filesystem connection");
+        }
+
+        @Override
+        public boolean exists(String directory) {
+            return new File(directory).exists();
+        }
+
+        @Override
+        public Collection<FileAbstractModel> getFiles(String dir) {
+            logger.debug("Listing local files from {}", dir);
+
+            final Collection<FileAbstractModel> result = new ArrayList<>();
+            try (Stream<Path> paths = Files.list(Paths.get(dir))) {
+                paths.filter(p -> fsSettings.getFs().isFollowSymlinks() || !Files.isSymbolicLink(p))
+                        .sorted(PATH_COMPARATOR.reversed())
+                        .forEach(p -> result.add(toFileAbstractModel(dir, p.toFile())));
+            } catch (IOException e) {
+                logger.warn("Error listing files in {}: {}", dir, e.getMessage());
+            }
+
+            logger.debug("{} local files found", result.size());
+            return result;
+        }
+
+        @Override
+        public InputStream getInputStream(FileAbstractModel file) throws Exception {
+            return new FileInputStream(file.getFullpath());
+        }
+
+        @Override
+        public void closeInputStream(InputStream inputStream) throws Exception {
+            inputStream.close();
+        }
+
+        /**
+         * Convert a File to a FileAbstractModel.
+         */
+        private FileAbstractModel toFileAbstractModel(String path, File file) {
+            List<FileAcl> fileAcls = fsSettings.getFs().isAclSupport() && fsSettings.getFs().isAttributesSupport()
+                    ? getFileAcls(file.toPath())
+                    : Collections.emptyList();
+
+            String separator = getPathSeparator(fsSettings.getFs().getUrl());
+
+            return new FileAbstractModel(
+                    file.getName(),
+                    file.isFile(),
+                    getModificationTime(file),
+                    getCreationTime(file),
+                    getLastAccessTime(file),
+                    getFileExtension(file),
+                    resolveSeparator(path, separator),
+                    resolveSeparator(file.getAbsolutePath(), separator),
+                    file.length(),
+                    getOwnerName(file),
+                    getGroupName(file),
+                    getFilePermissions(file),
+                    fileAcls,
+                    computeAclHash(fileAcls));
+        }
+
+        private String resolveSeparator(String path, String separator) {
+            if (separator.equals("/")) {
+                return path.replace("\\", "/");
+            }
+            return path.replace("/", "\\");
         }
     }
 }

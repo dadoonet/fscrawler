@@ -158,13 +158,16 @@ The job file (``~/.fscrawler/test/_settings.yaml``) for the job name ``test`` mu
      # optional: add static metadata to all indexed documents
      staticMetaFilename: "/path/to/static_metadata.json"
 
-   # optional: only required if you want to SSH to another server to index documents from there
+   # optional: specify a crawler provider (default is "local")
+   # available providers: "local", "ftp", "ssh"
+   # provider: "ssh"
+
+   # optional: only required if you want to SSH/FTP to another server to index documents from there
    server:
      hostname: "localhost"
      port: 22
      username: "dadoonet"
      password: "password"
-     protocol: "SSH"
      pem_path: "/path/to/pemfile"
 
    # required

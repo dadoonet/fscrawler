@@ -20,7 +20,6 @@
         <module>distribution</module>
         <module>cli</module>
         <module>tika</module>
-        <module>crawler</module>
         <module>rest</module>
         <module>docs</module>
         <module>contrib</module>
@@ -474,26 +473,6 @@
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
-                <artifactId>fscrawler-crawler-abstract</artifactId>
-                <version>2.10-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>fr.pilato.elasticsearch.crawler</groupId>
-                <artifactId>fscrawler-crawler-fs</artifactId>
-                <version>2.10-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>fr.pilato.elasticsearch.crawler</groupId>
-                <artifactId>fscrawler-crawler-ftp</artifactId>
-                <version>2.10-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>fr.pilato.elasticsearch.crawler</groupId>
-                <artifactId>fscrawler-crawler-ssh</artifactId>
-                <version>2.10-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-tika</artifactId>
                 <version>2.10-SNAPSHOT</version>
             </dependency>
@@ -522,6 +501,16 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-fs-local-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-fs-ftp-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-fs-ssh-plugin</artifactId>
                 <version>2.10-SNAPSHOT</version>
             </dependency>
             <dependency>
