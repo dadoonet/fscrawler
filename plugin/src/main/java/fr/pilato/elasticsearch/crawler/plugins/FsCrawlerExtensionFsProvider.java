@@ -23,7 +23,6 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.pf4j.ExtensionPoint;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 
