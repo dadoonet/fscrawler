@@ -33,6 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
+import fr.pilato.elasticsearch.crawler.plugins.fs.ssh.SshTestHelper;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -45,7 +46,6 @@ import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.config.keys.AuthorizedKeysAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
@@ -63,15 +63,11 @@ import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.MountableFile;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -639,10 +635,6 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         createFile(sshTestDir, "testfile.txt", textContent);
         createFile(sshTestDir, "anotherfile.txt", "This one should be ignored.");
 
-        // Generate key files for SSH tests
-        KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
-        saveKeyPair(rootTmpDir, keyPair);
-
         // Setup SFTP file system accessor
         SftpSubsystemFactory factory = new SftpSubsystemFactory.Builder()
                 .withFileSystemAccessor(new SftpFileSystemAccessor() {
@@ -659,6 +651,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
 
         String sshUsername = "testuser";
         String sshPassword = "testpass";
+
+        // Generate key files for SSH tests
+        SshTestHelper.generateAndSaveKeyPair(rootTmpDir);
 
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setHost("localhost");
@@ -787,19 +782,4 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         }
     }
 
-    private void saveKeyPair(Path path, KeyPair keyPair) {
-        OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
-
-        try (FileOutputStream fos = new FileOutputStream(path.resolve("public.key").toFile())) {
-            writer.writePublicKey(keyPair.getPublic(), "Public Key for tests", fos);
-        } catch (GeneralSecurityException | IOException e) {
-            logger.error("Failed to save public key", e);
-        }
-
-        try (FileOutputStream fos = new FileOutputStream(path.resolve("private.key").toFile())) {
-            writer.writePrivateKey(keyPair, "Private Key for tests", null, fos);
-        } catch (GeneralSecurityException | IOException e) {
-            logger.error("Failed to save private key", e);
-        }
-    }
 }
