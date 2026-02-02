@@ -71,12 +71,13 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     }
 
     /**
-     * Hook for protocol-specific validation.
-     * Override this method to add validation logic specific to the protocol.
+     * Validate the remote file exists and is accessible.
+     * This method is called after the connection is opened.
+     * Implementations should check if the file exists and store any file metadata needed.
      *
-     * @throws IOException if validation fails
+     * @throws FsCrawlerPluginException if the file doesn't exist or is not accessible
      */
-    protected abstract void validateProtocolSpecificSettings() throws IOException;
+    protected abstract void doValidateFile() throws FsCrawlerPluginException;
 
     // ========== Common implementations ==========
 
@@ -109,8 +110,26 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
         // Normalize the path
         remotePath = normalizeRemotePath(remotePath);
 
-        // Delegate to protocol-specific validation
-        validateProtocolSpecificSettings();
+        // Open connection and validate file with proper resource management
+        boolean success = false;
+        try {
+            openConnection();
+            doValidateFile();
+            success = true;
+        } catch (FsCrawlerPluginException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new FsCrawlerPluginException("Failed to connect to " + getType().toUpperCase() + " server: " + e.getMessage(), e);
+        } finally {
+            if (!success) {
+                // Close connection on validation failure to prevent resource leak
+                try {
+                    closeConnection();
+                } catch (Exception e) {
+                    logger.warn("Error closing {} connection after validation failure: {}", getType().toUpperCase(), e.getMessage());
+                }
+            }
+        }
     }
 
     @Override

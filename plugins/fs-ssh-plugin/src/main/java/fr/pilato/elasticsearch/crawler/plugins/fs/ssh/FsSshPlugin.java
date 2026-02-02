@@ -97,33 +97,20 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        protected void validateProtocolSpecificSettings() throws FsCrawlerPluginException {
-            // Open SSH connection to validate and get file attributes
-            boolean success = false;
+        protected void doValidateFile() throws FsCrawlerPluginException {
             try {
-                openConnection();
                 // Check if file exists and get its attributes
                 fileAttributes = sftpClient.stat(remotePath);
                 if (fileAttributes.isDirectory()) {
                     throw new FsCrawlerPluginException("Path [" + remotePath + "] is a directory, not a file");
                 }
-                success = true;
             } catch (SftpException e) {
                 if (e.getStatus() == SftpConstants.SSH_FX_NO_SUCH_FILE) {
                     throw new FsCrawlerPluginException("File [" + remotePath + "] does not exist on SSH server");
                 }
                 throw new FsCrawlerPluginException("Failed to access file [" + remotePath + "] via SSH: " + e.getMessage(), e);
-            } catch (Exception e) {
-                throw new FsCrawlerPluginException("Failed to connect to SSH server: " + e.getMessage(), e);
-            } finally {
-                if (!success) {
-                    // Close connection on validation failure to prevent resource leak
-                    try {
-                        closeConnection();
-                    } catch (Exception e) {
-                        logger.warn("Error closing SSH connection after validation failure: {}", e.getMessage());
-                    }
-                }
+            } catch (IOException e) {
+                throw new FsCrawlerPluginException("Failed to access file [" + remotePath + "] via SSH: " + e.getMessage(), e);
             }
         }
 

@@ -97,11 +97,8 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        protected void validateProtocolSpecificSettings() throws FsCrawlerPluginException {
-            // Open FTP connection to validate and get file info
-            boolean success = false;
+        protected void doValidateFile() throws FsCrawlerPluginException {
             try {
-                openConnection();
                 // Get file info to validate it exists
                 String ftpPath = encodePathForFtp(remotePath);
                 FTPFile[] files = ftp.listFiles(ftpPath);
@@ -112,20 +109,8 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                 if (fileInfo.isDirectory()) {
                     throw new FsCrawlerPluginException("Path [" + remotePath + "] is a directory, not a file");
                 }
-                success = true;
             } catch (IOException e) {
                 throw new FsCrawlerPluginException("Failed to access file [" + remotePath + "] via FTP: " + e.getMessage(), e);
-            } catch (Exception e) {
-                throw new FsCrawlerPluginException("Failed to connect to FTP server: " + e.getMessage(), e);
-            } finally {
-                if (!success) {
-                    // Close connection on validation failure to prevent resource leak
-                    try {
-                        closeConnection();
-                    } catch (Exception e) {
-                        logger.warn("Error closing FTP connection after validation failure: {}", e.getMessage());
-                    }
-                }
             }
         }
 
