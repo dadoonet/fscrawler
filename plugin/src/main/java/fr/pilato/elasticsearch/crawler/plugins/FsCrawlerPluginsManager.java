@@ -86,12 +86,7 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
      * @throws FsCrawlerIllegalConfigurationException if no provider is found or if it doesn't support crawling
      */
     public FsCrawlerExtensionFsProvider findFsProviderForCrawling(String type) {
-        logger.debug("Load FsProvider extension for crawling, type [{}]", type);
-        FsCrawlerExtensionFsProvider provider = fsProviders.get(type);
-        if (provider == null) {
-            logger.warn("Can not find FsProvider for type [{}]", type);
-            throw new FsCrawlerIllegalConfigurationException("No FsProvider found for type [" + type + "]");
-        }
+        FsCrawlerExtensionFsProvider provider = findFsProvider(type);
         if (!provider.supportsCrawling()) {
             logger.warn("FsProvider [{}] does not support directory crawling", type);
             throw new FsCrawlerIllegalConfigurationException(
