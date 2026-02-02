@@ -119,27 +119,34 @@ public class FsCrawlerImpl implements AutoCloseable {
     }
 
     /**
-     * Determine the protocol type from settings.
-     * Maps the server protocol to the plugin type name.
+     * Determine the provider type from settings.
+     * <p>
+     * Uses fs.provider if specified, otherwise falls back to server.protocol (deprecated).
+     * </p>
      *
      * @param settings the FSCrawler settings
-     * @return the protocol type string (e.g., "local", "ftp", "ssh")
+     * @return the provider type string (e.g., "local", "ftp", "ssh")
      */
     private static String determineProtocolType(FsSettings settings) {
-        if (settings.getServer() == null) {
-            return "local";
+        // Check if fs.provider is explicitly set (new way)
+        String provider = settings.getFs().getProvider();
+        if (provider != null && !provider.isEmpty()) {
+            logger.debug("Using fs.provider [{}]", provider);
+            return provider;
         }
-        String protocol = settings.getServer().getProtocol();
-        if (protocol == null || Server.PROTOCOL.LOCAL.equals(protocol)) {
-            return "local";
-        } else if (Server.PROTOCOL.FTP.equals(protocol)) {
-            return "ftp";
-        } else if (Server.PROTOCOL.SSH.equals(protocol)) {
-            return "ssh";
-        } else {
-            throw new RuntimeException(protocol + " is not supported yet. Please use " +
-                    Server.PROTOCOL.LOCAL + ", " + Server.PROTOCOL.FTP + " or " + Server.PROTOCOL.SSH);
+
+        // Fall back to server.protocol (deprecated)
+        if (settings.getServer() != null) {
+            String protocol = settings.getServer().getProtocol();
+            if (protocol != null && !Server.PROTOCOL.LOCAL.equals(protocol)) {
+                logger.warn("Setting server.protocol is deprecated and will be removed in a future version. " +
+                        "Please use fs.provider: \"{}\" instead.", protocol);
+                return protocol;
+            }
         }
+
+        // Default to local
+        return "local";
     }
 
     public FsCrawlerDocumentService getDocumentService() {
