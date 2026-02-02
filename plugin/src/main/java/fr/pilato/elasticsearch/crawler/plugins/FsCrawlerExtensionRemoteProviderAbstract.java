@@ -52,13 +52,6 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     protected String password;
 
     /**
-     * Get the protocol prefix used in JSON settings (e.g., "ssh", "ftp").
-     *
-     * @return the protocol prefix
-     */
-    protected abstract String getProtocolPrefix();
-
-    /**
      * Get the file size of the remote file.
      * Each provider implements this based on how they retrieve file metadata.
      *
@@ -88,8 +81,13 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     // ========== Common implementations ==========
 
     @Override
+    public boolean supportsCrawling() {
+        return true;
+    }
+
+    @Override
     protected void parseSettings() throws PathNotFoundException {
-        String prefix = getProtocolPrefix();
+        String prefix = getType();
         remotePath = document.read("$." + prefix + ".path");
 
         // Parse optional server connection details from JSON
@@ -104,10 +102,8 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
 
     @Override
     protected void validateSettings() throws IOException {
-        String protocolName = getProtocolPrefix().toUpperCase();
-
         if (remotePath == null || remotePath.isEmpty()) {
-            throw new IOException(protocolName + " path is missing");
+            throw new IOException(getType() + " path is missing");
         }
 
         // Normalize the path
@@ -118,9 +114,9 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     }
 
     @Override
-    public Doc createDocument() throws IOException {
+    public Doc createDocument() {
         String filename = getFilename();
-        logger.debug("Creating document from {} file {}", getProtocolPrefix().toUpperCase(), filename);
+        logger.debug("Creating document from {} for file {}", getType(), filename);
 
         Doc doc = new Doc();
         doc.getFile().setFilename(filename);
