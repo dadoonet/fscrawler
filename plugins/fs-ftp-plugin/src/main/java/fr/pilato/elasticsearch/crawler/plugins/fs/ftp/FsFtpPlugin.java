@@ -18,11 +18,8 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ftp;
 
-import com.jayway.jsonpath.PathNotFoundException;
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionRemoteProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.net.PrintCommandListener;
@@ -52,7 +49,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.toOctalPermission;
 
 public class FsFtpPlugin extends FsCrawlerPlugin {
@@ -64,7 +60,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class FsCrawlerExtensionFsProviderFtp extends FsCrawlerExtensionFsProviderAbstract {
+    public static class FsCrawlerExtensionFsProviderFtp extends FsCrawlerExtensionRemoteProviderAbstract {
 
         private static final String ALTERNATIVE_ENCODING = "GBK";
         private static final Comparator<FTPFile> FTP_FILE_COMPARATOR = Comparator.comparing(
@@ -78,14 +74,8 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         private FTPClient ftp;
         private boolean isUtf8 = false;
 
-        // REST API specific fields
-        private String remotePath;
+        // FTP-specific fields
         private FTPFile fileInfo;
-        // Server connection details (can be overridden via JSON)
-        private String hostname;
-        private int port;
-        private String username;
-        private String password;
 
         private final Predicate<FTPFile> isNotSymLink = file -> {
             if (fsSettings != null && fsSettings.getFs().isFollowSymlinks()) return true;
@@ -98,87 +88,24 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         }
 
         @Override
+        protected String getProtocolPrefix() {
+            return "ftp";
+        }
+
+        @Override
         public boolean supportsCrawling() {
             return true;
         }
 
-        // ========== FsCrawlerExtensionFsProvider methods (REST API) ==========
+        // ========== Protocol-specific settings ==========
 
         @Override
-        public InputStream readFile() throws IOException {
-            logger.debug("Reading FTP file from [{}]", remotePath);
-            String ftpPath = encodePathForFtp(remotePath);
-            InputStream inputStream = ftp.retrieveFileStream(ftpPath);
-            if (inputStream != null) {
-                return inputStream;
-            } else {
-                throw new IOException("FTP client cannot retrieve stream for [" + remotePath + "]");
-            }
-        }
-
-        private String getFilename() {
-            return FilenameUtils.getName(remotePath);
-        }
-
-        private long getFilesize() {
+        protected long getFilesize() {
             return fileInfo != null ? fileInfo.getSize() : 0;
         }
 
         @Override
-        public Doc createDocument() throws IOException {
-            logger.debug("Creating document from FTP file {}", getFilename());
-            String filename = getFilename();
-
-            Doc doc = new Doc();
-            // The file name without the path
-            doc.getFile().setFilename(filename);
-            doc.getFile().setFilesize(getFilesize());
-            // The virtual URL (not including the initial root dir)
-            doc.getPath().setVirtual(computeVirtualPathName(fsSettings.getFs().getUrl(), remotePath));
-            // The real URL on the FTP server
-            doc.getPath().setReal(remotePath);
-            return doc;
-        }
-
-        @Override
-        protected void parseSettings() throws PathNotFoundException {
-            remotePath = document.read("$.ftp.path");
-            // Parse optional server connection details from JSON
-            try {
-                hostname = document.read("$.ftp.hostname");
-            } catch (PathNotFoundException e) {
-                // Will use fsSettings.getServer().getHostname()
-            }
-            try {
-                port = document.read("$.ftp.port");
-            } catch (PathNotFoundException e) {
-                // Will use fsSettings.getServer().getPort()
-            }
-            try {
-                username = document.read("$.ftp.username");
-            } catch (PathNotFoundException e) {
-                // Will use fsSettings.getServer().getUsername()
-            }
-            try {
-                password = document.read("$.ftp.password");
-            } catch (PathNotFoundException e) {
-                // Will use fsSettings.getServer().getPassword()
-            }
-        }
-
-        @Override
-        protected void validateSettings() throws IOException {
-            if (remotePath == null || remotePath.isEmpty()) {
-                throw new IOException("FTP path is missing");
-            }
-
-            // Normalize the path
-            String rootPath = fsSettings.getFs().getUrl();
-            if (!remotePath.startsWith("/")) {
-                // Relative path - resolve against root
-                remotePath = rootPath.endsWith("/") ? rootPath + remotePath : rootPath + "/" + remotePath;
-            }
-
+        protected void validateProtocolSpecificSettings() throws IOException {
             // Open FTP connection to validate and get file info
             try {
                 openConnection();
@@ -199,9 +126,18 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
             }
         }
 
+        // ========== REST API methods ==========
+
         @Override
-        public void stop() throws Exception {
-            closeConnection();
+        public InputStream readFile() throws IOException {
+            logger.debug("Reading FTP file from [{}]", remotePath);
+            String ftpPath = encodePathForFtp(remotePath);
+            InputStream inputStream = ftp.retrieveFileStream(ftpPath);
+            if (inputStream != null) {
+                return inputStream;
+            } else {
+                throw new IOException("FTP client cannot retrieve stream for [" + remotePath + "]");
+            }
         }
 
         /**
@@ -228,13 +164,10 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
             // Send a safe command (NOOP) over the control connection to reset the router's idle timer
             ftp.setControlKeepAliveTimeout(Duration.ofSeconds(300));
 
-            Server server = fsSettings.getServer();
-
-            // Use JSON settings if available, otherwise fall back to fsSettings.getServer()
-            String effectiveHostname = hostname != null ? hostname : server.getHostname();
-            int effectivePort = port > 0 ? port : server.getPort();
-            String effectiveUsername = username != null ? username : server.getUsername();
-            String effectivePassword = password != null ? password : server.getPassword();
+            String effectiveHostname = getEffectiveHostname();
+            int effectivePort = getEffectivePort();
+            String effectiveUsername = getEffectiveUsername();
+            String effectivePassword = getEffectivePassword();
 
             logger.debug("Opening FTP connection to {}@{}", effectiveUsername, effectiveHostname);
 

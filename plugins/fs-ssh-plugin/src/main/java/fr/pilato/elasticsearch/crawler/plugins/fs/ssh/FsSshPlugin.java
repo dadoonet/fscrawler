@@ -19,10 +19,8 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
 import com.jayway.jsonpath.PathNotFoundException;
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionRemoteProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
@@ -49,8 +47,6 @@ import java.util.Comparator;
 import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
-
 public class FsSshPlugin extends FsCrawlerPlugin {
     private static final Logger logger = LogManager.getLogger();
 
@@ -60,7 +56,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class FsCrawlerExtensionFsProviderSsh extends FsCrawlerExtensionFsProviderAbstract {
+    public static class FsCrawlerExtensionFsProviderSsh extends FsCrawlerExtensionRemoteProviderAbstract {
 
         private static final Predicate<SftpClient.DirEntry> IS_DOT = file ->
                 !".".equals(file.getFilename()) &&
@@ -77,18 +73,17 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         private SshClient sshClient;
         private SftpClient sftpClient;
 
-        // REST API specific fields
-        private String remotePath;
-        private SftpClient.Attributes fileAttributes;
-        // Server connection details (can be overridden via JSON)
-        private String hostname;
-        private int port;
-        private String username;
-        private String password;
+        // SSH-specific fields
         private String pemPath;
+        private SftpClient.Attributes fileAttributes;
 
         @Override
         public String getType() {
+            return "ssh";
+        }
+
+        @Override
+        protected String getProtocolPrefix() {
             return "ssh";
         }
 
@@ -97,86 +92,20 @@ public class FsSshPlugin extends FsCrawlerPlugin {
             return true;
         }
 
-        // ========== FsCrawlerExtensionFsProvider methods (REST API) ==========
+        // ========== Protocol-specific settings ==========
 
         @Override
-        public InputStream readFile() throws IOException {
-            logger.debug("Reading SSH file from [{}]", remotePath);
-            try {
-                return sftpClient.read(remotePath);
-            } catch (IOException e) {
-                throw new IOException("Failed to read file [" + remotePath + "] via SSH: " + e.getMessage(), e);
-            }
+        protected void parseProtocolSpecificSettings() throws PathNotFoundException {
+            pemPath = readOptionalString("$.ssh.pem_path");
         }
 
-        private String getFilename() {
-            return FilenameUtils.getName(remotePath);
-        }
-
-        private long getFilesize() {
+        @Override
+        protected long getFilesize() {
             return fileAttributes != null ? fileAttributes.getSize() : 0;
         }
 
         @Override
-        public Doc createDocument() throws IOException {
-            logger.debug("Creating document from SSH file {}", getFilename());
-            String filename = getFilename();
-
-            Doc doc = new Doc();
-            // The file name without the path
-            doc.getFile().setFilename(filename);
-            doc.getFile().setFilesize(getFilesize());
-            // The virtual URL (not including the initial root dir)
-            doc.getPath().setVirtual(computeVirtualPathName(fsSettings.getFs().getUrl(), remotePath));
-            // The real URL on the SSH server
-            doc.getPath().setReal(remotePath);
-            return doc;
-        }
-
-        @Override
-        protected void parseSettings() throws PathNotFoundException {
-            remotePath = document.read("$.ssh.path");
-            // Parse optional server connection details from JSON
-            try {
-                hostname = document.read("$.ssh.hostname");
-            } catch (PathNotFoundException e) {
-                // Will use fsSettings.getServer().getHostname()
-            }
-            try {
-                port = document.read("$.ssh.port");
-            } catch (PathNotFoundException e) {
-                // Will use fsSettings.getServer().getPort()
-            }
-            try {
-                username = document.read("$.ssh.username");
-            } catch (PathNotFoundException e) {
-                // Will use fsSettings.getServer().getUsername()
-            }
-            try {
-                password = document.read("$.ssh.password");
-            } catch (PathNotFoundException e) {
-                // Will use fsSettings.getServer().getPassword()
-            }
-            try {
-                pemPath = document.read("$.ssh.pem_path");
-            } catch (PathNotFoundException e) {
-                // Will use fsSettings.getServer().getPemPath()
-            }
-        }
-
-        @Override
-        protected void validateSettings() throws IOException {
-            if (remotePath == null || remotePath.isEmpty()) {
-                throw new IOException("SSH path is missing");
-            }
-
-            // Normalize the path
-            String rootPath = fsSettings.getFs().getUrl();
-            if (!remotePath.startsWith("/")) {
-                // Relative path - resolve against root
-                remotePath = rootPath.endsWith("/") ? rootPath + remotePath : rootPath + "/" + remotePath;
-            }
-
+        protected void validateProtocolSpecificSettings() throws IOException {
             // Open SSH connection to validate and get file attributes
             try {
                 openConnection();
@@ -190,14 +119,23 @@ public class FsSshPlugin extends FsCrawlerPlugin {
                     throw new IOException("File [" + remotePath + "] does not exist on SSH server");
                 }
                 throw new IOException("Failed to access file [" + remotePath + "] via SSH: " + e.getMessage(), e);
+            } catch (IOException e) {
+                throw e;
             } catch (Exception e) {
                 throw new IOException("Failed to connect to SSH server: " + e.getMessage(), e);
             }
         }
 
+        // ========== REST API methods ==========
+
         @Override
-        public void stop() throws Exception {
-            closeConnection();
+        public InputStream readFile() throws IOException {
+            logger.debug("Reading SSH file from [{}]", remotePath);
+            try {
+                return sftpClient.read(remotePath);
+            } catch (IOException e) {
+                throw new IOException("Failed to read file [" + remotePath + "] via SSH: " + e.getMessage(), e);
+            }
         }
 
         // ========== Crawling methods ==========
@@ -205,23 +143,17 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         @Override
         public void openConnection() throws Exception {
             logger.debug("Opening SSH connection");
-            Server server = fsSettings.getServer();
 
-            // Use JSON settings if available, otherwise fall back to fsSettings.getServer()
-            String effectiveHostname = hostname != null ? hostname : server.getHostname();
-            int effectivePort = port > 0 ? port : server.getPort();
-            String effectiveUsername = username != null ? username : server.getUsername();
-            String effectivePassword = password != null ? password : server.getPassword();
-            String effectivePemPath = pemPath != null ? pemPath : server.getPemPath();
+            String effectivePemPath = pemPath != null ? pemPath : fsSettings.getServer().getPemPath();
 
             sshClient = createSshClient();
             sftpClient = createSftpClient(openSshSession(
                     sshClient,
-                    effectiveUsername,
-                    effectivePassword,
+                    getEffectiveUsername(),
+                    getEffectivePassword(),
                     effectivePemPath,
-                    effectiveHostname,
-                    effectivePort));
+                    getEffectiveHostname(),
+                    getEffectivePort()));
         }
 
         @Override
