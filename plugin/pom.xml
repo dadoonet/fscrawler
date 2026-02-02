@@ -21,6 +21,10 @@
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-beans</artifactId>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-crawler-abstract</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

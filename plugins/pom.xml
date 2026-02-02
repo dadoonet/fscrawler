@@ -18,6 +18,8 @@
         <module>fs-local-plugin</module>
         <module>fs-s3-plugin</module>
         <module>fs-http-plugin</module>
+        <module>fs-ftp-plugin</module>
+        <module>fs-ssh-plugin</module>
     </modules>
 
     <dependencies>

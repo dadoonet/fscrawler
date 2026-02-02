@@ -31,10 +31,12 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
     private static final Logger logger = LogManager.getLogger();
     private final PluginManager pluginManager;
     private final HashMap<String, FsCrawlerExtensionFsProvider> fsProviders;
+    private final HashMap<String, FsCrawlerExtensionFsCrawler> fsCrawlers;
 
     public FsCrawlerPluginsManager() {
         pluginManager = new DefaultPluginManager();
         fsProviders = new HashMap<>();
+        fsCrawlers = new HashMap<>();
     }
 
     public void loadPlugins() {
@@ -50,6 +52,11 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
             logger.debug("Found FsCrawlerExtensionFsProvider extension for type [{}]", extension.getType());
             fsProviders.put(extension.getType(), extension);
         }
+
+        for (FsCrawlerExtensionFsCrawler extension : pluginManager.getExtensions(FsCrawlerExtensionFsCrawler.class)) {
+            logger.debug("Found FsCrawlerExtensionFsCrawler extension for type [{}]", extension.getType());
+            fsCrawlers.put(extension.getType(), extension);
+        }
     }
 
     public void close() {
@@ -57,13 +64,47 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
         pluginManager.stopPlugins();
     }
 
+    /**
+     * Find a filesystem provider for single file operations (REST API).
+     *
+     * @param type the provider type (e.g., "local", "http", "s3")
+     * @return the provider for the given type
+     * @throws FsCrawlerIllegalConfigurationException if no provider is found for the type
+     */
     public FsCrawlerExtensionFsProvider findFsProvider(String type) {
-        logger.debug("Load extension for type [{}]", type);
+        logger.debug("Load FsProvider extension for type [{}]", type);
         FsCrawlerExtensionFsProvider fsCrawlerExtensionFsProvider = fsProviders.get(type);
         if (fsCrawlerExtensionFsProvider == null) {
             logger.warn("Can not find FsProvider for type [{}]", type);
             throw new FsCrawlerIllegalConfigurationException("No FsProvider found for type [" + type + "]");
         }
         return fsCrawlerExtensionFsProvider;
+    }
+
+    /**
+     * Find a filesystem crawler for directory crawling operations.
+     *
+     * @param type the crawler type (e.g., "local", "ftp", "ssh")
+     * @return the crawler for the given type
+     * @throws FsCrawlerIllegalConfigurationException if no crawler is found for the type
+     */
+    public FsCrawlerExtensionFsCrawler findFsCrawler(String type) {
+        logger.debug("Load FsCrawler extension for type [{}]", type);
+        FsCrawlerExtensionFsCrawler fsCrawlerExtensionFsCrawler = fsCrawlers.get(type);
+        if (fsCrawlerExtensionFsCrawler == null) {
+            logger.warn("Can not find FsCrawler for type [{}]", type);
+            throw new FsCrawlerIllegalConfigurationException("No FsCrawler found for type [" + type + "]");
+        }
+        return fsCrawlerExtensionFsCrawler;
+    }
+
+    /**
+     * Check if a crawler plugin is available for the given type.
+     *
+     * @param type the crawler type to check
+     * @return true if a crawler is available, false otherwise
+     */
+    public boolean hasFsCrawler(String type) {
+        return fsCrawlers.containsKey(type);
     }
 }
