@@ -7,39 +7,41 @@ Elasticsearch settings
 
 Here is a list of Elasticsearch settings (under ``elasticsearch.`` prefix)`:
 
-+-----------------------------------+---------------------------+---------------------------------+
-| Name                              | Default value             | Documentation                   |
-+===================================+===========================+=================================+
-| ``elasticsearch.index``           | job name + ``_docs``      | `Index settings for documents`_ |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.index_folder``    | job name + ``_folder``    | `Index settings for folders`_   |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.push_templates``  | ``true``                  | :ref:`mappings`                 |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.bulk_size``       | ``100``                   | `Bulk settings`_                |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.flush_interval``  | ``"5s"``                  | `Bulk settings`_                |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.byte_size``       | ``"10mb"``                | `Bulk settings`_                |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.pipeline``        | ``null``                  | :ref:`ingest_node`              |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.semantic_search`` | ``true``                  | :ref:`semantic_search`          |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.urls``            | ``https://127.0.0.1:9200``| `Node settings`_                |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.path_prefix``     | ``null``                  | `Path prefix`_                  |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.api_key``         | ``null``                  | `API Key`_                      |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.username``        | ``null``                  | :ref:`credentials`              |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.password``        | ``null``                  | :ref:`credentials`              |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.ssl_verification``| ``true``                  | :ref:`ssl`                      |
-+-----------------------------------+---------------------------+---------------------------------+
-| ``elasticsearch.ca_certificate``  | ``null``                  | :ref:`ssl`                      |
-+-----------------------------------+---------------------------+---------------------------------+
++----------------------------------------+---------------------------+---------------------------------+
+| Name                                   | Default value             | Documentation                   |
++========================================+===========================+=================================+
+| ``elasticsearch.index``                | job name + ``_docs``      | `Index settings for documents`_ |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.index_folder``         | job name + ``_folder``    | `Index settings for folders`_   |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.push_templates``       | ``true``                  | :ref:`mappings`                 |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.force_push_templates`` | ``false``                 | :ref:`mappings`                 |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.bulk_size``            | ``100``                   | `Bulk settings`_                |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.flush_interval``       | ``"5s"``                  | `Bulk settings`_                |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.byte_size``            | ``"10mb"``                | `Bulk settings`_                |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.pipeline``             | ``null``                  | :ref:`ingest_node`              |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.semantic_search``      | ``true``                  | :ref:`semantic_search`          |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.urls``                 | ``https://127.0.0.1:9200``| `Node settings`_                |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.path_prefix``          | ``null``                  | `Path prefix`_                  |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.api_key``              | ``null``                  | `API Key`_                      |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.username``             | ``null``                  | :ref:`credentials`              |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.password``             | ``null``                  | :ref:`credentials`              |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.ssl_verification``     | ``true``                  | :ref:`ssl`                      |
++----------------------------------------+---------------------------+---------------------------------+
+| ``elasticsearch.ca_certificate``       | ``null``                  | :ref:`ssl`                      |
++----------------------------------------+---------------------------+---------------------------------+
 
 Index settings
 ^^^^^^^^^^^^^^
@@ -103,6 +105,13 @@ You can see the content of those templates by running:
 
 Then, FSCrawler applies those templates to the indices being created.
 
+By default, FSCrawler will check if the index template already exists before creating templates.
+If the index template exists, FSCrawler will skip the templates management, preserving any
+custom component templates you may have defined in advance.
+
+This means you can create your own component template before starting FSCrawler. FSCrawler will then create all the
+missing component templates if any (but not the ones you already defined) and create the index template.
+
 You can stop FSCrawler creating/updating the index templates for you
 by setting ``push_templates`` to ``false``:
 
@@ -112,6 +121,15 @@ by setting ``push_templates`` to ``false``:
    elasticsearch:
      push_templates: false
 
+If you want to force FSCrawler to push all templates (overwriting any existing ones),
+you can set ``force_push_templates`` to ``true``:
+
+.. code:: yaml
+
+   name: "test"
+   elasticsearch:
+     force_push_templates: true
+
 If you want to know what are the component templates and index templates
 that will be created, you can get them from `the source <https://github.com/dadoonet/fscrawler/blob/master/elasticsearch-client/src/main/resources/fr/pilato/elasticsearch/crawler/fs/client/9>`__.
 
@@ -119,19 +137,38 @@ Creating your own mapping (analyzers)
 """""""""""""""""""""""""""""""""""""
 
 If you want to define your own index settings and mapping to set
-analyzers for example, you can update the needed component template
-**before starting the FSCrawler**.
+analyzers for example, you can create the needed component template
+**before starting FSCrawler**.
 
-.. attention::
+FSCrawler will detect that the component template already exists and will not override it.
+It will only create the missing component templates and the index template.
 
-    Don't forget to set ``push_templates`` to ``false``, otherwise FSCrawler will
-    override your changes:
+For example, you can define in advance your own component template ``fscrawler_fscrawler_mapping_content``:
 
-    .. code:: yaml
+.. code:: json
 
-       name: "test"
-       elasticsearch:
-         push_templates: false
+    PUT _component_template/fscrawler_fscrawler_mapping_content
+    {
+      "template": {
+        "mappings": {
+          "properties": {
+            "content": {
+              "type": "text",
+              "analyzer": "french"
+            }
+          }
+        }
+      }
+    }
+
+Then start FSCrawler. It will create all the component templates but ``fscrawler_fscrawler_mapping_content``
+(which you already defined) and create the index template.
+
+.. note::
+
+    If someone wants to force pushing all the templates again (for example after an upgrade),
+    they can use ``force_push_templates: true``. In the above example, the custom
+    ``fscrawler_fscrawler_mapping_content`` component template would be overridden.
 
 The following example uses a ``french`` analyzer to index the
 ``content`` field and still allow using semantic search.
@@ -177,10 +214,9 @@ The following example uses a ``french`` analyzer to index the
 
 .. tip::
 
-    You can launch FSCrawler with ``push_templates`` to ``true`` in the job settings and with ``--loop 0``. This way,
-    FSCrawler will create the index templates which you can then edit from Kibana or using the Elasticsearch API.
-
-    Then set ``push_templates`` to ``false`` before restarting FSCrawler.
+    You can launch FSCrawler with ``--loop 0`` to see what component templates and index templates
+    would be created without indexing any document. Then you can create your own custom component
+    templates and restart FSCrawler. Your custom templates will be preserved.
 
 Replace existing mapping
 """"""""""""""""""""""""

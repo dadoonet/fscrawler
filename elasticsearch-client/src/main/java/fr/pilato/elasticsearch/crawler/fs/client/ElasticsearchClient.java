@@ -366,7 +366,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @Override
     public boolean isExistingIndex(String index) throws ElasticsearchClientException {
-        logger.debug("is existing index [{}]", index);
+        logger.trace("is existing index [{}]", index);
         try {
             httpGet(index);
             logger.debug("Index [{}] was found", index);
@@ -384,7 +384,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @Override
     public boolean isExistingPipeline(String pipelineName) throws ElasticsearchClientException {
-        logger.debug("is existing pipeline [{}]", pipelineName);
+        logger.trace("is existing pipeline [{}]", pipelineName);
         try {
             httpGet("_ingest/pipeline/" + pipelineName);
             logger.debug("Pipeline [{}] was found", pipelineName);
@@ -402,13 +402,31 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     @Override
     public boolean isExistingComponentTemplate(String templateName) throws ElasticsearchClientException {
-        logger.debug("is existing component template [{}]", templateName);
+        logger.trace("is existing component template [{}]", templateName);
         try {
             httpGet("_component_template/" + templateName);
             logger.debug("Component template [{}] was found", templateName);
             return true;
         } catch (NotFoundException e) {
             logger.debug("Component template [{}] was not found", templateName);
+            return false;
+        }
+    }
+
+    /**
+     * Check if an index template exists
+     * @param templateName index template name
+     * @return true if the index template exists, false otherwise
+     */
+    @Override
+    public boolean isExistingIndexTemplate(String templateName) throws ElasticsearchClientException {
+        logger.trace("is existing index template [{}]", templateName);
+        try {
+            httpGet("_index_template/" + templateName);
+            logger.debug("Index template [{}] was found", templateName);
+            return true;
+        } catch (NotFoundException e) {
+            logger.debug("Index template [{}] was not found", templateName);
             return false;
         }
     }
@@ -562,49 +580,72 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void createIndexAndComponentTemplates() throws Exception {
         if (settings.getElasticsearch().isPushTemplates()) {
-            List<String> componentTemplates = new ArrayList<>();
+            boolean forcePush = settings.getElasticsearch().isForcePushTemplates();
 
-            logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndex());
-            componentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_alias", settings.getElasticsearch().getIndex(), settings.getName()));
-            componentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_settings_total_fields", settings.getElasticsearch().getIndex()));
-            componentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attributes", settings.getElasticsearch().getIndex()));
-            componentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndex()));
-            componentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndex()));
-            componentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attachment", settings.getElasticsearch().getIndex()));
+            // Check if the index template already exists for docs
+            String docsIndexTemplateName = "fscrawler_" + settings.getElasticsearch().getIndex() + "_docs";
             if (semanticSearch) {
-                componentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content_semantic", settings.getElasticsearch().getIndex()));
-            } else {
-                componentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_content", settings.getElasticsearch().getIndex()));
+                docsIndexTemplateName = "fscrawler_" + settings.getElasticsearch().getIndex() + "_docs_semantic";
             }
-            componentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_meta", settings.getElasticsearch().getIndex()));
 
-            // Wait for all component templates to be available before creating index templates
-            waitForComponentTemplates(componentTemplates);
+            boolean docsIndexTemplateExists = isExistingIndexTemplate(docsIndexTemplateName);
 
-            logger.debug("Creating/updating index templates for [{}]", settings.getElasticsearch().getIndex());
-            // If needed, we create the new settings for this files index
-            if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
+            if (docsIndexTemplateExists && !forcePush) {
+                logger.debug("Index template [{}] already exists. Skipping templates management for docs. " +
+                        "Use force_push_templates: true to override.", docsIndexTemplateName);
+            } else {
+                List<String> componentTemplates = new ArrayList<>();
+
+                logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndex());
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_alias", settings.getElasticsearch().getIndex(), settings.getName(), forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_settings_total_fields", settings.getElasticsearch().getIndex(), null, forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_attributes", settings.getElasticsearch().getIndex(), null, forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndex(), null, forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndex(), null, forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_attachment", settings.getElasticsearch().getIndex(), null, forcePush));
                 if (semanticSearch) {
-                    loadAndPushIndexTemplate(majorVersion, "fscrawler_docs_semantic", settings.getElasticsearch().getIndex());
+                    componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_content_semantic", settings.getElasticsearch().getIndex(), null, forcePush));
                 } else {
-                    loadAndPushIndexTemplate(majorVersion, "fscrawler_docs", settings.getElasticsearch().getIndex());
+                    componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_content", settings.getElasticsearch().getIndex(), null, forcePush));
+                }
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_meta", settings.getElasticsearch().getIndex(), null, forcePush));
+
+                // Wait for all component templates to be available before creating index templates
+                waitForComponentTemplates(componentTemplates);
+
+                logger.debug("Creating/updating index templates for [{}]", settings.getElasticsearch().getIndex());
+                // If needed, we create the new settings for this files index
+                if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
+                    if (semanticSearch) {
+                        loadAndPushIndexTemplate(majorVersion, "fscrawler_docs_semantic", settings.getElasticsearch().getIndex());
+                    } else {
+                        loadAndPushIndexTemplate(majorVersion, "fscrawler_docs", settings.getElasticsearch().getIndex());
+                    }
                 }
             }
 
             // If needed, we create the component and index templates for the folder index
             if (settings.getFs().isIndexFolders()) {
-                List<String> folderComponentTemplates = new ArrayList<>();
+                String folderIndexTemplateName = "fscrawler_" + settings.getElasticsearch().getIndexFolder() + "_folders";
+                boolean folderIndexTemplateExists = isExistingIndexTemplate(folderIndexTemplateName);
 
-                logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndexFolder());
-                folderComponentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_attributes", settings.getElasticsearch().getIndexFolder()));
-                folderComponentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndexFolder()));
-                folderComponentTemplates.add(loadAndPushComponentTemplate(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndexFolder()));
+                if (folderIndexTemplateExists && !forcePush) {
+                    logger.debug("Index template [{}] already exists. Skipping templates management for folders. " +
+                            "Use force_push_templates: true to override.", folderIndexTemplateName);
+                } else {
+                    List<String> folderComponentTemplates = new ArrayList<>();
 
-                // Wait for all folder component templates to be available before creating index template
-                waitForComponentTemplates(folderComponentTemplates);
+                    logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndexFolder());
+                    folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_attributes", settings.getElasticsearch().getIndexFolder(), null, forcePush));
+                    folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndexFolder(), null, forcePush));
+                    folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndexFolder(), null, forcePush));
 
-                logger.debug("Creating/updating index templates for [{}]", settings.getElasticsearch().getIndexFolder());
-                loadAndPushIndexTemplate(majorVersion, "fscrawler_folders", settings.getElasticsearch().getIndexFolder());
+                    // Wait for all folder component templates to be available before creating index template
+                    waitForComponentTemplates(folderComponentTemplates);
+
+                    logger.debug("Creating/updating index templates for [{}]", settings.getElasticsearch().getIndexFolder());
+                    loadAndPushIndexTemplate(majorVersion, "fscrawler_folders", settings.getElasticsearch().getIndexFolder());
+                }
             }
         }
     }
@@ -637,22 +678,31 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    private String loadAndPushComponentTemplate(int version, String name, String index) throws IOException, ElasticsearchClientException {
+    /**
+     * Load and push a component template only if it doesn't already exist (unless forcePush is true)
+     * @param version   the Elasticsearch major version
+     * @param name      the component template name (without the index prefix)
+     * @param index     the index name to use as prefix
+     * @param alias     the alias to replace in the template (can be null)
+     * @param forcePush if true, always push the template even if it exists
+     * @return the component template name
+     */
+    private String loadAndPushComponentTemplateIfMissing(int version, String name, String index, String alias, boolean forcePush) throws IOException, ElasticsearchClientException {
+        String componentTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
+
+        if (!forcePush && isExistingComponentTemplate(componentTemplateName)) {
+            logger.debug("Component template [{}] already exists. Skipping.", componentTemplateName);
+            return componentTemplateName;
+        }
+
         logger.trace("Loading component template [{}]", name);
         String json = loadResourceFile(version + "/_component_templates/" + name + ".json");
-        String componentTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
-        pushComponentTemplate(componentTemplateName, json);
-        return componentTemplateName;
-    }
 
-    private String loadAndPushComponentTemplate(int version, String name, String index, String alias) throws IOException, ElasticsearchClientException {
-        logger.trace("Loading component template [{}]", name);
-        String json = loadResourceFile(version + "/_component_templates/" + name + ".json");
+        // We need to replace the placeholder values if alias is provided
+        if (alias != null) {
+            json = json.replace("ALIAS", alias);
+        }
 
-        // We need to replace the placeholder values
-        json = json.replace("ALIAS", alias != null ? alias : "fscrawler");
-
-        String componentTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
         pushComponentTemplate(componentTemplateName, json);
         return componentTemplateName;
     }
@@ -1153,7 +1203,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                         e.getResponse().getStatusInfo().getReasonPhrase(),
                         e.getResponse().readEntity(String.class));
             } else {
-                logger.debug("Error while running {} {}/{}: {}", method, node, path == null ? "" : path, e.getResponse().readEntity(String.class));
+                logger.trace("Error while running {} {}/{}: {}", method, node, path == null ? "" : path, e.getResponse().readEntity(String.class));
             }
             throw e;
         } catch (ProcessingException e) {

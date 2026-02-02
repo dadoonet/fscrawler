@@ -62,6 +62,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
 
     @Override
     public void createSchema() throws Exception {
+        logger.debug("Creating Elasticsearch Schema");
         client.createIndexAndComponentTemplates();
     }
 
