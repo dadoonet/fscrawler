@@ -121,7 +121,12 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
         Doc doc = new Doc();
         doc.getFile().setFilename(filename);
         doc.getFile().setFilesize(getFilesize());
-        doc.getPath().setVirtual(computeVirtualPathName(fsSettings.getFs().getUrl(), remotePath));
+
+        // Compute virtual path - use root URL if configured, otherwise use "/" as default
+        String rootUrl = (fsSettings.getFs() != null && fsSettings.getFs().getUrl() != null)
+                ? fsSettings.getFs().getUrl()
+                : "/";
+        doc.getPath().setVirtual(computeVirtualPathName(rootUrl, remotePath));
         doc.getPath().setReal(remotePath);
         return doc;
     }
@@ -147,14 +152,19 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
      *
      * @param path the path to normalize
      * @return the normalized path
+     * @throws IOException if a relative path is provided but no root URL is configured
      */
-    protected String normalizeRemotePath(String path) {
+    protected String normalizeRemotePath(String path) throws IOException {
         if (path == null) {
             return null;
         }
-        String rootPath = fsSettings.getFs().getUrl();
         if (!path.startsWith("/")) {
-            // Relative path - resolve against root
+            // Relative path - need to resolve against root URL
+            String rootPath = fsSettings.getFs() != null ? fsSettings.getFs().getUrl() : null;
+            if (rootPath == null || rootPath.isEmpty()) {
+                throw new IOException("Cannot resolve relative path [" + path + "]: fs.url is not configured. " +
+                        "Please use an absolute path starting with '/' or configure fs.url in the job settings.");
+            }
             return rootPath.endsWith("/") ? rootPath + path : rootPath + "/" + path;
         }
         return path;
