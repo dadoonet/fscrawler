@@ -445,7 +445,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        logger.info("⏳ Waiting up to {} for {} documents in {}", duration,
+        logger.info("⏳ Waiting up to {} for {} documents in {}", durationToString(duration),
                 expected == null ? "some" : expected, request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
 

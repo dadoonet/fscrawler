@@ -25,10 +25,10 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import fr.pilato.elasticsearch.crawler.plugins.fs.ssh.SshTestHelper;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.config.keys.AuthorizedKeysAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
@@ -39,14 +39,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 
@@ -80,8 +76,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
                 .build();
 
         // Generate the key files for our SSH tests
-        KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
-        saveKeyPair(rootTmpDir, keyPair);
+        SshTestHelper.generateAndSaveKeyPair(rootTmpDir);
 
         sshd = SshServer.setUpDefaultServer();
         sshd.setHost("localhost");
@@ -94,24 +89,6 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         sshd.start();
 
         logger.info(" -> Started fake SSHD service on {}:{}", sshd.getHost(), sshd.getPort());
-    }
-
-    private void saveKeyPair(Path path, KeyPair keyPair) {
-        OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
-
-        // Store Public Key.
-        try (FileOutputStream fos = new FileOutputStream(path.resolve("public.key").toFile())) {
-            writer.writePublicKey(keyPair.getPublic(), "Public Key for tests", fos);
-        } catch (GeneralSecurityException | IOException e) {
-            logger.error("Failed to save public key", e);
-        }
-
-        // Store Private Key.
-        try (FileOutputStream fos = new FileOutputStream(path.resolve("private.key").toFile())) {
-            writer.writePrivateKey(keyPair, "Private Key for tests", null, fos);
-        } catch (GeneralSecurityException | IOException e) {
-            logger.error("Failed to save public key", e);
-        }
     }
 
     @After

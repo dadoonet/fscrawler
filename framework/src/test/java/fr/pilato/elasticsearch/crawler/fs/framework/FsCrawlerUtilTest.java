@@ -20,6 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -39,7 +41,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
+import static com.carrotsearch.randomizedtesting.RandomizedTest.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 
@@ -317,5 +319,18 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         // Edge case: just a drive letter with colon but no slashes
         // Should return "\" because it contains ":" but no "/"
         assertThat(FsCrawlerUtil.getPathSeparator("C:")).isEqualTo("\\");
+    }
+
+    @Test
+    public void humanReadableDuration() {
+        assertThat(FsCrawlerUtil.durationToString(Duration.ZERO)).isEqualTo("0s");
+        assertThat(FsCrawlerUtil.durationToString(null)).isNull();
+        assertThat(FsCrawlerUtil.durationToString(Duration.ofSeconds(59))).isEqualTo("59s");
+        assertThat(FsCrawlerUtil.durationToString(Duration.ofSeconds(60))).isEqualTo("1m");
+        assertThat(FsCrawlerUtil.durationToString(Duration.ofSeconds(61))).isEqualTo("1m1s");
+        assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(59))).isEqualTo("59m");
+        assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(60))).isEqualTo("1h");
+        assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(61))).isEqualTo("1h1m");
+        assertThat(FsCrawlerUtil.durationToString(Duration.ofMillis(randomLongBetween(0, 999999999L)))).isNotEmpty();
     }
 }

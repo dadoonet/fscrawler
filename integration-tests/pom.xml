@@ -78,6 +78,13 @@
         </dependency>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-fs-ssh-plugin</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-fs-s3-plugin</artifactId>
             <scope>test</scope>
         </dependency>

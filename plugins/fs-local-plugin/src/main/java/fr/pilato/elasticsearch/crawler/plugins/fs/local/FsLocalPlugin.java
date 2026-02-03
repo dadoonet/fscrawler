@@ -22,17 +22,15 @@ import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsCrawler;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pf4j.Extension;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,8 +52,7 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract
-            implements FsCrawlerExtensionFsCrawler {
+    public static class FsCrawlerExtensionFsProviderLocal extends FsCrawlerExtensionFsProviderAbstract {
 
         private Path path;
         private String url;
@@ -69,23 +66,36 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             return "local";
         }
 
+        @Override
+        public boolean supportsCrawling() {
+            return true;
+        }
+
         // ========== FsCrawlerExtensionFsProvider methods (REST API) ==========
 
         @Override
-        public InputStream readFile() throws IOException {
-            return Files.newInputStream(path);
+        public InputStream readFile() throws FsCrawlerPluginException {
+            try {
+                return Files.newInputStream(path);
+            } catch (IOException e) {
+                throw new FsCrawlerPluginException("Can not open stream for path " + path, e);
+            }
         }
 
         private String getFilename() {
             return path.getFileName().toString();
         }
 
-        private long getFilesize() throws IOException {
-            return Files.size(path);
+        private long getFilesize() throws FsCrawlerPluginException {
+            try {
+                return Files.size(path);
+            } catch (IOException e) {
+                throw new FsCrawlerPluginException("Can not get filesize for " + path, e);
+            }
         }
 
         @Override
-        public Doc createDocument() throws IOException {
+        public Doc createDocument() throws FsCrawlerPluginException {
             logger.debug("Creating document from {}", getFilename());
             String filename = getFilename();
 
@@ -106,22 +116,22 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        protected void validateSettings() throws IOException {
+        protected void validateSettings() throws FsCrawlerIllegalConfigurationException {
             Path rootPath = Path.of(fsSettings.getFs().getUrl()).toAbsolutePath().normalize();
             logger.debug("Reading file {} from {}", url, rootPath);
 
             path = rootPath.resolve(url).normalize();
             if (Files.notExists(path)) {
-                throw new IOException("File " + path.toAbsolutePath() + " does not exist");
+                throw new FsCrawlerIllegalConfigurationException("File " + path.toAbsolutePath() + " does not exist");
             }
 
             // Check that the url is under the rootPath
             if (!path.startsWith(rootPath)) {
-                throw new IOException("File " + path.toAbsolutePath() + " is not within " + rootPath);
+                throw new FsCrawlerIllegalConfigurationException("File " + path.toAbsolutePath() + " is not within " + rootPath);
             }
         }
 
-        // ========== FsCrawlerExtensionFsCrawler methods (Crawling) ==========
+        // ========== Crawling methods ==========
 
         @Override
         public void openConnection() {
@@ -158,13 +168,21 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        public InputStream getInputStream(FileAbstractModel file) throws Exception {
-            return new FileInputStream(file.getFullpath());
+        public InputStream getInputStream(FileAbstractModel file) throws FsCrawlerPluginException {
+            try {
+                return new FileInputStream(file.getFullpath());
+            } catch (FileNotFoundException e) {
+                throw new FsCrawlerPluginException("Can not get input stream for " + file.getFullpath(), e);
+            }
         }
 
         @Override
-        public void closeInputStream(InputStream inputStream) throws Exception {
-            inputStream.close();
+        public void closeInputStream(InputStream inputStream) throws FsCrawlerPluginException {
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                throw new FsCrawlerPluginException("Error while closing stream", e);
+            }
         }
 
         /**

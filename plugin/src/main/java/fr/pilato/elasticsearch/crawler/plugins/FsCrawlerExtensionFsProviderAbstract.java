@@ -59,8 +59,7 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
     }
 
     @Override
-    public void stop() throws Exception {
-
+    public void stop() throws FsCrawlerPluginException {
     }
 
     @Override

@@ -213,6 +213,8 @@ it into Elasticsearch. FSCrawler supports so far the following services:
 * ``local``: reads a file from the server where FSCrawler is running (a local file)
 * ``http``: reads a file from a URL
 * ``s3``: reads a file from an S3 compatible service
+* ``ssh``: reads a file from an SSH/SFTP server
+* ``ftp``: reads a file from an FTP server
 
 To upload a binary from a 3rd party service, you can call ``POST /_document`` endpoint and pass
 a JSON document which describes the service settings:
@@ -312,7 +314,106 @@ If you are using Minio, you can use:
       }
     }'
 
+SSH plugin
+~~~~~~~~~~
 
+The ``ssh`` plugin reads a file from an SSH/SFTP server.
+It accepts the following parameters:
+
+* ``path`` (required): path to the file on the remote server
+* ``hostname`` (optional): SSH server hostname. If not provided, uses the ``server.hostname`` from job settings.
+* ``port`` (optional): SSH server port. If not provided, uses the ``server.port`` from job settings.
+* ``username`` (optional): SSH username. If not provided, uses the ``server.username`` from job settings.
+* ``password`` (optional): SSH password. If not provided, uses the ``server.password`` from job settings.
+* ``pem_path`` (optional): path to the PEM key file for key-based authentication. If not provided, uses the ``server.pem_path`` from job settings.
+
+For example, we can read the file ``document.pdf`` from an SSH server with:
+
+.. code:: sh
+
+    curl -XPOST http://127.0.0.1:8080/_document -H 'Content-Type: application/json' -d '{
+      "type": "ssh",
+      "ssh": {
+        "hostname": "my-ssh-server.example.com",
+        "port": 22,
+        "username": "myuser",
+        "password": "mypassword",
+        "path": "/home/myuser/documents/document.pdf"
+      }
+    }'
+
+If you have already configured the SSH server settings in your job ``_settings.yaml`` file:
+
+.. code:: yaml
+
+    name: "my_job"
+    server:
+      hostname: "my-ssh-server.example.com"
+      port: 22
+      username: "myuser"
+      password: "mypassword"
+      protocol: "SSH"
+
+You can simplify the REST call by only providing the ``path``:
+
+.. code:: sh
+
+    curl -XPOST http://127.0.0.1:8080/_document -H 'Content-Type: application/json' -d '{
+      "type": "ssh",
+      "ssh": {
+        "path": "/home/myuser/documents/document.pdf"
+      }
+    }'
+
+FTP plugin
+~~~~~~~~~~
+
+The ``ftp`` plugin reads a file from an FTP server.
+It accepts the following parameters:
+
+* ``path`` (required): path to the file on the remote server
+* ``hostname`` (optional): FTP server hostname. If not provided, uses the ``server.hostname`` from job settings.
+* ``port`` (optional): FTP server port. If not provided, uses the ``server.port`` from job settings.
+* ``username`` (optional): FTP username. If not provided, uses the ``server.username`` from job settings.
+* ``password`` (optional): FTP password. If not provided, uses the ``server.password`` from job settings.
+
+For example, we can read the file ``document.pdf`` from an FTP server with:
+
+.. code:: sh
+
+    curl -XPOST http://127.0.0.1:8080/_document -H 'Content-Type: application/json' -d '{
+      "type": "ftp",
+      "ftp": {
+        "hostname": "ftp.example.com",
+        "port": 21,
+        "username": "myuser",
+        "password": "mypassword",
+        "path": "/documents/document.pdf"
+      }
+    }'
+
+If you have already configured the FTP server settings in your job ``_settings.yaml`` file:
+
+.. code:: yaml
+
+    name: "my_job"
+    server:
+      hostname: "ftp.example.com"
+      port: 21
+      username: "myuser"
+      password: "mypassword"
+      protocol: "FTP"
+
+You can simplify the REST call by only providing the ``path``:
+
+.. code:: sh
+
+    curl -XPOST http://127.0.0.1:8080/_document -H 'Content-Type: application/json' -d '{
+      "type": "ftp",
+      "ftp": {
+        "path": "/documents/document.pdf"
+      }
+    }'
 
 Simulate Upload
 ^^^^^^^^^^^^^^^
