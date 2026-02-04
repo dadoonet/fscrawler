@@ -21,6 +21,9 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.FilterSection;
+import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.InputSection;
+import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.OutputSection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.github.gestalt.config.Gestalt;
@@ -131,20 +134,64 @@ public class FsSettingsLoader extends MetaFileHandler {
 
             FsSettings settings = new FsSettings();
 
+            // Load version if present
+            settings.setVersion(gestalt.getConfigOptional("version", Integer.class).orElse(null));
+            
+            // Load legacy v1 settings
             settings.setName(gestalt.getConfigOptional("name", String.class).orElse(null));
             settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
             settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class).orElse(null));
             settings.setTags(gestalt.getConfigOptional("tags", Tags.class).orElse(null));
             settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
             settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
+            
+            // Load v2 pipeline settings (singular form)
+            settings.setInput(gestalt.getConfigOptional("input", InputSection.class).orElse(null));
+            settings.setFilter(gestalt.getConfigOptional("filter", FilterSection.class).orElse(null));
+            settings.setOutput(gestalt.getConfigOptional("output", OutputSection.class).orElse(null));
+            
+            // Load v2 pipeline settings (plural form)
+            settings.setInputs(gestalt.getConfigOptional("inputs", new org.github.gestalt.config.reflect.TypeCapture<List<InputSection>>(){}).orElse(null));
+            settings.setFilters(gestalt.getConfigOptional("filters", new org.github.gestalt.config.reflect.TypeCapture<List<FilterSection>>(){}).orElse(null));
+            settings.setOutputs(gestalt.getConfigOptional("outputs", new org.github.gestalt.config.reflect.TypeCapture<List<OutputSection>>(){}).orElse(null));
 
             logger.debug("Successfully loaded settings from classpath [fscrawler-default.properties] and files {}",
                     (Object) configFiles);
             logger.trace("Loaded settings [{}]", settings);
 
+            // Apply migration and normalization
+            settings = migrateAndNormalize(settings);
+
             return settings;
         } catch (Exception e) {
             throw new FsCrawlerIllegalConfigurationException("Can not load settings", e);
         }
+    }
+    
+    /**
+     * Migrates v1 settings to v2 and normalizes singular to plural form.
+     * @param settings The loaded settings
+     * @return The migrated and normalized settings
+     */
+    private static FsSettings migrateAndNormalize(FsSettings settings) {
+        int version = FsSettingsMigrator.detectVersion(settings);
+        
+        if (version == FsSettingsMigrator.VERSION_1) {
+            logger.warn("Job [{}] uses deprecated settings format (v1). " +
+                    "Please migrate to the new pipeline format (v2).", settings.getName());
+            
+            FsSettings v2Settings = FsSettingsMigrator.migrateV1ToV2(settings);
+            
+            if (logger.isInfoEnabled()) {
+                logger.info("Suggested new configuration for job [{}]:\n---\n{}---", 
+                        settings.getName(),
+                        FsSettingsMigrator.generateV2Yaml(v2Settings));
+            }
+            
+            return v2Settings;
+        }
+        
+        // Normalize singular to plural for v2 settings
+        return FsSettingsMigrator.normalizeSingularToPlural(settings);
     }
 }
