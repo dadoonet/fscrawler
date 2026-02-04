@@ -24,8 +24,9 @@ package fr.pilato.elasticsearch.crawler.plugins.pipeline;
  * Used by FilterPlugin and OutputPlugin to determine if they should
  * process a specific document based on conditions.
  * 
- * Phase 1: Conditions are not evaluated (shouldApply always returns true).
- * Phase 2: MVEL expressions are used to evaluate conditions.
+ * Conditions are expressed as MVEL expressions that evaluate against
+ * the PipelineContext. See {@link ConditionEvaluator} for available
+ * variables and example expressions.
  */
 public interface ConditionalPlugin {
 
@@ -46,15 +47,16 @@ public interface ConditionalPlugin {
 
     /**
      * Determines if this plugin should be applied to the given document.
-     * 
-     * Phase 1 implementation: Always returns true (no conditions).
-     * Phase 2 implementation: Evaluates the MVEL condition.
+     * Evaluates the MVEL condition expression against the context.
      *
      * @param context the document context containing tags, metadata, etc.
      * @return true if this plugin should process the document
      */
     default boolean shouldApply(PipelineContext context) {
-        // Phase 1: No conditional routing, always apply
-        return true;
+        String when = getWhen();
+        if (when == null || when.isBlank()) {
+            return true; // No condition means always apply
+        }
+        return ConditionEvaluator.evaluate(when, context);
     }
 }
