@@ -98,6 +98,13 @@ public class FsCrawlerCli {
         @Parameter(names = "--list", description = "List FSCrawler jobs if any.")
         boolean list = false;
 
+        @Parameter(names = "--migrate", description = "Migrate a job configuration from v1 to v2 pipeline format.")
+        boolean migrate = false;
+
+        @Parameter(names = "--migrate-output", description = "Output file for migrated configuration (use with --migrate). " +
+                "If not specified, the new configuration is displayed on console.")
+        String migrateOutput = null;
+
         @Deprecated
         @Parameter(names = "--debug", description = "Debug mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\" instead)")
         boolean debug = false;
@@ -270,6 +277,12 @@ public class FsCrawlerCli {
             return;
         }
 
+        if (command.migrate) {
+            // We are in migrate mode. We read the v1 configuration and output v2 format.
+            migrateConfiguration(configDir, jobName, command.migrateOutput);
+            return;
+        }
+
         // If we ask to reinit, we need to clean the status for the job
         if (command.restart) {
             logger.debug("Cleaning existing status for job [{}]...", jobName);
@@ -376,6 +389,61 @@ public class FsCrawlerCli {
         FSCrawlerLogger.console("You can edit the settings in [{}]. Then, you can run again fscrawler " +
                         "without the --setup option.",
                 configDir.resolve(jobName).resolve(FsSettingsLoader.SETTINGS_YAML));
+    }
+
+    private static void migrateConfiguration(Path configDir, String jobName, String outputFile) throws IOException {
+        logger.debug("Entering migrate mode for [{}]...", jobName);
+        
+        FsSettings fsSettings;
+        try {
+            fsSettings = new FsSettingsLoader(configDir).read(jobName);
+            if (fsSettings.getName() == null) {
+                fsSettings.setName(jobName);
+            }
+        } catch (Exception e) {
+            logger.fatal("Cannot parse the configuration file: {}", e.getMessage());
+            throw e;
+        }
+        
+        // Detect the version
+        int version = FsSettingsMigrator.detectVersion(fsSettings);
+        
+        if (version == FsSettingsMigrator.VERSION_2) {
+            FSCrawlerLogger.console("Job [{}] is already using v2 pipeline format. No migration needed.", jobName);
+            return;
+        }
+        
+        FSCrawlerLogger.console("Migrating job [{}] from v1 to v2 pipeline format...", jobName);
+        
+        // Perform the migration
+        FsSettings v2Settings = FsSettingsMigrator.migrateV1ToV2(fsSettings);
+        
+        // Generate the v2 YAML
+        String v2Yaml = FsSettingsMigrator.generateV2Yaml(v2Settings);
+        
+        if (outputFile != null) {
+            // Write to output file
+            Path outputPath = Paths.get(outputFile);
+            if (!outputPath.isAbsolute()) {
+                outputPath = configDir.resolve(jobName).resolve(outputFile);
+            }
+            Files.writeString(outputPath, v2Yaml);
+            FSCrawlerLogger.console("Migrated configuration written to [{}]", outputPath);
+            FSCrawlerLogger.console("");
+            FSCrawlerLogger.console("To use the new configuration:");
+            FSCrawlerLogger.console("  1. Review the generated file");
+            FSCrawlerLogger.console("  2. Backup your current _settings.yaml");
+            FSCrawlerLogger.console("  3. Replace _settings.yaml with the migrated version");
+        } else {
+            // Display on console
+            FSCrawlerLogger.console("");
+            FSCrawlerLogger.console("--- Migrated v2 configuration ---");
+            FSCrawlerLogger.console(v2Yaml);
+            FSCrawlerLogger.console("---------------------------------");
+            FSCrawlerLogger.console("");
+            FSCrawlerLogger.console("To save this configuration, run:");
+            FSCrawlerLogger.console("  fscrawler {} --migrate --migrate-output _settings_v2.yaml", jobName);
+        }
     }
 
     private static boolean startFsCrawlerThreadAndServices(FsCrawlerImpl fsCrawler) {
