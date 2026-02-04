@@ -19,17 +19,41 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.FilterSection;
+import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.InputSection;
+import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.OutputSection;
+
+import java.util.List;
 import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
 public class FsSettings {
 
+    /**
+     * Settings format version.
+     * Version 1: Legacy format with fs/server/elasticsearch at root
+     * Version 2: Pipeline format with inputs/filters/outputs
+     */
+    private Integer version;
+
     private String name;
+    
+    // Legacy v1 settings (kept for backward compatibility)
     private Fs fs;
     private Server server;
     private Elasticsearch elasticsearch;
     private Rest rest;
     private Tags tags;
+
+    // Pipeline v2 settings - singular form (shorthand)
+    private InputSection input;
+    private FilterSection filter;
+    private OutputSection output;
+
+    // Pipeline v2 settings - plural form (full)
+    private List<InputSection> inputs;
+    private List<FilterSection> filters;
+    private List<OutputSection> outputs;
 
     public String getName() {
         return name;
@@ -79,6 +103,62 @@ public class FsSettings {
         this.tags = tags;
     }
 
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    public InputSection getInput() {
+        return input;
+    }
+
+    public void setInput(InputSection input) {
+        this.input = input;
+    }
+
+    public FilterSection getFilter() {
+        return filter;
+    }
+
+    public void setFilter(FilterSection filter) {
+        this.filter = filter;
+    }
+
+    public OutputSection getOutput() {
+        return output;
+    }
+
+    public void setOutput(OutputSection output) {
+        this.output = output;
+    }
+
+    public List<InputSection> getInputs() {
+        return inputs;
+    }
+
+    public void setInputs(List<InputSection> inputs) {
+        this.inputs = inputs;
+    }
+
+    public List<FilterSection> getFilters() {
+        return filters;
+    }
+
+    public void setFilters(List<FilterSection> filters) {
+        this.filters = filters;
+    }
+
+    public List<OutputSection> getOutputs() {
+        return outputs;
+    }
+
+    public void setOutputs(List<OutputSection> outputs) {
+        this.outputs = outputs;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -86,34 +166,55 @@ public class FsSettings {
 
         FsSettings that = (FsSettings) o;
 
+        if (!Objects.equals(version, that.version)) return false;
         if (!Objects.equals(name, that.name)) return false;
         if (!Objects.equals(fs, that.fs)) return false;
         if (!Objects.equals(server, that.server)) return false;
         if (!Objects.equals(rest, that.rest)) return false;
         if (!Objects.equals(tags, that.tags)) return false;
-        return Objects.equals(elasticsearch, that.elasticsearch);
-
+        if (!Objects.equals(elasticsearch, that.elasticsearch)) return false;
+        if (!Objects.equals(input, that.input)) return false;
+        if (!Objects.equals(filter, that.filter)) return false;
+        if (!Objects.equals(output, that.output)) return false;
+        if (!Objects.equals(inputs, that.inputs)) return false;
+        if (!Objects.equals(filters, that.filters)) return false;
+        return Objects.equals(outputs, that.outputs);
     }
 
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
+        int result = version != null ? version.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (fs != null ? fs.hashCode() : 0);
         result = 31 * result + (server != null ? server.hashCode() : 0);
         result = 31 * result + (rest != null ? rest.hashCode() : 0);
         result = 31 * result + (tags != null ? tags.hashCode() : 0);
         result = 31 * result + (elasticsearch != null ? elasticsearch.hashCode() : 0);
+        result = 31 * result + (input != null ? input.hashCode() : 0);
+        result = 31 * result + (filter != null ? filter.hashCode() : 0);
+        result = 31 * result + (output != null ? output.hashCode() : 0);
+        result = 31 * result + (inputs != null ? inputs.hashCode() : 0);
+        result = 31 * result + (filters != null ? filters.hashCode() : 0);
+        result = 31 * result + (outputs != null ? outputs.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "FsSettings{" + "name='" + name + '\'' +
+        return "FsSettings{" +
+                "version=" + version +
+                ", name='" + name + '\'' +
                 ", fs=" + fs +
                 ", server=" + server +
                 ", elasticsearch=" + elasticsearch +
                 ", rest=" + rest +
                 ", tags=" + tags +
+                ", input=" + input +
+                ", filter=" + filter +
+                ", output=" + output +
+                ", inputs=" + inputs +
+                ", filters=" + filters +
+                ", outputs=" + outputs +
                 '}';
     }
 }
