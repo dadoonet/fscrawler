@@ -1,0 +1,22 @@
+# V1 configuration format (no version field)
+name: test_v1
+fs:
+  url: /path/to/data
+  update_rate: "5m"
+  includes:
+    - "*.pdf"
+    - "*.docx"
+  json_support: true
+  ocr:
+    enabled: true
+    language: "fra"
+server:
+  hostname: my-sftp-server.com
+  port: 22
+  username: user
+  protocol: ssh
+elasticsearch:
+  urls:
+    - https://localhost:9200
+  index: test_v1_docs
+  index_folder: test_v1_folder

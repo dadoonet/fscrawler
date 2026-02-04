@@ -182,11 +182,21 @@ public class FsSettingsMigrator {
             return "tika";
         }
         
-        if (v1Settings.getFs().isJsonSupport()) {
+        Fs fs = v1Settings.getFs();
+        
+        // If indexContent is false and OCR is disabled, no content parsing is needed
+        if (!fs.isIndexContent()) {
+            Ocr ocr = fs.getOcr();
+            if (ocr == null || !ocr.isEnabled()) {
+                return "none";
+            }
+        }
+        
+        if (fs.isJsonSupport()) {
             return "json";
         }
         
-        if (v1Settings.getFs().isXmlSupport()) {
+        if (fs.isXmlSupport()) {
             return "xml";
         }
         
