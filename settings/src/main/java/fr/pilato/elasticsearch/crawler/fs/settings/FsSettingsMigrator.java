@@ -440,97 +440,82 @@ public class FsSettingsMigrator {
         common.append("version: 2\n");
         files.put("00-common.yaml", common.toString());
         
-        // 10-input-{type}.yaml - each input using indexed syntax
-        if (settings.getInputs() != null) {
-            int index = 0;
-            Map<String, Integer> inputTypeCount = new HashMap<>();
-            for (InputSection input : settings.getInputs()) {
-                StringBuilder inputYaml = new StringBuilder();
-                inputYaml.append("# Input: ").append(input.getId()).append(" (").append(input.getType()).append(")\n");
-                String prefix = "inputs[" + index + "]";
-                inputYaml.append(prefix).append(".type: \"").append(input.getType()).append("\"\n");
-                inputYaml.append(prefix).append(".id: \"").append(input.getId()).append("\"\n");
-                
-                if (input.getUpdateRate() != null) {
-                    inputYaml.append(prefix).append(".update_rate: \"").append(input.getUpdateRate()).append("\"\n");
-                }
-                if (input.getIncludes() != null && !input.getIncludes().isEmpty()) {
-                    inputYaml.append(prefix).append(".includes: ").append(formatList(input.getIncludes())).append("\n");
-                }
-                if (input.getExcludes() != null && !input.getExcludes().isEmpty()) {
-                    inputYaml.append(prefix).append(".excludes: ").append(formatList(input.getExcludes())).append("\n");
-                }
-                
-                // Type-specific config using dot notation
-                if (input.getRawConfig() != null && input.getRawConfig().containsKey(input.getType())) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> typeConfig = (Map<String, Object>) input.getRawConfig().get(input.getType());
-                    appendMapAsDotNotation(inputYaml, prefix + "." + input.getType(), typeConfig);
-                }
-                
-                // Use type in filename, add suffix if multiple inputs of same type
-                String filename = generateUniqueFilename("10-input", input.getType(), inputTypeCount);
-                files.put(filename, inputYaml.toString());
-                index++;
+        // 10-input-{type}.yaml - input configuration
+        if (settings.getInputs() != null && !settings.getInputs().isEmpty()) {
+            InputSection input = settings.getInputs().get(0);
+            StringBuilder inputYaml = new StringBuilder();
+            inputYaml.append("# Input: ").append(input.getId()).append(" (").append(input.getType()).append(")\n");
+            String prefix = "inputs[0]";
+            inputYaml.append(prefix).append(".type: \"").append(input.getType()).append("\"\n");
+            inputYaml.append(prefix).append(".id: \"").append(input.getId()).append("\"\n");
+            
+            if (input.getUpdateRate() != null) {
+                inputYaml.append(prefix).append(".update_rate: \"").append(input.getUpdateRate()).append("\"\n");
             }
+            if (input.getIncludes() != null && !input.getIncludes().isEmpty()) {
+                inputYaml.append(prefix).append(".includes: ").append(formatList(input.getIncludes())).append("\n");
+            }
+            if (input.getExcludes() != null && !input.getExcludes().isEmpty()) {
+                inputYaml.append(prefix).append(".excludes: ").append(formatList(input.getExcludes())).append("\n");
+            }
+            
+            // Type-specific config using dot notation
+            if (input.getRawConfig() != null && input.getRawConfig().containsKey(input.getType())) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> typeConfig = (Map<String, Object>) input.getRawConfig().get(input.getType());
+                appendMapAsDotNotation(inputYaml, prefix + "." + input.getType(), typeConfig);
+            }
+            
+            String filename = String.format("10-input-%s.yaml", sanitizeFilename(input.getType()));
+            files.put(filename, inputYaml.toString());
         }
         
-        // 20-filter-{type}.yaml - each filter using indexed syntax
-        if (settings.getFilters() != null) {
-            int index = 0;
-            Map<String, Integer> filterTypeCount = new HashMap<>();
-            for (FilterSection filter : settings.getFilters()) {
-                StringBuilder filterYaml = new StringBuilder();
-                filterYaml.append("# Filter: ").append(filter.getId()).append(" (").append(filter.getType()).append(")\n");
-                String prefix = "filters[" + index + "]";
-                filterYaml.append(prefix).append(".type: \"").append(filter.getType()).append("\"\n");
-                filterYaml.append(prefix).append(".id: \"").append(filter.getId()).append("\"\n");
-                
-                if (filter.getWhen() != null) {
-                    filterYaml.append(prefix).append(".when: \"").append(filter.getWhen()).append("\"\n");
-                }
-                
-                // Type-specific config using dot notation
-                if (filter.getRawConfig() != null && filter.getRawConfig().containsKey(filter.getType())) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> typeConfig = (Map<String, Object>) filter.getRawConfig().get(filter.getType());
-                    appendMapAsDotNotation(filterYaml, prefix + "." + filter.getType(), typeConfig);
-                }
-                
-                // Use type in filename, add suffix if multiple filters of same type
-                String filename = generateUniqueFilename("20-filter", filter.getType(), filterTypeCount);
-                files.put(filename, filterYaml.toString());
-                index++;
+        // 20-filter-{type}.yaml - filter configuration
+        if (settings.getFilters() != null && !settings.getFilters().isEmpty()) {
+            FilterSection filter = settings.getFilters().get(0);
+            StringBuilder filterYaml = new StringBuilder();
+            filterYaml.append("# Filter: ").append(filter.getId()).append(" (").append(filter.getType()).append(")\n");
+            String prefix = "filters[0]";
+            filterYaml.append(prefix).append(".type: \"").append(filter.getType()).append("\"\n");
+            filterYaml.append(prefix).append(".id: \"").append(filter.getId()).append("\"\n");
+            
+            if (filter.getWhen() != null) {
+                filterYaml.append(prefix).append(".when: \"").append(filter.getWhen()).append("\"\n");
             }
+            
+            // Type-specific config using dot notation
+            if (filter.getRawConfig() != null && filter.getRawConfig().containsKey(filter.getType())) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> typeConfig = (Map<String, Object>) filter.getRawConfig().get(filter.getType());
+                appendMapAsDotNotation(filterYaml, prefix + "." + filter.getType(), typeConfig);
+            }
+            
+            String filename = String.format("20-filter-%s.yaml", sanitizeFilename(filter.getType()));
+            files.put(filename, filterYaml.toString());
         }
         
-        // 30-output-{type}.yaml - each output using indexed syntax
-        if (settings.getOutputs() != null) {
-            int index = 0;
-            Map<String, Integer> outputTypeCount = new HashMap<>();
-            for (OutputSection output : settings.getOutputs()) {
-                StringBuilder outputYaml = new StringBuilder();
-                outputYaml.append("# Output: ").append(output.getId()).append(" (").append(output.getType()).append(")\n");
-                String prefix = "outputs[" + index + "]";
-                outputYaml.append(prefix).append(".type: \"").append(output.getType()).append("\"\n");
-                outputYaml.append(prefix).append(".id: \"").append(output.getId()).append("\"\n");
-                
-                if (output.getWhen() != null) {
-                    outputYaml.append(prefix).append(".when: \"").append(output.getWhen()).append("\"\n");
-                }
-                
-                // Type-specific config using dot notation
-                if (output.getRawConfig() != null && output.getRawConfig().containsKey(output.getType())) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> typeConfig = (Map<String, Object>) output.getRawConfig().get(output.getType());
-                    appendMapAsDotNotation(outputYaml, prefix + "." + output.getType(), typeConfig);
-                }
-                
-                // Use type in filename, add suffix if multiple outputs of same type
-                String filename = generateUniqueFilename("30-output", output.getType(), outputTypeCount);
-                files.put(filename, outputYaml.toString());
-                index++;
+        // 30-output-{type}.yaml - output configuration
+        if (settings.getOutputs() != null && !settings.getOutputs().isEmpty()) {
+            OutputSection output = settings.getOutputs().get(0);
+            StringBuilder outputYaml = new StringBuilder();
+            outputYaml.append("# Output: ").append(output.getId()).append(" (").append(output.getType()).append(")\n");
+            String prefix = "outputs[0]";
+            outputYaml.append(prefix).append(".type: \"").append(output.getType()).append("\"\n");
+            outputYaml.append(prefix).append(".id: \"").append(output.getId()).append("\"\n");
+            
+            if (output.getWhen() != null) {
+                outputYaml.append(prefix).append(".when: \"").append(output.getWhen()).append("\"\n");
             }
+            
+            // Type-specific config using dot notation
+            if (output.getRawConfig() != null && output.getRawConfig().containsKey(output.getType())) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> typeConfig = (Map<String, Object>) output.getRawConfig().get(output.getType());
+                appendMapAsDotNotation(outputYaml, prefix + "." + output.getType(), typeConfig);
+            }
+            
+            String filename = String.format("30-output-%s.yaml", sanitizeFilename(output.getType()));
+            files.put(filename, outputYaml.toString());
         }
         
         return files;
@@ -556,27 +541,6 @@ public class FsSettingsMigrator {
             } else if (value != null) {
                 yaml.append(key).append(": ").append(value).append("\n");
             }
-        }
-    }
-
-    /**
-     * Generates a unique filename based on type.
-     * If multiple items have the same type, adds a numeric suffix (e.g., local, local-2, local-3).
-     * 
-     * @param prefix The file prefix (e.g., "10-input", "20-filter", "30-output")
-     * @param type The type name (e.g., "local", "tika", "elasticsearch")
-     * @param typeCount Map tracking how many of each type have been seen
-     * @return A unique filename
-     */
-    private static String generateUniqueFilename(String prefix, String type, Map<String, Integer> typeCount) {
-        String sanitizedType = sanitizeFilename(type);
-        int count = typeCount.getOrDefault(sanitizedType, 0) + 1;
-        typeCount.put(sanitizedType, count);
-        
-        if (count == 1) {
-            return String.format("%s-%s.yaml", prefix, sanitizedType);
-        } else {
-            return String.format("%s-%s-%d.yaml", prefix, sanitizedType, count);
         }
     }
 

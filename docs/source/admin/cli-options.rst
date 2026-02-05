@@ -137,21 +137,11 @@ File names are based on the component type:
 
    _settings/
      00-common.yaml              # name, version
-     10-input-local.yaml         # local filesystem input
-     20-filter-tika.yaml         # Tika filter
+     10-input-local.yaml         # local filesystem input (or ssh, ftp, etc.)
+     20-filter-tika.yaml         # Tika filter (or json, xml, none)
      30-output-elasticsearch.yaml # Elasticsearch output
 
-If you have multiple components of the same type, they are numbered:
-
-.. code-block:: none
-
-   _settings/
-     10-input-local.yaml         # first local input
-     10-input-local-2.yaml       # second local input
-     10-input-ssh.yaml           # SSH input
-
-The split format is useful when you have multiple inputs, filters, or outputs,
-as each component gets its own file.
+The split format makes it easy to understand and modify each component separately.
 
 Using with Docker
 ^^^^^^^^^^^^^^^^^
