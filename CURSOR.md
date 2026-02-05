@@ -117,9 +117,27 @@ The project uses the Randomized Testing Framework from Carrotsearch:
 - Integration test base: `AbstractFSCrawlerMetadataTestCase`
 - Uses TestContainers for Elasticsearch instances
 
+### Running Tests
+
+**IMPORTANT for AI assistants**: Always use `-Dtests.parallelism=1` when running integration tests to avoid race conditions and flaky tests.
+
+```bash
+# Run unit tests only (fast)
+mvn test -pl <module>
+
+# Run integration tests (ALWAYS use parallelism=1)
+mvn verify -pl integration-tests -Dtests.parallelism=1
+
+# Run a specific integration test
+mvn verify -pl integration-tests -Dtests.parallelism=1 -Dtest=FsCrawlerImplAllDocumentsIT
+
+# Run integration tests with a specific Elasticsearch version
+mvn verify -pl integration-tests -Pes-8x -Dtests.parallelism=1
+```
+
 ### Test Properties
 ```bash
--Dtests.parallelism=1          # Control parallel test execution
+-Dtests.parallelism=1          # REQUIRED for integration tests - run tests sequentially
 -Dtests.leaveTemporary=false   # Clean up temp files after tests
 -Dtests.cluster.url=...        # Use external Elasticsearch cluster
 ```
@@ -196,3 +214,30 @@ FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler job-name
 - Use Log4j2 for logging (not SLF4J directly)
 - Jackson for JSON serialization
 - Gestalt for configuration management
+
+## AI Assistant Instructions
+
+This section contains important reminders for AI assistants working on this project.
+
+### Running Tests
+- **ALWAYS** use `-Dtests.parallelism=1` when running integration tests
+- Integration tests use TestContainers and shared Elasticsearch instances - parallel execution causes race conditions
+- Example: `mvn verify -pl integration-tests -Dtests.parallelism=1`
+
+### Adding New Pipeline Plugins
+When creating a new pipeline plugin (input, filter, or output):
+1. Create the plugin class extending `AbstractInputPlugin`, `AbstractFilterPlugin`, or `AbstractOutputPlugin`
+2. Annotate with `@Extension` (PF4J annotation)
+3. Create `META-INF/services/fr.pilato.elasticsearch.crawler.plugins.pipeline.[input|filter|output].[Input|Filter|Output]Plugin` file
+4. Add the fully qualified class name to the service file
+5. The plugin will be auto-discovered via ServiceLoader
+
+### Module Dependencies
+- `plugin/` - Contains plugin interfaces and `PipelinePluginsManager`
+- `plugins/` - Contains plugin implementations (filter plugins, output plugins, etc.)
+- `core/` - Main crawler logic, depends on plugins for the pipeline
+
+### Configuration Migration (v1 to v2)
+- v1 configurations are automatically converted to v2 format in memory by `FsSettingsLoader`
+- Use `--migrate` CLI option to convert configuration files permanently
+- v2 uses pipeline architecture: inputs → filters → outputs
