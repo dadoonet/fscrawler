@@ -46,6 +46,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
@@ -418,32 +419,82 @@ public class FsCrawlerCli {
         // Perform the migration
         FsSettings v2Settings = FsSettingsMigrator.migrateV1ToV2(fsSettings);
         
-        // Generate the v2 YAML
-        String v2Yaml = FsSettingsMigrator.generateV2Yaml(v2Settings);
-        
         if (outputFile != null) {
-            // Write to output file
-            Path outputPath = Paths.get(outputFile);
-            if (!outputPath.isAbsolute()) {
-                outputPath = configDir.resolve(jobName).resolve(outputFile);
+            // Check if output should be a split directory structure
+            boolean isSplitOutput = outputFile.endsWith("/") || 
+                                   outputFile.equals(FsSettingsLoader.SETTINGS_DIR) ||
+                                   outputFile.endsWith("/" + FsSettingsLoader.SETTINGS_DIR);
+            
+            if (isSplitOutput) {
+                // Generate split files
+                writeSplitConfiguration(configDir, jobName, outputFile, v2Settings);
+            } else {
+                // Write single file
+                writeSingleConfiguration(configDir, jobName, outputFile, v2Settings);
             }
-            Files.writeString(outputPath, v2Yaml);
-            FSCrawlerLogger.console("Migrated configuration written to [{}]", outputPath);
-            FSCrawlerLogger.console("");
-            FSCrawlerLogger.console("To use the new configuration:");
-            FSCrawlerLogger.console("  1. Review the generated file");
-            FSCrawlerLogger.console("  2. Backup your current _settings.yaml");
-            FSCrawlerLogger.console("  3. Replace _settings.yaml with the migrated version");
         } else {
             // Display on console
+            String v2Yaml = FsSettingsMigrator.generateV2Yaml(v2Settings);
             FSCrawlerLogger.console("");
             FSCrawlerLogger.console("--- Migrated v2 configuration ---");
             FSCrawlerLogger.console(v2Yaml);
             FSCrawlerLogger.console("---------------------------------");
             FSCrawlerLogger.console("");
-            FSCrawlerLogger.console("To save this configuration, run:");
+            FSCrawlerLogger.console("To save this configuration as a single file, run:");
             FSCrawlerLogger.console("  fscrawler {} --migrate --migrate-output _settings_v2.yaml", jobName);
+            FSCrawlerLogger.console("");
+            FSCrawlerLogger.console("To save as split files (recommended for complex configurations), run:");
+            FSCrawlerLogger.console("  fscrawler {} --migrate --migrate-output _settings/", jobName);
         }
+    }
+
+    private static void writeSingleConfiguration(Path configDir, String jobName, String outputFile, FsSettings v2Settings) throws IOException {
+        String v2Yaml = FsSettingsMigrator.generateV2Yaml(v2Settings);
+        Path outputPath = Paths.get(outputFile);
+        if (!outputPath.isAbsolute()) {
+            outputPath = configDir.resolve(jobName).resolve(outputFile);
+        }
+        Files.writeString(outputPath, v2Yaml);
+        FSCrawlerLogger.console("Migrated configuration written to [{}]", outputPath);
+        FSCrawlerLogger.console("");
+        FSCrawlerLogger.console("To use the new configuration:");
+        FSCrawlerLogger.console("  1. Review the generated file");
+        FSCrawlerLogger.console("  2. Backup your current _settings.yaml");
+        FSCrawlerLogger.console("  3. Replace _settings.yaml with the migrated version");
+    }
+
+    private static void writeSplitConfiguration(Path configDir, String jobName, String outputDir, FsSettings v2Settings) throws IOException {
+        // Determine the output directory path
+        String dirName = outputDir.endsWith("/") ? outputDir.substring(0, outputDir.length() - 1) : outputDir;
+        Path outputPath = Paths.get(dirName);
+        if (!outputPath.isAbsolute()) {
+            outputPath = configDir.resolve(jobName).resolve(dirName);
+        }
+        
+        // Create directory if needed
+        Files.createDirectories(outputPath);
+        
+        // Generate and write split files
+        Map<String, String> splitFiles = FsSettingsMigrator.generateV2SplitFiles(v2Settings);
+        for (Map.Entry<String, String> entry : splitFiles.entrySet()) {
+            Path filePath = outputPath.resolve(entry.getKey());
+            Files.writeString(filePath, entry.getValue());
+            FSCrawlerLogger.console("  Created: {}", filePath.getFileName());
+        }
+        
+        FSCrawlerLogger.console("");
+        FSCrawlerLogger.console("Migrated configuration written to [{}]", outputPath);
+        FSCrawlerLogger.console("");
+        FSCrawlerLogger.console("Files created:");
+        FSCrawlerLogger.console("  - 00-common.yaml     : Name and version");
+        FSCrawlerLogger.console("  - 10-input-*.yaml    : Input configurations");
+        FSCrawlerLogger.console("  - 20-filter-*.yaml   : Filter configurations");
+        FSCrawlerLogger.console("  - 30-output-*.yaml   : Output configurations");
+        FSCrawlerLogger.console("");
+        FSCrawlerLogger.console("To use the new configuration:");
+        FSCrawlerLogger.console("  1. Review the generated files");
+        FSCrawlerLogger.console("  2. Backup your current _settings.yaml");
+        FSCrawlerLogger.console("  3. Remove _settings.yaml (the _settings/ directory takes precedence)");
     }
 
     private static boolean startFsCrawlerThreadAndServices(FsCrawlerImpl fsCrawler) {

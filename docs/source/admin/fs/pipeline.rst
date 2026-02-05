@@ -62,6 +62,70 @@ Here is a simple v2 configuration example:
          - "https://127.0.0.1:9200"
        index: "my_docs"
 
+Split Configuration Files
+-------------------------
+
+For complex configurations with multiple inputs, filters, or outputs, you can split the configuration
+across multiple files in a ``_settings/`` directory. Files are loaded in alphabetical order, so use
+numeric prefixes to control the order:
+
+.. code-block:: none
+
+   ~/.fscrawler/my_job/
+     _settings/
+       00-common.yaml          # name, version
+       10-input-local.yaml     # local filesystem input
+       11-input-remote.yaml    # SSH/FTP input
+       20-filter-tika.yaml     # Tika filter
+       21-filter-ocr.yaml      # OCR filter
+       30-output-main.yaml     # Main Elasticsearch output
+       31-output-archive.yaml  # Archive Elasticsearch output
+
+Each file uses indexed array syntax to contribute to the configuration:
+
+**00-common.yaml:**
+
+.. code:: yaml
+
+   name: "my_job"
+   version: 2
+
+**10-input-local.yaml:**
+
+.. code:: yaml
+
+   # Local filesystem input
+   inputs[0].type: "local"
+   inputs[0].id: "local_docs"
+   inputs[0].local.path: "/data/documents"
+   inputs[0].update_rate: "5m"
+
+**11-input-remote.yaml:**
+
+.. code:: yaml
+
+   # Remote SSH input
+   inputs[1].type: "ssh"
+   inputs[1].id: "remote_docs"
+   inputs[1].ssh.hostname: "files.example.com"
+   inputs[1].ssh.username: "crawler"
+   inputs[1].update_rate: "1h"
+
+**30-output-main.yaml:**
+
+.. code:: yaml
+
+   # Main Elasticsearch output
+   outputs[0].type: "elasticsearch"
+   outputs[0].id: "main"
+   outputs[0].elasticsearch.urls: ["https://localhost:9200"]
+   outputs[0].elasticsearch.index: "documents"
+
+.. tip::
+
+   Use the ``--migrate --migrate-output _settings/`` option to automatically generate
+   split configuration files from an existing v1 configuration. See :ref:`cli-migrate`.
+
 Configuration Format
 --------------------
 

@@ -94,13 +94,15 @@ public class FsSettingsLoader extends MetaFileHandler {
     }
 
     /**
-     * Read all files in ~/.fscrawler/{job_name}/_settings directory
+     * Read all files in ~/.fscrawler/{job_name}/_settings directory.
+     * Files are sorted alphabetically to ensure deterministic order.
+     * Use numeric prefixes (e.g., 00-common.yaml, 10-input-local.yaml) to control loading order.
      * @param settingsDir is _settings directory
-     * @return The list of setting files
+     * @return The list of setting files, sorted alphabetically
      */
     private List<Path> readDir(Path settingsDir) throws IOException {
         try (Stream<Path> files = Files.list(settingsDir)) {
-            return files.toList();
+            return files.sorted().toList();
         }
     }
 

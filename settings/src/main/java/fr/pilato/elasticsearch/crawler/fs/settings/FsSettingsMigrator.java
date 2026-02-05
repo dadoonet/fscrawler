@@ -421,4 +421,143 @@ public class FsSettingsMigrator {
         sb.append("]");
         return sb.toString();
     }
+
+    /**
+     * Generates split YAML configuration files for v2 settings.
+     * Creates separate files for common settings, each input, filter, and output.
+     * Files are prefixed with numbers to ensure correct loading order.
+     * 
+     * @param settings The v2 settings to convert
+     * @return Map of filename to YAML content
+     */
+    public static Map<String, String> generateV2SplitFiles(FsSettings settings) {
+        Map<String, String> files = new java.util.LinkedHashMap<>();
+        
+        // 00-common.yaml - name and version
+        StringBuilder common = new StringBuilder();
+        common.append("# Common settings\n");
+        common.append("name: \"").append(settings.getName()).append("\"\n");
+        common.append("version: 2\n");
+        files.put("00-common.yaml", common.toString());
+        
+        // 10-input-{id}.yaml - each input using indexed syntax
+        if (settings.getInputs() != null) {
+            int index = 0;
+            for (InputSection input : settings.getInputs()) {
+                StringBuilder inputYaml = new StringBuilder();
+                inputYaml.append("# Input: ").append(input.getId()).append("\n");
+                String prefix = "inputs[" + index + "]";
+                inputYaml.append(prefix).append(".type: \"").append(input.getType()).append("\"\n");
+                inputYaml.append(prefix).append(".id: \"").append(input.getId()).append("\"\n");
+                
+                if (input.getUpdateRate() != null) {
+                    inputYaml.append(prefix).append(".update_rate: \"").append(input.getUpdateRate()).append("\"\n");
+                }
+                if (input.getIncludes() != null && !input.getIncludes().isEmpty()) {
+                    inputYaml.append(prefix).append(".includes: ").append(formatList(input.getIncludes())).append("\n");
+                }
+                if (input.getExcludes() != null && !input.getExcludes().isEmpty()) {
+                    inputYaml.append(prefix).append(".excludes: ").append(formatList(input.getExcludes())).append("\n");
+                }
+                
+                // Type-specific config using dot notation
+                if (input.getRawConfig() != null && input.getRawConfig().containsKey(input.getType())) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> typeConfig = (Map<String, Object>) input.getRawConfig().get(input.getType());
+                    appendMapAsDotNotation(inputYaml, prefix + "." + input.getType(), typeConfig);
+                }
+                
+                String filename = String.format("10-input-%s.yaml", sanitizeFilename(input.getId()));
+                files.put(filename, inputYaml.toString());
+                index++;
+            }
+        }
+        
+        // 20-filter-{id}.yaml - each filter using indexed syntax
+        if (settings.getFilters() != null) {
+            int index = 0;
+            for (FilterSection filter : settings.getFilters()) {
+                StringBuilder filterYaml = new StringBuilder();
+                filterYaml.append("# Filter: ").append(filter.getId()).append("\n");
+                String prefix = "filters[" + index + "]";
+                filterYaml.append(prefix).append(".type: \"").append(filter.getType()).append("\"\n");
+                filterYaml.append(prefix).append(".id: \"").append(filter.getId()).append("\"\n");
+                
+                if (filter.getWhen() != null) {
+                    filterYaml.append(prefix).append(".when: \"").append(filter.getWhen()).append("\"\n");
+                }
+                
+                // Type-specific config using dot notation
+                if (filter.getRawConfig() != null && filter.getRawConfig().containsKey(filter.getType())) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> typeConfig = (Map<String, Object>) filter.getRawConfig().get(filter.getType());
+                    appendMapAsDotNotation(filterYaml, prefix + "." + filter.getType(), typeConfig);
+                }
+                
+                String filename = String.format("20-filter-%s.yaml", sanitizeFilename(filter.getId()));
+                files.put(filename, filterYaml.toString());
+                index++;
+            }
+        }
+        
+        // 30-output-{id}.yaml - each output using indexed syntax
+        if (settings.getOutputs() != null) {
+            int index = 0;
+            for (OutputSection output : settings.getOutputs()) {
+                StringBuilder outputYaml = new StringBuilder();
+                outputYaml.append("# Output: ").append(output.getId()).append("\n");
+                String prefix = "outputs[" + index + "]";
+                outputYaml.append(prefix).append(".type: \"").append(output.getType()).append("\"\n");
+                outputYaml.append(prefix).append(".id: \"").append(output.getId()).append("\"\n");
+                
+                if (output.getWhen() != null) {
+                    outputYaml.append(prefix).append(".when: \"").append(output.getWhen()).append("\"\n");
+                }
+                
+                // Type-specific config using dot notation
+                if (output.getRawConfig() != null && output.getRawConfig().containsKey(output.getType())) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> typeConfig = (Map<String, Object>) output.getRawConfig().get(output.getType());
+                    appendMapAsDotNotation(outputYaml, prefix + "." + output.getType(), typeConfig);
+                }
+                
+                String filename = String.format("30-output-%s.yaml", sanitizeFilename(output.getId()));
+                files.put(filename, outputYaml.toString());
+                index++;
+            }
+        }
+        
+        return files;
+    }
+
+    /**
+     * Appends a map as dot notation YAML (e.g., prefix.key: value)
+     */
+    private static void appendMapAsDotNotation(StringBuilder yaml, String prefix, Map<String, Object> map) {
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String key = prefix + "." + entry.getKey();
+            Object value = entry.getValue();
+            if (value instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> nestedMap = (Map<String, Object>) value;
+                appendMapAsDotNotation(yaml, key, nestedMap);
+            } else if (value instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<String> list = (List<String>) value;
+                yaml.append(key).append(": ").append(formatList(list)).append("\n");
+            } else if (value instanceof String) {
+                yaml.append(key).append(": \"").append(value).append("\"\n");
+            } else if (value != null) {
+                yaml.append(key).append(": ").append(value).append("\n");
+            }
+        }
+    }
+
+    /**
+     * Sanitizes a string for use as a filename (removes/replaces problematic characters)
+     */
+    private static String sanitizeFilename(String name) {
+        if (name == null) return "unknown";
+        return name.replaceAll("[^a-zA-Z0-9_-]", "_").toLowerCase();
+    }
 }
