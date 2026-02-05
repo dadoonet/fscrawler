@@ -136,9 +136,10 @@ Migration Options
 ``--migrate-output <path>``
    Specifies where to write the migrated configuration.
    
-   - Use a filename (e.g., ``_settings_v2.yaml``) for a single file
-   - Use a directory with trailing slash (e.g., ``_settings/``) for split files
-   - **Default**: ``_settings/`` (split files)
+   - If path exists and is a **directory**: writes split files to that directory
+   - If path exists and is a **file**: overwrites with single file output
+   - If path **doesn't exist**: creates ``_settings/`` directory with split files
+   - **Default** (no option): creates ``_settings/`` directory with split files
 
 ``--migrate-keep-old-files``
    Keeps old configuration files after migration instead of deleting them.

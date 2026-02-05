@@ -102,8 +102,9 @@ public class FsCrawlerCli {
         @Parameter(names = "--migrate", description = "Migrate a job configuration from v1 to v2 pipeline format.")
         boolean migrate = false;
 
-        @Parameter(names = "--migrate-output", description = "Output file or directory for migrated configuration (use with --migrate). " +
-                "Use '_settings/' for split files. If not specified, outputs to '_settings/' by default.")
+        @Parameter(names = "--migrate-output", description = "Output path for migrated configuration (use with --migrate). " +
+                "If path is an existing directory, writes split files. If path is an existing file, overwrites it. " +
+                "If path doesn't exist, creates '_settings/' directory. Default: '_settings/' directory.")
         String migrateOutput = null;
 
         @Parameter(names = "--migrate-keep-old-files", description = "Keep old configuration files after migration (use with --migrate).")
@@ -432,28 +433,36 @@ public class FsCrawlerCli {
         // Perform the migration
         FsSettings v2Settings = FsSettingsMigrator.migrateV1ToV2(fsSettings);
         
-        // Default output is split files in _settings/
-        String effectiveOutput = (outputFile != null) ? outputFile : FsSettingsLoader.SETTINGS_DIR + "/";
-        boolean isSplitOutput = effectiveOutput.endsWith("/") || 
-                               effectiveOutput.equals(FsSettingsLoader.SETTINGS_DIR) ||
-                               effectiveOutput.endsWith("/" + FsSettingsLoader.SETTINGS_DIR);
+        // Determine output path and type (split directory or single file)
+        Path outputPath;
+        boolean isSplitOutput;
+        
+        if (outputFile == null) {
+            // Default: create _settings directory
+            outputPath = jobDir.resolve(FsSettingsLoader.SETTINGS_DIR);
+            isSplitOutput = true;
+        } else {
+            // Resolve the provided path
+            outputPath = Paths.get(outputFile);
+            if (!outputPath.isAbsolute()) {
+                outputPath = jobDir.resolve(outputFile);
+            }
+            
+            if (Files.exists(outputPath)) {
+                // Path exists: check if directory or file
+                isSplitOutput = Files.isDirectory(outputPath);
+            } else {
+                // Path doesn't exist: create as directory (split output)
+                outputPath = jobDir.resolve(FsSettingsLoader.SETTINGS_DIR);
+                isSplitOutput = true;
+            }
+        }
         
         // Generate the new configuration content
         Map<String, String> newFiles;
-        Path outputPath;
-        
         if (isSplitOutput) {
-            String dirName = effectiveOutput.endsWith("/") ? effectiveOutput.substring(0, effectiveOutput.length() - 1) : effectiveOutput;
-            outputPath = Paths.get(dirName);
-            if (!outputPath.isAbsolute()) {
-                outputPath = jobDir.resolve(dirName);
-            }
             newFiles = FsSettingsMigrator.generateV2SplitFiles(v2Settings);
         } else {
-            outputPath = Paths.get(effectiveOutput);
-            if (!outputPath.isAbsolute()) {
-                outputPath = jobDir.resolve(effectiveOutput);
-            }
             newFiles = Map.of(outputPath.getFileName().toString(), FsSettingsMigrator.generateV2Yaml(v2Settings));
         }
         
