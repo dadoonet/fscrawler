@@ -8,7 +8,8 @@ CLI options
 -  ``--list`` lists all jobs. See `List`_.
 -  ``--loop x`` defines the number of runs we want before exiting. See `Loop`_.
 -  ``--migrate`` migrates a v1 configuration to v2 pipeline format. See `Migrate`_.
--  ``--migrate-output`` specifies output file for migrated configuration. See `Migrate`_.
+-  ``--migrate-output`` specifies output file or directory for migrated configuration. See `Migrate`_.
+-  ``--migrate-keep-old-files`` keeps old configuration files after migration. See `Migrate`_.
 -  ``--restart`` restart a job from scratch. See `Restart`_.
 -  ``--rest`` starts the REST service. See `Rest`_.
 -  ``--setup`` creates a job configuration. See `Setup`_.
@@ -98,39 +99,73 @@ use the ``--migrate`` option:
 
 .. code:: sh
 
-   # Display the migrated configuration on console
    bin/fscrawler my_job --migrate
 
-   # Save the migrated configuration to a single file
-   bin/fscrawler my_job --migrate --migrate-output _settings_v2.yaml
+The migration is interactive by default:
 
-   # Save as split files (recommended for complex configurations)
-   bin/fscrawler my_job --migrate --migrate-output _settings/
+1. **Preview**: Shows the new configuration files that will be created
+2. **Confirmation**: Asks for user confirmation before proceeding
+3. **Execution**: Creates new files and removes old ones
 
-The migration tool will:
+Example output:
 
-1. Read your existing v1 configuration (including split configurations from ``_settings/`` directory)
-2. Convert it to the new v2 pipeline format
-3. Display or save the result
+.. code-block:: none
 
-Single File vs Split Output
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   === Migration Preview for job [my_job] ===
 
-When using ``--migrate-output``, you can choose between two output formats:
+   Files to be CREATED in [~/.fscrawler/my_job/_settings]:
 
-**Single file** (default): Use a filename like ``_settings_v2.yaml``
+   --- 00-common.yaml ---
+   name: "my_job"
+   version: 2
+
+   --- 10-input-local.yaml ---
+   inputs[0].type: "local"
+   inputs[0].id: "default"
+   ...
+
+   Files to be DELETED:
+     - _settings.yaml
+
+   =================================
+   Do you want to proceed with the migration? (y/N):
+
+Migration Options
+^^^^^^^^^^^^^^^^^
+
+``--migrate-output <path>``
+   Specifies where to write the migrated configuration.
+   
+   - Use a filename (e.g., ``_settings_v2.yaml``) for a single file
+   - Use a directory with trailing slash (e.g., ``_settings/``) for split files
+   - **Default**: ``_settings/`` (split files)
+
+``--migrate-keep-old-files``
+   Keeps old configuration files after migration instead of deleting them.
+
+``--silent``
+   Skips the preview and confirmation prompts. Use for automated migrations.
+
+Examples:
 
 .. code:: sh
 
+   # Interactive migration (default: creates _settings/ directory)
+   bin/fscrawler my_job --migrate
+
+   # Keep old files for backup
+   bin/fscrawler my_job --migrate --migrate-keep-old-files
+
+   # Single file output
    bin/fscrawler my_job --migrate --migrate-output _settings_v2.yaml
 
-**Split files** (recommended for complex configurations): Use ``_settings/`` as output
+   # Automated migration (no prompts)
+   bin/fscrawler my_job --migrate --silent
 
-.. code:: sh
+Split File Structure
+^^^^^^^^^^^^^^^^^^^^
 
-   bin/fscrawler my_job --migrate --migrate-output _settings/
-
-This creates multiple files with numeric prefixes to ensure correct loading order.
+By default, migration creates split files with numeric prefixes for correct loading order.
 File names are based on the component type:
 
 .. code-block:: none
@@ -146,35 +181,28 @@ The split format makes it easy to understand and modify each component separatel
 Using with Docker
 ^^^^^^^^^^^^^^^^^
 
-The ``--migrate`` option works with Docker. The output file is written relative
-to the configuration directory (which is typically mounted):
+The ``--migrate`` option works with Docker. Use ``--silent`` for non-interactive mode:
 
 .. code:: sh
 
-   # Display on console
+   # Interactive migration (requires -it for terminal)
    docker run -it --rm \
         -v ~/.fscrawler:/root/.fscrawler \
         dadoonet/fscrawler my_job --migrate
 
-   # Save to a single file (will be in ~/.fscrawler/my_job/_settings_v2.yaml)
-   docker run -it --rm \
+   # Automated migration (no prompts)
+   docker run --rm \
         -v ~/.fscrawler:/root/.fscrawler \
-        dadoonet/fscrawler my_job --migrate --migrate-output _settings_v2.yaml
+        dadoonet/fscrawler my_job --migrate --silent
 
-   # Save as split files (will be in ~/.fscrawler/my_job/_settings/)
-   docker run -it --rm \
+   # Keep old files
+   docker run --rm \
         -v ~/.fscrawler:/root/.fscrawler \
-        dadoonet/fscrawler my_job --migrate --migrate-output _settings/
+        dadoonet/fscrawler my_job --migrate --silent --migrate-keep-old-files
 
 .. note::
 
    Use relative filenames (not absolute paths) to ensure the output files
    are written inside the mounted volume and accessible on the host machine.
-
-After migration, you should:
-
-1. Review the generated configuration
-2. Backup your current ``_settings.yaml``
-3. Replace it with the migrated version (or remove ``_settings.yaml`` if using split files)
 
 For more details about the v2 pipeline format, see :ref:`pipeline-settings`.
