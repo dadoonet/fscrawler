@@ -49,6 +49,10 @@ New
 * The job name is not mandatory anymore and it will be ``fscrawler`` by default. Thanks to dadoonet.
 * FSCrawler also supports Elasticsearch 9. Thanks to dadoonet.
 * Add support for ACL metadata extraction for NTFS filesystems, including principals, permissions, and flags. Thanks to alexbluesteele.
+* New pipeline-based configuration format (v2) supporting multiple inputs, filters, and outputs with conditional
+  routing using MVEL expressions. The legacy v1 format is still fully supported with automatic migration.
+  See :ref:`pipeline-settings`. Thanks to dadoonet.
+* New ``--migrate`` CLI option to convert v1 configurations to v2 pipeline format. See :ref:`cli-migrate`. Thanks to dadoonet.
 
 Fix
 ---
