@@ -130,15 +130,25 @@ When using ``--migrate-output``, you can choose between two output formats:
 
    bin/fscrawler my_job --migrate --migrate-output _settings/
 
-This creates multiple files with numeric prefixes to ensure correct loading order:
+This creates multiple files with numeric prefixes to ensure correct loading order.
+File names are based on the component type:
 
 .. code-block:: none
 
    _settings/
-     00-common.yaml        # name, version
-     10-input-default.yaml # input configuration
-     20-filter-default.yaml # filter configuration
-     30-output-default.yaml # output configuration
+     00-common.yaml              # name, version
+     10-input-local.yaml         # local filesystem input
+     20-filter-tika.yaml         # Tika filter
+     30-output-elasticsearch.yaml # Elasticsearch output
+
+If you have multiple components of the same type, they are numbered:
+
+.. code-block:: none
+
+   _settings/
+     10-input-local.yaml         # first local input
+     10-input-local-2.yaml       # second local input
+     10-input-ssh.yaml           # SSH input
 
 The split format is useful when you have multiple inputs, filters, or outputs,
 as each component gets its own file.

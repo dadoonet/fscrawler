@@ -485,11 +485,11 @@ public class FsCrawlerCli {
         FSCrawlerLogger.console("");
         FSCrawlerLogger.console("Migrated configuration written to [{}]", outputPath);
         FSCrawlerLogger.console("");
-        FSCrawlerLogger.console("Files created:");
-        FSCrawlerLogger.console("  - 00-common.yaml     : Name and version");
-        FSCrawlerLogger.console("  - 10-input-*.yaml    : Input configurations");
-        FSCrawlerLogger.console("  - 20-filter-*.yaml   : Filter configurations");
-        FSCrawlerLogger.console("  - 30-output-*.yaml   : Output configurations");
+        FSCrawlerLogger.console("Files created (named by type):");
+        FSCrawlerLogger.console("  - 00-common.yaml              : Name and version");
+        FSCrawlerLogger.console("  - 10-input-{type}.yaml        : Input configurations (e.g., 10-input-local.yaml)");
+        FSCrawlerLogger.console("  - 20-filter-{type}.yaml       : Filter configurations (e.g., 20-filter-tika.yaml)");
+        FSCrawlerLogger.console("  - 30-output-{type}.yaml       : Output configurations (e.g., 30-output-elasticsearch.yaml)");
         FSCrawlerLogger.console("");
         FSCrawlerLogger.console("To use the new configuration:");
         FSCrawlerLogger.console("  1. Review the generated files");

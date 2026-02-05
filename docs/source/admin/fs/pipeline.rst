@@ -73,13 +73,12 @@ numeric prefixes to control the order:
 
    ~/.fscrawler/my_job/
      _settings/
-       00-common.yaml          # name, version
-       10-input-local.yaml     # local filesystem input
-       11-input-remote.yaml    # SSH/FTP input
-       20-filter-tika.yaml     # Tika filter
-       21-filter-ocr.yaml      # OCR filter
-       30-output-main.yaml     # Main Elasticsearch output
-       31-output-archive.yaml  # Archive Elasticsearch output
+       00-common.yaml               # name, version
+       10-input-local.yaml          # local filesystem input
+       10-input-ssh.yaml            # SSH input
+       20-filter-tika.yaml          # Tika filter
+       30-output-elasticsearch.yaml # Elasticsearch output
+       30-output-elasticsearch-2.yaml # Second Elasticsearch output (archive)
 
 Each file uses indexed array syntax to contribute to the configuration:
 
