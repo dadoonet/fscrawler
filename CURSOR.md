@@ -135,6 +135,28 @@ mvn verify -pl integration-tests -Dtests.parallelism=1 -Dtest=FsCrawlerImplAllDo
 mvn verify -pl integration-tests -Pes-8x -Dtests.parallelism=1
 ```
 
+### Manual End-to-End Testing (Full Build Verification)
+
+As a final verification step, build the full distribution and test it manually:
+
+```bash
+# 1. Build the distribution (skip tests for speed)
+mvn install -DskipTests -Ddocker.skip
+
+# 2. Unzip the distribution
+cd distribution/target
+unzip fscrawler-distribution-2.10-SNAPSHOT.zip
+cd fscrawler-distribution-2.10-SNAPSHOT
+
+# 3. Run FSCrawler with debug logging
+FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler --config_dir config
+
+# Or with a specific job name
+FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler my_job --config_dir config
+```
+
+This is the ultimate test to verify the build works correctly as it would for an end user.
+
 ### Test Properties
 ```bash
 -Dtests.parallelism=1          # REQUIRED for integration tests - run tests sequentially

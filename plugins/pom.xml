@@ -25,6 +25,7 @@
         <module>json-filter-plugin</module>
         <module>xml-filter-plugin</module>
         <module>none-filter-plugin</module>
+        <module>local-input-plugin</module>
     </modules>
 
     <dependencies>
