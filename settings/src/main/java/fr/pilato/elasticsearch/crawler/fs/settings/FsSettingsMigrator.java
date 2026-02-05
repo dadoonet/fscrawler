@@ -58,10 +58,10 @@ public class FsSettingsMigrator {
             return VERSION_1;
         }
         
-        // New format has inputs/filters/outputs or input/filter/output
-        if (settings.getInputs() != null || settings.getInput() != null ||
-            settings.getFilters() != null || settings.getFilter() != null ||
-            settings.getOutputs() != null || settings.getOutput() != null) {
+        // New format has inputs/filters/outputs
+        if (settings.getInputs() != null ||
+            settings.getFilters() != null ||
+            settings.getOutputs() != null) {
             return VERSION_2;
         }
         
@@ -108,50 +108,6 @@ public class FsSettingsMigrator {
         v2.setOutputs(List.of(outputSection));
         
         return v2;
-    }
-
-    /**
-     * Normalizes settings from singular form (input/filter/output) to plural form (inputs/filters/outputs).
-     * This allows users to use the simpler singular syntax for single-item configurations.
-     * 
-     * @param settings The settings to normalize (modified in place)
-     * @return The same settings object, normalized
-     */
-    public static FsSettings normalizeSingularToPlural(FsSettings settings) {
-        // Normalize input -> inputs
-        if (settings.getInput() != null && settings.getInputs() == null) {
-            InputSection input = settings.getInput();
-            if (input.getId() == null) {
-                input.setId("default");
-            }
-            settings.setInputs(List.of(input));
-            settings.setInput(null);
-            logger.debug("Normalized singular 'input' to 'inputs' list");
-        }
-        
-        // Normalize filter -> filters
-        if (settings.getFilter() != null && settings.getFilters() == null) {
-            FilterSection filter = settings.getFilter();
-            if (filter.getId() == null) {
-                filter.setId("default");
-            }
-            settings.setFilters(List.of(filter));
-            settings.setFilter(null);
-            logger.debug("Normalized singular 'filter' to 'filters' list");
-        }
-        
-        // Normalize output -> outputs
-        if (settings.getOutput() != null && settings.getOutputs() == null) {
-            OutputSection output = settings.getOutput();
-            if (output.getId() == null) {
-                output.setId("default");
-            }
-            settings.setOutputs(List.of(output));
-            settings.setOutput(null);
-            logger.debug("Normalized singular 'output' to 'outputs' list");
-        }
-        
-        return settings;
     }
 
     /**

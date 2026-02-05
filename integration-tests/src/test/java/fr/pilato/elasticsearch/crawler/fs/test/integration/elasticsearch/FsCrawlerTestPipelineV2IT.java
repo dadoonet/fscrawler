@@ -138,45 +138,6 @@ public class FsCrawlerTestPipelineV2IT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test singular to plural normalization.
-     */
-    @Test
-    public void test_singular_to_plural_normalization() throws Exception {
-        // Create settings with singular sections
-        FsSettings fsSettings = new FsSettings();
-        fsSettings.setVersion(2);
-        fsSettings.setName("test_singular");
-        
-        InputSection input = new InputSection();
-        input.setType("local");
-        input.setId("single");
-        fsSettings.setInput(input);
-        
-        FilterSection filter = new FilterSection();
-        filter.setType("tika");
-        filter.setId("single");
-        fsSettings.setFilter(filter);
-        
-        OutputSection output = new OutputSection();
-        output.setType("elasticsearch");
-        output.setId("single");
-        fsSettings.setOutput(output);
-        
-        // Normalize
-        FsSettings normalized = FsSettingsMigrator.normalizeSingularToPlural(fsSettings);
-        
-        // Verify plural sections are populated
-        assertThat(normalized.getInputs()).hasSize(1);
-        assertThat(normalized.getInputs().get(0).getId()).isEqualTo("single");
-        
-        assertThat(normalized.getFilters()).hasSize(1);
-        assertThat(normalized.getFilters().get(0).getId()).isEqualTo("single");
-        
-        assertThat(normalized.getOutputs()).hasSize(1);
-        assertThat(normalized.getOutputs().get(0).getId()).isEqualTo("single");
-    }
-
-    /**
      * Test version detection for various settings configurations.
      */
     @Test
@@ -194,11 +155,6 @@ public class FsCrawlerTestPipelineV2IT extends AbstractFsCrawlerITCase {
         FsSettings v2WithInputs = new FsSettings();
         v2WithInputs.setInputs(List.of(new InputSection()));
         assertThat(FsSettingsMigrator.detectVersion(v2WithInputs)).isEqualTo(FsSettingsMigrator.VERSION_2);
-        
-        // v2: has singular input
-        FsSettings v2WithInput = new FsSettings();
-        v2WithInput.setInput(new InputSection());
-        assertThat(FsSettingsMigrator.detectVersion(v2WithInput)).isEqualTo(FsSettingsMigrator.VERSION_2);
     }
 
     /**

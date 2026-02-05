@@ -145,12 +145,7 @@ public class FsSettingsLoader extends MetaFileHandler {
             settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
             settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
             
-            // Load v2 pipeline settings (singular form)
-            settings.setInput(gestalt.getConfigOptional("input", InputSection.class).orElse(null));
-            settings.setFilter(gestalt.getConfigOptional("filter", FilterSection.class).orElse(null));
-            settings.setOutput(gestalt.getConfigOptional("output", OutputSection.class).orElse(null));
-            
-            // Load v2 pipeline settings (plural form)
+            // Load v2 pipeline settings
             settings.setInputs(gestalt.getConfigOptional("inputs", new org.github.gestalt.config.reflect.TypeCapture<List<InputSection>>(){}).orElse(null));
             settings.setFilters(gestalt.getConfigOptional("filters", new org.github.gestalt.config.reflect.TypeCapture<List<FilterSection>>(){}).orElse(null));
             settings.setOutputs(gestalt.getConfigOptional("outputs", new org.github.gestalt.config.reflect.TypeCapture<List<OutputSection>>(){}).orElse(null));
@@ -169,9 +164,9 @@ public class FsSettingsLoader extends MetaFileHandler {
     }
     
     /**
-     * Migrates v1 settings to v2 and normalizes singular to plural form.
+     * Migrates v1 settings to v2 format if needed.
      * @param settings The loaded settings
-     * @return The migrated and normalized settings
+     * @return The migrated settings
      */
     private static FsSettings migrateAndNormalize(FsSettings settings) {
         int version = FsSettingsMigrator.detectVersion(settings);
@@ -191,7 +186,6 @@ public class FsSettingsLoader extends MetaFileHandler {
             return v2Settings;
         }
         
-        // Normalize singular to plural for v2 settings
-        return FsSettingsMigrator.normalizeSingularToPlural(settings);
+        return settings;
     }
 }

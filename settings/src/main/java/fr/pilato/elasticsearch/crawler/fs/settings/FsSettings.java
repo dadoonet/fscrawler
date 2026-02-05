@@ -45,12 +45,7 @@ public class FsSettings {
     private Rest rest;
     private Tags tags;
 
-    // Pipeline v2 settings - singular form (shorthand)
-    private InputSection input;
-    private FilterSection filter;
-    private OutputSection output;
-
-    // Pipeline v2 settings - plural form (full)
+    // Pipeline v2 settings
     private List<InputSection> inputs;
     private List<FilterSection> filters;
     private List<OutputSection> outputs;
@@ -111,30 +106,6 @@ public class FsSettings {
         this.version = version;
     }
 
-    public InputSection getInput() {
-        return input;
-    }
-
-    public void setInput(InputSection input) {
-        this.input = input;
-    }
-
-    public FilterSection getFilter() {
-        return filter;
-    }
-
-    public void setFilter(FilterSection filter) {
-        this.filter = filter;
-    }
-
-    public OutputSection getOutput() {
-        return output;
-    }
-
-    public void setOutput(OutputSection output) {
-        this.output = output;
-    }
-
     public List<InputSection> getInputs() {
         return inputs;
     }
@@ -173,9 +144,6 @@ public class FsSettings {
         if (!Objects.equals(rest, that.rest)) return false;
         if (!Objects.equals(tags, that.tags)) return false;
         if (!Objects.equals(elasticsearch, that.elasticsearch)) return false;
-        if (!Objects.equals(input, that.input)) return false;
-        if (!Objects.equals(filter, that.filter)) return false;
-        if (!Objects.equals(output, that.output)) return false;
         if (!Objects.equals(inputs, that.inputs)) return false;
         if (!Objects.equals(filters, that.filters)) return false;
         return Objects.equals(outputs, that.outputs);
@@ -190,9 +158,6 @@ public class FsSettings {
         result = 31 * result + (rest != null ? rest.hashCode() : 0);
         result = 31 * result + (tags != null ? tags.hashCode() : 0);
         result = 31 * result + (elasticsearch != null ? elasticsearch.hashCode() : 0);
-        result = 31 * result + (input != null ? input.hashCode() : 0);
-        result = 31 * result + (filter != null ? filter.hashCode() : 0);
-        result = 31 * result + (output != null ? output.hashCode() : 0);
         result = 31 * result + (inputs != null ? inputs.hashCode() : 0);
         result = 31 * result + (filters != null ? filters.hashCode() : 0);
         result = 31 * result + (outputs != null ? outputs.hashCode() : 0);
@@ -209,9 +174,6 @@ public class FsSettings {
                 ", elasticsearch=" + elasticsearch +
                 ", rest=" + rest +
                 ", tags=" + tags +
-                ", input=" + input +
-                ", filter=" + filter +
-                ", output=" + output +
                 ", inputs=" + inputs +
                 ", filters=" + filters +
                 ", outputs=" + outputs +

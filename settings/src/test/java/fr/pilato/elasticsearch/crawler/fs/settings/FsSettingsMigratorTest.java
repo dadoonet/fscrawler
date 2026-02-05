@@ -49,18 +49,6 @@ public class FsSettingsMigratorTest {
     }
 
     @Test
-    public void testDetectVersionV2WithSingularInput() {
-        // V2 format detected by presence of singular input
-        FsSettings v2Settings = new FsSettings();
-        v2Settings.setName("test");
-        InputSection input = new InputSection();
-        input.setType("local");
-        v2Settings.setInput(input);
-        int version = FsSettingsMigrator.detectVersion(v2Settings);
-        assertThat(version).isEqualTo(FsSettingsMigrator.VERSION_2);
-    }
-
-    @Test
     public void testMigrateV1ToV2_LocalInput() {
         // Load v1 settings with local filesystem
         FsSettings v1Settings = createV1LocalSettings();
@@ -162,70 +150,6 @@ public class FsSettingsMigratorTest {
         assertThat(v2Settings.getFilters()).hasSize(1);
         FilterSection filter = v2Settings.getFilters().get(0);
         assertThat(filter.getType()).isEqualTo("none");
-    }
-
-    @Test
-    public void testNormalizeSingularToPlural_WithSingular() {
-        // Create settings with singular sections
-        FsSettings settings = new FsSettings();
-        settings.setVersion(2);
-        settings.setName("test");
-        
-        InputSection input = new InputSection();
-        input.setType("local");
-        input.setId("single_input");
-        settings.setInput(input);
-        
-        FilterSection filter = new FilterSection();
-        filter.setType("tika");
-        filter.setId("single_filter");
-        settings.setFilter(filter);
-        
-        OutputSection output = new OutputSection();
-        output.setType("elasticsearch");
-        output.setId("single_output");
-        settings.setOutput(output);
-        
-        // Normalize
-        FsSettings normalized = FsSettingsMigrator.normalizeSingularToPlural(settings);
-        
-        // Verify singular was converted to list
-        assertThat(normalized.getInputs()).hasSize(1);
-        assertThat(normalized.getInputs().get(0).getId()).isEqualTo("single_input");
-        
-        assertThat(normalized.getFilters()).hasSize(1);
-        assertThat(normalized.getFilters().get(0).getId()).isEqualTo("single_filter");
-        
-        assertThat(normalized.getOutputs()).hasSize(1);
-        assertThat(normalized.getOutputs().get(0).getId()).isEqualTo("single_output");
-    }
-
-    @Test
-    public void testNormalizeSingularToPlural_PluralTakesPrecedence() {
-        // Create settings with both singular and plural (plural should win)
-        FsSettings settings = new FsSettings();
-        settings.setVersion(2);
-        settings.setName("test");
-        
-        // Singular
-        InputSection singularInput = new InputSection();
-        singularInput.setType("local");
-        singularInput.setId("singular");
-        settings.setInput(singularInput);
-        
-        // Plural
-        InputSection pluralInput = new InputSection();
-        pluralInput.setType("ssh");
-        pluralInput.setId("plural");
-        settings.setInputs(List.of(pluralInput));
-        
-        // Normalize
-        FsSettings normalized = FsSettingsMigrator.normalizeSingularToPlural(settings);
-        
-        // Verify plural takes precedence
-        assertThat(normalized.getInputs()).hasSize(1);
-        assertThat(normalized.getInputs().get(0).getId()).isEqualTo("plural");
-        assertThat(normalized.getInputs().get(0).getType()).isEqualTo("ssh");
     }
 
     @Test

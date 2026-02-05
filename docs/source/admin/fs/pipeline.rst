@@ -363,34 +363,6 @@ Here is a complete example with multiple inputs, conditional filters, and output
        index: "archive"
        when: "size > 10485760"  # Files > 10MB go to archive
 
-Singular vs Plural Syntax
--------------------------
-
-For simple configurations with a single input/filter/output, you can use the singular
-form (``input``, ``filter``, ``output``) instead of lists:
-
-.. code:: yaml
-
-   version: 2
-   name: "simple_job"
-
-   input:
-     type: local
-     id: main
-     url: "/path/to/docs"
-
-   filter:
-     type: tika
-     id: main
-
-   output:
-     type: elasticsearch
-     id: main
-     urls:
-       - "https://127.0.0.1:9200"
-
-This is equivalent to using lists with a single element.
-
 .. _cli-migrate:
 
 Migrating from v1 to v2
