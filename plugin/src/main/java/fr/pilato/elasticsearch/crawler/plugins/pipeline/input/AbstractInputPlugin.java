@@ -17,18 +17,15 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.plugins.pipeline;
+package fr.pilato.elasticsearch.crawler.plugins.pipeline.input;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import fr.pilato.elasticsearch.crawler.plugins.pipeline.AbstractPlugin;
+import fr.pilato.elasticsearch.crawler.plugins.pipeline.PipelineContext;
 
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -36,26 +33,16 @@ import java.util.Map;
  * Abstract base class for input plugins.
  * Provides common functionality and default implementations.
  */
-public abstract class AbstractInputPlugin implements InputPlugin {
+public abstract class AbstractInputPlugin extends AbstractPlugin implements InputPlugin {
 
-    protected final Logger logger = LogManager.getLogger(getClass());
-
-    protected String id;
     protected String updateRate;
     protected List<String> includes;
     protected List<String> excludes;
     protected List<String> tags;
-    protected FsSettings globalSettings;
-    protected Map<String, Object> rawConfig;
 
     @Override
-    public String getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(String id) {
-        this.id = id;
+    protected String getPluginCategory() {
+        return "Input";
     }
 
     @Override
@@ -69,17 +56,13 @@ public abstract class AbstractInputPlugin implements InputPlugin {
     }
 
     @Override
-    public void configure(Map<String, Object> rawConfig, FsSettings globalSettings) {
-        this.rawConfig = rawConfig;
-        this.globalSettings = globalSettings;
-
-        // Read common input configuration
-        if (rawConfig != null) {
-            this.updateRate = getConfigValue(rawConfig, "update_rate", String.class, null);
-            this.includes = getConfigList(rawConfig, "includes");
-            this.excludes = getConfigList(rawConfig, "excludes");
-            this.tags = getConfigList(rawConfig, "tags");
-        }
+    protected void configureCommon(Map<String, Object> config) {
+        super.configureCommon(config);
+        
+        this.updateRate = getConfigValue(config, "update_rate", String.class, null);
+        this.includes = getConfigList(config, "includes");
+        this.excludes = getConfigList(config, "excludes");
+        this.tags = getConfigList(config, "tags");
 
         // Fallback to global settings for backward compatibility
         if (updateRate == null && globalSettings.getFs() != null && globalSettings.getFs().getUpdateRate() != null) {
@@ -90,29 +73,6 @@ public abstract class AbstractInputPlugin implements InputPlugin {
         }
         if (excludes == null && globalSettings.getFs() != null) {
             this.excludes = globalSettings.getFs().getExcludes();
-        }
-
-        // Get type-specific configuration
-        @SuppressWarnings("unchecked")
-        Map<String, Object> typeConfig = rawConfig != null ? 
-                (Map<String, Object>) rawConfig.get(getType()) : null;
-        if (typeConfig != null) {
-            configureTypeSpecific(typeConfig);
-        }
-    }
-
-    /**
-     * Configure type-specific settings from the configuration map.
-     * Subclasses should override this to read their specific settings.
-     *
-     * @param typeConfig the type-specific configuration map
-     */
-    protected abstract void configureTypeSpecific(Map<String, Object> typeConfig);
-
-    @Override
-    public void validateConfiguration() throws FsCrawlerIllegalConfigurationException {
-        if (id == null || id.isEmpty()) {
-            throw new FsCrawlerIllegalConfigurationException("Input plugin id is required");
         }
     }
 
@@ -171,44 +131,5 @@ public abstract class AbstractInputPlugin implements InputPlugin {
     @Override
     public PipelineContext createContext() throws FsCrawlerPluginException {
         throw new FsCrawlerPluginException("REST API not supported by " + getType() + " input plugin");
-    }
-
-    // ========== Utility methods ==========
-
-    @SuppressWarnings("unchecked")
-    protected <T> T getConfigValue(Map<String, Object> config, String key, Class<T> type, T defaultValue) {
-        Object value = config.get(key);
-        if (value == null) {
-            return defaultValue;
-        }
-        if (type.isInstance(value)) {
-            return type.cast(value);
-        }
-        // Handle type conversion for common cases
-        if (type == String.class) {
-            return type.cast(value.toString());
-        }
-        if (type == Integer.class && value instanceof Number) {
-            return type.cast(((Number) value).intValue());
-        }
-        if (type == Long.class && value instanceof Number) {
-            return type.cast(((Number) value).longValue());
-        }
-        if (type == Boolean.class) {
-            if (value instanceof Boolean) {
-                return type.cast(value);
-            }
-            return type.cast(Boolean.parseBoolean(value.toString()));
-        }
-        return defaultValue;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected List<String> getConfigList(Map<String, Object> config, String key) {
-        Object value = config.get(key);
-        if (value instanceof List) {
-            return (List<String>) value;
-        }
-        return null;
     }
 }

@@ -17,10 +17,13 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.plugins.pipeline;
+package fr.pilato.elasticsearch.crawler.plugins.pipeline.filter;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
+import fr.pilato.elasticsearch.crawler.plugins.pipeline.ConditionalPlugin;
+import fr.pilato.elasticsearch.crawler.plugins.pipeline.ConfigurablePlugin;
+import fr.pilato.elasticsearch.crawler.plugins.pipeline.PipelineContext;
 import org.pf4j.ExtensionPoint;
 
 import java.io.InputStream;
