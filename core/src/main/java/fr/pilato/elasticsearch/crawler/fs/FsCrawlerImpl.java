@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfiguratio
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServicePipelineImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
@@ -30,6 +31,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
+import fr.pilato.elasticsearch.crawler.plugins.pipeline.Pipeline;
+import fr.pilato.elasticsearch.crawler.plugins.pipeline.PipelinePluginsManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -59,6 +62,8 @@ public class FsCrawlerImpl implements AutoCloseable {
     private final FsCrawlerDocumentService documentService;
     private final FsCrawlerManagementService managementService;
     private final FsCrawlerPluginsManager pluginsManager;
+    private final PipelinePluginsManager pipelinePluginsManager;
+    private final Pipeline pipeline;
     private final FsParser fsParser;
     private final Thread fsCrawlerThread;
 
@@ -70,12 +75,42 @@ public class FsCrawlerImpl implements AutoCloseable {
         this.rest = rest;
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(settings);
-        this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(settings);
 
-        // Initialize and start the plugin manager
+        // Initialize and start the filesystem plugin manager
         this.pluginsManager = new FsCrawlerPluginsManager();
         pluginsManager.loadPlugins();
         pluginsManager.startPlugins();
+
+        // Check if v2 pipeline configuration is present
+        boolean usePipeline = settings.getOutputs() != null && !settings.getOutputs().isEmpty();
+        
+        if (usePipeline) {
+            logger.info("Using v2 pipeline architecture with {} output(s)", settings.getOutputs().size());
+            
+            // Initialize the pipeline plugins manager
+            this.pipelinePluginsManager = new PipelinePluginsManager();
+            pipelinePluginsManager.loadPlugins();
+            pipelinePluginsManager.startPlugins();
+            
+            // Create the pipeline from settings
+            try {
+                this.pipeline = pipelinePluginsManager.createPipeline(settings);
+            } catch (FsCrawlerIllegalConfigurationException e) {
+                throw new RuntimeException("Failed to create pipeline: " + e.getMessage(), e);
+            }
+            
+            // Create the underlying ES service for query operations (search, exists, get)
+            FsCrawlerDocumentService underlyingService = new FsCrawlerDocumentServiceElasticsearchImpl(settings);
+            
+            // Create the pipeline-based document service
+            String defaultIndex = settings.getElasticsearch() != null ? settings.getElasticsearch().getIndex() : settings.getName();
+            this.documentService = new FsCrawlerDocumentServicePipelineImpl(pipeline, underlyingService, defaultIndex);
+        } else {
+            logger.debug("Using legacy document service (v1 configuration)");
+            this.pipelinePluginsManager = null;
+            this.pipeline = null;
+            this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(settings);
+        }
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
@@ -244,10 +279,31 @@ public class FsCrawlerImpl implements AutoCloseable {
         pluginsManager.close();
         logger.debug("Plugins Manager stopped");
 
+        if (pipelinePluginsManager != null) {
+            pipelinePluginsManager.close();
+            logger.debug("Pipeline Plugins Manager stopped");
+        }
+
         logger.info("FS crawler [{}] stopped", settings.getName());
     }
 
     public FsParser getFsParser() {
         return fsParser;
+    }
+
+    /**
+     * Get the pipeline if v2 configuration is used.
+     * @return the pipeline or null if using legacy configuration
+     */
+    public Pipeline getPipeline() {
+        return pipeline;
+    }
+
+    /**
+     * Check if the crawler is using v2 pipeline architecture.
+     * @return true if using pipeline, false if using legacy configuration
+     */
+    public boolean isUsingPipeline() {
+        return pipeline != null;
     }
 }

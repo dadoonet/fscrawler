@@ -127,7 +127,12 @@ public class ElasticsearchOutputPlugin extends AbstractOutputPlugin {
                 indexFolder = globalEs.getIndexFolder();
             }
             if (bulkSize == null) {
-                bulkSize = globalEs.getBulkSize();
+                // getBulkSize() returns int and may throw NPE if not set
+                try {
+                    bulkSize = globalEs.getBulkSize();
+                } catch (NullPointerException ignored) {
+                    // bulkSize not set in global settings
+                }
             }
             if (flushInterval == null && globalEs.getFlushInterval() != null) {
                 flushInterval = globalEs.getFlushInterval().toString();
@@ -154,16 +159,36 @@ public class ElasticsearchOutputPlugin extends AbstractOutputPlugin {
                 pathPrefix = globalEs.getPathPrefix();
             }
             if (sslVerification == null) {
-                sslVerification = globalEs.isSslVerification();
+                // isSslVerification() returns boolean and may throw NPE if not set
+                try {
+                    sslVerification = globalEs.isSslVerification();
+                } catch (NullPointerException ignored) {
+                    // sslVerification not set in global settings
+                }
             }
             if (pushTemplates == null) {
-                pushTemplates = globalEs.isPushTemplates();
+                // isPushTemplates() returns boolean and may throw NPE if not set
+                try {
+                    pushTemplates = globalEs.isPushTemplates();
+                } catch (NullPointerException ignored) {
+                    // pushTemplates not set in global settings
+                }
             }
             if (forcePushTemplates == null) {
-                forcePushTemplates = globalEs.isForcePushTemplates();
+                // isForcePushTemplates() returns boolean and may throw NPE if not set
+                try {
+                    forcePushTemplates = globalEs.isForcePushTemplates();
+                } catch (NullPointerException ignored) {
+                    // forcePushTemplates not set in global settings
+                }
             }
             if (semanticSearch == null) {
-                semanticSearch = globalEs.isSemanticSearch();
+                // isSemanticSearch() returns boolean and may throw NPE if not set
+                try {
+                    semanticSearch = globalEs.isSemanticSearch();
+                } catch (NullPointerException ignored) {
+                    // semanticSearch not set in global settings
+                }
             }
         }
         
