@@ -1,0 +1,5 @@
+Plugin-Id: fscrawler-elasticsearch-plugin
+Plugin-Version: ${project.version}
+Plugin-Class: fr.pilato.elasticsearch.crawler.plugins.elasticsearch.ElasticsearchPlugin
+Plugin-Provider: David Pilato
+Plugin-Description: Elasticsearch plugin for FSCrawler (output)

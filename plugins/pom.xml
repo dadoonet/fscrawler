@@ -20,6 +20,7 @@
         <module>fs-http-plugin</module>
         <module>fs-ftp-plugin</module>
         <module>fs-ssh-plugin</module>
+        <module>elasticsearch-plugin</module>
     </modules>
 
     <dependencies>
