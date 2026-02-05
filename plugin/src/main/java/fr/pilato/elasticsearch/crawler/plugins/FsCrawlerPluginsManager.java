@@ -25,6 +25,7 @@ import org.pf4j.DefaultPluginManager;
 import org.pf4j.PluginManager;
 
 import java.util.HashMap;
+import java.util.ServiceLoader;
 
 public class FsCrawlerPluginsManager implements AutoCloseable {
 
@@ -46,10 +47,37 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
         logger.debug("Starting plugins");
         pluginManager.startPlugins();
 
+        // Discover plugins from PF4J (external JARs in plugins directory)
+        discoverPf4jPlugins();
+
+        // Discover plugins from ServiceLoader (built-in plugins on classpath)
+        discoverServiceLoaderPlugins();
+    }
+
+    /**
+     * Discovers plugins using PF4J extension mechanism (for external JAR plugins).
+     */
+    private void discoverPf4jPlugins() {
         for (FsCrawlerExtensionFsProvider extension : pluginManager.getExtensions(FsCrawlerExtensionFsProvider.class)) {
-            logger.debug("Found FsCrawlerExtensionFsProvider extension for type [{}], supportsCrawling=[{}]",
+            logger.debug("Found FsCrawlerExtensionFsProvider from PF4J for type [{}], supportsCrawling=[{}]",
                     extension.getType(), extension.supportsCrawling());
             fsProviders.put(extension.getType(), extension);
+        }
+    }
+
+    /**
+     * Discovers plugins using Java ServiceLoader (for built-in plugins on classpath).
+     * This allows plugins to be discovered without external JAR packaging.
+     */
+    private void discoverServiceLoaderPlugins() {
+        ServiceLoader<FsCrawlerExtensionFsProvider> loader = ServiceLoader.load(FsCrawlerExtensionFsProvider.class);
+        for (FsCrawlerExtensionFsProvider extension : loader) {
+            String type = extension.getType();
+            if (!fsProviders.containsKey(type)) {
+                logger.debug("Found FsCrawlerExtensionFsProvider from ServiceLoader for type [{}], supportsCrawling=[{}]",
+                        type, extension.supportsCrawling());
+                fsProviders.put(type, extension);
+            }
         }
     }
 
