@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  * Manager for pipeline plugins.
@@ -65,31 +66,90 @@ public class PipelinePluginsManager implements AutoCloseable {
 
     /**
      * Starts all plugins and discovers available extensions.
+     * Discovers plugins from:
+     * 1. PF4J plugin manager (external JARs in plugins directory)
+     * 2. Java ServiceLoader (built-in plugins on classpath via META-INF/services)
      */
     public void startPlugins() {
         logger.debug("Starting pipeline plugins");
         pluginManager.startPlugins();
 
-        // Discover input plugins
-        for (InputPlugin plugin : pluginManager.getExtensions(InputPlugin.class)) {
-            logger.debug("Found InputPlugin extension for type [{}]", plugin.getType());
-            inputPluginTypes.put(plugin.getType(), plugin.getClass());
-        }
+        // Discover plugins from PF4J (external JARs)
+        discoverPf4jPlugins();
 
-        // Discover filter plugins
-        for (FilterPlugin plugin : pluginManager.getExtensions(FilterPlugin.class)) {
-            logger.debug("Found FilterPlugin extension for type [{}]", plugin.getType());
-            filterPluginTypes.put(plugin.getType(), plugin.getClass());
-        }
+        // Discover plugins from ServiceLoader (built-in plugins on classpath)
+        discoverServiceLoaderPlugins();
 
-        // Discover output plugins
-        for (OutputPlugin plugin : pluginManager.getExtensions(OutputPlugin.class)) {
-            logger.debug("Found OutputPlugin extension for type [{}]", plugin.getType());
-            outputPluginTypes.put(plugin.getType(), plugin.getClass());
-        }
-
-        logger.info("Pipeline plugins started: {} inputs, {} filters, {} outputs",
+        logger.info("Pipeline plugins discovered: {} inputs, {} filters, {} outputs",
                 inputPluginTypes.size(), filterPluginTypes.size(), outputPluginTypes.size());
+    }
+
+    /**
+     * Discovers plugins using PF4J extension mechanism (for external JAR plugins).
+     */
+    private void discoverPf4jPlugins() {
+        // Discover input plugins from PF4J
+        for (InputPlugin plugin : pluginManager.getExtensions(InputPlugin.class)) {
+            String type = plugin.getType();
+            if (!inputPluginTypes.containsKey(type)) {
+                logger.debug("Found InputPlugin extension from PF4J for type [{}]", type);
+                inputPluginTypes.put(type, plugin.getClass());
+            }
+        }
+
+        // Discover filter plugins from PF4J
+        for (FilterPlugin plugin : pluginManager.getExtensions(FilterPlugin.class)) {
+            String type = plugin.getType();
+            if (!filterPluginTypes.containsKey(type)) {
+                logger.debug("Found FilterPlugin extension from PF4J for type [{}]", type);
+                filterPluginTypes.put(type, plugin.getClass());
+            }
+        }
+
+        // Discover output plugins from PF4J
+        for (OutputPlugin plugin : pluginManager.getExtensions(OutputPlugin.class)) {
+            String type = plugin.getType();
+            if (!outputPluginTypes.containsKey(type)) {
+                logger.debug("Found OutputPlugin extension from PF4J for type [{}]", type);
+                outputPluginTypes.put(type, plugin.getClass());
+            }
+        }
+    }
+
+    /**
+     * Discovers plugins using Java ServiceLoader (for built-in plugins on classpath).
+     * This allows plugins to be discovered without external JAR packaging.
+     */
+    private void discoverServiceLoaderPlugins() {
+        // Discover input plugins from ServiceLoader
+        ServiceLoader<InputPlugin> inputLoader = ServiceLoader.load(InputPlugin.class);
+        for (InputPlugin plugin : inputLoader) {
+            String type = plugin.getType();
+            if (!inputPluginTypes.containsKey(type)) {
+                logger.debug("Found InputPlugin from ServiceLoader for type [{}]", type);
+                inputPluginTypes.put(type, plugin.getClass());
+            }
+        }
+
+        // Discover filter plugins from ServiceLoader
+        ServiceLoader<FilterPlugin> filterLoader = ServiceLoader.load(FilterPlugin.class);
+        for (FilterPlugin plugin : filterLoader) {
+            String type = plugin.getType();
+            if (!filterPluginTypes.containsKey(type)) {
+                logger.debug("Found FilterPlugin from ServiceLoader for type [{}]", type);
+                filterPluginTypes.put(type, plugin.getClass());
+            }
+        }
+
+        // Discover output plugins from ServiceLoader
+        ServiceLoader<OutputPlugin> outputLoader = ServiceLoader.load(OutputPlugin.class);
+        for (OutputPlugin plugin : outputLoader) {
+            String type = plugin.getType();
+            if (!outputPluginTypes.containsKey(type)) {
+                logger.debug("Found OutputPlugin from ServiceLoader for type [{}]", type);
+                outputPluginTypes.put(type, plugin.getClass());
+            }
+        }
     }
 
     /**
@@ -232,6 +292,7 @@ public class PipelinePluginsManager implements AutoCloseable {
      * @param pluginClass the plugin class
      */
     public void registerInputPlugin(String type, Class<? extends InputPlugin> pluginClass) {
+        logger.debug("Manually registering InputPlugin for type [{}]", type);
         inputPluginTypes.put(type, pluginClass);
     }
 
@@ -243,6 +304,7 @@ public class PipelinePluginsManager implements AutoCloseable {
      * @param pluginClass the plugin class
      */
     public void registerFilterPlugin(String type, Class<? extends FilterPlugin> pluginClass) {
+        logger.debug("Manually registering FilterPlugin for type [{}]", type);
         filterPluginTypes.put(type, pluginClass);
     }
 
@@ -254,6 +316,33 @@ public class PipelinePluginsManager implements AutoCloseable {
      * @param pluginClass the plugin class
      */
     public void registerOutputPlugin(String type, Class<? extends OutputPlugin> pluginClass) {
+        logger.debug("Manually registering OutputPlugin for type [{}]", type);
         outputPluginTypes.put(type, pluginClass);
+    }
+
+    // ========== Query methods ==========
+
+    /**
+     * Returns the available input plugin types.
+     * @return set of input plugin type names
+     */
+    public java.util.Set<String> getAvailableInputTypes() {
+        return java.util.Collections.unmodifiableSet(inputPluginTypes.keySet());
+    }
+
+    /**
+     * Returns the available filter plugin types.
+     * @return set of filter plugin type names
+     */
+    public java.util.Set<String> getAvailableFilterTypes() {
+        return java.util.Collections.unmodifiableSet(filterPluginTypes.keySet());
+    }
+
+    /**
+     * Returns the available output plugin types.
+     * @return set of output plugin type names
+     */
+    public java.util.Set<String> getAvailableOutputTypes() {
+        return java.util.Collections.unmodifiableSet(outputPluginTypes.keySet());
     }
 }
