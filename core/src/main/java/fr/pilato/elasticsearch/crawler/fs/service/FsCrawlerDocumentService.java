@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 public interface FsCrawlerDocumentService extends FsCrawlerService {
     /**
@@ -43,6 +44,26 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @param pipeline  Pipeline (can be null)
      */
     void index(String index, String id, Doc doc, String pipeline);
+
+    /**
+     * Process a document through the pipeline filters and then index it.
+     * This method allows content extraction to be handled by pipeline filters
+     * instead of being done externally.
+     * <p>
+     * Default implementation ignores the inputStream and just calls index().
+     * Implementations that support pipeline filters should override this.
+     *
+     * @param inputStream the raw content stream (may be null if already processed)
+     * @param doc the document with metadata already populated
+     * @param index the target index
+     * @param id the document ID
+     * @param fileSize the file size for processing hints
+     */
+    default void processAndIndex(InputStream inputStream, Doc doc, String index, String id, long fileSize) {
+        // Default: ignore inputStream and just index the doc
+        // Pipeline-based implementations will override to apply filters
+        index(index, id, doc, null);
+    }
 
     /**
      * Send a Raw Json to the target service

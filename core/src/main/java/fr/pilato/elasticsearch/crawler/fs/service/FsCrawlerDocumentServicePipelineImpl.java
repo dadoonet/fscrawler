@@ -122,17 +122,52 @@ public class FsCrawlerDocumentServicePipelineImpl implements FsCrawlerDocumentSe
         logger.debug("Indexing document [{}] to index [{}] via Pipeline", id, index);
         
         // Create a context for the document
-        PipelineContext context = new PipelineContext()
+        PipelineContext context = createContext(index, id, doc);
+        
+        // Send to all matching outputs (filters already applied by processAndIndex or externally)
+        sendToOutputs(index, id, doc, context);
+    }
+
+    /**
+     * Process a document through the pipeline filters and then index it.
+     * This is the main entry point for documents that need content extraction.
+     *
+     * @param inputStream the raw content stream
+     * @param doc the document with metadata already populated
+     * @param index the target index
+     * @param id the document ID
+     * @param fileSize the file size for processing
+     */
+    public void processAndIndex(java.io.InputStream inputStream, Doc doc, String index, String id, long fileSize) {
+        logger.debug("Processing and indexing document [{}] to index [{}] via Pipeline", id, index);
+        
+        // Create a context for the document
+        PipelineContext context = createContext(index, id, doc);
+        context.withSize(fileSize);
+        
+        try {
+            // Apply filters sequentially
+            pipeline.processDocument(inputStream, doc, context);
+        } catch (FsCrawlerPluginException e) {
+            logger.error("Error processing document [{}] through pipeline: {}", id, e.getMessage());
+            throw new RuntimeException("Failed to process document: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Creates a PipelineContext from document information.
+     */
+    private PipelineContext createContext(String index, String id, Doc doc) {
+        return new PipelineContext()
                 .withIndex(index != null ? index : defaultIndex)
                 .withFilename(doc.getFile() != null ? doc.getFile().getFilename() : id)
                 .withPath(doc.getPath() != null ? doc.getPath().getReal() : null);
-        
-        // If doc has file extension, add it to context
-        if (doc.getFile() != null && doc.getFile().getExtension() != null) {
-            // Extension is already set by withFilename if filename has extension
-        }
-        
-        // Send to all matching outputs
+    }
+
+    /**
+     * Sends a document to all matching output plugins.
+     */
+    private void sendToOutputs(String index, String id, Doc doc, PipelineContext context) {
         for (OutputPlugin output : this.pipeline.getOutputs()) {
             if (output.shouldApply(context)) {
                 try {

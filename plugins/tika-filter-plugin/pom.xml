@@ -5,58 +5,34 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>fr.pilato.elasticsearch.crawler</groupId>
-        <artifactId>fscrawler-parent</artifactId>
+        <artifactId>fscrawler-plugins</artifactId>
         <version>2.10-SNAPSHOT</version>
     </parent>
 
-    <artifactId>fscrawler-plugins</artifactId>
-    <name>FSCrawler Plugins Parent</name>
-    <packaging>pom</packaging>
-
-    <modules>
-        <module>welcome-plugin</module>
-        <module>fs-local-plugin</module>
-        <module>fs-s3-plugin</module>
-        <module>fs-http-plugin</module>
-        <module>fs-ftp-plugin</module>
-        <module>fs-ssh-plugin</module>
-        <module>elasticsearch-plugin</module>
-        <module>tika-filter-plugin</module>
-    </modules>
+    <artifactId>fscrawler-tika-filter-plugin</artifactId>
+    <name>FSCrawler Tika Filter Plugin</name>
+    <description>FSCrawler Tika Filter Plugin for content extraction</description>
 
     <dependencies>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-framework</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-plugin</artifactId>
         </dependency>
-
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-test-framework</artifactId>
-            <scope>test</scope>
+            <artifactId>fscrawler-tika</artifactId>
         </dependency>
     </dependencies>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
         <plugins>
             <plugin>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
                 <artifactId>junit4-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <!-- There is no unit test, so we can skip that execution -->
                         <id>unit-tests</id>
-                        <phase>none</phase>
+                        <phase>test</phase>
                     </execution>
                 </executions>
             </plugin>

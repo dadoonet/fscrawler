@@ -75,6 +75,10 @@
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-elasticsearch-plugin</artifactId>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-tika-filter-plugin</artifactId>
+        </dependency>
 
         <!-- Our Elasticsearch Client -->
         <dependency>

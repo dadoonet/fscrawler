@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Plugin-Id: tika-filter
+Plugin-Version: ${project.version}
+Plugin-Class: fr.pilato.elasticsearch.crawler.plugins.filter.tika.TikaPlugin
