@@ -1,0 +1,5 @@
+# Example: Split configuration - Common settings
+# Place this in ~/.fscrawler/<job-name>/_settings/00-common.yaml
+
+name: "my-job"
+version: 2

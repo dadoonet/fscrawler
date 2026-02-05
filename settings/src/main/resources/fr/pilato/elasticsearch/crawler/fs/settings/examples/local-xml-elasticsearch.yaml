@@ -1,0 +1,30 @@
+# Example: Local filesystem with XML files to Elasticsearch
+# Use this when all files are XML documents
+
+name: "xml-indexer"
+version: 2
+
+inputs:
+  - type: "local"
+    id: "xml-files"
+    local:
+      path: "/path/to/xml/files"
+    update_rate: "10m"
+    includes:
+      - "*.xml"
+
+filters:
+  - type: "xml"
+    id: "xml-parser"
+    # XML filter parses the file and stores content in doc.object
+    # No additional configuration needed
+
+outputs:
+  - type: "elasticsearch"
+    id: "es-output"
+    elasticsearch:
+      urls:
+        - "https://localhost:9200"
+      index: "xml_documents"
+      api_key: "YOUR_API_KEY"
+      push_templates: true

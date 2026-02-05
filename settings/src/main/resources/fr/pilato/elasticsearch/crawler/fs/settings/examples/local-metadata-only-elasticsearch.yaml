@@ -1,0 +1,28 @@
+# Example: Local filesystem metadata only (no content extraction)
+# Use this when you only want to index file metadata without content
+
+name: "metadata-indexer"
+version: 2
+
+inputs:
+  - type: "local"
+    id: "all-files"
+    local:
+      path: "/path/to/files"
+    update_rate: "1h"
+
+filters:
+  - type: "none"
+    id: "no-extraction"
+    # None filter passes documents through without content extraction
+    # Only file metadata (name, path, size, dates, etc.) will be indexed
+
+outputs:
+  - type: "elasticsearch"
+    id: "es-output"
+    elasticsearch:
+      urls:
+        - "https://localhost:9200"
+      index: "file_metadata"
+      api_key: "YOUR_API_KEY"
+      push_templates: true

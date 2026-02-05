@@ -1,0 +1,12 @@
+# Example: Split configuration - Tika filter
+# Place this in ~/.fscrawler/<job-name>/_settings/20-filter-tika.yaml
+
+filters[0]:
+  type: "tika"
+  id: "tika-extractor"
+  tika:
+    index_content: true
+    lang_detect: false
+    ocr:
+      enabled: true
+      language: "eng"

@@ -1,0 +1,11 @@
+# Example: Split configuration - Local input
+# Place this in ~/.fscrawler/<job-name>/_settings/10-input-local.yaml
+
+inputs[0]:
+  type: "local"
+  id: "local-docs"
+  local:
+    path: "/path/to/documents"
+  update_rate: "15m"
+  excludes:
+    - "~*"

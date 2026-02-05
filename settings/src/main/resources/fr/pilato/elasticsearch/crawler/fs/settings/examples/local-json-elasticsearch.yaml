@@ -1,0 +1,30 @@
+# Example: Local filesystem with JSON files to Elasticsearch
+# Use this when all files are JSON documents
+
+name: "json-indexer"
+version: 2
+
+inputs:
+  - type: "local"
+    id: "json-files"
+    local:
+      path: "/path/to/json/files"
+    update_rate: "5m"
+    includes:
+      - "*.json"
+
+filters:
+  - type: "json"
+    id: "json-parser"
+    # JSON filter parses the file and stores content in doc.object
+    # No additional configuration needed
+
+outputs:
+  - type: "elasticsearch"
+    id: "es-output"
+    elasticsearch:
+      urls:
+        - "https://localhost:9200"
+      index: "json_documents"
+      api_key: "YOUR_API_KEY"
+      push_templates: true

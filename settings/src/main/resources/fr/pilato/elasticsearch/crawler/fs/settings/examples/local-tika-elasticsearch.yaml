@@ -1,0 +1,51 @@
+# Example: Local filesystem with Tika content extraction to Elasticsearch
+# This is the most common configuration for indexing documents (PDF, Word, etc.)
+
+name: "my-job"
+version: 2
+
+inputs:
+  - type: "local"
+    id: "local-docs"
+    local:
+      path: "/path/to/documents"
+    update_rate: "15m"
+    includes:
+      - "*.pdf"
+      - "*.doc"
+      - "*.docx"
+      - "*.xls"
+      - "*.xlsx"
+      - "*.ppt"
+      - "*.pptx"
+      - "*.odt"
+      - "*.ods"
+      - "*.odp"
+    excludes:
+      - "~*"
+      - "*.tmp"
+
+filters:
+  - type: "tika"
+    id: "tika-extractor"
+    tika:
+      index_content: true
+      lang_detect: true
+      store_source: false
+      indexed_chars: "100000"
+      ocr:
+        enabled: true
+        language: "eng"
+        pdf_strategy: "ocr_and_text"
+
+outputs:
+  - type: "elasticsearch"
+    id: "es-output"
+    elasticsearch:
+      urls:
+        - "https://localhost:9200"
+      index: "documents"
+      index_folder: "documents_folder"
+      api_key: "YOUR_API_KEY"
+      push_templates: true
+      semantic_search: true
