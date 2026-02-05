@@ -468,6 +468,21 @@
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-json-filter-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-xml-filter-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-none-filter-plugin</artifactId>
+                <version>2.10-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-cli</artifactId>
                 <version>2.10-SNAPSHOT</version>
             </dependency>

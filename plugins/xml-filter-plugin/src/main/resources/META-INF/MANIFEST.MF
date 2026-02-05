@@ -1,0 +1,3 @@
+Plugin-Id: xml-filter
+Plugin-Version: 2.10-SNAPSHOT
+Plugin-Class: fr.pilato.elasticsearch.crawler.plugins.filter.xml.XmlPlugin

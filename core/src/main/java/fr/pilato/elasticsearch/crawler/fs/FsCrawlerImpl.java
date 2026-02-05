@@ -32,7 +32,10 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import fr.pilato.elasticsearch.crawler.plugins.elasticsearch.ElasticsearchOutputPlugin;
+import fr.pilato.elasticsearch.crawler.plugins.filter.json.JsonFilterPlugin;
+import fr.pilato.elasticsearch.crawler.plugins.filter.none.NoneFilterPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.filter.tika.TikaFilterPlugin;
+import fr.pilato.elasticsearch.crawler.plugins.filter.xml.XmlFilterPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.Pipeline;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.PipelinePluginsManager;
 import org.apache.logging.log4j.LogManager;
@@ -92,6 +95,9 @@ public class FsCrawlerImpl implements AutoCloseable {
         // Register built-in plugins
         pipelinePluginsManager.registerOutputPlugin("elasticsearch", ElasticsearchOutputPlugin.class);
         pipelinePluginsManager.registerFilterPlugin("tika", TikaFilterPlugin.class);
+        pipelinePluginsManager.registerFilterPlugin("json", JsonFilterPlugin.class);
+        pipelinePluginsManager.registerFilterPlugin("xml", XmlFilterPlugin.class);
+        pipelinePluginsManager.registerFilterPlugin("none", NoneFilterPlugin.class);
         
         // Create the pipeline from settings
         try {

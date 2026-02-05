@@ -22,6 +22,9 @@
         <module>fs-ssh-plugin</module>
         <module>elasticsearch-plugin</module>
         <module>tika-filter-plugin</module>
+        <module>json-filter-plugin</module>
+        <module>xml-filter-plugin</module>
+        <module>none-filter-plugin</module>
     </modules>
 
     <dependencies>

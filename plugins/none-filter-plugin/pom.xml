@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>fr.pilato.elasticsearch.crawler</groupId>
+        <artifactId>fscrawler-plugins</artifactId>
+        <version>2.10-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>fscrawler-none-filter-plugin</artifactId>
+    <name>FSCrawler None Filter Plugin</name>
+    <description>FSCrawler None Filter Plugin for passing documents without content extraction</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-plugin</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.carrotsearch.randomizedtesting</groupId>
+                <artifactId>junit4-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unit-tests</id>
+                        <phase>test</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
