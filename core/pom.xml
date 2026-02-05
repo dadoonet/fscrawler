@@ -70,6 +70,12 @@
             <artifactId>fscrawler-plugin</artifactId>
         </dependency>
 
+        <!-- Built-in pipeline plugins -->
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-elasticsearch-plugin</artifactId>
+        </dependency>
+
         <!-- Our Elasticsearch Client -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>

@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
+import fr.pilato.elasticsearch.crawler.plugins.elasticsearch.ElasticsearchOutputPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.Pipeline;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.PipelinePluginsManager;
 import org.apache.logging.log4j.LogManager;
@@ -86,6 +87,9 @@ public class FsCrawlerImpl implements AutoCloseable {
         this.pipelinePluginsManager = new PipelinePluginsManager();
         pipelinePluginsManager.loadPlugins();
         pipelinePluginsManager.startPlugins();
+        
+        // Register built-in output plugins
+        pipelinePluginsManager.registerOutputPlugin("elasticsearch", ElasticsearchOutputPlugin.class);
         
         // Create the pipeline from settings
         try {
