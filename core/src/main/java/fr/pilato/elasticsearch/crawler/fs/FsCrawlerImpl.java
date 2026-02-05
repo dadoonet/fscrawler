@@ -81,36 +81,30 @@ public class FsCrawlerImpl implements AutoCloseable {
         pluginsManager.loadPlugins();
         pluginsManager.startPlugins();
 
-        // Check if v2 pipeline configuration is present
-        boolean usePipeline = settings.getOutputs() != null && !settings.getOutputs().isEmpty();
+        // Initialize the pipeline plugins manager
+        // Note: Settings are automatically converted from v1 to v2 format by FsSettingsLoader
+        this.pipelinePluginsManager = new PipelinePluginsManager();
+        pipelinePluginsManager.loadPlugins();
+        pipelinePluginsManager.startPlugins();
         
-        if (usePipeline) {
-            logger.info("Using v2 pipeline architecture with {} output(s)", settings.getOutputs().size());
-            
-            // Initialize the pipeline plugins manager
-            this.pipelinePluginsManager = new PipelinePluginsManager();
-            pipelinePluginsManager.loadPlugins();
-            pipelinePluginsManager.startPlugins();
-            
-            // Create the pipeline from settings
-            try {
-                this.pipeline = pipelinePluginsManager.createPipeline(settings);
-            } catch (FsCrawlerIllegalConfigurationException e) {
-                throw new RuntimeException("Failed to create pipeline: " + e.getMessage(), e);
-            }
-            
-            // Create the underlying ES service for query operations (search, exists, get)
-            FsCrawlerDocumentService underlyingService = new FsCrawlerDocumentServiceElasticsearchImpl(settings);
-            
-            // Create the pipeline-based document service
-            String defaultIndex = settings.getElasticsearch() != null ? settings.getElasticsearch().getIndex() : settings.getName();
-            this.documentService = new FsCrawlerDocumentServicePipelineImpl(pipeline, underlyingService, defaultIndex);
-        } else {
-            logger.debug("Using legacy document service (v1 configuration)");
-            this.pipelinePluginsManager = null;
-            this.pipeline = null;
-            this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(settings);
+        // Create the pipeline from settings
+        try {
+            this.pipeline = pipelinePluginsManager.createPipeline(settings);
+        } catch (FsCrawlerIllegalConfigurationException e) {
+            throw new RuntimeException("Failed to create pipeline: " + e.getMessage(), e);
         }
+        
+        logger.info("Pipeline architecture initialized with {} input(s), {} filter(s), {} output(s)",
+                settings.getInputs() != null ? settings.getInputs().size() : 0,
+                settings.getFilters() != null ? settings.getFilters().size() : 0,
+                settings.getOutputs() != null ? settings.getOutputs().size() : 0);
+        
+        // Create the underlying ES service for query operations (search, exists, get)
+        FsCrawlerDocumentService underlyingService = new FsCrawlerDocumentServiceElasticsearchImpl(settings);
+        
+        // Create the pipeline-based document service
+        String defaultIndex = settings.getElasticsearch() != null ? settings.getElasticsearch().getIndex() : settings.getName();
+        this.documentService = new FsCrawlerDocumentServicePipelineImpl(pipeline, underlyingService, defaultIndex);
 
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
@@ -279,10 +273,8 @@ public class FsCrawlerImpl implements AutoCloseable {
         pluginsManager.close();
         logger.debug("Plugins Manager stopped");
 
-        if (pipelinePluginsManager != null) {
-            pipelinePluginsManager.close();
-            logger.debug("Pipeline Plugins Manager stopped");
-        }
+        pipelinePluginsManager.close();
+        logger.debug("Pipeline Plugins Manager stopped");
 
         logger.info("FS crawler [{}] stopped", settings.getName());
     }
@@ -292,18 +284,10 @@ public class FsCrawlerImpl implements AutoCloseable {
     }
 
     /**
-     * Get the pipeline if v2 configuration is used.
-     * @return the pipeline or null if using legacy configuration
+     * Get the pipeline.
+     * @return the pipeline (always non-null)
      */
     public Pipeline getPipeline() {
         return pipeline;
-    }
-
-    /**
-     * Check if the crawler is using v2 pipeline architecture.
-     * @return true if using pipeline, false if using legacy configuration
-     */
-    public boolean isUsingPipeline() {
-        return pipeline != null;
     }
 }

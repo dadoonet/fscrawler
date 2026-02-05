@@ -175,12 +175,13 @@ public class FsSettingsLoader extends MetaFileHandler {
         
         if (version == FsSettingsMigrator.VERSION_1) {
             logger.warn("Job [{}] uses deprecated settings format (v1). " +
-                    "Please migrate to the new pipeline format (v2).", settings.getName());
+                    "Please migrate to the new pipeline format (v2) using: " +
+                    "fscrawler {} --migrate", settings.getName(), settings.getName());
             
             FsSettings v2Settings = FsSettingsMigrator.migrateV1ToV2(settings);
             
-            if (logger.isInfoEnabled()) {
-                logger.info("Suggested new configuration for job [{}]:\n---\n{}---", 
+            if (logger.isDebugEnabled()) {
+                logger.debug("Automatically converted to v2 configuration for job [{}]:\n---\n{}---", 
                         settings.getName(),
                         FsSettingsMigrator.generateV2Yaml(v2Settings));
             }
