@@ -152,12 +152,13 @@ public class FsSettingsLoader extends MetaFileHandler {
             settings.setFilters(gestalt.getConfigOptional("filters", new org.github.gestalt.config.reflect.TypeCapture<List<FilterSection>>(){}).orElse(null));
             settings.setOutputs(gestalt.getConfigOptional("outputs", new org.github.gestalt.config.reflect.TypeCapture<List<OutputSection>>(){}).orElse(null));
 
+            boolean hasUserConfigFiles = configFiles != null && configFiles.length > 0;
             logger.debug("Successfully loaded settings from classpath [fscrawler-default.properties] and files {}",
                     (Object) configFiles);
             logger.trace("Loaded settings [{}]", settings);
 
-            // Apply migration and normalization
-            settings = migrateAndNormalize(settings);
+            // Apply migration and normalization (only warn if there are actual user config files)
+            settings = migrateAndNormalize(settings, hasUserConfigFiles);
 
             return settings;
         } catch (Exception e) {
@@ -168,15 +169,19 @@ public class FsSettingsLoader extends MetaFileHandler {
     /**
      * Migrates v1 settings to v2 format if needed.
      * @param settings The loaded settings
+     * @param hasUserConfigFiles true if the settings came from user config files (not just defaults)
      * @return The migrated settings
      */
-    private static FsSettings migrateAndNormalize(FsSettings settings) {
+    private static FsSettings migrateAndNormalize(FsSettings settings, boolean hasUserConfigFiles) {
         int version = FsSettingsMigrator.detectVersion(settings);
         
         if (version == FsSettingsMigrator.VERSION_1) {
-            logger.warn("Job [{}] uses deprecated settings format (v1). " +
-                    "Please migrate to the new pipeline format (v2) using: " +
-                    "fscrawler {} --migrate", settings.getName(), settings.getName());
+            // Only show deprecation warning if user has actual config files to migrate
+            if (hasUserConfigFiles) {
+                logger.warn("Job [{}] uses deprecated settings format (v1). " +
+                        "Please migrate to the new pipeline format (v2) using: " +
+                        "fscrawler {} --migrate", settings.getName(), settings.getName());
+            }
             
             FsSettings v2Settings = FsSettingsMigrator.migrateV1ToV2(settings);
             
