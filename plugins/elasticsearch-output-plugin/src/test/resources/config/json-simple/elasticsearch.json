@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "id": "test-json-output",
+  "type": "elasticsearch",
+  "index": "json_test_docs"
+}

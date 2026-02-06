@@ -79,8 +79,8 @@ public class FsSettingsLoaderTest {
     }
 
     @Test
-    public void withDefaultNamesForEnvVariables() throws Exception {
-        // Create environment variables
+    public void withSystemPropertiesOverridingYaml() throws Exception {
+        // System properties should override yaml file values
         System.setProperty("name", "foo");
         System.setProperty("fs.url", "/tmp/test");
         System.setProperty("fs.xml_support", "true");
@@ -88,25 +88,91 @@ public class FsSettingsLoaderTest {
         try {
             FsSettings settings = new FsSettingsLoader(configPath).read("yaml-env-vars");
             FsSettings expected = generateExpectedDefaultFsSettings();
-            // Although a value is set by a env variable, the yaml file takes precedence
-            // So we have myname instead of foo
-            expected.setName("myname");
+            // System property overrides the yaml file value "myname"
+            expected.setName("foo");
 
             // Elasticsearch index name depends on the crawler name value ${name}
-            expected.getElasticsearch().setIndex("myname_docs");
-            expected.getElasticsearch().setIndexFolder("myname_folder");
+            expected.getElasticsearch().setIndex("foo_docs");
+            expected.getElasticsearch().setIndexFolder("foo_folder");
 
-            // This is set by the env variable
+            // This is set by the system property
             expected.getFs().setUrl("/tmp/test");
 
-            // This is set by the env variable
+            // This is set by the system property
             expected.getFs().setXmlSupport(true);
             checkSettings(expected, settings);
         } finally {
-            // Remove the environment variable
+            // Remove the system properties
             System.clearProperty("name");
             System.clearProperty("fs.url");
             System.clearProperty("fs.xml_support");
+        }
+    }
+
+    @Test
+    public void withSystemPropertyOverridingSslVerification() throws Exception {
+        // System property should override ssl_verification from defaults
+        System.setProperty("elasticsearch.ssl_verification", "false");
+
+        try {
+            FsSettings settings = FsSettingsLoader.load();
+            // ssl_verification defaults to true, but system property should override it
+            assertThat(settings.getElasticsearch().isSslVerification())
+                    .as("ssl_verification should be overridden by system property")
+                    .isFalse();
+        } finally {
+            System.clearProperty("elasticsearch.ssl_verification");
+        }
+    }
+
+    @Test
+    public void withSystemPropertyOverridingSslVerificationWithConfigFile() throws Exception {
+        // System property should override ssl_verification even when config file sets it to true
+        System.setProperty("elasticsearch.ssl_verification", "false");
+
+        try {
+            // yaml-simple has default ssl_verification=true
+            FsSettings settings = new FsSettingsLoader(configPath).read("yaml-simple");
+            // ssl_verification is true in defaults, but system property should override it
+            assertThat(settings.getElasticsearch().isSslVerification())
+                    .as("ssl_verification should be overridden by system property")
+                    .isFalse();
+        } finally {
+            System.clearProperty("elasticsearch.ssl_verification");
+        }
+    }
+
+    @Test
+    public void withV2SystemPropertyOverrideAfterMigration() throws Exception {
+        // System property should override v2 output settings after migration from v1
+        System.setProperty("outputs[0].elasticsearch.ssl_verification", "false");
+
+        try {
+            // Load v1 settings which will be migrated to v2
+            FsSettings settings = new FsSettingsLoader(configPath).read("yaml-simple");
+            
+            // After migration, outputs should exist
+            assertThat(settings.getOutputs())
+                    .as("outputs should exist after migration")
+                    .isNotNull()
+                    .isNotEmpty();
+            
+            // Check rawConfig has the override applied
+            var rawConfig = settings.getOutputs().get(0).getRawConfig();
+            assertThat(rawConfig)
+                    .as("rawConfig should exist")
+                    .isNotNull();
+            
+            @SuppressWarnings("unchecked")
+            var esConfig = (java.util.Map<String, Object>) rawConfig.get("elasticsearch");
+            assertThat(esConfig)
+                    .as("elasticsearch config should exist in rawConfig")
+                    .isNotNull();
+            assertThat(esConfig.get("ssl_verification"))
+                    .as("ssl_verification should be overridden to false")
+                    .isEqualTo(false);
+        } finally {
+            System.clearProperty("outputs[0].elasticsearch.ssl_verification");
         }
     }
 

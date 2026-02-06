@@ -435,6 +435,21 @@ public class FsCrawlerUtil {
     }
 
     /**
+     * Read a resource file from the classpath as a string.
+     * @param source Resource path (e.g., "fr/pilato/.../file.yaml")
+     * @return The file content as a string
+     * @throws IOException If reading fails
+     */
+    public static String readResourceFileAsString(String source) throws IOException {
+        try (InputStream resource = FsCrawlerUtil.class.getResourceAsStream(source)) {
+            if (resource == null) {
+                throw new IOException("Resource not found: " + source);
+            }
+            return new String(resource.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        }
+    }
+
+    /**
      * Read a property file from the class loader
      * @param resource Resource name
      * @return The properties loaded

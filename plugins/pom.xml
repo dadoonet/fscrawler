@@ -20,7 +20,7 @@
         <module>fs-http-plugin</module>
         <module>fs-ftp-plugin</module>
         <module>fs-ssh-plugin</module>
-        <module>elasticsearch-plugin</module>
+        <module>elasticsearch-output-plugin</module>
         <module>tika-filter-plugin</module>
         <module>json-filter-plugin</module>
         <module>xml-filter-plugin</module>
@@ -47,9 +47,23 @@
 
     <build>
         <resources>
+            <!-- Non-filtered resources (plugin config templates) -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>**/*-default.yaml</include>
+                    <include>**/*-default.properties</include>
+                </includes>
+            </resource>
+            <!-- Filtered resources (other files) -->
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <excludes>
+                    <exclude>**/*-default.yaml</exclude>
+                    <exclude>**/*-default.properties</exclude>
+                </excludes>
             </resource>
         </resources>
         <plugins>

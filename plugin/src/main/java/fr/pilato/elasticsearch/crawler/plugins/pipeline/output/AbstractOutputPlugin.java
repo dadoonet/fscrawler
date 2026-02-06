@@ -29,7 +29,7 @@ import fr.pilato.elasticsearch.crawler.plugins.pipeline.AbstractConditionalPlugi
 public abstract class AbstractOutputPlugin extends AbstractConditionalPlugin implements OutputPlugin {
 
     @Override
-    protected String getPluginCategory() {
+    protected String getPluginCategoryLabel() {
         return "Output";
     }
 

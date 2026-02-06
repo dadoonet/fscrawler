@@ -1,0 +1,5 @@
+# Wrong configuration - type doesn't match
+version: 1
+id: wrong-local
+type: wrong_type
+path: /data/documents

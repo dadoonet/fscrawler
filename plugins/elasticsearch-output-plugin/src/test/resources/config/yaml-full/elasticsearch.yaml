@@ -1,0 +1,29 @@
+# Full Elasticsearch output plugin configuration
+version: 1
+id: test-full-output
+type: elasticsearch
+
+# Connection settings
+urls:
+  - https://localhost:9200
+  - https://localhost:9201
+username: elastic
+password: changeme
+ssl_verification: false
+ca_certificate: /path/to/ca.crt
+path_prefix: /elasticsearch
+
+# Index settings
+index: my_documents
+index_folder: my_folders
+pipeline: my_pipeline
+
+# Bulk settings
+bulk_size: 500
+flush_interval: 10s
+byte_size: 50mb
+
+# Template settings
+push_templates: true
+force_push_templates: false
+semantic_search: true

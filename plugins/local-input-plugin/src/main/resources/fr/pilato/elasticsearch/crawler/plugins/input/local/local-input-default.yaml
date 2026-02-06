@@ -1,0 +1,50 @@
+# Local Input Plugin Configuration
+# This plugin crawls files from a local filesystem path.
+
+# Filesystem settings
+fs:
+  # Path to crawl (required)
+  # If running inside a docker container, this must be the path INSIDE the container
+  url: "/tmp/es"
+
+  # How often to scan for changes (default: 15m)
+  #update_rate: "15m"
+
+  # File patterns to include (glob patterns)
+  #includes:
+  #  - "*.doc"
+  #  - "*.xls"
+  #  - "*.pdf"
+
+  # File patterns to exclude (glob patterns)
+  # By default, files ending with ~ are excluded
+  #excludes:
+  #  - "resume.doc"
+  #  - "*~"
+
+  # Follow symbolic links when crawling
+  #follow_symlinks: false
+
+  # Remove documents from index when source file is deleted
+  #remove_deleted: true
+
+  # Continue crawling even if errors occur
+  #continue_on_error: false
+
+  # Use MD5 hash of content as document ID instead of filename
+  #filename_as_id: false
+
+  # Include file size in indexed document
+  #add_filesize: true
+
+  # Extract file owner/group attributes (requires filesystem support)
+  #attributes_support: false
+
+  # Extract file ACL entries (requires attributes_support)
+  #acl_support: false
+
+  # Maximum file size to process (larger files are skipped)
+  #ignore_above: "512mb"
+
+  # Create a separate index for folder metadata
+  #index_folders: true

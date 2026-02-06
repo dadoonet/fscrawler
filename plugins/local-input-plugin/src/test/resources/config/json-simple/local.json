@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "id": "test-json-local",
+  "type": "local",
+  "path": "/data/json/documents"
+}

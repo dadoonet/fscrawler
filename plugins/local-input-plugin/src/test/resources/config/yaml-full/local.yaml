@@ -1,0 +1,26 @@
+# Full local input plugin configuration
+version: 1
+id: test-full-local
+type: local
+
+# Required settings
+path: /data/documents/archive
+
+# Common input settings
+update_rate: 30m
+includes:
+  - "*.pdf"
+  - "*.docx"
+  - "*.txt"
+excludes:
+  - "*~"
+  - "*.tmp"
+  - ".*"
+tags:
+  - documents
+  - archive
+
+# Local-specific settings
+follow_symlinks: true
+acl_support: true
+attributes_support: true

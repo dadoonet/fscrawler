@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "id": "test-json-tika",
+  "type": "tika",
+  "index_content": true,
+  "lang_detect": false
+}

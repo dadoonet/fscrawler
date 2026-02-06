@@ -24,14 +24,20 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Abstract base class for all pipeline plugins (input, filter, output).
  * Provides common functionality including configuration handling and utility methods.
+ * <p>
+ * This class implements both legacy configuration (via rawConfig map) and the new
+ * per-plugin configuration (via dedicated config files). Subclasses should override
+ * the per-plugin methods when migrating to typed settings.
  */
-public abstract class AbstractPlugin {
+public abstract class AbstractPlugin implements ConfigurablePlugin {
 
     protected final Logger logger = LogManager.getLogger(getClass());
 
@@ -133,15 +139,15 @@ public abstract class AbstractPlugin {
     public void validateConfiguration() throws FsCrawlerIllegalConfigurationException {
         if (id == null || id.isEmpty()) {
             throw new FsCrawlerIllegalConfigurationException(
-                    getPluginCategory() + " plugin id is required");
+                    getPluginCategoryLabel() + " plugin id is required");
         }
     }
 
     /**
-     * Returns the plugin category for error messages (e.g., "Input", "Filter", "Output").
-     * @return the plugin category
+     * Returns the plugin category label for error messages (e.g., "Input", "Filter", "Output").
+     * @return the plugin category label
      */
-    protected abstract String getPluginCategory();
+    protected abstract String getPluginCategoryLabel();
 
     // ========== Utility methods ==========
 
@@ -216,5 +222,56 @@ public abstract class AbstractPlugin {
             return (Map<String, Object>) value;
         }
         return null;
+    }
+
+    // ========== Per-Plugin Configuration Methods ==========
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Default implementation throws UnsupportedOperationException.
+     * Subclasses should override this when migrating to typed settings.
+     */
+    @Override
+    public void loadSettings(Path configFile) throws IOException, FsCrawlerIllegalConfigurationException {
+        throw new UnsupportedOperationException(
+                "Plugin " + getType() + " does not yet support per-plugin configuration. " +
+                "Override loadSettings() to enable this feature.");
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Default implementation throws UnsupportedOperationException.
+     * Subclasses should override this when migrating to typed settings.
+     */
+    @Override
+    public void saveSettings(Path configFile) throws IOException {
+        throw new UnsupportedOperationException(
+                "Plugin " + getType() + " does not yet support per-plugin configuration. " +
+                "Override saveSettings() to enable this feature.");
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Default implementation logs a warning.
+     * Subclasses should override this to extract their settings from FsSettings.
+     */
+    @Override
+    public void migrateFromV1(FsSettings v1Settings) {
+        logger.warn("Plugin {} does not implement V1 migration. " +
+                "Override migrateFromV1() to enable automatic migration.", getType());
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Default implementation returns false.
+     * Subclasses should override this to return true after implementing typed settings.
+     */
+    @Override
+    public boolean supportsPerPluginConfig() {
+        return false;
     }
 }

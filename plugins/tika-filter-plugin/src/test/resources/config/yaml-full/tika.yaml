@@ -1,0 +1,23 @@
+# Full Tika filter plugin configuration
+version: 1
+id: test-full-tika
+type: tika
+
+# Content extraction settings
+index_content: true
+indexed_chars: "100000"
+lang_detect: true
+store_source: true
+raw_metadata: true
+tika_config_path: /path/to/tika-config.xml
+
+# OCR settings
+ocr:
+  enabled: true
+  language: fra
+  path: /usr/bin/tesseract
+  data_path: /usr/share/tessdata
+  output_type: txt
+  pdf_strategy: ocr_and_text
+  page_seg_mode: "1"
+  preserve_interword_spacing: true

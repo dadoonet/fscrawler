@@ -1,0 +1,5 @@
+# Simple Elasticsearch output plugin configuration
+version: 1
+id: test-output
+type: elasticsearch
+index: test_docs

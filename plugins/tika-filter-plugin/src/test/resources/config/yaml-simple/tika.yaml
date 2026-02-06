@@ -1,0 +1,5 @@
+# Simple Tika filter plugin configuration
+version: 1
+id: test-tika
+type: tika
+index_content: true

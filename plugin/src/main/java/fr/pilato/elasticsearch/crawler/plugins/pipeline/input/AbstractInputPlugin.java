@@ -41,7 +41,7 @@ public abstract class AbstractInputPlugin extends AbstractPlugin implements Inpu
     protected List<String> tags;
 
     @Override
-    protected String getPluginCategory() {
+    protected String getPluginCategoryLabel() {
         return "Input";
     }
 
@@ -50,9 +50,33 @@ public abstract class AbstractInputPlugin extends AbstractPlugin implements Inpu
         return tags;
     }
 
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
     @Override
     public String getUpdateRate() {
         return updateRate;
+    }
+
+    public void setUpdateRate(String updateRate) {
+        this.updateRate = updateRate;
+    }
+
+    public List<String> getIncludes() {
+        return includes;
+    }
+
+    public void setIncludes(List<String> includes) {
+        this.includes = includes;
+    }
+
+    public List<String> getExcludes() {
+        return excludes;
+    }
+
+    public void setExcludes(List<String> excludes) {
+        this.excludes = excludes;
     }
 
     @Override

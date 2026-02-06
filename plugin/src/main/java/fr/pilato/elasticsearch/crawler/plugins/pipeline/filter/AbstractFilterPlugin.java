@@ -28,7 +28,7 @@ import fr.pilato.elasticsearch.crawler.plugins.pipeline.AbstractConditionalPlugi
 public abstract class AbstractFilterPlugin extends AbstractConditionalPlugin implements FilterPlugin {
 
     @Override
-    protected String getPluginCategory() {
+    protected String getPluginCategoryLabel() {
         return "Filter";
     }
 }

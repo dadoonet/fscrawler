@@ -551,4 +551,256 @@ public class FsSettingsMigrator {
         if (name == null) return "unknown";
         return name.replaceAll("[^a-zA-Z0-9_-]", "_").toLowerCase();
     }
+
+    // ========== Per-Plugin Configuration Generation (V2 format) ==========
+
+    /**
+     * Directory names for the per-plugin configuration structure.
+     */
+    public static final String SETTINGS_DIR = "_settings";
+    public static final String INPUTS_DIR = "inputs";
+    public static final String FILTERS_DIR = "filters";
+    public static final String OUTPUTS_DIR = "outputs";
+
+    /**
+     * Generates per-plugin configuration files from FsSettings (V1 format).
+     * Creates the directory structure:
+     * <pre>
+     * _settings/
+     *   inputs/
+     *     01-{type}.yaml
+     *   filters/
+     *     01-{type}.yaml
+     *   outputs/
+     *     01-{type}.yaml
+     * </pre>
+     *
+     * @param settings The V1 settings to convert
+     * @return Map of relative file path to YAML content
+     */
+    public static Map<String, String> generatePerPluginFiles(FsSettings settings) {
+        // First migrate to v2 if needed
+        FsSettings v2Settings = settings;
+        if (detectVersion(settings) == VERSION_1) {
+            v2Settings = migrateV1ToV2(settings);
+        }
+
+        Map<String, String> files = new java.util.LinkedHashMap<>();
+
+        // Generate input plugin files
+        if (v2Settings.getInputs() != null) {
+            int index = 1;
+            for (InputSection input : v2Settings.getInputs()) {
+                String filename = String.format("%s/%s/%02d-%s.yaml", 
+                        SETTINGS_DIR, INPUTS_DIR, index, sanitizeFilename(input.getType()));
+                String content = generateInputPluginYaml(input, v2Settings);
+                files.put(filename, content);
+                index++;
+            }
+        }
+
+        // Generate filter plugin files
+        if (v2Settings.getFilters() != null) {
+            int index = 1;
+            for (FilterSection filter : v2Settings.getFilters()) {
+                String filename = String.format("%s/%s/%02d-%s.yaml", 
+                        SETTINGS_DIR, FILTERS_DIR, index, sanitizeFilename(filter.getType()));
+                String content = generateFilterPluginYaml(filter, v2Settings);
+                files.put(filename, content);
+                index++;
+            }
+        }
+
+        // Generate output plugin files
+        if (v2Settings.getOutputs() != null) {
+            int index = 1;
+            for (OutputSection output : v2Settings.getOutputs()) {
+                String filename = String.format("%s/%s/%02d-%s.yaml", 
+                        SETTINGS_DIR, OUTPUTS_DIR, index, sanitizeFilename(output.getType()));
+                String content = generateOutputPluginYaml(output, v2Settings);
+                files.put(filename, content);
+                index++;
+            }
+        }
+
+        return files;
+    }
+
+    /**
+     * Generates YAML content for an input plugin configuration file.
+     */
+    private static String generateInputPluginYaml(InputSection input, FsSettings settings) {
+        StringBuilder yaml = new StringBuilder();
+        yaml.append("# Input plugin configuration\n");
+        yaml.append("version: 1\n");
+        yaml.append("id: \"").append(input.getId()).append("\"\n");
+        yaml.append("type: \"").append(input.getType()).append("\"\n");
+        yaml.append("\n");
+
+        // Add common input settings
+        if (input.getUpdateRate() != null) {
+            yaml.append("update_rate: \"").append(input.getUpdateRate()).append("\"\n");
+        }
+        if (input.getIncludes() != null && !input.getIncludes().isEmpty()) {
+            yaml.append("includes: ").append(formatList(input.getIncludes())).append("\n");
+        }
+        if (input.getExcludes() != null && !input.getExcludes().isEmpty()) {
+            yaml.append("excludes: ").append(formatList(input.getExcludes())).append("\n");
+        }
+        if (input.getTags() != null && !input.getTags().isEmpty()) {
+            yaml.append("tags: ").append(formatList(input.getTags())).append("\n");
+        }
+
+        // Add type-specific settings from rawConfig
+        if (input.getRawConfig() != null && input.getRawConfig().containsKey(input.getType())) {
+            yaml.append("\n# Plugin-specific settings\n");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> typeConfig = (Map<String, Object>) input.getRawConfig().get(input.getType());
+            appendMapAsYaml(yaml, typeConfig, 0);
+        }
+
+        // For local input, add path from fs.url if not in rawConfig
+        if ("local".equals(input.getType()) && settings.getFs() != null && settings.getFs().getUrl() != null) {
+            if (input.getRawConfig() == null || !input.getRawConfig().containsKey("local")) {
+                yaml.append("\n# Path to crawl\n");
+                yaml.append("path: \"").append(settings.getFs().getUrl()).append("\"\n");
+            }
+        }
+
+        // Add follow_symlinks setting from fs if available
+        if (settings.getFs() != null) {
+            yaml.append("follow_symlinks: ").append(settings.getFs().isFollowSymlinks()).append("\n");
+        }
+
+        return yaml.toString();
+    }
+
+    /**
+     * Generates YAML content for a filter plugin configuration file.
+     */
+    private static String generateFilterPluginYaml(FilterSection filter, FsSettings settings) {
+        StringBuilder yaml = new StringBuilder();
+        yaml.append("# Filter plugin configuration\n");
+        yaml.append("version: 1\n");
+        yaml.append("id: \"").append(filter.getId()).append("\"\n");
+        yaml.append("type: \"").append(filter.getType()).append("\"\n");
+
+        if (filter.getWhen() != null) {
+            yaml.append("when: \"").append(filter.getWhen()).append("\"\n");
+        }
+        yaml.append("\n");
+
+        // Add type-specific settings from rawConfig
+        if (filter.getRawConfig() != null && filter.getRawConfig().containsKey(filter.getType())) {
+            yaml.append("# Plugin-specific settings\n");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> typeConfig = (Map<String, Object>) filter.getRawConfig().get(filter.getType());
+            appendMapAsYaml(yaml, typeConfig, 0);
+        }
+
+        // For tika filter, add settings from fs if not in rawConfig
+        if ("tika".equals(filter.getType()) && settings.getFs() != null) {
+            Fs fs = settings.getFs();
+            if (filter.getRawConfig() == null || !filter.getRawConfig().containsKey("tika")) {
+                yaml.append("# Content extraction settings\n");
+                yaml.append("index_content: ").append(fs.isIndexContent()).append("\n");
+                if (fs.getIndexedChars() != null) {
+                    yaml.append("indexed_chars: \"").append(fs.getIndexedChars()).append("\"\n");
+                }
+                yaml.append("lang_detect: ").append(fs.isLangDetect()).append("\n");
+                yaml.append("store_source: ").append(fs.isStoreSource()).append("\n");
+                yaml.append("raw_metadata: ").append(fs.isRawMetadata()).append("\n");
+
+                // OCR settings
+                if (fs.getOcr() != null) {
+                    Ocr ocr = fs.getOcr();
+                    yaml.append("\n# OCR settings\n");
+                    yaml.append("ocr:\n");
+                    yaml.append("  enabled: ").append(ocr.isEnabled()).append("\n");
+                    if (ocr.getLanguage() != null) {
+                        yaml.append("  language: \"").append(ocr.getLanguage()).append("\"\n");
+                    }
+                    if (ocr.getPdfStrategy() != null) {
+                        yaml.append("  pdf_strategy: \"").append(ocr.getPdfStrategy()).append("\"\n");
+                    }
+                    if (ocr.getOutputType() != null) {
+                        yaml.append("  output_type: \"").append(ocr.getOutputType()).append("\"\n");
+                    }
+                }
+            }
+        }
+
+        return yaml.toString();
+    }
+
+    /**
+     * Generates YAML content for an output plugin configuration file.
+     */
+    private static String generateOutputPluginYaml(OutputSection output, FsSettings settings) {
+        StringBuilder yaml = new StringBuilder();
+        yaml.append("# Output plugin configuration\n");
+        yaml.append("version: 1\n");
+        yaml.append("id: \"").append(output.getId()).append("\"\n");
+        yaml.append("type: \"").append(output.getType()).append("\"\n");
+
+        if (output.getWhen() != null) {
+            yaml.append("when: \"").append(output.getWhen()).append("\"\n");
+        }
+        yaml.append("\n");
+
+        // Add type-specific settings from rawConfig
+        if (output.getRawConfig() != null && output.getRawConfig().containsKey(output.getType())) {
+            yaml.append("# Plugin-specific settings\n");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> typeConfig = (Map<String, Object>) output.getRawConfig().get(output.getType());
+            appendMapAsYaml(yaml, typeConfig, 0);
+        }
+
+        // For elasticsearch output, add settings from elasticsearch if not in rawConfig
+        if ("elasticsearch".equals(output.getType()) && settings.getElasticsearch() != null) {
+            Elasticsearch es = settings.getElasticsearch();
+            if (output.getRawConfig() == null || !output.getRawConfig().containsKey("elasticsearch")) {
+                yaml.append("# Elasticsearch connection settings\n");
+                if (es.getUrls() != null && !es.getUrls().isEmpty()) {
+                    yaml.append("urls:\n");
+                    for (String url : es.getUrls()) {
+                        yaml.append("  - \"").append(url).append("\"\n");
+                    }
+                }
+                if (es.getIndex() != null) {
+                    yaml.append("index: \"").append(es.getIndex()).append("\"\n");
+                }
+                if (es.getIndexFolder() != null) {
+                    yaml.append("index_folder: \"").append(es.getIndexFolder()).append("\"\n");
+                }
+                if (es.getApiKey() != null) {
+                    yaml.append("api_key: \"").append(es.getApiKey()).append("\"\n");
+                }
+                if (es.getUsername() != null) {
+                    yaml.append("username: \"").append(es.getUsername()).append("\"\n");
+                }
+                if (es.getPassword() != null) {
+                    yaml.append("password: \"").append(es.getPassword()).append("\"\n");
+                }
+                yaml.append("ssl_verification: ").append(es.isSslVerification()).append("\n");
+                if (es.getCaCertificate() != null) {
+                    yaml.append("ca_certificate: \"").append(es.getCaCertificate()).append("\"\n");
+                }
+                yaml.append("\n# Bulk indexing settings\n");
+                yaml.append("bulk_size: ").append(es.getBulkSize()).append("\n");
+                if (es.getFlushInterval() != null) {
+                    yaml.append("flush_interval: \"").append(es.getFlushInterval()).append("\"\n");
+                }
+                if (es.getByteSize() != null) {
+                    yaml.append("byte_size: \"").append(es.getByteSize()).append("\"\n");
+                }
+                if (es.getPipeline() != null) {
+                    yaml.append("pipeline: \"").append(es.getPipeline()).append("\"\n");
+                }
+                yaml.append("push_templates: ").append(es.isPushTemplates()).append("\n");
+            }
+        }
+
+        return yaml.toString();
+    }
 }

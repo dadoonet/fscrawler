@@ -73,7 +73,7 @@
         <!-- Built-in pipeline plugins -->
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
-            <artifactId>fscrawler-elasticsearch-plugin</artifactId>
+            <artifactId>fscrawler-elasticsearch-output-plugin</artifactId>
         </dependency>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>

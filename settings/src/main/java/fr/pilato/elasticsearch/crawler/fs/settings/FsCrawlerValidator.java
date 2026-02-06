@@ -35,11 +35,14 @@ public class FsCrawlerValidator {
      * @return true if we found fatal errors and should prevent from starting
      */
     public static boolean validateSettings(Logger logger, FsSettings settings) {
-        if (settings.getElasticsearch().getUsername() != null || settings.getElasticsearch().getPassword() != null) {
-            logger.warn("username/password is deprecated. Use apiKey instead.");
+        // V2 format doesn't have elasticsearch settings in global config (they're in plugin config)
+        if (settings.getElasticsearch() != null) {
+            if (settings.getElasticsearch().getUsername() != null || settings.getElasticsearch().getPassword() != null) {
+                logger.warn("username/password is deprecated. Use apiKey instead.");
+            }
         }
 
-        // Checking protocol
+        // Checking protocol (V1 format only)
         if (settings.getServer() != null) {
             if (!Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol()) &&
                     !Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol()) && !Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
@@ -61,36 +64,39 @@ public class FsCrawlerValidator {
             }
         }
 
-        // Checking Checksum Algorithm
-        if (settings.getFs().getChecksum() != null) {
-            try {
-                MessageDigest.getInstance(settings.getFs().getChecksum());
-            } catch (NoSuchAlgorithmException e) {
-                // Non supported protocol
-                logger.error("Algorithm [{}] not found. Disabling crawler", settings.getFs().getChecksum());
+        // V2 format doesn't have fs settings in global config (they're in plugin config)
+        if (settings.getFs() != null) {
+            // Checking Checksum Algorithm
+            if (settings.getFs().getChecksum() != null) {
+                try {
+                    MessageDigest.getInstance(settings.getFs().getChecksum());
+                } catch (NoSuchAlgorithmException e) {
+                    // Non supported protocol
+                    logger.error("Algorithm [{}] not found. Disabling crawler", settings.getFs().getChecksum());
+                    return true;
+                }
+            }
+
+            // Checking That we don't try to do both xml and json
+            if (settings.getFs().isJsonSupport() && settings.getFs().isXmlSupport()) {
+                logger.error("Can not support both xml and json parsing. Disabling crawler");
                 return true;
             }
-        }
 
-        // Checking That we don't try to do both xml and json
-        if (settings.getFs().isJsonSupport() && settings.getFs().isXmlSupport()) {
-            logger.error("Can not support both xml and json parsing. Disabling crawler");
-            return true;
-        }
+            // Checking That we don't try to have xml or json, but we don't want to index their content
+            if ((settings.getFs().isJsonSupport() || settings.getFs().isXmlSupport()) && !settings.getFs().isIndexContent()) {
+                logger.error("Json or Xml indexation is activated but you disabled indexing content which does not make sense. Disabling crawler");
+                return true;
+            }
 
-        // Checking That we don't try to have xml or json, but we don't want to index their content
-        if ((settings.getFs().isJsonSupport() || settings.getFs().isXmlSupport()) && !settings.getFs().isIndexContent()) {
-            logger.error("Json or Xml indexation is activated but you disabled indexing content which does not make sense. Disabling crawler");
-            return true;
-        }
+            // We just warn the user if he is running on Windows but want to get attributes
+            if (OsValidator.WINDOWS && settings.getFs().isAttributesSupport()) {
+                logger.info("attributes_support is set to true but getting group is not available on [{}].", OsValidator.OS);
+            }
 
-        // We just warn the user if he is running on Windows but want to get attributes
-        if (OsValidator.WINDOWS && settings.getFs().isAttributesSupport()) {
-            logger.info("attributes_support is set to true but getting group is not available on [{}].", OsValidator.OS);
-        }
-
-        if (settings.getFs().isAclSupport() && !settings.getFs().isAttributesSupport()) {
-            logger.warn("acl_support is set to true but attributes_support is false. ACL collection is disabled.");
+            if (settings.getFs().isAclSupport() && !settings.getFs().isAttributesSupport()) {
+                logger.warn("acl_support is set to true but attributes_support is false. ACL collection is disabled.");
+            }
         }
 
         return false;

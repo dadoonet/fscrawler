@@ -21,6 +21,10 @@ package fr.pilato.elasticsearch.crawler.plugins.input.local;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.plugin.PluginSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.settings.plugin.PluginSettingsWriter;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.PipelineContext;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.input.AbstractInputPlugin;
@@ -59,7 +63,13 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 public class LocalInputPlugin extends AbstractInputPlugin {
 
     public static final String TYPE = "local";
+    public static final String DEFAULT_YAML_RESOURCE = "/fr/pilato/elasticsearch/crawler/plugins/input/local/local-input-default.yaml";
+    public static final String DEFAULT_PROPERTIES_RESOURCE = "/fr/pilato/elasticsearch/crawler/plugins/input/local/local-input-default.properties";
 
+    // Typed settings for per-plugin configuration
+    private LocalInputSettings settings;
+
+    // Configuration fields (populated from settings or legacy config)
     private String basePath;
     private boolean followSymlinks;
     private boolean aclSupport;
@@ -78,6 +88,126 @@ public class LocalInputPlugin extends AbstractInputPlugin {
     public boolean supportsCrawling() {
         return true;
     }
+
+    // ========== Per-Plugin Configuration (new approach) ==========
+
+    @Override
+    public boolean supportsPerPluginConfig() {
+        return true;
+    }
+
+    @Override
+    public String getDefaultYamlResource() {
+        return DEFAULT_YAML_RESOURCE;
+    }
+
+    @Override
+    public String getDefaultPropertiesResource() {
+        return DEFAULT_PROPERTIES_RESOURCE;
+    }
+
+    @Override
+    public String getDefaultSettingsFilename() {
+        return "01-local.yaml";
+    }
+
+    @Override
+    public String getPluginCategory() {
+        return "inputs";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Local filesystem input configuration";
+    }
+
+    @Override
+    public void loadSettings(Path configFile) throws IOException, FsCrawlerIllegalConfigurationException {
+        logger.debug("Loading local input settings from [{}]", configFile);
+        this.settings = PluginSettingsLoader.load(configFile, LocalInputSettings.class);
+        applySettings();
+    }
+
+    @Override
+    public void saveSettings(Path configFile) throws IOException {
+        if (settings == null) {
+            settings = createSettingsFromCurrentConfig();
+        }
+        logger.debug("Saving local input settings to [{}]", configFile);
+        PluginSettingsWriter.write(settings, configFile);
+    }
+
+    @Override
+    public void migrateFromV1(FsSettings v1Settings) {
+        logger.debug("Migrating local input settings from V1 FsSettings");
+        settings = new LocalInputSettings();
+        settings.setVersion(LocalInputSettings.CURRENT_VERSION);
+        settings.setId(id != null ? id : "default");
+        settings.setType(TYPE);
+
+        if (v1Settings.getFs() != null) {
+            settings.setPath(v1Settings.getFs().getUrl());
+            if (v1Settings.getFs().getUpdateRate() != null) {
+                settings.setUpdateRate(v1Settings.getFs().getUpdateRate().toString());
+            }
+            settings.setIncludes(v1Settings.getFs().getIncludes());
+            settings.setExcludes(v1Settings.getFs().getExcludes());
+            settings.setFollowSymlinks(v1Settings.getFs().isFollowSymlinks());
+            settings.setAclSupport(v1Settings.getFs().isAclSupport());
+            settings.setAttributesSupport(v1Settings.getFs().isAttributesSupport());
+        }
+
+        applySettings();
+    }
+
+    /**
+     * Applies the loaded settings to the plugin's internal state.
+     */
+    private void applySettings() {
+        this.id = settings.getId();
+        this.basePath = settings.getPath();
+        this.followSymlinks = settings.getFollowSymlinks() != null ? settings.getFollowSymlinks() : false;
+        this.aclSupport = settings.getAclSupport() != null ? settings.getAclSupport() : false;
+        this.attributesSupport = settings.getAttributesSupport() != null ? settings.getAttributesSupport() : false;
+
+        // Apply common input settings to parent
+        if (settings.getUpdateRate() != null) {
+            setUpdateRate(settings.getUpdateRate());
+        }
+        if (settings.getIncludes() != null) {
+            setIncludes(settings.getIncludes());
+        }
+        if (settings.getExcludes() != null) {
+            setExcludes(settings.getExcludes());
+        }
+        if (settings.getTags() != null) {
+            setTags(settings.getTags());
+        }
+
+        logger.debug("Local input plugin [{}] configured with path [{}]", id, basePath);
+    }
+
+    /**
+     * Creates a settings object from the current plugin configuration.
+     * Useful for saveSettings() when settings were loaded via legacy configure().
+     */
+    private LocalInputSettings createSettingsFromCurrentConfig() {
+        LocalInputSettings s = new LocalInputSettings();
+        s.setVersion(LocalInputSettings.CURRENT_VERSION);
+        s.setId(id);
+        s.setType(TYPE);
+        s.setPath(basePath);
+        s.setUpdateRate(getUpdateRate());
+        s.setIncludes(getIncludes());
+        s.setExcludes(getExcludes());
+        s.setTags(getTags());
+        s.setFollowSymlinks(followSymlinks);
+        s.setAclSupport(aclSupport);
+        s.setAttributesSupport(attributesSupport);
+        return s;
+    }
+
+    // ========== Legacy Configuration (backward compatibility) ==========
 
     @Override
     protected void configureTypeSpecific(Map<String, Object> typeConfig) {
@@ -103,10 +233,12 @@ public class LocalInputPlugin extends AbstractInputPlugin {
         logger.debug("Local input plugin [{}] configured with path [{}]", id, basePath);
     }
 
+    // ========== Validation ==========
+
     @Override
     public void validateConfiguration() throws FsCrawlerPluginException {
         if (basePath == null || basePath.isEmpty()) {
-            throw new FsCrawlerPluginException("Local input plugin requires 'local.path' to be configured");
+            throw new FsCrawlerPluginException("Local input plugin requires 'path' to be configured");
         }
 
         Path path = Paths.get(basePath);
@@ -115,6 +247,14 @@ public class LocalInputPlugin extends AbstractInputPlugin {
         }
 
         logger.debug("Local input plugin [{}] configuration validated", id);
+    }
+
+    /**
+     * Returns the typed settings for this plugin.
+     * @return the settings, or null if not loaded via per-plugin config
+     */
+    public LocalInputSettings getSettings() {
+        return settings;
     }
 
     // ========== Crawling methods ==========

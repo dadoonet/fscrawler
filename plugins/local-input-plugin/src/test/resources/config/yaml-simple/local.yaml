@@ -1,0 +1,5 @@
+# Simple local input plugin configuration
+version: 1
+id: test-local-input
+type: local
+path: /data/documents

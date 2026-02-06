@@ -1,0 +1,48 @@
+# Tika Filter Plugin Configuration
+# This plugin extracts content and metadata from documents using Apache Tika.
+
+# Plugin identification (required)
+version: 1
+id: "tika_filter"
+type: "tika"
+
+# Index the extracted text content
+#index_content: true
+
+# Maximum characters to index from content
+# Can be a number (e.g., 10000) or a percentage (e.g., "0.5" for 50%)
+#indexed_chars: "100000"
+
+# Detect document language automatically
+#lang_detect: false
+
+# Store the original file as base64 in the index (WARNING: increases index size significantly)
+#store_source: false
+
+# Keep raw metadata field names without normalization
+#raw_metadata: false
+
+# Compute and store file checksum (requires index_content: true)
+#checksum: "MD5"
+
+# Path to external Tika configuration file
+#tika_config_path: "/path/to/tika-config.xml"
+
+# OCR (Optical Character Recognition) settings
+#ocr:
+  # Enable OCR for images and scanned documents
+  #enabled: true
+  # Language for OCR (e.g., "eng", "fra", "deu")
+  #language: "eng"
+  # Path to Tesseract binary (if not in PATH)
+  #path: "/path/to/tesseract"
+  # Path to Tesseract tessdata directory
+  #data_path: "/path/to/tessdata"
+  # Output type: "txt" or "hocr"
+  #output_type: "txt"
+  # PDF strategy: "auto", "no_ocr", "ocr_only", "ocr_and_text"
+  #pdf_strategy: "ocr_and_text"
+  # Page segmentation mode (0-13)
+  #page_seg_mode: 1
+  # Preserve spacing between words
+  #preserve_interword_spacing: false

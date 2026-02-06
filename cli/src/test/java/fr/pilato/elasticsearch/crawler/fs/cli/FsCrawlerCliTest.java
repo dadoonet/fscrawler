@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfiguratio
 import fr.pilato.elasticsearch.crawler.fs.settings.Defaults;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.settings.GlobalSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -203,7 +204,14 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
 
         Path jobDir = metadataDir.resolve(jobName);
         assertThat(jobDir).exists();
-        assertThat(jobDir.resolve(SETTINGS_YAML)).exists();
+        
+        // V2 setup creates _settings/ directory structure
+        Path settingsDir = jobDir.resolve(GlobalSettings.SETTINGS_DIR);
+        assertThat(settingsDir).exists();
+        assertThat(settingsDir.resolve(GlobalSettings.GLOBAL_SETTINGS_YAML)).exists();
+        assertThat(settingsDir.resolve(GlobalSettings.INPUTS_DIR)).exists();
+        assertThat(settingsDir.resolve(GlobalSettings.FILTERS_DIR)).exists();
+        assertThat(settingsDir.resolve(GlobalSettings.OUTPUTS_DIR)).exists();
     }
 
     @Test

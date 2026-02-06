@@ -1,0 +1,22 @@
+# FSCrawler Global Settings (V2 format)
+# This file contains global settings shared across all plugins.
+
+# Settings format version (required for V2)
+version: 2
+
+# The name of the job. Used as prefix for Elasticsearch indices.
+name: "${JOB_NAME}"
+
+# Metadata tags configuration
+#tags:
+  # Filename for per-directory metadata (default: .meta.yml)
+  #meta_filename: ".meta.yml"
+  # Path to a static metadata file applied to all documents
+  #static_meta_filename: "/path/to/meta_tags.json"
+
+# REST API configuration (only used when started with --rest option)
+#rest:
+  # The URL FSCrawler will listen to
+  #url: "http://127.0.0.1:8080"
+  # Enable Cross-Origin Resource Sharing
+  #enable_cors: false

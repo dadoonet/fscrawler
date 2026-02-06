@@ -1,0 +1,5 @@
+# Wrong configuration - type doesn't match
+version: 1
+id: wrong-tika
+type: wrong_type
+index_content: true

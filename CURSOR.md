@@ -95,6 +95,9 @@ elasticsearch:
 # Clean build without tests (fastest)
 mvn clean package -DskipTests
 
+# Clean build skipping tests and Docker image creation
+mvn clean install -DskipTests -Ddocker.skip
+
 # Build with unit tests only
 mvn clean install -DskipIntegTests
 
@@ -104,6 +107,12 @@ mvn clean install -Pes-8x -DskipIntegTests
 # Run a single test
 mvn test -pl integration-tests -Dtest=ClassName#methodName
 ```
+
+### Useful Build Options
+- `-DskipTests` - Skip all tests
+- `-Ddocker.skip` - Skip Docker image creation (faster builds)
+- `-DskipIntegTests` - Skip integration tests only
+- `-q` - Quiet mode (less output)
 
 ## Testing
 
@@ -143,16 +152,23 @@ As a final verification step, build the full distribution and test it manually:
 # 1. Build the distribution (skip tests for speed)
 mvn install -DskipTests -Ddocker.skip
 
-# 2. Unzip the distribution
-cd distribution/target
+# 2. Unzip the distribution (re-extract if already exists)
+cd ~/IdeaProjects/fscrawler/distribution/target
+rm -rf fscrawler-distribution-2.10-SNAPSHOT
 unzip fscrawler-distribution-2.10-SNAPSHOT.zip
 cd fscrawler-distribution-2.10-SNAPSHOT
 
-# 3. Run FSCrawler with debug logging
-FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler --config_dir config
+# 3. Create a new job with --setup
+FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler --config_dir config --setup my_job
 
-# Or with a specific job name
-FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler my_job --config_dir config
+# 4. Run FSCrawler with debug logging
+FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler --config_dir config my_job
+
+# 5. Run with environment variable overrides (e.g., disable SSL verification)
+FS_JAVA_OPTS="-DLOG_LEVEL=debug" FSCRAWLER_ELASTICSEARCH_SSL_VERIFICATION=false bin/fscrawler --config_dir config my_job
+
+# 6. Run default job (uses "fscrawler" as job name if not specified)
+FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler --config_dir config
 ```
 
 This is the ultimate test to verify the build works correctly as it would for an end user.

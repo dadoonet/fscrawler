@@ -1,0 +1,40 @@
+# Elasticsearch Output Plugin Configuration
+# This plugin sends crawled documents to Elasticsearch.
+
+# Elasticsearch settings
+elasticsearch:
+  # Elasticsearch connection URLs
+  #nodes:
+  #  - url: "https://127.0.0.1:9200"
+
+  # Index name for documents (defaults to {job_name}_docs)
+  index: "${name}_docs"
+
+  # Index name for folders (defaults to {job_name}_folder)
+  index_folder: "${name}_folder"
+
+  # Authentication
+  # API key is preferred over username/password
+  #api_key: "YOUR_API_KEY@{secret}"
+
+  # Path to CA certificate for SSL verification with self-signed certs
+  #ssl_verification: true
+
+  # Bulk indexing settings
+  # Number of documents per bulk request
+  #bulk_size: 100
+
+  # Maximum time between bulk flushes
+  #flush_interval: "5s"
+
+  # Maximum size of bulk request in bytes
+  #byte_size: "10mb"
+
+  # Ingest pipeline to process documents
+  #pipeline: "my_pipeline"
+
+  # Create/update index templates on startup
+  #push_templates: true
+
+  # Enable semantic search (requires Elasticsearch 8.17+ with enterprise license)
+  #semantic_search: true

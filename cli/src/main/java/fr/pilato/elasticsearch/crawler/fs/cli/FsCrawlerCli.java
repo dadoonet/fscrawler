@@ -39,12 +39,15 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 
+import fr.pilato.elasticsearch.crawler.plugins.pipeline.PipelinePluginsManager;
+
 import java.io.Console;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -93,19 +96,16 @@ public class FsCrawlerCli {
         @Parameter(names = "--upgrade", description = "Upgrade elasticsearch indices from one old version to the last version.")
         boolean upgrade = false;
 
-        @Parameter(names = "--setup", description = "Setup FSCrawler and associated services for a given job name.")
+        @Parameter(names = "--setup", description = "Setup FSCrawler with V2 per-plugin configuration. " +
+                "Creates _settings/ directory with global settings and one config file per plugin.")
         boolean setup = false;
 
         @Parameter(names = "--list", description = "List FSCrawler jobs if any.")
         boolean list = false;
 
-        @Parameter(names = "--migrate", description = "Migrate a job configuration from v1 to v2 pipeline format.")
+        @Parameter(names = "--migrate", description = "Migrate a job configuration from v1 to v2 per-plugin format. " +
+                "Creates separate config files for each plugin in _settings/inputs/, _settings/filters/, _settings/outputs/.")
         boolean migrate = false;
-
-        @Parameter(names = "--migrate-output", description = "Output path for migrated configuration (use with --migrate). " +
-                "If path is an existing directory, writes split files. If path is an existing file, overwrites it. " +
-                "If path doesn't exist, creates '_settings/' directory. Default: '_settings/' directory.")
-        String migrateOutput = null;
 
         @Parameter(names = "--migrate-keep-old-files", description = "Keep old configuration files after migration (use with --migrate).")
         boolean migrateKeepOldFiles = false;
@@ -220,23 +220,90 @@ public class FsCrawlerCli {
     }
 
     /**
-     * Create a job if needed
+     * Create a job if needed (V2 format with per-plugin settings).
+     * Creates the following structure:
+     * <pre>
+     *   config/{jobName}/_settings/
+     *     01-global.yaml
+     *     inputs/
+     *       01-local.yaml
+     *     filters/
+     *       01-tika.yaml
+     *     outputs/
+     *       01-elasticsearch.yaml
+     * </pre>
      * @param jobName the job name
      * @param configDir the config dir
+     * @param pluginsManager the plugins manager for discovering available plugins
+     * @return list of created plugin descriptions for display
      * @throws IOException In case of IO problem
      */
-    static void createJob(String jobName, Path configDir) throws IOException {
+    static List<String> createJob(String jobName, Path configDir, PipelinePluginsManager pluginsManager) throws IOException {
+        List<String> createdFiles = new ArrayList<>();
         Path configJobDir = configDir.resolve(jobName);
-        Files.createDirectories(configJobDir);
-        Path configFile = configJobDir.resolve(FsSettingsLoader.SETTINGS_YAML);
-
-        if (Files.exists(configFile)) {
-            logger.debug("Job [{}] already exists, skipping creation", jobName);
-        } else {
-            // Write the example config files from the classpath FsSettingsLoader.EXAMPLE_SETTINGS
-            logger.debug("Creating [{}] from the classloader [{}] file.", configFile, FsSettingsLoader.EXAMPLE_SETTINGS);
-            copyResourceFile(FsSettingsLoader.EXAMPLE_SETTINGS, configFile);
+        Path settingsDir = configJobDir.resolve(GlobalSettings.SETTINGS_DIR);
+        
+        // Check if job already exists (either V1 or V2 format)
+        if (Files.exists(settingsDir)) {
+            logger.debug("Job [{}] already exists (V2 format), skipping creation", jobName);
+            return createdFiles;
         }
+        Path oldConfigFile = configJobDir.resolve(FsSettingsLoader.SETTINGS_YAML);
+        if (Files.exists(oldConfigFile)) {
+            logger.debug("Job [{}] already exists (V1 format), skipping creation", jobName);
+            return createdFiles;
+        }
+        
+        // Create directory structure
+        Files.createDirectories(settingsDir.resolve(GlobalSettings.INPUTS_DIR));
+        Files.createDirectories(settingsDir.resolve(GlobalSettings.FILTERS_DIR));
+        Files.createDirectories(settingsDir.resolve(GlobalSettings.OUTPUTS_DIR));
+        
+        // Create global settings file (replace ${JOB_NAME} placeholder with actual job name)
+        Path globalSettingsFile = settingsDir.resolve(GlobalSettings.GLOBAL_SETTINGS_YAML);
+        logger.debug("Creating global settings from the classloader [{}] file.", GlobalSettings.EXAMPLE_SETTINGS);
+        String globalContent = readResourceFileAsString(GlobalSettings.EXAMPLE_SETTINGS);
+        globalContent = globalContent.replace("${JOB_NAME}", jobName);
+        Files.writeString(globalSettingsFile, globalContent);
+        createdFiles.add("01-global.yaml : Global settings (job name, REST API)");
+        
+        // Create input plugin settings from discovered plugins
+        for (var plugin : pluginsManager.getDefaultInputPlugins()) {
+            String filename = plugin.getDefaultSettingsFilename();
+            String resource = plugin.getDefaultYamlResource();
+            if (filename != null && resource != null) {
+                Path targetFile = settingsDir.resolve(GlobalSettings.INPUTS_DIR).resolve(filename);
+                logger.debug("Creating input settings from plugin [{}] using resource [{}]", plugin.getType(), resource);
+                copyResourceFile(resource, targetFile);
+                createdFiles.add("inputs/" + filename + " : " + plugin.getDescription());
+            }
+        }
+        
+        // Create filter plugin settings from discovered plugins
+        for (var plugin : pluginsManager.getDefaultFilterPlugins()) {
+            String filename = plugin.getDefaultSettingsFilename();
+            String resource = plugin.getDefaultYamlResource();
+            if (filename != null && resource != null) {
+                Path targetFile = settingsDir.resolve(GlobalSettings.FILTERS_DIR).resolve(filename);
+                logger.debug("Creating filter settings from plugin [{}] using resource [{}]", plugin.getType(), resource);
+                copyResourceFile(resource, targetFile);
+                createdFiles.add("filters/" + filename + " : " + plugin.getDescription());
+            }
+        }
+        
+        // Create output plugin settings from discovered plugins
+        for (var plugin : pluginsManager.getDefaultOutputPlugins()) {
+            String filename = plugin.getDefaultSettingsFilename();
+            String resource = plugin.getDefaultYamlResource();
+            if (filename != null && resource != null) {
+                Path targetFile = settingsDir.resolve(GlobalSettings.OUTPUTS_DIR).resolve(filename);
+                logger.debug("Creating output settings from plugin [{}] using resource [{}]", plugin.getType(), resource);
+                copyResourceFile(resource, targetFile);
+                createdFiles.add("outputs/" + filename + " : " + plugin.getDescription());
+            }
+        }
+        
+        return createdFiles;
     }
 
     static void runner(FsCrawlerCommand command) throws IOException {
@@ -283,8 +350,8 @@ public class FsCrawlerCli {
         }
 
         if (command.migrate) {
-            // We are in migrate mode. We read the v1 configuration and output v2 format.
-            migrateConfiguration(configDir, jobName, command.migrateOutput, command.silent, command.migrateKeepOldFiles);
+            // We are in migrate mode. We read the v1 configuration and output v2 per-plugin format.
+            migrateConfiguration(configDir, jobName, command.silent, command.migrateKeepOldFiles);
             return;
         }
 
@@ -322,7 +389,10 @@ public class FsCrawlerCli {
             return;
         }
 
-        if (fsSettings.getElasticsearch().getUsername() != null && fsSettings.getElasticsearch().getPassword() == null && scanner != null) {
+        // For V1 format, check if user needs to provide password
+        if (fsSettings.getElasticsearch() != null &&
+                fsSettings.getElasticsearch().getUsername() != null && 
+                fsSettings.getElasticsearch().getPassword() == null && scanner != null) {
             logger.fatal("We don't support reading elasticsearch password from the command line anymore. " +
                     "Please use either FS_JAVA_OPTS=\"-Delasticsearch.password=YOUR_PASS\" or set the env variable as " +
                     "follows: FSCRAWLER_ELASTICSEARCH_PASSWORD=YOUR_PASS.");
@@ -389,22 +459,41 @@ public class FsCrawlerCli {
 
     private static void setup(Path configDir, String jobName) throws IOException {
         logger.debug("Entering setup mode for [{}]...", jobName);
-        createJob(jobName, configDir);
-
-        FSCrawlerLogger.console("You can edit the settings in [{}]. Then, you can run again fscrawler " +
-                        "without the --setup option.",
-                configDir.resolve(jobName).resolve(FsSettingsLoader.SETTINGS_YAML));
+        
+        // Load plugins to discover available plugin types
+        PipelinePluginsManager pluginsManager = new PipelinePluginsManager();
+        pluginsManager.loadPlugins();
+        pluginsManager.startPlugins();
+        
+        try {
+            List<String> createdFiles = createJob(jobName, configDir, pluginsManager);
+            
+            if (createdFiles.isEmpty()) {
+                FSCrawlerLogger.console("Job [{}] already exists. No files created.", jobName);
+                return;
+            }
+            
+            Path settingsDir = configDir.resolve(jobName).resolve(GlobalSettings.SETTINGS_DIR);
+            FSCrawlerLogger.console("Created job settings in [{}]:", settingsDir);
+            for (String fileDesc : createdFiles) {
+                FSCrawlerLogger.console("  - {}", fileDesc);
+            }
+            FSCrawlerLogger.console("");
+            FSCrawlerLogger.console("Edit these files to configure your crawler, then run 'fscrawler %s'.", jobName);
+        } finally {
+            pluginsManager.close();
+        }
     }
 
-    private static void migrateConfiguration(Path configDir, String jobName, String outputFile, 
+    private static void migrateConfiguration(Path configDir, String jobName,
                                               boolean silent, boolean keepOldFiles) throws IOException {
         logger.debug("Entering migrate mode for [{}]...", jobName);
         
-        // Step 1: Read and parse current configuration
+        // Step 1: Read and parse current configuration (without auto-migration)
         FsSettings fsSettings;
         Path jobDir = configDir.resolve(jobName);
         try {
-            fsSettings = new FsSettingsLoader(configDir).read(jobName);
+            fsSettings = new FsSettingsLoader(configDir).read(jobName, false);
             if (fsSettings.getName() == null) {
                 fsSettings.setName(jobName);
             }
@@ -413,58 +502,29 @@ public class FsCrawlerCli {
             throw e;
         }
         
-        // Check if already v2
-        int version = FsSettingsMigrator.detectVersion(fsSettings);
-        if (version == FsSettingsMigrator.VERSION_2) {
-            FSCrawlerLogger.console("Job [{}] is already using v2 pipeline format. No migration needed.", jobName);
+        // Check if already v2 (per-plugin format)
+        Path settingsDir = jobDir.resolve(FsSettingsMigrator.SETTINGS_DIR);
+        if (Files.exists(settingsDir) && Files.isDirectory(settingsDir)) {
+            FSCrawlerLogger.console("Job [{}] already has a _settings/ directory. No migration needed.", jobName);
             return;
         }
         
-        // Detect existing configuration files
+        // Detect existing configuration files (v1 format)
         Path existingYaml = jobDir.resolve(FsSettingsLoader.SETTINGS_YAML);
         Path existingJson = jobDir.resolve(FsSettingsLoader.SETTINGS_JSON);
-        Path existingDir = jobDir.resolve(FsSettingsLoader.SETTINGS_DIR);
         
         List<Path> oldFiles = new java.util.ArrayList<>();
         if (Files.exists(existingYaml)) oldFiles.add(existingYaml);
         if (Files.exists(existingJson)) oldFiles.add(existingJson);
-        if (Files.isDirectory(existingDir)) oldFiles.add(existingDir);
         
-        // Perform the migration
-        FsSettings v2Settings = FsSettingsMigrator.migrateV1ToV2(fsSettings);
-        
-        // Determine output path and type (split directory or single file)
-        Path outputPath;
-        boolean isSplitOutput;
-        
-        if (outputFile == null) {
-            // Default: create _settings directory
-            outputPath = jobDir.resolve(FsSettingsLoader.SETTINGS_DIR);
-            isSplitOutput = true;
-        } else {
-            // Resolve the provided path
-            outputPath = Paths.get(outputFile);
-            if (!outputPath.isAbsolute()) {
-                outputPath = jobDir.resolve(outputFile);
-            }
-            
-            if (Files.exists(outputPath)) {
-                // Path exists: check if directory or file
-                isSplitOutput = Files.isDirectory(outputPath);
-            } else {
-                // Path doesn't exist: create as directory (split output)
-                outputPath = jobDir.resolve(FsSettingsLoader.SETTINGS_DIR);
-                isSplitOutput = true;
-            }
+        if (oldFiles.isEmpty()) {
+            FSCrawlerLogger.console("No configuration files found for job [{}].", jobName);
+            return;
         }
         
-        // Generate the new configuration content
-        Map<String, String> newFiles;
-        if (isSplitOutput) {
-            newFiles = FsSettingsMigrator.generateV2SplitFiles(v2Settings);
-        } else {
-            newFiles = Map.of(outputPath.getFileName().toString(), FsSettingsMigrator.generateV2Yaml(v2Settings));
-        }
+        // Generate per-plugin configuration files (v2 format)
+        Path outputPath = jobDir.resolve(FsSettingsMigrator.SETTINGS_DIR);
+        Map<String, String> newFiles = FsSettingsMigrator.generatePerPluginFiles(fsSettings);
         
         // Step 2: Display what will be done (unless silent)
         if (!silent) {
@@ -473,7 +533,7 @@ public class FsCrawlerCli {
             FSCrawlerLogger.console("");
             
             // Show files to be created
-            FSCrawlerLogger.console("Files to be CREATED in [{}]:", isSplitOutput ? outputPath : outputPath.getParent());
+            FSCrawlerLogger.console("Files to be CREATED in [{}]:", outputPath);
             for (Map.Entry<String, String> entry : newFiles.entrySet()) {
                 FSCrawlerLogger.console("");
                 FSCrawlerLogger.console("--- {} ---", entry.getKey());
@@ -485,11 +545,7 @@ public class FsCrawlerCli {
             if (!oldFiles.isEmpty() && !keepOldFiles) {
                 FSCrawlerLogger.console("Files to be DELETED:");
                 for (Path oldFile : oldFiles) {
-                    if (Files.isDirectory(oldFile)) {
-                        FSCrawlerLogger.console("  - {}/ (directory)", oldFile.getFileName());
-                    } else {
-                        FSCrawlerLogger.console("  - {}", oldFile.getFileName());
-                    }
+                    FSCrawlerLogger.console("  - {}", oldFile.getFileName());
                 }
                 FSCrawlerLogger.console("");
             } else if (keepOldFiles) {
@@ -506,19 +562,15 @@ public class FsCrawlerCli {
         }
         
         // Step 4: Create new files
-        if (isSplitOutput) {
-            Files.createDirectories(outputPath);
-            for (Map.Entry<String, String> entry : newFiles.entrySet()) {
-                Path filePath = outputPath.resolve(entry.getKey());
-                Files.writeString(filePath, entry.getValue());
-                if (!silent) {
-                    FSCrawlerLogger.console("  Created: {}", filePath);
-                }
+        for (Map.Entry<String, String> entry : newFiles.entrySet()) {
+            Path filePath = outputPath.resolve(entry.getKey());
+            // Create parent directories if needed (for per-plugin format with subdirs)
+            if (filePath.getParent() != null) {
+                Files.createDirectories(filePath.getParent());
             }
-        } else {
-            Files.writeString(outputPath, newFiles.values().iterator().next());
+            Files.writeString(filePath, entry.getValue());
             if (!silent) {
-                FSCrawlerLogger.console("  Created: {}", outputPath);
+                FSCrawlerLogger.console("  Created: {}", filePath);
             }
         }
         
