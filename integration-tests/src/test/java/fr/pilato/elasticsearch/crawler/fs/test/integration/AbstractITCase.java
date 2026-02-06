@@ -618,6 +618,50 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     /**
+     * Creates test settings in legacy v1 format (no inputs/filters/outputs).
+     * Used by pipeline V2 tests that need to assert version detection or v1→v2 migration.
+     * For actually running the crawler with v1-style config, migrate to v2 and call
+     * {@link #syncElasticsearchConfigToOutputSections(FsSettings)} before starting.
+     */
+    protected FsSettings createV1TestSettings() {
+        return createV1TestSettings(getCrawlerName());
+    }
+
+    /**
+     * Creates test settings in legacy v1 format (no inputs/filters/outputs) for the given job name.
+     */
+    protected FsSettings createV1TestSettings(String name) {
+        FsSettings fsSettings = FsSettingsLoader.load(false);
+        fsSettings.setName(name);
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(5));
+        fsSettings.getFs().setUrl(currentTestResourceDir.toString());
+
+        Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
+        fsSettings.setElasticsearch(elasticsearch);
+        fsSettings.getElasticsearch().setIndex(name + INDEX_SUFFIX_DOCS);
+        fsSettings.getElasticsearch().setIndexFolder(name + INDEX_SUFFIX_FOLDER);
+        fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
+        fsSettings.getElasticsearch().setSemanticSearch(false);
+        return fsSettings;
+    }
+
+    /**
+     * Applies the test cluster Elasticsearch connection (URL, CA cert, apiKey, etc.) to the given
+     * settings and syncs it into V2 output sections. Use this when you loaded settings from a file
+     * (e.g. v1 YAML) and need the crawler to connect to the test cluster with the correct certificate.
+     */
+    protected void applyTestElasticsearchConnection(FsSettings fsSettings) {
+        Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
+        String name = fsSettings.getName();
+        elasticsearch.setIndex(name + INDEX_SUFFIX_DOCS);
+        elasticsearch.setIndexFolder(name + INDEX_SUFFIX_FOLDER);
+        elasticsearch.setFlushInterval(TimeValue.timeValueSeconds(1));
+        elasticsearch.setSemanticSearch(false);
+        fsSettings.setElasticsearch(elasticsearch);
+        syncElasticsearchConfigToOutputSections(fsSettings);
+    }
+
+    /**
      * Syncs Elasticsearch connection settings (URL, apiKey, caCertificate, etc.) from
      * {@link FsSettings#getElasticsearch()} into V2 output sections' rawConfig so the
      * pipeline plugin uses the TestContainers URL instead of defaults from migration.
