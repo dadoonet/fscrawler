@@ -24,7 +24,6 @@ import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.*;
-import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.*;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +50,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static org.awaitility.Awaitility.await;
@@ -63,7 +64,6 @@ public class FsCrawlerCli {
     private static final Duration CLOSE_POLLING_WAIT_TIME = Duration.ofMillis(100);
 
     private static final Logger logger = LogManager.getLogger();
-    private static RestServer restServer;
 
     @SuppressWarnings("CanBeFinal")
     public static class FsCrawlerCommand {
@@ -90,7 +90,8 @@ public class FsCrawlerCli {
                 "This does not clean elasticsearch indices.")
         boolean restart = false;
 
-        @Parameter(names = "--rest", description = "Start REST Layer")
+        @Deprecated
+        @Parameter(names = "--rest", description = "Deprecated and ignored. Enable REST via enabled: true in _settings/services/01-rest.yaml; the rest-service-plugin will start the server.")
         boolean rest = false;
 
         @Parameter(names = "--upgrade", description = "Upgrade elasticsearch indices from one old version to the last version.")
@@ -412,7 +413,7 @@ public class FsCrawlerCli {
 
         // For V1 format, check if user needs to provide password
         if (fsSettings.getElasticsearch() != null &&
-                fsSettings.getElasticsearch().getUsername() != null && 
+                fsSettings.getElasticsearch().getUsername() != null &&
                 fsSettings.getElasticsearch().getPassword() == null && scanner != null) {
             logger.fatal("We don't support reading elasticsearch password from the command line anymore. " +
                     "Please use either FS_JAVA_OPTS=\"-Delasticsearch.password=YOUR_PASS\" or set the env variable as " +
@@ -435,7 +436,15 @@ public class FsCrawlerCli {
         pluginsManager.loadPlugins();
         pluginsManager.startPlugins();
 
-        try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, command.loop, command.rest)) {
+        if (command.rest) {
+            logger.warn("--rest is deprecated and will be removed in the future. " +
+                    "Please enable REST via enabled: true in _settings/services/01-rest.yaml or " +
+                    "use FS_JAVA_OPTS=\"-Drest.enabled=true\" or set the env variable as " +
+                    "follows: FSCRAWLER_REST_ENABLED=true");
+            // TODO We need to force enable the rest plugin
+        }
+
+        try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, command.loop)) {
             // Let see if we want to upgrade an existing cluster to the latest version
             if (command.upgrade) {
                 logger.info("Upgrading job [{}]. No rule implemented. Skipping.", jobName);
@@ -444,14 +453,8 @@ public class FsCrawlerCli {
                     return;
                 }
 
-                // Start the REST Server if needed
-                if (command.rest) {
-                    restServer = new RestServer(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService(), pluginsManager);
-                    restServer.start();
-                }
-
                 // We add a shutdown hook to stop the crawler and all the related services
-                Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler, pluginsManager, restServer));
+                Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler, pluginsManager));
 
                 // We just have to wait until the process is stopped
                 await()
@@ -478,15 +481,23 @@ public class FsCrawlerCli {
         }
     }
 
+    private static String formatPluginListWithStatus(Set<String> types, boolean defaultEnabled) {
+        String suffix = defaultEnabled ? " ✅" : " ❌";
+        return types.stream()
+                .sorted()
+                .map(type -> type + suffix)
+                .collect(Collectors.joining(", "));
+    }
+
     private static void listPlugins() {
         try (PipelinePluginsManager manager = new PipelinePluginsManager()) {
             manager.loadPlugins();
             manager.startPlugins();
             FSCrawlerLogger.console("Discovered plugins:");
-            FSCrawlerLogger.console("  Inputs:   {}", String.join(", ", manager.getAvailableInputTypes()));
-            FSCrawlerLogger.console("  Filters: {}", String.join(", ", manager.getAvailableFilterTypes()));
-            FSCrawlerLogger.console("  Outputs: {}", String.join(", ", manager.getAvailableOutputTypes()));
-            FSCrawlerLogger.console("  Services: {} (enable in _settings/services/*.yaml)", String.join(", ", manager.getAvailableServiceTypes()));
+            FSCrawlerLogger.console("  Inputs:   {}", formatPluginListWithStatus(manager.getAvailableInputTypes(), true));
+            FSCrawlerLogger.console("  Filters: {}", formatPluginListWithStatus(manager.getAvailableFilterTypes(), true));
+            FSCrawlerLogger.console("  Outputs: {}", formatPluginListWithStatus(manager.getAvailableOutputTypes(), true));
+            FSCrawlerLogger.console("  Services: {}", formatPluginListWithStatus(manager.getAvailableServiceTypes(), false));
         }
     }
 

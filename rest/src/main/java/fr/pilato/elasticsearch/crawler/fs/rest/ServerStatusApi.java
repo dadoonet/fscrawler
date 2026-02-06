@@ -30,6 +30,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Root resource (exposed at "/" path)
@@ -39,10 +40,16 @@ public class ServerStatusApi extends RestApi {
 
     private final FsCrawlerManagementService managementService;
     private final FsSettings settings;
+    private final Map<String, String> pluginStatus;
 
     ServerStatusApi(FsCrawlerManagementService managementService, FsSettings settings) {
+        this(managementService, settings, null);
+    }
+
+    ServerStatusApi(FsCrawlerManagementService managementService, FsSettings settings, Map<String, String> pluginStatus) {
         this.managementService = managementService;
         this.settings = settings;
+        this.pluginStatus = pluginStatus;
     }
 
     @GET
@@ -53,6 +60,9 @@ public class ServerStatusApi extends RestApi {
         status.setElasticsearch(managementService.getVersion());
         status.setOk(true);
         status.setSettings(settings);
+        if (pluginStatus != null) {
+            status.setPlugins(pluginStatus);
+        }
         return status;
     }
 

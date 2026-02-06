@@ -32,6 +32,7 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
 import java.net.URI;
+import java.util.Map;
 
 public class RestServer implements AutoCloseable {
     private static final Logger logger = LogManager.getLogger();
@@ -39,6 +40,7 @@ public class RestServer implements AutoCloseable {
     private final FsCrawlerManagementService managementService;
     private final FsCrawlerDocumentService documentService;
     private final FsCrawlerPluginsManager pluginsManager;
+    private final Map<String, String> pluginStatus;
     private HttpServer httpServer = null;
 
     /**
@@ -52,10 +54,23 @@ public class RestServer implements AutoCloseable {
                       FsCrawlerManagementService managementService,
                       FsCrawlerDocumentService documentService,
                       FsCrawlerPluginsManager pluginsManager) {
+        this(settings, managementService, documentService, pluginsManager, null);
+    }
+
+    /**
+     * Create the Rest Server with optional plugin status for the status API.
+     * @param pluginStatus Optional map with keys "inputs", "filters", "outputs", "services" (e.g. "local ✅", "rest ❌"); null to omit from status
+     */
+    public RestServer(FsSettings settings,
+                      FsCrawlerManagementService managementService,
+                      FsCrawlerDocumentService documentService,
+                      FsCrawlerPluginsManager pluginsManager,
+                      Map<String, String> pluginStatus) {
         this.settings = settings;
         this.managementService = managementService;
         this.documentService = documentService;
         this.pluginsManager = pluginsManager;
+        this.pluginStatus = pluginStatus;
     }
 
     /**
@@ -68,7 +83,7 @@ public class RestServer implements AutoCloseable {
             // in fr.pilato.elasticsearch.crawler.fs.rest package
             final ResourceConfig rc = new ResourceConfig()
                     .registerInstances(
-                            new ServerStatusApi(managementService, settings),
+                            new ServerStatusApi(managementService, settings, pluginStatus),
                             new DocumentApi(settings, documentService, pluginsManager))
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)

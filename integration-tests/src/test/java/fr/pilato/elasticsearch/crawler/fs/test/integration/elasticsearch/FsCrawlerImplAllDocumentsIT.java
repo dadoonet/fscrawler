@@ -108,7 +108,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
 
         fsSettings.getFs().setRawMetadata(true);
 
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE);
         crawler.start();
 
         // We wait until we have all docs up to 10 minutes

@@ -21,11 +21,19 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
+import java.util.Map;
+
 public class ServerStatusResponse extends RestResponse {
 
     private String version;
     private String elasticsearch;
     private FsSettings settings;
+
+    /**
+     * Discovered plugins with status (e.g. "local ✅", "rest ❌").
+     * Keys: "inputs", "filters", "outputs", "services". Optional; null when not provided.
+     */
+    private Map<String, String> plugins;
 
     public String getVersion() {
         return version;
@@ -49,5 +57,13 @@ public class ServerStatusResponse extends RestResponse {
 
     public void setSettings(FsSettings settings) {
         this.settings = settings;
+    }
+
+    public Map<String, String> getPlugins() {
+        return plugins;
+    }
+
+    public void setPlugins(Map<String, String> plugins) {
+        this.plugins = plugins;
     }
 }

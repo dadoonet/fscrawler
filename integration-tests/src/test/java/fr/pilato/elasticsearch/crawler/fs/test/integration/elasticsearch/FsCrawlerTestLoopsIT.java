@@ -42,7 +42,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void single_loop() throws Exception {
-        crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 1, false);
+        crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 1);
         crawler.start();
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
@@ -61,7 +61,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
      */
     @Test
     public void two_loops() throws Exception {
-        crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 2, false);
+        crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 2);
         crawler.start();
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);

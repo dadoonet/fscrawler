@@ -33,7 +33,7 @@ public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
     public void checksum_non_existing_algorithm() {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("FSCRAWLER");
-        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false));
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE));
     }
 
     /**
@@ -45,6 +45,6 @@ public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setXmlSupport(true);
         fsSettings.getFs().setJsonSupport(true);
-        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false));
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE));
     }
 }

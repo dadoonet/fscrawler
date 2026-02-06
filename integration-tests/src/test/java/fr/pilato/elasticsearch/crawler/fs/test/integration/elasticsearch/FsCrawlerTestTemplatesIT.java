@@ -67,7 +67,7 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         assertThat(client.isExistingComponentTemplate(componentTemplateName)).isTrue();
 
         // Start FSCrawler with loop = 0 (no document indexing, just template creation)
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0, false);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0);
         crawler.start();
 
         // Wait for the crawler to complete
@@ -117,7 +117,7 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
 
         // Start FSCrawler with force_push_templates = true
         fsSettings.getElasticsearch().setForcePushTemplates(true);
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0, false);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0);
         crawler.start();
 
         // Wait for the crawler to complete
@@ -143,7 +143,7 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         String componentTemplateName = "fscrawler_" + indexName + "_mapping_content";
 
         // First, run FSCrawler to create all templates
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0, false);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0);
         crawler.start();
 
         // Wait for the crawler to complete
@@ -179,7 +179,7 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         assertThat(templateContentBefore).contains("german");
 
         // Start FSCrawler again - it should skip template management
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0, false);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0);
         crawler.start();
 
         // Wait for the crawler to complete

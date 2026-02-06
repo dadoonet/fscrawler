@@ -56,7 +56,6 @@ public class FsCrawlerImpl implements AutoCloseable {
     public static final int LOOP_INFINITE = -1;
 
     private final FsSettings settings;
-    private final boolean rest;
     private final Integer loop;
 
     private final FsCrawlerDocumentService documentService;
@@ -67,12 +66,11 @@ public class FsCrawlerImpl implements AutoCloseable {
     private final FsParser fsParser;
     private final Thread fsCrawlerThread;
 
-    public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
+    public FsCrawlerImpl(Path config, FsSettings settings, Integer loop) {
         FsCrawlerUtil.createDirIfMissing(config);
 
         this.settings = settings;
         this.loop = loop;
-        this.rest = rest;
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(settings);
 
@@ -221,8 +219,8 @@ public class FsCrawlerImpl implements AutoCloseable {
         documentService.start();
         documentService.createSchema();
 
-        if (loop == 0 && !rest) {
-            logger.warn("Number of runs is set to 0 and rest layer has not been started. Exiting");
+        if (loop == 0) {
+            logger.warn("Number of runs is set to 0. Exiting.");
             return;
         }
 
@@ -282,6 +280,14 @@ public class FsCrawlerImpl implements AutoCloseable {
 
     public FsParser getFsParser() {
         return fsParser;
+    }
+
+    /**
+     * Get the pipeline plugins manager (for building plugin status, starting services, etc.).
+     * @return the pipeline plugins manager (always non-null)
+     */
+    public PipelinePluginsManager getPipelinePluginsManager() {
+        return pipelinePluginsManager;
     }
 
     /**

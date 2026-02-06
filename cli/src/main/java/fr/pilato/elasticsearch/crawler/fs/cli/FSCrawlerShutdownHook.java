@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 
 import java.io.IOException;
@@ -32,23 +31,16 @@ class FSCrawlerShutdownHook extends Thread {
 
     private final FsCrawlerImpl fsCrawler;
     private final FsCrawlerPluginsManager pluginsManager;
-    private final RestServer restServer;
 
-    FSCrawlerShutdownHook(FsCrawlerImpl fsCrawler, FsCrawlerPluginsManager pluginsManager, RestServer restServer) {
+    FSCrawlerShutdownHook(FsCrawlerImpl fsCrawler, FsCrawlerPluginsManager pluginsManager) {
         this.fsCrawler = fsCrawler;
         this.pluginsManager = pluginsManager;
-        this.restServer = restServer;
     }
 
     @Override
     public void run() {
         try {
             fsCrawler.close();
-            // Stop the REST Server if needed
-            if (restServer != null) {
-                restServer.close();
-            }
-            // Stop the plugins
             pluginsManager.close();
         } catch (InterruptedException | IOException e) {
             Thread.currentThread().interrupt();

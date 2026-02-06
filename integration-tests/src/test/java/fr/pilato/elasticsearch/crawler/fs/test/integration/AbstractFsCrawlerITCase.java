@@ -119,7 +119,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         logger.info("🎬 starting crawler [{}]", fsSettings.getName());
         logger.debug("⚙️ with settings [{}]", fsSettings);
 
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE);
         crawler.start();
 
         // Wait for the index to be healthy as we might have a race condition
