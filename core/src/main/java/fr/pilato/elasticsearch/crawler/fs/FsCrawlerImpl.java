@@ -32,7 +32,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.Pipeline;
-import fr.pilato.elasticsearch.crawler.plugins.pipeline.PipelinePluginsManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -61,7 +60,6 @@ public class FsCrawlerImpl implements AutoCloseable {
     private final FsCrawlerDocumentService documentService;
     private final FsCrawlerManagementService managementService;
     private final FsCrawlerPluginsManager pluginsManager;
-    private final PipelinePluginsManager pipelinePluginsManager;
     private final Pipeline pipeline;
     private final FsParser fsParser;
     private final Thread fsCrawlerThread;
@@ -74,21 +72,14 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(settings);
 
-        // Initialize and start the filesystem plugin manager
+        // Initialize and start the unified plugin manager (FsProvider + pipeline + services)
         this.pluginsManager = new FsCrawlerPluginsManager();
         pluginsManager.loadPlugins();
         pluginsManager.startPlugins();
 
-        // Initialize the pipeline plugins manager
-        // Note: Settings are automatically converted from v1 to v2 format by FsSettingsLoader
-        // Plugins are auto-discovered via ServiceLoader from META-INF/services files
-        this.pipelinePluginsManager = new PipelinePluginsManager();
-        pipelinePluginsManager.loadPlugins();
-        pipelinePluginsManager.startPlugins();
-        
         // Create the pipeline from settings
         try {
-            this.pipeline = pipelinePluginsManager.createPipeline(settings);
+            this.pipeline = pluginsManager.createPipeline(settings);
         } catch (FsCrawlerIllegalConfigurationException e) {
             throw new RuntimeException("Failed to create pipeline: " + e.getMessage(), e);
         }
@@ -272,22 +263,11 @@ public class FsCrawlerImpl implements AutoCloseable {
         pluginsManager.close();
         logger.debug("Plugins Manager stopped");
 
-        pipelinePluginsManager.close();
-        logger.debug("Pipeline Plugins Manager stopped");
-
         logger.info("FS crawler [{}] stopped", settings.getName());
     }
 
     public FsParser getFsParser() {
         return fsParser;
-    }
-
-    /**
-     * Get the pipeline plugins manager (for building plugin status, starting services, etc.).
-     * @return the pipeline plugins manager (always non-null)
-     */
-    public PipelinePluginsManager getPipelinePluginsManager() {
-        return pipelinePluginsManager;
     }
 
     /**

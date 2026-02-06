@@ -85,7 +85,7 @@ public class FsSettingsLoader extends MetaFileHandler {
         logger.trace("Trying to read settings from [{}] directory", configDir);
         if (Files.exists(configDir)) {
             // V2 format: only load the global settings file
-            // Plugin-specific settings are loaded by PipelinePluginsManager
+            // Plugin-specific settings are loaded by FsCrawlerPluginsManager
             Path globalYaml = configDir.resolve(GlobalSettings.GLOBAL_SETTINGS_YAML);
             Path globalJson = configDir.resolve(GlobalSettings.GLOBAL_SETTINGS_JSON);
             if (Files.exists(globalYaml)) {
@@ -310,7 +310,7 @@ public class FsSettingsLoader extends MetaFileHandler {
         }
         
         // Filter plugins don't map directly to V1 structure
-        // They are loaded by PipelinePluginsManager
+        // They are loaded by FsCrawlerPluginsManager
     }
 
     /**

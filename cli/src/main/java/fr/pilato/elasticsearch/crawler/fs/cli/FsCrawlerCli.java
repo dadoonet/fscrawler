@@ -38,8 +38,6 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 
-import fr.pilato.elasticsearch.crawler.plugins.pipeline.PipelinePluginsManager;
-
 import java.io.Console;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -242,7 +240,7 @@ public class FsCrawlerCli {
      * @return list of created plugin descriptions for display
      * @throws IOException In case of IO problem
      */
-    static List<String> createJob(String jobName, Path configDir, PipelinePluginsManager pluginsManager) throws IOException {
+    static List<String> createJob(String jobName, Path configDir, FsCrawlerPluginsManager pluginsManager) throws IOException {
         List<String> createdFiles = new ArrayList<>();
         Path configJobDir = configDir.resolve(jobName);
         Path settingsDir = configJobDir.resolve(GlobalSettings.SETTINGS_DIR);
@@ -490,7 +488,7 @@ public class FsCrawlerCli {
     }
 
     private static void listPlugins() {
-        try (PipelinePluginsManager manager = new PipelinePluginsManager()) {
+        try (FsCrawlerPluginsManager manager = new FsCrawlerPluginsManager()) {
             manager.loadPlugins();
             manager.startPlugins();
             FSCrawlerLogger.console("Discovered plugins:");
@@ -505,7 +503,7 @@ public class FsCrawlerCli {
         logger.debug("Entering setup mode for [{}]...", jobName);
         
         // Load plugins to discover available plugin types
-        PipelinePluginsManager pluginsManager = new PipelinePluginsManager();
+        FsCrawlerPluginsManager pluginsManager = new FsCrawlerPluginsManager();
         pluginsManager.loadPlugins();
         pluginsManager.startPlugins();
         

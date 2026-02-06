@@ -17,20 +17,20 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.plugins.pipeline;
+package fr.pilato.elasticsearch.crawler.plugins;
 
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for service plugin lifecycle in PipelinePluginsManager.
+ * Tests for service plugin lifecycle in FsCrawlerPluginsManager.
  */
-public class PipelinePluginsManagerServiceTest {
+public class FsCrawlerPluginsManagerServiceTest {
 
     @Test
     public void getServicePluginsEmptyBeforeCreatePipelineFromDirectory() {
-        try (PipelinePluginsManager manager = new PipelinePluginsManager()) {
+        try (FsCrawlerPluginsManager manager = new FsCrawlerPluginsManager()) {
             manager.loadPlugins();
             manager.startPlugins();
             assertThat(manager.getServicePlugins()).isEmpty();
@@ -38,8 +38,8 @@ public class PipelinePluginsManagerServiceTest {
     }
 
     @Test
-    public void startServicesAndStopServicesDoNotThrowWhenNoServices() {
-        try (PipelinePluginsManager manager = new PipelinePluginsManager()) {
+    public void startServicesAndStopServicesDoNotThrowWhenNoServices() throws FsCrawlerPluginException {
+        try (FsCrawlerPluginsManager manager = new FsCrawlerPluginsManager()) {
             manager.loadPlugins();
             manager.startPlugins();
             manager.startServices();
@@ -49,7 +49,7 @@ public class PipelinePluginsManagerServiceTest {
 
     @Test
     public void getAvailableServiceTypesReflectsDiscovery() {
-        try (PipelinePluginsManager manager = new PipelinePluginsManager()) {
+        try (FsCrawlerPluginsManager manager = new FsCrawlerPluginsManager()) {
             manager.loadPlugins();
             manager.startPlugins();
             // No service plugins on classpath by default; set may be empty or contain rest once we add the plugin
