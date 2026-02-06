@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "id": "rest-json",
+  "type": "rest",
+  "url": "http://127.0.0.1:8080/fscrawler"
+}

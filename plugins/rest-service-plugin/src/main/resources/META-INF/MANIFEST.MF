@@ -1,0 +1,5 @@
+Plugin-Id: fscrawler-rest-service-plugin
+Plugin-Version: ${project.version}
+Plugin-Class: fr.pilato.elasticsearch.crawler.plugins.service.rest.RestPlugin
+Plugin-Provider: David Pilato
+Plugin-Description: REST API service plugin for FSCrawler

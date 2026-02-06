@@ -26,6 +26,7 @@
         <module>xml-filter-plugin</module>
         <module>none-filter-plugin</module>
         <module>local-input-plugin</module>
+        <module>rest-service-plugin</module>
     </modules>
 
     <dependencies>

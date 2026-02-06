@@ -1,0 +1,5 @@
+# Wrong type: type must be "rest" to match plugin
+version: 1
+id: rest-wrong
+type: elasticsearch
+url: "http://127.0.0.1:8080/fscrawler"

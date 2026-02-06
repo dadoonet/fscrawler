@@ -95,6 +95,10 @@
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-local-input-plugin</artifactId>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-rest-service-plugin</artifactId>
+        </dependency>
 
         <!-- Our Elasticsearch Client -->
         <dependency>

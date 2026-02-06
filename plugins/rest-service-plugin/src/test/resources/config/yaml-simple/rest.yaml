@@ -1,0 +1,5 @@
+# Simple REST service plugin configuration
+version: 1
+id: rest-service
+type: rest
+url: "http://127.0.0.1:8080/fscrawler"

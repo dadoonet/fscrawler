@@ -1,0 +1,7 @@
+# Full REST service plugin configuration
+version: 1
+id: rest-service-full
+type: rest
+url: "http://0.0.0.0:9090/fscrawler"
+enableCors: true
+enabled: true

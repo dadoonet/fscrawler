@@ -1,0 +1,12 @@
+# Rest Service Plugin Configuration
+# This plugin exposes an HTTP REST API for document upload and server status.
+# Service plugins are disabled by default; set enabled: true to start the server.
+
+# REST API bind URL
+url: "http://127.0.0.1:8080/fscrawler"
+
+# Enable CORS
+#enableCors: false
+
+# Enable the service (required for service plugins - they default to disabled)
+#enabled: false
