@@ -22,7 +22,7 @@ package fr.pilato.elasticsearch.crawler.plugins.pipeline.filter;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.ConditionalPlugin;
-import fr.pilato.elasticsearch.crawler.plugins.pipeline.ConfigurablePlugin;
+import fr.pilato.elasticsearch.crawler.plugins.ConfigurablePlugin;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.PipelineContext;
 import org.pf4j.ExtensionPoint;
 

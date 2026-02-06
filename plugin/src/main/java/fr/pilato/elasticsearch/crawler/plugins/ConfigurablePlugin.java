@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.plugins.pipeline;
+package fr.pilato.elasticsearch.crawler.plugins;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 /**
- * Base interface for all configurable pipeline plugins.
+ * Base interface for all configurable plugins (pipeline input/filter/output and services).
  * Each plugin is responsible for reading and validating its own configuration section.
  * <p>
  * Plugins can be configured in two ways:
@@ -181,7 +181,7 @@ public interface ConfigurablePlugin {
      * Returns the plugin category for directory organization.
      * Used to determine where to place the settings file during --setup.
      *
-     * @return "inputs", "filters", or "outputs"
+     * @return "inputs", "filters", "outputs", or "services"
      */
     default String getPluginCategory() {
         return null;

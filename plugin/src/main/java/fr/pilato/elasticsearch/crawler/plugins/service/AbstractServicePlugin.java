@@ -22,7 +22,7 @@ package fr.pilato.elasticsearch.crawler.plugins.service;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
-import fr.pilato.elasticsearch.crawler.plugins.pipeline.AbstractPlugin;
+import fr.pilato.elasticsearch.crawler.plugins.AbstractPlugin;
 
 import java.io.IOException;
 import java.nio.file.Path;

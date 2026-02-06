@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.plugins.pipeline;
+package fr.pilato.elasticsearch.crawler.plugins;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Abstract base class for all pipeline plugins (input, filter, output).
+ * Abstract base class for all configurable plugins (pipeline input/filter/output and services).
  * Provides common functionality including configuration handling and utility methods.
  * <p>
  * This class implements both legacy configuration (via rawConfig map) and the new
@@ -159,7 +159,7 @@ public abstract class AbstractPlugin implements ConfigurablePlugin {
     }
 
     /**
-     * Returns the plugin category label for error messages (e.g., "Input", "Filter", "Output").
+     * Returns the plugin category label for error messages (e.g., "Input", "Filter", "Output", "Service").
      * @return the plugin category label
      */
     protected abstract String getPluginCategoryLabel();

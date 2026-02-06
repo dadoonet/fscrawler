@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.plugins.pipeline;
 
+import fr.pilato.elasticsearch.crawler.plugins.AbstractPlugin;
+
 import java.util.Map;
 
 /**

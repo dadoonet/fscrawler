@@ -19,7 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.plugins.service;
 
-import fr.pilato.elasticsearch.crawler.plugins.pipeline.ConfigurablePlugin;
+import fr.pilato.elasticsearch.crawler.plugins.ConfigurablePlugin;
 
 /**
  * Plugin interface for transversal services that are not part of the document pipeline.
