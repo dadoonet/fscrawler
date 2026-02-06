@@ -801,7 +801,7 @@ public class FsParserAbstract extends FsParser {
         Collection<String> listFile = getFileDirectory(path);
 
         for (String esfile : listFile) {
-            esDelete(managementService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, path));
+            esDelete(documentService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, path));
             stats.removeFile();
         }
 
@@ -810,7 +810,7 @@ public class FsParserAbstract extends FsParser {
             removeEsDirectoryRecursively(esfolder, stats);
         }
 
-        esDelete(managementService, fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path));
+        esDelete(documentService, fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path));
     }
 
     /**
@@ -825,18 +825,4 @@ public class FsParserAbstract extends FsParser {
             logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }
     }
-
-    /**
-     * Remove a document with the management service
-     */
-    private void esDelete(FsCrawlerManagementService service, String index, String id) {
-        logger.debug("Deleting {}/{}", index, id);
-        if (!closed) {
-            service.delete(index, id);
-            removeStoredAclHash(id);
-        } else {
-            logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
-        }
-    }
-
 }

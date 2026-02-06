@@ -50,11 +50,4 @@ public interface FsCrawlerManagementService extends FsCrawlerService {
      */
     void storeVisitedDirectory(String indexFolder, String id, Folder folder);
 
-
-    /**
-     * Remove a document from the target service
-     * @param index     Index name
-     * @param id        Document ID
-     */
-    void delete(String index, String id);
 }

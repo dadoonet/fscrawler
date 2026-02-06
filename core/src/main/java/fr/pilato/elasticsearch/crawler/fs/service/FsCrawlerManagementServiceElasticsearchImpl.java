@@ -150,9 +150,4 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     public void storeVisitedDirectory(String indexFolder, String id, Folder folder) {
         client.indexRawJson(indexFolder, id, serialize(folder), null);
     }
-
-    @Override
-    public void delete(String index, String id) {
-        client.delete(index, id);
-    }
 }
