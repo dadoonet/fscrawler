@@ -212,6 +212,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         assertThat(settingsDir.resolve(GlobalSettings.INPUTS_DIR)).exists();
         assertThat(settingsDir.resolve(GlobalSettings.FILTERS_DIR)).exists();
         assertThat(settingsDir.resolve(GlobalSettings.OUTPUTS_DIR)).exists();
+        assertThat(settingsDir.resolve(GlobalSettings.SERVICES_DIR)).exists();
     }
 
     @Test

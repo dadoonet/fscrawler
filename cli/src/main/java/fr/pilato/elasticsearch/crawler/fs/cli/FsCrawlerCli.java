@@ -261,6 +261,7 @@ public class FsCrawlerCli {
         Files.createDirectories(settingsDir.resolve(GlobalSettings.INPUTS_DIR));
         Files.createDirectories(settingsDir.resolve(GlobalSettings.FILTERS_DIR));
         Files.createDirectories(settingsDir.resolve(GlobalSettings.OUTPUTS_DIR));
+        Files.createDirectories(settingsDir.resolve(GlobalSettings.SERVICES_DIR));
         
         // Create global settings file (replace ${JOB_NAME} placeholder with actual job name)
         Path globalSettingsFile = settingsDir.resolve(GlobalSettings.GLOBAL_SETTINGS_YAML);
@@ -303,6 +304,18 @@ public class FsCrawlerCli {
                 logger.debug("Creating output settings from plugin [{}] using resource [{}]", plugin.getType(), resource);
                 copyResourceFile(resource, targetFile);
                 createdFiles.add("outputs/" + filename + " : " + plugin.getDescription());
+            }
+        }
+
+        // Create service plugin settings from discovered plugins
+        for (var plugin : pluginsManager.getDefaultServicePlugins()) {
+            String filename = plugin.getDefaultSettingsFilename();
+            String resource = plugin.getDefaultYamlResource();
+            if (filename != null && resource != null) {
+                Path targetFile = settingsDir.resolve(GlobalSettings.SERVICES_DIR).resolve(filename);
+                logger.debug("Creating service settings from plugin [{}] using resource [{}]", plugin.getType(), resource);
+                copyResourceFile(resource, targetFile);
+                createdFiles.add("services/" + filename + " : " + plugin.getDescription());
             }
         }
         

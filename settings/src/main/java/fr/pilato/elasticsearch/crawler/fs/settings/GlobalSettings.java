@@ -42,6 +42,7 @@ public class GlobalSettings {
     public static final String INPUTS_DIR = "inputs";
     public static final String FILTERS_DIR = "filters";
     public static final String OUTPUTS_DIR = "outputs";
+    public static final String SERVICES_DIR = "services";
 
     public static final String EXAMPLE_SETTINGS = "/fr/pilato/elasticsearch/crawler/fs/settings/v2/global-default.yaml";
     public static final String DEFAULT_PROPERTIES = "/fr/pilato/elasticsearch/crawler/fs/settings/v2/global-default.properties";
