@@ -479,17 +479,14 @@ public class FsCrawlerCli {
     }
 
     private static void listPlugins() {
-        PipelinePluginsManager manager = new PipelinePluginsManager();
-        manager.loadPlugins();
-        manager.startPlugins();
-        try {
+        try (PipelinePluginsManager manager = new PipelinePluginsManager()) {
+            manager.loadPlugins();
+            manager.startPlugins();
             FSCrawlerLogger.console("Discovered plugins:");
             FSCrawlerLogger.console("  Inputs:   {}", String.join(", ", manager.getAvailableInputTypes()));
             FSCrawlerLogger.console("  Filters: {}", String.join(", ", manager.getAvailableFilterTypes()));
             FSCrawlerLogger.console("  Outputs: {}", String.join(", ", manager.getAvailableOutputTypes()));
             FSCrawlerLogger.console("  Services: {} (enable in _settings/services/*.yaml)", String.join(", ", manager.getAvailableServiceTypes()));
-        } finally {
-            manager.close();
         }
     }
 
