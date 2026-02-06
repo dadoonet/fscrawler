@@ -64,6 +64,24 @@ public interface ConfigurablePlugin {
      */
     void setId(String id);
 
+    /**
+     * Whether this plugin instance is enabled.
+     * <ul>
+     *   <li>Pipeline plugins (input, filter, output): default {@code true}.</li>
+     *   <li>Service plugins: default {@code false}; must be explicitly enabled in config.</li>
+     * </ul>
+     *
+     * @return true if the plugin is enabled
+     */
+    boolean isEnabled();
+
+    /**
+     * Sets whether this plugin instance is enabled.
+     *
+     * @param enabled true to enable, false to disable
+     */
+    void setEnabled(boolean enabled);
+
     // ========== Legacy Configuration (rawConfig map) ==========
 
     /**

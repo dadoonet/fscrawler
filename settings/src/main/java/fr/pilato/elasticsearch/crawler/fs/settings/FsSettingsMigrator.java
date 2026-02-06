@@ -561,6 +561,8 @@ public class FsSettingsMigrator {
     public static final String INPUTS_DIR = "inputs";
     public static final String FILTERS_DIR = "filters";
     public static final String OUTPUTS_DIR = "outputs";
+    /** Directory for service plugin configs (e.g. rest, scheduler). */
+    public static final String SERVICES_DIR = "services";
 
     /**
      * Generates per-plugin configuration files from FsSettings (V1 format).

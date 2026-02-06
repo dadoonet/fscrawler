@@ -25,9 +25,11 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsMigrator;
 import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.FilterSection;
 import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.InputSection;
 import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.OutputSection;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.filter.FilterPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.input.InputPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.output.OutputPlugin;
+import fr.pilato.elasticsearch.crawler.plugins.pipeline.service.ServicePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pf4j.DefaultPluginManager;
@@ -57,6 +59,10 @@ public class PipelinePluginsManager implements AutoCloseable {
     private final Map<String, Class<? extends InputPlugin>> inputPluginTypes = new HashMap<>();
     private final Map<String, Class<? extends FilterPlugin>> filterPluginTypes = new HashMap<>();
     private final Map<String, Class<? extends OutputPlugin>> outputPluginTypes = new HashMap<>();
+    private final Map<String, Class<? extends ServicePlugin>> servicePluginTypes = new HashMap<>();
+
+    /** Loaded service plugin instances (populated when creating pipeline from directory). */
+    private final List<ServicePlugin> servicePlugins = new ArrayList<>();
 
     public PipelinePluginsManager() {
         this.pluginManager = new DefaultPluginManager();
@@ -86,8 +92,8 @@ public class PipelinePluginsManager implements AutoCloseable {
         // Discover plugins from ServiceLoader (built-in plugins on classpath)
         discoverServiceLoaderPlugins();
 
-        logger.info("Pipeline plugins discovered: {} inputs, {} filters, {} outputs",
-                inputPluginTypes.size(), filterPluginTypes.size(), outputPluginTypes.size());
+        logger.info("Pipeline plugins discovered: {} inputs, {} filters, {} outputs, {} services",
+                inputPluginTypes.size(), filterPluginTypes.size(), outputPluginTypes.size(), servicePluginTypes.size());
     }
 
     /**
@@ -118,6 +124,15 @@ public class PipelinePluginsManager implements AutoCloseable {
             if (!outputPluginTypes.containsKey(type)) {
                 logger.debug("Found OutputPlugin extension from PF4J for type [{}]", type);
                 outputPluginTypes.put(type, plugin.getClass());
+            }
+        }
+
+        // Discover service plugins from PF4J
+        for (ServicePlugin plugin : pluginManager.getExtensions(ServicePlugin.class)) {
+            String type = plugin.getType();
+            if (!servicePluginTypes.containsKey(type)) {
+                logger.debug("Found ServicePlugin extension from PF4J for type [{}]", type);
+                servicePluginTypes.put(type, plugin.getClass());
             }
         }
     }
@@ -154,6 +169,16 @@ public class PipelinePluginsManager implements AutoCloseable {
             if (!outputPluginTypes.containsKey(type)) {
                 logger.debug("Found OutputPlugin from ServiceLoader for type [{}]", type);
                 outputPluginTypes.put(type, plugin.getClass());
+            }
+        }
+
+        // Discover service plugins from ServiceLoader
+        ServiceLoader<ServicePlugin> serviceLoader = ServiceLoader.load(ServicePlugin.class);
+        for (ServicePlugin plugin : serviceLoader) {
+            String type = plugin.getType();
+            if (!servicePluginTypes.containsKey(type)) {
+                logger.debug("Found ServicePlugin from ServiceLoader for type [{}]", type);
+                servicePluginTypes.put(type, plugin.getClass());
             }
         }
     }
@@ -253,8 +278,15 @@ public class PipelinePluginsManager implements AutoCloseable {
             outputs = loadOutputPluginsFromDirectory(outputsDir);
         }
 
-        logger.debug("Pipeline created from directory with {} inputs, {} filters, {} outputs",
-                inputs.size(), filters.size(), outputs.size());
+        // Load service plugins (all loaded; only enabled ones are started via startServices())
+        servicePlugins.clear();
+        Path servicesDir = settingsDir.resolve(FsSettingsMigrator.SERVICES_DIR);
+        if (Files.exists(servicesDir)) {
+            servicePlugins.addAll(loadServicePluginsFromDirectory(servicesDir));
+        }
+
+        logger.debug("Pipeline created from directory with {} inputs, {} filters, {} outputs, {} services",
+                inputs.size(), filters.size(), outputs.size(), servicePlugins.size());
 
         return new Pipeline(inputs, filters, outputs);
     }
@@ -275,9 +307,11 @@ public class PipelinePluginsManager implements AutoCloseable {
         Path filtersDir = settingsDir.resolve(FsSettingsMigrator.FILTERS_DIR);
         Path outputsDir = settingsDir.resolve(FsSettingsMigrator.OUTPUTS_DIR);
         
+        Path servicesDir = settingsDir.resolve(FsSettingsMigrator.SERVICES_DIR);
         return (Files.exists(inputsDir) && hasConfigFiles(inputsDir)) ||
                (Files.exists(filtersDir) && hasConfigFiles(filtersDir)) ||
-               (Files.exists(outputsDir) && hasConfigFiles(outputsDir));
+               (Files.exists(outputsDir) && hasConfigFiles(outputsDir)) ||
+               (Files.exists(servicesDir) && hasConfigFiles(servicesDir));
     }
 
     /**
@@ -348,6 +382,24 @@ public class PipelinePluginsManager implements AutoCloseable {
         for (Path configFile : configFiles) {
             logger.debug("Loading output plugin from [{}]", configFile);
             OutputPlugin plugin = loadOutputPluginFromFile(configFile);
+            plugins.add(plugin);
+        }
+
+        return plugins;
+    }
+
+    /**
+     * Loads service plugins from configuration files in a directory.
+     * All plugins are loaded; only those with {@code enabled: true} are started by {@link #startServices()}.
+     */
+    private List<ServicePlugin> loadServicePluginsFromDirectory(Path servicesDir) 
+            throws FsCrawlerIllegalConfigurationException, IOException {
+        List<ServicePlugin> plugins = new ArrayList<>();
+        List<Path> configFiles = getConfigFilesInOrder(servicesDir);
+
+        for (Path configFile : configFiles) {
+            logger.debug("Loading service plugin from [{}]", configFile);
+            ServicePlugin plugin = loadServicePluginFromFile(configFile);
             plugins.add(plugin);
         }
 
@@ -484,6 +536,41 @@ public class PipelinePluginsManager implements AutoCloseable {
     }
 
     /**
+     * Loads a single service plugin from a configuration file.
+     */
+    private ServicePlugin loadServicePluginFromFile(Path configFile) 
+            throws FsCrawlerIllegalConfigurationException, IOException {
+        String type = extractTypeFromFilename(configFile);
+
+        Class<? extends ServicePlugin> pluginClass = servicePluginTypes.get(type);
+        if (pluginClass == null) {
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Unknown service plugin type: " + type + " (from file " + configFile + "). " +
+                    "Available: " + servicePluginTypes.keySet());
+        }
+
+        try {
+            ServicePlugin plugin = pluginClass.getDeclaredConstructor().newInstance();
+
+            if (plugin.supportsPerPluginConfig()) {
+                plugin.loadSettings(configFile);
+            } else {
+                logger.warn("Service plugin [{}] does not support per-plugin config.", type);
+                throw new FsCrawlerIllegalConfigurationException(
+                        "Service plugin " + type + " does not yet support per-plugin configuration.");
+            }
+
+            plugin.validateConfiguration();
+            return plugin;
+        } catch (FsCrawlerIllegalConfigurationException | IOException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Failed to create service plugin from " + configFile + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Extracts the plugin type from a filename.
      * Assumes format: NN-type.ext (e.g., 01-local.yaml -> local)
      */
@@ -506,8 +593,61 @@ public class PipelinePluginsManager implements AutoCloseable {
         return filename;
     }
 
+    /**
+     * Starts all loaded service plugins that are enabled.
+     * Call this after creating a pipeline from directory (which loads services).
+     *
+     * @throws FsCrawlerPluginException if any enabled service fails to start
+     */
+    public void startServices() throws FsCrawlerPluginException {
+        for (ServicePlugin plugin : servicePlugins) {
+            if (plugin.isEnabled()) {
+                try {
+                    plugin.start();
+                    logger.info("Service plugin [{}] ({}) started", plugin.getId(), plugin.getType());
+                } catch (FsCrawlerPluginException e) {
+                    logger.error("Failed to start service plugin [{}] ({}): {}", 
+                            plugin.getId(), plugin.getType(), e.getMessage());
+                    throw e;
+                }
+            } else {
+                logger.debug("Service plugin [{}] ({}) is disabled, not starting", plugin.getId(), plugin.getType());
+            }
+        }
+    }
+
+    /**
+     * Stops all loaded service plugins that were started.
+     * Idempotent: safe to call even if none are running.
+     */
+    public void stopServices() {
+        for (ServicePlugin plugin : servicePlugins) {
+            if (plugin.isRunning()) {
+                try {
+                    plugin.stop();
+                    logger.debug("Service plugin [{}] ({}) stopped", plugin.getId(), plugin.getType());
+                } catch (FsCrawlerPluginException e) {
+                    logger.warn("Error stopping service plugin [{}] ({}): {}", 
+                            plugin.getId(), plugin.getType(), e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the list of loaded service plugin instances.
+     * Populated when {@link #createPipelineFromDirectory(Path, String)} is used.
+     *
+     * @return unmodifiable list of service plugins
+     */
+    public List<ServicePlugin> getServicePlugins() {
+        return java.util.Collections.unmodifiableList(new ArrayList<>(servicePlugins));
+    }
+
     @Override
     public void close() {
+        logger.debug("Stopping service plugins");
+        stopServices();
         logger.debug("Stopping pipeline plugins");
         pluginManager.stopPlugins();
     }
@@ -630,6 +770,18 @@ public class PipelinePluginsManager implements AutoCloseable {
         outputPluginTypes.put(type, pluginClass);
     }
 
+    /**
+     * Manually registers a service plugin type.
+     * Useful for built-in plugins or testing.
+     *
+     * @param type the plugin type identifier
+     * @param pluginClass the plugin class
+     */
+    public void registerServicePlugin(String type, Class<? extends ServicePlugin> pluginClass) {
+        logger.debug("Manually registering ServicePlugin for type [{}]", type);
+        servicePluginTypes.put(type, pluginClass);
+    }
+
     // ========== Query methods ==========
 
     /**
@@ -654,6 +806,14 @@ public class PipelinePluginsManager implements AutoCloseable {
      */
     public java.util.Set<String> getAvailableOutputTypes() {
         return java.util.Collections.unmodifiableSet(outputPluginTypes.keySet());
+    }
+
+    /**
+     * Returns the available service plugin types.
+     * @return set of service plugin type names
+     */
+    public java.util.Set<String> getAvailableServiceTypes() {
+        return java.util.Collections.unmodifiableSet(servicePluginTypes.keySet());
     }
 
     // ========== Setup helper methods ==========
@@ -716,6 +876,27 @@ public class PipelinePluginsManager implements AutoCloseable {
                 }
             } catch (Exception e) {
                 logger.warn("Could not instantiate output plugin {}: {}", pluginClass.getName(), e.getMessage());
+            }
+        }
+        return plugins;
+    }
+
+    /**
+     * Returns all default service plugins for setup purposes.
+     * Creates fresh instances of each registered service plugin.
+     *
+     * @return list of service plugin instances
+     */
+    public List<ServicePlugin> getDefaultServicePlugins() {
+        List<ServicePlugin> plugins = new ArrayList<>();
+        for (Class<? extends ServicePlugin> pluginClass : servicePluginTypes.values()) {
+            try {
+                ServicePlugin plugin = pluginClass.getDeclaredConstructor().newInstance();
+                if (plugin.supportsPerPluginConfig() && plugin.getDefaultYamlResource() != null) {
+                    plugins.add(plugin);
+                }
+            } catch (Exception e) {
+                logger.warn("Could not instantiate service plugin {}: {}", pluginClass.getName(), e.getMessage());
             }
         }
         return plugins;

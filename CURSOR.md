@@ -158,16 +158,19 @@ rm -rf fscrawler-distribution-2.10-SNAPSHOT
 unzip fscrawler-distribution-2.10-SNAPSHOT.zip
 cd fscrawler-distribution-2.10-SNAPSHOT
 
-# 3. Create a new job with --setup
+# 3. List discovered plugins (inputs, filters, outputs, services)
+bin/fscrawler --config_dir config --list-plugins
+
+# 4. Create a new job with --setup
 FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler --config_dir config --setup my_job
 
-# 4. Run FSCrawler with debug logging
+# 5. Run FSCrawler with debug logging
 FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler --config_dir config my_job
 
-# 5. Run with environment variable overrides (e.g., disable SSL verification)
+# 6. Run with environment variable overrides (e.g., disable SSL verification)
 FS_JAVA_OPTS="-DLOG_LEVEL=debug" FSCRAWLER_ELASTICSEARCH_SSL_VERIFICATION=false bin/fscrawler --config_dir config my_job
 
-# 6. Run default job (uses "fscrawler" as job name if not specified)
+# 7. Run default job (uses "fscrawler" as job name if not specified)
 FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler --config_dir config
 ```
 

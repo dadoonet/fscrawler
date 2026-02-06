@@ -42,6 +42,8 @@ public abstract class AbstractPlugin implements ConfigurablePlugin {
     protected final Logger logger = LogManager.getLogger(getClass());
 
     protected String id;
+    /** Whether this plugin instance is enabled. Pipeline plugins default to true. */
+    protected boolean enabled = true;
     protected FsSettings globalSettings;
     protected Map<String, Object> rawConfig;
 
@@ -65,6 +67,16 @@ public abstract class AbstractPlugin implements ConfigurablePlugin {
      */
     public void setId(String id) {
         this.id = id;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     /**
@@ -114,12 +126,15 @@ public abstract class AbstractPlugin implements ConfigurablePlugin {
     /**
      * Configure common settings from the configuration map.
      * Subclasses should override this to read their common settings.
-     * Default implementation does nothing.
+     * Reads the unified {@code enabled} attribute.
      *
      * @param config the configuration map
      */
     protected void configureCommon(Map<String, Object> config) {
-        // Default: no common configuration
+        Boolean enabledVal = getConfigValue(config, "enabled", Boolean.class, null);
+        if (enabledVal != null) {
+            this.enabled = enabledVal;
+        }
     }
 
     /**

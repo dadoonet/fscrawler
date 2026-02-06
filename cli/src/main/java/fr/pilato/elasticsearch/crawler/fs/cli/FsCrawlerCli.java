@@ -103,6 +103,9 @@ public class FsCrawlerCli {
         @Parameter(names = "--list", description = "List FSCrawler jobs if any.")
         boolean list = false;
 
+        @Parameter(names = "--list-plugins", description = "List discovered pipeline and service plugins (inputs, filters, outputs, services).")
+        boolean listPlugins = false;
+
         @Parameter(names = "--migrate", description = "Migrate a job configuration from v1 to v2 per-plugin format. " +
                 "Creates separate config files for each plugin in _settings/inputs/, _settings/filters/, _settings/outputs/.")
         boolean migrate = false;
@@ -343,6 +346,11 @@ public class FsCrawlerCli {
             return;
         }
 
+        if (command.listPlugins) {
+            listPlugins();
+            return;
+        }
+
         if (command.setup) {
             // We are in setup mode. We need to create the job if it does not exist yet.
             setup(configDir, jobName);
@@ -454,6 +462,21 @@ public class FsCrawlerCli {
         } else {
             FSCrawlerLogger.console("No job exists in [{}].", configDir);
             FSCrawlerLogger.console("To create your first job, run 'fscrawler --setup'");
+        }
+    }
+
+    private static void listPlugins() {
+        PipelinePluginsManager manager = new PipelinePluginsManager();
+        manager.loadPlugins();
+        manager.startPlugins();
+        try {
+            FSCrawlerLogger.console("Discovered plugins:");
+            FSCrawlerLogger.console("  Inputs:   {}", String.join(", ", manager.getAvailableInputTypes()));
+            FSCrawlerLogger.console("  Filters: {}", String.join(", ", manager.getAvailableFilterTypes()));
+            FSCrawlerLogger.console("  Outputs: {}", String.join(", ", manager.getAvailableOutputTypes()));
+            FSCrawlerLogger.console("  Services: {} (enable in _settings/services/*.yaml)", String.join(", ", manager.getAvailableServiceTypes()));
+        } finally {
+            manager.close();
         }
     }
 

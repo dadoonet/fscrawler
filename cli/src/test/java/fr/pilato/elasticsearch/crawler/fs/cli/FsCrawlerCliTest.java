@@ -224,4 +224,12 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         String[] argsListJobs = { "--config_dir", metadataDir.toString(), "--list" };
         FsCrawlerCli.main(argsListJobs);
     }
+
+    @Test
+    public void testListPlugins() {
+        assertThatNoException().isThrownBy(() -> {
+            String[] args = { "--config_dir", metadataDir.toString(), "--list-plugins" };
+            FsCrawlerCli.main(args);
+        });
+    }
 }
