@@ -24,7 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.plugin.PluginSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.settings.plugin.PluginSettingsWriter;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
-import fr.pilato.elasticsearch.crawler.plugins.pipeline.service.AbstractServicePlugin;
+import fr.pilato.elasticsearch.crawler.plugins.service.AbstractServicePlugin;
 import org.pf4j.Extension;
 
 import java.io.IOException;

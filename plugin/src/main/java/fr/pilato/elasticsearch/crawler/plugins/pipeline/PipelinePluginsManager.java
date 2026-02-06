@@ -29,7 +29,7 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.filter.FilterPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.input.InputPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.output.OutputPlugin;
-import fr.pilato.elasticsearch.crawler.plugins.pipeline.service.ServicePlugin;
+import fr.pilato.elasticsearch.crawler.plugins.service.ServicePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pf4j.DefaultPluginManager;
