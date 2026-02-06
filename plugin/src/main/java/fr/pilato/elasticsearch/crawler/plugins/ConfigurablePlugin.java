@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.plugins;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import org.pf4j.ExtensionPoint;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -38,7 +39,7 @@ import java.util.Map;
  *       for each plugin instance (e.g., _settings/inputs/01-local.yaml).</li>
  * </ol>
  */
-public interface ConfigurablePlugin {
+public interface ConfigurablePlugin extends ExtensionPoint {
 
     /**
      * Returns the type identifier of this plugin.

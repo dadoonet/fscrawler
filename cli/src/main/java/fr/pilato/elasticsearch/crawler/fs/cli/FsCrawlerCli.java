@@ -109,9 +109,6 @@ public class FsCrawlerCli {
                 "Creates separate config files for each plugin in _settings/inputs/, _settings/filters/, _settings/outputs/.")
         boolean migrate = false;
 
-        @Parameter(names = "--migrate-keep-old-files", description = "Keep old configuration files after migration (use with --migrate).")
-        boolean migrateKeepOldFiles = false;
-
         @Deprecated
         @Parameter(names = "--debug", description = "Debug mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\" instead)")
         boolean debug = false;
@@ -371,7 +368,7 @@ public class FsCrawlerCli {
 
         if (command.migrate) {
             // We are in migrate mode. We read the v1 configuration and output v2 per-plugin format.
-            migrateConfiguration(configDir, jobName, command.silent, command.migrateKeepOldFiles);
+            migrateConfiguration(configDir, jobName, command.silent);
             return;
         }
 
@@ -527,8 +524,7 @@ public class FsCrawlerCli {
         }
     }
 
-    private static void migrateConfiguration(Path configDir, String jobName,
-                                              boolean silent, boolean keepOldFiles) throws IOException {
+    private static void migrateConfiguration(Path configDir, String jobName, boolean silent) throws IOException {
         logger.debug("Entering migrate mode for [{}]...", jobName);
         
         // Step 1: Read and parse current configuration (without auto-migration)
@@ -584,14 +580,11 @@ public class FsCrawlerCli {
             FSCrawlerLogger.console("");
             
             // Show files to be deleted
-            if (!oldFiles.isEmpty() && !keepOldFiles) {
+            if (!oldFiles.isEmpty()) {
                 FSCrawlerLogger.console("Files to be DELETED:");
                 for (Path oldFile : oldFiles) {
                     FSCrawlerLogger.console("  - {}", oldFile.getFileName());
                 }
-                FSCrawlerLogger.console("");
-            } else if (keepOldFiles) {
-                FSCrawlerLogger.console("Old files will be KEPT (--migrate-keep-old-files).");
                 FSCrawlerLogger.console("");
             }
             
@@ -616,8 +609,8 @@ public class FsCrawlerCli {
             }
         }
         
-        // Step 5: Delete old files (unless --migrate-keep-old-files)
-        if (!keepOldFiles && !oldFiles.isEmpty()) {
+        // Step 5: Delete old files
+        if (!oldFiles.isEmpty()) {
             for (Path oldFile : oldFiles) {
                 // Don't delete if it's the same as output
                 if (oldFile.equals(outputPath)) continue;

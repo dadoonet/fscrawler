@@ -106,6 +106,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
         fsSettings.getElasticsearch().setSemanticSearch(false);
 
+        syncElasticsearchConfigToOutputSections(fsSettings);
+
         fsSettings.getFs().setRawMetadata(true);
 
         crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE);

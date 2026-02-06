@@ -9,7 +9,6 @@ CLI options
 -  ``--loop x`` defines the number of runs we want before exiting. See `Loop`_.
 -  ``--migrate`` migrates a v1 configuration to v2 pipeline format. See `Migrate`_.
 -  ``--migrate-output`` specifies output file or directory for migrated configuration. See `Migrate`_.
--  ``--migrate-keep-old-files`` keeps old configuration files after migration. See `Migrate`_.
 -  ``--restart`` restart a job from scratch. See `Restart`_.
 -  ``--rest`` starts the REST service. See `Rest`_.
 -  ``--setup`` creates a job configuration. See `Setup`_.
@@ -141,9 +140,6 @@ Migration Options
    - If path **doesn't exist**: creates ``_settings/`` directory with split files
    - **Default** (no option): creates ``_settings/`` directory with split files
 
-``--migrate-keep-old-files``
-   Keeps old configuration files after migration instead of deleting them.
-
 ``--silent``
    Skips the preview and confirmation prompts. Use for automated migrations.
 
@@ -153,9 +149,6 @@ Examples:
 
    # Interactive migration (default: creates _settings/ directory)
    bin/fscrawler my_job --migrate
-
-   # Keep old files for backup
-   bin/fscrawler my_job --migrate --migrate-keep-old-files
 
    # Single file output
    bin/fscrawler my_job --migrate --migrate-output _settings_v2.yaml
@@ -195,11 +188,6 @@ The ``--migrate`` option works with Docker. Use ``--silent`` for non-interactive
    docker run --rm \
         -v ~/.fscrawler:/root/.fscrawler \
         dadoonet/fscrawler my_job --migrate --silent
-
-   # Keep old files
-   docker run --rm \
-        -v ~/.fscrawler:/root/.fscrawler \
-        dadoonet/fscrawler my_job --migrate --silent --migrate-keep-old-files
 
 .. note::
 

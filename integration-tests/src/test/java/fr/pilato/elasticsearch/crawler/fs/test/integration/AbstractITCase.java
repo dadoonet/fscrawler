@@ -30,6 +30,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.OutputSection;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
@@ -611,6 +612,35 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
         // We explicitly set semantic search to false because IT takes too long time
         fsSettings.getElasticsearch().setSemanticSearch(false);
+
+        syncElasticsearchConfigToOutputSections(fsSettings);
         return fsSettings;
+    }
+
+    /**
+     * Syncs Elasticsearch connection settings (URL, apiKey, caCertificate, etc.) from
+     * {@link FsSettings#getElasticsearch()} into V2 output sections' rawConfig so the
+     * pipeline plugin uses the TestContainers URL instead of defaults from migration.
+     * Call this after setting elasticsearch on fsSettings when building settings manually.
+     */
+    protected static void syncElasticsearchConfigToOutputSections(FsSettings fsSettings) {
+        if (fsSettings.getOutputs() == null) return;
+        Elasticsearch es = fsSettings.getElasticsearch();
+        if (es == null) return;
+        for (OutputSection output : fsSettings.getOutputs()) {
+            if ("elasticsearch".equals(output.getType()) && output.getRawConfig() != null
+                    && output.getRawConfig().containsKey("elasticsearch")) {
+                @SuppressWarnings("unchecked")
+                java.util.Map<String, Object> esConfig = (java.util.Map<String, Object>) output.getRawConfig().get("elasticsearch");
+                if (esConfig != null) {
+                    esConfig.put("urls", es.getUrls());
+                    if (es.getApiKey() != null) esConfig.put("api_key", es.getApiKey());
+                    if (es.getUsername() != null) esConfig.put("username", es.getUsername());
+                    if (es.getPassword() != null) esConfig.put("password", es.getPassword());
+                    esConfig.put("ca_certificate", es.getCaCertificate());
+                    esConfig.put("ssl_verification", es.isSslVerification());
+                }
+            }
+        }
     }
 }
