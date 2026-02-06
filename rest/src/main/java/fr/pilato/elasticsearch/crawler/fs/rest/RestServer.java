@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Rest;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,6 +42,8 @@ public class RestServer implements AutoCloseable {
     private final FsCrawlerDocumentService documentService;
     private final FsCrawlerPluginsManager pluginsManager;
     private final Map<String, String> pluginStatus;
+    /** When set (e.g. by RestServicePlugin), overrides settings.getRest() for bind URL and CORS. */
+    private final Rest restConfigOverride;
     private HttpServer httpServer = null;
 
     /**
@@ -71,16 +74,38 @@ public class RestServer implements AutoCloseable {
         this.documentService = documentService;
         this.pluginsManager = pluginsManager;
         this.pluginStatus = pluginStatus;
+        this.restConfigOverride = null;
+    }
+
+    /**
+     * Create the Rest Server with explicit bind URL and CORS (e.g. from RestServicePlugin settings).
+     * Uses url and enableCors for the HTTP server and CORS; settings is still used for DocumentApi/ServerStatusApi.
+     */
+    public RestServer(String url, boolean enableCors,
+                      FsSettings settings,
+                      FsCrawlerManagementService managementService,
+                      FsCrawlerDocumentService documentService,
+                      FsCrawlerPluginsManager pluginsManager,
+                      Map<String, String> pluginStatus) {
+        this.settings = settings;
+        this.managementService = managementService;
+        this.documentService = documentService;
+        this.pluginsManager = pluginsManager;
+        this.pluginStatus = pluginStatus;
+        Rest rest = new Rest();
+        rest.setUrl(url);
+        rest.setEnableCors(enableCors);
+        this.restConfigOverride = rest;
     }
 
     /**
      * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
      */
     public void start() {
-        // We create the service only one
         if (httpServer == null) {
-            // create a resource config that scans for JAX-RS resources and providers
-            // in fr.pilato.elasticsearch.crawler.fs.rest package
+            Rest restForCors = restConfigOverride != null ? restConfigOverride : settings.getRest();
+            String bindUrl = restConfigOverride != null ? restConfigOverride.getUrl() : settings.getRest().getUrl();
+
             final ResourceConfig rc = new ResourceConfig()
                     .registerInstances(
                             new ServerStatusApi(managementService, settings, pluginStatus),
@@ -88,13 +113,11 @@ public class RestServer implements AutoCloseable {
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)
                     .register(JacksonFeature.class)
-                    .register(new CORSFilter(settings.getRest()))
+                    .register(new CORSFilter(restForCors))
                     .packages("fr.pilato.elasticsearch.crawler.fs.rest");
 
-            // create and start a new instance of grizzly http server
-            // exposing the Jersey application at BASE_URI
-            httpServer = GrizzlyHttpServerFactory.createHttpServer(URI.create(settings.getRest().getUrl()), rc);
-            logger.info("FSCrawler Rest service started on [{}]", settings.getRest().getUrl());
+            httpServer = GrizzlyHttpServerFactory.createHttpServer(URI.create(bindUrl), rc);
+            logger.info("FSCrawler Rest service started on [{}]", bindUrl);
         } else {
             logger.warn("FSCrawler Rest service already started. This might indicate a bug.");
         }

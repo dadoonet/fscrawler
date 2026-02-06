@@ -20,6 +20,10 @@
 package fr.pilato.elasticsearch.crawler.plugins.service.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
+import fr.pilato.elasticsearch.crawler.fs.settings.Defaults;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.plugin.PluginSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.settings.plugin.PluginSettingsWriter;
@@ -44,6 +48,7 @@ public class RestServicePlugin extends AbstractServicePlugin {
     public static final String DEFAULT_PROPERTIES_RESOURCE = "/fr/pilato/elasticsearch/crawler/plugins/service/rest/rest-service-default.properties";
 
     private RestServiceSettings settings;
+    private RestServer restServer;
 
     @Override
     public String getType() {
@@ -151,14 +156,41 @@ public class RestServicePlugin extends AbstractServicePlugin {
 
     @Override
     protected void doStart() throws FsCrawlerPluginException {
-        // Phase 2.2: will start RestServer here
-        logger.info("REST service plugin [{}] started (bind URL: {})", id, settings != null ? settings.getUrl() : "not configured");
+        if (servicePluginContext == null) {
+            throw new FsCrawlerPluginException("REST service plugin requires a context (set by the runner before start)");
+        }
+        if (settings == null) {
+            throw new FsCrawlerPluginException("REST service plugin requires settings (configure or migrate from V1)");
+        }
+        FsSettings fsSettings = servicePluginContext.getFsSettings();
+        Object mgmt = servicePluginContext.getManagementService();
+        Object doc = servicePluginContext.getDocumentService();
+        if (fsSettings == null || mgmt == null || doc == null) {
+            throw new FsCrawlerPluginException("REST service plugin context is incomplete (missing FsSettings or services)");
+        }
+        String url = settings.getUrl() != null ? settings.getUrl() : Defaults.REST_URL_DEFAULT;
+        boolean enableCors = settings.getEnableCors() != null && settings.getEnableCors();
+
+        restServer = new RestServer(url, enableCors,
+                fsSettings,
+                (FsCrawlerManagementService) mgmt,
+                (FsCrawlerDocumentService) doc,
+                servicePluginContext.getPluginsManager(),
+                null);
+        restServer.start();
+        logger.info("REST service plugin [{}] started (bind URL: {})", id, url);
     }
 
     @Override
     protected void doStop() throws FsCrawlerPluginException {
-        // Phase 2.2: will stop RestServer here
-        logger.debug("REST service plugin [{}] stopped", id);
+        if (restServer != null) {
+            try {
+                restServer.close();
+            } finally {
+                restServer = null;
+            }
+            logger.debug("REST service plugin [{}] stopped", id);
+        }
     }
 
     public RestServiceSettings getSettings() {

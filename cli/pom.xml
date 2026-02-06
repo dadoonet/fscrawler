@@ -56,6 +56,10 @@
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-fs-http-plugin</artifactId>
         </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-rest-service-plugin</artifactId>
+        </dependency>
 
     </dependencies>
 

@@ -53,4 +53,15 @@ public interface ServicePlugin extends ConfigurablePlugin {
      * @return true if the service has been started and not yet stopped
      */
     boolean isRunning();
+
+    /**
+     * Injects the runner context (settings, document/management services, plugin manager) before start.
+     * Called by {@link fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager#startServices()}.
+     * Default is no-op; override to store the context for use in {@link #start()}.
+     *
+     * @param context the context from the crawler runner, or null to clear
+     */
+    default void setContext(ServicePluginContext context) {
+        // no-op by default
+    }
 }

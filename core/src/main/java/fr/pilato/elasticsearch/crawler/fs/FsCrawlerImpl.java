@@ -30,8 +30,10 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.Pipeline;
+import fr.pilato.elasticsearch.crawler.plugins.service.ServicePluginContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -209,6 +211,16 @@ public class FsCrawlerImpl implements AutoCloseable {
         managementService.start();
         documentService.start();
         documentService.createSchema();
+
+        // Start service plugins (e.g. REST API) with context so they can use document/management services
+        ServicePluginContext context = new DefaultServicePluginContext(
+                settings, managementService, documentService, pluginsManager);
+        pluginsManager.setServicePluginContext(context);
+        try {
+            pluginsManager.startServices();
+        } catch (FsCrawlerPluginException e) {
+            throw new RuntimeException("Failed to start service plugins: " + e.getMessage(), e);
+        }
 
         if (loop == 0) {
             logger.warn("Number of runs is set to 0. Exiting.");

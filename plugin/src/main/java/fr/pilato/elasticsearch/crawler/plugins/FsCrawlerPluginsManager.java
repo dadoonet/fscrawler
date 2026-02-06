@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.plugins.pipeline.filter.FilterPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.input.InputPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.pipeline.output.OutputPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.service.ServicePlugin;
+import fr.pilato.elasticsearch.crawler.plugins.service.ServicePluginContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pf4j.DefaultPluginManager;
@@ -62,8 +63,11 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
     private final Map<String, Class<? extends OutputPlugin>> outputPluginTypes = new HashMap<>();
     private final Map<String, Class<? extends ServicePlugin>> servicePluginTypes = new HashMap<>();
 
-    /** Loaded service plugin instances (populated when creating pipeline from directory). */
+    /** Loaded service plugin instances (populated when creating pipeline from directory or legacy REST). */
     private final List<ServicePlugin> servicePlugins = new ArrayList<>();
+
+    /** Context set by runner before startServices() so plugins can access document/management services. */
+    private volatile ServicePluginContext servicePluginContext;
 
     public FsCrawlerPluginsManager() {
         pluginManager = new DefaultPluginManager();
@@ -279,8 +283,38 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
                (Files.exists(servicesDir) && hasConfigFiles(servicesDir));
     }
 
+    /**
+     * Sets the context (settings, document/management services, plugin manager) for service plugins.
+     * Must be called by the runner before {@link #startServices()}.
+     */
+    public void setServicePluginContext(ServicePluginContext context) {
+        this.servicePluginContext = context;
+    }
+
     public void startServices() throws FsCrawlerPluginException {
+        // Legacy mode: if no service plugins loaded but REST is configured in FsSettings, create a synthetic REST plugin
+        if (servicePlugins.isEmpty() && servicePluginContext != null) {
+            FsSettings settings = servicePluginContext.getFsSettings();
+            if (settings != null && settings.getRest() != null) {
+                Class<? extends ServicePlugin> restClass = servicePluginTypes.get("rest");
+                if (restClass != null) {
+                    try {
+                        ServicePlugin restPlugin = restClass.getDeclaredConstructor().newInstance();
+                        restPlugin.setId("rest-service");
+                        restPlugin.migrateFromV1(settings);
+                        servicePlugins.add(restPlugin);
+                        logger.debug("Created legacy REST service plugin from FsSettings");
+                    } catch (Exception e) {
+                        logger.warn("Could not create legacy REST service plugin: {}", e.getMessage());
+                    }
+                }
+            }
+        }
+
         for (ServicePlugin plugin : servicePlugins) {
+            if (servicePluginContext != null) {
+                plugin.setContext(servicePluginContext);
+            }
             if (plugin.isEnabled()) {
                 try {
                     plugin.start();

@@ -40,10 +40,18 @@ public abstract class AbstractServicePlugin extends AbstractPlugin implements Se
     /** Tracks whether the service has been started. */
     private volatile boolean running = false;
 
+    /** Context injected by the runner before start (settings, document/management services, plugin manager). */
+    protected volatile ServicePluginContext servicePluginContext;
+
     public AbstractServicePlugin() {
         super();
         // Service plugins are disabled by default (unlike pipeline plugins)
         this.enabled = false;
+    }
+
+    @Override
+    public void setContext(ServicePluginContext context) {
+        this.servicePluginContext = context;
     }
 
     @Override
