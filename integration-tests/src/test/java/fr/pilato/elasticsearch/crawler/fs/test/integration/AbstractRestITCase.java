@@ -20,6 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import fr.pilato.elasticsearch.crawler.fs.FsParserNoop;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.*;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
@@ -110,7 +112,12 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         managementService.start();
         documentService.start();
 
-        restServer = new RestServer(fsSettings, managementService, documentService, pluginsManager);
+        // Create a no-op parser and checkpoint handler for REST API testing
+        FsParserNoop noopParser = new FsParserNoop(fsSettings);
+        FsCrawlerCheckpointFileHandler checkpointHandler = new FsCrawlerCheckpointFileHandler(rootTmpDir);
+        
+        restServer = new RestServer(fsSettings, managementService, documentService, pluginsManager, 
+                noopParser, checkpointHandler);
         restServer.start();
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");

@@ -62,8 +62,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
      */
     public boolean exists(String jobname) {
         try {
-            read(jobname);
-            return true;
+            return read(jobname) != null;
         } catch (IOException e) {
             return false;
         }
