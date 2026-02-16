@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -74,6 +75,12 @@ public abstract class FsParser implements Runnable, AutoCloseable {
      * @return the checkpoint or null if no scan is in progress
      */
     public abstract FsCrawlerCheckpoint getCheckpoint();
+
+    /**
+     * Get the checkpoint file handler for persistence operations.
+     * @return the checkpoint file handler or null if not supported
+     */
+    public abstract FsCrawlerCheckpointFileHandler getCheckpointHandler();
 
     Object getSemaphore() {
         return semaphore;

@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.cli;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.*;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
@@ -270,10 +271,11 @@ public class FsCrawlerCli {
             return;
         }
 
-        // If we ask to reinit, we need to clean the status for the job
+        // If we ask to reinit, we need to clean the status and checkpoint for the job
         if (command.restart) {
-            logger.debug("Cleaning existing status for job [{}]...", jobName);
+            logger.debug("Cleaning existing status and checkpoint for job [{}]...", jobName);
             new FsJobFileHandler(configDir).clean(jobName);
+            new FsCrawlerCheckpointFileHandler(configDir).clean(jobName);
         }
 
         logger.debug("Starting job [{}]...", jobName);
@@ -337,7 +339,12 @@ public class FsCrawlerCli {
 
                 // Start the REST Server if needed
                 if (command.rest) {
-                    restServer = new RestServer(fsSettings, fsCrawler.getManagementService(), fsCrawler.getDocumentService(), pluginsManager);
+                    restServer = new RestServer(fsSettings, 
+                            fsCrawler.getManagementService(), 
+                            fsCrawler.getDocumentService(), 
+                            pluginsManager,
+                            fsCrawler.getFsParser(),
+                            fsCrawler.getFsParser().getCheckpointHandler());
                     restServer.start();
                 }
 
