@@ -1,0 +1,2 @@
+This is another valid text file.
+The crawler should continue indexing this file even if a previous file failed to parse.

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Mock file to simulate a RuntimeException during parsing.
+  The crawler should continue processing other files despite this error.
+  See https://cwiki.apache.org/confluence/display/tika/MockParser
+-->
+<mock>
+    <throw class="java.lang.RuntimeException">Simulated parser crash during integration test</throw>
+</mock>

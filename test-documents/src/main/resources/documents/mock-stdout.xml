@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Mock file to simulate writing to stdout during parsing.
+  See https://cwiki.apache.org/confluence/display/tika/MockParser
+-->
+<mock>
+    <metadata action="set" name="dc:creator">David Pilato</metadata>
+    <write element="p">I'm a fake file</write>
+    <print_out>This is written to stdout by the parser</print_out>
+    <print_err>This is written to stderr by the parser</print_err>
+</mock>
