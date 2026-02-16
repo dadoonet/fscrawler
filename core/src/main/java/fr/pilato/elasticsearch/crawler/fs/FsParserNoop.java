@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +31,23 @@ public class FsParserNoop extends FsParser {
 
     public FsParserNoop(FsSettings fsSettings) {
         this.fsSettings = fsSettings;
+    }
+
+    @Override
+    public CrawlerState getState() {
+        if (closed) {
+            return CrawlerState.STOPPED;
+        }
+        if (paused) {
+            return CrawlerState.PAUSED;
+        }
+        return CrawlerState.RUNNING;
+    }
+
+    @Override
+    public FsCrawlerCheckpoint getCheckpoint() {
+        // No-op parser has no checkpoint
+        return null;
     }
 
     @Override

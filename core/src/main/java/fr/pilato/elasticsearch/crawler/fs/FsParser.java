@@ -19,12 +19,16 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class FsParser implements Runnable, AutoCloseable {
     static final Object semaphore = new Object();
     final AtomicInteger runNumber = new AtomicInteger(0);
-    boolean closed = true;
+    volatile boolean closed = true;
+    volatile boolean paused = false;
 
     public void close() {
         this.closed = true;
@@ -33,6 +37,43 @@ public abstract class FsParser implements Runnable, AutoCloseable {
     public boolean isClosed() {
         return closed;
     }
+
+    /**
+     * Pause the crawler. The crawler will save its checkpoint and wait for resume.
+     */
+    public void pause() {
+        this.paused = true;
+    }
+
+    /**
+     * Resume the crawler after a pause.
+     */
+    public void resume() {
+        this.paused = false;
+        synchronized (semaphore) {
+            semaphore.notifyAll();
+        }
+    }
+
+    /**
+     * Check if the crawler is paused.
+     * @return true if paused
+     */
+    public boolean isPaused() {
+        return paused;
+    }
+
+    /**
+     * Get the current state of the crawler.
+     * @return the crawler state
+     */
+    public abstract CrawlerState getState();
+
+    /**
+     * Get the current checkpoint (progress) of the crawler.
+     * @return the checkpoint or null if no scan is in progress
+     */
+    public abstract FsCrawlerCheckpoint getCheckpoint();
 
     Object getSemaphore() {
         return semaphore;
