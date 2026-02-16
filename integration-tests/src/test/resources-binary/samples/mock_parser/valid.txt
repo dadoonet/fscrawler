@@ -1,0 +1,2 @@
+This is a valid text file that should be parsed successfully.
+It contains some searchable content for testing purposes.

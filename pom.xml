@@ -628,6 +628,13 @@
                 <artifactId>tika-core</artifactId>
                 <version>${tika.version}</version>
             </dependency>
+            <!-- Tika MockParser for testing erratic parser behaviors -->
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-core</artifactId>
+                <version>${tika.version}</version>
+                <type>test-jar</type>
+            </dependency>
             <dependency>
                 <groupId>org.apache.tika</groupId>
                 <artifactId>tika-parsers-standard-package</artifactId>

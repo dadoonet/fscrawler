@@ -96,6 +96,13 @@
             <artifactId>fscrawler-test-documents</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Tika MockParser for testing erratic parser behaviors -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 

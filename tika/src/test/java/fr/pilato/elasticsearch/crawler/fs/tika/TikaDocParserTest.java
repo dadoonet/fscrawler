@@ -1074,6 +1074,60 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent()).isNotEmpty();
     }
 
+    /**
+     * Test that FSCrawler handles RuntimeException/IOException/SAXException from parser gracefully.
+     * The document should be created but with empty/null content.
+     * <p>
+     * The MockParser throws an exception during parsing, but FSCrawler should
+     * not crash and should create a document object (even if content is empty).
+     * <p>
+     * See <<a href="https://cwiki.apache.org/confluence/display/tika/MockParser">MockParser</a>>
+     */
+    @Test
+    public void mockParserRuntimeException() throws IOException {
+        Doc doc = testWithMock("mock-runtime-exception.xml");
+        assertThat(doc.getContent()).isNull();
+        doc = testWithMock("mock-io-exception.xml");
+        assertThat(doc.getContent()).isNull();
+        doc = testWithMock("mock-parse-exception.xml");
+        assertThat(doc.getContent()).isNull();
+    }
+
+    /**
+     * Test that FSCrawler handles parser writing to stdout without issues.
+     * Note: The MockParser behavior varies - it may or may not extract content
+     * depending on the Tika version and configuration. This test verifies
+     * that the document is created without crashing.
+     * <p>
+     * See <<a href="https://cwiki.apache.org/confluence/display/tika/MockParser">MockParser</a>>
+     */
+    @Test
+    public void mockParserStdoutAndStderr() throws IOException {
+        Doc doc = testWithMock("mock-stdout.xml");
+        // Content should be extracted
+        assertThat(doc.getContent()).contains("I'm a fake file");
+        // Meta data author should be there
+        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+    }
+
+    /**
+     * Helper method to test MockParser behavior with different mock files.
+     * @param mockFilename The name of the mock file to test (e.g., "mock-runtime-exception.xml")
+     * @return The generated Doc object, which should be created even if the parser throws an exception
+     * @throws IOException In case something goes wrong
+     */
+    private Doc testWithMock(String mockFilename) throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        Doc doc = extractFromFile(mockFilename, fsSettings);
+
+        // The document should be created despite the exception
+        assertThat(doc).isNotNull();
+        // The filename should still be set
+        assertThat(doc.getFile().getFilename()).isEqualTo(mockFilename);
+
+        return doc;
+    }
+
     private Doc extractFromFileExtension(String extension) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
