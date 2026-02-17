@@ -23,6 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.CrawlerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
@@ -38,7 +39,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.awaitility.core.ConditionTimeoutException;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.junit.After;
 import org.junit.Before;
@@ -48,12 +48,12 @@ import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.*;
 import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
-import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.waitFor;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 
 /**
@@ -150,7 +150,7 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
             long docsBeforePause = response.getTotalHits();
             logger.info("📍 Documents indexed before pause: {}", docsBeforePause);
 
-            waitFor(Duration.ofSeconds(1));
+            FsCrawlerUtil.waitFor(Duration.ofSeconds(1));
 
             // Record how many documents we have now (after pause and flush)
             refresh(fsSettings.getElasticsearch().getIndex());
@@ -345,9 +345,68 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_status_during_scan() {
-        waitFor(Duration.ofSeconds(1));
+    public void status_during_scan() throws Exception {
+        // Create a deep directory structure with many files to slow down scanning
+        long nbFolders = randomLongBetween(5, 20);
+        long nbFiles = randomLongBetween(100, 1000);
 
+        Path testDir = currentTestResourceDir;
+        for (long i = 0; i < nbFolders; i++) {
+            Path subDir = testDir.resolve("subdir_" + i);
+            Files.createDirectories(subDir);
+            for (long j = 0; j < nbFiles; j++) {
+                Files.writeString(subDir.resolve("file_" + j + ".txt"), "Content of file " + i + "_" + j);
+            }
+        }
+
+        long expectedDocs = 1L + nbFolders * nbFiles; // x subdirs * y files + 1 from _common
+        logger.info("📂 Created {} documents within {} folders", expectedDocs, nbFolders);
+
+        // Create settings with a reasonable update rate
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(5)); // Long update rate to avoid second scan
+
+        // Start crawler with REST
+        try (FsCrawlerImpl fsCrawler = startCrawlerWithRest(fsSettings)) {
+            // Verify status shows RUNNING
+            CrawlerStatusResponse status = restGetCrawlerStatus();
+            assertThat(status.getState()).isEqualTo(CrawlerState.RUNNING);
+
+            final AtomicLong counterFiles = new AtomicLong(status.getFilesProcessed());
+            final AtomicInteger counterCompletedDirs = new AtomicInteger(status.getCompletedDirectories());
+            final AtomicInteger counterPendingDirs = new AtomicInteger(status.getPendingDirectories());
+            await()
+                    .pollInterval(Duration.ofSeconds(1))
+                    .timeout(Duration.ofMinutes(5))
+                    .until(() -> {
+                        CrawlerStatusResponse s = restGetCrawlerStatus();
+                        logger.info("📊 Crawler status while scanning: completedDirs={}, filesProcessed={}, pendingDirs={}",
+                                s.getCompletedDirectories(),
+                                s.getFilesProcessed(),
+                                s.getPendingDirectories());
+                        long oldFiles = counterFiles.getAndSet(s.getFilesProcessed());
+                        int oldCompletedDirs = counterCompletedDirs.getAndSet(s.getCompletedDirectories());
+                        int oldPendingDirs = counterPendingDirs.getAndSet(s.getPendingDirectories());
+                        // We should see progress in both files and directories processed
+                        assertThat(s.getFilesProcessed()).isGreaterThanOrEqualTo(oldFiles);
+                        // But if the crawler is completed, we should have no completed directories anymore (since we reset the checkpoint)
+                        if (s.getState() == CrawlerState.COMPLETED) {
+                            assertThat(s.getCompletedDirectories()).isZero();
+                            assertThat(s.getPendingDirectories()).isZero();
+                        } else {
+                            assertThat(s.getCompletedDirectories()).isGreaterThanOrEqualTo(oldCompletedDirs);
+                            assertThat(s.getPendingDirectories()).isLessThanOrEqualTo(oldPendingDirs);
+                        }
+
+                        // We wait until the crawler is completed and has no pending directories
+                        return s.getState() == CrawlerState.COMPLETED && s.getPendingDirectories() == 0;
+                    });
+
+            assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.COMPLETED);
+
+            // Count expected files
+            countTestHelper(new ESSearchRequest().withIndex(fsSettings.getElasticsearch().getIndex()), expectedDocs, testDir);
+        }
     }
 
     // Utility methods for REST API calls
