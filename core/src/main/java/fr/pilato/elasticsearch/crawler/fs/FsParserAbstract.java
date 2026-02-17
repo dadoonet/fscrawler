@@ -507,7 +507,7 @@ public class FsParserAbstract extends FsParser {
         saveCheckpoint();
 
         // Exponential backoff
-        long delay = INITIAL_RETRY_DELAY_MS * (long) Math.pow(2, checkpoint.get().getRetryCount() - 1);
+        long delay = INITIAL_RETRY_DELAY_MS * (long) Math.pow(2, checkpoint.get().getRetryCount() - (double) 1);
         logger.warn("Network error on path [{}], retry {}/{} in {}ms: {}",
                 failedPath, checkpoint.get().getRetryCount(), MAX_RETRIES, delay, e.getMessage());
 
