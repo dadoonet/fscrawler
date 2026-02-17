@@ -106,8 +106,10 @@ public class FsParserAbstract extends FsParser {
 
     @Override
     public CrawlerState getState() {
-        if (checkpoint != null) {
-            return checkpoint.getState();
+        // Capture volatile field to avoid race condition
+        FsCrawlerCheckpoint localCheckpoint = checkpoint;
+        if (localCheckpoint != null) {
+            return localCheckpoint.getState();
         }
         if (closed) {
             return CrawlerState.STOPPED;
@@ -136,9 +138,11 @@ public class FsParserAbstract extends FsParser {
         super.close();
         logger.trace("Closing the parser {}", this.getClass().getSimpleName());
         
+        // Capture volatile field to avoid race condition
+        FsCrawlerCheckpoint localCheckpoint = checkpoint;
         // Save checkpoint before closing if we have one in progress
-        if (checkpoint != null && checkpoint.getState() == CrawlerState.RUNNING) {
-            checkpoint.setState(CrawlerState.STOPPED);
+        if (localCheckpoint != null && localCheckpoint.getState() == CrawlerState.RUNNING) {
+            localCheckpoint.setState(CrawlerState.STOPPED);
             saveCheckpoint();
         }
         
@@ -153,8 +157,10 @@ public class FsParserAbstract extends FsParser {
     @Override
     public void pause() {
         super.pause();
-        if (checkpoint != null) {
-            checkpoint.setState(CrawlerState.PAUSED);
+        // Capture volatile field to avoid race condition
+        FsCrawlerCheckpoint localCheckpoint = checkpoint;
+        if (localCheckpoint != null) {
+            localCheckpoint.setState(CrawlerState.PAUSED);
             saveCheckpoint();
             logger.info("Crawler paused. Checkpoint saved.");
         }
@@ -396,10 +402,17 @@ public class FsParserAbstract extends FsParser {
             checkpoint.setCurrentPath(currentPath);
             
             try {
-                processDirectory(currentPath, lastScanDate, stats);
-                checkpoint.markCompleted(currentPath);
-                checkpoint.resetRetryCount();
-                maybeSaveCheckpoint();
+                boolean fullyProcessed = processDirectory(currentPath, lastScanDate, stats);
+                if (fullyProcessed) {
+                    checkpoint.markCompleted(currentPath);
+                    checkpoint.resetRetryCount();
+                    maybeSaveCheckpoint();
+                } else {
+                    // Directory was interrupted - re-add to pending queue for resume
+                    checkpoint.addPath(currentPath);
+                    saveCheckpoint();
+                    return;  // Exit the processing loop
+                }
             } catch (Exception e) {
                 if (isNetworkError(e)) {
                     handleNetworkError(e, currentPath);
@@ -438,11 +451,18 @@ public class FsParserAbstract extends FsParser {
      * Check if an exception is a network-related error
      */
     private boolean isNetworkError(Exception e) {
-        return e instanceof java.net.SocketException ||
-               e instanceof java.net.SocketTimeoutException ||
-               e instanceof java.net.ConnectException ||
-               e instanceof java.net.UnknownHostException ||
-               (e.getCause() != null && isNetworkError((Exception) e.getCause()));
+        if (e instanceof java.net.SocketException ||
+            e instanceof java.net.SocketTimeoutException ||
+            e instanceof java.net.ConnectException ||
+            e instanceof java.net.UnknownHostException) {
+            return true;
+        }
+        // Safely check cause - only recurse if it's an Exception, not an Error
+        Throwable cause = e.getCause();
+        if (cause instanceof Exception) {
+            return isNetworkError((Exception) cause);
+        }
+        return false;
     }
 
     /**
@@ -481,13 +501,14 @@ public class FsParserAbstract extends FsParser {
     /**
      * Process a single directory (non-recursive).
      * Subdirectories are added to the checkpoint's pending queue.
+     * @return true if the directory was fully processed, false if interrupted by pause/close
      */
-    private void processDirectory(String filepath, LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
+    private boolean processDirectory(String filepath, LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
         logger.debug("indexing [{}] content", filepath);
 
         if (closed) {
             logger.debug("FS crawler thread [{}] is now marked as closed...", fsSettings.getName());
-            return;
+            return false;
         }
 
         final Collection<FileAbstractModel> children = crawlerPlugin.getFiles(filepath);
@@ -519,7 +540,7 @@ public class FsParserAbstract extends FsParser {
                     // Check for pause/close during processing
                     if (closed || paused) {
                         saveCheckpoint();
-                        return;
+                        return false;  // Interrupted - directory not fully processed
                     }
 
                     logger.trace("FileAbstractModel = {}", child);
@@ -640,6 +661,7 @@ public class FsParserAbstract extends FsParser {
                 }
             }
         }
+        return true;  // Directory fully processed
     }
 
     private LocalDateTime getLastDateFromMeta(String jobName) throws IOException {
