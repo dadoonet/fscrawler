@@ -21,6 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -384,6 +385,10 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                                 s.getCompletedDirectories(),
                                 s.getFilesProcessed(),
                                 s.getPendingDirectories());
+                        FsCrawlerCheckpoint checkpoint = fsCrawler.getFsParser().getCheckpoint();
+                        logger.debug("Current dir: {}", checkpoint.getCurrentPath());
+                        logger.debug("Remaining dirs: {}", checkpoint.getPendingPaths());
+                        logger.trace("Checkpoint: {}", checkpoint);
                         long oldFiles = counterFiles.getAndSet(s.getFilesProcessed());
                         int oldCompletedDirs = counterCompletedDirs.getAndSet(s.getCompletedDirectories());
                         int oldPendingDirs = counterPendingDirs.getAndSet(s.getPendingDirectories());
