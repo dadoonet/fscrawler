@@ -640,3 +640,132 @@ You can change it using ``rest`` settings:
 
 It also means that if you are running more than one instance of FScrawler locally, you can (must) change the port as
 it will conflict.
+
+Crawler control
+^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.10
+
+FSCrawler provides REST endpoints to control the crawler, allowing you to pause, resume, 
+and monitor the crawling process. This is particularly useful for large file systems 
+where crawling may take a long time and you want to be able to stop and resume later.
+
+Getting crawler status
+~~~~~~~~~~~~~~~~~~~~~~
+
+To get the current status of the crawler, you can call ``GET /_crawler/status``:
+
+.. code:: sh
+
+   curl http://127.0.0.1:8080/_crawler/status
+
+It will give you a response similar to:
+
+.. code:: json
+
+   {
+     "state" : "RUNNING",
+     "scanId" : "abc123-def456",
+     "currentPath" : "/data/documents/subfolder",
+     "pendingDirectories" : 42,
+     "completedDirectories" : 158,
+     "filesProcessed" : 1523,
+     "filesDeleted" : 12,
+     "scanStartTime" : "2024-01-15T10:30:00",
+     "elapsedTime" : "15m 32s",
+     "retryCount" : 0,
+     "lastError" : null
+   }
+
+The possible states are:
+
+* ``RUNNING``: The crawler is actively processing files
+* ``PAUSED``: The crawler has been paused and is waiting for a resume command
+* ``STOPPED``: The crawler is not running
+* ``COMPLETED``: The crawler has finished its scan successfully
+* ``ERROR``: The crawler encountered an error and stopped
+
+Pausing the crawler
+~~~~~~~~~~~~~~~~~~~
+
+To pause the crawler, call ``POST /_crawler/pause``:
+
+.. code:: sh
+
+   curl -X POST http://127.0.0.1:8080/_crawler/pause
+
+The crawler will save its current progress (checkpoint) and pause. You can then safely 
+stop FSCrawler if needed. When you restart FSCrawler, it will automatically resume 
+from where it left off.
+
+Response:
+
+.. code:: json
+
+   {
+     "ok" : true,
+     "message" : "Crawler paused. Checkpoint saved."
+   }
+
+Resuming the crawler
+~~~~~~~~~~~~~~~~~~~~
+
+To resume a paused crawler, call ``POST /_crawler/resume``:
+
+.. code:: sh
+
+   curl -X POST http://127.0.0.1:8080/_crawler/resume
+
+Response:
+
+.. code:: json
+
+   {
+     "ok" : true,
+     "message" : "Crawler resumed"
+   }
+
+Clearing the checkpoint
+~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to force a fresh start and ignore any saved progress, you can clear 
+the checkpoint file. The crawler must be paused or stopped first:
+
+.. code:: sh
+
+   curl -X DELETE http://127.0.0.1:8080/_crawler/checkpoint
+
+Response:
+
+.. code:: json
+
+   {
+     "ok" : true,
+     "message" : "Checkpoint cleared"
+   }
+
+.. note::
+
+   You can also clear the checkpoint using the ``--restart`` command line option 
+   when starting FSCrawler. This will clear both the status file and the checkpoint file.
+
+Automatic resume after crash
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If FSCrawler crashes or is forcefully terminated during a crawl, it will automatically 
+resume from the last saved checkpoint when restarted. The checkpoint is saved periodically 
+(every 100 files by default) and whenever the crawler state changes.
+
+Network error recovery
+~~~~~~~~~~~~~~~~~~~~~~
+
+FSCrawler automatically handles network errors with exponential backoff retry. If a network 
+error occurs, it will:
+
+1. Save the current checkpoint
+2. Wait with exponential backoff (starting from 1 second, doubling each retry)
+3. Attempt to reconnect
+4. Resume from the failed directory
+
+After 10 consecutive failures, the crawler will stop with an error state. You can then 
+fix the network issue and restart FSCrawler to resume from the checkpoint.
