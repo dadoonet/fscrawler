@@ -3,31 +3,17 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 /**
  * Simple response for operations
  */
-public class SimpleResponse {
-    private boolean ok;
-    private String message;
+public class SimpleResponse extends RestResponse {
 
     public SimpleResponse() {
+        super();
     }
 
     public SimpleResponse(boolean ok, String message) {
-        this.ok = ok;
-        this.message = message;
+        super(ok, message);
     }
 
-    public boolean isOk() {
-        return ok;
-    }
-
-    public void setOk(boolean ok) {
-        this.ok = ok;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
+    public SimpleResponse(boolean ok) {
+        super(ok);
     }
 }

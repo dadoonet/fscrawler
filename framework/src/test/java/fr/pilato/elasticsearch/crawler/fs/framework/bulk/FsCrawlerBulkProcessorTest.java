@@ -33,6 +33,7 @@ import java.time.Duration;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.waitFor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -142,7 +143,7 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
                 new FsCrawlerBulkProcessor<>(new TestEngine(), listener, 0, flushInterval, null, TestBulkRequest::new);
 
         // We don't load immediately the bulk processor
-        Thread.sleep(100);
+        waitFor(Duration.ofMillis(100));
 
         generatePayload(bulkProcessor, 1, maxActions);
         assertThat(listener.nbSuccessfulExecutions).isZero();

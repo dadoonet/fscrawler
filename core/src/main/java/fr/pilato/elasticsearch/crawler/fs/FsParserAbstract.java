@@ -81,7 +81,7 @@ public class FsParserAbstract extends FsParser {
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
     // Checkpoint for current scan
-    private AtomicReference<FsCrawlerCheckpoint> checkpoint = new AtomicReference<>(new FsCrawlerCheckpoint());
+    private final AtomicReference<FsCrawlerCheckpoint> checkpoint = new AtomicReference<>(new FsCrawlerCheckpoint());
     private int filesSinceLastCheckpoint = 0;
 
     public FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
@@ -114,10 +114,10 @@ public class FsParserAbstract extends FsParser {
         if (localCheckpoint != null) {
             return localCheckpoint.getState();
         }
-        if (closed) {
+        if (closed.get()) {
             return CrawlerState.STOPPED;
         }
-        if (paused) {
+        if (paused.get()) {
             return CrawlerState.PAUSED;
         }
         return CrawlerState.RUNNING;
@@ -134,6 +134,19 @@ public class FsParserAbstract extends FsParser {
      */
     public FsCrawlerCheckpointFileHandler getCheckpointHandler() {
         return checkpointHandler;
+    }
+
+    /**
+     * Resume the crawler after a pause.
+     */
+    @Override
+    public void resume() {
+        super.resume();
+
+        // Also update the checkpoint
+        checkpoint.get().setState(CrawlerState.RUNNING);
+        saveCheckpoint();
+        logger.trace("Crawler resumed. Checkpoint updated.");
     }
 
     @Override
@@ -160,13 +173,10 @@ public class FsParserAbstract extends FsParser {
     @Override
     public void pause() {
         super.pause();
-        // Capture volatile field to avoid race condition
-        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
-        if (localCheckpoint != null) {
-            localCheckpoint.setState(CrawlerState.PAUSED);
-            saveCheckpoint();
-            logger.info("Crawler paused. Checkpoint saved.");
-        }
+        // Also update the checkpoint state to PAUSED so that it is saved on disk immediately
+        checkpoint.get().setState(CrawlerState.PAUSED);
+        saveCheckpoint();
+        logger.trace("Crawler paused. Checkpoint saved.");
     }
 
     @Override
@@ -174,9 +184,9 @@ public class FsParserAbstract extends FsParser {
         logger.info("FS crawler started for [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
-        closed = false;
+        closed.set(false);
         while (true) {
-            if (closed) {
+            if (closed.get()) {
                 logger.debug("FS crawler thread [{}] is now marked as closed...", fsSettings.getName());
                 return;
             }
@@ -239,7 +249,7 @@ public class FsParserAbstract extends FsParser {
                         nextCheck);
 
                 // If we completed successfully, update the checkpoint with completion info
-                if (!closed && !paused && checkpoint.get().getState() != CrawlerState.ERROR) {
+                if (!closed.get() && !paused.get() && checkpoint.get().getState() != CrawlerState.ERROR) {
                     updateCheckpointAsCompleted(scanDatenew, nextCheck);
                 }
             } catch (Exception e) {
@@ -247,11 +257,9 @@ public class FsParserAbstract extends FsParser {
                 logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
                 
                 // Save checkpoint on error so we can resume
-                if (checkpoint != null) {
-                    checkpoint.get().setState(CrawlerState.ERROR);
-                    checkpoint.get().setLastError(e.getMessage());
-                    saveCheckpoint();
-                }
+                checkpoint.get().setState(CrawlerState.ERROR);
+                checkpoint.get().setLastError(e.getMessage());
+                saveCheckpoint();
             } finally {
                 persistAclHashCacheIfNeeded();
                 try {
@@ -265,7 +273,7 @@ public class FsParserAbstract extends FsParser {
 
             if (loop > 0 && run >= loop) {
                 logger.info("FS crawler is stopping after {} run{}", run, run > 1 ? "s" : "");
-                closed = true;
+                closed.set(true);
                 return;
             }
 
@@ -275,11 +283,11 @@ public class FsParserAbstract extends FsParser {
                 // The problem here is that there is no wait to close the thread while we are sleeping.
                 // Which leads to Zombie threads in our tests
 
-                if (!closed) {
+                if (!closed.get()) {
                     synchronized (semaphore) {
                         long totalWaitTime = 0;
                         long maxWaitTime = fsSettings.getFs().getUpdateRate().millis();
-                        while (totalWaitTime < maxWaitTime && !closed) {
+                        while (totalWaitTime < maxWaitTime && !closed.get()) {
                             long waitTime = Math.min(CHECK_JOB_INTERVAL.millis(), maxWaitTime - totalWaitTime);
                             semaphore.wait(waitTime);
                             totalWaitTime += waitTime;
@@ -288,7 +296,7 @@ public class FsParserAbstract extends FsParser {
                             // Read again the checkpoint to check if we need to stop the crawler
                             try {
                                 FsCrawlerCheckpoint savedCheckpoint = checkpointHandler.read(fsSettings.getName());
-                                if (savedCheckpoint == null || savedCheckpoint.getNextCheck() == null 
+                                if (savedCheckpoint == null || savedCheckpoint.getNextCheck() == null
                                         || LocalDateTime.now().isAfter(savedCheckpoint.getNextCheck())) {
                                     logger.debug("Fs crawler is waking up because next check time [{}] is in the past.", 
                                             savedCheckpoint != null ? savedCheckpoint.getNextCheck() : "null");
@@ -394,12 +402,9 @@ public class FsParserAbstract extends FsParser {
      * Save the current checkpoint to disk
      */
     private void saveCheckpoint() {
-        if (checkpoint == null) {
-            return;
-        }
         try {
             checkpointHandler.write(fsSettings.getName(), checkpoint.get());
-            logger.debug("Checkpoint saved: {} files processed, {} directories pending",
+            logger.trace("✅ Checkpoint saved: {} files processed, {} directories pending",
                     checkpoint.get().getFilesProcessed(), checkpoint.get().getPendingPaths().size());
         } catch (IOException e) {
             logger.warn("Failed to save checkpoint: {}", e.getMessage());
@@ -428,7 +433,7 @@ public class FsParserAbstract extends FsParser {
         localCheckpoint.resetRetryCount();
         
         saveCheckpoint();
-        logger.debug("Checkpoint updated as completed: scanEndTime [{}], nextCheck [{}], indexed [{}], deleted [{}]",
+        logger.debug("💾 Checkpoint updated as completed: scanEndTime [{}], nextCheck [{}], indexed [{}], deleted [{}]",
                 scanEndTime, nextCheck, localCheckpoint.getFilesProcessed(), localCheckpoint.getFilesDeleted());
     }
 
@@ -447,13 +452,13 @@ public class FsParserAbstract extends FsParser {
      * Process directories using a work queue with checkpoint support
      */
     private void processDirectoriesWithCheckpoint(LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
-        while (checkpoint.get().hasPendingWork() && !closed) {
+        while (checkpoint.get().hasPendingWork() && !closed.get()) {
             // Handle pause
-            if (paused) {
+            if (paused.get()) {
                 checkpoint.get().setState(CrawlerState.PAUSED);
                 saveCheckpoint();
                 waitForResume();
-                if (closed) {
+                if (closed.get()) {
                     return;
                 }
                 checkpoint.get().setState(CrawlerState.RUNNING);
@@ -484,7 +489,7 @@ public class FsParserAbstract extends FsParser {
                     saveCheckpoint();
                     return;  // Exit the processing loop
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
                 if (isNetworkError(e)) {
                     handleNetworkError(e, currentPath);
                 } else if (fsSettings.getFs().isContinueOnError()) {
@@ -504,7 +509,7 @@ public class FsParserAbstract extends FsParser {
     private void waitForResume() {
         logger.info("Crawler is paused. Waiting for resume...");
         synchronized (semaphore) {
-            while (paused && !closed) {
+            while (paused.get() && !closed.get()) {
                 try {
                     semaphore.wait(1000);
                 } catch (InterruptedException e) {
@@ -513,7 +518,7 @@ public class FsParserAbstract extends FsParser {
                 }
             }
         }
-        if (!closed) {
+        if (!closed.get()) {
             logger.info("Crawler resumed.");
         }
     }
@@ -537,7 +542,7 @@ public class FsParserAbstract extends FsParser {
     /**
      * Handle network errors with retry and exponential backoff
      */
-    private void handleNetworkError(Exception e, String failedPath) throws Exception {
+    private void handleNetworkError(Exception e, String failedPath) {
         checkpoint.get().setLastError(e.getMessage());
         checkpoint.get().incrementRetryCount();
 
@@ -575,7 +580,7 @@ public class FsParserAbstract extends FsParser {
     private boolean processDirectory(String filepath, LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
         logger.debug("indexing [{}] content", filepath);
 
-        if (closed) {
+        if (closed.get()) {
             logger.debug("FS crawler thread [{}] is now marked as closed...", fsSettings.getName());
             return false;
         }
@@ -607,7 +612,7 @@ public class FsParserAbstract extends FsParser {
             if (!ignoreFolder) {
                 for (FileAbstractModel child : children) {
                     // Check for pause/close during processing
-                    if (closed || paused) {
+                    if (closed.get() || paused.get()) {
                         saveCheckpoint();
                         return false;  // Interrupted - directory not fully processed
                     }
@@ -875,7 +880,7 @@ public class FsParserAbstract extends FsParser {
     private Collection<String> getFileDirectory(String path)
             throws Exception {
         // If the crawler is being closed, we return
-        if (closed) {
+        if (closed.get()) {
             return new ArrayList<>();
         }
         return managementService.getFileDirectory(path);
@@ -883,7 +888,7 @@ public class FsParserAbstract extends FsParser {
 
     private Collection<String> getFolderDirectory(String path) throws Exception {
         // If the crawler is being closed, we return
-        if (closed) {
+        if (closed.get()) {
             return new ArrayList<>();
         }
         return managementService.getFolderDirectory(path);
@@ -975,7 +980,7 @@ public class FsParserAbstract extends FsParser {
 
             // We index the data structure
             if (isIndexable(mergedDoc.getContent(), fsSettings.getFs().getFilters())) {
-                if (!closed) {
+                if (!closed.get()) {
                     FSCrawlerLogger.documentDebug(id,
                             computeVirtualPathName(stats.getRootPath(), fullFilename),
                             "Indexing content");
@@ -1004,7 +1009,7 @@ public class FsParserAbstract extends FsParser {
                     String jsonString = documentContext.jsonString();
 
                     // We index the json content directly
-                    if (!closed) {
+                    if (!closed.get()) {
                         documentService.indexRawJson(
                                 fsSettings.getElasticsearch().getIndex(),
                                 id,
@@ -1030,7 +1035,7 @@ public class FsParserAbstract extends FsParser {
                 // We need to check that the provided file is actually a JSON file which can be parsed
                 try {
                     // We index the xml content directly (after transformation to json)
-                    if (!closed) {
+                    if (!closed.get()) {
                         documentService.indexRawJson(
                                 fsSettings.getElasticsearch().getIndex(),
                                 id,
@@ -1066,7 +1071,7 @@ public class FsParserAbstract extends FsParser {
      * @param folder    path object
      */
     private void indexDirectory(String id, Folder folder) {
-        if (!closed) {
+        if (!closed.get()) {
             managementService.storeVisitedDirectory(fsSettings.getElasticsearch().getIndexFolder(), id, folder);
         } else {
             logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
@@ -1150,7 +1155,7 @@ public class FsParserAbstract extends FsParser {
      */
     private void esDelete(FsCrawlerDocumentService service, String index, String id) {
         logger.debug("Deleting {}/{}", index, id);
-        if (!closed) {
+        if (!closed.get()) {
             service.delete(index, id);
             removeStoredAclHash(id);
         } else {
@@ -1163,12 +1168,11 @@ public class FsParserAbstract extends FsParser {
      */
     private void esDelete(FsCrawlerManagementService service, String index, String id) {
         logger.debug("Deleting {}/{}", index, id);
-        if (!closed) {
+        if (!closed.get()) {
             service.delete(index, id);
             removeStoredAclHash(id);
         } else {
             logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }
     }
-
 }

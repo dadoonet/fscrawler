@@ -45,6 +45,15 @@ public class CrawlerStatusResponse extends RestResponse {
     private String scanId;
 
     public CrawlerStatusResponse() {
+        super();
+    }
+
+    public CrawlerStatusResponse(boolean ok, String message) {
+        super(ok, message);
+    }
+
+    public CrawlerStatusResponse(boolean ok) {
+        super(ok);
     }
 
     public CrawlerStatusResponse(FsCrawlerCheckpoint checkpoint) {
@@ -65,6 +74,11 @@ public class CrawlerStatusResponse extends RestResponse {
             Duration elapsed = Duration.between(checkpoint.getScanStartTime(), LocalDateTime.now());
             setElapsedTime(elapsed);
         }
+    }
+
+    public CrawlerStatusResponse(FsCrawlerCheckpoint checkpoint, CrawlerState state) {
+        this(checkpoint);
+        this.state = state;
     }
 
     public CrawlerState getState() {

@@ -28,8 +28,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.LocalDateTime;
 
 /**
  * REST API for controlling the crawler (pause, resume, status)
@@ -58,14 +56,12 @@ public class CrawlerApi extends RestApi {
         
         if (fsParser.isClosed()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new SimpleResponse(false, "Crawler is not running"))
+                    .entity(new SimpleResponse(false, "Crawler is not closed"))
                     .build();
         }
         
         if (fsParser.isPaused()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new SimpleResponse(false, "Crawler is already paused"))
-                    .build();
+            return Response.ok(new SimpleResponse(true, "Crawler is already paused.")).build();
         }
         
         fsParser.pause();
@@ -84,18 +80,17 @@ public class CrawlerApi extends RestApi {
         
         if (fsParser.isClosed()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new SimpleResponse(false, "Crawler is not running"))
+                    .entity(new SimpleResponse(false, "Crawler is closed. Cannot resume."))
                     .build();
         }
         
         if (!fsParser.isPaused()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new SimpleResponse(false, "Crawler is not paused"))
+            return Response.ok(new SimpleResponse(true, "Crawler is not paused. No action needed."))
                     .build();
         }
         
         fsParser.resume();
-        return Response.ok(new SimpleResponse(true, "Crawler resumed")).build();
+        return Response.ok(new SimpleResponse(true, "Crawler resumed.")).build();
     }
 
     /**
@@ -108,33 +103,28 @@ public class CrawlerApi extends RestApi {
     public CrawlerStatusResponse getStatus() {
         FsCrawlerCheckpoint checkpoint = fsParser.getCheckpoint();
         if (checkpoint != null) {
-            CrawlerStatusResponse response = new CrawlerStatusResponse(checkpoint);
-            response.setState(fsParser.getState());
-            return response;
-        } else {
-            if (fsParser.getCheckpointHandler() != null) {
-                logger.debug("No checkpoint in memory, but we have a checkpoint handler. This might indicate that the " +
-                        "crawler is not running or just started. Trying to load checkpoint from file...");
-                // Try to load checkpoint from file if parser doesn't have one in memory
-                try {
-                    FsCrawlerCheckpoint savedCheckpoint = fsParser.getCheckpointHandler().read(jobName);
-                    if (savedCheckpoint != null) {
-                        return new CrawlerStatusResponse(savedCheckpoint);
-                    }
-                } catch (IOException e) {
-                    logger.debug("No saved checkpoint found: {}", e.getMessage());
+            return new CrawlerStatusResponse(checkpoint, fsParser.getState());
+        }
+
+        if (fsParser.getCheckpointHandler() != null) {
+            logger.debug("No checkpoint in memory, but we have a checkpoint handler. This might indicate that the " +
+                    "crawler is not running or just started. Trying to load checkpoint from file...");
+            // Try to load checkpoint from file if parser doesn't have one in memory
+            try {
+                FsCrawlerCheckpoint savedCheckpoint = fsParser.getCheckpointHandler().read(jobName);
+                if (savedCheckpoint != null) {
+                    return new CrawlerStatusResponse(savedCheckpoint);
                 }
-            } else {
-                logger.debug("No checkpoint in memory and no checkpoint handler. This probably means there's no active " +
-                        "crawler. Did you start with --loop 0?");
+            } catch (IOException e) {
+                logger.debug("No saved checkpoint found: {}", e.getMessage());
             }
+        } else {
+            logger.debug("No checkpoint in memory and no checkpoint handler. This probably means there's no active " +
+                    "crawler. Did you start with --loop 0?");
         }
 
         logger.warn("Failed to get the checkpoint status");
-        CrawlerStatusResponse response = new CrawlerStatusResponse();
-        response.setOk(false);
-        response.setMessage("Failed to get the checkpoint status");
-        return response;
+        return new CrawlerStatusResponse(false, "Failed to get the checkpoint status");
     }
 
     /**

@@ -31,11 +31,13 @@ import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.waitFor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -54,7 +56,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         logger.info(" ---> Creating a new file second.txt");
         // Let's wait for at least one second to make sure we have different dates
         // between the two files. Created date seems to be rounded to the second.
-        Thread.sleep(1001);
+        waitFor(Duration.ofMillis(1001));
 
         Files.write(currentTestResourceDir.resolve("second.txt"), "This is a second file".getBytes());
 

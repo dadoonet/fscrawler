@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.waitFor;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -99,7 +100,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
     public void add_new_file() throws Exception {
         // We need to wait for 2 seconds before starting the test as the file might have just been created
         // It's due to https://github.com/dadoonet/fscrawler/issues/82 which removes 2 seconds from the last scan date
-        Thread.sleep(2000L);
+        waitFor(Duration.ofSeconds(2));
 
         FsSettings fsSettings = createTestSettings();
         // We change the update rate to 5 seconds because the FsParser last scan date is set to 2 seconds less than the current time

@@ -204,7 +204,7 @@ public class FsCrawlerImpl implements AutoCloseable {
         }
 
         fsCrawlerThread.start();
-        fsParser.closed = false;
+        fsParser.closed.set(false);
     }
 
     @Override

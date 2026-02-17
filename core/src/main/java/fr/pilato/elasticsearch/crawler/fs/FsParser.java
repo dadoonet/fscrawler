@@ -23,34 +23,35 @@ import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class FsParser implements Runnable, AutoCloseable {
     static final Object semaphore = new Object();
     final AtomicInteger runNumber = new AtomicInteger(0);
-    volatile boolean closed = true;
-    volatile boolean paused = false;
+    final AtomicBoolean closed = new AtomicBoolean(true);
+    final AtomicBoolean paused = new AtomicBoolean(false);
 
     public void close() {
-        this.closed = true;
+        this.closed.set(true);
     }
 
     public boolean isClosed() {
-        return closed;
+        return closed.get();
     }
 
     /**
      * Pause the crawler. The crawler will save its checkpoint and wait for resume.
      */
     public void pause() {
-        this.paused = true;
+        this.paused.set(true);
     }
 
     /**
      * Resume the crawler after a pause.
      */
     public void resume() {
-        this.paused = false;
+        this.paused.set(false);
         synchronized (semaphore) {
             semaphore.notifyAll();
         }
@@ -61,7 +62,7 @@ public abstract class FsParser implements Runnable, AutoCloseable {
      * @return true if paused
      */
     public boolean isPaused() {
-        return paused;
+        return paused.get();
     }
 
     /**

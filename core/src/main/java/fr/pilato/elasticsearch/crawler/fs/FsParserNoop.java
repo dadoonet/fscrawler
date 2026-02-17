@@ -36,10 +36,10 @@ public class FsParserNoop extends FsParser {
 
     @Override
     public CrawlerState getState() {
-        if (closed) {
+        if (closed.get()) {
             return CrawlerState.STOPPED;
         }
-        if (paused) {
+        if (paused.get()) {
             return CrawlerState.PAUSED;
         }
         return CrawlerState.RUNNING;
@@ -59,9 +59,9 @@ public class FsParserNoop extends FsParser {
 
     @Override
     public void run() {
-        closed = false;
+        closed.set(false);
 
-        while (!closed) {
+        while (!closed.get()) {
             // This is doing nothing
             try {
                 logger.debug("Fs crawler is going to sleep for {}", fsSettings.getFs().getUpdateRate());
