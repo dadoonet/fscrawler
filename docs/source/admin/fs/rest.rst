@@ -714,13 +714,31 @@ The crawler will save its current progress (checkpoint) and pause. You can then 
 stop FSCrawler if needed. When you restart FSCrawler, it will automatically resume 
 from where it left off.
 
-Response:
+Success response (200):
 
 .. code:: json
 
    {
      "ok" : true,
      "message" : "Crawler paused. Checkpoint saved."
+   }
+
+If the crawler is already paused, you get 200 with:
+
+.. code:: json
+
+   {
+     "ok" : true,
+     "message" : "Crawler is already paused."
+   }
+
+Error response (400) when the crawler is not running:
+
+.. code:: json
+
+   {
+     "ok" : false,
+     "message" : "Crawler is not running"
    }
 
 Resuming the crawler
@@ -732,13 +750,31 @@ To resume a paused crawler, call ``POST /_crawler/resume``:
 
    curl -X POST http://127.0.0.1:8080/_crawler/resume
 
-Response:
+Success response (200) when resuming from pause:
 
 .. code:: json
 
    {
      "ok" : true,
-     "message" : "Crawler resumed"
+     "message" : "Crawler resumed."
+   }
+
+If the crawler is not paused, you get 200 with no action taken:
+
+.. code:: json
+
+   {
+     "ok" : true,
+     "message" : "Crawler is not paused. No action needed."
+   }
+
+Error response (400) when the crawler is closed:
+
+.. code:: json
+
+   {
+     "ok" : false,
+     "message" : "Crawler is closed. Cannot resume."
    }
 
 Clearing the checkpoint
@@ -751,7 +787,7 @@ the checkpoint file. The crawler must be paused or stopped first:
 
    curl -X DELETE http://127.0.0.1:8080/_crawler/checkpoint
 
-Response:
+Success response (200):
 
 .. code:: json
 
@@ -759,6 +795,26 @@ Response:
      "ok" : true,
      "message" : "Checkpoint cleared"
    }
+
+Error response (400) when the crawler is running and not paused:
+
+.. code:: json
+
+   {
+     "ok" : false,
+     "message" : "Cannot clear checkpoint while crawler is running. Pause or stop it first."
+   }
+
+Error response (404) when there is no active crawler (e.g. started with ``--loop 0``):
+
+.. code:: json
+
+   {
+     "ok" : false,
+     "message" : "Failed to clear checkpoint as we don't have a checkpoint handler. This probably means there's no active crawler. Did you start with --loop 0?"
+   }
+
+On I/O error, the server returns 500 with a message starting with ``Failed to clear checkpoint:``.
 
 .. note::
 

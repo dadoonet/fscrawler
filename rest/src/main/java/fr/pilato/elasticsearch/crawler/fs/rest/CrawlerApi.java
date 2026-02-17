@@ -56,7 +56,7 @@ public class CrawlerApi extends RestApi {
         
         if (fsParser.isClosed()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new SimpleResponse(false, "Crawler is not closed"))
+                    .entity(new SimpleResponse(false, "Crawler is not running"))
                     .build();
         }
         
