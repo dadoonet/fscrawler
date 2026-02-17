@@ -83,6 +83,16 @@ public class FsCrawlerCheckpoint {
      */
     private LocalDateTime scanDate;
 
+    /**
+     * When this scan was completed (replaces FsJob.lastrun)
+     */
+    private LocalDateTime scanEndTime;
+
+    /**
+     * When the next scan should run (replaces FsJob.nextCheck)
+     */
+    private LocalDateTime nextCheck;
+
     public FsCrawlerCheckpoint() {
         this.pendingPaths = new LinkedList<>();
         this.completedPaths = new HashSet<>();
@@ -212,6 +222,22 @@ public class FsCrawlerCheckpoint {
         this.scanDate = scanDate;
     }
 
+    public LocalDateTime getScanEndTime() {
+        return scanEndTime;
+    }
+
+    public void setScanEndTime(LocalDateTime scanEndTime) {
+        this.scanEndTime = scanEndTime;
+    }
+
+    public LocalDateTime getNextCheck() {
+        return nextCheck;
+    }
+
+    public void setNextCheck(LocalDateTime nextCheck) {
+        this.nextCheck = nextCheck;
+    }
+
     /**
      * Check if there are more directories to process
      * @return true if there are pending directories
@@ -284,13 +310,16 @@ public class FsCrawlerCheckpoint {
                 Objects.equals(completedPaths, that.completedPaths) &&
                 state == that.state &&
                 Objects.equals(lastError, that.lastError) &&
-                Objects.equals(scanDate, that.scanDate);
+                Objects.equals(scanDate, that.scanDate) &&
+                Objects.equals(scanEndTime, that.scanEndTime) &&
+                Objects.equals(nextCheck, that.nextCheck);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(scanId, scanStartTime, currentPath, pendingPaths, completedPaths,
-                filesProcessed, filesDeleted, state, retryCount, lastError, scanDate);
+                filesProcessed, filesDeleted, state, retryCount, lastError, scanDate,
+                scanEndTime, nextCheck);
     }
 
     @Override
@@ -304,6 +333,8 @@ public class FsCrawlerCheckpoint {
                 ", filesProcessed=" + filesProcessed +
                 ", filesDeleted=" + filesDeleted +
                 ", retryCount=" + retryCount +
+                ", scanEndTime=" + scanEndTime +
+                ", nextCheck=" + nextCheck +
                 '}';
     }
 }

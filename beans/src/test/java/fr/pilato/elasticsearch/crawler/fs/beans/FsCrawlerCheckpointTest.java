@@ -67,6 +67,8 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
         checkpoint.setRetryCount(2);
         checkpoint.setLastError("Test error");
         checkpoint.setScanDate(LocalDateTime.now().minusDays(1));
+        checkpoint.setScanEndTime(LocalDateTime.now());
+        checkpoint.setNextCheck(LocalDateTime.now().plusHours(1));
         
         checkpointTester(checkpoint);
     }
@@ -156,11 +158,36 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanStartTime(now);
         checkpoint.setScanDate(now);
+        checkpoint.setScanEndTime(now);
+        checkpoint.setNextCheck(now.plusHours(1));
         
         String json = prettyMapper.writeValueAsString(checkpoint);
         FsCrawlerCheckpoint generated = prettyMapper.readValue(json, FsCrawlerCheckpoint.class);
         
         assertThat(generated.getScanStartTime()).isEqualTo(now);
         assertThat(generated.getScanDate()).isEqualTo(now);
+        assertThat(generated.getScanEndTime()).isEqualTo(now);
+        assertThat(generated.getNextCheck()).isEqualTo(now.plusHours(1));
+    }
+
+    /**
+     * Test completed checkpoint scenario (replaces FsJob)
+     */
+    @Test
+    public void testCompletedCheckpoint() throws IOException {
+        FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
+        checkpoint.setScanId("completed-scan-123");
+        checkpoint.setState(CrawlerState.COMPLETED);
+        checkpoint.setScanEndTime(LocalDateTime.now());
+        checkpoint.setNextCheck(LocalDateTime.now().plusMinutes(15));
+        checkpoint.setFilesProcessed(500);
+        checkpoint.setFilesDeleted(10);
+        
+        checkpointTester(checkpoint);
+        
+        // Verify the completed state can be used for next run
+        assertThat(checkpoint.getState()).isEqualTo(CrawlerState.COMPLETED);
+        assertThat(checkpoint.getScanEndTime()).isNotNull();
+        assertThat(checkpoint.getNextCheck()).isNotNull();
     }
 }

@@ -65,8 +65,9 @@ public class FsParserAbstract extends FsParser {
     private static final long INITIAL_RETRY_DELAY_MS = 1000;
 
     final FsSettings fsSettings;
-    private final FsJobFileHandler fsJobFileHandler;
     private final FsCrawlerCheckpointFileHandler checkpointHandler;
+    // Keep FsJobFileHandler for migration purposes only (reading legacy _status.json)
+    private final FsJobFileHandler legacyJobFileHandler;
     private final FsAclsFileHandler fsAclsFileHandler;
 
     private final FsCrawlerManagementService managementService;
@@ -87,8 +88,9 @@ public class FsParserAbstract extends FsParser {
                            FsCrawlerDocumentService documentService, Integer loop,
                            FsCrawlerExtensionFsProvider crawlerPlugin) {
         this.fsSettings = fsSettings;
-        this.fsJobFileHandler = new FsJobFileHandler(config);
         this.checkpointHandler = new FsCrawlerCheckpointFileHandler(config);
+        // Keep for migration purposes only
+        this.legacyJobFileHandler = new FsJobFileHandler(config);
         this.fsAclsFileHandler = initializeAclsFileHandler(fsSettings, config);
         this.aclHashCache = initializeAclCache(fsSettings);
         this.aclHashCacheDirty = false;
@@ -199,10 +201,9 @@ public class FsParserAbstract extends FsParser {
                 // We need to round that latest date to the lower second and remove 2 seconds.
                 // See #82: https://github.com/dadoonet/fscrawler/issues/82
                 LocalDateTime scanDatenew = startDate.minusSeconds(2);
-                LocalDateTime scanDate = getLastDateFromMeta(fsSettings.getName());
 
-                // Load or create checkpoint
-                checkpoint.set(loadOrCreateCheckpoint(fsSettings.getFs().getUrl(), scanDate));
+                // Load or create checkpoint (handles migration from legacy _status.json)
+                checkpoint.set(loadOrCreateCheckpoint(fsSettings.getFs().getUrl()));
                 
                 // Restore stats from checkpoint if resuming
                 if (checkpoint.get().getFilesProcessed() > 0) {
@@ -213,22 +214,16 @@ public class FsParserAbstract extends FsParser {
                 }
 
                 // We only index the root directory once (first run)
-                // That means that we don't have a scanDate yet
-                if (scanDate == null && fsSettings.getFs().isIndexFolders()) {
+                // That means that we don't have a scanDate yet (checkpoint.scanDate is MIN)
+                LocalDateTime scanDate = checkpoint.get().getScanDate();
+                if ((scanDate == null || scanDate.equals(LocalDateTime.MIN)) && fsSettings.getFs().isIndexFolders()) {
                     indexDirectory(fsSettings.getFs().getUrl(), fsSettings.getFs().getUrl());
                 }
 
-                LocalDateTime effectiveScanDate = checkpoint.get().getScanDate() != null ?
-                        checkpoint.get().getScanDate() : (scanDate != null ? scanDate : LocalDateTime.MIN);
+                LocalDateTime effectiveScanDate = scanDate != null ? scanDate : LocalDateTime.MIN;
 
                 // Process directories using work queue instead of recursion
                 processDirectoriesWithCheckpoint(effectiveScanDate, stats);
-
-                // If we completed successfully, clean up the checkpoint
-                if (!closed && !paused && checkpoint.get().getState() != CrawlerState.ERROR) {
-                    checkpoint.get().setState(CrawlerState.COMPLETED);
-                    cleanCheckpoint();
-                }
 
                 stats.setEndTime(LocalDateTime.now());
                 stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
@@ -243,8 +238,10 @@ public class FsParserAbstract extends FsParser {
                         stats.getStartTime(), stats.getEndTime(), durationToString(stats.computeDuration()),
                         nextCheck);
 
-                updateFsJob(fsSettings.getName(), scanDatenew, nextCheck, stats);
-                checkpoint = null;  // Clear checkpoint after successful completion
+                // If we completed successfully, update the checkpoint with completion info
+                if (!closed && !paused && checkpoint.get().getState() != CrawlerState.ERROR) {
+                    updateCheckpointAsCompleted(scanDatenew, nextCheck);
+                }
             } catch (Exception e) {
                 logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
                 logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
@@ -288,17 +285,17 @@ public class FsParserAbstract extends FsParser {
                             totalWaitTime += waitTime;
                             logger.trace("Waking up after {} ms to check if the condition changed. We waited for {} in total on {}...", waitTime, totalWaitTime, maxWaitTime);
 
-                            // Read again the FsJob to check if we need to stop the crawler
+                            // Read again the checkpoint to check if we need to stop the crawler
                             try {
-                                FsJob fsJob = fsJobFileHandler.read(fsSettings.getName());
-                                if (fsJob.getNextCheck() == null || LocalDateTime.now().isAfter(fsJob.getNextCheck())) {
-                                    logger.debug("Fs crawler is waking up because next check time [{}] is in the past.", fsJob.getNextCheck());
+                                FsCrawlerCheckpoint savedCheckpoint = checkpointHandler.read(fsSettings.getName());
+                                if (savedCheckpoint == null || savedCheckpoint.getNextCheck() == null 
+                                        || LocalDateTime.now().isAfter(savedCheckpoint.getNextCheck())) {
+                                    logger.debug("Fs crawler is waking up because next check time [{}] is in the past.", 
+                                            savedCheckpoint != null ? savedCheckpoint.getNextCheck() : "null");
                                     break; // Exit the loop to re-run the crawler
                                 }
-                            } catch (NoSuchFileException e) {
-                                // The file does not exist yet, we can continue
                             } catch (IOException e) {
-                                logger.warn("Error while reading job metadata: {}", e.getMessage());
+                                logger.warn("Error while reading checkpoint: {}", e.getMessage());
                             }
                         }
                         logger.debug("Fs crawler is now waking up again after a total wait time of {}...", totalWaitTime);
@@ -312,25 +309,85 @@ public class FsParserAbstract extends FsParser {
     }
 
     /**
-     * Load an existing checkpoint or create a new one
+     * Load an existing checkpoint or create a new one.
+     * Handles three cases:
+     * 1. Existing checkpoint with pending work (resume interrupted scan)
+     * 2. Existing checkpoint with COMPLETED state (use its scanEndTime as lastrun)
+     * 3. No checkpoint but legacy _status.json exists (migrate)
+     * 4. Nothing exists (fresh start)
      */
-    private FsCrawlerCheckpoint loadOrCreateCheckpoint(String rootPath, LocalDateTime scanDate) {
+    private FsCrawlerCheckpoint loadOrCreateCheckpoint(String rootPath) {
         try {
             FsCrawlerCheckpoint existing = checkpointHandler.read(fsSettings.getName());
             if (existing != null) {
-                logger.info("Found existing checkpoint for job [{}], resuming scan", fsSettings.getName());
-                existing.setState(CrawlerState.RUNNING);
-                existing.resetRetryCount();
-                return existing;
+                if (existing.getState() == CrawlerState.COMPLETED) {
+                    // Previous scan completed - start fresh but use its scanEndTime as reference
+                    logger.debug("Found completed checkpoint for job [{}], starting new scan with lastrun [{}]",
+                            fsSettings.getName(), existing.getScanEndTime());
+                    FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
+                    newCheckpoint.setScanDate(existing.getScanEndTime());
+                    return newCheckpoint;
+                } else if (existing.hasPendingWork()) {
+                    // Interrupted scan - resume
+                    logger.info("Found existing checkpoint for job [{}] with pending work, resuming scan", fsSettings.getName());
+                    existing.setState(CrawlerState.RUNNING);
+                    existing.resetRetryCount();
+                    return existing;
+                } else {
+                    // Checkpoint exists but no pending work and not completed - start fresh
+                    logger.debug("Found checkpoint for job [{}] but no pending work, starting fresh", fsSettings.getName());
+                    FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
+                    newCheckpoint.setScanDate(existing.getScanEndTime() != null ? existing.getScanEndTime() : LocalDateTime.MIN);
+                    return newCheckpoint;
+                }
             }
         } catch (IOException e) {
-            logger.warn("Error reading checkpoint, starting fresh: {}", e.getMessage());
+            logger.warn("Error reading checkpoint, will try legacy migration: {}", e.getMessage());
         }
+
+        // Try to migrate from legacy _status.json
+        LocalDateTime lastRun = migrateLegacyStatus();
         
         // Create new checkpoint
         FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
-        newCheckpoint.setScanDate(scanDate != null ? scanDate : LocalDateTime.MIN);
+        newCheckpoint.setScanDate(lastRun != null ? lastRun : LocalDateTime.MIN);
         return newCheckpoint;
+    }
+
+    /**
+     * Migrate from legacy _status.json file if it exists.
+     * @return the lastrun date from the legacy file, or null if not found
+     */
+    private LocalDateTime migrateLegacyStatus() {
+        try {
+            FsJob legacyJob = legacyJobFileHandler.read(fsSettings.getName());
+            if (legacyJob != null) {
+                logger.info("Migrating legacy _status.json to checkpoint format for job [{}]", fsSettings.getName());
+                
+                // Create a completed checkpoint from the legacy job
+                FsCrawlerCheckpoint migratedCheckpoint = new FsCrawlerCheckpoint();
+                migratedCheckpoint.setScanEndTime(legacyJob.getLastrun());
+                migratedCheckpoint.setNextCheck(legacyJob.getNextCheck());
+                migratedCheckpoint.setFilesProcessed(legacyJob.getIndexed());
+                migratedCheckpoint.setFilesDeleted(legacyJob.getDeleted());
+                migratedCheckpoint.setState(CrawlerState.COMPLETED);
+                
+                // Save the migrated checkpoint
+                checkpointHandler.write(fsSettings.getName(), migratedCheckpoint);
+                
+                // Delete the legacy file
+                legacyJobFileHandler.clean(fsSettings.getName());
+                logger.info("Migration complete. Legacy _status.json has been removed.");
+                
+                return legacyJob.getLastrun();
+            }
+        } catch (NoSuchFileException e) {
+            // No legacy file, that's fine
+            logger.debug("No legacy _status.json found for job [{}]", fsSettings.getName());
+        } catch (IOException e) {
+            logger.warn("Error migrating legacy _status.json: {}", e.getMessage());
+        }
+        return null;
     }
 
     /**
@@ -351,15 +408,28 @@ public class FsParserAbstract extends FsParser {
     }
 
     /**
-     * Clean the checkpoint file after successful completion
+     * Update the checkpoint as completed with scan end time and next check time.
+     * The checkpoint is kept (not deleted) to serve as the source of truth for lastrun.
      */
-    private void cleanCheckpoint() {
-        try {
-            checkpointHandler.clean(fsSettings.getName());
-            logger.debug("Checkpoint cleaned after successful scan");
-        } catch (IOException e) {
-            logger.warn("Failed to clean checkpoint: {}", e.getMessage());
+    private void updateCheckpointAsCompleted(LocalDateTime scanEndTime, LocalDateTime nextCheck) {
+        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+        if (localCheckpoint == null) {
+            return;
         }
+        
+        localCheckpoint.setState(CrawlerState.COMPLETED);
+        localCheckpoint.setScanEndTime(scanEndTime);
+        localCheckpoint.setNextCheck(nextCheck);
+        // Clear the working state (not needed after completion)
+        localCheckpoint.getPendingPaths().clear();
+        localCheckpoint.getCompletedPaths().clear();
+        localCheckpoint.setCurrentPath(null);
+        localCheckpoint.setLastError(null);
+        localCheckpoint.resetRetryCount();
+        
+        saveCheckpoint();
+        logger.debug("Checkpoint updated as completed: scanEndTime [{}], nextCheck [{}], indexed [{}], deleted [{}]",
+                scanEndTime, nextCheck, localCheckpoint.getFilesProcessed(), localCheckpoint.getFilesDeleted());
     }
 
     /**
@@ -663,32 +733,6 @@ public class FsParserAbstract extends FsParser {
         return true;  // Directory fully processed
     }
 
-    private LocalDateTime getLastDateFromMeta(String jobName) throws IOException {
-        try {
-            FsJob fsJob = fsJobFileHandler.read(jobName);
-            return fsJob.getLastrun();
-        } catch (NoSuchFileException e) {
-            // The file does not exist yet
-        }
-        return null;
-    }
-
-    /**
-     * Update the job statistics
-     *
-     * @param jobName   job name
-     * @param scanDate  last date we scan the dirs
-     * @param nextCheck next planned date to scan again
-     * @param stats     the stats used to update the job statistics
-     * @throws IOException In case of error while saving the job stats
-     */
-    private void updateFsJob(final String jobName, final LocalDateTime scanDate, final LocalDateTime nextCheck, final ScanStatistic stats) throws IOException {
-        FsJob fsJob = new FsJob(jobName, scanDate, nextCheck, stats.getNbDocScan(), stats.getNbDocDeleted());
-        // TODO replace this with a call to the management service (Elasticsearch)
-        fsJobFileHandler.write(jobName, fsJob);
-        logger.debug("Updating job metadata after run for [{}]: lastrun [{}], nextcheck [{}], indexed [{}], deleted [{}]",
-                jobName, scanDate, nextCheck, stats.getNbDocScan(), stats.getNbDocDeleted());
-    }
 
     private Map<String, String> loadAclHashCache(String jobName) {
         if (fsAclsFileHandler == null) {

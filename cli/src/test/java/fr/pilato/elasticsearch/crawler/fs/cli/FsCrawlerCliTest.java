@@ -19,6 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
@@ -79,23 +82,32 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     public void restartCommand() throws Exception {
         String jobName = "fscrawler_restart_command";
 
-        // We generate a fake status first in metadata dir
+        // We generate fake status and checkpoint files first in metadata dir
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
         FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir);
+        FsCrawlerCheckpointFileHandler checkpointHandler = new FsCrawlerCheckpointFileHandler(metadataDir);
 
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
 
         fsSettingsLoader.write(jobName, new FsSettings());
+        // Write legacy status file
         fsJobFileHandler.write(jobName, new FsJob());
+        // Write checkpoint file
+        FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
+        checkpoint.setState(CrawlerState.COMPLETED);
+        checkpointHandler.write(jobName, checkpoint);
 
         assertThat(jobDir.resolve(FsJobFileHandler.FILENAME)).exists();
+        assertThat(jobDir.resolve(FsCrawlerCheckpointFileHandler.FILENAME)).exists();
 
         String[] args = { "--config_dir", metadataDir.toString(), "--loop", "0", "--restart", jobName };
 
         FsCrawlerCli.main(args);
 
+        // Both files should be cleaned
         assertThat(jobDir.resolve(FsJobFileHandler.FILENAME)).doesNotExist();
+        assertThat(jobDir.resolve(FsCrawlerCheckpointFileHandler.FILENAME)).doesNotExist();
     }
 
     @Test

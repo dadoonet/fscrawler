@@ -37,6 +37,8 @@ public class CrawlerStatusResponse extends RestResponse {
     private long filesProcessed;
     private long filesDeleted;
     private LocalDateTime scanStartTime;
+    private LocalDateTime scanEndTime;
+    private LocalDateTime nextCheck;
     private String elapsedTime;
     private int retryCount;
     private String lastError;
@@ -54,6 +56,8 @@ public class CrawlerStatusResponse extends RestResponse {
         this.filesProcessed = checkpoint.getFilesProcessed();
         this.filesDeleted = checkpoint.getFilesDeleted();
         this.scanStartTime = checkpoint.getScanStartTime();
+        this.scanEndTime = checkpoint.getScanEndTime();
+        this.nextCheck = checkpoint.getNextCheck();
         this.retryCount = checkpoint.getRetryCount();
         this.lastError = checkpoint.getLastError();
 
@@ -117,6 +121,22 @@ public class CrawlerStatusResponse extends RestResponse {
 
     public void setScanStartTime(LocalDateTime scanStartTime) {
         this.scanStartTime = scanStartTime;
+    }
+
+    public LocalDateTime getScanEndTime() {
+        return scanEndTime;
+    }
+
+    public void setScanEndTime(LocalDateTime scanEndTime) {
+        this.scanEndTime = scanEndTime;
+    }
+
+    public LocalDateTime getNextCheck() {
+        return nextCheck;
+    }
+
+    public void setNextCheck(LocalDateTime nextCheck) {
+        this.nextCheck = nextCheck;
     }
 
     public String getElapsedTime() {

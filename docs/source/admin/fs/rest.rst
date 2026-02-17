@@ -672,9 +672,25 @@ It will give you a response similar to:
      "filesProcessed" : 1523,
      "filesDeleted" : 12,
      "scanStartTime" : "2024-01-15T10:30:00",
+     "scanEndTime" : null,
+     "nextCheck" : null,
      "elapsedTime" : "15m 32s",
      "retryCount" : 0,
      "lastError" : null
+   }
+
+When a scan is completed, the response will also include the ``scanEndTime`` and ``nextCheck`` fields:
+
+.. code:: json
+
+   {
+     "state" : "COMPLETED",
+     "filesProcessed" : 2500,
+     "filesDeleted" : 25,
+     "scanStartTime" : "2024-01-15T10:30:00",
+     "scanEndTime" : "2024-01-15T11:45:00",
+     "nextCheck" : "2024-01-15T12:00:00",
+     "elapsedTime" : "1h 15m"
    }
 
 The possible states are:
@@ -747,7 +763,7 @@ Response:
 .. note::
 
    You can also clear the checkpoint using the ``--restart`` command line option 
-   when starting FSCrawler. This will clear both the status file and the checkpoint file.
+   when starting FSCrawler. See :ref:`cli-options` for more details.
 
 Automatic resume after crash
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
