@@ -212,6 +212,9 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
             pathHitTesterEndWith(document, i, "sample.txt", expectedVirtual);
         }
 
+        // Wait for folders to be indexed (they may not be immediately visible)
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), subdirs + 2, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+
         // Check folders
         response = client.search(new ESSearchRequest()
                 .withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER)
