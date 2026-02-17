@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
@@ -71,7 +72,7 @@ public class FsParserAbstract extends FsParser {
     private final FsCrawlerManagementService managementService;
     private final FsCrawlerDocumentService documentService;
     private final Integer loop;
-    private Map<String, String> aclHashCache;
+    private final Map<String, String> aclHashCache;
     private boolean aclHashCacheDirty;
     private final FsCrawlerExtensionFsProvider crawlerPlugin;
     private final String metadataFilename;
@@ -79,7 +80,7 @@ public class FsParserAbstract extends FsParser {
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
     // Checkpoint for current scan
-    private volatile FsCrawlerCheckpoint checkpoint;
+    private AtomicReference<FsCrawlerCheckpoint> checkpoint = new AtomicReference<>(new FsCrawlerCheckpoint());
     private int filesSinceLastCheckpoint = 0;
 
     public FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
@@ -107,7 +108,7 @@ public class FsParserAbstract extends FsParser {
     @Override
     public CrawlerState getState() {
         // Capture volatile field to avoid race condition
-        FsCrawlerCheckpoint localCheckpoint = checkpoint;
+        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
         if (localCheckpoint != null) {
             return localCheckpoint.getState();
         }
@@ -122,7 +123,7 @@ public class FsParserAbstract extends FsParser {
 
     @Override
     public FsCrawlerCheckpoint getCheckpoint() {
-        return checkpoint;
+        return checkpoint.get();
     }
 
     /**
@@ -139,7 +140,7 @@ public class FsParserAbstract extends FsParser {
         logger.trace("Closing the parser {}", this.getClass().getSimpleName());
         
         // Capture volatile field to avoid race condition
-        FsCrawlerCheckpoint localCheckpoint = checkpoint;
+        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
         // Save checkpoint before closing if we have one in progress
         if (localCheckpoint != null && localCheckpoint.getState() == CrawlerState.RUNNING) {
             localCheckpoint.setState(CrawlerState.STOPPED);
@@ -158,7 +159,7 @@ public class FsParserAbstract extends FsParser {
     public void pause() {
         super.pause();
         // Capture volatile field to avoid race condition
-        FsCrawlerCheckpoint localCheckpoint = checkpoint;
+        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
         if (localCheckpoint != null) {
             localCheckpoint.setState(CrawlerState.PAUSED);
             saveCheckpoint();
@@ -201,14 +202,14 @@ public class FsParserAbstract extends FsParser {
                 LocalDateTime scanDate = getLastDateFromMeta(fsSettings.getName());
 
                 // Load or create checkpoint
-                checkpoint = loadOrCreateCheckpoint(fsSettings.getFs().getUrl(), scanDate);
+                checkpoint.set(loadOrCreateCheckpoint(fsSettings.getFs().getUrl(), scanDate));
                 
                 // Restore stats from checkpoint if resuming
-                if (checkpoint.getFilesProcessed() > 0) {
-                    stats.setNbDocScan((int) checkpoint.getFilesProcessed());
-                    stats.setNbDocDeleted((int) checkpoint.getFilesDeleted());
+                if (checkpoint.get().getFilesProcessed() > 0) {
+                    stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
+                    stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());
                     logger.info("Resuming from checkpoint: {} files processed, {} directories pending",
-                            checkpoint.getFilesProcessed(), checkpoint.getPendingPaths().size());
+                            checkpoint.get().getFilesProcessed(), checkpoint.get().getPendingPaths().size());
                 }
 
                 // We only index the root directory once (first run)
@@ -217,21 +218,21 @@ public class FsParserAbstract extends FsParser {
                     indexDirectory(fsSettings.getFs().getUrl(), fsSettings.getFs().getUrl());
                 }
 
-                LocalDateTime effectiveScanDate = checkpoint.getScanDate() != null ? 
-                        checkpoint.getScanDate() : (scanDate != null ? scanDate : LocalDateTime.MIN);
+                LocalDateTime effectiveScanDate = checkpoint.get().getScanDate() != null ?
+                        checkpoint.get().getScanDate() : (scanDate != null ? scanDate : LocalDateTime.MIN);
 
                 // Process directories using work queue instead of recursion
                 processDirectoriesWithCheckpoint(effectiveScanDate, stats);
 
                 // If we completed successfully, clean up the checkpoint
-                if (!closed && !paused && checkpoint.getState() != CrawlerState.ERROR) {
-                    checkpoint.setState(CrawlerState.COMPLETED);
+                if (!closed && !paused && checkpoint.get().getState() != CrawlerState.ERROR) {
+                    checkpoint.get().setState(CrawlerState.COMPLETED);
                     cleanCheckpoint();
                 }
 
                 stats.setEndTime(LocalDateTime.now());
-                stats.setNbDocScan((int) checkpoint.getFilesProcessed());
-                stats.setNbDocDeleted((int) checkpoint.getFilesDeleted());
+                stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
+                stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());
 
                 // Compute the next check time by adding fsSettings.getFs().getUpdateRate().millis()
                 LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
@@ -250,8 +251,8 @@ public class FsParserAbstract extends FsParser {
                 
                 // Save checkpoint on error so we can resume
                 if (checkpoint != null) {
-                    checkpoint.setState(CrawlerState.ERROR);
-                    checkpoint.setLastError(e.getMessage());
+                    checkpoint.get().setState(CrawlerState.ERROR);
+                    checkpoint.get().setLastError(e.getMessage());
                     saveCheckpoint();
                 }
             } finally {
@@ -340,9 +341,9 @@ public class FsParserAbstract extends FsParser {
             return;
         }
         try {
-            checkpointHandler.write(fsSettings.getName(), checkpoint);
+            checkpointHandler.write(fsSettings.getName(), checkpoint.get());
             logger.debug("Checkpoint saved: {} files processed, {} directories pending",
-                    checkpoint.getFilesProcessed(), checkpoint.getPendingPaths().size());
+                    checkpoint.get().getFilesProcessed(), checkpoint.get().getPendingPaths().size());
         } catch (IOException e) {
             logger.warn("Failed to save checkpoint: {}", e.getMessage());
             logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
@@ -376,40 +377,40 @@ public class FsParserAbstract extends FsParser {
      * Process directories using a work queue with checkpoint support
      */
     private void processDirectoriesWithCheckpoint(LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
-        while (checkpoint.hasPendingWork() && !closed) {
+        while (checkpoint.get().hasPendingWork() && !closed) {
             // Handle pause
             if (paused) {
-                checkpoint.setState(CrawlerState.PAUSED);
+                checkpoint.get().setState(CrawlerState.PAUSED);
                 saveCheckpoint();
                 waitForResume();
                 if (closed) {
                     return;
                 }
-                checkpoint.setState(CrawlerState.RUNNING);
+                checkpoint.get().setState(CrawlerState.RUNNING);
             }
 
-            String currentPath = checkpoint.pollNextPath();
+            String currentPath = checkpoint.get().pollNextPath();
             if (currentPath == null) {
                 break;
             }
             
             // Skip if already completed (in case of resume with duplicates)
-            if (checkpoint.isCompleted(currentPath)) {
+            if (checkpoint.get().isCompleted(currentPath)) {
                 logger.debug("Skipping already completed directory: {}", currentPath);
                 continue;
             }
 
-            checkpoint.setCurrentPath(currentPath);
+            checkpoint.get().setCurrentPath(currentPath);
             
             try {
                 boolean fullyProcessed = processDirectory(currentPath, lastScanDate, stats);
                 if (fullyProcessed) {
-                    checkpoint.markCompleted(currentPath);
-                    checkpoint.resetRetryCount();
+                    checkpoint.get().markCompleted(currentPath);
+                    checkpoint.get().resetRetryCount();
                     maybeSaveCheckpoint();
                 } else {
                     // Directory was interrupted - re-add to pending queue for resume
-                    checkpoint.addPath(currentPath);
+                    checkpoint.get().addPath(currentPath);
                     saveCheckpoint();
                     return;  // Exit the processing loop
                 }
@@ -418,8 +419,8 @@ public class FsParserAbstract extends FsParser {
                     handleNetworkError(e, currentPath);
                 } else if (fsSettings.getFs().isContinueOnError()) {
                     logger.warn("Error processing directory {}, continuing: {}", currentPath, e.getMessage());
-                    checkpoint.markCompleted(currentPath);
-                    checkpoint.setLastError(e.getMessage());
+                    checkpoint.get().markCompleted(currentPath);
+                    checkpoint.get().setLastError(e.getMessage());
                 } else {
                     throw e;
                 }
@@ -451,16 +452,14 @@ public class FsParserAbstract extends FsParser {
      * Check if an exception is a network-related error
      */
     private boolean isNetworkError(Exception e) {
-        if (e instanceof java.net.SocketException ||
-            e instanceof java.net.SocketTimeoutException ||
-            e instanceof java.net.ConnectException ||
-            e instanceof java.net.UnknownHostException) {
+        if (e instanceof java.net.SocketException
+                || e instanceof java.net.SocketTimeoutException
+                || e instanceof java.net.UnknownHostException) {
             return true;
         }
         // Safely check cause - only recurse if it's an Exception, not an Error
-        Throwable cause = e.getCause();
-        if (cause instanceof Exception) {
-            return isNetworkError((Exception) cause);
+        if (e.getCause() instanceof Exception exception) {
+            return isNetworkError(exception);
         }
         return false;
     }
@@ -469,23 +468,23 @@ public class FsParserAbstract extends FsParser {
      * Handle network errors with retry and exponential backoff
      */
     private void handleNetworkError(Exception e, String failedPath) throws Exception {
-        checkpoint.setLastError(e.getMessage());
-        checkpoint.incrementRetryCount();
+        checkpoint.get().setLastError(e.getMessage());
+        checkpoint.get().incrementRetryCount();
 
-        if (checkpoint.getRetryCount() > MAX_RETRIES) {
-            checkpoint.setState(CrawlerState.ERROR);
+        if (checkpoint.get().getRetryCount() > MAX_RETRIES) {
+            checkpoint.get().setState(CrawlerState.ERROR);
             saveCheckpoint();
             throw new RuntimeException("Max retries (" + MAX_RETRIES + ") exceeded for network errors", e);
         }
 
         // Re-add the path to retry
-        checkpoint.addPathFirst(failedPath);
+        checkpoint.get().addPathFirst(failedPath);
         saveCheckpoint();
 
         // Exponential backoff
-        long delay = INITIAL_RETRY_DELAY_MS * (long) Math.pow(2, checkpoint.getRetryCount() - 1);
+        long delay = INITIAL_RETRY_DELAY_MS * (long) Math.pow(2, checkpoint.get().getRetryCount() - 1);
         logger.warn("Network error on path [{}], retry {}/{} in {}ms: {}",
-                failedPath, checkpoint.getRetryCount(), MAX_RETRIES, delay, e.getMessage());
+                failedPath, checkpoint.get().getRetryCount(), MAX_RETRIES, delay, e.getMessage());
 
         try {
             // Close and reopen connection
@@ -578,7 +577,7 @@ public class FsParserAbstract extends FsParser {
                                         }
                                         indexFile(child, stats, filepath, inputStream, child.getSize(), metadataStream);
                                         stats.addFile();
-                                        checkpoint.incrementFilesProcessed();
+                                        checkpoint.get().incrementFilesProcessed();
                                         maybeSaveCheckpoint();
                                     } catch (Exception e) {
                                         if (fsSettings.getFs().isContinueOnError()) {
@@ -609,8 +608,8 @@ public class FsParserAbstract extends FsParser {
                                 indexDirectory(child.getFullpath(), fsSettings.getFs().getUrl());
                             }
                             // Add subdirectory to pending queue instead of recursive call
-                            if (!checkpoint.isCompleted(child.getFullpath())) {
-                                checkpoint.addPath(child.getFullpath());
+                            if (!checkpoint.get().isCompleted(child.getFullpath())) {
+                                checkpoint.get().addPath(child.getFullpath());
                             }
                         } else {
                             logger.debug("  - other: {}", filename);
@@ -640,7 +639,7 @@ public class FsParserAbstract extends FsParser {
                     logger.trace("Removing file [{}] in elasticsearch", esfile);
                     esDelete(documentService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, filepath));
                     stats.removeFile();
-                    checkpoint.incrementFilesDeleted();
+                    checkpoint.get().incrementFilesDeleted();
                 }
             }
 
@@ -1091,7 +1090,7 @@ public class FsParserAbstract extends FsParser {
         for (String esfile : listFile) {
             esDelete(managementService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, path));
             stats.removeFile();
-            checkpoint.incrementFilesDeleted();
+            checkpoint.get().incrementFilesDeleted();
         }
 
         Collection<String> listFolder = getFolderDirectory(path);

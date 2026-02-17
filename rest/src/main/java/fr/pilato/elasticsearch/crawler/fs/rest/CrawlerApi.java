@@ -20,9 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.FsParser;
-import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -41,12 +39,10 @@ public class CrawlerApi extends RestApi {
     private static final Logger logger = LogManager.getLogger();
 
     private final FsParser fsParser;
-    private final FsCrawlerCheckpointFileHandler checkpointHandler;
     private final String jobName;
 
-    public CrawlerApi(FsParser fsParser, FsCrawlerCheckpointFileHandler checkpointHandler, String jobName) {
+    public CrawlerApi(FsParser fsParser, String jobName) {
         this.fsParser = fsParser;
-        this.checkpointHandler = checkpointHandler;
         this.jobName = jobName;
     }
 
@@ -110,47 +106,34 @@ public class CrawlerApi extends RestApi {
     @Path("/status")
     @Produces(MediaType.APPLICATION_JSON)
     public CrawlerStatusResponse getStatus() {
-        CrawlerStatusResponse response = new CrawlerStatusResponse();
-        response.setState(fsParser.getState());
-        
         FsCrawlerCheckpoint checkpoint = fsParser.getCheckpoint();
         if (checkpoint != null) {
-            response.setScanId(checkpoint.getScanId());
-            response.setCurrentPath(checkpoint.getCurrentPath());
-            response.setPendingDirectories(checkpoint.getPendingPaths().size());
-            response.setCompletedDirectories(checkpoint.getCompletedPaths().size());
-            response.setFilesProcessed(checkpoint.getFilesProcessed());
-            response.setFilesDeleted(checkpoint.getFilesDeleted());
-            response.setScanStartTime(checkpoint.getScanStartTime());
-            response.setRetryCount(checkpoint.getRetryCount());
-            response.setLastError(checkpoint.getLastError());
-            
-            if (checkpoint.getScanStartTime() != null) {
-                Duration elapsed = Duration.between(checkpoint.getScanStartTime(), LocalDateTime.now());
-                response.setElapsedTime(elapsed);
-            }
+            CrawlerStatusResponse response = new CrawlerStatusResponse(checkpoint);
+            response.setState(fsParser.getState());
+            return response;
         } else {
-            // Try to load checkpoint from file if parser doesn't have one in memory
-            try {
-                FsCrawlerCheckpoint savedCheckpoint = checkpointHandler.read(jobName);
-                if (savedCheckpoint != null) {
-                    response.setScanId(savedCheckpoint.getScanId());
-                    response.setCurrentPath(savedCheckpoint.getCurrentPath());
-                    response.setPendingDirectories(savedCheckpoint.getPendingPaths().size());
-                    response.setCompletedDirectories(savedCheckpoint.getCompletedPaths().size());
-                    response.setFilesProcessed(savedCheckpoint.getFilesProcessed());
-                    response.setFilesDeleted(savedCheckpoint.getFilesDeleted());
-                    response.setScanStartTime(savedCheckpoint.getScanStartTime());
-                    response.setRetryCount(savedCheckpoint.getRetryCount());
-                    response.setLastError(savedCheckpoint.getLastError());
-                    // Override state from saved checkpoint
-                    response.setState(savedCheckpoint.getState());
+            if (fsParser.getCheckpointHandler() != null) {
+                logger.debug("No checkpoint in memory, but we have a checkpoint handler. This might indicate that the " +
+                        "crawler is not running or just started. Trying to load checkpoint from file...");
+                // Try to load checkpoint from file if parser doesn't have one in memory
+                try {
+                    FsCrawlerCheckpoint savedCheckpoint = fsParser.getCheckpointHandler().read(jobName);
+                    if (savedCheckpoint != null) {
+                        return new CrawlerStatusResponse(savedCheckpoint);
+                    }
+                } catch (IOException e) {
+                    logger.debug("No saved checkpoint found: {}", e.getMessage());
                 }
-            } catch (IOException e) {
-                logger.debug("No saved checkpoint found: {}", e.getMessage());
+            } else {
+                logger.debug("No checkpoint in memory and no checkpoint handler. This probably means there's no active " +
+                        "crawler. Did you start with --loop 0?");
             }
         }
-        
+
+        logger.warn("Failed to get the checkpoint status");
+        CrawlerStatusResponse response = new CrawlerStatusResponse();
+        response.setOk(false);
+        response.setMessage("Failed to get the checkpoint status");
         return response;
     }
 
@@ -171,45 +154,21 @@ public class CrawlerApi extends RestApi {
         }
         
         try {
-            checkpointHandler.clean(jobName);
-            return Response.ok(new SimpleResponse(true, "Checkpoint cleared")).build();
+            if (fsParser.getCheckpointHandler() != null) {
+                fsParser.getCheckpointHandler().clean(jobName);
+                return Response.ok(new SimpleResponse(true, "Checkpoint cleared")).build();
+            }
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new SimpleResponse(false,
+                            "Failed to clear checkpoint as we don't have a checkpoint handler. " +
+                                    "This probably means there's no active crawler. " +
+                                    "Did you start with --loop 0?"))
+                    .build();
         } catch (IOException e) {
             logger.warn("Failed to clear checkpoint: {}", e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new SimpleResponse(false, "Failed to clear checkpoint: " + e.getMessage()))
                     .build();
-        }
-    }
-
-    /**
-     * Simple response for operations
-     */
-    public static class SimpleResponse {
-        private boolean ok;
-        private String message;
-
-        public SimpleResponse() {
-        }
-
-        public SimpleResponse(boolean ok, String message) {
-            this.ok = ok;
-            this.message = message;
-        }
-
-        public boolean isOk() {
-            return ok;
-        }
-
-        public void setOk(boolean ok) {
-            this.ok = ok;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
         }
     }
 }

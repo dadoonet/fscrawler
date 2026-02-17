@@ -114,10 +114,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
 
         // Create a no-op parser and checkpoint handler for REST API testing
         FsParserNoop noopParser = new FsParserNoop(fsSettings);
-        FsCrawlerCheckpointFileHandler checkpointHandler = new FsCrawlerCheckpointFileHandler(rootTmpDir);
-        
-        restServer = new RestServer(fsSettings, managementService, documentService, pluginsManager, 
-                noopParser, checkpointHandler);
+
+        restServer = new RestServer(fsSettings, managementService, documentService, pluginsManager, noopParser);
         restServer.start();
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");

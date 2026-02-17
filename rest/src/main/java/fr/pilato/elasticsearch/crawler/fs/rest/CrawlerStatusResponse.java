@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -27,7 +28,7 @@ import java.time.LocalDateTime;
 /**
  * Response object for the crawler status endpoint
  */
-public class CrawlerStatusResponse {
+public class CrawlerStatusResponse extends RestResponse {
 
     private CrawlerState state;
     private String currentPath;
@@ -42,6 +43,24 @@ public class CrawlerStatusResponse {
     private String scanId;
 
     public CrawlerStatusResponse() {
+    }
+
+    public CrawlerStatusResponse(FsCrawlerCheckpoint checkpoint) {
+        this.state = checkpoint.getState();
+        this.scanId = checkpoint.getScanId();
+        this.currentPath = checkpoint.getCurrentPath();
+        this.pendingDirectories = checkpoint.getPendingPaths().size();
+        this.completedDirectories = checkpoint.getCompletedPaths().size();
+        this.filesProcessed = checkpoint.getFilesProcessed();
+        this.filesDeleted = checkpoint.getFilesDeleted();
+        this.scanStartTime = checkpoint.getScanStartTime();
+        this.retryCount = checkpoint.getRetryCount();
+        this.lastError = checkpoint.getLastError();
+
+        if (checkpoint.getScanStartTime() != null) {
+            Duration elapsed = Duration.between(checkpoint.getScanStartTime(), LocalDateTime.now());
+            setElapsedTime(elapsed);
+        }
     }
 
     public CrawlerState getState() {

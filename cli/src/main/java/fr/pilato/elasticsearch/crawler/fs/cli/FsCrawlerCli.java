@@ -343,8 +343,7 @@ public class FsCrawlerCli {
                             fsCrawler.getManagementService(), 
                             fsCrawler.getDocumentService(), 
                             pluginsManager,
-                            fsCrawler.getFsParser(),
-                            fsCrawler.getFsParser().getCheckpointHandler());
+                            fsCrawler.getFsParser());
                     restServer.start();
                 }
 
