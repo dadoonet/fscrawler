@@ -20,6 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
@@ -34,6 +36,7 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper
  */
 public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
 
+    private static final Logger logger = LogManager.getLogger();
     public static final String FILENAME = "_checkpoint.json";
 
     public FsCrawlerCheckpointFileHandler(Path root) {
@@ -86,4 +89,38 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
     public void clean(String jobname) throws IOException {
         removeFile(jobname, FILENAME);
     }
+
+    /**
+     * Migrate from legacy _status.json file if it exists.
+     */
+    public void migrateLegacyStatus(String jobname) {
+        try {
+            FsJobFileHandler legacyJobFileHandler = new FsJobFileHandler(this.root);
+            FsJob legacyJob = legacyJobFileHandler.read(jobname);
+            if (legacyJob != null) {
+                logger.info("Migrating legacy _status.json to checkpoint format for job [{}]", jobname);
+
+                // Create a completed checkpoint from the legacy job
+                FsCrawlerCheckpoint migratedCheckpoint = new FsCrawlerCheckpoint();
+                migratedCheckpoint.setScanDate(legacyJob.getLastrun());
+                migratedCheckpoint.setNextCheck(legacyJob.getNextCheck());
+                migratedCheckpoint.setFilesProcessed(legacyJob.getIndexed());
+                migratedCheckpoint.setFilesDeleted(legacyJob.getDeleted());
+                migratedCheckpoint.setState(CrawlerState.COMPLETED);
+
+                // Save the migrated checkpoint
+                write(jobname, migratedCheckpoint);
+
+                // Delete the legacy file
+                legacyJobFileHandler.clean(jobname);
+                logger.info("Migration complete. Legacy _status.json has been removed.");
+            }
+        } catch (NoSuchFileException e) {
+            // No legacy file, that's fine
+            logger.trace("No legacy {} found for job [{}]", FsJobFileHandler.FILENAME, jobname);
+        } catch (IOException e) {
+            logger.warn("Error migrating legacy {}: {}", FsJobFileHandler.FILENAME, e.getMessage());
+        }
+    }
+
 }

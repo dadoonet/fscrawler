@@ -37,9 +37,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.io.File;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -66,8 +66,6 @@ public class FsParserAbstract extends FsParser {
 
     final FsSettings fsSettings;
     private final FsCrawlerCheckpointFileHandler checkpointHandler;
-    // Keep FsJobFileHandler for migration purposes only (reading legacy _status.json)
-    private final FsJobFileHandler legacyJobFileHandler;
     private final FsAclsFileHandler fsAclsFileHandler;
 
     private final FsCrawlerManagementService managementService;
@@ -89,8 +87,6 @@ public class FsParserAbstract extends FsParser {
                            FsCrawlerExtensionFsProvider crawlerPlugin) {
         this.fsSettings = fsSettings;
         this.checkpointHandler = new FsCrawlerCheckpointFileHandler(config);
-        // Keep for migration purposes only
-        this.legacyJobFileHandler = new FsJobFileHandler(config);
         this.fsAclsFileHandler = initializeAclsFileHandler(fsSettings, config);
         this.aclHashCache = initializeAclCache(fsSettings);
         this.aclHashCacheDirty = false;
@@ -324,78 +320,32 @@ public class FsParserAbstract extends FsParser {
      * 3. No checkpoint but legacy _status.json exists (migrate)
      * 4. Nothing exists (fresh start)
      */
-    private FsCrawlerCheckpoint loadOrCreateCheckpoint(String rootPath) {
-        try {
-            FsCrawlerCheckpoint existing = checkpointHandler.read(fsSettings.getName());
-            if (existing != null) {
-                if (existing.getState() == CrawlerState.COMPLETED) {
-                    // Previous scan completed - start fresh but use its scanEndTime as reference
-                    logger.debug("Found completed checkpoint for job [{}], starting new scan with lastrun [{}]",
-                            fsSettings.getName(), existing.getScanEndTime());
-                    FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
-                    newCheckpoint.setScanDate(existing.getScanEndTime());
-                    return newCheckpoint;
-                } else if (existing.hasPendingWork()) {
-                    // Interrupted scan - resume
-                    logger.info("Found existing checkpoint for job [{}] with pending work, resuming scan", fsSettings.getName());
-                    existing.setState(CrawlerState.RUNNING);
-                    existing.resetRetryCount();
-                    return existing;
-                } else {
-                    // Checkpoint exists but no pending work and not completed - start fresh
-                    logger.debug("Found checkpoint for job [{}] but no pending work, starting fresh", fsSettings.getName());
-                    FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
-                    newCheckpoint.setScanDate(existing.getScanEndTime() != null ? existing.getScanEndTime() : LocalDateTime.MIN);
-                    return newCheckpoint;
-                }
+    private FsCrawlerCheckpoint loadOrCreateCheckpoint(String rootPath) throws IOException {
+        FsCrawlerCheckpoint existing = checkpointHandler.read(fsSettings.getName());
+        if (existing != null) {
+            if (existing.getState() == CrawlerState.COMPLETED) {
+                // Previous scan completed - start fresh but use its scanEndTime as reference
+                logger.debug("Found completed checkpoint for job [{}], starting new scan with lastrun [{}]",
+                        fsSettings.getName(), existing.getScanEndTime());
+                FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
+                newCheckpoint.setScanDate(existing.getScanEndTime());
+                return newCheckpoint;
+            } else if (existing.hasPendingWork()) {
+                // Interrupted scan - resume
+                logger.info("Found existing checkpoint for job [{}] with pending work, resuming scan", fsSettings.getName());
+                existing.setState(CrawlerState.RUNNING);
+                existing.resetRetryCount();
+                return existing;
+            } else {
+                // Checkpoint exists but no pending work and not completed - start fresh
+                logger.debug("Found checkpoint for job [{}] but no pending work, starting fresh", fsSettings.getName());
+                FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
+                newCheckpoint.setScanDate(existing.getScanEndTime() != null ? existing.getScanEndTime() : LocalDateTime.MIN);
+                return newCheckpoint;
             }
-        } catch (IOException e) {
-            logger.warn("Error reading checkpoint, will try legacy migration: {}", e.getMessage());
         }
 
-        // Try to migrate from legacy _status.json
-        LocalDateTime lastRun = migrateLegacyStatus();
-        
-        // Create new checkpoint
-        FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
-        newCheckpoint.setScanDate(lastRun != null ? lastRun : LocalDateTime.MIN);
-        return newCheckpoint;
-    }
-
-    /**
-     * Migrate from legacy _status.json file if it exists.
-     * @return the lastrun date from the legacy file, or null if not found
-     */
-    private LocalDateTime migrateLegacyStatus() {
-        try {
-            FsJob legacyJob = legacyJobFileHandler.read(fsSettings.getName());
-            if (legacyJob != null) {
-                logger.info("Migrating legacy _status.json to checkpoint format for job [{}]", fsSettings.getName());
-                
-                // Create a completed checkpoint from the legacy job
-                FsCrawlerCheckpoint migratedCheckpoint = new FsCrawlerCheckpoint();
-                migratedCheckpoint.setScanEndTime(legacyJob.getLastrun());
-                migratedCheckpoint.setNextCheck(legacyJob.getNextCheck());
-                migratedCheckpoint.setFilesProcessed(legacyJob.getIndexed());
-                migratedCheckpoint.setFilesDeleted(legacyJob.getDeleted());
-                migratedCheckpoint.setState(CrawlerState.COMPLETED);
-                
-                // Save the migrated checkpoint
-                checkpointHandler.write(fsSettings.getName(), migratedCheckpoint);
-                
-                // Delete the legacy file
-                legacyJobFileHandler.clean(fsSettings.getName());
-                logger.info("Migration complete. Legacy _status.json has been removed.");
-                
-                return legacyJob.getLastrun();
-            }
-        } catch (NoSuchFileException e) {
-            // No legacy file, that's fine
-            logger.debug("No legacy _status.json found for job [{}]", fsSettings.getName());
-        } catch (IOException e) {
-            logger.warn("Error migrating legacy _status.json: {}", e.getMessage());
-        }
-        return null;
+        return FsCrawlerCheckpoint.newCheckpoint(rootPath);
     }
 
     /**
@@ -561,15 +511,10 @@ public class FsParserAbstract extends FsParser {
         logger.warn("Network error on path [{}], retry {}/{} in {}ms: {}",
                 failedPath, checkpoint.get().getRetryCount(), MAX_RETRIES, delay, e.getMessage());
 
-        try {
-            // Close and reopen connection
-            crawlerPlugin.closeConnection();
-            Thread.sleep(delay);
-            crawlerPlugin.openConnection();
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Interrupted during retry backoff", ie);
-        }
+        // Close and reopen connection
+        crawlerPlugin.closeConnection();
+        FsCrawlerUtil.waitFor(Duration.ofMillis(delay));
+        crawlerPlugin.openConnection();
     }
 
     /**

@@ -19,6 +19,7 @@
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
@@ -31,7 +32,6 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Iterator;
 
-import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.waitFor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsLocalPluginTest {
@@ -53,7 +53,7 @@ public class FsLocalPluginTest {
         Path tempFile1 = Files.createFile(tempDir.resolve("file1.txt"));
 
         // Wait for 100ms to make sure file2 is created after
-        waitFor(Duration.ofMillis(100));
+        FsCrawlerUtil.waitFor(Duration.ofMillis(100));
 
         // Then file2
         Path tempFile2 = Files.createFile(tempDir.resolve("file2.txt"));

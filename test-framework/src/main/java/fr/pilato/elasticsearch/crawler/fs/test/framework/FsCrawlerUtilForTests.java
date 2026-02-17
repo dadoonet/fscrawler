@@ -20,19 +20,18 @@ package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.awaitility.core.ConditionTimeoutException;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Duration;
 import java.util.EnumSet;
-
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.awaitility.Awaitility.await;
 
 public class FsCrawlerUtilForTests {
     private static final Logger logger = LogManager.getLogger();
+
+    private FsCrawlerUtilForTests() {
+        // Utility class should not be instantiated
+    }
 
     /**
      * Copy files from a source to a target
@@ -89,16 +88,5 @@ public class FsCrawlerUtilForTests {
             }
             return FileVisitResult.CONTINUE;
         }
-    }
-
-    /**
-     * It's an util to avoid Thread.sleep() in our tests. It will wait for the given duration
-     * and then throw a ConditionTimeoutException which is caught.
-     * @param duration The duration to wait for
-     */
-    public static void waitFor(Duration duration) {
-        logger.debug("⏳ Waiting for {} seconds...", duration.toSeconds());
-        assertThatExceptionOfType(ConditionTimeoutException.class)
-                .isThrownBy(() -> await().atMost(duration).until(() -> false));
     }
 }

@@ -22,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.core.ConditionTimeoutException;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,11 +42,17 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
+import static org.awaitility.Awaitility.await;
+
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_DOCS = "_docs";
     public static final String INDEX_SUFFIX_FOLDER = "_folder";
 
     private static final Logger logger = LogManager.getLogger();
+
+    private FsCrawlerUtil() {
+        // Utility class, do not instantiate
+    }
 
     /**
      * We check if we can index the file or if we should ignore it
@@ -193,10 +200,10 @@ public class FsCrawlerUtil {
         return File.separator;
     }
 
-    public static String computeRealPathName(String _dirname, String filename) {
+    public static String computeRealPathName(String srcDirname, String filename) {
         // new File(dirname, filename).toString() is not suitable for server
-        String separator = getPathSeparator(_dirname);
-        String dirname = _dirname.endsWith(separator) ? _dirname : _dirname.concat(separator);
+        String separator = getPathSeparator(srcDirname);
+        String dirname = srcDirname.endsWith(separator) ? srcDirname : srcDirname.concat(separator);
         return dirname + filename;
     }
 
@@ -524,5 +531,24 @@ public class FsCrawlerUtil {
         return duration.toString()
                 .substring(2)
                 .toLowerCase();
+    }
+
+    /**
+     * It's a util to avoid Thread.sleep() in our tests. It will wait for the given duration
+     * and then throw a ConditionTimeoutException which is caught.
+     * @param duration The duration to wait for
+     */
+    public static void waitFor(Duration duration) {
+        logger.trace("⏳ Waiting for {} seconds...", duration.toSeconds());
+        try {
+            await().atMost(duration)
+                    // We must have a longer poll delay than the duration
+                    .pollDelay(duration.plusMillis(1))
+                    // We must have a longer timeout than the poll delay
+                    .timeout(duration.plusMillis(2))
+                    .until(() -> false);
+        } catch (ConditionTimeoutException ignored) {
+            // We are expecting this exception. We just waited for it.
+        }
     }
 }

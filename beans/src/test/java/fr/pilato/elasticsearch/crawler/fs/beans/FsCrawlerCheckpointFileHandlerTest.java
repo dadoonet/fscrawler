@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
 
@@ -88,9 +89,9 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
     }
 
     @Test
-    public void testCleanNonExistent() throws IOException {
-        // Should not throw
-        handler.clean("non-existent-job");
+    public void testCleanNonExistent() {
+        // Should not throw an exception even if the job does not exist
+        assertThatNoException().isThrownBy(() -> handler.clean("non-existent-job"));
     }
 
     @Test
@@ -141,5 +142,31 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
         assertThat(read.getState()).isEqualTo(CrawlerState.RUNNING);
         assertThat(read.getRetryCount()).isEqualTo(3);
         assertThat(read.getLastError()).isEqualTo("Some error");
+    }
+
+    @Test
+    public void migrate_from_legacy_status() throws IOException {
+        String jobName = getCurrentTestName();
+
+        // Create a legacy _status.json file
+        FsJobFileHandler legacyHandler = new FsJobFileHandler(rootDir);
+        FsJob legacyJob = new FsJob();
+        legacyJob.setLastrun(LocalDateTime.now().minusHours(1));
+        legacyJob.setNextCheck(LocalDateTime.now().plusHours(1));
+        legacyJob.setIndexed(50);
+        legacyJob.setDeleted(2);
+        legacyHandler.write(jobName, legacyJob);
+
+        // Migrate to checkpoint format
+        handler.migrateLegacyStatus(jobName);
+
+        // Check that the checkpoint was created with the expected values
+        FsCrawlerCheckpoint checkpoint = handler.read(jobName);
+        assertThat(checkpoint).isNotNull();
+        assertThat(checkpoint.getScanEndTime()).isEqualTo(legacyJob.getLastrun());
+        assertThat(checkpoint.getNextCheck()).isEqualTo(legacyJob.getNextCheck());
+        assertThat(checkpoint.getFilesProcessed()).isEqualTo(legacyJob.getIndexed());
+        assertThat(checkpoint.getFilesDeleted()).isEqualTo(legacyJob.getDeleted());
+        assertThat(checkpoint.getState()).isEqualTo(CrawlerState.COMPLETED);
     }
 }
