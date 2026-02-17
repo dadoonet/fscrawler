@@ -163,7 +163,7 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
         // Check that the checkpoint was created with the expected values
         FsCrawlerCheckpoint checkpoint = handler.read(jobName);
         assertThat(checkpoint).isNotNull();
-        assertThat(checkpoint.getScanEndTime()).isEqualTo(legacyJob.getLastrun());
+        assertThat(checkpoint.getScanDate()).isEqualTo(legacyJob.getLastrun());
         assertThat(checkpoint.getNextCheck()).isEqualTo(legacyJob.getNextCheck());
         assertThat(checkpoint.getFilesProcessed()).isEqualTo(legacyJob.getIndexed());
         assertThat(checkpoint.getFilesDeleted()).isEqualTo(legacyJob.getDeleted());
