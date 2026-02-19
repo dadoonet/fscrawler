@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
+import fr.pilato.elasticsearch.crawler.fs.FsParser;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -39,6 +41,7 @@ public class RestServer implements AutoCloseable {
     private final FsCrawlerManagementService managementService;
     private final FsCrawlerDocumentService documentService;
     private final FsCrawlerPluginsManager pluginsManager;
+    private final FsParser fsParser;
     private HttpServer httpServer = null;
 
     /**
@@ -47,15 +50,18 @@ public class RestServer implements AutoCloseable {
      * @param managementService The management service
      * @param documentService The document service
      * @param pluginsManager The plugins manager instance
+     * @param fsParser The file system parser (for crawler control)
      */
     public RestServer(FsSettings settings,
                       FsCrawlerManagementService managementService,
                       FsCrawlerDocumentService documentService,
-                      FsCrawlerPluginsManager pluginsManager) {
+                      FsCrawlerPluginsManager pluginsManager,
+                      FsParser fsParser) {
         this.settings = settings;
         this.managementService = managementService;
         this.documentService = documentService;
         this.pluginsManager = pluginsManager;
+        this.fsParser = fsParser;
     }
 
     /**
@@ -69,7 +75,8 @@ public class RestServer implements AutoCloseable {
             final ResourceConfig rc = new ResourceConfig()
                     .registerInstances(
                             new ServerStatusApi(managementService, settings),
-                            new DocumentApi(settings, documentService, pluginsManager))
+                            new DocumentApi(settings, documentService, pluginsManager),
+                            new CrawlerApi(fsParser, settings.getName()))
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)
                     .register(JacksonFeature.class)

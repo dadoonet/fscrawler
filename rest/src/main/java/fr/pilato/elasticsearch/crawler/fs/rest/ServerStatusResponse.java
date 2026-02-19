@@ -23,6 +23,18 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 
 public class ServerStatusResponse extends RestResponse {
 
+    public ServerStatusResponse() {
+        super();
+    }
+
+    public ServerStatusResponse(boolean ok, String message) {
+        super(ok, message);
+    }
+
+    public ServerStatusResponse(boolean ok) {
+        super(ok);
+    }
+
     private String version;
     private String elasticsearch;
     private FsSettings settings;

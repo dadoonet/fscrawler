@@ -19,6 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,10 +35,33 @@ public class FsParserNoop extends FsParser {
     }
 
     @Override
-    public void run() {
-        closed = false;
+    public CrawlerState getState() {
+        if (closed.get()) {
+            return CrawlerState.STOPPED;
+        }
+        if (paused.get()) {
+            return CrawlerState.PAUSED;
+        }
+        return CrawlerState.RUNNING;
+    }
 
-        while (!closed) {
+    @Override
+    public FsCrawlerCheckpoint getCheckpoint() {
+        // No-op parser has no checkpoint
+        return null;
+    }
+
+    @Override
+    public FsCrawlerCheckpointFileHandler getCheckpointHandler() {
+        // No-op parser has no checkpoint handler
+        return null;
+    }
+
+    @Override
+    public void run() {
+        closed.set(false);
+
+        while (!closed.get()) {
             // This is doing nothing
             try {
                 logger.debug("Fs crawler is going to sleep for {}", fsSettings.getFs().getUpdateRate());

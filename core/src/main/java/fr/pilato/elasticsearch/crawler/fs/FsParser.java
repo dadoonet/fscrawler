@@ -19,20 +19,69 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class FsParser implements Runnable, AutoCloseable {
     static final Object semaphore = new Object();
     final AtomicInteger runNumber = new AtomicInteger(0);
-    boolean closed = true;
+    final AtomicBoolean closed = new AtomicBoolean(true);
+    final AtomicBoolean paused = new AtomicBoolean(false);
 
     public void close() {
-        this.closed = true;
+        this.closed.set(true);
     }
 
     public boolean isClosed() {
-        return closed;
+        return closed.get();
     }
+
+    /**
+     * Pause the crawler. The crawler will save its checkpoint and wait for resume.
+     */
+    public void pause() {
+        this.paused.set(true);
+    }
+
+    /**
+     * Resume the crawler after a pause.
+     */
+    public void resume() {
+        this.paused.set(false);
+        synchronized (semaphore) {
+            semaphore.notifyAll();
+        }
+    }
+
+    /**
+     * Check if the crawler is paused.
+     * @return true if paused
+     */
+    public boolean isPaused() {
+        return paused.get();
+    }
+
+    /**
+     * Get the current state of the crawler.
+     * @return the crawler state
+     */
+    public abstract CrawlerState getState();
+
+    /**
+     * Get the current checkpoint (progress) of the crawler.
+     * @return the checkpoint or null if no scan is in progress
+     */
+    public abstract FsCrawlerCheckpoint getCheckpoint();
+
+    /**
+     * Get the checkpoint file handler for persistence operations.
+     * @return the checkpoint file handler or null if not supported
+     */
+    public abstract FsCrawlerCheckpointFileHandler getCheckpointHandler();
 
     Object getSemaphore() {
         return semaphore;

@@ -19,6 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
@@ -35,6 +38,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,7 +72,9 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
             if (Files.isDirectory(path)) {
                 try {
                     printLs(path);
-                } catch (IOException ignored) { }
+                } catch (IOException ignored) {
+                    // It's just for debugging, we don't care if it fails
+                }
             } else {
                 logger.debug("{}", path);
             }
@@ -79,23 +85,32 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     public void restartCommand() throws Exception {
         String jobName = "fscrawler_restart_command";
 
-        // We generate a fake status first in metadata dir
+        // We generate fake status and checkpoint files first in metadata dir
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
         FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir);
+        FsCrawlerCheckpointFileHandler checkpointHandler = new FsCrawlerCheckpointFileHandler(metadataDir);
 
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
 
         fsSettingsLoader.write(jobName, new FsSettings());
+        // Write legacy status file
         fsJobFileHandler.write(jobName, new FsJob());
+        // Write checkpoint file
+        FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
+        checkpoint.setState(CrawlerState.COMPLETED);
+        checkpointHandler.write(jobName, checkpoint);
 
         assertThat(jobDir.resolve(FsJobFileHandler.FILENAME)).exists();
+        assertThat(jobDir.resolve(FsCrawlerCheckpointFileHandler.FILENAME)).exists();
 
         String[] args = { "--config_dir", metadataDir.toString(), "--loop", "0", "--restart", jobName };
 
         FsCrawlerCli.main(args);
 
+        // Both files should be cleaned
         assertThat(jobDir.resolve(FsJobFileHandler.FILENAME)).doesNotExist();
+        assertThat(jobDir.resolve(FsCrawlerCheckpointFileHandler.FILENAME)).doesNotExist();
     }
 
     @Test
@@ -103,12 +118,14 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         String jobName = "fscrawler_wrong_settings";
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
+        // Wrong indentation
         Files.writeString(jobDir.resolve(SETTINGS_YAML),
-                    "name: \"fscrawler_wrong_settings\"\n" +
-                            "fs:\n" +
-                            "  url: \"/path/to/docs\"\n" +
-                            // Wrong indentation
-                            " follow_symlinks: false\n");
+                """
+                        name: "fscrawler_wrong_settings"
+                        fs:
+                          url: "/path/to/docs"
+                         follow_symlinks: false
+                        """);
         String[] args = {"--config_dir", metadataDir.toString(), "--loop", "1", jobName};
         assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class).isThrownBy(() ->
                 FsCrawlerCli.main(args));
@@ -121,9 +138,11 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
         Files.writeString(jobDir.resolve(SETTINGS_YAML),
-                "name: \"${MY_JOB_NAME}\"\n" +
-                        "fs:\n" +
-                        "  url: \"${FSCRAWLER_FS_URL:=/tmp/test}\"\n");
+                """
+                name: "${MY_JOB_NAME}"
+                fs:
+                  url: "${FSCRAWLER_FS_URL:=/tmp/test}"
+                """);
 
         String[] args = { "--config_dir", metadataDir.toString(), jobName };
         // Create an environment variable
@@ -164,9 +183,11 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
         Files.writeString(jobDir.resolve(SETTINGS_YAML),
-                    "name: \"${MY_JOB_NAME}\"\n" +
-                            "fs:\n" +
-                            "  url: \"${FSCRAWLER_FS_URL:=/tmp/test}\"\n");
+                    """
+                    name: "${MY_JOB_NAME}"
+                    fs:
+                      url: "${FSCRAWLER_FS_URL:=/tmp/test}"
+                    """);
         String[] args = {"--config_dir", metadataDir.toString(), jobName};
         assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class).isThrownBy(() ->
                 FsCrawlerCli.main(args));
@@ -192,7 +213,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
 
         String[] args = { "--config_dir", metadataDir.toString() };
 
-        FsCrawlerCli.main(args);
+        assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
     }
 
     @Test
@@ -214,6 +235,49 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         FsCrawlerCli.main(argsJob2);
 
         String[] argsListJobs = { "--config_dir", metadataDir.toString(), "--list" };
-        FsCrawlerCli.main(argsListJobs);
+        assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(argsListJobs));
+    }
+
+    @Test
+    public void migrate_legacy_job() throws Exception {
+        String jobName = getCurrentTestName();
+
+        // We generate fake status and checkpoint files first in metadata dir
+        FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
+        FsJobFileHandler legacyHandler = new FsJobFileHandler(metadataDir);
+        FsCrawlerCheckpointFileHandler checkpointHandler = new FsCrawlerCheckpointFileHandler(metadataDir);
+
+        Path jobDir = metadataDir.resolve(jobName);
+        Files.createDirectories(jobDir);
+
+        FsSettings fsSettings = new FsSettings();
+        fsSettings.setName(jobName);
+        fsSettingsLoader.write(jobName, fsSettings);
+
+        // Write legacy status file
+        FsJob legacyJob = new FsJob();
+        legacyJob.setLastrun(LocalDateTime.now().minusHours(1));
+        legacyJob.setNextCheck(LocalDateTime.now().plusHours(1));
+        legacyJob.setIndexed(50);
+        legacyJob.setDeleted(2);
+        legacyHandler.write(getCurrentTestName(), legacyJob);
+
+        assertThat(jobDir.resolve(FsJobFileHandler.FILENAME)).exists();
+        assertThat(jobDir.resolve(FsCrawlerCheckpointFileHandler.FILENAME)).doesNotExist();
+
+        String[] args = { "--config_dir", metadataDir.toString(), "--loop", "0", jobName };
+        FsCrawlerCli.main(args);
+
+        // Both files should be cleaned
+        assertThat(jobDir.resolve(FsJobFileHandler.FILENAME)).doesNotExist();
+        assertThat(jobDir.resolve(FsCrawlerCheckpointFileHandler.FILENAME)).exists();
+
+        FsCrawlerCheckpoint checkpoint = checkpointHandler.read(jobName);
+        assertThat(checkpoint).isNotNull();
+        assertThat(checkpoint.getScanDate()).isEqualTo(legacyJob.getLastrun());
+        assertThat(checkpoint.getNextCheck()).isEqualTo(legacyJob.getNextCheck());
+        assertThat(checkpoint.getFilesProcessed()).isEqualTo(legacyJob.getIndexed());
+        assertThat(checkpoint.getFilesDeleted()).isEqualTo(legacyJob.getDeleted());
+        assertThat(checkpoint.getState()).isEqualTo(CrawlerState.COMPLETED);
     }
 }

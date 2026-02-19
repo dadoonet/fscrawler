@@ -52,7 +52,14 @@ You can tell FSCrawler that it must restart from the beginning by using ``--rest
 
    bin/fscrawler --restart
 
-In that case, the ``~/.fscrawler/fscrawler/_status.json`` file will be removed.
+In that case, the ``~/.fscrawler/{job_name}/_checkpoint.json`` file will be removed, 
+forcing a fresh scan of the entire filesystem as if it had never been indexed before.
+
+.. note::
+
+   The ``--restart`` option does **not** delete the Elasticsearch indices. It only clears the 
+   checkpoint file so FSCrawler will re-scan all files. If you also want to remove the indexed 
+   documents, you need to delete the Elasticsearch indices manually.
 
 Rest
 ----

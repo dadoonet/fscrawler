@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -34,7 +35,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -44,9 +44,6 @@ import static org.awaitility.Awaitility.await;
  * @author dadoonet (David Pilato)
  */
 public class FsCrawlerImpl implements AutoCloseable {
-
-    @Deprecated
-    public static final String INDEX_TYPE_FOLDER = "folder";
 
     private static final Logger logger = LogManager.getLogger();
 
@@ -85,11 +82,10 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         // Generate the directory where we write status and other files
         Path jobSettingsFolder = config.resolve(settings.getName());
-        try {
-            Files.createDirectories(jobSettingsFolder);
-        } catch (IOException e) {
-            throw new RuntimeException("Can not create the job config directory", e);
-        }
+        FsCrawlerUtil.createDirIfMissing(jobSettingsFolder);
+
+        // Migrate the old status file to the new checkpoint file if needed
+        new FsCrawlerCheckpointFileHandler(config).migrateLegacyStatus(settings.getName());
 
         // Set default temp directory if not configured
         if (settings.getFs().getTempDir() == null) {
@@ -204,7 +200,7 @@ public class FsCrawlerImpl implements AutoCloseable {
         }
 
         fsCrawlerThread.start();
-        fsParser.closed = false;
+        fsParser.closed.set(false);
     }
 
     @Override

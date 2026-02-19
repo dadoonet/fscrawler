@@ -177,7 +177,9 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(createTestSettings(), MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // We expect to have x files (<- whoa that's funny Mulder!)
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), subdirs+1, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), subdirs + 1, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        // Wait also for the folders to be fully indexed (they may not be immediately visible)
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), subdirs + 2, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // Run aggs
         ESSearchResponse response = client.search(new ESSearchRequest()
