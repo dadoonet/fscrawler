@@ -213,5 +213,11 @@ Here is a list of existing top level settings:
 | ``rest``                          | :ref:`rest-service`           |
 +-----------------------------------+-------------------------------+
 
+.. note::
+
+   Starting with version 2.10, FSCrawler supports a new pipeline-based configuration format (v2)
+   with ``inputs``, ``filters``, and ``outputs`` sections. See :ref:`pipeline-settings` for details.
+   The legacy v1 format shown above is still fully supported.
+
 You can define your job settings either in ``_settings.yaml`` (using ``.yaml`` extension) or
 in ``_settings.json`` (using ``.json`` extension).
