@@ -141,10 +141,13 @@ public class FsParserAbstract extends FsParser {
     public void resume() {
         super.resume();
 
-        // Also update the checkpoint
-        checkpoint.get().setState(CrawlerState.RUNNING);
-        saveCheckpoint();
-        logger.trace("Crawler resumed. Checkpoint updated.");
+        // Update checkpoint only when resuming from PAUSED (not when waking from sleep after COMPLETED)
+        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+        if (localCheckpoint != null && localCheckpoint.getState() == CrawlerState.PAUSED) {
+            localCheckpoint.setState(CrawlerState.RUNNING);
+            saveCheckpoint();
+            logger.trace("Crawler resumed. Checkpoint updated.");
+        }
     }
 
     @Override
@@ -171,10 +174,14 @@ public class FsParserAbstract extends FsParser {
     @Override
     public void pause() {
         super.pause();
-        // Also update the checkpoint state to PAUSED so that it is saved on disk immediately
-        checkpoint.get().setState(CrawlerState.PAUSED);
-        saveCheckpoint();
-        logger.trace("Crawler paused. Checkpoint saved.");
+        // Only overwrite checkpoint when a scan is in progress; do not replace COMPLETED during sleep phase
+        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+        if (localCheckpoint != null && localCheckpoint.getState() != CrawlerState.COMPLETED
+                && localCheckpoint.getState() != CrawlerState.ERROR) {
+            localCheckpoint.setState(CrawlerState.PAUSED);
+            saveCheckpoint();
+            logger.trace("Crawler paused. Checkpoint saved.");
+        }
     }
 
     @Override
