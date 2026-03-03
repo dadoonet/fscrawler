@@ -295,6 +295,23 @@ public class FsCrawlerCheckpoint {
         return completedPaths.contains(path);
     }
 
+    /**
+     * Compare pending paths by content and order so that equality holds after
+     * round-trip serialization (Jackson may deserialize Deque to ArrayDeque
+     * while we initialize as LinkedList, and LinkedList.equals(ArrayDeque) is false).
+     */
+    private static boolean pendingPathsEqual(Deque<String> a, Deque<String> b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        if (a.size() != b.size()) return false;
+        Iterator<String> itA = a.iterator();
+        Iterator<String> itB = b.iterator();
+        while (itA.hasNext()) {
+            if (!Objects.equals(itA.next(), itB.next())) return false;
+        }
+        return true;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -306,7 +323,7 @@ public class FsCrawlerCheckpoint {
                 Objects.equals(scanId, that.scanId) &&
                 Objects.equals(scanStartTime, that.scanStartTime) &&
                 Objects.equals(currentPath, that.currentPath) &&
-                Objects.equals(pendingPaths, that.pendingPaths) &&
+                pendingPathsEqual(pendingPaths, that.pendingPaths) &&
                 Objects.equals(completedPaths, that.completedPaths) &&
                 state == that.state &&
                 Objects.equals(lastError, that.lastError) &&
@@ -317,7 +334,9 @@ public class FsCrawlerCheckpoint {
 
     @Override
     public int hashCode() {
-        return Objects.hash(scanId, scanStartTime, currentPath, pendingPaths, completedPaths,
+        return Objects.hash(scanId, scanStartTime, currentPath,
+                pendingPaths == null ? null : new ArrayList<>(pendingPaths),
+                completedPaths,
                 filesProcessed, filesDeleted, state, retryCount, lastError, scanDate,
                 scanEndTime, nextCheck);
     }
