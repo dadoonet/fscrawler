@@ -551,6 +551,8 @@ public class FsParserAbstract extends FsParser {
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             throw new NetworkErrorRecoveryException("Interrupted during backoff", ie);
+        } catch (NetworkErrorRecoveryException recoveryEx) {
+            throw recoveryEx; // rethrow as-is (e.g. "Crawler closed during backoff") to avoid double-wrapping
         } catch (Exception ex) {
             throw new NetworkErrorRecoveryException("Reconnect failed: " + ex.getMessage(), ex);
         }
