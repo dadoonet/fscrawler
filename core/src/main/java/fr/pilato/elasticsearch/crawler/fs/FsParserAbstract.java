@@ -333,6 +333,12 @@ public class FsParserAbstract extends FsParser {
      * 2. Existing checkpoint with COMPLETED state (use its scanEndTime as lastrun)
      * 3. No checkpoint but legacy _status.json exists (migrate)
      * 4. Nothing exists (fresh start)
+     *
+     * When resuming, re-adds {@link FsCrawlerCheckpoint#getCurrentPath() currentPath} to the front
+     * of pendingPaths if it is set and not already in the queue. This is required because the
+     * crawler polls a path from pendingPaths and then sets currentPath; any checkpoint saved
+     * between those points or during directory processing has currentPath set but the path
+     * absent from pendingPaths, so recovery would otherwise lose that directory.
      */
     private FsCrawlerCheckpoint loadOrCreateCheckpoint(String rootPath) throws IOException {
         FsCrawlerCheckpoint existing = checkpointHandler.read(fsSettings.getName());
@@ -344,14 +350,24 @@ public class FsParserAbstract extends FsParser {
                 FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
                 newCheckpoint.setScanDate(existing.getScanEndTime());
                 return newCheckpoint;
-            } else if (existing.hasPendingWork()) {
-                // Interrupted scan - resume
-                logger.info("Found existing checkpoint for job [{}] with pending work, resuming scan", fsSettings.getName());
+            } else if (existing.hasPendingWork() || (existing.getCurrentPath() != null && !existing.getCurrentPath().isEmpty())) {
+                // Interrupted scan - resume (either pending queue non-empty or currentPath set but path was polled out)
+                if (existing.getCurrentPath() != null && !existing.getCurrentPath().isEmpty()
+                        && !existing.getPendingPaths().contains(existing.getCurrentPath())) {
+                    existing.addPathFirst(existing.getCurrentPath());
+                    logger.debug("Re-added currentPath [{}] to pending queue for resume", existing.getCurrentPath());
+                }
+                if (!existing.hasPendingWork()) {
+                    logger.info("Found existing checkpoint for job [{}] with currentPath but empty pending queue, resuming scan", fsSettings.getName());
+                } else {
+                    logger.info("Found existing checkpoint for job [{}] with pending work, resuming scan", fsSettings.getName());
+                }
+                existing.setCurrentPath(null);
                 existing.setState(CrawlerState.RUNNING);
                 existing.resetRetryCount();
                 return existing;
             } else {
-                // Checkpoint exists but no pending work and not completed - start fresh
+                // Checkpoint exists but no pending work and no currentPath - start fresh
                 logger.debug("Found checkpoint for job [{}] but no pending work, starting fresh", fsSettings.getName());
                 FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
                 newCheckpoint.setScanDate(existing.getScanEndTime() != null ? existing.getScanEndTime() : LocalDateTime.MIN);
