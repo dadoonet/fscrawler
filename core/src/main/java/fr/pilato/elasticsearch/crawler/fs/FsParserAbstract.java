@@ -435,10 +435,13 @@ public class FsParserAbstract extends FsParser {
                     checkpoint.get().resetRetryCount();
                     maybeSaveCheckpoint();
                 } else {
-                    // Directory was interrupted - re-add to pending queue for resume
+                    // Directory was interrupted (pause or close) - re-add to pending queue
                     checkpoint.get().addPath(currentPath);
                     saveCheckpoint();
-                    return;  // Exit the processing loop
+                    // Use continue so the while loop re-checks paused/closed and can call
+                    // waitForResume() directly instead of exiting to run() and triggering
+                    // a full new scan cycle (connection close/reopen, checkpoint reload).
+                    continue;
                 }
             } catch (IOException e) {
                 if (isNetworkError(e)) {
