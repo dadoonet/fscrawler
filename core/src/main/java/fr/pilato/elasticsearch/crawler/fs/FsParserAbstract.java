@@ -541,6 +541,10 @@ public class FsParserAbstract extends FsParser {
             return false;
         }
 
+        // Track files indexed in this directory so we can undo counts if interrupted (pause/close).
+        // When the directory is re-added and re-processed, we must not double-count.
+        int filesIndexedInThisDirectory = 0;
+
         final Collection<FileAbstractModel> children = crawlerPlugin.getFiles(filepath);
         Collection<String> fsFiles = new ArrayList<>();
         Collection<String> fsFolders = new ArrayList<>();
@@ -569,6 +573,14 @@ public class FsParserAbstract extends FsParser {
                 for (FileAbstractModel child : children) {
                     // Check for pause/close during processing
                     if (closed.get() || paused.get()) {
+                        // Undo counts for files already indexed in this directory so we don't double-count
+                        // when this directory is re-processed from scratch on resume
+                        if (filesIndexedInThisDirectory > 0) {
+                            checkpoint.get().setFilesProcessed(
+                                    Math.max(0, checkpoint.get().getFilesProcessed() - filesIndexedInThisDirectory));
+                            stats.setNbDocScan(Math.max(0, stats.getNbDocScan() - filesIndexedInThisDirectory));
+                            filesSinceLastCheckpoint = Math.max(0, filesSinceLastCheckpoint - filesIndexedInThisDirectory);
+                        }
                         saveCheckpoint();
                         return false;  // Interrupted - directory not fully processed
                     }
@@ -609,6 +621,7 @@ public class FsParserAbstract extends FsParser {
                                         indexFile(child, stats, filepath, inputStream, child.getSize(), metadataStream);
                                         stats.addFile();
                                         checkpoint.get().incrementFilesProcessed();
+                                        filesIndexedInThisDirectory++;
                                         maybeSaveCheckpoint();
                                     } catch (Exception e) {
                                         if (fsSettings.getFs().isContinueOnError()) {
