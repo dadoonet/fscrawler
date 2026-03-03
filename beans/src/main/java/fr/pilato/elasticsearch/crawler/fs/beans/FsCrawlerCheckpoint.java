@@ -21,6 +21,8 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * Represents a checkpoint for the crawler, allowing pause/resume functionality.
@@ -94,12 +96,29 @@ public class FsCrawlerCheckpoint {
     private LocalDateTime nextCheck;
 
     public FsCrawlerCheckpoint() {
-        this.pendingPaths = new LinkedList<>();
-        this.completedPaths = new HashSet<>();
+        this.pendingPaths = new ConcurrentLinkedDeque<>();
+        this.completedPaths = ConcurrentHashMap.newKeySet();
         this.state = CrawlerState.STOPPED;
         this.filesProcessed = 0;
         this.filesDeleted = 0;
         this.retryCount = 0;
+    }
+
+    /**
+     * Ensure pending and completed paths use thread-safe collections so that
+     * saveCheckpoint() can serialize while the crawler thread modifies them
+     * (avoids ConcurrentModificationException). Call after deserializing from
+     * JSON, since Jackson may create LinkedList/ArrayDeque and HashSet.
+     */
+    public void ensureConcurrentCollections() {
+        if (pendingPaths != null) {
+            this.pendingPaths = new ConcurrentLinkedDeque<>(pendingPaths);
+        }
+        if (completedPaths != null) {
+            Set<String> concurrent = ConcurrentHashMap.newKeySet();
+            concurrent.addAll(completedPaths);
+            this.completedPaths = concurrent;
+        }
     }
 
     /**

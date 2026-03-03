@@ -210,7 +210,8 @@ public class FsParserAbstract extends FsParser {
 
                 // Load or create checkpoint (handles migration from legacy _status.json)
                 checkpoint.set(loadOrCreateCheckpoint(fsSettings.getFs().getUrl()));
-                
+                checkpoint.get().ensureConcurrentCollections();
+
                 // Restore stats from checkpoint if resuming
                 if (checkpoint.get().getFilesProcessed() > 0) {
                     stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
