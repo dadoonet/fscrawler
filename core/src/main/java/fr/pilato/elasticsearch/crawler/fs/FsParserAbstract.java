@@ -191,6 +191,7 @@ public class FsParserAbstract extends FsParser {
 
             try {
                 logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
+                filesSinceLastCheckpoint = 0;
                 ScanStatistic stats = new ScanStatistic(fsSettings.getFs().getUrl());
                 LocalDateTime startDate = LocalDateTime.now();
                 stats.setStartTime(startDate);
