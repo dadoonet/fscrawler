@@ -4,7 +4,7 @@ SETLOCAL enabledelayedexpansion
 TITLE FSCrawler ${project.version}
 
 set SCRIPT_DIR=%~dp0
-REM change into script directory
+REM Change to FS_HOME so PF4J resolves "plugins" to distribution's plugins directory
 PUSHD "%SCRIPT_DIR%\.."
 for %%I in ("%SCRIPT_DIR%..") do set FS_HOME=%%~dpfI
 
@@ -70,6 +70,6 @@ FOR /F "usebackq tokens=1* delims= " %%A IN (!params!) DO (
 )
 
 %JAVA% %JAVA_OPTS% -cp %FS_CLASSPATH% "${distribution.mainClassName}" !newparams!
-REM Return to original directory
+REM Return to directory from which the script was launched
 POPD
 ENDLOCAL
