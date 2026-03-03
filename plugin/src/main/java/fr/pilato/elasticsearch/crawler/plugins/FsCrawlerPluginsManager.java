@@ -64,6 +64,14 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
 
     public void close() {
         logger.debug("Stopping plugins");
+        for (FsCrawlerExtensionFsProvider provider : fsProviders.values()) {
+            try {
+                logger.trace("Closing provider [{}]", provider.getType());
+                provider.close();
+            } catch (Exception e) {
+                logger.warn("Error closing provider [{}]: {}", provider.getType(), e.getMessage());
+            }
+        }
         pluginManager.stopPlugins();
     }
 
