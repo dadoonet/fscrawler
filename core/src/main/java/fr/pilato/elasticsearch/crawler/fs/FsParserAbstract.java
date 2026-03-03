@@ -448,8 +448,14 @@ public class FsParserAbstract extends FsParser {
                     checkpoint.get().markCompleted(currentPath);
                     checkpoint.get().setLastError(e.getMessage());
                 } else {
+                    checkpoint.get().addPathFirst(currentPath);
+                    saveCheckpoint();
                     throw e;
                 }
+            } catch (Exception e) {
+                checkpoint.get().addPathFirst(currentPath);
+                saveCheckpoint();
+                throw e;
             }
         }
     }
@@ -497,15 +503,15 @@ public class FsParserAbstract extends FsParser {
         checkpoint.get().setLastError(e.getMessage());
         checkpoint.get().incrementRetryCount();
 
+        // Re-add the path so it is not lost from the checkpoint (on resume or when we throw)
+        checkpoint.get().addPathFirst(failedPath);
+        saveCheckpoint();
+
         if (checkpoint.get().getRetryCount() > MAX_RETRIES) {
             checkpoint.get().setState(CrawlerState.ERROR);
             saveCheckpoint();
             throw new RuntimeException("Max retries (" + MAX_RETRIES + ") exceeded for network errors", e);
         }
-
-        // Re-add the path to retry
-        checkpoint.get().addPathFirst(failedPath);
-        saveCheckpoint();
 
         // Exponential backoff
         long delay = INITIAL_RETRY_DELAY_MS * (long) Math.pow(2, checkpoint.get().getRetryCount() - (double) 1);
