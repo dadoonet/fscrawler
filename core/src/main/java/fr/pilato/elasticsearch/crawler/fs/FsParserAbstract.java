@@ -81,6 +81,8 @@ public class FsParserAbstract extends FsParser {
     // Checkpoint for current scan
     private final AtomicReference<FsCrawlerCheckpoint> checkpoint = new AtomicReference<>(new FsCrawlerCheckpoint());
     private int filesSinceLastCheckpoint = 0;
+    /** Lock for serializing checkpoint file writes (close/pause/crawler threads). */
+    private final Object checkpointWriteLock = new Object();
 
     public FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
                            FsCrawlerDocumentService documentService, Integer loop,
@@ -353,16 +355,19 @@ public class FsParserAbstract extends FsParser {
     }
 
     /**
-     * Save the current checkpoint to disk
+     * Save the current checkpoint to disk.
+     * Synchronized so close(), pause(), and the crawler thread do not write concurrently.
      */
     private void saveCheckpoint() {
-        try {
-            checkpointHandler.write(fsSettings.getName(), checkpoint.get());
-            logger.trace("✅ Checkpoint saved: {} files processed, {} directories pending",
-                    checkpoint.get().getFilesProcessed(), checkpoint.get().getPendingPaths().size());
-        } catch (IOException e) {
-            logger.warn("Failed to save checkpoint: {}", e.getMessage());
-            logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+        synchronized (checkpointWriteLock) {
+            try {
+                checkpointHandler.write(fsSettings.getName(), checkpoint.get());
+                logger.trace("✅ Checkpoint saved: {} files processed, {} directories pending",
+                        checkpoint.get().getFilesProcessed(), checkpoint.get().getPendingPaths().size());
+            } catch (IOException e) {
+                logger.warn("Failed to save checkpoint: {}", e.getMessage());
+                logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+            }
         }
     }
 
