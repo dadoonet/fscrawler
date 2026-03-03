@@ -66,7 +66,7 @@ public class CrawlerApi extends RestApi {
         }
         
         fsParser.pause();
-        // FsParserAbstract.pause() only saves checkpoint when state is RUNNING; not when COMPLETED/ERROR (e.g. between scans)
+        // FsParser.pause() only saves checkpoint when state is RUNNING; not when COMPLETED/ERROR (e.g. between scans)
         FsCrawlerCheckpoint checkpoint = fsParser.getCheckpoint();
         boolean checkpointSaved = checkpoint != null && checkpoint.getState() == CrawlerState.PAUSED;
         String message = checkpointSaved

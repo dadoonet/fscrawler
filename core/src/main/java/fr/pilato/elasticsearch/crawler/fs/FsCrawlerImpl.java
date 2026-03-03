@@ -101,7 +101,7 @@ public class FsCrawlerImpl implements AutoCloseable {
         FsCrawlerExtensionFsProvider crawlerPlugin = pluginsManager.findFsProviderForCrawling(protocolType);
         crawlerPlugin.start(settings, "{}");
 
-        fsParser = new FsParserAbstract(settings, config, managementService, documentService, loop, rest, crawlerPlugin);
+        fsParser = new FsParser(settings, config, managementService, documentService, loop, rest, crawlerPlugin);
         fsCrawlerThread = new Thread(fsParser, "fs-crawler");
     }
 
