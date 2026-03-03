@@ -199,22 +199,43 @@ public class FsParserAbstract extends FsParser {
                 return;
             }
 
+            // loop == 0: wait for resume before each run (start in pause)
+            if (loop == 0) {
+                paused.set(true);
+                waitForResume();
+                if (closed.get()) {
+                    return;
+                }
+                paused.set(false);
+            }
+
             int run = runNumber.incrementAndGet();
 
             try {
                 logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
                 filesSinceLastCheckpoint = 0;
-                ScanStatistic stats = new ScanStatistic(fsSettings.getFs().getUrl());
+
+                String url = fsSettings.getFs().getUrl();
+                if (isNullOrEmpty(url)) {
+                    // No folder to monitor (REST-only mode): no-op run, checkpoint completed with 0 files
+                    logger.info("Run #{}: job [{}]: no fs.url configured, skipping crawl (REST-only mode).", run, fsSettings.getName());
+                    LocalDateTime scanDatenew = LocalDateTime.now().minusSeconds(2);
+                    LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
+                    checkpoint.set(FsCrawlerCheckpoint.newCheckpoint(""));
+                    checkpoint.get().ensureConcurrentCollections();
+                    updateCheckpointAsCompleted(scanDatenew, nextCheck);
+                } else {
+                ScanStatistic stats = new ScanStatistic(url);
                 LocalDateTime startDate = LocalDateTime.now();
                 stats.setStartTime(startDate);
 
                 crawlerPlugin.openConnection();
 
-                if (!crawlerPlugin.exists(fsSettings.getFs().getUrl())) {
-                    throw new RuntimeException(fsSettings.getFs().getUrl() + " doesn't exists.");
+                if (!crawlerPlugin.exists(url)) {
+                    throw new RuntimeException(url + " doesn't exists.");
                 }
 
-                String rootPathId = SignTool.sign(fsSettings.getFs().getUrl());
+                String rootPathId = SignTool.sign(url);
                 stats.setRootPathId(rootPathId);
 
                 // We need to round that latest date to the lower second and remove 2 seconds.
@@ -222,7 +243,7 @@ public class FsParserAbstract extends FsParser {
                 LocalDateTime scanDatenew = startDate.minusSeconds(2);
 
                 // Load or create checkpoint (handles migration from legacy _status.json)
-                checkpoint.set(loadOrCreateCheckpoint(fsSettings.getFs().getUrl()));
+                checkpoint.set(loadOrCreateCheckpoint(url));
                 checkpoint.get().ensureConcurrentCollections();
 
                 // Restore stats from checkpoint if resuming
@@ -237,7 +258,7 @@ public class FsParserAbstract extends FsParser {
                 // That means that we don't have a scanDate yet (checkpoint.scanDate is MIN)
                 LocalDateTime scanDate = checkpoint.get().getScanDate();
                 if ((scanDate == null || scanDate.equals(LocalDateTime.MIN)) && fsSettings.getFs().isIndexFolders()) {
-                    indexDirectory(fsSettings.getFs().getUrl(), fsSettings.getFs().getUrl());
+                    indexDirectory(url, url);
                 }
 
                 LocalDateTime effectiveScanDate = scanDate != null ? scanDate : LocalDateTime.MIN;
@@ -264,6 +285,7 @@ public class FsParserAbstract extends FsParser {
                 if (!closed.get() && checkpoint.get().getState() != CrawlerState.ERROR) {
                     updateCheckpointAsCompleted(scanDatenew, nextCheck);
                 }
+                }
             } catch (Exception e) {
                 logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
                 logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
@@ -283,10 +305,42 @@ public class FsParserAbstract extends FsParser {
                 }
             }
 
+            // After run: loop 0 => always back to pause and wait for next resume
+            if (loop == 0) {
+                paused.set(true);
+                FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+                if (localCheckpoint != null && localCheckpoint.getState() != CrawlerState.ERROR) {
+                    localCheckpoint.setState(CrawlerState.PAUSED);
+                    saveCheckpoint();
+                }
+                waitForResume();
+                if (closed.get()) {
+                    return;
+                }
+                paused.set(false);
+                continue;
+            }
+
+            // loop > 0 and reached limit: exit if !rest, else enter pause and wait for resume
             if (loop > 0 && run >= loop) {
-                logger.info("FS crawler is stopping after {} run{}", run, run > 1 ? "s" : "");
-                closed.set(true);
-                return;
+                if (!rest) {
+                    logger.info("FS crawler is stopping after {} run{}", run, run > 1 ? "s" : "");
+                    closed.set(true);
+                    return;
+                }
+                logger.info("FS crawler completed {} run{}, entering pause (REST mode). Resume to run again.", run, run > 1 ? "s" : "");
+                paused.set(true);
+                FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+                if (localCheckpoint != null && localCheckpoint.getState() != CrawlerState.ERROR) {
+                    localCheckpoint.setState(CrawlerState.PAUSED);
+                    saveCheckpoint();
+                }
+                waitForResume();
+                if (closed.get()) {
+                    return;
+                }
+                paused.set(false);
+                continue;
             }
 
             try {
