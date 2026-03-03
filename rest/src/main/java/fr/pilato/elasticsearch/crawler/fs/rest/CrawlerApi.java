@@ -20,6 +20,7 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.FsParser;
+import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -65,7 +66,13 @@ public class CrawlerApi extends RestApi {
         }
         
         fsParser.pause();
-        return Response.ok(new SimpleResponse(true, "Crawler paused. Checkpoint saved.")).build();
+        // FsParserAbstract.pause() only saves checkpoint when state is RUNNING; not when COMPLETED/ERROR (e.g. between scans)
+        FsCrawlerCheckpoint checkpoint = fsParser.getCheckpoint();
+        boolean checkpointSaved = checkpoint != null && checkpoint.getState() == CrawlerState.PAUSED;
+        String message = checkpointSaved
+                ? "Crawler paused. Checkpoint saved."
+                : "Crawler paused. No checkpoint saved (no active scan in progress).";
+        return Response.ok(new SimpleResponse(true, message)).build();
     }
 
     /**
