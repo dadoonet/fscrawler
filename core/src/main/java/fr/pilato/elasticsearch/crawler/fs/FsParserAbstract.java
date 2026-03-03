@@ -444,10 +444,15 @@ public class FsParserAbstract extends FsParser {
                     // a full new scan cycle (connection close/reopen, checkpoint reload).
                     continue;
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
+                // Path already re-added in handleNetworkError; do not add again to avoid duplicate in pending queue
+                if (e instanceof NetworkErrorRecoveryException) {
+                    throw e;
+                }
+                // Network errors (including FsCrawlerPluginException with SocketException etc. cause) get retry
                 if (isNetworkError(e)) {
                     handleNetworkError(e, currentPath);
-                } else if (fsSettings.getFs().isContinueOnError()) {
+                } else if (e instanceof IOException && fsSettings.getFs().isContinueOnError()) {
                     logger.warn("Error processing directory {}, continuing: {}", currentPath, e.getMessage());
                     checkpoint.get().markCompleted(currentPath);
                     checkpoint.get().setLastError(e.getMessage());
@@ -456,10 +461,6 @@ public class FsParserAbstract extends FsParser {
                     saveCheckpoint();
                     throw e;
                 }
-            } catch (Exception e) {
-                checkpoint.get().addPathFirst(currentPath);
-                saveCheckpoint();
-                throw e;
             }
         }
     }
@@ -485,9 +486,10 @@ public class FsParserAbstract extends FsParser {
     }
 
     /**
-     * Check if an exception is a network-related error
+     * Check if an exception is a network-related error (including when wrapped in
+     * FsCrawlerPluginException or other RuntimeException by FTP/SSH plugins).
      */
-    private boolean isNetworkError(Exception e) {
+    private boolean isNetworkError(Throwable e) {
         if (e instanceof java.net.SocketException
                 || e instanceof java.net.SocketTimeoutException
                 || e instanceof java.net.UnknownHostException) {
@@ -501,9 +503,11 @@ public class FsParserAbstract extends FsParser {
     }
 
     /**
-     * Handle network errors with retry and exponential backoff
+     * Handle network errors with retry and exponential backoff.
+     * On throw, the path has already been re-added; callers must not add it again
+     * (they detect this via NetworkErrorRecoveryException).
      */
-    private void handleNetworkError(Exception e, String failedPath) {
+    private void handleNetworkError(Throwable e, String failedPath) {
         checkpoint.get().setLastError(e.getMessage());
         checkpoint.get().incrementRetryCount();
 
@@ -514,7 +518,8 @@ public class FsParserAbstract extends FsParser {
         if (checkpoint.get().getRetryCount() > MAX_RETRIES) {
             checkpoint.get().setState(CrawlerState.ERROR);
             saveCheckpoint();
-            throw new RuntimeException("Max retries (" + MAX_RETRIES + ") exceeded for network errors", e);
+            throw new NetworkErrorRecoveryException(
+                    "Max retries (" + MAX_RETRIES + ") exceeded for network errors", e);
         }
 
         // Exponential backoff
@@ -522,10 +527,13 @@ public class FsParserAbstract extends FsParser {
         logger.warn("Network error on path [{}], retry {}/{} in {}ms: {}",
                 failedPath, checkpoint.get().getRetryCount(), MAX_RETRIES, delay, e.getMessage());
 
-        // Close and reopen connection
-        crawlerPlugin.closeConnection();
-        FsCrawlerUtil.waitFor(Duration.ofMillis(delay));
-        crawlerPlugin.openConnection();
+        try {
+            crawlerPlugin.closeConnection();
+            FsCrawlerUtil.waitFor(Duration.ofMillis(delay));
+            crawlerPlugin.openConnection();
+        } catch (Exception ex) {
+            throw new NetworkErrorRecoveryException("Reconnect failed: " + ex.getMessage(), ex);
+        }
     }
 
     /**
