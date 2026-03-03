@@ -460,13 +460,22 @@ public class FsCrawlerUtil {
         return string == null || string.isEmpty();
     }
 
+    /**
+     * Creates the given directory and any parent directories that do not exist.
+     * Does nothing if the directory already exists.
+     *
+     * @param root the directory to create
+     * @throws RuntimeException if the directory could not be created (wraps IOException)
+     */
     public static void createDirIfMissing(Path root) {
+        if (Files.exists(root)) {
+            return;
+        }
         try {
-            if (Files.notExists(root)) {
-                Files.createDirectory(root);
-            }
-        } catch (IOException ignored) {
-            logger.error("Failed to create config dir");
+            Files.createDirectories(root);
+        } catch (IOException e) {
+            logger.error("Failed to create directory [{}]: {}", root, e.getMessage());
+            throw new RuntimeException("Cannot create directory " + root + ": " + e.getMessage(), e);
         }
     }
 
