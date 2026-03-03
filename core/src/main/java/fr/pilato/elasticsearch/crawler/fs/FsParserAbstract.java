@@ -246,8 +246,10 @@ public class FsParserAbstract extends FsParser {
                         stats.getStartTime(), stats.getEndTime(), durationToString(stats.computeDuration()),
                         nextCheck);
 
-                // If we completed successfully, update the checkpoint with completion info
-                if (!closed.get() && !paused.get() && checkpoint.get().getState() != CrawlerState.ERROR) {
+                // If we completed successfully, update the checkpoint with completion info.
+                // Do not gate on !paused.get(): a pause arriving just after the scan finishes must not
+                // skip this, or scanEndTime stays null and the next run does a full rescan (losing progress).
+                if (!closed.get() && checkpoint.get().getState() != CrawlerState.ERROR) {
                     updateCheckpointAsCompleted(scanDatenew, nextCheck);
                 }
             } catch (Exception e) {
