@@ -524,15 +524,20 @@ public class FsParserAbstract extends FsParser {
                     "Max retries (" + MAX_RETRIES + ") exceeded for network errors", e);
         }
 
-        // Exponential backoff
-        long delay = INITIAL_RETRY_DELAY_MS * (long) Math.pow(2, checkpoint.get().getRetryCount() - (double) 1);
+        // Exponential backoff (wait in chunks so we can respect shutdown; avoids blocking close() for minutes)
+        long delayMs = INITIAL_RETRY_DELAY_MS * (long) Math.pow(2, checkpoint.get().getRetryCount() - (double) 1);
         logger.warn("Network error on path [{}], retry {}/{} in {}ms: {}",
-                failedPath, checkpoint.get().getRetryCount(), MAX_RETRIES, delay, e.getMessage());
+                failedPath, checkpoint.get().getRetryCount(), MAX_RETRIES, delayMs, e.getMessage());
 
         try {
             crawlerPlugin.closeConnection();
-            FsCrawlerUtil.waitFor(Duration.ofMillis(delay));
+            if (!FsCrawlerUtil.waitWithAbortCheck(Duration.ofMillis(delayMs), () -> closed.get())) {
+                throw new NetworkErrorRecoveryException("Crawler closed during backoff", null);
+            }
             crawlerPlugin.openConnection();
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new NetworkErrorRecoveryException("Interrupted during backoff", ie);
         } catch (Exception ex) {
             throw new NetworkErrorRecoveryException("Reconnect failed: " + ex.getMessage(), ex);
         }

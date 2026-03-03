@@ -39,6 +39,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -540,6 +541,33 @@ public class FsCrawlerUtil {
         return duration.toString()
                 .substring(2)
                 .toLowerCase();
+    }
+
+    /** Poll interval (ms) when waiting with abort check, so shutdown can complete promptly. */
+    private static final long WAIT_ABORT_POLL_MS = 500;
+
+    /**
+     * Waits for the given duration, checking an abort condition periodically so that
+     * callers (e.g. crawler shutdown) can exit without waiting the full duration.
+     *
+     * @param duration     How long to wait
+     * @param abortCondition When true, stop waiting and return false immediately
+     * @return true if the full duration was waited, false if abortCondition became true
+     * @throws InterruptedException if the thread is interrupted during the wait
+     */
+    public static boolean waitWithAbortCheck(Duration duration, BooleanSupplier abortCondition) throws InterruptedException {
+        long deadlineMs = System.currentTimeMillis() + duration.toMillis();
+        while (System.currentTimeMillis() < deadlineMs) {
+            if (abortCondition.getAsBoolean()) {
+                return false;
+            }
+            long remainingMs = Math.min(WAIT_ABORT_POLL_MS, deadlineMs - System.currentTimeMillis());
+            if (remainingMs <= 0) {
+                break;
+            }
+            Thread.sleep(remainingMs);
+        }
+        return true;
     }
 
     /**
