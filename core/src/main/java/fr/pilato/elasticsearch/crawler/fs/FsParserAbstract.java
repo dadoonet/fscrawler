@@ -107,16 +107,17 @@ public class FsParserAbstract extends FsParser {
 
     @Override
     public CrawlerState getState() {
-        // Capture volatile field to avoid race condition
-        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
-        if (localCheckpoint != null) {
-            return localCheckpoint.getState();
-        }
+        // Check closed/paused first so status matches isPaused()/isClosed() even when
+        // checkpoint state is stale (e.g. pause() during COMPLETED sleep phase does not update checkpoint).
         if (closed.get()) {
             return CrawlerState.STOPPED;
         }
         if (paused.get()) {
             return CrawlerState.PAUSED;
+        }
+        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+        if (localCheckpoint != null) {
+            return localCheckpoint.getState();
         }
         return CrawlerState.RUNNING;
     }
