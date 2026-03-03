@@ -57,6 +57,7 @@ public class CrawlerStatusResponse extends RestResponse {
     }
 
     public CrawlerStatusResponse(FsCrawlerCheckpoint checkpoint) {
+        setOk(true);
         this.state = checkpoint.getState();
         this.scanId = checkpoint.getScanId();
         this.currentPath = checkpoint.getCurrentPath();
