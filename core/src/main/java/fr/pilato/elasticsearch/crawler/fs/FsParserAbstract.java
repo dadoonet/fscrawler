@@ -71,6 +71,7 @@ public class FsParserAbstract extends FsParser {
     private final FsCrawlerManagementService managementService;
     private final FsCrawlerDocumentService documentService;
     private final Integer loop;
+    private final boolean rest;
     private final Map<String, String> aclHashCache;
     private boolean aclHashCacheDirty;
     private final FsCrawlerExtensionFsProvider crawlerPlugin;
@@ -85,7 +86,7 @@ public class FsParserAbstract extends FsParser {
     private final Object checkpointWriteLock = new Object();
 
     public FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
-                           FsCrawlerDocumentService documentService, Integer loop,
+                           FsCrawlerDocumentService documentService, Integer loop, boolean rest,
                            FsCrawlerExtensionFsProvider crawlerPlugin) {
         this.fsSettings = fsSettings;
         this.checkpointHandler = new FsCrawlerCheckpointFileHandler(config);
@@ -97,6 +98,7 @@ public class FsParserAbstract extends FsParser {
         this.crawlerPlugin = crawlerPlugin;
 
         this.loop = loop;
+        this.rest = rest;
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());

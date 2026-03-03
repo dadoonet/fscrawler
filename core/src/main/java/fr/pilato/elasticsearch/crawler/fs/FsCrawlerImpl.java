@@ -94,24 +94,14 @@ public class FsCrawlerImpl implements AutoCloseable {
             logger.debug("Using default temp directory: [{}]", tempDir);
         }
 
-        // Create the fsParser instance depending on the settings
-        if (loop != 0) {
-            // Determine the protocol type
-            String protocolType = determineProtocolType(settings);
-            logger.debug("Using crawler plugin for protocol type [{}]", protocolType);
+        // Create the fsParser instance (always use real parser; loop 0 + !rest => thread never started in start())
+        String protocolType = determineProtocolType(settings);
+        logger.debug("Using crawler plugin for protocol type [{}]", protocolType);
 
-            // Get the crawler plugin from the plugin manager (validates that it supports crawling)
-            FsCrawlerExtensionFsProvider crawlerPlugin = pluginsManager.findFsProviderForCrawling(protocolType);
+        FsCrawlerExtensionFsProvider crawlerPlugin = pluginsManager.findFsProviderForCrawling(protocolType);
+        crawlerPlugin.start(settings, "{}");
 
-            // Initialize the plugin with settings
-            crawlerPlugin.start(settings, "{}");
-
-            // Create the parser with the plugin
-            fsParser = new FsParserAbstract(settings, config, managementService, documentService, loop, crawlerPlugin);
-        } else {
-            // We start a No-OP parser
-            fsParser = new FsParserNoop(settings);
-        }
+        fsParser = new FsParserAbstract(settings, config, managementService, documentService, loop, rest, crawlerPlugin);
         fsCrawlerThread = new Thread(fsParser, "fs-crawler");
     }
 
