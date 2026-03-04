@@ -169,17 +169,19 @@ public class FsParser implements Runnable, AutoCloseable {
      * Resume the crawler after a pause.
      */
     public void resume() {
+        // Update checkpoint to RUNNING before waking crawler so disk state is correct (avoids race)
+        synchronized (checkpointWriteLock) {
+            FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+            if (localCheckpoint != null && localCheckpoint.getState() == CrawlerState.PAUSED) {
+                localCheckpoint.setState(CrawlerState.RUNNING);
+                saveCheckpoint();
+                logger.trace("Crawler resumed. Checkpoint updated.");
+            }
+        }
         this.userStopped.set(false);
         this.paused.set(false);
         synchronized (semaphore) {
             semaphore.notifyAll();
-        }
-        // Update checkpoint only when resuming from PAUSED (not when waking from sleep after COMPLETED)
-        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
-        if (localCheckpoint != null && localCheckpoint.getState() == CrawlerState.PAUSED) {
-            localCheckpoint.setState(CrawlerState.RUNNING);
-            saveCheckpoint();
-            logger.trace("Crawler resumed. Checkpoint updated.");
         }
     }
 
