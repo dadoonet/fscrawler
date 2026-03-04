@@ -757,9 +757,10 @@ public class FsParser implements Runnable, AutoCloseable {
                                 fsFolders.add(child.getFullpath());
                                 indexDirectory(child.getFullpath(), fsSettings.getFs().getUrl());
                             }
-                            // Add subdirectory to pending queue instead of recursive call
-                            if (!checkpoint.get().isCompleted(child.getFullpath())) {
-                                checkpoint.get().addPath(child.getFullpath());
+                            // Add subdirectory to pending queue instead of recursive call (avoid duplicates on resume)
+                            FsCrawlerCheckpoint cp = checkpoint.get();
+                            if (!cp.isCompleted(child.getFullpath()) && !cp.getPendingPaths().contains(child.getFullpath())) {
+                                cp.addPath(child.getFullpath());
                             }
                         } else {
                             logger.debug("  - other: {}", filename);
