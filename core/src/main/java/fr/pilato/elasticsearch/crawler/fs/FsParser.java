@@ -326,80 +326,47 @@ public class FsParser implements Runnable, AutoCloseable {
                 }
             }
 
-            // After run: loop 0 => always back to pause and wait for next resume
-            if (loop == 0) {
-                paused.set(true);
-                FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
-                if (localCheckpoint != null && localCheckpoint.getState() != CrawlerState.ERROR) {
-                    localCheckpoint.setState(CrawlerState.PAUSED);
-                    saveCheckpoint();
-                }
-                waitForResume();
-                if (closed.get()) {
-                    return;
-                }
-                paused.set(false);
-                continue;
-            }
-
-            // loop > 0 and reached limit: exit if !rest, else enter pause and wait for resume
-            if (loop > 0 && run >= loop) {
+            // Unified between-runs: pause, then wait for resume OR updateRate (same behavior REST and non-REST)
+            if (loop != null && loop > 0 && run >= loop) {
+                // After run: exit if loop limit reached and !rest
                 if (!rest) {
                     logger.info("FS crawler is stopping after {} run{}", run, run > 1 ? "s" : "");
                     closed.set(true);
                     return;
                 }
-                logger.info("FS crawler completed {} run{}, entering pause (REST mode). Resume to run again.", run, run > 1 ? "s" : "");
-                paused.set(true);
-                FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
-                if (localCheckpoint != null && localCheckpoint.getState() != CrawlerState.ERROR) {
-                    localCheckpoint.setState(CrawlerState.PAUSED);
-                    saveCheckpoint();
-                }
-                waitForResume();
-                if (closed.get()) {
-                    return;
-                }
-                paused.set(false);
-                continue;
+
+                logger.info("FS crawler completed {} run{}, entering pause. Resume or wait for next run.", run, run > 1 ? "s" : "");
+            } else {
+                logger.debug("Run completed. Entering pause. Resume or wait {} for next run.", fsSettings.getFs().getUpdateRate());
             }
-
+            paused.set(true);
+            FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+            if (localCheckpoint != null && localCheckpoint.getState() != CrawlerState.ERROR) {
+                localCheckpoint.setState(CrawlerState.PAUSED);
+                saveCheckpoint();
+            }
             try {
-                logger.debug("Fs crawler is going to sleep for {}", fsSettings.getFs().getUpdateRate());
-
-                // The problem here is that there is no wait to close the thread while we are sleeping.
-                // Which leads to Zombie threads in our tests
-
                 if (!closed.get()) {
                     synchronized (semaphore) {
                         long totalWaitTime = 0;
                         long maxWaitTime = fsSettings.getFs().getUpdateRate().millis();
-                        while (totalWaitTime < maxWaitTime && !closed.get()) {
+                        while (totalWaitTime < maxWaitTime && paused.get() && !closed.get()) {
                             long waitTime = Math.min(CHECK_JOB_INTERVAL.millis(), maxWaitTime - totalWaitTime);
                             semaphore.wait(waitTime);
                             totalWaitTime += waitTime;
-                            logger.trace("Waking up after {} ms to check if the condition changed. We waited for {} in total on {}...", waitTime, totalWaitTime, maxWaitTime);
-
-                            // Read again the checkpoint to check if we need to stop the crawler
-                            try {
-                                FsCrawlerCheckpoint savedCheckpoint = checkpointHandler.read(fsSettings.getName());
-                                if (savedCheckpoint == null || savedCheckpoint.getNextCheck() == null
-                                        || LocalDateTime.now().isAfter(savedCheckpoint.getNextCheck())) {
-                                    logger.debug("Fs crawler is waking up because next check time [{}] is in the past.", 
-                                            savedCheckpoint != null ? savedCheckpoint.getNextCheck() : "null");
-                                    break; // Exit the loop to re-run the crawler
-                                }
-                            } catch (IOException e) {
-                                logger.warn("Error while reading checkpoint: {}", e.getMessage());
-                            }
+                            logger.trace("Waking up after {} ms (resume or timeout). Waited {} / {} ms.", waitTime, totalWaitTime, maxWaitTime);
                         }
-                        logger.debug("Fs crawler is now waking up again after a total wait time of {}...", totalWaitTime);
+                        logger.debug("Exiting pause: {} (resume or {} elapsed)", paused.get() ? "timeout" : "resume", totalWaitTime);
                     }
                 }
             } catch (InterruptedException e) {
                 logger.debug("Fs crawler thread has been interrupted: [{}]", e.getMessage());
                 Thread.currentThread().interrupt();
             }
+            if (closed.get()) {
+                return;
+            }
+            paused.set(false);
         }
     }
 
