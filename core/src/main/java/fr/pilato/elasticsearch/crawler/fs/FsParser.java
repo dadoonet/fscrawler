@@ -371,6 +371,20 @@ public class FsParser implements Runnable, AutoCloseable {
                             semaphore.wait(waitTime);
                             totalWaitTime += waitTime;
                             logger.trace("Waking up after {} ms (resume or timeout). Waited {} / {} ms.", waitTime, totalWaitTime, maxWaitTime);
+                            // When not user-stopped, allow external checkpoint change (e.g. nextCheck in past) to trigger early run
+                            if (!userStopped.get()) {
+                                try {
+                                    FsCrawlerCheckpoint savedCheckpoint = checkpointHandler.read(fsSettings.getName());
+                                    if (savedCheckpoint == null || savedCheckpoint.getNextCheck() == null
+                                            || LocalDateTime.now().isAfter(savedCheckpoint.getNextCheck())) {
+                                        logger.debug("Fs crawler is waking up because next check time [{}] is in the past.",
+                                                savedCheckpoint != null ? savedCheckpoint.getNextCheck() : "null");
+                                        break;
+                                    }
+                                } catch (IOException e) {
+                                    logger.warn("Error while reading checkpoint: {}", e.getMessage());
+                                }
+                            }
                         }
                         logger.debug("Exiting pause: {} (resume or {} elapsed)", paused.get() ? "timeout" : "resume", totalWaitTime);
                     }
