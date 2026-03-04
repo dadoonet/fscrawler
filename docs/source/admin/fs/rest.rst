@@ -696,10 +696,27 @@ When a scan is completed, the response will also include the ``scanEndTime`` and
 The possible states are:
 
 * ``RUNNING``: The crawler is actively processing files
-* ``PAUSED``: The crawler has been paused and is waiting for a resume command
+* ``PAUSED``: The crawler is between runs or has been explicitly paused (see below)
 * ``STOPPED``: The crawler is not running
 * ``COMPLETED``: The crawler has finished its scan successfully
 * ``ERROR``: The crawler encountered an error and stopped
+
+Behavior between runs
+~~~~~~~~~~~~~~~~~~~~
+
+After each crawl run, the crawler enters a pause and waits for the next run. The next run
+starts when either:
+
+* You call ``POST /_crawler/resume`` (run on demand), or
+* The configured ``update_rate`` time has elapsed (automatic run).
+
+This behavior is the same whether you use the REST service or not. So you can trigger a run
+at any time with ``resume``, or let the crawler run automatically at the scheduled interval.
+
+If you explicitly call ``POST /_crawler/pause`` while the crawler is in that "between runs"
+wait, the crawler will **not** start the next run when the time elapses; it will only start
+when you call ``POST /_crawler/resume``. This lets you truly pause and control when the next
+run happens.
 
 Pausing the crawler
 ~~~~~~~~~~~~~~~~~~~
@@ -710,9 +727,11 @@ To pause the crawler, call ``POST /_crawler/pause``:
 
    curl -X POST http://127.0.0.1:8080/_crawler/pause
 
-The crawler will save its current progress (checkpoint) and pause. You can then safely 
-stop FSCrawler if needed. When you restart FSCrawler, it will automatically resume 
-from where it left off.
+The crawler will save its current progress (checkpoint) and pause. While explicitly paused,
+it will **not** automatically start the next run when ``update_rate`` elapses; you must call
+``POST /_crawler/resume`` to start the next run. You can also safely stop FSCrawler while
+paused; when you restart FSCrawler, it will resume from where it left off when you call
+``resume``.
 
 Success response (200):
 

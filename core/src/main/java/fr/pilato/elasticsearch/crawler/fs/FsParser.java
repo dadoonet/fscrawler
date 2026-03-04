@@ -60,6 +60,8 @@ public class FsParser implements Runnable, AutoCloseable {
     final AtomicInteger runNumber = new AtomicInteger(0);
     final AtomicBoolean closed = new AtomicBoolean(true);
     final AtomicBoolean paused = new AtomicBoolean(false);
+    /** When true, between-runs wait does not exit on timeout; only resume() starts the next run. */
+    private final AtomicBoolean userStopped = new AtomicBoolean(false);
 
     private static final Logger logger = LogManager.getLogger();
 
@@ -162,6 +164,7 @@ public class FsParser implements Runnable, AutoCloseable {
      * Resume the crawler after a pause.
      */
     public void resume() {
+        this.userStopped.set(false);
         this.paused.set(false);
         synchronized (semaphore) {
             semaphore.notifyAll();
@@ -178,6 +181,7 @@ public class FsParser implements Runnable, AutoCloseable {
     @Override
     public void close() {
         this.closed.set(true);
+        this.userStopped.set(false);
         logger.trace("Closing the parser {}", this.getClass().getSimpleName());
         
         // Capture volatile field to avoid race condition
@@ -197,6 +201,7 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     public void pause() {
+        this.userStopped.set(true);
         this.paused.set(true);
         // Only overwrite checkpoint when a scan is in progress; do not replace COMPLETED during sleep phase
         FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
@@ -350,8 +355,10 @@ public class FsParser implements Runnable, AutoCloseable {
                     synchronized (semaphore) {
                         long totalWaitTime = 0;
                         long maxWaitTime = fsSettings.getFs().getUpdateRate().millis();
-                        while (totalWaitTime < maxWaitTime && paused.get() && !closed.get()) {
-                            long waitTime = Math.min(CHECK_JOB_INTERVAL.millis(), maxWaitTime - totalWaitTime);
+                        while ((totalWaitTime < maxWaitTime || userStopped.get()) && paused.get() && !closed.get()) {
+                            long waitTime = userStopped.get()
+                                    ? CHECK_JOB_INTERVAL.millis()
+                                    : Math.min(CHECK_JOB_INTERVAL.millis(), maxWaitTime - totalWaitTime);
                             semaphore.wait(waitTime);
                             totalWaitTime += waitTime;
                             logger.trace("Waking up after {} ms (resume or timeout). Waited {} / {} ms.", waitTime, totalWaitTime, maxWaitTime);
