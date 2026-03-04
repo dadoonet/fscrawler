@@ -124,6 +124,21 @@ The project uses the Randomized Testing Framework from Carrotsearch:
 -Dtests.cluster.url=...        # Use external Elasticsearch cluster
 ```
 
+### Running a single integration test (local Elasticsearch)
+
+To run one integration test quickly against a **local** Elasticsearch (e.g. http://localhost:9200 with `elastic` / `changeme`), use `tests.cluster.url` so TestContainers is skipped:
+
+```bash
+mvn verify -pl integration-tests -am \
+  -Dtests.cluster.url=http://localhost:9200 \
+  -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch.FsCrawlerTestAddNewFilesIT \
+  -Dtests.method="add_new_files_and_force_rescan"
+```
+
+- Ensure Elasticsearch is running locally (e.g. on port 9200) with credentials `elastic` / `changeme` before running.
+- Replace `FsCrawlerTestAddNewFilesIT` and `add_new_files_and_force_rescan` with the desired test class and method.
+- Same pattern is documented in `docs/source/dev/build.rst` (e.g. `-Dtests.class=... -Dtests.method="METHOD_NAME"`).
+
 ## REST API Endpoints
 
 - `GET /` - Server status
