@@ -466,6 +466,7 @@ public class FsParser implements Runnable, AutoCloseable {
         }
         
         localCheckpoint.setState(CrawlerState.COMPLETED);
+        localCheckpoint.setScanDate(scanEndTime);
         localCheckpoint.setScanEndTime(scanEndTime);
         localCheckpoint.setNextCheck(nextCheck);
         // Clear the working state (not needed after completion)
