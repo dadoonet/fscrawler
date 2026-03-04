@@ -39,7 +39,7 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
             @Override
             protected ExtensionFinder createExtensionFinder() {
                 DefaultExtensionFinder extensionFinder = (DefaultExtensionFinder) super.createExtensionFinder();
-                extensionFinder.addServiceProviderExtensionFinder();
+                extensionFinder.add(new FsCrawlerServiceProviderExtensionFinder(this));
                 return extensionFinder;
             }
         };
