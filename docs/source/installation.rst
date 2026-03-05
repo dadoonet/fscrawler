@@ -253,12 +253,12 @@ If you prefer to run FSCrawler from a ZIP distribution on your machine instead o
 
         There's an issue with the download links for SNAPSHOT versions.
 
-        .. hint::
+        .. blockquote::
 
-        Due to a bug with the underlying service we rely on to provide SNAPSHOT hosting,
-        we've had to temporarily remove browse access for SNAPSHOT releases. You should
-        still be able to publish and consume SNAPSHOT releases as usual, but you cannot
-        browse them via the UI.
+            Due to a bug with the underlying service we rely on to provide SNAPSHOT hosting,
+            we've had to temporarily remove browse access for SNAPSHOT releases. You should
+            still be able to publish and consume SNAPSHOT releases as usual, but you cannot
+            browse them via the UI.
 
         So you must now download the `maven-metadata.xml <https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/2.10-SNAPSHOT/maven-metadata.xml>`__
         file. Check the ``<snapshotVersion>`` tag to find the latest SNAPSHOT version of the ``zip`` file.

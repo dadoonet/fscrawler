@@ -31,7 +31,7 @@ The ``lib`` directory contains the FSCrawler jar file and all the dependencies.
 
 The ``config`` directory contains the configuration files. See :ref:`logger`.
 
-The ``external`` directory is for optional JARs (e.g. for JPEG2000 support in PDFs). See :ref:`installation` for
+The ``external`` directory is for optional JARs (e.g. for JPEG2000 support in PDFs). See :ref:`local-installation` for
 details and how to add libraries such as ``jai-imageio-jpeg2000``.
 
 As this directory is empty by default, you can also mount it when using Docker images:
@@ -44,6 +44,6 @@ As this directory is empty by default, you can also mount it when using Docker i
         -v "$PWD/external:/usr/share/fscrawler/external" \
         dadoonet/fscrawler
 
-See also :ref:`installation`, :ref:`docker` and :ref:`docker-compose`.
+See also :ref:`docker`, :ref:`docker-compose` and :ref:`local-installation`.
 
 The ``logs`` directory contains the log files. See :ref:`logger`.
