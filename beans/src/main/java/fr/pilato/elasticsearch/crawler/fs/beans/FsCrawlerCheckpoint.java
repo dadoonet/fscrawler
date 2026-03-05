@@ -107,6 +107,14 @@ public class FsCrawlerCheckpoint {
      */
     private LocalDateTime nextCheck;
 
+    /**
+     * When the crawler was interrupted (pause/close) while processing {@link #currentPath},
+     * this is the number of files already indexed in that directory. On resume we re-process
+     * the directory from scratch (idempotent re-index) but skip incrementing {@link #filesProcessed}
+     * for the first this-many files to avoid double-counting.
+     */
+    private int currentPathFilesIndexedCount;
+
     public FsCrawlerCheckpoint() {
         this.pendingPaths = new ConcurrentLinkedDeque<>();
         this.pendingPathsSet = ConcurrentHashMap.newKeySet();
@@ -296,6 +304,14 @@ public class FsCrawlerCheckpoint {
         this.nextCheck = nextCheck;
     }
 
+    public int getCurrentPathFilesIndexedCount() {
+        return currentPathFilesIndexedCount;
+    }
+
+    public void setCurrentPathFilesIndexedCount(int currentPathFilesIndexedCount) {
+        this.currentPathFilesIndexedCount = Math.max(0, currentPathFilesIndexedCount);
+    }
+
     /**
      * Check if there are more directories to process
      * @return true if there are pending directories
@@ -417,7 +433,8 @@ public class FsCrawlerCheckpoint {
                 Objects.equals(lastError, that.lastError) &&
                 Objects.equals(scanDate, that.scanDate) &&
                 Objects.equals(scanEndTime, that.scanEndTime) &&
-                Objects.equals(nextCheck, that.nextCheck);
+                Objects.equals(nextCheck, that.nextCheck) &&
+                currentPathFilesIndexedCount == that.currentPathFilesIndexedCount;
     }
 
     @Override
@@ -426,7 +443,7 @@ public class FsCrawlerCheckpoint {
                 pendingPaths == null ? null : new ArrayList<>(pendingPaths),
                 completedPaths,
                 filesProcessed.get(), filesDeleted.get(), state, retryCount, lastError, scanDate,
-                scanEndTime, nextCheck);
+                scanEndTime, nextCheck, currentPathFilesIndexedCount);
     }
 
     @Override
@@ -442,6 +459,7 @@ public class FsCrawlerCheckpoint {
                 ", retryCount=" + retryCount +
                 ", scanEndTime=" + scanEndTime +
                 ", nextCheck=" + nextCheck +
+                ", currentPathFilesIndexedCount=" + currentPathFilesIndexedCount +
                 '}';
     }
 }

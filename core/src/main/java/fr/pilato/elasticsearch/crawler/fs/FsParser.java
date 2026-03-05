@@ -492,6 +492,7 @@ public class FsParser implements Runnable, AutoCloseable {
         localCheckpoint.clearPendingPaths();
         localCheckpoint.getCompletedPaths().clear();
         localCheckpoint.setCurrentPath(null);
+        localCheckpoint.setCurrentPathFilesIndexedCount(0);
         localCheckpoint.setLastError(null);
         localCheckpoint.resetRetryCount();
         
@@ -667,9 +668,19 @@ public class FsParser implements Runnable, AutoCloseable {
             return false;
         }
 
-        // Track files indexed in this directory so we can undo counts if interrupted (pause/close).
-        // When the directory is re-added and re-processed, we must not double-count.
-        int filesIndexedInThisDirectory = 0;
+        // When resuming this path after an interrupt, skip incrementing filesProcessed for the first N files
+        // we index (we still re-index them for idempotency) so we don't double-count.
+        FsCrawlerCheckpoint cp = checkpoint.get();
+        int skipCount = (filepath.equals(cp.getCurrentPath()) && cp.getCurrentPathFilesIndexedCount() > 0)
+                ? cp.getCurrentPathFilesIndexedCount()
+                : 0;
+        if (skipCount > 0) {
+            cp.setCurrentPathFilesIndexedCount(0);
+            logger.debug("Resuming directory [{}]: skipping count for first {} already-indexed files", filepath, skipCount);
+        }
+
+        // Number of files we've indexed in this pass (counted or not); used when interrupted to persist resume state.
+        int indexedInThisPass = 0;
 
         final Collection<FileAbstractModel> children = crawlerPlugin.getFiles(filepath);
         Collection<String> fsFiles = new ArrayList<>();
@@ -699,13 +710,10 @@ public class FsParser implements Runnable, AutoCloseable {
                 for (FileAbstractModel child : children) {
                     // Check for pause/close during processing
                     if (closed.get() || paused.get()) {
-                        // Undo counts for files already indexed in this directory so we don't double-count
-                        // when this directory is re-processed from scratch on resume
-                        if (filesIndexedInThisDirectory > 0) {
-                            checkpoint.get().setFilesProcessed(
-                                    Math.max(0, checkpoint.get().getFilesProcessed() - filesIndexedInThisDirectory));
-                            stats.setNbDocScan(Math.max(0, stats.getNbDocScan() - filesIndexedInThisDirectory));
-                            filesSinceLastCheckpoint = Math.max(0, filesSinceLastCheckpoint - filesIndexedInThisDirectory);
+                        // Persist how many files we've indexed in this directory so on resume we skip
+                        // counting them (avoid double-count); we do not roll back filesProcessed.
+                        if (indexedInThisPass > 0) {
+                            checkpoint.get().setCurrentPathFilesIndexedCount(indexedInThisPass);
                         }
                         saveCheckpoint();
                         return false;  // Interrupted - directory not fully processed
@@ -745,9 +753,13 @@ public class FsParser implements Runnable, AutoCloseable {
                                             metadataStream = crawlerPlugin.getInputStream(metadataFile);
                                         }
                                         indexFile(child, stats, filepath, inputStream, child.getSize(), metadataStream);
-                                        stats.addFile();
-                                        checkpoint.get().incrementFilesProcessed();
-                                        filesIndexedInThisDirectory++;
+                                        if (skipCount > 0) {
+                                            skipCount--;
+                                        } else {
+                                            stats.addFile();
+                                            checkpoint.get().incrementFilesProcessed();
+                                        }
+                                        indexedInThisPass++;
                                         maybeSaveCheckpoint();
                                     } catch (Exception e) {
                                         if (fsSettings.getFs().isContinueOnError()) {
@@ -778,9 +790,9 @@ public class FsParser implements Runnable, AutoCloseable {
                                 indexDirectory(child.getFullpath(), fsSettings.getFs().getUrl());
                             }
                             // Add subdirectory to pending queue instead of recursive call (avoid duplicates on resume)
-                            FsCrawlerCheckpoint cp = checkpoint.get();
-                            if (!cp.isCompleted(child.getFullpath()) && !cp.isPending(child.getFullpath())) {
-                                cp.addPath(child.getFullpath());
+                            FsCrawlerCheckpoint cpSub = checkpoint.get();
+                            if (!cpSub.isCompleted(child.getFullpath()) && !cpSub.isPending(child.getFullpath())) {
+                                cpSub.addPath(child.getFullpath());
                             }
                         } else {
                             logger.debug("  - other: {}", filename);
