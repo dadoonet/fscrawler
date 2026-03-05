@@ -1,60 +1,5 @@
 .. _installation:
 
-Download FSCrawler
-------------------
-
-.. ifconfig:: release.endswith('-SNAPSHOT')
-
-    Depending on your Elasticsearch cluster version, you can download
-    FSCrawler |version| using the following links from |Download_URL|_.
-
-    The filename ends with ``.zip``.
-
-    .. warning::
-
-        This is a **SNAPSHOT** version.
-        You can also download a **stable** version from |Maven_Central|_.
-
-    .. note::
-
-        There's an issue with the download links for SNAPSHOT versions.
-
-        .. hint::
-
-        Due to a bug with the underlying service we rely on to provide SNAPSHOT hosting,
-        we've had to temporarily remove browse access for SNAPSHOT releases. You should
-        still be able to publish and consume SNAPSHOT releases as usual, but you cannot
-        browse them via the UI.
-
-        So you must now download the `maven-metadata.xml <https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/2.10-SNAPSHOT/maven-metadata.xml>`__
-        file. Check the ``<snapshotVersion>`` tag to find the latest SNAPSHOT version of the ``zip`` file.
-
-        .. code:: xml
-
-            <snapshotVersion>
-              <extension>zip</extension>
-              <value>2.10-20250801.161301-75</value>
-              <updated>20250801161301</updated>
-            </snapshotVersion>
-
-        Note the ``value`` tag which contains the version you need to download. And use that value in the following URL:
-
-        https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/2.10-SNAPSHOT/fscrawler-distribution-2.10-20250801.161301-75.zip
-
-.. ifconfig:: release == version
-
-    Depending on your Elasticsearch cluster version, you can download
-    FSCrawler |version| from |Download_URL|_.
-
-    .. tip::
-
-        This is a **stable** version.
-        You can choose another version than |version| from |Maven_Central|_.
-
-        You can also download a **SNAPSHOT** version from |Sonatype|_.
-
-See :ref:`layout` to know more about the content of the distribution.
-
 .. _docker:
 
 Using docker
@@ -285,3 +230,69 @@ Create a ``fscrawlerRunner.bat`` as:
    /Elastic/fscrawler/bin/fscrawler.bat --config_dir /Elastic/fscrawler data >> /Elastic/logs/fscrawler.log 2>&1
 
 Then use ``fscrawlerRunner.bat`` to create your windows service.
+
+.. _local-installation:
+
+Local installation
+------------------
+
+If you prefer to run FSCrawler from a ZIP distribution on your machine instead of Docker:
+
+.. ifconfig:: release.endswith('-SNAPSHOT')
+
+    You can download FSCrawler |version| from |Download_URL|_.
+
+    The filename ends with ``.zip``.
+
+    .. warning::
+
+        This is a **SNAPSHOT** version.
+        You can also download a **stable** version from |Maven_Central|_.
+
+    .. note::
+
+        There's an issue with the download links for SNAPSHOT versions.
+
+        .. hint::
+
+            Due to a bug with the underlying service we rely on to provide SNAPSHOT hosting,
+            we've had to temporarily remove browse access for SNAPSHOT releases. You should
+            still be able to publish and consume SNAPSHOT releases as usual, but you cannot
+            browse them via the UI.
+
+        So you must now download the `maven-metadata.xml <https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/2.10-SNAPSHOT/maven-metadata.xml>`__
+        file. Check the ``<snapshotVersion>`` tag to find the latest SNAPSHOT version of the ``zip`` file.
+
+        .. code:: xml
+
+            <snapshotVersion>
+              <extension>zip</extension>
+              <value>2.10-20250801.161301-75</value>
+              <updated>20250801161301</updated>
+            </snapshotVersion>
+
+        Note the ``value`` tag which contains the version you need to download. And use that value in the following URL:
+
+        https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/2.10-SNAPSHOT/fscrawler-distribution-2.10-20250801.161301-75.zip
+
+.. ifconfig:: release == version
+
+    You can download FSCrawler |version| from |Download_URL|_.
+
+    .. tip::
+
+        This is a **stable** version.
+        You can choose another version than |version| from |Maven_Central|_.
+
+        You can also download a **SNAPSHOT** version from |Sonatype|_.
+
+After extracting the ZIP, you get a directory with ``bin/`` (run scripts), ``config/`` (logging), ``lib/`` (core and
+dependencies), ``external/`` (optional JARs), and ``logs/``. See :ref:`layout` for the full directory layout.
+
+Optional libraries (external)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You may need to add JARs to the ``external`` directory for some formats. For example, to support JPEG2000 (JPX/JP2)
+images in PDFs, add the ``jai-imageio-jpeg2000`` library: download it from
+`Maven Central <https://central.sonatype.com/search?q=g:com.github.jai-imageio>`_ and put
+``jai-imageio-jpeg2000-1.4.0.jar`` in the ``external`` directory.
