@@ -62,6 +62,7 @@ public class CrawlerApi extends RestApi {
         }
         
         if (fsParser.isPaused()) {
+            fsParser.ensureUserRequestedPause();
             return Response.ok(new SimpleResponse(true, "Crawler is already paused.")).build();
         }
         

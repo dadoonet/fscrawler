@@ -217,6 +217,14 @@ public class FsParser implements Runnable, AutoCloseable {
         }
     }
 
+    /**
+     * Set the user-requested-pause flag so that getState() returns PAUSED (e.g. when REST "pause" is called
+     * while crawler is already between runs). Does not change paused/userStopped; use when already paused.
+     */
+    public void ensureUserRequestedPause() {
+        this.userRequestedPause.set(true);
+    }
+
     public void pause() {
         this.userStopped.set(true);
         this.userRequestedPause.set(true);
