@@ -72,8 +72,10 @@ public class CrawlerStatusResponse extends RestResponse {
         this.lastError = checkpoint.getLastError();
 
         if (checkpoint.getScanStartTime() != null) {
-            Duration elapsed = Duration.between(checkpoint.getScanStartTime(), LocalDateTime.now());
-            setElapsedTime(elapsed);
+            LocalDateTime end = (checkpoint.getState() == CrawlerState.COMPLETED && checkpoint.getScanEndTime() != null)
+                    ? checkpoint.getScanEndTime()
+                    : LocalDateTime.now();
+            setElapsedTime(Duration.between(checkpoint.getScanStartTime(), end));
         }
     }
 
