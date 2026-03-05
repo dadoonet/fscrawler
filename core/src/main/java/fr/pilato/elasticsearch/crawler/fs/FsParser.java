@@ -62,6 +62,8 @@ public class FsParser implements Runnable, AutoCloseable {
     final AtomicBoolean paused = new AtomicBoolean(false);
     /** When true, between-runs wait does not exit on timeout; only resume() starts the next run. */
     private final AtomicBoolean userStopped = new AtomicBoolean(false);
+    /** True when the user explicitly called pause(); used so getState() returns PAUSED (not COMPLETED) after pause. */
+    private final AtomicBoolean userRequestedPause = new AtomicBoolean(false);
 
     private static final Logger logger = LogManager.getLogger();
 
@@ -124,6 +126,14 @@ public class FsParser implements Runnable, AutoCloseable {
             return CrawlerState.STOPPED;
         }
         if (paused.get()) {
+            // User explicitly paused: show PAUSED. Between runs (scan completed, waiting for next): show COMPLETED.
+            if (userRequestedPause.get()) {
+                return CrawlerState.PAUSED;
+            }
+            FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+            if (localCheckpoint != null && localCheckpoint.getState() == CrawlerState.COMPLETED) {
+                return CrawlerState.COMPLETED;
+            }
             return CrawlerState.PAUSED;
         }
         FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
@@ -175,6 +185,7 @@ public class FsParser implements Runnable, AutoCloseable {
             }
         }
         this.userStopped.set(false);
+        this.userRequestedPause.set(false);
         this.paused.set(false);
         synchronized (semaphore) {
             semaphore.notifyAll();
@@ -207,6 +218,7 @@ public class FsParser implements Runnable, AutoCloseable {
 
     public void pause() {
         this.userStopped.set(true);
+        this.userRequestedPause.set(true);
         this.paused.set(true);
         // Only overwrite checkpoint when a scan is in progress; do not replace COMPLETED during sleep phase
         FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
