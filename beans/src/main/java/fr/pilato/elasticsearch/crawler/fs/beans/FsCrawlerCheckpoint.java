@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Represents a checkpoint for the crawler, allowing pause/resume functionality.
@@ -65,14 +66,16 @@ public class FsCrawlerCheckpoint {
     private Set<String> completedPaths;
 
     /**
-     * Number of files indexed during this scan
+     * Number of files indexed during this scan.
+     * Atomic to allow concurrent increments by the crawler thread and reads by REST/checkpoint.
      */
-    private long filesProcessed;
+    private final AtomicLong filesProcessed = new AtomicLong(0);
 
     /**
-     * Number of files deleted during this scan
+     * Number of files deleted during this scan.
+     * Atomic to allow concurrent increments by the crawler thread and reads by REST/checkpoint.
      */
-    private long filesDeleted;
+    private final AtomicLong filesDeleted = new AtomicLong(0);
 
     /**
      * Current state of the crawler
@@ -109,8 +112,8 @@ public class FsCrawlerCheckpoint {
         this.pendingPathsSet = ConcurrentHashMap.newKeySet();
         this.completedPaths = ConcurrentHashMap.newKeySet();
         this.state = CrawlerState.STOPPED;
-        this.filesProcessed = 0;
-        this.filesDeleted = 0;
+        this.filesProcessed.set(0);
+        this.filesDeleted.set(0);
         this.retryCount = 0;
     }
 
@@ -214,27 +217,27 @@ public class FsCrawlerCheckpoint {
     }
 
     public long getFilesProcessed() {
-        return filesProcessed;
+        return filesProcessed.get();
     }
 
     public void setFilesProcessed(long filesProcessed) {
-        this.filesProcessed = filesProcessed;
+        this.filesProcessed.set(filesProcessed);
     }
 
     public void incrementFilesProcessed() {
-        this.filesProcessed++;
+        this.filesProcessed.incrementAndGet();
     }
 
     public long getFilesDeleted() {
-        return filesDeleted;
+        return filesDeleted.get();
     }
 
     public void setFilesDeleted(long filesDeleted) {
-        this.filesDeleted = filesDeleted;
+        this.filesDeleted.set(filesDeleted);
     }
 
     public void incrementFilesDeleted() {
-        this.filesDeleted++;
+        this.filesDeleted.incrementAndGet();
     }
 
     public CrawlerState getState() {
@@ -402,8 +405,8 @@ public class FsCrawlerCheckpoint {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FsCrawlerCheckpoint that = (FsCrawlerCheckpoint) o;
-        return filesProcessed == that.filesProcessed &&
-                filesDeleted == that.filesDeleted &&
+        return filesProcessed.get() == that.filesProcessed.get() &&
+                filesDeleted.get() == that.filesDeleted.get() &&
                 retryCount == that.retryCount &&
                 Objects.equals(scanId, that.scanId) &&
                 Objects.equals(scanStartTime, that.scanStartTime) &&
@@ -422,7 +425,7 @@ public class FsCrawlerCheckpoint {
         return Objects.hash(scanId, scanStartTime, currentPath,
                 pendingPaths == null ? null : new ArrayList<>(pendingPaths),
                 completedPaths,
-                filesProcessed, filesDeleted, state, retryCount, lastError, scanDate,
+                filesProcessed.get(), filesDeleted.get(), state, retryCount, lastError, scanDate,
                 scanEndTime, nextCheck);
     }
 
@@ -434,8 +437,8 @@ public class FsCrawlerCheckpoint {
                 ", currentPath='" + currentPath + '\'' +
                 ", pendingPaths=" + (pendingPaths != null ? pendingPaths.size() : 0) +
                 ", completedPaths=" + (completedPaths != null ? completedPaths.size() : 0) +
-                ", filesProcessed=" + filesProcessed +
-                ", filesDeleted=" + filesDeleted +
+                ", filesProcessed=" + filesProcessed.get() +
+                ", filesDeleted=" + filesDeleted.get() +
                 ", retryCount=" + retryCount +
                 ", scanEndTime=" + scanEndTime +
                 ", nextCheck=" + nextCheck +
