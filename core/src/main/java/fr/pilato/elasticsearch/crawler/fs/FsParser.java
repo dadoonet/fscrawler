@@ -428,7 +428,7 @@ public class FsParser implements Runnable, AutoCloseable {
             } else if (existing.hasPendingWork() || (existing.getCurrentPath() != null && !existing.getCurrentPath().isEmpty())) {
                 // Interrupted scan - resume (either pending queue non-empty or currentPath set but path was polled out)
                 if (existing.getCurrentPath() != null && !existing.getCurrentPath().isEmpty()
-                        && !existing.getPendingPaths().contains(existing.getCurrentPath())) {
+                        && !existing.isPending(existing.getCurrentPath())) {
                     existing.addPathFirst(existing.getCurrentPath());
                     logger.debug("Re-added currentPath [{}] to pending queue for resume", existing.getCurrentPath());
                 }
@@ -485,7 +485,7 @@ public class FsParser implements Runnable, AutoCloseable {
         localCheckpoint.setScanEndTime(scanEndTime);
         localCheckpoint.setNextCheck(nextCheck);
         // Clear the working state (not needed after completion)
-        localCheckpoint.getPendingPaths().clear();
+        localCheckpoint.clearPendingPaths();
         localCheckpoint.getCompletedPaths().clear();
         localCheckpoint.setCurrentPath(null);
         localCheckpoint.setLastError(null);
@@ -775,7 +775,7 @@ public class FsParser implements Runnable, AutoCloseable {
                             }
                             // Add subdirectory to pending queue instead of recursive call (avoid duplicates on resume)
                             FsCrawlerCheckpoint cp = checkpoint.get();
-                            if (!cp.isCompleted(child.getFullpath()) && !cp.getPendingPaths().contains(child.getFullpath())) {
+                            if (!cp.isCompleted(child.getFullpath()) && !cp.isPending(child.getFullpath())) {
                                 cp.addPath(child.getFullpath());
                             }
                         } else {

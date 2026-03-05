@@ -105,6 +105,26 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    public void testIsPendingAndClearPendingPaths() {
+        FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
+        assertThat(checkpoint.isPending("/path1")).isFalse();
+
+        checkpoint.addPath("/path1");
+        checkpoint.addPath("/path2");
+        assertThat(checkpoint.isPending("/path1")).isTrue();
+        assertThat(checkpoint.isPending("/path2")).isTrue();
+        assertThat(checkpoint.isPending("/path3")).isFalse();
+
+        checkpoint.pollNextPath();
+        assertThat(checkpoint.isPending("/path1")).isFalse();
+        assertThat(checkpoint.isPending("/path2")).isTrue();
+
+        checkpoint.clearPendingPaths();
+        assertThat(checkpoint.hasPendingWork()).isFalse();
+        assertThat(checkpoint.isPending("/path2")).isFalse();
+    }
+
+    @Test
     public void testCompletedPaths() {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         

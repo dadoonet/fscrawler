@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,6 +51,13 @@ public class FsCrawlerCheckpoint {
      * Directories waiting to be processed (FIFO queue)
      */
     private Deque<String> pendingPaths;
+
+    /**
+     * Set of paths in {@link #pendingPaths} for O(1) membership checks during crawl.
+     * Not persisted; rebuilt from pendingPaths in {@link #ensureConcurrentCollections()}.
+     */
+    @JsonIgnore
+    private Set<String> pendingPathsSet;
 
     /**
      * Directories that have been fully processed
@@ -97,6 +106,7 @@ public class FsCrawlerCheckpoint {
 
     public FsCrawlerCheckpoint() {
         this.pendingPaths = new ConcurrentLinkedDeque<>();
+        this.pendingPathsSet = ConcurrentHashMap.newKeySet();
         this.completedPaths = ConcurrentHashMap.newKeySet();
         this.state = CrawlerState.STOPPED;
         this.filesProcessed = 0;
@@ -113,6 +123,12 @@ public class FsCrawlerCheckpoint {
     public void ensureConcurrentCollections() {
         if (pendingPaths != null) {
             this.pendingPaths = new ConcurrentLinkedDeque<>(pendingPaths);
+            if (pendingPathsSet == null) {
+                pendingPathsSet = ConcurrentHashMap.newKeySet();
+            } else {
+                pendingPathsSet.clear();
+            }
+            pendingPathsSet.addAll(this.pendingPaths);
         }
         if (completedPaths != null) {
             Set<String> concurrent = ConcurrentHashMap.newKeySet();
@@ -130,7 +146,7 @@ public class FsCrawlerCheckpoint {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanId(UUID.randomUUID().toString());
         checkpoint.setScanStartTime(LocalDateTime.now());
-        checkpoint.getPendingPaths().add(rootPath);
+        checkpoint.addPath(rootPath);
         checkpoint.setState(CrawlerState.RUNNING);
         return checkpoint;
     }
@@ -167,6 +183,14 @@ public class FsCrawlerCheckpoint {
 
     public void setPendingPaths(Deque<String> pendingPaths) {
         this.pendingPaths = pendingPaths;
+        if (pendingPaths != null) {
+            if (pendingPathsSet == null) {
+                pendingPathsSet = ConcurrentHashMap.newKeySet();
+            } else {
+                pendingPathsSet.clear();
+            }
+            pendingPathsSet.addAll(pendingPaths);
+        }
     }
 
     public Set<String> getCompletedPaths() {
@@ -278,7 +302,11 @@ public class FsCrawlerCheckpoint {
      * @return the next directory path or null if empty
      */
     public String pollNextPath() {
-        return pendingPaths.poll();
+        String path = pendingPaths.poll();
+        if (path != null && pendingPathsSet != null) {
+            pendingPathsSet.remove(path);
+        }
+        return path;
     }
 
     /**
@@ -287,6 +315,9 @@ public class FsCrawlerCheckpoint {
      */
     public void addPathFirst(String path) {
         pendingPaths.addFirst(path);
+        if (pendingPathsSet != null) {
+            pendingPathsSet.add(path);
+        }
     }
 
     /**
@@ -295,6 +326,29 @@ public class FsCrawlerCheckpoint {
      */
     public void addPath(String path) {
         pendingPaths.addLast(path);
+        if (pendingPathsSet != null) {
+            pendingPathsSet.add(path);
+        }
+    }
+
+    /**
+     * Check if a path is in the pending queue (O(1)).
+     * Use this instead of {@code getPendingPaths().contains(path)} to avoid O(n) scan.
+     * @param path the directory path to check
+     * @return true if the path is pending
+     */
+    public boolean isPending(String path) {
+        return pendingPathsSet != null && pendingPathsSet.contains(path);
+    }
+
+    /**
+     * Clear the pending queue and its lookup set (e.g. when marking scan completed).
+     */
+    public void clearPendingPaths() {
+        pendingPaths.clear();
+        if (pendingPathsSet != null) {
+            pendingPathsSet.clear();
+        }
     }
 
     /**
