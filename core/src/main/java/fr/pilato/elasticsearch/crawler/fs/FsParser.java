@@ -198,12 +198,13 @@ public class FsParser implements Runnable, AutoCloseable {
         this.userStopped.set(false);
         logger.trace("Closing the parser {}", this.getClass().getSimpleName());
         
-        // Capture volatile field to avoid race condition
-        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
-        // Save checkpoint before closing if we have one in progress
-        if (localCheckpoint != null && localCheckpoint.getState() == CrawlerState.RUNNING) {
-            localCheckpoint.setState(CrawlerState.STOPPED);
-            saveCheckpoint();
+        // Read-modify-write checkpoint state under lock so crawler thread cannot overwrite before persist
+        synchronized (checkpointWriteLock) {
+            FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+            if (localCheckpoint != null && localCheckpoint.getState() == CrawlerState.RUNNING) {
+                localCheckpoint.setState(CrawlerState.STOPPED);
+                saveCheckpoint();
+            }
         }
         
         try {
@@ -220,13 +221,16 @@ public class FsParser implements Runnable, AutoCloseable {
         this.userStopped.set(true);
         this.userRequestedPause.set(true);
         this.paused.set(true);
-        // Only overwrite checkpoint when a scan is in progress; do not replace COMPLETED during sleep phase
-        FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
-        if (localCheckpoint != null && localCheckpoint.getState() != CrawlerState.COMPLETED
-                && localCheckpoint.getState() != CrawlerState.ERROR) {
-            localCheckpoint.setState(CrawlerState.PAUSED);
-            saveCheckpoint();
-            logger.trace("Crawler paused. Checkpoint saved.");
+        // Read-modify-write checkpoint state under lock so crawler thread cannot overwrite before persist
+        synchronized (checkpointWriteLock) {
+            FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
+            // Only overwrite checkpoint when a scan is in progress; do not replace COMPLETED during sleep phase
+            if (localCheckpoint != null && localCheckpoint.getState() != CrawlerState.COMPLETED
+                    && localCheckpoint.getState() != CrawlerState.ERROR) {
+                localCheckpoint.setState(CrawlerState.PAUSED);
+                saveCheckpoint();
+                logger.trace("Crawler paused. Checkpoint saved.");
+            }
         }
     }
 
