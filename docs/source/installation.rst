@@ -240,8 +240,7 @@ If you prefer to run FSCrawler from a ZIP distribution on your machine instead o
 
 .. ifconfig:: release.endswith('-SNAPSHOT')
 
-    Depending on your Elasticsearch cluster version, you can download
-    FSCrawler |version| using the following links from |Download_URL|_.
+    You can download FSCrawler |version| from |Download_URL|_.
 
     The filename ends with ``.zip``.
 
@@ -278,8 +277,7 @@ If you prefer to run FSCrawler from a ZIP distribution on your machine instead o
 
 .. ifconfig:: release == version
 
-    Depending on your Elasticsearch cluster version, you can download
-    FSCrawler |version| from |Download_URL|_.
+    You can download FSCrawler |version| from |Download_URL|_.
 
     .. tip::
 
