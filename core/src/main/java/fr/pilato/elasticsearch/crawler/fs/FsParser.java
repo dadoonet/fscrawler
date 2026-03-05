@@ -262,66 +262,66 @@ public class FsParser implements Runnable, AutoCloseable {
                     checkpoint.get().ensureConcurrentCollections();
                     updateCheckpointAsCompleted(scanDatenew, nextCheck);
                 } else {
-                ScanStatistic stats = new ScanStatistic(url);
-                LocalDateTime startDate = LocalDateTime.now();
-                stats.setStartTime(startDate);
+                    ScanStatistic stats = new ScanStatistic(url);
+                    LocalDateTime startDate = LocalDateTime.now();
+                    stats.setStartTime(startDate);
 
-                crawlerPlugin.openConnection();
+                    crawlerPlugin.openConnection();
 
-                if (!crawlerPlugin.exists(url)) {
-                    throw new RuntimeException(url + " doesn't exists.");
-                }
+                    if (!crawlerPlugin.exists(url)) {
+                        throw new RuntimeException(url + " doesn't exists.");
+                    }
 
-                String rootPathId = SignTool.sign(url);
-                stats.setRootPathId(rootPathId);
+                    String rootPathId = SignTool.sign(url);
+                    stats.setRootPathId(rootPathId);
 
-                // We need to round that latest date to the lower second and remove 2 seconds.
-                // See #82: https://github.com/dadoonet/fscrawler/issues/82
-                LocalDateTime scanDatenew = startDate.minusSeconds(2);
+                    // We need to round that latest date to the lower second and remove 2 seconds.
+                    // See #82: https://github.com/dadoonet/fscrawler/issues/82
+                    LocalDateTime scanDatenew = startDate.minusSeconds(2);
 
-                // Load or create checkpoint (handles migration from legacy _status.json)
-                checkpoint.set(loadOrCreateCheckpoint(url));
-                checkpoint.get().ensureConcurrentCollections();
+                    // Load or create checkpoint (handles migration from legacy _status.json)
+                    checkpoint.set(loadOrCreateCheckpoint(url));
+                    checkpoint.get().ensureConcurrentCollections();
 
-                // Restore stats from checkpoint if resuming
-                if (checkpoint.get().getFilesProcessed() > 0) {
+                    // Restore stats from checkpoint if resuming
+                    if (checkpoint.get().getFilesProcessed() > 0) {
+                        stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
+                        stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());
+                        logger.info("Resuming from checkpoint: {} files processed, {} directories pending",
+                                checkpoint.get().getFilesProcessed(), checkpoint.get().getPendingPaths().size());
+                    }
+
+                    // We only index the root directory once (first run)
+                    // That means that we don't have a scanDate yet (checkpoint.scanDate is MIN)
+                    LocalDateTime scanDate = checkpoint.get().getScanDate();
+                    if ((scanDate == null || scanDate.equals(LocalDateTime.MIN)) && fsSettings.getFs().isIndexFolders()) {
+                        indexDirectory(url, url);
+                    }
+
+                    LocalDateTime effectiveScanDate = scanDate != null ? scanDate : LocalDateTime.MIN;
+
+                    // Process directories using work queue instead of recursion
+                    processDirectoriesWithCheckpoint(effectiveScanDate, stats);
+
+                    stats.setEndTime(LocalDateTime.now());
                     stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
                     stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());
-                    logger.info("Resuming from checkpoint: {} files processed, {} directories pending",
-                            checkpoint.get().getFilesProcessed(), checkpoint.get().getPendingPaths().size());
-                }
 
-                // We only index the root directory once (first run)
-                // That means that we don't have a scanDate yet (checkpoint.scanDate is MIN)
-                LocalDateTime scanDate = checkpoint.get().getScanDate();
-                if ((scanDate == null || scanDate.equals(LocalDateTime.MIN)) && fsSettings.getFs().isIndexFolders()) {
-                    indexDirectory(url, url);
-                }
+                    // Compute the next check time by adding fsSettings.getFs().getUpdateRate().millis()
+                    LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
+                    logger.info("Run #{}: job [{}]: indexed [{}], deleted [{}], documents up to [{}]. " +
+                                    "Started at [{}], finished at [{}], took [{}]. " +
+                                    "Will restart at [{}].", run, fsSettings.getName(),
+                            stats.getNbDocScan(), stats.getNbDocDeleted(), scanDatenew,
+                            stats.getStartTime(), stats.getEndTime(), durationToString(stats.computeDuration()),
+                            nextCheck);
 
-                LocalDateTime effectiveScanDate = scanDate != null ? scanDate : LocalDateTime.MIN;
-
-                // Process directories using work queue instead of recursion
-                processDirectoriesWithCheckpoint(effectiveScanDate, stats);
-
-                stats.setEndTime(LocalDateTime.now());
-                stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
-                stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());
-
-                // Compute the next check time by adding fsSettings.getFs().getUpdateRate().millis()
-                LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
-                logger.info("Run #{}: job [{}]: indexed [{}], deleted [{}], documents up to [{}]. " +
-                                "Started at [{}], finished at [{}], took [{}]. " +
-                                "Will restart at [{}].", run, fsSettings.getName(),
-                        stats.getNbDocScan(), stats.getNbDocDeleted(), scanDatenew,
-                        stats.getStartTime(), stats.getEndTime(), durationToString(stats.computeDuration()),
-                        nextCheck);
-
-                // If we completed successfully, update the checkpoint with completion info.
-                // Do not gate on !paused.get(): a pause arriving just after the scan finishes must not
-                // skip this, or scanEndTime stays null and the next run does a full rescan (losing progress).
-                if (!closed.get() && checkpoint.get().getState() != CrawlerState.ERROR) {
-                    updateCheckpointAsCompleted(scanDatenew, nextCheck);
-                }
+                    // If we completed successfully, update the checkpoint with completion info.
+                    // Do not gate on !paused.get(): a pause arriving just after the scan finishes must not
+                    // skip this, or scanEndTime stays null and the next run does a full rescan (losing progress).
+                    if (!closed.get() && checkpoint.get().getState() != CrawlerState.ERROR) {
+                        updateCheckpointAsCompleted(scanDatenew, nextCheck);
+                    }
                 }
             } catch (Exception e) {
                 logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
