@@ -37,7 +37,7 @@ set JAVA_OPTS=%JAVA_OPTS% -Dlog4j2.formatMsgNoLookups=true
 REM If the user defined FS_JAVA_OPTS, we will use it to start the crawler
 set JAVA_OPTS=%JAVA_OPTS% %FS_JAVA_OPTS%
 
-set FS_CLASSPATH="%FS_HOME%/lib/*";"%FS_HOME%/external/*"
+set FS_CLASSPATH="%FS_HOME%/external/*";"%FS_HOME%/lib/*"
 
 SET params='%*'
 
