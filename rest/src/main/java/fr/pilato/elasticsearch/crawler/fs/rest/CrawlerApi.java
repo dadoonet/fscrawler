@@ -151,16 +151,8 @@ public class CrawlerApi extends RestApi {
         }
         
         try {
-            if (fsParser.getCheckpointHandler() != null) {
-                fsParser.getCheckpointHandler().clean(jobName);
-                return Response.ok(new SimpleResponse(true, "Checkpoint cleared")).build();
-            }
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new SimpleResponse(false,
-                            "Failed to clear checkpoint as we don't have a checkpoint handler. " +
-                                    "This probably means there's no active crawler. " +
-                                    "Did you start with --loop 0?"))
-                    .build();
+            fsParser.getCheckpointHandler().clean(jobName);
+            return Response.ok(new SimpleResponse(true, "Checkpoint cleared")).build();
         } catch (IOException e) {
             logger.warn("Failed to clear checkpoint: {}", e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
