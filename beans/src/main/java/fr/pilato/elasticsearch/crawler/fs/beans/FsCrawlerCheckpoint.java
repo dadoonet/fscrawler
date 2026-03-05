@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -83,9 +84,10 @@ public class FsCrawlerCheckpoint {
     private CrawlerState state;
 
     /**
-     * Number of retry attempts after network errors
+     * Number of retry attempts after network errors.
+     * Atomic to allow concurrent increments by the crawler thread and reads by REST/checkpoint.
      */
-    private int retryCount;
+    private final AtomicInteger retryCount = new AtomicInteger(0);
 
     /**
      * Last error message encountered
@@ -122,7 +124,7 @@ public class FsCrawlerCheckpoint {
         this.state = CrawlerState.STOPPED;
         this.filesProcessed.set(0);
         this.filesDeleted.set(0);
-        this.retryCount = 0;
+        this.retryCount.set(0);
     }
 
     /**
@@ -257,19 +259,19 @@ public class FsCrawlerCheckpoint {
     }
 
     public int getRetryCount() {
-        return retryCount;
+        return retryCount.get();
     }
 
     public void setRetryCount(int retryCount) {
-        this.retryCount = retryCount;
+        this.retryCount.set(retryCount);
     }
 
     public void incrementRetryCount() {
-        this.retryCount++;
+        this.retryCount.incrementAndGet();
     }
 
     public void resetRetryCount() {
-        this.retryCount = 0;
+        this.retryCount.set(0);
     }
 
     public String getLastError() {
@@ -423,7 +425,7 @@ public class FsCrawlerCheckpoint {
         FsCrawlerCheckpoint that = (FsCrawlerCheckpoint) o;
         return filesProcessed.get() == that.filesProcessed.get() &&
                 filesDeleted.get() == that.filesDeleted.get() &&
-                retryCount == that.retryCount &&
+                retryCount.get() == that.retryCount.get() &&
                 Objects.equals(scanId, that.scanId) &&
                 Objects.equals(scanStartTime, that.scanStartTime) &&
                 Objects.equals(currentPath, that.currentPath) &&
@@ -442,7 +444,7 @@ public class FsCrawlerCheckpoint {
         return Objects.hash(scanId, scanStartTime, currentPath,
                 pendingPaths == null ? null : new ArrayList<>(pendingPaths),
                 completedPaths,
-                filesProcessed.get(), filesDeleted.get(), state, retryCount, lastError, scanDate,
+                filesProcessed.get(), filesDeleted.get(), state, retryCount.get(), lastError, scanDate,
                 scanEndTime, nextCheck, currentPathFilesIndexedCount);
     }
 
@@ -456,7 +458,7 @@ public class FsCrawlerCheckpoint {
                 ", completedPaths=" + (completedPaths != null ? completedPaths.size() : 0) +
                 ", filesProcessed=" + filesProcessed.get() +
                 ", filesDeleted=" + filesDeleted.get() +
-                ", retryCount=" + retryCount +
+                ", retryCount=" + retryCount.get() +
                 ", scanEndTime=" + scanEndTime +
                 ", nextCheck=" + nextCheck +
                 ", currentPathFilesIndexedCount=" + currentPathFilesIndexedCount +
