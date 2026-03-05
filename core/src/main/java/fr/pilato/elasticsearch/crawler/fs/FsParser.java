@@ -348,6 +348,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 }
 
                 logger.info("FS crawler completed {} run{}, entering pause. Resume or wait for next run.", run, run > 1 ? "s" : "");
+                userStopped.set(true);
             } else {
                 logger.debug("Run completed. Entering pause. Resume or wait {} for next run.", fsSettings.getFs().getUpdateRate());
             }
