@@ -665,32 +665,32 @@ It will give you a response similar to:
 
    {
      "state" : "RUNNING",
-     "scanId" : "abc123-def456",
-     "currentPath" : "/data/documents/subfolder",
-     "pendingDirectories" : 42,
-     "completedDirectories" : 158,
-     "filesProcessed" : 1523,
-     "filesDeleted" : 12,
-     "scanStartTime" : "2024-01-15T10:30:00",
-     "scanEndTime" : null,
-     "nextCheck" : null,
-     "elapsedTime" : "15m 32s",
-     "retryCount" : 0,
-     "lastError" : null
+     "scan_id" : "abc123-def456",
+     "current_path" : "/data/documents/subfolder",
+     "pending_directories" : 42,
+     "completed_directories" : 158,
+     "files_processed" : 1523,
+     "files_deleted" : 12,
+     "scan_start_time" : "2024-01-15T10:30:00",
+     "scan_end_time" : null,
+     "next_check" : null,
+     "elapsed_time" : "15m 32s",
+     "retry_count" : 0,
+     "last_error" : null
    }
 
-When a scan is completed, the response will also include the ``scanEndTime`` and ``nextCheck`` fields:
+When a scan is completed, the response will also include the ``scan_end_time`` and ``next_check`` fields:
 
 .. code:: json
 
    {
      "state" : "COMPLETED",
-     "filesProcessed" : 2500,
-     "filesDeleted" : 25,
-     "scanStartTime" : "2024-01-15T10:30:00",
-     "scanEndTime" : "2024-01-15T11:45:00",
-     "nextCheck" : "2024-01-15T12:00:00",
-     "elapsedTime" : "1h 15m"
+     "files_processed" : 2500,
+     "files_deleted" : 25,
+     "scan_start_time" : "2024-01-15T10:30:00",
+     "scan_end_time" : "2024-01-15T11:45:00",
+     "next_check" : "2024-01-15T12:00:00",
+     "elapsed_time" : "1h 15m"
    }
 
 The possible states are:
