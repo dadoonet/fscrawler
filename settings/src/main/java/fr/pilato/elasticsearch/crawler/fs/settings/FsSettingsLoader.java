@@ -21,6 +21,9 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.FilterSection;
+import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.InputSection;
+import fr.pilato.elasticsearch.crawler.fs.settings.pipeline.OutputSection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.github.gestalt.config.Gestalt;
@@ -91,13 +94,15 @@ public class FsSettingsLoader extends MetaFileHandler {
     }
 
     /**
-     * Read all files in ~/.fscrawler/{job_name}/_settings directory
+     * Read all files in ~/.fscrawler/{job_name}/_settings directory.
+     * Files are sorted alphabetically to ensure deterministic order.
+     * Use numeric prefixes (e.g., 00-common.yaml, 10-input-local.yaml) to control loading order.
      * @param settingsDir is _settings directory
-     * @return The list of setting files
+     * @return The list of setting files, sorted alphabetically
      */
     private List<Path> readDir(Path settingsDir) throws IOException {
         try (Stream<Path> files = Files.list(settingsDir)) {
-            return files.toList();
+            return files.sorted().toList();
         }
     }
 
@@ -131,20 +136,58 @@ public class FsSettingsLoader extends MetaFileHandler {
 
             FsSettings settings = new FsSettings();
 
+            // Load version if present
+            settings.setVersion(gestalt.getConfigOptional("version", Integer.class).orElse(null));
+            
+            // Load legacy v1 settings
             settings.setName(gestalt.getConfigOptional("name", String.class).orElse(null));
             settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
             settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class).orElse(null));
             settings.setTags(gestalt.getConfigOptional("tags", Tags.class).orElse(null));
             settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
             settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
+            
+            // Load v2 pipeline settings
+            settings.setInputs(gestalt.getConfigOptional("inputs", new org.github.gestalt.config.reflect.TypeCapture<List<InputSection>>(){}).orElse(null));
+            settings.setFilters(gestalt.getConfigOptional("filters", new org.github.gestalt.config.reflect.TypeCapture<List<FilterSection>>(){}).orElse(null));
+            settings.setOutputs(gestalt.getConfigOptional("outputs", new org.github.gestalt.config.reflect.TypeCapture<List<OutputSection>>(){}).orElse(null));
 
             logger.debug("Successfully loaded settings from classpath [fscrawler-default.properties] and files {}",
                     (Object) configFiles);
             logger.trace("Loaded settings [{}]", settings);
 
+            // Apply migration and normalization
+            settings = migrateAndNormalize(settings);
+
             return settings;
         } catch (Exception e) {
             throw new FsCrawlerIllegalConfigurationException("Can not load settings", e);
         }
+    }
+    
+    /**
+     * Migrates v1 settings to v2 format if needed.
+     * @param settings The loaded settings
+     * @return The migrated settings
+     */
+    private static FsSettings migrateAndNormalize(FsSettings settings) {
+        int version = FsSettingsMigrator.detectVersion(settings);
+        
+        if (version == FsSettingsMigrator.VERSION_1) {
+            logger.warn("Job [{}] uses deprecated settings format (v1). " +
+                    "Please migrate to the new pipeline format (v2).", settings.getName());
+            
+            FsSettings v2Settings = FsSettingsMigrator.migrateV1ToV2(settings);
+            
+            if (logger.isInfoEnabled()) {
+                logger.info("Suggested new configuration for job [{}]:\n---\n{}---", 
+                        settings.getName(),
+                        FsSettingsMigrator.generateV2Yaml(v2Settings));
+            }
+            
+            return v2Settings;
+        }
+        
+        return settings;
     }
 }

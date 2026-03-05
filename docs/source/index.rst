@@ -58,6 +58,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
    admin/jvm-settings
    admin/logger
    admin/fs/index
+   admin/fs/pipeline
    admin/fs/simple
    admin/fs/local-fs
    admin/fs/tags

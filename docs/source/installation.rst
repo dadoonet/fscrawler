@@ -95,7 +95,7 @@ You can run FSCrawler with:
     running under the default ``127.0.0.1``. You will need to use the actual IP address of the host.
 
     Or use the ``FSCRAWLER_ELASTICSEARCH_URLS`` environment variable to set the elasticsearch URL.
-    See :ref:`docker-options` for more information.
+    See :ref:`cli-options` for more information about environment variables.
 
 If you need to add a 3rd party library (jar) or your Tika custom jar, you can put it in a ``external`` directory and
 mount it as well:
