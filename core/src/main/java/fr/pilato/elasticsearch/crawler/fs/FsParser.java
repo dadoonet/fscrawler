@@ -124,11 +124,6 @@ public class FsParser implements Runnable, AutoCloseable {
             return CrawlerState.STOPPED;
         }
         if (paused.get()) {
-            // Between runs after a successful scan, keep COMPLETED observable via REST (scanEndTime, nextCheck)
-            FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
-            if (localCheckpoint != null && localCheckpoint.getState() == CrawlerState.COMPLETED) {
-                return CrawlerState.COMPLETED;
-            }
             return CrawlerState.PAUSED;
         }
         FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
