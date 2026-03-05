@@ -544,8 +544,6 @@ public class FsParser implements Runnable, AutoCloseable {
                 continue;
             }
 
-            checkpoint.get().setCurrentPath(currentPath);
-            
             try {
                 boolean fullyProcessed = processDirectory(currentPath, lastScanDate, stats);
                 if (fullyProcessed) {
@@ -674,7 +672,9 @@ public class FsParser implements Runnable, AutoCloseable {
         }
 
         // When resuming this path after an interrupt, skip incrementing filesProcessed for the first N files
-        // we index (we still re-index them for idempotency) so we don't double-count.
+        // we index (we still re-index them for idempotency) so we don't double-count. Only apply skip count
+        // when this directory is the same as the one that was interrupted (checkpoint's currentPath is set on
+        // interrupt and must not be overwritten before this check; we set it below after this block).
         FsCrawlerCheckpoint cp = checkpoint.get();
         int skipCount = (filepath.equals(cp.getCurrentPath()) && cp.getCurrentPathFilesIndexedCount() > 0)
                 ? cp.getCurrentPathFilesIndexedCount()
@@ -683,6 +683,7 @@ public class FsParser implements Runnable, AutoCloseable {
             cp.setCurrentPathFilesIndexedCount(0);
             logger.debug("Resuming directory [{}]: skipping count for first {} already-indexed files", filepath, skipCount);
         }
+        cp.setCurrentPath(filepath);
 
         // Number of files we've indexed in this pass (counted or not); used when interrupted to persist resume state.
         int indexedInThisPass = 0;
