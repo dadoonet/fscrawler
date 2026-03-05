@@ -233,7 +233,7 @@ public class FsParser implements Runnable, AutoCloseable {
             }
 
             // loop == 0: wait for resume before each run (start in pause)
-            if (loop == 0) {
+            if (loop != null && loop == 0) {
                 paused.set(true);
                 waitForResume();
                 if (closed.get()) {
