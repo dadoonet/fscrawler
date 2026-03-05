@@ -253,7 +253,7 @@ If you prefer to run FSCrawler from a ZIP distribution on your machine instead o
 
         There's an issue with the download links for SNAPSHOT versions.
 
-        .. blockquote::
+        .. hint::
 
             Due to a bug with the underlying service we rely on to provide SNAPSHOT hosting,
             we've had to temporarily remove browse access for SNAPSHOT releases. You should
