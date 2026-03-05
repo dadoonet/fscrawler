@@ -189,8 +189,9 @@ public class FsCrawlerImpl implements AutoCloseable {
             logger.info("FSCrawler started in watch mode. It will run unless you stop it with CTRL+C.");
         }
 
-        fsCrawlerThread.start();
+        // Set closed=false before start() so a concurrent close() cannot set true and then be overwritten here
         fsParser.closed.set(false);
+        fsCrawlerThread.start();
     }
 
     @Override

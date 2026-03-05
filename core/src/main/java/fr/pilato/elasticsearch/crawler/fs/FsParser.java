@@ -225,6 +225,10 @@ public class FsParser implements Runnable, AutoCloseable {
         logger.info("FS crawler started for [{}] for [{}] every [{}]", fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
+        // If close() was called before this thread ran, exit without overwriting closed
+        if (closed.get()) {
+            return;
+        }
         closed.set(false);
         while (true) {
             if (closed.get()) {
