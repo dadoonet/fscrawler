@@ -30,7 +30,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderNoop;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -96,11 +95,11 @@ public class FsCrawlerImpl implements AutoCloseable {
         }
 
         // Create the fsParser instance. When loop == 0 (REST-only), no crawler backend is required:
-        // use a no-op provider so we don't fail at construction if e.g. SSH/FTP is configured but missing.
+        // pass null so we don't resolve/start a provider (e.g. SSH/FTP) that could fail if config is missing.
         final FsCrawlerExtensionFsProvider crawlerPlugin;
         if (loop != null && loop == 0) {
-            logger.debug("Loop is 0 (REST-only mode): using no-op crawler provider");
-            crawlerPlugin = new FsCrawlerExtensionFsProviderNoop();
+            logger.debug("Loop is 0 (REST-only mode): no crawler provider");
+            crawlerPlugin = null;
         } else {
             String protocolType = determineProtocolType(settings);
             logger.debug("Using crawler plugin for protocol type [{}]", protocolType);

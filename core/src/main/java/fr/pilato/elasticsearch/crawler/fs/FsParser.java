@@ -83,6 +83,7 @@ public class FsParser implements Runnable, AutoCloseable {
     private final boolean rest;
     private final Map<String, String> aclHashCache;
     private boolean aclHashCacheDirty;
+    /** Null when loop == 0 (REST-only mode); no crawl is performed. */
     private final FsCrawlerExtensionFsProvider crawlerPlugin;
     private final String metadataFilename;
     private final byte[] staticMetadata;
@@ -200,7 +201,9 @@ public class FsParser implements Runnable, AutoCloseable {
         }
         
         try {
-            crawlerPlugin.closeConnection();
+            if (crawlerPlugin != null) {
+                crawlerPlugin.closeConnection();
+            }
         } catch (Exception e) {
             logger.error("Error while closing crawler plugin", e);
             throw new RuntimeException(e);
@@ -253,9 +256,9 @@ public class FsParser implements Runnable, AutoCloseable {
                 filesSinceLastCheckpoint = 0;
 
                 String url = fsSettings.getFs().getUrl();
-                if (isNullOrEmpty(url)) {
-                    // No folder to monitor (REST-only mode): no-op run, checkpoint completed with 0 files
-                    logger.info("Run #{}: job [{}]: no fs.url configured, skipping crawl (REST-only mode).", run, fsSettings.getName());
+                if (crawlerPlugin == null || isNullOrEmpty(url)) {
+                    // REST-only (no provider) or no folder to monitor: no-op run, checkpoint completed with 0 files
+                    logger.info("Run #{}: job [{}]: skipping crawl (REST-only or no fs.url).", run, fsSettings.getName());
                     LocalDateTime scanDatenew = LocalDateTime.now().minusSeconds(2);
                     LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
                     checkpoint.set(FsCrawlerCheckpoint.newCheckpoint(""));
@@ -333,12 +336,14 @@ public class FsParser implements Runnable, AutoCloseable {
                 saveCheckpoint();
             } finally {
                 persistAclHashCacheIfNeeded();
-                try {
-                    logger.debug("Closing FS crawler plugin [{}].", crawlerPlugin.getType());
-                    crawlerPlugin.closeConnection();
-                } catch (Exception e) {
-                    logger.warn("Error while closing the connection: {}", e.getMessage());
-                    logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+                if (crawlerPlugin != null) {
+                    try {
+                        logger.debug("Closing FS crawler plugin [{}].", crawlerPlugin.getType());
+                        crawlerPlugin.closeConnection();
+                    } catch (Exception e) {
+                        logger.warn("Error while closing the connection: {}", e.getMessage());
+                        logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+                    }
                 }
             }
 
