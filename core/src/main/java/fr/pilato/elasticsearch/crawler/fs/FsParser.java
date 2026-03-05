@@ -453,7 +453,8 @@ public class FsParser implements Runnable, AutoCloseable {
                 } else {
                     logger.info("Found existing checkpoint for job [{}] with pending work, resuming scan", fsSettings.getName());
                 }
-                existing.setCurrentPath(null);
+                // Do not clear currentPath: processDirectory() uses it to match the resumed directory and apply
+                // currentPathFilesIndexedCount so we don't double-count files after crash/restart resume.
                 existing.setState(CrawlerState.RUNNING);
                 existing.resetRetryCount();
                 return existing;
