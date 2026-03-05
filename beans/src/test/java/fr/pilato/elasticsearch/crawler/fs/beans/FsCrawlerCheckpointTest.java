@@ -210,4 +210,30 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
         assertThat(checkpoint.getScanEndTime()).isNotNull();
         assertThat(checkpoint.getNextCheck()).isNotNull();
     }
+
+    /**
+     * When a checkpoint file contains explicit null for pendingPaths or completedPaths
+     * (e.g. manual edit or corruption), deserialization must not leave nulls, and
+     * toString() must not throw NPE (e.g. when used in logging).
+     */
+    @Test
+    public void parseCheckpointWithNullCollectionsDoesNotThrow() throws IOException {
+        String json = "{\"scanId\":\"x\",\"state\":\"PAUSED\",\"pendingPaths\":null,\"completedPaths\":null}";
+        FsCrawlerCheckpoint checkpoint = prettyMapper.readValue(json, FsCrawlerCheckpoint.class);
+
+        // Setters normalize null to empty collections
+        assertThat(checkpoint.getPendingPaths()).isNotNull();
+        assertThat(checkpoint.getPendingPaths()).isEmpty();
+        assertThat(checkpoint.getCompletedPaths()).isNotNull();
+        assertThat(checkpoint.getCompletedPaths()).isEmpty();
+
+        // toString() must not throw (defensive null check)
+        assertThat(checkpoint.toString()).contains("pendingPaths=0").contains("completedPaths=0");
+
+        // ensureConcurrentCollections() must not throw and must leave collections non-null
+        checkpoint.ensureConcurrentCollections();
+        assertThat(checkpoint.getPendingPaths()).isNotNull();
+        assertThat(checkpoint.getCompletedPaths()).isNotNull();
+        assertThat(checkpoint.toString()).contains("pendingPaths=0").contains("completedPaths=0");
+    }
 }

@@ -121,7 +121,10 @@ public class FsCrawlerCheckpoint {
      * JSON, since Jackson may create LinkedList/ArrayDeque and HashSet.
      */
     public void ensureConcurrentCollections() {
-        if (pendingPaths != null) {
+        if (pendingPaths == null) {
+            this.pendingPaths = new ConcurrentLinkedDeque<>();
+            this.pendingPathsSet = ConcurrentHashMap.newKeySet();
+        } else {
             this.pendingPaths = new ConcurrentLinkedDeque<>(pendingPaths);
             if (pendingPathsSet == null) {
                 pendingPathsSet = ConcurrentHashMap.newKeySet();
@@ -130,7 +133,9 @@ public class FsCrawlerCheckpoint {
             }
             pendingPathsSet.addAll(this.pendingPaths);
         }
-        if (completedPaths != null) {
+        if (completedPaths == null) {
+            this.completedPaths = ConcurrentHashMap.newKeySet();
+        } else {
             Set<String> concurrent = ConcurrentHashMap.newKeySet();
             concurrent.addAll(completedPaths);
             this.completedPaths = concurrent;
@@ -182,8 +187,15 @@ public class FsCrawlerCheckpoint {
     }
 
     public void setPendingPaths(Deque<String> pendingPaths) {
-        this.pendingPaths = pendingPaths;
-        if (pendingPaths != null) {
+        if (pendingPaths == null) {
+            this.pendingPaths = new ConcurrentLinkedDeque<>();
+            if (pendingPathsSet == null) {
+                pendingPathsSet = ConcurrentHashMap.newKeySet();
+            } else {
+                pendingPathsSet.clear();
+            }
+        } else {
+            this.pendingPaths = pendingPaths;
             if (pendingPathsSet == null) {
                 pendingPathsSet = ConcurrentHashMap.newKeySet();
             } else {
@@ -198,7 +210,7 @@ public class FsCrawlerCheckpoint {
     }
 
     public void setCompletedPaths(Set<String> completedPaths) {
-        this.completedPaths = completedPaths;
+        this.completedPaths = completedPaths == null ? ConcurrentHashMap.newKeySet() : completedPaths;
     }
 
     public long getFilesProcessed() {
@@ -420,8 +432,8 @@ public class FsCrawlerCheckpoint {
                 "scanId='" + scanId + '\'' +
                 ", state=" + state +
                 ", currentPath='" + currentPath + '\'' +
-                ", pendingPaths=" + pendingPaths.size() +
-                ", completedPaths=" + completedPaths.size() +
+                ", pendingPaths=" + (pendingPaths != null ? pendingPaths.size() : 0) +
+                ", completedPaths=" + (completedPaths != null ? completedPaths.size() : 0) +
                 ", filesProcessed=" + filesProcessed +
                 ", filesDeleted=" + filesDeleted +
                 ", retryCount=" + retryCount +
