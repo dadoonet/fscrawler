@@ -218,8 +218,11 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
      */
     @Test
     public void parseCheckpointWithNullCollectionsDoesNotThrow() throws IOException {
-        String json = "{\"scanId\":\"x\",\"state\":\"PAUSED\",\"pendingPaths\":null,\"completedPaths\":null}";
+        String json = "{\"scan_id\":\"x\",\"state\":\"PAUSED\",\"pending_paths\":null,\"completed_paths\":null}";
         FsCrawlerCheckpoint checkpoint = prettyMapper.readValue(json, FsCrawlerCheckpoint.class);
+
+        // prettyMapper uses SNAKE_CASE: camelCase keys are ignored, so scanId would stay null
+        assertThat(checkpoint.getScanId()).as("JSON keys must use snake_case so mapper deserializes them; otherwise setters (e.g. for null collections) are never called").isEqualTo("x");
 
         // Setters normalize null to empty collections
         assertThat(checkpoint.getPendingPaths()).isNotNull();
