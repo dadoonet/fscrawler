@@ -280,7 +280,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     logger.info("Run #{}: job [{}]: skipping crawl (REST-only or no fs.url).", run, fsSettings.getName());
                     LocalDateTime scanDatenew = LocalDateTime.now().minusSeconds(2);
                     LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
-                    checkpoint.set(FsCrawlerCheckpoint.newCheckpoint(""));
+                    setCurrentCheckpoint(FsCrawlerCheckpoint.newCheckpoint(""));
                     checkpoint.get().ensureConcurrentCollections();
                     updateCheckpointAsCompleted(scanDatenew, nextCheck);
                 } else {
@@ -302,7 +302,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     LocalDateTime scanDatenew = startDate.minusSeconds(2);
 
                     // Load or create checkpoint (handles migration from legacy _status.json)
-                    checkpoint.set(loadOrCreateCheckpoint(url));
+                    setCurrentCheckpoint(loadOrCreateCheckpoint(url));
                     checkpoint.get().ensureConcurrentCollections();
 
                     // Restore stats from checkpoint if resuming
@@ -349,10 +349,13 @@ public class FsParser implements Runnable, AutoCloseable {
                 logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
                 logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
                 
-                // Save checkpoint on error so we can resume
-                checkpoint.get().setState(CrawlerState.ERROR);
-                checkpoint.get().setLastError(e.getMessage());
-                saveCheckpoint();
+                // Only overwrite checkpoint file if we loaded/created one this run; otherwise we'd
+                // replace a valid checkpoint with the default empty instance (see High Severity bug).
+                if (checkpoint.get().isLoadedThisRun()) {
+                    checkpoint.get().setState(CrawlerState.ERROR);
+                    checkpoint.get().setLastError(e.getMessage());
+                    saveCheckpoint();
+                }
             } finally {
                 persistAclHashCacheIfNeeded();
                 if (crawlerPlugin != null) {
@@ -480,6 +483,16 @@ public class FsParser implements Runnable, AutoCloseable {
         }
 
         return FsCrawlerCheckpoint.newCheckpoint(rootPath);
+    }
+
+    /**
+     * Install the checkpoint for the current run. Sets {@link FsCrawlerCheckpoint#setLoadedThisRun(boolean)}
+     * so the error handler only persists when we have actually loaded/created this checkpoint (avoids
+     * overwriting a valid checkpoint file with the default empty instance on early failures).
+     */
+    private void setCurrentCheckpoint(FsCrawlerCheckpoint cp) {
+        cp.setLoadedThisRun(true);
+        checkpoint.set(cp);
     }
 
     /**

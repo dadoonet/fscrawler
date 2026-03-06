@@ -119,6 +119,15 @@ public class FsCrawlerCheckpoint {
      */
     private int currentPathFilesIndexedCount;
 
+    /**
+     * True if this instance was loaded or created for the current run and installed via
+     * FsParser.setCurrentCheckpoint(). Not persisted; ensures the error handler only overwrites
+     * the checkpoint file when we actually loaded/created one this run (avoids overwriting a
+     * valid checkpoint with the default empty instance).
+     */
+    @JsonIgnore
+    private boolean loadedThisRun;
+
     public FsCrawlerCheckpoint() {
         this.pendingPaths = new ConcurrentLinkedDeque<>();
         this.pendingPathsSet = ConcurrentHashMap.newKeySet();
@@ -314,6 +323,16 @@ public class FsCrawlerCheckpoint {
 
     public void setCurrentPathFilesIndexedCount(int currentPathFilesIndexedCount) {
         this.currentPathFilesIndexedCount = Math.max(0, currentPathFilesIndexedCount);
+    }
+
+    @JsonIgnore
+    public boolean isLoadedThisRun() {
+        return loadedThisRun;
+    }
+
+    @JsonIgnore
+    public void setLoadedThisRun(boolean loadedThisRun) {
+        this.loadedThisRun = loadedThisRun;
     }
 
     /**
