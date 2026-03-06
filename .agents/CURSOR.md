@@ -166,6 +166,17 @@ mvn verify -pl integration-tests -am \
 - Replace the class and method with the desired test.
 - Same pattern is documented in `docs/source/dev/build.rst` (e.g. `-Dtests.class=... -Dtests.method="METHOD_NAME"`).
 
+### Fixing failing tests
+
+When fixing a bug or addressing a test failure:
+
+1. **Reproduce first**: Add or adjust a unit test and/or integration test that reproduces the error (e.g. an assertion that fails with the current behaviour).
+2. **Run the test**: Execute the test and confirm it **fails** (red).
+3. **Fix the code**: Change the production (or test) code so that the intended behaviour is correct.
+4. **Verify**: Run the test again and confirm it **passes** (green).
+
+Do not fix the code first and then add a test that passes; the test must fail before the fix so that it actually guards against the bug.
+
 ## REST API Endpoints
 
 ### Server
