@@ -1,0 +1,4 @@
+{
+  "baseImage": "maven:3-eclipse-temurin-21",
+  "install": "mvn -B -DskipTests -DskipIntegTests compile -q"
+}
